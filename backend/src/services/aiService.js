@@ -9,81 +9,68 @@ const https = require('https');
  */
 const buildPrompt = ({
   businessName,
-  industry,
-  targetAudience,
+  template,
   businessDescription,
+  targetAudience,
   ctaText,
-  figmaUrl,
   aiPrompt,
-  figmaData,
+  pageId,
 }) => {
-  const variants = [
-    'Minimalist & Clean (Swiss Style)',
-    'Cyberpunk & Dark Mode',
-    'Playful Neo-Brutalism',
-    'Premium & Elegant (High Fashion style)',
-    'Corporate & Trust-Focused (Fintech style)',
-    'Asymmetrical & Creative',
-    'Nature-Inspired & Organic',
-    'Bold & Vibrant (Dribbble style)'
-  ];
-  const chosenVariant = variants[Math.floor(Math.random() * variants.length)];
+  const industries = {
+    medical: 'clean, blue, trust-focused',
+    real_estate: 'luxury, dark, premium-focused',
+    saas: 'modern, gradients, minimal-focused',
+    fitness: 'bold, dark, energetic-focused',
+    education: 'friendly, structured, academic-focused',
+    default: 'modern, professional, conversion-focused'
+  };
 
-  const figmaInstruction = figmaData 
-    ? `Figma Design Provided: ${figmaUrl}
-       Extracted Tokens: ${figmaData.colors?.length > 0 ? `Colors: ${figmaData.colors.join(', ')}` : 'Follow overall file styles'}
-       Layout Intent: Adhere to the spacing and hierarchy logic found in the "${figmaData.documentName || 'Figma'}" file.` 
-    : figmaUrl 
-      ? `Figma URL Provided: ${figmaUrl}. Use this as the primary design reference for structure and UI components.`
-      : `Instructions: Generate a unique, ${chosenVariant} design from scratch.`;
+  const styleContext = industries[template] || industries.default;
 
   return `
-Create a high-converting, modern, and pixel-perfect landing page based on the following details:
+You are an advanced AI landing page engine designed for SaaS automation platforms.
+Generate a HIGH-CONVERTING, VISUALLY RICH, MOBILE-FIRST landing page for:
+Business: ${businessName}
+Industry/Template: ${template}
+Description: ${businessDescription}
+Target Audience: ${targetAudience}
+Primary CTA: ${ctaText}
 
-Business Name: ${businessName}
-Industry: ${industry}
-Style Variant: ${chosenVariant}
-Business Description: ${businessDescription}
-Target Audience: ${targetAudience || 'General Public'}
-Primary CTA: ${ctaText || 'Get Started'}
+---
+## 🔒 HARD RULES (NON-NEGOTIABLE)
+1. NEVER return JSON.
+2. NEVER return empty fields or placeholders like "lorem ipsum".
+3. NEVER ask questions.
+4. ALWAYS generate COMPLETE, valid HTML5 documents including <!DOCTYPE html>, <html>, <head>, and <body>.
+5. ALWAYS include ALL CSS within <style> tags in the head.
+6. ALWAYS include ALL functionality within <script> tags before the closing </body>.
+7. ALWAYS use REAL images from Unsplash or Pexels based on the ${template} industry.
+8. ALWAYS optimize for conversion (CRO best practices).
+9. Design Style: ${styleContext}. Use premium fonts and vibrant but professional colors.
 
-${figmaInstruction}
+---
+## 🧱 MANDATORY SECTIONS
+1. HERO: Background image, H1 Headline + subheadline, Capture Form (Name, Phone, Email), Trust badge.
+2. SOCIAL PROOF: Stats (e.g. 5000+ Happy Clients) and Client logos.
+3. FEATURES / SERVICES: Grid cards with icons and benefit-driven copy.
+4. MID FORM: Consultation request form with Service dropdown.
+5. HOW IT WORKS: 3-step visualization.
+6. TESTIMONIALS: 3 realistic user reviews with names and professional roles.
+7. FAQ: Schema-ready accordion with 4-5 relevant questions.
+8. FINAL CTA & FOOTER: High-impact closure.
 
-DESIGN DIRECTIVE:
-- DO NOT use a generic "centered hero with 3 cards" layout every time.
-- Experiment with: Asymmetrical grids, staggered sections, overlapping elements, or large background typography.
-- Use a unique color palette based on ${industry} and the ${chosenVariant} style.
-- Incorporate subtle scroll animations or hover states in the 'fullHtml' and 'fullCss'.
+---
+## ⚙️ FUNCTIONALITY (MUST IMPLEMENT)
+- Fully responsive (mobile-first grid/flex).
+- Sticky CTA button for mobile users.
+- Smooth Scroll Reveal animations.
+- Form validation (JavaScript) and AJAX submission (fetch API to '/api/pages/${pageId || 'PAGE_ID'}/leads').
+- "Thank You" popup/modal trigger after submit.
+- Hidden UTM tracking fields: utm_source, utm_medium, utm_campaign.
+- CRM webhook logic (Handled by backend via the '/api/pages/${pageId || 'PAGE_ID'}/leads' endpoint).
 
-${aiPrompt ? `CUSTOM USER INSTRUCTIONS: ${aiPrompt}\nFollow these instructions strictly for the content and layout tone.` : ''}
-
-Generate the landing page with the following COMPREHENSIVE sections:
-
-### THEME & DESIGN REQUIREMENTS:
-- Create a 100% unique DESIGN for this industry. 
-- Provide a 'fullHtml' string (semantic <body> content with animations).
-- Provide a 'fullCss' string (modern, responsive CSS with gradients/glassmorphism).
-- Provide a 'fullJs' string (optional interactivity like counters, tab switches, or scroll reveals).
-
-### STRUCTURED CONTENT (FOR SIDEBAR EDITING):
-1. hero: { badge, headline, subheadline, primaryCta, secondaryCta }
-2. features: { title, subtitle, list: [ { title, description, icon } ] }
-3. about: { title, subtitle, content }
-4. testimonials: { title, subtitle, list: [ { name, role, feedback, stars } ] }
-5. pricing: { title, subtitle, list: [ { plan, price, pricePeriod, features: [], isPopular, cta } ] }
-6. faq: { title, list: [ { question, answer } ] }
-7. contact: { title, subtitle, buttonText }
-8. footer: { copyright, links: [] }
-
-Output Format:
-Return ONLY valid JSON including:
-- fullHtml (The entire HTML structure for the body)
-- fullCss (The entire CSS block)
-- fullJs (The entire JS block)
-- pageContent (the 8 sections above)
-- seo: { title, description, keywords: [] }
-
-Return ONLY the JSON. No markdown. No conversational text.
+OUTPUT REQUIREMENT:
+Return ONLY the raw HTML code. Do NOT wrap in markdown fences. Do NOT add explanation text. Start with <!DOCTYPE html>.
 `;
 };
 
@@ -104,17 +91,16 @@ const callOpenAI = (prompt) => {
       messages: [
         {
           role: 'system',
-          content:
-            'You are an expert conversion-focused landing page copywriter. Always respond with valid JSON only, no markdown.',
+          content: 'You are an advanced AI landing page engine. You generate complete, production-ready HTML code without any JSON or conversational text.',
         },
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 1.0,
+      temperature: 0.7,
       max_tokens: 4096,
-      response_format: { type: 'json_object' },
+      // Removed response_format: { type: 'json_object' } to allow raw HTML
     });
 
     const options = {
@@ -148,12 +134,31 @@ const callOpenAI = (prompt) => {
             return reject(new Error('No content returned from OpenAI'));
           }
 
-          // Strip any accidental markdown code fences
-          const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-          const content = JSON.parse(cleaned);
-          resolve(content);
+          const cleaned = raw.replace(/```html\s*/gi, '').replace(/```/g, '').trim();
+
+          // HEURISTIC: If it starts with JSON curly brace, attempt parse. 
+          // Otherwise, treat as raw HTML and wrap in a compatible structure.
+          if (cleaned.startsWith('{')) {
+            try {
+              const content = JSON.parse(cleaned);
+              return resolve(content);
+            } catch (err) {
+              // Fallback if it looks like JSON but fails
+              return resolve({ fullHtml: cleaned });
+            }
+          }
+
+          // RAW HTML MODE: Wrap for backward compatibility with controllers
+          resolve({
+            fullHtml: cleaned,
+            fullCss: '', // CSS is expected to be inline in head
+            fullJs: '',  // JS is expected to be inline in body
+            pageContent: [], // Structured sidebar won't be available in raw mode
+            seo: { title: 'Generated Page', description: '', keywords: [] }
+          });
+
         } catch (err) {
-          reject(new Error(`Failed to parse OpenAI response: ${err.message}`));
+          reject(new Error(`Failed to process OpenAI response: ${err.message}`));
         }
       });
     });

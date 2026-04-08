@@ -3,21 +3,29 @@
 const { z } = require('zod');
 const crypto = require('crypto');
 const Page = require('../models/Page');
+const Project = require('../models/Project');
+const AIService = require('../services/aiService');
 const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
+const logger = require('../utils/logger');
 
 // ─── Validation Schemas ────────────────────────────────────────────────────────
 const createPageSchema = z.object({
   title: z.string().min(1, 'title is required'),
-  slug: z.string().optional(),
   template: z.string().optional(),
-  content: z.any().optional(),
-  designUrl: z.string().url('Invalid Figma or Stitch URL').optional(),
+  business_name: z.string().optional(),
+  business_description: z.string().optional(),
+  target_audience: z.string().optional(),
+  cta_text: z.string().optional(),
+  ai_prompt: z.string().optional(),
+  industry: z.string().optional(),
 });
 
 const updatePageSchema = z.object({
   title: z.string().min(1).optional(),
+  slug: z.string().min(1).optional(),
   content: z.any().optional(),
+  status: z.enum(['draft', 'published']).optional(),
   seo: z
     .object({
       title: z.string().optional(),
@@ -49,21 +57,36 @@ const leadSchema = z.object({
 });
 
 // ─── Helper: Unique slug generator ────────────────────────────────────────────
-const generateUniqueSlug = async (base) => {
+const generateUniqueSlug = async (base, projectId, excludeId = null) => {
   const slug = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   let uniqueSlug = slug;
   let counter = 1;
-  while (await Page.exists({ slug: uniqueSlug })) {
+  const query = { projectId, slug: uniqueSlug };
+  if (excludeId) query._id = { $ne: excludeId };
+
+  while (await Page.exists(query)) {
     uniqueSlug = `${slug}-${counter++}`;
+    query.slug = uniqueSlug;
   }
   return uniqueSlug;
 };
 
-// ─── GET /pages ───────────────────────────────────────────────────────────────
-exports.getMyPages = async (req, res, next) => {
+// Helper: Ensure project ownership
+const checkProjectOwnership = async (projectId, userId) => {
+  return await Project.exists({ _id: projectId, userId });
+};
+
+// ─── GET /projects/:projectId/pages ───────────────────────────────────────────
+exports.getPagesInProject = async (req, res, next) => {
   try {
+    const { projectId } = req.params;
     const { status, page = 1, limit = 10 } = req.query;
-    const filter = { userId: req.user._id };
+
+    if (!(await checkProjectOwnership(projectId, req.user._id))) {
+      return res.status(403).json({ status: 'fail', message: 'Unauthorized project' });
+    }
+
+    const filter = { projectId, userId: req.user._id };
     if (status) filter.status = status;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -90,17 +113,21 @@ exports.getMyPages = async (req, res, next) => {
   }
 };
 
-// ─── GET /pages/:id ───────────────────────────────────────────────────────────
+// ─── GET /pages/:id or /projects/:projectId/pages/:id ─────────────────────────
 exports.getPage = async (req, res, next) => {
   try {
-    const page = await Page.findOne({ _id: req.params.id, userId: req.user._id });
+    const { id, projectId } = req.params;
+    const query = { _id: id, userId: req.user._id };
+    if (projectId) query.projectId = projectId;
+
+    const page = await Page.findOne(query);
 
     if (!page) {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const previewUrl = `${baseAppUrl}/preview/${page.previewToken || page._id}`;
+    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrl = page.previewUrl || `${baseAppUrl}/preview/${page.slug}`;
 
     return res.status(200).json({
       status: 'success',
@@ -116,10 +143,12 @@ exports.getPage = async (req, res, next) => {
   }
 };
 
-// ─── POST /pages ──────────────────────────────────────────────────────────────
+// ─── POST /projects/:projectId/pages (Enhanced with AI) ───────────────────────
 exports.createPage = async (req, res, next) => {
   try {
+    const { projectId } = req.params;
     const parsed = createPageSchema.safeParse(req.body);
+
     if (!parsed.success) {
       return res.status(400).json({
         status: 'fail',
@@ -128,40 +157,88 @@ exports.createPage = async (req, res, next) => {
       });
     }
 
-    const { title, slug, template, content, designUrl } = parsed.data;
-    const uniqueSlug = await generateUniqueSlug(slug || title);
+    if (!(await checkProjectOwnership(projectId, req.user._id))) {
+      return res.status(403).json({ status: 'fail', message: 'Unauthorized project' });
+    }
 
-    const newPage = await Page.create({
+    const { 
+      title, 
+      template, 
+      business_name, 
+      business_description, 
+      target_audience, 
+      cta_text, 
+      ai_prompt,
+      industry 
+    } = parsed.data;
+
+    const uniqueSlug = await generateUniqueSlug(title, projectId);
+
+    const page = await Page.create({
+      projectId,
       userId: req.user._id,
       title,
       slug: uniqueSlug,
       template: template || 'blank',
-      content: content || {},
-      designUrl: designUrl || undefined,
-      status: 'draft',
+      aiPrompt: ai_prompt,
+      status: 'generating',
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const previewUrl = `${baseAppUrl}/preview/${newPage.previewToken}`;
+    let aiResponse = { sections: [], seo: {} };
+    try {
+      const generated = await AIService.generateLandingPageContent({
+        businessName: business_name || title,
+        industry: industry || 'Service',
+        businessDescription: business_description || '',
+        targetAudience: target_audience || 'General',
+        ctaText: cta_text || 'Get Started',
+        aiPrompt: ai_prompt || '',
+        pageId: page._id
+      });
+
+      aiResponse = {
+        sections: generated.pageContent || [],
+        fullHtml: generated.fullHtml,
+        fullCss: generated.fullCss,
+        fullJs: generated.fullJs,
+        seo: generated.seo || {}
+      };
+
+    } catch (aiErr) {
+      logger.error('AI Generation Failed during page creation:', aiErr);
+    }
+
+    const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
+    const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
+
+    page.content = aiResponse;
+    page.seo = aiResponse.seo;
+    page.previewUrl = previewUrl;
+    page.status = 'draft';
+    await page.save();
 
     return res.status(201).json({
-      status: 'success',
+      success: true,
+      message: 'Landing page created successfully',
       data: {
-        page: {
-          ...newPage.toObject(),
-          previewUrl
-        }
+        page_id: page._id,
+        title: page.title,
+        slug: page.slug,
+        preview_url: page.previewUrl,
+        content: page.content
       }
     });
+
   } catch (err) {
     next(err);
   }
 };
 
-// ─── PUT /pages/:id ───────────────────────────────────────────────────────────
+// ─── PUT /pages/:id or /projects/:projectId/pages/:id ─────────────────────────
 exports.updatePage = async (req, res, next) => {
   try {
+    const { id, projectId } = req.params;
     const parsed = updatePageSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -171,37 +248,58 @@ exports.updatePage = async (req, res, next) => {
       });
     }
 
+    const query = { _id: id, userId: req.user._id };
+    if (projectId) query.projectId = projectId;
+
+    const currentPage = await Page.findOne(query);
+    if (!currentPage) {
+      return res.status(404).json({ status: 'fail', message: 'Page not found' });
+    }
+
+    const updateData = { ...parsed.data, updatedAt: Date.now() };
+
+    if (parsed.data.slug && parsed.data.slug !== currentPage.slug) {
+      const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
+      updateData.slug = uniqueSlug;
+      
+      const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
+      updateData.previewUrl = `${baseAppUrl}/preview/${uniqueSlug}`;
+    }
+
+    const updatedPage = await Page.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (updatedPage.domain && updatedPage.apiToken) {
+      SyncService.flushWordPressCache(updatedPage.domain, updatedPage.apiToken);
+    }
+
+    return res.status(200).json({ status: 'success', data: { page: updatedPage } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DELETE /pages/:id or /projects/:projectId/pages/:id ──────────────────────
+exports.deletePage = async (req, res, next) => {
+  try {
+    const { id, projectId } = req.params;
+    const query = { _id: id, userId: req.user._id };
+    if (projectId) query.projectId = projectId;
+
     const page = await Page.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      { ...parsed.data, updatedAt: Date.now() },
-      { new: true, runValidators: false }
+      query,
+      { isDeleted: true },
+      { new: true }
     );
 
     if (!page) {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    // Trigger remote flush if domain is attached
-    if (page.domain && page.apiToken) {
-      SyncService.flushWordPressCache(page.domain, page.apiToken);
-    }
-
-    return res.status(200).json({ status: 'success', data: { page } });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ─── DELETE /pages/:id ────────────────────────────────────────────────────────
-exports.deletePage = async (req, res, next) => {
-  try {
-    const page = await Page.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
-
-    if (!page) {
-      return res.status(404).json({ status: 'fail', message: 'Page not found' });
-    }
-
-    return res.status(200).json({ status: 'success', message: 'Page deleted successfully' });
+    return res.status(204).json({ status: 'success', message: 'Page deleted successfully' });
   } catch (err) {
     next(err);
   }
@@ -225,28 +323,16 @@ exports.publishPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    // Determine the publish URL
     const baseAppUrl = process.env.APP_BASE_URL || 'https://app.yourdomain.com';
     let liveUrl;
 
     if (parsed.data.domain) {
-      // Custom domain — just store it; Nginx/DNS wiring is done externally
-      const existingDomain = await Page.findOne({
-        domain: parsed.data.domain,
-        _id: { $ne: page._id },
-      });
-      // if (existingDomain) {
-      //   return res
-      //     .status(409)
-      //     .json({ status: 'fail', message: 'This domain is already in use by another page' });
-      // }
       page.domain = parsed.data.domain;
       liveUrl = `https://${parsed.data.domain}`;
     } else if (parsed.data.subdomain) {
       page.domain = `${parsed.data.subdomain}.${process.env.APP_DOMAIN || 'pages.yourdomain.com'}`;
       liveUrl = `https://${page.domain}`;
     } else {
-      // Default: slug-based path on the platform
       liveUrl = `${baseAppUrl}/p/${page.slug}`;
     }
 
@@ -254,18 +340,14 @@ exports.publishPage = async (req, res, next) => {
     page.publishedAt = Date.now();
     page.updatedAt = Date.now();
 
-    // Generate a unique API token for plugin verification if it doesn't have one
     if (!page.apiToken) {
       page.apiToken = crypto.randomBytes(32).toString('hex');
     }
 
     await page.save({ validateBeforeSave: false });
 
-    // Trigger background routing & SSL job if a domain is attached
     if (page.domain) {
       PublishService.triggerPublishJob(page.domain, page.slug);
-      
-      // Also flush remote WP cache if apiToken exists
       if (page.apiToken) {
         SyncService.flushWordPressCache(page.domain, page.apiToken);
       }
@@ -298,7 +380,6 @@ exports.unpublishPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    // Trigger remote flush if domain is attached
     if (page.domain && page.apiToken) {
       SyncService.flushWordPressCache(page.domain, page.apiToken);
     }
@@ -310,7 +391,6 @@ exports.unpublishPage = async (req, res, next) => {
 };
 
 // ─── POST /pages/:id/leads ────────────────────────────────────────────────────
-// Public endpoint — no auth required (visitors submit from live pages)
 exports.captureLead = async (req, res, next) => {
   try {
     const parsed = leadSchema.safeParse(req.body);
@@ -338,11 +418,10 @@ exports.captureLead = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Published page not found' });
     }
 
-    // Fire webhook natively asynchronously if configured
     if (page.settings?.webhookUrl) {
       setImmediate(async () => {
         try {
-          await fetch(page.settings.webhookUrl, {
+          const response = await fetch(page.settings.webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -353,9 +432,7 @@ exports.captureLead = async (req, res, next) => {
               timestamp: new Date().toISOString()
             })
           });
-        } catch (err) {
-          // Swallow error silently for webhook delivery
-        }
+        } catch (err) {}
       });
     }
 
@@ -372,7 +449,7 @@ exports.captureLead = async (req, res, next) => {
 exports.getLeads = async (req, res, next) => {
   try {
     const page = await Page.findOne(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user._id, isDeleted: { $ne: true } },
       { leads: 1, title: 1 }
     );
 
@@ -394,7 +471,7 @@ exports.getLeads = async (req, res, next) => {
 exports.exportLeadsCsv = async (req, res, next) => {
   try {
     const page = await Page.findOne(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user._id, isDeleted: { $ne: true } },
       { leads: 1, title: 1, slug: 1 }
     );
 
@@ -402,7 +479,6 @@ exports.exportLeadsCsv = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    // Generate CSV string
     const headers = 'Name,Email,Message,Date\n';
     const rows = page.leads.map((l) => {
       const safeName = `"${(l.name || '').replace(/"/g, '""')}"`;

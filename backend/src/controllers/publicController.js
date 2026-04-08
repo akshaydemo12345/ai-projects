@@ -38,12 +38,18 @@ const renderFullHTML = (page) => {
   const { title, content, seo, _id } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
-  // ─── 1. AI-Generated Code Blocks ───────────────────────────────────────────
-  const aiHtml = content.fullHtml || '';
+  const aiHtml = (content.fullHtml || '').trim();
   const aiCss = content.fullCss || '';
   const aiJs = content.fullJs || '';
+
+  // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
+  // If the AI generated a full document (doctype or html tag), serve it DIRECTLY.
+  // This prevents double-nested <html> and <body> tags which break styles/scripts.
+  if (aiHtml.toLowerCase().includes('<!doctype') || aiHtml.toLowerCase().includes('<html')) {
+    return aiHtml;
+  }
   
-  // ─── 2. Legacy/Structured Mapper (Fallback) ────────────────────────────────
+  // ─── 1. Legacy/Structured Mapper (Fallback) ────────────────────────────────
   const pageData = content.pageContent || content;
   const design = pageData.design || {};
 
@@ -64,59 +70,15 @@ const renderFullHTML = (page) => {
         </div>
       </section>`;
     }
-    if (data.features && data.features.list) {
-      html += `
-      <section class="section">
-        <div class="container text-center mb-16">
-          <h2 class="heading-lg">${data.features.title || 'Features'}</h2>
-        </div>
-        <div class="container grid-cols-3">
-          ${data.features.list.map((f, i) => `
-            <div class="glass-card stagger-in" style="--order: ${i}">
-              <div class="icon-wrap">${f.icon || '✨'}</div>
-              <h3 class="heading-md">${f.title}</h3>
-              <p class="text-sm">${f.description}</p>
-            </div>
-          `).join('')}
-        </div>
-      </section>`;
-    }
-    return html;
+    return html || '<p>No content generated.</p>';
   };
 
   const bodyContent = aiHtml || renderLegacyContent(pageData);
 
   // Fallback Styles if aiCss is missing
   const fallbackStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=${(design.fontHeading || 'Outfit').replace(/ /g, '+')}:wght@700&family=${(design.fontBody || 'Inter').replace(/ /g, '+')}:wght@400&display=swap');
-    :root { --primary: ${design.primaryColor || '#7c3aed'}; --text: #1e293b; --border: #e2e8f0; --card-bg: rgba(255, 255, 255, 0.7); }
-    body { font-family: '${design.fontBody || 'Inter'}', sans-serif; margin: 0; color: var(--text); background: #f8fafc; overflow-x: hidden; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-    .hero-section { padding: 140px 0; text-align: center; background: white; }
-    .heading-xl { font-size: 4rem; font-weight: 800; margin-bottom: 20px; }
-    .btn-primary { padding: 16px 32px; background: var(--primary); color: white; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
-    .section { padding: 80px 0; }
-    .glass-card { background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 30px; }
-    .grid-cols-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-    ${design.customCss || ''}
-  `;
-
-  // Fallback Script if aiJs is missing
-  const fallbackScript = `
-    const form = document.getElementById('leadForm');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          const res = await fetch('/api/pages/${_id}/leads', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
-          });
-          if (res.ok) alert('Success! We will contact you soon.');
-        } catch (err) { console.error(err); }
-      });
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
   `;
 
   return `<!DOCTYPE html>
@@ -125,12 +87,12 @@ const renderFullHTML = (page) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title || (seo ? seo.title : 'AI Created Site')}</title>
-    <style>${aiCss || fallbackStyles}</style>
+    <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
     ${seo ? `<meta name="description" content="${seo.description || ''}">` : ''}
 </head>
 <body>
     ${bodyContent}
-    <script>${aiJs || fallbackScript}</script>
+    <script>${aiJs || ''}</script>
 </body>
 </html>`;
 };
@@ -143,7 +105,11 @@ exports.getPreviewHTML = async (req, res, next) => {
   try {
     const { token } = req.params;
     const page = await Page.findOne({
-      $or: [{ previewToken: token }, { _id: token.length === 24 ? token : null }],
+      $or: [
+        { previewToken: token }, 
+        { slug: token }, 
+        { _id: token && token.length === 24 ? token : null }
+      ],
     }).select('title content seo status');
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
@@ -254,10 +220,16 @@ exports.getPreview = async (req, res, next) => {
     const { token } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { $or: [{ previewToken: token }, { _id: token.length === 24 ? token : null }] },
+      { 
+        $or: [
+          { previewToken: token }, 
+          { slug: token }, 
+          { _id: token.length === 24 ? token : null }
+        ] 
+      },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain status previewToken');
+    ).select('title slug content seo template domain status previewToken previewUrl');
 
     if (!page) return next(new AppError('Preview expired or invalid link', 404));
 

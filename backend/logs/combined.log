@@ -952,3 +952,386 @@ Require stack:
 [2026-04-07T15:31:03.560Z] [HTTP] GET /pages/69d52306d47eafaab6bcb347 200 14ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
 [2026-04-07T15:31:03.916Z] [HTTP] GET /preview/23d399c6f081866e04b6bf4b8452c81a/html 200 9ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
 [2026-04-07T15:33:15.424Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:22:56.278Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:22:56.284Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:22:56.285Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:23:16.321Z] [HTTP] OPTIONS /user/profile 204 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:23:16.341Z] [HTTP] GET /user/profile 200 19ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:23:24.620Z] [HTTP] OPTIONS /auth/login 204 0ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:23:24.641Z] [WARN] POST /auth/login 400 20ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:34:07.901Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:34:07.909Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:34:07.910Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:34:16.289Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:34:16.294Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:34:16.295Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:34:28.316Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:34:28.322Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:34:28.323Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:35:17.116Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:35:17.122Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:35:17.123Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:35:25.901Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:35:25.911Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:35:25.913Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:35:31.785Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:35:31.792Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:35:31.793Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:37:04.577Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:37:04.587Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:37:04.588Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:37:23.635Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:37:23.643Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:37:23.644Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:40:01.264Z] [WARN] GET /projects 401 8ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:41:00.796Z] [ERROR] POST /auth/login → Invalid email or password {"statusCode":401,"stack":"Error: Invalid email or password\n    at exports.login (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/authController.js:39:19)"}
+[2026-04-08T06:41:00.796Z] [WARN] POST /auth/login 401 252ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:46:10.377Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:46:10.640Z] [INFO] User logged in {"userId":"69d507c5bff7253d170775a9"}
+[2026-04-08T06:46:10.644Z] [HTTP] POST /auth/login 200 266ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:46:10.673Z] [HTTP] OPTIONS /user/dashboard 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:46:10.690Z] [HTTP] GET /user/dashboard 200 15ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:47:31.627Z] [ERROR] POST /auth/login → Invalid email or password {"statusCode":401,"stack":"Error: Invalid email or password\n    at exports.login (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/authController.js:39:19)"}
+[2026-04-08T06:47:31.628Z] [WARN] POST /auth/login 401 241ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:48:42.037Z] [ERROR] POST /auth/login → Invalid email or password {"statusCode":401,"stack":"Error: Invalid email or password\n    at exports.login (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/authController.js:39:19)"}
+[2026-04-08T06:48:42.038Z] [WARN] POST /auth/login 401 240ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:49:05.503Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T06:49:05.514Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T06:49:05.515Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T06:51:24.183Z] [HTTP] GET / 304 22ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T06:52:20.494Z] [INFO] User logged in {"userId":"69d507c5bff7253d170775a9"}
+[2026-04-08T06:52:20.498Z] [HTTP] POST /auth/login 200 261ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:52:43.341Z] [HTTP] POST /projects 201 11ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:54:00.110Z] [WARN] GET /projects?page=1&limit=5 401 1ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:54:13.431Z] [HTTP] GET /projects?page=1&limit=5 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:57:02.221Z] [HTTP] POST /projects/69d5fb3b33279274cb49c4ce/pages 201 7ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T06:57:21.432Z] [HTTP] GET /preview/0b9c6c5f588921dba5acbfe25e885833 200 16ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:37.571Z] [HTTP] OPTIONS /user/dashboard 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:37.573Z] [HTTP] OPTIONS /user/profile 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:37.580Z] [WARN] GET /user/dashboard 401 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:37.582Z] [WARN] GET /user/profile 401 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:40.175Z] [WARN] GET /user/dashboard 401 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:00:40.176Z] [WARN] GET /user/profile 401 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:15.107Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:15.111Z] [ERROR] POST /auth/login → Invalid email or password {"statusCode":401,"stack":"Error: Invalid email or password\n    at exports.login (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/authController.js:39:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T07:01:15.112Z] [WARN] POST /auth/login 401 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:44.588Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:44.866Z] [INFO] New user registered {"userId":"69d5fd5833279274cb49c4df","email":"akshay@gmail.com"}
+[2026-04-08T07:01:44.867Z] [HTTP] POST /auth/signup 201 276ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:44.893Z] [HTTP] OPTIONS /user/dashboard 204 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:01:44.911Z] [HTTP] GET /user/dashboard 200 15ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:02:46.150Z] [HTTP] OPTIONS /user/dashboard 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:02:46.153Z] [HTTP] OPTIONS /user/profile 204 0ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:02:46.166Z] [HTTP] GET /user/dashboard 200 13ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:02:46.167Z] [HTTP] GET /user/profile 200 10ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:04:37.097Z] [HTTP] POST /projects 201 3ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T07:05:41.284Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 6ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T07:06:49.148Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 4ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T07:12:17.687Z] [HTTP] GET /preview/bd419ec8c949923708ee553e2523e8e8 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:13:28.395Z] [HTTP] OPTIONS /ai/improve 204 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:13:32.242Z] [HTTP] POST /ai/improve 200 3846ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T07:19:21.466Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T07:19:21.476Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T07:19:21.478Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T07:20:00.047Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T07:20:00.059Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T07:20:00.060Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T07:20:25.682Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T07:20:25.693Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T07:20:25.694Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T07:22:00.586Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 38910ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T08:25:40.764Z] [HTTP] GET / 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:26:08.476Z] [ERROR] POST /plugin/verify → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T08:26:08.479Z] [WARN] POST /plugin/verify 401 9ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T08:26:09.502Z] [ERROR] GET /favicon.ico → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T08:26:09.503Z] [WARN] GET /favicon.ico 404 9ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:26:30.002Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T08:26:30.003Z] [HTTP] POST /pages/69d601f193172cdde565f0f3/publish 200 11ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T08:26:30.003Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: modern-dental-clinic)
+[2026-04-08T08:26:30.003Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T08:26:30.003Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T08:26:30.003Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T08:26:30.003Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T08:26:30.005Z] [WARN] ⚠️ Flush failed with status 404 for my-wordpress-site.test
+[2026-04-08T08:27:14.006Z] [HTTP] POST /plugin/verify 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T08:27:26.730Z] [HTTP] POST /plugin/verify 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T08:28:02.665Z] [HTTP] POST /plugin/verify 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T08:28:23.153Z] [HTTP] GET /modern-dental-clinic 200 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:29:03.932Z] [HTTP] GET /modern-dental-clinic 200 9ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:29:17.620Z] [ERROR] GET /ppc/modern-dental-clinic → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T08:29:17.621Z] [WARN] GET /ppc/modern-dental-clinic 404 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:35:30.470Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T08:35:30.480Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T08:35:30.481Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T08:38:02.781Z] [WARN] PUT /projects/69d601f193172cdde565f0f3/pages 404 14ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T08:38:16.490Z] [HTTP] GET /modern-dental-clinic 304 24ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:48:50.795Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T08:48:50.803Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T08:48:50.804Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T08:49:21.120Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T08:49:21.129Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T08:49:21.130Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T08:51:31.652Z] [HTTP] GET /preview/modern-dental-clinic 200 27ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T08:53:39.362Z] [WARN] PUT /projects/69d5fe0533279274cb49c4ea/pages/69d601f193172cdde565f0f3 401 6ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T08:53:55.578Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T08:53:55.581Z] [HTTP] PUT /projects/69d5fe0533279274cb49c4ea/pages/69d601f193172cdde565f0f3 200 13ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T08:53:56.674Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T08:54:01.182Z] [HTTP] GET /preview/modern-dental-clinic 200 9ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:00:21.287Z] [HTTP] GET /modern-dental-clinic 200 7ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:00:25.798Z] [HTTP] GET /modern-dental-clinic 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:02:12.201Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 43902ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T09:02:25.961Z] [HTTP] GET /modern-dental-clinic 304 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:02:46.789Z] [ERROR] GET /modern-dental-clinic-1 → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:02:46.790Z] [WARN] GET /modern-dental-clinic-1 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:02:58.147Z] [HTTP] GET /preview/modern-dental-clinic-1 200 10ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:04:05.133Z] [WARN] PUT /pages/69d6196858488b68265e27d1/publish 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T09:04:10.373Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T09:04:10.375Z] [HTTP] POST /pages/69d6196858488b68265e27d1/publish 200 6ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T09:04:10.375Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: modern-dental-clinic-1)
+[2026-04-08T09:04:10.375Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T09:04:10.375Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T09:04:10.375Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T09:04:10.375Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T09:04:10.462Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T09:04:20.277Z] [HTTP] GET /modern-dental-clinic-1 200 7ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:04:50.768Z] [HTTP] GET /modern-dental-clinic 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:05:22.117Z] [HTTP] POST /plugin/verify 200 3ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T09:05:37.465Z] [HTTP] GET /modern-dental-clinic-1 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:40.880Z] [ERROR] POST /plugin/verify → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:06:40.880Z] [WARN] POST /plugin/verify 401 1ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T09:06:51.613Z] [HTTP] GET /modern-dental-clinic-1 304 9ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:52.321Z] [HTTP] GET /modern-dental-clinic-1 304 7ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:52.512Z] [HTTP] GET /modern-dental-clinic-1 304 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:52.686Z] [HTTP] GET /modern-dental-clinic-1 304 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:52.869Z] [HTTP] GET /modern-dental-clinic-1 304 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:06:55.181Z] [HTTP] GET / 200 0ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:07:03.149Z] [HTTP] GET / 200 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:13:09.595Z] [ERROR] POST /plugin/verify → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:13:09.596Z] [WARN] POST /plugin/verify 401 5ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T09:21:30.606Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T09:21:30.613Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T09:21:30.614Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T09:24:21.837Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:24:21.839Z] [WARN] POST /verify-api-key 401 14ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:24:35.910Z] [HTTP] POST /verify-api-key 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:24:45.073Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:24:45.074Z] [WARN] POST /verify-api-key 401 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:24:50.349Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:24:50.350Z] [WARN] POST /verify-api-key 401 3ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:25:06.851Z] [HTTP] POST /verify-api-key 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:27:09.974Z] [HTTP] POST /verify-api-key 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:27:20.298Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:27:20.299Z] [WARN] POST /verify-api-key 401 3ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:27:26.026Z] [HTTP] POST /verify-api-key 200 3ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:27:55.694Z] [HTTP] POST /verify-api-key 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:28:49.129Z] [HTTP] POST /plugin/verify 200 12ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T09:32:05.502Z] [HTTP] POST /verify-api-key 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:33:59.337Z] [HTTP] POST /verify-api-key 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:43:15.942Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:43:15.943Z] [WARN] POST /verify-api-key 401 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:43:30.306Z] [HTTP] POST /verify-api-key 200 1ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:45:57.865Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:45:57.866Z] [WARN] POST /verify-api-key 401 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:46:19.584Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:46:19.584Z] [WARN] POST /verify-api-key 401 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:46:57.122Z] [HTTP] POST /verify-api-key 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:47:09.785Z] [HTTP] GET /modern-dental-clinic-1 200 12ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:49:25.883Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 39527ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T09:50:01.730Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T09:50:01.731Z] [HTTP] POST /pages/69d6247eec9ad57ca6f64e79/publish 200 7ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T09:50:01.731Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: transform-your-body-today)
+[2026-04-08T09:50:01.731Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T09:50:01.731Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T09:50:01.732Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T09:50:01.732Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T09:50:01.868Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T09:51:09.297Z] [HTTP] POST /verify-api-key 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:51:27.829Z] [HTTP] GET /transform-your-body-today 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:52:01.409Z] [HTTP] GET /transform-your-body-today 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:52:33.460Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:52:33.461Z] [WARN] POST /verify-api-key 401 2ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:52:43.698Z] [ERROR] POST /verify-api-key → Invalid API token or page is unpublished. {"statusCode":401,"stack":"Error: Invalid API token or page is unpublished.\n    at exports.verifyPlugin (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:233:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T09:52:43.699Z] [WARN] POST /verify-api-key 401 3ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:52:52.954Z] [HTTP] POST /verify-api-key 200 1ms {"ip":"::ffff:127.0.0.1","userAgent":"WordPress/6.9.4; http://my-wordpress-site.test"}
+[2026-04-08T09:53:28.712Z] [HTTP] GET /transform-your-body-today 304 7ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:53:52.513Z] [HTTP] GET / 200 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:53:56.804Z] [HTTP] GET / 200 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T09:58:31.986Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T09:58:31.993Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T09:58:31.994Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:02:14.626Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 65088ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:03:02.778Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T10:03:02.779Z] [HTTP] POST /pages/69d62765a1ec5d89c336bfc2/publish 200 8ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:03:02.779Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: master-digital-marketing)
+[2026-04-08T10:03:02.779Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T10:03:02.779Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T10:03:02.779Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T10:03:02.779Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T10:03:02.870Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T10:03:35.035Z] [HTTP] GET /master-digital-marketing 200 14ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:49.141Z] [HTTP] GET /master-digital-marketing 304 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:50.805Z] [HTTP] GET /master-digital-marketing 304 8ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:57.803Z] [HTTP] GET /master-digital-marketing 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:57.869Z] [ERROR] GET /styles.css → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:03:57.870Z] [WARN] GET /styles.css 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:57.880Z] [ERROR] GET /trust-badge1.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:03:57.881Z] [WARN] GET /trust-badge1.png 404 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:57.882Z] [ERROR] GET /script.js → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:03:57.882Z] [WARN] GET /script.js 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:03:57.882Z] [ERROR] GET /trust-badge2.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:03:57.883Z] [WARN] GET /trust-badge2.png 404 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:23.634Z] [ERROR] GET /styles.css → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:23.634Z] [WARN] GET /styles.css 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:23.636Z] [ERROR] GET /trust-badge2.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:23.636Z] [WARN] GET /trust-badge2.png 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:23.636Z] [ERROR] GET /trust-badge1.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:23.637Z] [WARN] GET /trust-badge1.png 404 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:23.637Z] [ERROR] GET /script.js → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:23.638Z] [WARN] GET /script.js 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:23.674Z] [ERROR] GET /favicon.ico → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:23.675Z] [WARN] GET /favicon.ico 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:24.403Z] [ERROR] GET /styles.css → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:24.404Z] [WARN] GET /styles.css 404 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:24.406Z] [ERROR] GET /trust-badge2.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:24.406Z] [WARN] GET /trust-badge2.png 404 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:24.408Z] [ERROR] GET /trust-badge1.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:24.408Z] [WARN] GET /trust-badge1.png 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:24.409Z] [ERROR] GET /script.js → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:24.409Z] [WARN] GET /script.js 404 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:24.447Z] [ERROR] GET /favicon.ico → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:24.447Z] [WARN] GET /favicon.ico 404 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:28.321Z] [ERROR] GET /styles.css → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:28.321Z] [WARN] GET /styles.css 404 2ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:28.325Z] [ERROR] GET /script.js → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:28.325Z] [WARN] GET /script.js 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:28.327Z] [ERROR] GET /trust-badge2.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:28.328Z] [WARN] GET /trust-badge2.png 404 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:28.330Z] [ERROR] GET /trust-badge1.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:28.330Z] [WARN] GET /trust-badge1.png 404 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:28.365Z] [ERROR] GET /favicon.ico → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:28.365Z] [WARN] GET /favicon.ico 404 1ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:42.795Z] [ERROR] GET /summer-sale → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:42.796Z] [WARN] GET /summer-sale 404 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:51.114Z] [ERROR] GET /summer-testing → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:04:51.114Z] [WARN] GET /summer-testing 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:04:58.930Z] [HTTP] GET /modern-dental-clinic 200 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:05:09.437Z] [HTTP] GET /modern-dental-clinic-1 200 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:05:20.708Z] [ERROR] GET /styles.css → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:05:20.709Z] [WARN] GET /styles.css 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:05:20.714Z] [ERROR] GET /trust-badge1.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:05:20.715Z] [WARN] GET /trust-badge1.png 404 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:05:20.715Z] [ERROR] GET /trust-badge2.png → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:05:20.716Z] [WARN] GET /trust-badge2.png 404 3ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:05:20.716Z] [ERROR] GET /script.js → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:178:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:05:20.716Z] [WARN] GET /script.js 404 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:23:11.726Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T10:23:11.733Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T10:23:11.735Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:25:17.198Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 42499ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:25:47.673Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T10:25:47.674Z] [HTTP] POST /pages/69d62ce2a778786548d25d91/publish 200 9ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:25:47.674Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: luxury-living-redefined)
+[2026-04-08T10:25:47.674Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T10:25:47.674Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T10:25:47.674Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T10:25:47.674Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T10:25:47.970Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T10:26:10.351Z] [HTTP] GET /luxury-living-redefined 200 20ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:27:04.941Z] [HTTP] GET /luxury-living-redefined 200 8ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:27:30.719Z] [HTTP] GET /luxury-living-redefined 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:29:05.323Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T10:29:05.329Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T10:29:05.331Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:29:50.915Z] [HTTP] GET /luxury-living-redefined 200 18ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:29:52.060Z] [HTTP] GET /luxury-living-redefined 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:31:25.081Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T10:31:25.088Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T10:31:25.089Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:31:47.944Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T10:31:47.955Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T10:31:47.956Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:33:59.474Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-08T10:33:59.480Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-08T10:33:59.481Z] [INFO] 🚀 Server running on port 5000
+[2026-04-08T10:38:29.028Z] [HTTP] GET / 200 8ms {"ip":"::1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:38:29.101Z] [ERROR] GET /favicon.ico → Page not found or not published {"statusCode":404,"stack":"Error: Page not found or not published\n    at exports.getPublicPageHTML (/var/www/html/circle-animation/landing-page-ai-builder/backend/src/controllers/publicController.js:141:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+[2026-04-08T10:38:29.102Z] [WARN] GET /favicon.ico 404 15ms {"ip":"::1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:40:20.907Z] [HTTP] GET /luxury-living-redefined 200 8ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:40:22.008Z] [HTTP] GET /luxury-living-redefined 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-08T10:41:16.339Z] [HTTP] POST /projects/69d5fe0533279274cb49c4ea/pages 201 41854ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:41:37.093Z] [INFO] 🔄 Triggering remote flush for my-wordpress-site.test...
+[2026-04-08T10:41:37.095Z] [HTTP] POST /pages/69d630a2b0962a047c3cc77c/publish 200 8ms {"ip":"::ffff:127.0.0.1","userAgent":"PostmanRuntime/7.39.1"}
+[2026-04-08T10:41:37.095Z] [INFO] Starting provisioning job for domain: my-wordpress-site.test (slug: luxury-living-redefined-1)
+[2026-04-08T10:41:37.095Z] [INFO] [Job Simulation] Generated Nginx config for my-wordpress-site.test
+[2026-04-08T10:41:37.095Z] [DEBUG] server {
+    listen 80;
+    server_name my-wordpress-site.test;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000/p/domain/my-wordpress-site.test;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+[2026-04-08T10:41:37.095Z] [INFO] [Job Simulation] Nginx reloaded successfully
+[2026-04-08T10:41:37.095Z] [INFO] [Job Simulation] SSL certificate generated for my-wordpress-site.test
+[2026-04-08T10:41:37.373Z] [HTTP] POST /plugin/verify 200 9ms {"ip":"::ffff:127.0.0.1","userAgent":"SiteAccelerator/1.1.0; http://my-wordpress-site.test"}
+[2026-04-08T10:41:37.425Z] [INFO] ✅ Successfully flushed cache on my-wordpress-site.test
+[2026-04-08T10:41:58.830Z] [HTTP] GET /luxury-living-redefined-1 200 6ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}

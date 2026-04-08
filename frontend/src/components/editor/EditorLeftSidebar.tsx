@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Type, LayoutGrid, GripVertical, Plus } from "lucide-react";
+import { Type, LayoutGrid, GripVertical, Plus, Sparkles, Image, AlignLeft, Grid3X3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ interface EditorLeftSidebarProps {
   onSelectSection: (id: string) => void;
   onReorderSections: (sections: PageSection[]) => void;
   onAddSection: (type: PageSection["type"]) => void;
+  onOpenAI: () => void;
   pageTitle: string;
   metaDesc: string;
   onPageTitleChange: (v: string) => void;
@@ -23,6 +24,7 @@ const EditorLeftSidebar = ({
   onSelectSection,
   onReorderSections,
   onAddSection,
+  onOpenAI,
   pageTitle,
   metaDesc,
   onPageTitleChange,
@@ -47,17 +49,31 @@ const EditorLeftSidebar = ({
   const handleDragEnd = () => setDraggedIdx(null);
 
   const sectionIcon = (type: string) => {
-    if (type === "hero") return <Type className="h-3.5 w-3.5" />;
-    return <LayoutGrid className="h-3.5 w-3.5" />;
+    switch (type) {
+      case "hero": return <Type className="h-3.5 w-3.5" />;
+      case "image": return <Image className="h-3.5 w-3.5" />;
+      case "text": return <AlignLeft className="h-3.5 w-3.5" />;
+      case "grid": return <Grid3X3 className="h-3.5 w-3.5" />;
+      default: return <LayoutGrid className="h-3.5 w-3.5" />;
+    }
   };
 
-  const sectionTypes: { type: PageSection["type"]; label: string }[] = [
-    { type: "hero", label: "Hero Section" },
-    { type: "features", label: "Features Grid" },
-    { type: "testimonials", label: "Testimonials" },
-    { type: "pricing", label: "Pricing" },
-    { type: "contact", label: "Contact Form" },
+  const sectionTypes: { type: PageSection["type"]; label: string; group: "Layout" | "Content" | "Conversion" }[] = [
+    { type: "hero", label: "Hero Section", group: "Layout" },
+    { type: "image", label: "Image Block", group: "Content" },
+    { type: "text", label: "Text Block", group: "Content" },
+    { type: "grid", label: "Content Grid", group: "Content" },
+    { type: "features", label: "Features Grid", group: "Content" },
+    { type: "testimonials", label: "Testimonials", group: "Conversion" },
+    { type: "pricing", label: "Pricing", group: "Conversion" },
+    { type: "contact", label: "Contact Form", group: "Conversion" },
   ];
+
+  const grouped = sectionTypes.reduce<Record<string, typeof sectionTypes>>((acc, st) => {
+    if (!acc[st.group]) acc[st.group] = [];
+    acc[st.group].push(st);
+    return acc;
+  }, {});
 
   return (
     <div className="mt-12 w-56 flex-shrink-0 border-r border-border bg-card overflow-y-auto">
@@ -103,29 +119,60 @@ const EditorLeftSidebar = ({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sections</p>
-                <div className="relative">
+                <div className="flex items-center gap-1">
+                  {/* AI Button */}
                   <button
-                    onClick={() => setAddMenuOpen(!addMenuOpen)}
-                    className="text-primary hover:text-primary/80 transition-colors"
+                    onClick={onOpenAI}
+                    title="Generate with AI"
+                    className="flex items-center justify-center h-6 w-6 rounded-md bg-gradient-to-br from-violet-600/30 to-indigo-600/30 border border-violet-500/30 text-violet-400 hover:text-violet-300 hover:border-violet-400/50 transition-all"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Sparkles className="h-3 w-3" />
                   </button>
-                  {addMenuOpen && (
-                    <div className="absolute right-0 top-6 z-50 w-40 rounded-lg border border-border bg-card shadow-lg py-1">
-                      {sectionTypes.map((st) => (
-                        <button
-                          key={st.type}
-                          onClick={() => { onAddSection(st.type); setAddMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted transition-colors"
-                        >
-                          {sectionIcon(st.type)}
-                          {st.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Add Button */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setAddMenuOpen(!addMenuOpen)}
+                      className="text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                    {addMenuOpen && (
+                      <div
+                        className="absolute right-0 top-6 z-50 w-48 rounded-lg border border-border bg-card shadow-lg py-1 overflow-hidden"
+                        onMouseLeave={() => setAddMenuOpen(false)}
+                      >
+                        {Object.entries(grouped).map(([group, items]) => (
+                          <div key={group}>
+                            <p className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">{group}</p>
+                            {items.map((st) => (
+                              <button
+                                key={st.type}
+                                onClick={() => { onAddSection(st.type); setAddMenuOpen(false); }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted transition-colors"
+                              >
+                                <span className="text-muted-foreground">{sectionIcon(st.type)}</span>
+                                {st.label}
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* AI Prompt Banner */}
+              <button
+                onClick={onOpenAI}
+                className="w-full mb-2 rounded-lg border border-violet-500/20 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 p-2.5 text-left hover:from-violet-600/20 hover:to-indigo-600/20 transition-all group"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-violet-400 group-hover:text-violet-300" />
+                  <span className="text-[10px] font-medium text-violet-300">Ask AI to generate a section</span>
+                </div>
+              </button>
+
               <div className="space-y-1">
                 {sections.map((s, idx) => (
                   <div

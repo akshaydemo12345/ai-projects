@@ -23,7 +23,7 @@ export interface Lead {
 
 export interface PageSection {
   id: string;
-  type: "hero" | "features" | "testimonials" | "pricing" | "contact" | "faq" | "benefits";
+  type: "hero" | "features" | "testimonials" | "pricing" | "contact" | "image" | "text" | "grid";
   title: string;
   content: Record<string, unknown>;
 }

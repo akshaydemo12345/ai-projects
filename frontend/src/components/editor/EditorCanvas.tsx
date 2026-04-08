@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Settings, Sparkles, CheckCircle2 } from "lucide-react";
+import { Settings, AlignLeft, AlignCenter, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PageSection } from "@/services/api";
 
@@ -7,226 +6,253 @@ interface EditorCanvasProps {
   sections: PageSection[];
   selectedSection: string | null;
   onSelectSection: (id: string) => void;
-  previewToken: string | null;
 }
 
-const EditorCanvas = ({ sections, selectedSection, onSelectSection, previewToken }: EditorCanvasProps) => {
-  const [isPreviewMode, setIsPreviewMode] = useState(true);
+const selectedRing = "ring-2 ring-primary ring-offset-2 ring-offset-muted";
+
+const EditorCanvas = ({ sections, selectedSection, onSelectSection }: EditorCanvasProps) => {
+  const isSelected = (id: string) => selectedSection === id;
+
+  const wrapperClass = (id: string, extra = "") =>
+    `cursor-pointer rounded-xl overflow-hidden transition-all ${isSelected(id) ? selectedRing : "border border-border"} ${extra}`;
 
   const renderSection = (section: PageSection) => {
-    const isSelected = selectedSection === section.id;
-    const commonClasses = `cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 relative group ${
-      isSelected 
-        ? "ring-4 ring-primary shadow-[0_0_40px_rgba(124,58,237,0.3)] scale-[1.02] z-10" 
-        : "hover:ring-2 hover:ring-primary/40 border border-border bg-card"
-    }`;
-
     switch (section.type) {
+      // ──────────────────────────────────────────
+      // HERO
+      // ──────────────────────────────────────────
       case "hero":
         return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-16 text-center relative border-b border-border bg-background">
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground">
-                {(section.content?.heading as string) || "Elevate Your Digital Presence"}
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} border-0`}
+          >
+            <div className="gradient-hero p-12 text-center">
+              <h1 className="text-3xl font-bold text-white">
+                {(section.content?.heading as string) || "Launch Your Product with Confidence"}
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                {(section.content?.subheading as string) || "Experience the future of landing page creation with our AI-powered engine."}
+              <p className="mt-3 text-sm text-white/70 max-w-lg mx-auto">
+                {(section.content?.subheading as string) || "Build, test, and deploy your product faster"}
               </p>
-              <Button className="mt-8 shadow-xl px-8 h-12 text-lg">
-                {(section.content?.cta as string) || "Start Your Journey"}
+              <Button className="mt-6 bg-white text-foreground hover:bg-white/90" size="sm">
+                {(section.content?.cta as string) || "Get Started Free"}
               </Button>
             </div>
-            {isSelected && (
-              <div className="absolute top-0 left-0 bg-primary text-white text-[10px] uppercase font-bold px-3 py-1 rounded-br-lg shadow-lg">
-                Selected Section
+          </div>
+        );
+
+      // ──────────────────────────────────────────
+      // IMAGE BLOCK
+      // ──────────────────────────────────────────
+      case "image":
+        return (
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card`}
+          >
+            {section.content?.src ? (
+              <div className="overflow-hidden">
+                <img
+                  src={section.content.src as string}
+                  alt={(section.content.alt as string) || "Section image"}
+                  className={`w-full object-cover max-h-72 ${section.content.rounded ? "rounded-xl" : ""}`}
+                />
+                {section.content.caption && (
+                  <p className="px-4 py-2 text-xs text-muted-foreground text-center italic">
+                    {section.content.caption as string}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
+                <ImageIcon className="h-8 w-8 opacity-30" />
+                <p className="text-xs">Click to configure image</p>
               </div>
             )}
           </div>
         );
 
+      // ──────────────────────────────────────────
+      // TEXT BLOCK
+      // ──────────────────────────────────────────
+      case "text": {
+        const align = (section.content?.align as string) || "left";
+        const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+        return (
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <div className={alignClass}>
+              {section.content?.heading && (
+                <h2 className="text-xl font-bold text-foreground mb-3">
+                  {section.content.heading as string}
+                </h2>
+              )}
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {(section.content?.body as string) || "Your content goes here…"}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      // ──────────────────────────────────────────
+      // CONTENT GRID
+      // ──────────────────────────────────────────
+      case "grid": {
+        const cols = (section.content?.columns as number) || 3;
+        const items = (section.content?.items as Array<{ icon?: string; title: string; description: string }>) || [];
+        const gridClass = cols === 2 ? "grid-cols-2" : cols === 4 ? "grid-cols-4" : "grid-cols-3";
+        return (
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <div className={`grid ${gridClass} gap-4`}>
+              {items.map((item, i) => (
+                <div key={i} className="rounded-lg border border-border p-4 space-y-2">
+                  {item.icon && <span className="text-2xl">{item.icon}</span>}
+                  <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div className="col-span-full flex items-center justify-center h-24 text-xs text-muted-foreground">
+                  No grid items yet — edit via right panel
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // ──────────────────────────────────────────
+      // FEATURES
+      // ──────────────────────────────────────────
       case "features":
         return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10">
-              <div className="flex justify-between items-center mb-10">
-                <h2 className="text-2xl font-bold text-foreground">{(section.content?.title as string) || "Key Features"}</h2>
-                <Settings className="h-5 w-5 text-muted-foreground opacity-20" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {((section.content?.features as Array<{ title: string; description: string }>) || []).map((f, i) => (
-                  <div key={i} className="rounded-2xl bg-white/50 dark:bg-black/20 border border-white/40 p-6 backdrop-blur-sm hover:translate-y-[-4px] transition-transform shadow-sm">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="text-base font-bold text-foreground mb-2">{f.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{f.description}</p>
-                  </div>
-                ))}
-              </div>
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <h2 className="text-xl font-bold text-foreground mb-6">Amazing Features</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {((section.content?.features as Array<{ title: string; description: string }>) || []).map((f, i) => (
+                <div key={i} className="rounded-lg border border-border p-4">
+                  <Settings className="h-5 w-5 text-muted-foreground mb-2" />
+                  <h3 className="text-sm font-semibold text-foreground">{f.title}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{f.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         );
 
+      // ──────────────────────────────────────────
+      // TESTIMONIALS
+      // ──────────────────────────────────────────
       case "testimonials":
         return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10 bg-muted/30">
-              <h2 className="text-2xl font-bold text-foreground mb-8 text-center">Loved by Professionals</h2>
-              <div className="grid grid-cols-2 gap-6">
-                {((section.content?.testimonials as Array<{ name: string; feedback: string }>) || []).map((t, i) => (
-                  <div key={i} className="rounded-2xl bg-card border border-border p-6 shadow-sm relative">
-                    <span className="absolute -top-4 -left-2 text-6xl text-primary/10 font-serif">“</span>
-                    <p className="text-sm text-foreground italic relative z-10 leading-relaxed mb-4">
-                      {t.feedback}
-                    </p>
-                    <p className="text-sm font-bold text-primary">— {t.name}</p>
-                  </div>
-                ))}
-              </div>
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <h2 className="text-xl font-bold text-foreground mb-4">What People Say</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {((section.content?.testimonials as Array<{ name?: string; role?: string; text?: string }>) || []).length > 0
+                ? (section.content.testimonials as Array<{ name?: string; role?: string; text?: string }>).map((t, i) => (
+                    <div key={i} className="rounded-lg border border-border p-4">
+                      <p className="text-xs text-muted-foreground italic">"{t.text}"</p>
+                      <p className="mt-2 text-xs font-medium text-foreground">
+                        — {t.name}{t.role ? `, ${t.role}` : ""}
+                      </p>
+                    </div>
+                  ))
+                : [1, 2].map((i) => (
+                    <div key={i} className="rounded-lg border border-border p-4">
+                      <p className="text-xs text-muted-foreground italic">"This product changed everything for our team."</p>
+                      <p className="mt-2 text-xs font-medium text-foreground">— Customer {i}</p>
+                    </div>
+                  ))}
             </div>
           </div>
         );
 
-      case "faq":
-        return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10">
-              <h2 className="text-2xl font-bold text-foreground mb-10">FAQ</h2>
-              <div className="space-y-4 max-w-2xl mx-auto text-left">
-                {((section.content?.faq as Array<{ question: string; answer: string }>) || []).map((q, i) => (
-                  <div key={i} className="rounded-xl border border-border bg-muted/20 p-5">
-                    <h3 className="text-sm font-bold text-foreground">Q: {q.question}</h3>
-                    <p className="mt-2 text-xs text-muted-foreground leading-relaxed">A: {q.answer}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case "benefits":
-        return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10 bg-primary/5">
-              <h2 className="text-2xl font-bold text-foreground mb-8">Why Choose Us?</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {((section.content?.benefits as string[]) || []).map((b, i) => (
-                  <div key={i} className="flex items-center gap-4 bg-white/60 p-4 rounded-xl shadow-sm border border-white">
-                    <div className="h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-xs">✓</div>
-                    <span className="text-sm font-medium text-foreground">{b}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
+      // ──────────────────────────────────────────
+      // PRICING
+      // ──────────────────────────────────────────
       case "pricing":
         return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10 text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-10">Pricing Plans</h2>
-              <div className="grid grid-cols-3 gap-6">
-                {(section.content?.plans as Array<any> || [
-                  { plan: "Starter", price: "$29", features: ["1 Project", "Basic analytics"] },
-                  { plan: "Pro", price: "$79", features: ["Unlimited Projects", "Custom domain"] }
-                ]).map((p, i) => (
-                  <div key={i} className={`rounded-2xl border p-8 flex flex-col items-center ${p.plan === 'Pro' ? 'bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-105' : 'bg-card border-border'}`}>
-                    <p className="text-xs font-bold uppercase tracking-widest mb-2">{p.plan}</p>
-                    <p className="text-4xl font-extrabold mb-1">{p.price}</p>
-                    <p className={`text-[10px] mb-6 ${p.plan === 'Pro' ? 'text-white/70' : 'text-muted-foreground'}`}>per month</p>
-                    <ul className="space-y-2 mb-8 text-left w-full text-xs">
-                      {(p.features || []).map((f: string, fi: number) => (
-                        <li key={fi} className="flex items-center gap-2">
-                           <CheckCircle2 className="h-3 w-3" /> {f}
-                        </li>
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <h2 className="text-xl font-bold text-foreground mb-4 text-center">Pricing</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {(section.content?.plans as Array<{ name: string; price: string; features?: string[] }> || [
+                { name: "Starter", price: "$0" },
+                { name: "Pro", price: "$29" },
+                { name: "Enterprise", price: "Custom" },
+              ]).map((plan) => (
+                <div key={plan.name} className="rounded-lg border border-border p-4 text-center">
+                  <h3 className="text-sm font-semibold text-foreground">{plan.name}</h3>
+                  <p className="text-2xl font-bold text-primary mt-2">{plan.price}</p>
+                  {plan.features && (
+                    <ul className="mt-3 space-y-1">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="text-xs text-muted-foreground">✓ {f}</li>
                       ))}
                     </ul>
-                    <Button variant={p.plan === 'Pro' ? 'secondary' : 'outline'} className="w-full">
-                       Join {p.plan}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         );
 
+      // ──────────────────────────────────────────
+      // CONTACT
+      // ──────────────────────────────────────────
       case "contact":
         return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-            <div className="p-10">
-              <h2 className="text-2xl font-bold text-foreground mb-4 text-center">Contact Form</h2>
-              <div className="max-w-md mx-auto space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="h-10 rounded-lg border border-border bg-muted/30" />
-                   <div className="h-10 rounded-lg border border-border bg-muted/30" />
-                </div>
-                <div className="h-10 rounded-lg border border-border bg-muted/30" />
-                <div className="h-24 rounded-lg border border-border bg-muted/30" />
-                <Button className="w-full">Send Message</Button>
-              </div>
+          <div
+            key={section.id}
+            onClick={() => onSelectSection(section.id)}
+            className={`${wrapperClass(section.id)} bg-card p-8`}
+          >
+            <h2 className="text-xl font-bold text-foreground mb-4">Contact Us</h2>
+            <div className="max-w-sm space-y-3">
+              <div className="h-8 rounded border border-border bg-muted" />
+              <div className="h-8 rounded border border-border bg-muted" />
+              <div className="h-20 rounded border border-border bg-muted" />
+              <Button size="sm">Send Message</Button>
             </div>
           </div>
         );
 
       default:
-        return (
-          <div key={section.id} onClick={() => onSelectSection(section.id)} className={commonClasses}>
-             <div className="p-8 text-center text-muted-foreground italic">
-                {section.title} Content Rendering...
-             </div>
-          </div>
-        );
+        return null;
     }
   };
-
-  // Dynamic backend URL discovery for preview iframe
-  const getBackendBaseUrl = () => {
-    // 1. Try VITE_API_URL (usually http://host:port/api)
-    const viteApiUrl = import.meta.env.VITE_API_URL;
-    if (viteApiUrl) {
-      return viteApiUrl.replace('/api', '');
-    }
-    // 2. Fallback to common dev addresses OR hardcoded setup from .env
-    return "http://my-ai-backend.test:5000"; 
-  };
-
-  const backendUrl = getBackendBaseUrl();
 
   return (
-    <div className="mt-12 flex-1 overflow-y-auto bg-muted p-8 relative">
-      {isPreviewMode && previewToken ? (
-        <div className="mx-auto max-w-5xl h-full min-h-[600px] rounded-xl overflow-hidden shadow-2xl border border-border bg-white animate-in zoom-in-95 duration-300">
-           <iframe 
-            src={`${backendUrl}/preview/${previewToken}/html`}
-            className="w-full h-full border-none"
-            title="AI Preview"
-          />
-        </div>
-      ) : (
-        <div className="mx-auto max-w-3xl space-y-6">
-          {sections.map(renderSection)}
-          {sections.length === 0 && (
-            <div className="flex items-center justify-center h-64 rounded-xl border-2 border-dashed border-border">
-              <p className="text-sm text-muted-foreground">Add sections from the left panel</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Floating Toggle Preview Button */}
-      <div className="fixed bottom-6 right-1/4 translate-x-12 z-20">
-        <Button 
-          variant="secondary" 
-          onClick={() => setIsPreviewMode(!isPreviewMode)}
-          className="shadow-lg gap-2 bg-background border border-border px-6 py-2 hover:bg-muted"
-        >
-          {isPreviewMode ? "✏️ Edit Layout" : "🌍 Real-World Preview"}
-        </Button>
+    <div className="mt-12 flex-1 overflow-y-auto bg-muted p-8">
+      <div className="mx-auto max-w-3xl space-y-6">
+        {sections.map(renderSection)}
+        {sections.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-64 rounded-xl border-2 border-dashed border-border gap-3">
+            <p className="text-sm text-muted-foreground">Add sections from the left panel</p>
+            <p className="text-xs text-muted-foreground/60">or use AI ✨ to generate them</p>
+          </div>
+        )}
       </div>
     </div>
   );

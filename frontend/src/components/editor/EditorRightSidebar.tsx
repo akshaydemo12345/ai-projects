@@ -181,111 +181,69 @@ const EditorRightSidebar = ({ selected, onUpdateContent }: EditorRightSidebarPro
               </div>
             </>
           ) : (
-            /* Properties Tab - Dynamic Content editing */
-            <div className="space-y-4 pb-10">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
-                  {selected.type} Content
-                </p>
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              </div>
-              
-              {Object.entries(selected.content).map(([key, value]) => {
-                // Helper to humanize keys (e.g. primaryCta -> Primary Cta)
-                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-                
-                // 1. Handle Simple Strings / Numbers
-                if (typeof value === "string" || typeof value === "number") {
-                  const isLongText = (value as string).length > 60 || key.toLowerCase().includes("description") || key.toLowerCase().includes("content") || key.toLowerCase().includes("about");
-                  
-                  return (
-                    <div key={key} className="space-y-1.5">
-                      <label className="text-[10px] text-white/50">{label}</label>
-                      {isLongText ? (
-                        <textarea
-                          className="w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 py-2 text-xs text-white min-h-[80px] focus:outline-none focus:border-primary/50 transition-colors"
-                          value={value || ""}
-                          onChange={(e) => onUpdateContent(selected.id, { ...selected.content, [key]: e.target.value })}
-                        />
-                      ) : (
+            /* Properties Tab - Content editing */
+            <div className="space-y-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-2">Edit Content</p>
+              {selected.type === "hero" && (
+                <>
+                  <div>
+                    <label className="text-[10px] text-white/40">Heading</label>
+                    <input
+                      className="mt-1 h-8 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 text-xs text-white"
+                      value={(selected.content.heading as string) || ""}
+                      onChange={(e) => onUpdateContent(selected.id, { ...selected.content, heading: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-white/40">Subheading</label>
+                    <textarea
+                      className="mt-1 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 py-1.5 text-xs text-white min-h-[60px]"
+                      value={(selected.content.subheading as string) || ""}
+                      onChange={(e) => onUpdateContent(selected.id, { ...selected.content, subheading: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-white/40">CTA Text</label>
+                    <input
+                      className="mt-1 h-8 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 text-xs text-white"
+                      value={(selected.content.cta as string) || ""}
+                      onChange={(e) => onUpdateContent(selected.id, { ...selected.content, cta: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+              {selected.type === "features" && (
+                <>
+                  {((selected.content.features as Array<{ title: string; description: string }>) || []).map((f, i) => (
+                    <div key={i} className="space-y-2 border-b border-[hsl(240,10%,18%)] pb-3">
+                      <div>
+                        <label className="text-[10px] text-white/40">Feature {i + 1} Title</label>
                         <input
-                          className="h-8 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 text-xs text-white focus:outline-none focus:border-primary/50 transition-colors"
-                          value={value || ""}
-                          onChange={(e) => onUpdateContent(selected.id, { ...selected.content, [key]: e.target.value })}
+                          className="mt-1 h-8 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 text-xs text-white"
+                          value={f.title}
+                          onChange={(e) => {
+                            const features = [...(selected.content.features as Array<{ title: string; description: string }>)];
+                            features[i] = { ...features[i], title: e.target.value };
+                            onUpdateContent(selected.id, { ...selected.content, features });
+                          }}
                         />
-                      )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-white/40">Description</label>
+                        <textarea
+                          className="mt-1 w-full rounded bg-[hsl(240,10%,18%)] border border-[hsl(240,10%,25%)] px-2 py-1.5 text-xs text-white min-h-[50px]"
+                          value={f.description}
+                          onChange={(e) => {
+                            const features = [...(selected.content.features as Array<{ title: string; description: string }>)];
+                            features[i] = { ...features[i], description: e.target.value };
+                            onUpdateContent(selected.id, { ...selected.content, features });
+                          }}
+                        />
+                      </div>
                     </div>
-                  );
-                }
-
-                // 2. Handle Arrays (e.g. features.list, pricing.list)
-                if (Array.isArray(value)) {
-                  return (
-                    <div key={key} className="space-y-4 pt-2 border-t border-[hsl(240,10%,18%)]">
-                      <p className="text-[10px] font-bold text-primary/80 uppercase tracking-widest">{label}</p>
-                      {value.map((item, index) => (
-                        <div key={index} className="space-y-3 bg-[hsl(240,10%,15%)] p-3 rounded-lg border border-[hsl(240,10%,18%)]">
-                          <p className="text-[9px] text-white/30 font-mono">Item #${index + 1}</p>
-                          {typeof item === "object" && item !== null ? (
-                            Object.entries(item).map(([subKey, subValue]) => (
-                              <div key={subKey} className="space-y-1">
-                                <label className="text-[9px] text-white/40 uppercase font-medium">{subKey}</label>
-                                <input
-                                  className="h-7 w-full rounded bg-[hsl(240,10%,12%)] border border-[hsl(240,10%,20%)] px-2 text-[11px] text-white"
-                                  value={(subValue as string) || ""}
-                                  onChange={(e) => {
-                                    const newList = [...value];
-                                    newList[index] = { ...newList[index], [subKey]: e.target.value };
-                                    onUpdateContent(selected.id, { ...selected.content, [key]: newList });
-                                  }}
-                                />
-                              </div>
-                            ))
-                          ) : (
-                            <input
-                              className="h-7 w-full rounded bg-[hsl(240,10%,12%)] border border-[hsl(240,10%,20%)] px-2 text-[11px] text-white"
-                              value={(item as string) || ""}
-                              onChange={(e) => {
-                                const newList = [...value];
-                                newList[index] = e.target.value;
-                                onUpdateContent(selected.id, { ...selected.content, [key]: newList });
-                              }}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-
-                // 3. Handle Nested Objects (if any, e.g. a nested settings object)
-                if (typeof value === "object" && value !== null) {
-                   return (
-                     <div key={key} className="space-y-2 pt-2 border-t border-[hsl(240,10%,18%)]">
-                        <p className="text-[10px] font-bold text-white/40 uppercase">{label}</p>
-                        <div className="pl-2 space-y-2 border-l border-[hsl(240,10%,20%)]">
-                          {Object.entries(value).map(([nestedKey, nestedValue]) => (
-                            <div key={nestedKey} className="space-y-1">
-                               <label className="text-[9px] text-white/40">{nestedKey}</label>
-                               <input
-                                  className="h-7 w-full rounded bg-[hsl(240,10%,12%)] border border-[hsl(240,10%,20%)] px-2 text-[11px] text-white"
-                                  value={(nestedValue as string) || ""}
-                                  onChange={(e) => {
-                                    onUpdateContent(selected.id, { 
-                                      ...selected.content, 
-                                      [key]: { ...(selected.content[key] as object), [nestedKey]: e.target.value } 
-                                    });
-                                  }}
-                               />
-                            </div>
-                          ))}
-                        </div>
-                     </div>
-                   );
-                }
-
-                return null;
-              })}
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>

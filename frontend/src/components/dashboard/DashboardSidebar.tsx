@@ -1,12 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  Globe, Plus, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, User
+  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun
 } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
 
 const navItems = [
-  { icon: Globe, label: "All Sites", href: "/dashboard" },
-  { icon: Plus, label: "Create Page", href: "/dashboard/create", highlight: true },
+  { icon: FolderOpen, label: "Projects", href: "/dashboard" },
   { icon: Users, label: "Leads", href: "/dashboard/leads" },
 ];
 
@@ -18,15 +16,6 @@ const settingsItems = [
 
 const DashboardSidebar = () => {
   const location = useLocation();
-  const { user, logout } = useUser();
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return location.pathname === "/dashboard";
@@ -42,12 +31,8 @@ const DashboardSidebar = () => {
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">
-              {user?.name ? `${user.name}'s Workspace` : "My Workspace"}
-            </p>
-            <p className="text-[10px] text-muted-foreground uppercase">
-              {user?.role || "Starter"} Plan
-            </p>
+            <p className="text-sm font-semibold text-foreground truncate">Priti's Workspace</p>
+            <p className="text-[10px] text-muted-foreground">Starter Plan</p>
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         </div>
@@ -61,12 +46,8 @@ const DashboardSidebar = () => {
             to={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
               isActive(item.href)
-                ? item.highlight
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "bg-primary/10 text-primary font-medium"
-                : item.highlight
-                  ? "text-primary hover:bg-primary/5"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
             <item.icon className="h-4 w-4" />
@@ -107,20 +88,22 @@ const DashboardSidebar = () => {
         </div>
         <div className="flex items-center gap-2 px-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-            {user?.name ? getInitials(user.name) : <User className="h-4 w-4" />}
+            PS
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">
-              {user?.name || "Guest User"}
-            </p>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {user?.email || "No email provided"}
-            </p>
+            <p className="text-xs font-medium text-foreground truncate">Priti Sharma</p>
+            <p className="text-[10px] text-muted-foreground truncate">priti@company.com</p>
           </div>
-          <LogOut 
-            onClick={logout}
-            className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" 
-          />
+          <button 
+            onClick={() => {
+              // Simulated logout action
+              window.location.href = "/login";
+            }}
+            title="Log out"
+            className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
+          >
+            <LogOut className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </button>
         </div>
       </div>
     </div>

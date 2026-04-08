@@ -11,6 +11,7 @@ require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const pageRoutes = require('./routes/pageRoutes');
+const projectRoutes = require('./routes/projectRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const publicRoutes = require('./routes/publicRoutes');
@@ -53,6 +54,7 @@ app.get('/', (req, res) => {
 // ROUTES
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/projects', projectRoutes);
 app.use('/pages', pageRoutes);
 app.use('/ai', aiRoutes);
 app.use('/admin', adminRoutes);

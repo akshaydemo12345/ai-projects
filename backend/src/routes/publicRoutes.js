@@ -39,6 +39,13 @@ router.get('/p/domain/:domain', getPublicPageByDomain);
 router.post('/plugin/verify', verifyPlugin);
 
 /**
+ * @route   POST /verify-api-key
+ * @desc    Explicit endpoint for verification as requested by the user
+ * @access  Public
+ */
+router.post('/verify-api-key', verifyPlugin);
+
+/**
  * @route   GET /:slug
  * @desc    Get live published page HTML by its slug (for WordPress plugin)
  * @access  Public

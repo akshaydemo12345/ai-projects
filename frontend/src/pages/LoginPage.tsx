@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, CheckCircle2, Star, Loader2 } from "lucide-react";
+import { Zap, CheckCircle2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { authService } from "@/services/authService";
-import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,37 +11,9 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const payload = isSignUp 
-        ? { name, email, password } 
-        : { email, password };
-
-      const response = await (isSignUp 
-        ? authService.signup(payload) 
-        : authService.login(payload));
-
-      const finalToken = response.accessToken || response.token || response.data?.token;
-
-      if (response.status === "success" && (finalToken && response.data?.user)) {
-        authService.setToken(finalToken);
-        authService.setUser(response.data.user);
-        toast.success(isSignUp ? "Account created successfully!" : "Welcome back!");
-        navigate("/dashboard");
-      } else {
-        toast.error(response.message || "An error occurred");
-      }
-    } catch (err: any) {
-      toast.error("Internal Server Error. Please try again later.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    navigate("/dashboard");
   };
 
   return (
@@ -215,14 +185,9 @@ const LoginPage = () => {
             </div>
             <Button
               type="submit"
-              disabled={loading}
               className="w-full h-12 text-base bg-primary hover:bg-primary/90"
             >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                isSignUp ? "Create Account" : "Sign In"
-              )}
+              {isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
 
