@@ -37,8 +37,8 @@ const PublicLandingPage = () => {
       }
 
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-      const aiCss = typeof content === 'string' ? '' : (content?.fullCss || '');
-      const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
+      const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
+      const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
       
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
       const PAGE_ID = meta?.projectId || '';
@@ -115,11 +115,22 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
-      // If it's a full HTML already, inject script before </body>
+      // Ensure styles and scripts are injected even into full documents
       if (finalHtml.toLowerCase().includes('</body>')) {
-         finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        // Inject styles into head
+        if (aiCss && aiCss.trim()) {
+          const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
+          if (finalHtml.toLowerCase().includes('</head>')) {
+            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + '</head>');
+          } else {
+            finalHtml = finalHtml.replace(/<html>/i, '<html><head>' + styleTag + '</head>');
+          }
+        }
+        
+        // Inject lead capture at end of body
+        finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
       } else {
-        // Fallback or fragment: Wrap it
+        // Fallback or fragment: Wrap it with proper metadata and reset styles
         finalHtml = `
           <!DOCTYPE html>
           <html>

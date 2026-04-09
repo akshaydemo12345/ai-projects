@@ -86,63 +86,59 @@ const GrapesEditor = () => {
     const currentPage = pageDataRef.current;
     if (!editor || !currentPage) return;
 
-    console.log('🔄 Applying content to editor. Page status:', currentPage.status);
+    console.log('🔄 Applying content to editor. Page ID:', currentPage._id, 'Status:', currentPage.status);
 
-    let dbContent: any = typeof currentPage.content === 'object' && (currentPage.content as any)?.fullHtml
-      ? (currentPage.content as any).fullHtml
-      : (currentPage?.content as any);
+    let dbContent: string = '';
+    let dbStyles: string = '';
+
+    // 1. Resolve Content Structure
+    if (typeof currentPage.content === 'object' && currentPage.content !== null) {
+      dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
+      dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
+    } else if (typeof currentPage.content === 'string') {
+      dbContent = currentPage.content;
+    }
     
-    let dbStyles: any = typeof currentPage.content === 'object' && (currentPage.content as any)?.fullCss
-      ? (currentPage.content as any).fullCss
-      : (currentPage as any)?.styles;
+    // Use explicit styles field as priority or fallback
+    if (currentPage.styles) {
+      dbStyles = currentPage.styles;
+    }
 
-    // Handle full HTML documents from AI
-    if (typeof dbContent === 'string' && (dbContent.toLowerCase().includes('<html') || dbContent.toLowerCase().includes('<body'))) {
-      console.log('📄 Full HTML detected, extracting body and styles...');
-      
-      const bodyMatch = dbContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-      const styleMatches = dbContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
-
-      if (bodyMatch) {
-        dbContent = bodyMatch[1];
-        console.log('✅ Body extracted, length:', dbContent.length);
-      } else if (dbContent.toLowerCase().includes('<html')) {
-        // If no body tag but html exists, strip everything up to the first div or section
-        const firstTag = dbContent.match(/<(div|section|header|main)[\s\S]*$/i);
-        if (firstTag) {
-          dbContent = firstTag[0].replace(/<\/body>[\s\S]*$/i, '').replace(/<\/html>[\s\S]*$/i, '');
-        }
-      }
-
-      if (styleMatches) {
-        let extractedStyles = '';
-        styleMatches.forEach((tag: string) => {
-          const m = tag.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-          if (m) extractedStyles += m[1] + '\n';
-        });
-        if (extractedStyles) {
-          dbStyles = (dbStyles || '') + '\n' + extractedStyles;
-          console.log('✅ Styles extracted, length:', extractedStyles.length);
-        }
+    // 2. Intelligent Extraction
+    if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head')) {
+      console.log('📄 Full HTML detected, extracting via DOMParser...');
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(dbContent, 'text/html');
+        
+        // Extract styles
+        const styles = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        if (styles) dbStyles = (dbStyles || '') + '\n' + styles;
+        
+        // Extract body
+        dbContent = doc.body.innerHTML;
+        console.log('✅ Extraction successful. Content length:', dbContent.length);
+      } catch (err) {
+        console.error('❌ DOMParser failed, using fallback regex:', err);
+        const bodyMatch = dbContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyMatch) dbContent = bodyMatch[1];
       }
     }
 
-    if (dbContent && typeof dbContent === 'string' && dbContent.trim().length > 5) {
-      console.log('✅ GrapesJS: Setting Components (length:', dbContent.length, ')');
-      editor.setComponents(''); // Clear first
+    // 3. Set to Editor
+    if (dbContent && dbContent.trim().length > 10) {
+      editor.setComponents(''); 
       editor.setComponents(dbContent);
       
-      if (dbStyles && typeof dbStyles === 'string' && dbStyles.trim().length > 0) {
-        console.log('✅ GrapesJS: Setting Styles (length:', dbStyles.length, ')');
+      if (dbStyles && dbStyles.trim().length > 0) {
         editor.setStyle(dbStyles);
       }
     } else {
-      console.warn('⚠️ GrapesJS: No valid content to apply or content too short');
-      // If it's a new draft with no content, maybe don't clear? 
-      // Or set a default placeholder if it's completely empty
-      if (!dbContent || dbContent === '{}') {
-        editor.setComponents('<div style="padding: 50px; text-align: center; color: #999;">Start building your page here...</div>');
-      }
+      console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
+      editor.setComponents('<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">' +
+        '<h2 style="margin-bottom: 10px;">Your Landing Page is Ready</h2>' +
+        '<p>Start editing by choosing a block from the left or use the AI generator.</p>' +
+        '</div>');
     }
   };
 

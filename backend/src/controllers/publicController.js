@@ -18,7 +18,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain status previewToken projectId');
+    ).select('title slug content styles seo template domain status previewToken projectId');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -28,6 +28,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       data: page.content,
+      styles: page.styles,
       // We also include meta for the frontend to set title/description
       meta: {
         title: page.title,
@@ -79,8 +80,8 @@ const renderFullHTML = (page) => {
   
   // Handle content being a string (full document) or an object (structured)
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-  const aiCss = typeof content === 'string' ? '' : (content?.fullCss || '');
-  const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
+  const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || '');
+  const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
   // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
   // If the AI generated a full document (doctype or html tag), serve it DIRECTLY.
@@ -150,7 +151,7 @@ exports.getPreviewHTML = async (req, res, next) => {
         { slug: token }, 
         { _id: token && token.length === 24 ? token : null }
       ],
-    }).select('title content seo status');
+    }).select('title content styles seo status');
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
 
