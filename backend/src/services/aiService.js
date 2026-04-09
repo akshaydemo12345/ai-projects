@@ -9,81 +9,63 @@ const https = require('https');
  */
 const buildPrompt = ({
   businessName,
-  industry,
-  targetAudience,
+  template,
   businessDescription,
+  targetAudience,
   ctaText,
-  figmaUrl,
   aiPrompt,
-  figmaData,
+  pageId,
 }) => {
-  const variants = [
-    'Minimalist & Clean (Swiss Style)',
-    'Cyberpunk & Dark Mode',
-    'Playful Neo-Brutalism',
-    'Premium & Elegant (High Fashion style)',
-    'Corporate & Trust-Focused (Fintech style)',
-    'Asymmetrical & Creative',
-    'Nature-Inspired & Organic',
-    'Bold & Vibrant (Dribbble style)'
-  ];
-  const chosenVariant = variants[Math.floor(Math.random() * variants.length)];
+  const industries = {
+    medical: 'clean, blue, trust-focused',
+    real_estate: 'luxury, dark, premium-focused',
+    saas: 'modern, gradients, minimal-focused',
+    fitness: 'bold, dark, energetic-focused',
+    education: 'friendly, structured, academic-focused',
+    default: 'modern, professional, conversion-focused'
+  };
 
-  const figmaInstruction = figmaData 
-    ? `Figma Design Provided: ${figmaUrl}
-       Extracted Tokens: ${figmaData.colors?.length > 0 ? `Colors: ${figmaData.colors.join(', ')}` : 'Follow overall file styles'}
-       Layout Intent: Adhere to the spacing and hierarchy logic found in the "${figmaData.documentName || 'Figma'}" file.` 
-    : figmaUrl 
-      ? `Figma URL Provided: ${figmaUrl}. Use this as the primary design reference for structure and UI components.`
-      : `Instructions: Generate a unique, ${chosenVariant} design from scratch.`;
+  const styleContext = industries[template] || industries.default;
 
   return `
-Create a high-converting, modern, and pixel-perfect landing page based on the following details:
+You are an advanced AI landing page engine designed for SaaS automation platforms.
+Generate a HIGH-CONVERTING, VISUALLY RICH, MOBILE-FIRST landing page for:
+Business: ${businessName}
+Description: ${businessDescription}
+Target Audience: ${targetAudience}
+Primary CTA: ${ctaText}
+Custom Instructions: ${aiPrompt}
 
-Business Name: ${businessName}
-Industry: ${industry}
-Style Variant: ${chosenVariant}
-Business Description: ${businessDescription}
-Target Audience: ${targetAudience || 'General Public'}
-Primary CTA: ${ctaText || 'Get Started'}
+---
+## 🧱 MANDATORY SECTIONS
+1. HERO: Background image, H1 Headline + subheadline, Capture Form (Name, Phone, Email), Trust badge.
+2. FEATURES / SERVICES: Grid cards with icons and benefit-driven copy.
+3. MID FORM: Full capture form (Name, Email, Phone, Message, Service Dropdown).
+4. TESTIMONIALS: 3 realistic user reviews.
+5. FAQ: FAQ section.
+6. FINAL CTA & FOOTER.
 
-${figmaInstruction}
+---
+## 🎨 DESIGN & ASSET RULES (STRICT)
+- Style: ${styleContext}.
+- **CSS**: Use ONLY inline <style> tags in the <head>. NEVER use external .css files or relative links.
+- **Images**: Use ONLY absolute https://images.unsplash.com URLs. NO relative paths (e.g., "img/hero.jpg").
+- **Gradients & Shadows**: Use modern, premium visual styling (glassmorphism if appropriate).
+- **Fonts**: Use Google Fonts via @import in the <style> block.
 
-DESIGN DIRECTIVE:
-- DO NOT use a generic "centered hero with 3 cards" layout every time.
-- Experiment with: Asymmetrical grids, staggered sections, overlapping elements, or large background typography.
-- Use a unique color palette based on ${industry} and the ${chosenVariant} style.
-- Incorporate subtle scroll animations or hover states in the 'fullHtml' and 'fullCss'.
+## ⚙️ FUNCTIONALITY (MUST IMPLEMENT)
+- Fully responsive (mobile-first).
+- Form validation (HTML5 + JS).
+- AJAX Submission: Include a global <script> that intercepts ALL form submissions:
+  - Endpoint: "/api/leads"
+  - Method: POST
+  - Payload: { name, email, phone, message, pageSlug: window.location.pathname.split("/").pop(), projectId: "${pageId}" }
+  - Handle Loading: Disable button during fetch.
+  - Handle Success: Replace form with "Thank you! We will contact you soon." message.
+  - Handle Error: Show alert "Submission failed, please try again."
 
-${aiPrompt ? `CUSTOM USER INSTRUCTIONS: ${aiPrompt}\nFollow these instructions strictly for the content and layout tone.` : ''}
-
-Generate the landing page with the following COMPREHENSIVE sections:
-
-### THEME & DESIGN REQUIREMENTS:
-- Create a 100% unique DESIGN for this industry. 
-- Provide a 'fullHtml' string (semantic <body> content with animations).
-- Provide a 'fullCss' string (modern, responsive CSS with gradients/glassmorphism).
-- Provide a 'fullJs' string (optional interactivity like counters, tab switches, or scroll reveals).
-
-### STRUCTURED CONTENT (FOR SIDEBAR EDITING):
-1. hero: { badge, headline, subheadline, primaryCta, secondaryCta }
-2. features: { title, subtitle, list: [ { title, description, icon } ] }
-3. about: { title, subtitle, content }
-4. testimonials: { title, subtitle, list: [ { name, role, feedback, stars } ] }
-5. pricing: { title, subtitle, list: [ { plan, price, pricePeriod, features: [], isPopular, cta } ] }
-6. faq: { title, list: [ { question, answer } ] }
-7. contact: { title, subtitle, buttonText }
-8. footer: { copyright, links: [] }
-
-Output Format:
-Return ONLY valid JSON including:
-- fullHtml (The entire HTML structure for the body)
-- fullCss (The entire CSS block)
-- fullJs (The entire JS block)
-- pageContent (the 8 sections above)
-- seo: { title, description, keywords: [] }
-
-Return ONLY the JSON. No markdown. No conversational text.
+OUTPUT REQUIREMENT:
+Return ONLY the raw HTML code. Do NOT wrap in markdown fences. Do NOT add explanation text. Start with <!DOCTYPE html>.
 `;
 };
 
@@ -104,17 +86,16 @@ const callOpenAI = (prompt) => {
       messages: [
         {
           role: 'system',
-          content:
-            'You are an expert conversion-focused landing page copywriter. Always respond with valid JSON only, no markdown.',
+          content: 'You are an advanced AI landing page engine. You generate complete, production-ready HTML code without any JSON or conversational text.',
         },
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 1.0,
+      temperature: 0.7,
       max_tokens: 4096,
-      response_format: { type: 'json_object' },
+      // Removed response_format: { type: 'json_object' } to allow raw HTML
     });
 
     const options = {
@@ -148,12 +129,31 @@ const callOpenAI = (prompt) => {
             return reject(new Error('No content returned from OpenAI'));
           }
 
-          // Strip any accidental markdown code fences
-          const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-          const content = JSON.parse(cleaned);
-          resolve(content);
+          const cleaned = raw.replace(/```html\s*/gi, '').replace(/```/g, '').trim();
+
+          // HEURISTIC: If it starts with JSON curly brace, attempt parse. 
+          // Otherwise, treat as raw HTML and wrap in a compatible structure.
+          if (cleaned.startsWith('{')) {
+            try {
+              const content = JSON.parse(cleaned);
+              return resolve(content);
+            } catch (err) {
+              // Fallback if it looks like JSON but fails
+              return resolve({ fullHtml: cleaned });
+            }
+          }
+
+          // RAW HTML MODE: Wrap for backward compatibility with controllers
+          resolve({
+            fullHtml: cleaned,
+            fullCss: '', // CSS is expected to be inline in head
+            fullJs: '',  // JS is expected to be inline in body
+            pageContent: [], // Structured sidebar won't be available in raw mode
+            seo: { title: 'Generated Page', description: '', keywords: [] }
+          });
+
         } catch (err) {
-          reject(new Error(`Failed to parse OpenAI response: ${err.message}`));
+          reject(new Error(`Failed to process OpenAI response: ${err.message}`));
         }
       });
     });

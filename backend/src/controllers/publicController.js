@@ -1,11 +1,50 @@
 'use strict';
 
 const Page = require('../models/Page');
+const Project = require('../models/Project');
 const AppError = require('../utils/AppError');
+const path = require('path');
+const fs = require('fs');
+
+/**
+ * GET /api/public/page/:slug
+ * 100% Public endpoint — serves content WITHOUT requiring tokens.
+ */
+exports.getPublicPageBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+
+    const page = await Page.findOneAndUpdate(
+      { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
+      { $inc: { views: 1 } },
+      { new: true }
+    ).select('title slug content styles seo template domain status previewToken projectId');
+
+    if (!page) return next(new AppError('Page not found', 404));
+
+    // For public published pages, we don't check status strictly here if we want same logic for preview
+    // But the requirements say "published URL should work", so we can check if it's published or if it's a preview request
+    
+    res.status(200).json({
+      status: 'success',
+      data: page.content,
+      styles: page.styles,
+      // We also include meta for the frontend to set title/description
+      meta: {
+        title: page.title,
+        seo: page.seo,
+        status: page.status,
+        projectId: page.projectId
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 /**
  * GET /p/:slug
- * Public endpoint — serves the live JSON content of a published page.
+ * Deprecated or updated to not require tokens if public.
  */
 exports.getPublicPage = async (req, res, next) => {
   try {
@@ -15,10 +54,11 @@ exports.getPublicPage = async (req, res, next) => {
       { slug, status: 'published' },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views');
+    ).select('title slug content seo template domain publishedAt views projectId');
 
     if (!page) return next(new AppError('Page not found or not published', 404));
 
+    // Token check removed as per requirements for public pages
     res.status(200).json({
       status: 'success',
       data: { page },
@@ -38,12 +78,19 @@ const renderFullHTML = (page) => {
   const { title, content, seo, _id } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
-  // ─── 1. AI-Generated Code Blocks ───────────────────────────────────────────
-  const aiHtml = content.fullHtml || '';
-  const aiCss = content.fullCss || '';
-  const aiJs = content.fullJs || '';
+  // Handle content being a string (full document) or an object (structured)
+  const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
+  const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || '');
+  const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
+
+  // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
+  // If the AI generated a full document (doctype or html tag), serve it DIRECTLY.
+  // This prevents double-nested <html> and <body> tags which break styles/scripts.
+  if (aiHtml.toLowerCase().includes('<!doctype') || aiHtml.toLowerCase().includes('<html')) {
+    return aiHtml;
+  }
   
-  // ─── 2. Legacy/Structured Mapper (Fallback) ────────────────────────────────
+  // ─── 1. Legacy/Structured Mapper (Fallback) ────────────────────────────────
   const pageData = content.pageContent || content;
   const design = pageData.design || {};
 
@@ -64,59 +111,15 @@ const renderFullHTML = (page) => {
         </div>
       </section>`;
     }
-    if (data.features && data.features.list) {
-      html += `
-      <section class="section">
-        <div class="container text-center mb-16">
-          <h2 class="heading-lg">${data.features.title || 'Features'}</h2>
-        </div>
-        <div class="container grid-cols-3">
-          ${data.features.list.map((f, i) => `
-            <div class="glass-card stagger-in" style="--order: ${i}">
-              <div class="icon-wrap">${f.icon || '✨'}</div>
-              <h3 class="heading-md">${f.title}</h3>
-              <p class="text-sm">${f.description}</p>
-            </div>
-          `).join('')}
-        </div>
-      </section>`;
-    }
-    return html;
+    return html || '<p>No content generated.</p>';
   };
 
   const bodyContent = aiHtml || renderLegacyContent(pageData);
 
   // Fallback Styles if aiCss is missing
   const fallbackStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=${(design.fontHeading || 'Outfit').replace(/ /g, '+')}:wght@700&family=${(design.fontBody || 'Inter').replace(/ /g, '+')}:wght@400&display=swap');
-    :root { --primary: ${design.primaryColor || '#7c3aed'}; --text: #1e293b; --border: #e2e8f0; --card-bg: rgba(255, 255, 255, 0.7); }
-    body { font-family: '${design.fontBody || 'Inter'}', sans-serif; margin: 0; color: var(--text); background: #f8fafc; overflow-x: hidden; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-    .hero-section { padding: 140px 0; text-align: center; background: white; }
-    .heading-xl { font-size: 4rem; font-weight: 800; margin-bottom: 20px; }
-    .btn-primary { padding: 16px 32px; background: var(--primary); color: white; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
-    .section { padding: 80px 0; }
-    .glass-card { background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 30px; }
-    .grid-cols-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-    ${design.customCss || ''}
-  `;
-
-  // Fallback Script if aiJs is missing
-  const fallbackScript = `
-    const form = document.getElementById('leadForm');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          const res = await fetch('/api/pages/${_id}/leads', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
-          });
-          if (res.ok) alert('Success! We will contact you soon.');
-        } catch (err) { console.error(err); }
-      });
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
   `;
 
   return `<!DOCTYPE html>
@@ -125,12 +128,12 @@ const renderFullHTML = (page) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title || (seo ? seo.title : 'AI Created Site')}</title>
-    <style>${aiCss || fallbackStyles}</style>
+    <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
     ${seo ? `<meta name="description" content="${seo.description || ''}">` : ''}
 </head>
 <body>
     ${bodyContent}
-    <script>${aiJs || fallbackScript}</script>
+    <script>${aiJs || ''}</script>
 </body>
 </html>`;
 };
@@ -143,8 +146,12 @@ exports.getPreviewHTML = async (req, res, next) => {
   try {
     const { token } = req.params;
     const page = await Page.findOne({
-      $or: [{ previewToken: token }, { _id: token.length === 24 ? token : null }],
-    }).select('title content seo status');
+      $or: [
+        { previewToken: token }, 
+        { slug: token }, 
+        { _id: token && token.length === 24 ? token : null }
+      ],
+    }).select('title content styles seo status');
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
 
@@ -193,7 +200,7 @@ exports.getPublicPageByDomain = async (req, res, next) => {
       { domain, status: 'published' },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views');
+    ).select('title slug content seo template domain publishedAt views projectId');
 
     if (!page) return next(new AppError('No published page found for this domain', 404));
 
@@ -222,13 +229,15 @@ exports.verifyPlugin = async (req, res, next) => {
       return next(new AppError('API token is required for verification', 400));
     }
 
-    const page = await Page.findOne({ apiToken, status: 'published' }).select(
+    const project = await Project.findOne({ apiToken });
+
+    if (!project) {
+      return next(new AppError('Invalid API token. No project found.', 401));
+    }
+
+    const pages = await Page.find({ projectId: project._id, status: 'published' }).select(
       'title slug content seo template domain publishedAt'
     );
-
-    if (!page) {
-      return next(new AppError('Invalid API token or page is unpublished.', 401));
-    }
 
     const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
     const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
@@ -237,9 +246,11 @@ exports.verifyPlugin = async (req, res, next) => {
       status: 'active',
       plan: 'pro',
       cache_time: 300,
+      projectId: project._id,
+      projectName: project.name,
       target_url: normalizedBackendBase,
-      allowed_paths: [ `/${page.slug}` ],
-      message: 'License verified and active.'
+      allowed_paths: pages.map(p => `/${p.slug}`),
+      message: `License verified. Project "${project.name}" is active.`
     });
   } catch (err) {
     next(err);
@@ -254,10 +265,16 @@ exports.getPreview = async (req, res, next) => {
     const { token } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { $or: [{ previewToken: token }, { _id: token.length === 24 ? token : null }] },
+      { 
+        $or: [
+          { previewToken: token }, 
+          { slug: token }, 
+          { _id: token.length === 24 ? token : null }
+        ] 
+      },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain status previewToken');
+    ).select('title slug content seo template domain status previewToken previewUrl');
 
     if (!page) return next(new AppError('Preview expired or invalid link', 404));
 
@@ -268,6 +285,38 @@ exports.getPreview = async (req, res, next) => {
         isPreview: true,
         tempUrl: `${process.env.APP_BASE_URL}/preview/${page.previewToken || page._id}`
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /plugin/download
+ * Serves the domain-mapper.zip file from the backend public directory.
+ * Ensures correct headers for ZIP file downloads.
+ */
+exports.downloadPlugin = async (req, res, next) => {
+  try {
+    const zipPath = path.resolve(__dirname, '../../public/zip/domain-mapper.zip');
+
+    if (!fs.existsSync(zipPath)) {
+      return next(new AppError('Plugin ZIP file not found. Please contact support.', 404));
+    }
+
+    // Set correct headers for forcing a ZIP download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="domain-mapper.zip"');
+
+    // Stream the file for efficiency
+    const fileStream = fs.createReadStream(zipPath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      console.error('Download stream error:', err);
+      if (!res.headersSent) {
+        next(new AppError('Error occurred while downloading the file', 500));
+      }
     });
   } catch (err) {
     next(err);

@@ -1,0 +1,45 @@
+const mongoose = require('mongoose');
+
+const leadSchema = new mongoose.Schema({
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    required: false, // Optional if we only have slug
+  },
+  pageSlug: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  name: {
+    type: String,
+    required: [true, 'Please provide a name'],
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: [true, 'Please provide an email'],
+    lowercase: true,
+    trim: true,
+  },
+  phone: {
+    type: String,
+    trim: true,
+  },
+  message: {
+    type: String,
+    trim: true,
+  },
+  ip: {
+    type: String,
+  },
+  userAgent: {
+    type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+module.exports = mongoose.model('Lead', leadSchema);

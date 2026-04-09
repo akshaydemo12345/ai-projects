@@ -3,70 +3,34 @@ import { Link } from "react-router-dom";
 import { Globe, Plus, Users, Link2, TrendingUp, Search, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { authService } from "@/services/authService";
-
-interface Site {
-  id: string;
-  name: string;
-  url: string;
-  status: "published" | "draft";
-  lastEdited: string;
-}
+import { sitesApi, statsApi, type Site } from "@/services/api";
 
 const AllSitesPage = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [stats, setStats] = useState({ 
-    totalSites: 0, 
-    totalLeads: 0, 
-    totalViews: 0, 
-    avgConversion: "0%",
-    publishedSites: 0
-  });
+  const [stats, setStats] = useState({ totalSites: 0, totalLeads: 0, totalViews: 0, avgConversion: "0%" });
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const response = await authService.getDashboard();
-        if (response.status === "success" && response.data) {
-          const { stats: s, recentPages } = response.data;
-          
-          setStats({
-            totalSites: s?.totalPages || 0,
-            totalLeads: s?.totalLeads || 0,
-            totalViews: s?.totalViews || 0,
-            avgConversion: `${s?.conversionRate || 0}%`,
-            publishedSites: s?.publishedPages || 0
-          });
-
-          const mappedSites: Site[] = (recentPages || []).map((p: any) => ({
-            id: p._id,
-            name: p.title,
-            url: p.domain || `${p.slug}.pagebuilder.ai`,
-            status: p.status,
-            lastEdited: new Date(p.createdAt).toLocaleDateString()
-          }));
-
-          setSites(mappedSites);
-        }
-      } catch (error) {
-        console.error("Dashboard fetch failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
+    Promise.all([sitesApi.getAll(), statsApi.getDashboardStats()]).then(([s, st]) => {
+      setSites(s);
+      setStats(st);
+      setLoading(false);
+    });
   }, []);
+
+  const handleDelete = async (id: string) => {
+    await sitesApi.delete(id);
+    setSites(sites.filter((s) => s.id !== id));
+  };
 
   const filtered = sites.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
 
   const statCards = [
     { icon: Globe, label: "Total Sites", value: stats.totalSites, iconBg: "bg-primary/10", iconColor: "text-primary" },
     { icon: Users, label: "Total Leads", value: stats.totalLeads.toLocaleString(), iconBg: "bg-yellow-50", iconColor: "text-yellow-500" },
-    { icon: Link2, label: "Active Domains", value: stats.publishedSites, iconBg: "bg-muted", iconColor: "text-muted-foreground" },
+    { icon: Link2, label: "Active Domains", value: sites.filter(s => s.status === "published").length, iconBg: "bg-muted", iconColor: "text-muted-foreground" },
     { icon: TrendingUp, label: "Avg Conversion", value: stats.avgConversion, iconBg: "bg-green-50", iconColor: "text-green-500" },
   ];
 

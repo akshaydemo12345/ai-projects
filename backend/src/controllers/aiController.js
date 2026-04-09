@@ -45,65 +45,76 @@ exports.generateContent = async (req, res, next) => {
 
     const input = parsed.data;
 
-    // 2. Fetch Figma Design (if URL provided)
-    let figmaData = null;
-    if (input.figmaUrl) {
-      figmaData = await fetchFigmaDesign(input.figmaUrl, process.env.FIGMA_ACCESS_TOKEN);
-    }
-
-    // 3. Check user credits
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(401).json({ status: 'fail', message: 'User not found' });
-    }
-
-    if (user.credits <= 0) {
-      return res.status(402).json({
-        status: 'fail',
-        message: 'Insufficient credits. Please upgrade your plan.',
-      });
-    }
-
-    // 4. Call AI service with Figma Data
-    const aiContent = await generateLandingPageContent({
-      ...input,
-      figmaData,
-    });
-
-    // 5. Deduct 1 credit per generation
-    user.credits = Math.max(0, user.credits - 1);
-    await user.save({ validateBeforeSave: false });
-
-    // 6. Optionally attach AI content to an existing page
-    let updatedPage = null;
+    // 4. Update page status to 'generating' early if pageId provided
     if (input.pageId) {
-      updatedPage = await Page.findOneAndUpdate(
+      await Page.findOneAndUpdate(
         { _id: input.pageId, userId: req.user._id },
-        {
-          content: aiContent,
-          seo: aiContent.seo || {},
-          ...(input.figmaUrl && { figmaUrl: input.figmaUrl }),
-          updatedAt: Date.now(),
-        },
-        { new: true, runValidators: false }
+        { status: 'generating' }
       );
     }
 
-    // 7. Respond
-    return res.status(200).json({
+    // 5. Respond immediately (Background process begins)
+    res.status(202).json({
       status: 'success',
+      message: 'AI generation started in the background.',
       data: {
-        content: aiContent,
+        pageId: input.pageId,
         creditsRemaining: user.credits,
-        ...(updatedPage && { page: updatedPage }),
-        ...(figmaData && { figmaDesignMeta: figmaData }),
       },
     });
+
+    // ─── Background Job ───────────────────────────────────────────────────────
+    setImmediate(async () => {
+      try {
+        // A. Fetch Figma Design (if URL provided)
+        let figmaData = null;
+        if (input.figmaUrl) {
+          try {
+            figmaData = await fetchFigmaDesign(input.figmaUrl, process.env.FIGMA_ACCESS_TOKEN);
+          } catch (figmaErr) {
+            console.error('Background Figma error:', figmaErr.message);
+          }
+        }
+
+        // B. Call AI service
+        const aiContent = await generateLandingPageContent({
+          ...input,
+          figmaData,
+        });
+
+        // C. Update Page with AI content and set status back to 'draft'
+        if (input.pageId) {
+          await Page.findOneAndUpdate(
+            { _id: input.pageId, userId: req.user._id },
+            {
+              content: aiContent,
+              seo: aiContent.seo || { 
+                title: `${input.businessName} - High Converting Landing Page`,
+                description: input.businessDescription.substring(0, 160)
+              },
+              status: 'draft',
+              updatedAt: Date.now(),
+              ...(input.figmaUrl && { designUrl: input.figmaUrl })
+            }
+          );
+        }
+
+        // D. Deduct 1 credit on success
+        await User.findByIdAndUpdate(req.user._id, { $inc: { credits: -1 } });
+        
+        console.log(`AI Page Generation successful for user ${req.user._id}`);
+
+      } catch (err) {
+        console.error('Background AI generation failed:', err.message);
+        
+        // E. Revert status on failure so user can retry
+        if (input.pageId) {
+          await Page.findByIdAndUpdate(input.pageId, { status: 'draft' });
+        }
+      }
+    });
+
   } catch (err) {
-    // Surface AI-specific errors cleanly
-    if (err.message?.startsWith('OpenAI') || err.message?.startsWith('Failed to parse')) {
-      return res.status(502).json({ status: 'fail', message: err.message });
-    }
     next(err);
   }
 };

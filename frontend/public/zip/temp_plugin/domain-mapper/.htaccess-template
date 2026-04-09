@@ -1,0 +1,34 @@
+# BEGIN DomainMapper — Path-specific proxy routing
+# Only requests to the configured proxy paths are routed through the proxy.
+# All other requests (including Divi Builder, REST API, AJAX, etc.) are
+# served by WordPress normally — no side-effects on the live site.
+#
+# IMPORTANT: This block is injected by the "Apply .htaccess Rules" button
+# in the Domain Mapper settings page.  It is NOT written on plugin activation.
+# The proxy works at the PHP level ('init' hook) and does NOT require these
+# rules for basic operation.  Apply them only if direct-file assets (CSS/JS
+# images) from the proxied path are being served incorrectly.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # ── 1. Always pass through WordPress core admin / system paths ────────
+    RewriteRule ^wp-admin(/.*)?$                        -   [L]
+    RewriteRule ^wp-login\.php                          -   [L]
+    RewriteRule ^wp-cron\.php                           -   [L]
+    RewriteRule ^xmlrpc\.php                            -   [L]
+    RewriteRule ^wp-includes/(.*)$                      -   [L]
+    RewriteRule ^wp-content/plugins/(.*)$               -   [L]
+    RewriteRule ^wp-content/themes/(.*)$                -   [L]
+    RewriteRule ^wp-content/uploads/(.*)$               -   [L]
+    RewriteRule ^wp-json/(.*)$                          -   [L]
+
+    # ── 2. Proxy-path rules are injected below by write_htaccess() ───────
+    # Example (generated automatically from Allowed Paths setting):
+    #   RewriteRule ^ppc(/.*)?$ index.php [QSA,L]
+    #   RewriteRule ^landing(/.*)?$ index.php [QSA,L]
+
+</IfModule>
+
+# END DomainMapper
