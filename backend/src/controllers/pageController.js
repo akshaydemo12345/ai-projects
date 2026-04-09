@@ -1,5 +1,8 @@
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
+
 const { z } = require('zod');
 const crypto = require('crypto');
 const Page = require('../models/Page');
@@ -9,22 +12,35 @@ const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
 const logger = require('../utils/logger');
 
+const AppError = require('../utils/AppError');
+
 // ─── Validation Schemas ────────────────────────────────────────────────────────
 const createPageSchema = z.object({
-  title: z.string().min(1, 'title is required'),
+  title: z.string().optional(),
+  name: z.string().optional(),
   template: z.string().optional(),
+  content: z.any().optional(),
   business_name: z.string().optional(),
   business_description: z.string().optional(),
   target_audience: z.string().optional(),
   cta_text: z.string().optional(),
   ai_prompt: z.string().optional(),
+  aiPrompt: z.string().optional(),
   industry: z.string().optional(),
+  styles: z.string().optional(),
+}).transform(data => ({
+  ...data,
+  title: data.title || data.name || 'Untitled Page'
+})).refine(data => data.title.length > 0, {
+  message: "Title or name is required",
+  path: ["title"]
 });
 
 const updatePageSchema = z.object({
   title: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
   content: z.any().optional(),
+  styles: z.string().optional(),
   status: z.enum(['draft', 'published']).optional(),
   seo: z
     .object({
@@ -101,12 +117,15 @@ exports.getPagesInProject = async (req, res, next) => {
     ]);
 
     return res.status(200).json({
-      status: 'success',
-      results: pages.length,
-      total,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
-      data: { pages },
+      success: true,
+      message: 'Pages retrieved successfully',
+      data: { 
+        pages,
+        results: pages.length,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / parseInt(limit))
+      },
     });
   } catch (err) {
     next(err);
@@ -130,13 +149,9 @@ exports.getPage = async (req, res, next) => {
     const previewUrl = page.previewUrl || `${baseAppUrl}/preview/${page.slug}`;
 
     return res.status(200).json({
-      status: 'success',
-      data: {
-        page: {
-          ...page.toObject(),
-          previewUrl
-        }
-      }
+      success: true,
+      message: 'Page retrieved successfully',
+      data: { page: { ...page.toObject(), previewUrl } },
     });
   } catch (err) {
     next(err);
@@ -145,93 +160,170 @@ exports.getPage = async (req, res, next) => {
 
 // ─── POST /projects/:projectId/pages (Enhanced with AI) ───────────────────────
 exports.createPage = async (req, res, next) => {
+  logger.info(`Creating page for project ${req.params.projectId}`, { userId: req.user?._id });
+
   try {
     const { projectId } = req.params;
-    const parsed = createPageSchema.safeParse(req.body);
-
-    if (!parsed.success) {
+    
+    // 1. Basic Parameter Validation
+    if (!projectId) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Validation failed',
-        errors: parsed.error.flatten().fieldErrors,
+        success: false,
+        message: "Project ID is required in URL",
+        data: {}
       });
     }
 
-    if (!(await checkProjectOwnership(projectId, req.user._id))) {
-      return res.status(403).json({ status: 'fail', message: 'Unauthorized project' });
+    // 2. Body Validation
+    const parsed = createPageSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        data: { errors }
+      });
     }
 
     const { 
       title, 
       template, 
+      content: initialContent,
       business_name, 
       business_description, 
       target_audience, 
       cta_text, 
       ai_prompt,
-      industry 
+      aiPrompt: camelAiPrompt,
+      industry,
+      styles: initialStyles
     } = parsed.data;
 
+    // 3. Project Existence Check
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+        data: {}
+      });
+    }
+
+    // 4. Ownership Check
+    if (project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to add pages to this project",
+        data: {}
+      });
+    }
+
+    // 5. Slug Generation
     const uniqueSlug = await generateUniqueSlug(title, projectId);
 
+    // 6. Initial Page Creation
     const page = await Page.create({
       projectId,
       userId: req.user._id,
       title,
       slug: uniqueSlug,
       template: template || 'blank',
-      aiPrompt: ai_prompt,
+      aiPrompt: ai_prompt || camelAiPrompt,
+      content: initialContent || {},
+      styles: initialStyles || '',
       status: 'generating',
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
 
+    // Increment pageCount
+    await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: 1 } });
+
+
+    // 7. AI Content Generation (Backgroundish)
     let aiResponse = { sections: [], seo: {} };
     try {
+      logger.info(`Starting AI generation for page ${page._id}`);
       const generated = await AIService.generateLandingPageContent({
         businessName: business_name || title,
         industry: industry || 'Service',
         businessDescription: business_description || '',
         targetAudience: target_audience || 'General',
         ctaText: cta_text || 'Get Started',
-        aiPrompt: ai_prompt || '',
+        aiPrompt: camelAiPrompt || ai_prompt || '',
         pageId: page._id
       });
 
-      aiResponse = {
-        sections: generated.pageContent || [],
-        fullHtml: generated.fullHtml,
-        fullCss: generated.fullCss,
-        fullJs: generated.fullJs,
-        seo: generated.seo || {}
-      };
-
+      if (generated) {
+        aiResponse = {
+          sections: generated.pageContent || [],
+          fullHtml: generated.fullHtml,
+          fullCss: generated.fullCss,
+          fullJs: generated.fullJs,
+          seo: generated.seo || {}
+        };
+      }
     } catch (aiErr) {
-      logger.error('AI Generation Failed during page creation:', aiErr);
+      logger.error('AI Generation Failed during page creation:', {
+        error: aiErr.message,
+        pageId: page._id
+      });
+      // Fallback: If AI fails on a purely AI-generated page, we should halt rather than giving a blank page.
+      if (!initialContent && (!template || template === 'blank')) {
+        await Page.findByIdAndDelete(page._id);
+        return res.status(502).json({
+           success: false,
+           message: `AI Generation Error: ${aiErr.message}`,
+           data: {}
+        });
+      }
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
+    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:5000';
     const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
 
-    page.content = aiResponse;
-    page.seo = aiResponse.seo;
+    // 8. Update Page with AI Results
+    if (aiResponse.fullHtml) {
+      logger.info('--- AI Output snippet ---');
+      logger.info(aiResponse.fullHtml.substring(0, 100));
+      page.content = aiResponse.fullHtml;
+      page.styles = aiResponse.fullCss || '';
+    } else {
+      page.content = initialContent || page.content;
+      page.styles = initialStyles || page.styles || '';
+    }
+    
+    page.seo = aiResponse.seo || {};
     page.previewUrl = previewUrl;
     page.status = 'draft';
     await page.save();
 
+    // 9. Success Response
     return res.status(201).json({
       success: true,
       message: 'Landing page created successfully',
       data: {
-        page_id: page._id,
+        pageId: page._id,
+        _id: page._id,
         title: page.title,
         slug: page.slug,
-        preview_url: page.previewUrl,
-        content: page.content
+        previewUrl: page.previewUrl,
+        content: page.content,
+        styles: page.styles
       }
     });
 
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    logger.error("Create Page Final Error:", { 
+      message: error.message, 
+      stack: error.stack,
+      projectId: req.params.projectId 
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+      data: {}
+    });
   }
 };
 
@@ -299,7 +391,11 @@ exports.deletePage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    return res.status(204).json({ status: 'success', message: 'Page deleted successfully' });
+    // Decrement pageCount
+    await Project.findByIdAndUpdate(page.projectId, { $inc: { pageCount: -1 } });
+
+
+    return res.status(200).json({ status: 'success', message: 'Page deleted successfully' });
   } catch (err) {
     next(err);
   }

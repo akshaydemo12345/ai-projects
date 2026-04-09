@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { pagesApi, aiApi } from "@/services/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
 
 type Step = "methods" | "create-ai" | "analyze" | "crafting";

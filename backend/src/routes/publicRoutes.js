@@ -1,9 +1,21 @@
 'use strict';
 
 const express = require('express');
-const { getPublicPage, getPublicPageByDomain, verifyPlugin, getPreview, getPreviewHTML, getPublicPageHTML } = require('../controllers/publicController');
+const { 
+  getPublicPage, 
+  getPublicPageBySlug,
+  getPublicPageByDomain, 
+  verifyPlugin, 
+  getPreview, 
+  getPreviewHTML, 
+  getPublicPageHTML, 
+  downloadPlugin 
+} = require('../controllers/publicController');
 
 const router = express.Router();
+
+// ─── Direct API Access ───────────────────────────────────────────────────────
+router.get('/api/public/page/:slug', getPublicPageBySlug);
 
 // ─── Public Preview Rendering ────────────────────────────────────────────────
 
@@ -31,12 +43,14 @@ router.get('/p/:slug', getPublicPage);
  */
 router.get('/p/domain/:domain', getPublicPageByDomain);
 
+router.post('/plugin/verify', verifyPlugin);
+
 /**
- * @route   POST /plugin/verify
- * @desc    Verify a plugin token and fetch configuration (WordPress/Shopify)
+ * @route   GET /plugin/download
+ * @desc    Download the Domain Mapper WordPress plugin ZIP
  * @access  Public
  */
-router.post('/plugin/verify', verifyPlugin);
+router.get('/plugin/download', downloadPlugin);
 
 /**
  * @route   POST /verify-api-key

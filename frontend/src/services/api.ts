@@ -1,15 +1,67 @@
-// PageCraft API Service — Single file for all CRUD operations
-// Uses static data as mock, ready to connect to real API
+// PageCraft API Service — Scalable modular API layer
+// Connects to Node.js/MongoDB backend
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// Types
 export interface Site {
-  id: string;
+  _id: string;
   name: string;
-  url: string;
+  description: string;
+  domain?: string;
   status: "published" | "draft";
+  stats?: {
+    views: number;
+    leads: number;
+    conversion: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Project {
+  _id: string;
+  name: string;
+  description: string;
+  url?: string;
+  category: string;
+  apiToken: string;
+  userId: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  pages?: LandingPage[];
+  stats?: {
+    views: number;
+    leads: number;
+    conversion: number;
+  };
+}
+
+export interface LandingPage {
+  _id: string;
+  name: string;
+  title?: string;
+  slug: string;
+  type: "ppc" | "seo";
+  status: "draft" | "published" | "generating" | "archived";
+  content?: any;
+  styles?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  publishedUrl?: string; // Virtual/Frontend helper
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  logoUrl?: string;
+  generationMethod?: "ai" | "analyze" | "manual";
+  aiPrompt?: string;
+  apiToken?: string;
+  previewToken?: string;
   views: number;
-  leads: number;
-  conversion: string;
-  publishedAt: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Lead {
@@ -21,177 +73,199 @@ export interface Lead {
   createdAt: string;
 }
 
-export interface PageSection {
-  id: string;
-  type: "hero" | "features" | "testimonials" | "pricing" | "contact" | "image" | "text" | "grid";
-  title: string;
-  content: Record<string, unknown>;
+// Helper for fetch with Auth
+async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const token = localStorage.getItem('pagecraft_token');
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (response.status === 401) {
+    // Unauthorized - clear token and potentially redirect
+    localStorage.removeItem('pagecraft_token');
+    localStorage.removeItem('pagecraft_user');
+    window.location.href = '/login';
+    throw new Error('Session expired. Please log in again.');
+  }
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Something went wrong');
+  }
+
+  return result;
 }
 
-// --- Static Data ---
-let sites: Site[] = [
-  {
-    id: "1",
-    name: "SaaS Marketing Pro",
-    url: "https://saas-marketing-pro-7x2k.pagebuilder.ai",
-    status: "published",
-    views: 1245,
-    leads: 847,
-    conversion: "4.2%",
-    publishedAt: "2 days ago",
+// --- Auth API ---
+export const authApi = {
+  login: async (credentials: any) => {
+    return apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
   },
-  {
-    id: "2",
-    name: "Startup Launch Page",
-    url: "https://startup-launch-a9b3.pagebuilder.ai",
-    status: "published",
-    views: 890,
-    leads: 432,
-    conversion: "3.8%",
-    publishedAt: "5 days ago",
+  signup: async (data: any) => {
+    return apiFetch('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
-  {
-    id: "3",
-    name: "Product Hunt Launch",
-    url: "https://product-hunt-c2d1.pagebuilder.ai",
-    status: "draft",
-    views: 0,
-    leads: 0,
-    conversion: "0%",
-    publishedAt: "",
+  getProfile: async () => {
+    return apiFetch('/auth/profile');
   },
-];
+};
 
-let leads: Lead[] = [
-  { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", siteId: "2", createdAt: "2024-01-15" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+1234567891", siteId: "2", createdAt: "2024-01-16" },
-];
-
-let pageSections: PageSection[] = [
-  {
-    id: "1",
-    type: "hero",
-    title: "Hero Section",
-    content: {
-      heading: "Launch Your Product with Confidence",
-      subheading: "Build, test, and deploy your product faster with our comprehensive platform",
-      cta: "Get Started Free",
-    },
+// --- Projects API ---
+export const projectsApi = {
+  getAll: async () => {
+    const res = await apiFetch('/projects');
+    return res.data.projects;
   },
-  {
-    id: "2",
-    type: "features",
-    title: "Features Grid",
-    content: {
-      features: [
-        { title: "Amazing Feature 1", description: "Description of this amazing feature that will help your business grow." },
-        { title: "Amazing Feature 2", description: "Description of this amazing feature that will help your business grow." },
-        { title: "Amazing Feature 3", description: "Description of this amazing feature that will help your business grow." },
-      ],
-    },
+  getById: async (id: string) => {
+    const res = await apiFetch(`/projects/${id}`);
+    return res.data.project;
   },
-];
+  create: async (data: any) => {
+    return apiFetch('/projects', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  update: async (id: string, data: any) => {
+    return apiFetch(`/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  delete: async (id: string) => {
+    return apiFetch(`/projects/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
 
-// --- Simulated async delay ---
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+// --- Pages API ---
+export const pagesApi = {
+  getPagesByProject: async (projectId: string) => {
+    const res = await apiFetch(`/projects/${projectId}/pages`);
+    return res.data.pages;
+  },
+  getById: async (projectId: string, pageId: string) => {
+    const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`);
+    return res.data.page;
+  },
+  create: async (projectId: string, data: any) => {
+    const res = await apiFetch(`/projects/${projectId}/pages`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  },
+  update: async (projectId: string, pageId: string, data: any) => {
+    const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  },
+  delete: async (projectId: string, pageId: string) => {
+    return apiFetch(`/projects/${projectId}/pages/${pageId}`, {
+      method: 'DELETE',
+    });
+  },
+  getBySlug: async (slug: string) => {
+    // 100% Public endpoint — serves content WITHOUT requiring tokens.
+    const response = await fetch(`${API_BASE_URL}/api/public/page/${slug}`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Page not found');
+    
+    // Returns { status, data: content, meta: { title, seo } }
+    return result;
+  }
+};
 
-// --- Sites API ---
+// --- AI API ---
+export const aiApi = {
+  generate: async (data: any) => {
+    return apiFetch('/ai/generate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  analyze: async (url: string) => {
+    return apiFetch('/ai/analyze-website', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+  improve: async (sectionData: any) => {
+    return apiFetch('/ai/improve', {
+      method: 'POST',
+      body: JSON.stringify(sectionData),
+    });
+  },
+};
+
+// --- Legacy Compatibility Site API (Maps to Projects/Pages) ---
 export const sitesApi = {
   getAll: async (): Promise<Site[]> => {
-    await delay();
-    return [...sites];
-  },
-  getById: async (id: string): Promise<Site | undefined> => {
-    await delay();
-    return sites.find((s) => s.id === id);
-  },
-  create: async (data: Omit<Site, "id">): Promise<Site> => {
-    await delay();
-    const newSite: Site = { ...data, id: String(Date.now()) };
-    sites = [...sites, newSite];
-    return newSite;
-  },
-  update: async (id: string, data: Partial<Site>): Promise<Site | undefined> => {
-    await delay();
-    const idx = sites.findIndex((s) => s.id === id);
-    if (idx === -1) return undefined;
-    sites[idx] = { ...sites[idx], ...data };
-    sites = [...sites];
-    return sites[idx];
-  },
-  delete: async (id: string): Promise<boolean> => {
-    await delay();
-    const len = sites.length;
-    sites = sites.filter((s) => s.id !== id);
-    return sites.length < len;
-  },
-};
-
-// --- Leads API ---
-export const leadsApi = {
-  getAll: async (): Promise<Lead[]> => {
-    await delay();
-    return [...leads];
-  },
-  getBySiteId: async (siteId: string): Promise<Lead[]> => {
-    await delay();
-    return leads.filter((l) => l.siteId === siteId);
-  },
-  create: async (data: Omit<Lead, "id">): Promise<Lead> => {
-    await delay();
-    const newLead: Lead = { ...data, id: String(Date.now()) };
-    leads = [...leads, newLead];
-    return newLead;
-  },
-  delete: async (id: string): Promise<boolean> => {
-    await delay();
-    const len = leads.length;
-    leads = leads.filter((l) => l.id !== id);
-    return leads.length < len;
-  },
-};
-
-// --- Page Sections API ---
-export const sectionsApi = {
-  getAll: async (): Promise<PageSection[]> => {
-    await delay();
-    return [...pageSections];
-  },
-  getById: async (id: string): Promise<PageSection | undefined> => {
-    await delay();
-    return pageSections.find((s) => s.id === id);
-  },
-  create: async (data: Omit<PageSection, "id">): Promise<PageSection> => {
-    await delay();
-    const newSection: PageSection = { ...data, id: String(Date.now()) };
-    pageSections = [...pageSections, newSection];
-    return newSection;
-  },
-  update: async (id: string, data: Partial<PageSection>): Promise<PageSection | undefined> => {
-    await delay();
-    const idx = pageSections.findIndex((s) => s.id === id);
-    if (idx === -1) return undefined;
-    pageSections[idx] = { ...pageSections[idx], ...data };
-    pageSections = [...pageSections];
-    return pageSections[idx];
-  },
-  delete: async (id: string): Promise<boolean> => {
-    await delay();
-    const len = pageSections.length;
-    pageSections = pageSections.filter((s) => s.id !== id);
-    return pageSections.length < len;
+    // In our new backend, "Sites" are essentially "Pages" or "Projects"
+    // For compatibility with old code, we fetch projects and map them
+    const projects = await projectsApi.getAll();
+    return projects.map((p: any) => ({
+      _id: p._id,
+      name: p.name,
+      url: p.domain ? `https://${p.domain}` : '#',
+      status: p.isPublished ? 'published' : 'draft',
+      views: 0,
+      leads: 0,
+      conversion: "0%",
+      publishedAt: p.createdAt,
+    }));
   },
 };
 
 // --- Stats API ---
 export const statsApi = {
   getDashboardStats: async () => {
-    await delay();
-    return {
-      totalSites: sites.length,
-      totalLeads: leads.length + 1845,
-      avgConversion: "4.2%",
-      totalViews: sites.reduce((sum, s) => sum + s.views, 0),
-    };
+    const res = await authApi.getProfile();
+    return res.data.stats;
+  },
+};
+
+// --- Leads API ---
+export interface Lead {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  pageId: string;
+  projectId: string;
+  data?: any;
+  createdAt: string;
+}
+
+export const leadsApi = {
+  getAll: async () => {
+    const res = await apiFetch('/leads');
+    return res.data;
+  },
+  getByPage: async (pageId: string) => {
+    const res = await apiFetch(`/leads?pageId=${pageId}`);
+    return res.data;
+  },
+  delete: async (id: string) => {
+    return apiFetch(`/leads/${id}`, {
+      method: 'DELETE',
+    });
   },
 };

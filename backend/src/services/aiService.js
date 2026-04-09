@@ -31,43 +31,38 @@ const buildPrompt = ({
 You are an advanced AI landing page engine designed for SaaS automation platforms.
 Generate a HIGH-CONVERTING, VISUALLY RICH, MOBILE-FIRST landing page for:
 Business: ${businessName}
-Industry/Template: ${template}
 Description: ${businessDescription}
 Target Audience: ${targetAudience}
 Primary CTA: ${ctaText}
-
----
-## 🔒 HARD RULES (NON-NEGOTIABLE)
-1. NEVER return JSON.
-2. NEVER return empty fields or placeholders like "lorem ipsum".
-3. NEVER ask questions.
-4. ALWAYS generate COMPLETE, valid HTML5 documents including <!DOCTYPE html>, <html>, <head>, and <body>.
-5. ALWAYS include ALL CSS within <style> tags in the head.
-6. ALWAYS include ALL functionality within <script> tags before the closing </body>.
-7. ALWAYS use REAL images from Unsplash or Pexels based on the ${template} industry.
-8. ALWAYS optimize for conversion (CRO best practices).
-9. Design Style: ${styleContext}. Use premium fonts and vibrant but professional colors.
+Custom Instructions: ${aiPrompt}
 
 ---
 ## 🧱 MANDATORY SECTIONS
 1. HERO: Background image, H1 Headline + subheadline, Capture Form (Name, Phone, Email), Trust badge.
-2. SOCIAL PROOF: Stats (e.g. 5000+ Happy Clients) and Client logos.
-3. FEATURES / SERVICES: Grid cards with icons and benefit-driven copy.
-4. MID FORM: Consultation request form with Service dropdown.
-5. HOW IT WORKS: 3-step visualization.
-6. TESTIMONIALS: 3 realistic user reviews with names and professional roles.
-7. FAQ: Schema-ready accordion with 4-5 relevant questions.
-8. FINAL CTA & FOOTER: High-impact closure.
+2. FEATURES / SERVICES: Grid cards with icons and benefit-driven copy.
+3. MID FORM: Full capture form (Name, Email, Phone, Message, Service Dropdown).
+4. TESTIMONIALS: 3 realistic user reviews.
+5. FAQ: FAQ section.
+6. FINAL CTA & FOOTER.
 
 ---
+## 🎨 DESIGN & ASSET RULES (STRICT)
+- Style: ${styleContext}.
+- **CSS**: Use ONLY inline <style> tags in the <head>. NEVER use external .css files or relative links.
+- **Images**: Use ONLY absolute https://images.unsplash.com URLs. NO relative paths (e.g., "img/hero.jpg").
+- **Gradients & Shadows**: Use modern, premium visual styling (glassmorphism if appropriate).
+- **Fonts**: Use Google Fonts via @import in the <style> block.
+
 ## ⚙️ FUNCTIONALITY (MUST IMPLEMENT)
-- Fully responsive (mobile-first grid/flex).
-- Sticky CTA button for mobile users.
-- Smooth Scroll Reveal animations.
-- Form validation (JavaScript) and AJAX submission (fetch API to '/api/pages/${pageId || 'PAGE_ID'}/leads').
-- "Thank You" popup/modal trigger after submit.
-- Hidden UTM tracking fields: utm_source, utm_medium, utm_campaign.
-- CRM webhook logic (Handled by backend via the '/api/pages/${pageId || 'PAGE_ID'}/leads' endpoint).
+- Fully responsive (mobile-first).
+- Form validation (HTML5 + JS).
+- AJAX Submission: Include a global <script> that intercepts ALL form submissions:
+  - Endpoint: "/api/leads"
+  - Method: POST
+  - Payload: { name, email, phone, message, pageSlug: window.location.pathname.split("/").pop(), projectId: "${pageId}" }
+  - Handle Loading: Disable button during fetch.
+  - Handle Success: Replace form with "Thank you! We will contact you soon." message.
+  - Handle Error: Show alert "Submission failed, please try again."
 
 OUTPUT REQUIREMENT:
 Return ONLY the raw HTML code. Do NOT wrap in markdown fences. Do NOT add explanation text. Start with <!DOCTYPE html>.

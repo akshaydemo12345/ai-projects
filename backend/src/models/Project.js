@@ -20,6 +20,10 @@ const projectSchema = new mongoose.Schema({
     default: false,
     select: false,
   },
+  apiToken: {
+    type: String,
+    unique: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -28,11 +32,25 @@ const projectSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  pageCount: {
+    type: Number,
+    default: 0,
+  },
+  leadCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
-// Middleware to update updatedAt
+// Middleware to update updatedAt and generate apiToken
 projectSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
+  
+  if (!this.apiToken) {
+    const crypto = require('crypto');
+    this.apiToken = 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
+  }
+  
   next();
 });
 

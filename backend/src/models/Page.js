@@ -26,6 +26,10 @@ const pageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {},
   },
+  styles: {
+    type: String,
+    default: '',
+  },
   template: {
     type: String,
     default: 'blank',

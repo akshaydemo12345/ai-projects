@@ -1,11 +1,49 @@
 'use strict';
 
 const Page = require('../models/Page');
+const Project = require('../models/Project');
 const AppError = require('../utils/AppError');
+const path = require('path');
+const fs = require('fs');
+
+/**
+ * GET /api/public/page/:slug
+ * 100% Public endpoint — serves content WITHOUT requiring tokens.
+ */
+exports.getPublicPageBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+
+    const page = await Page.findOneAndUpdate(
+      { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
+      { $inc: { views: 1 } },
+      { new: true }
+    ).select('title slug content seo template domain status previewToken projectId');
+
+    if (!page) return next(new AppError('Page not found', 404));
+
+    // For public published pages, we don't check status strictly here if we want same logic for preview
+    // But the requirements say "published URL should work", so we can check if it's published or if it's a preview request
+    
+    res.status(200).json({
+      status: 'success',
+      data: page.content,
+      // We also include meta for the frontend to set title/description
+      meta: {
+        title: page.title,
+        seo: page.seo,
+        status: page.status,
+        projectId: page.projectId
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 /**
  * GET /p/:slug
- * Public endpoint — serves the live JSON content of a published page.
+ * Deprecated or updated to not require tokens if public.
  */
 exports.getPublicPage = async (req, res, next) => {
   try {
@@ -15,10 +53,11 @@ exports.getPublicPage = async (req, res, next) => {
       { slug, status: 'published' },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views');
+    ).select('title slug content seo template domain publishedAt views projectId');
 
     if (!page) return next(new AppError('Page not found or not published', 404));
 
+    // Token check removed as per requirements for public pages
     res.status(200).json({
       status: 'success',
       data: { page },
@@ -38,9 +77,10 @@ const renderFullHTML = (page) => {
   const { title, content, seo, _id } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
-  const aiHtml = (content.fullHtml || '').trim();
-  const aiCss = content.fullCss || '';
-  const aiJs = content.fullJs || '';
+  // Handle content being a string (full document) or an object (structured)
+  const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
+  const aiCss = typeof content === 'string' ? '' : (content?.fullCss || '');
+  const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
 
   // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
   // If the AI generated a full document (doctype or html tag), serve it DIRECTLY.
@@ -159,7 +199,7 @@ exports.getPublicPageByDomain = async (req, res, next) => {
       { domain, status: 'published' },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views');
+    ).select('title slug content seo template domain publishedAt views projectId');
 
     if (!page) return next(new AppError('No published page found for this domain', 404));
 
@@ -188,13 +228,15 @@ exports.verifyPlugin = async (req, res, next) => {
       return next(new AppError('API token is required for verification', 400));
     }
 
-    const page = await Page.findOne({ apiToken, status: 'published' }).select(
+    const project = await Project.findOne({ apiToken });
+
+    if (!project) {
+      return next(new AppError('Invalid API token. No project found.', 401));
+    }
+
+    const pages = await Page.find({ projectId: project._id, status: 'published' }).select(
       'title slug content seo template domain publishedAt'
     );
-
-    if (!page) {
-      return next(new AppError('Invalid API token or page is unpublished.', 401));
-    }
 
     const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
     const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
@@ -203,9 +245,11 @@ exports.verifyPlugin = async (req, res, next) => {
       status: 'active',
       plan: 'pro',
       cache_time: 300,
+      projectId: project._id,
+      projectName: project.name,
       target_url: normalizedBackendBase,
-      allowed_paths: [ `/${page.slug}` ],
-      message: 'License verified and active.'
+      allowed_paths: pages.map(p => `/${p.slug}`),
+      message: `License verified. Project "${project.name}" is active.`
     });
   } catch (err) {
     next(err);
@@ -240,6 +284,38 @@ exports.getPreview = async (req, res, next) => {
         isPreview: true,
         tempUrl: `${process.env.APP_BASE_URL}/preview/${page.previewToken || page._id}`
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /plugin/download
+ * Serves the domain-mapper.zip file from the backend public directory.
+ * Ensures correct headers for ZIP file downloads.
+ */
+exports.downloadPlugin = async (req, res, next) => {
+  try {
+    const zipPath = path.resolve(__dirname, '../../public/zip/domain-mapper.zip');
+
+    if (!fs.existsSync(zipPath)) {
+      return next(new AppError('Plugin ZIP file not found. Please contact support.', 404));
+    }
+
+    // Set correct headers for forcing a ZIP download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="domain-mapper.zip"');
+
+    // Stream the file for efficiency
+    const fileStream = fs.createReadStream(zipPath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      console.error('Download stream error:', err);
+      if (!res.headersSent) {
+        next(new AppError('Error occurred while downloading the file', 500));
+      }
     });
   } catch (err) {
     next(err);

@@ -1,14 +1,20 @@
 const Project = require('../models/Project');
 const Page = require('../models/Page');
+const crypto = require('crypto');
 
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
+    
+    // Generate unique API Token if not provided
+    const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
+
     const project = await Project.create({
       name,
       description,
       userId: req.user._id,
+      apiToken
     });
 
     res.status(201).json({
@@ -50,8 +56,13 @@ exports.listProjects = async (req, res, next) => {
 // GET PROJECT
 exports.getProject = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
     const project = await Project.findOne({
-      _id: req.params.id,
+      _id: id,
       userId: req.user._id,
     });
 
@@ -59,9 +70,24 @@ exports.getProject = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Project not found' });
     }
 
+    // Also fetch pages for this project to ensure frontend has them
+    const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } }).select('-leads');
+    
+    // Ensure pageCount is accurate (sync it just in case)
+    const pageCount = pages.length;
+    if (project.pageCount !== pageCount) {
+      project.pageCount = pageCount;
+      await project.save({ validateBeforeSave: false });
+    }
+
     res.status(200).json({
       status: 'success',
-      data: { project },
+      data: { 
+        project: {
+          ...project.toObject(),
+          pages
+        }
+      },
     });
   } catch (err) {
     next(err);
@@ -71,9 +97,14 @@ exports.getProject = async (req, res, next) => {
 // UPDATE PROJECT
 exports.updateProject = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
     const { name, description } = req.body;
     const project = await Project.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: id, userId: req.user._id },
       { name, description, updatedAt: Date.now() },
       { new: true, runValidators: true }
     );
@@ -107,9 +138,9 @@ exports.deleteProject = async (req, res, next) => {
     // Optionally soft delete ALL pages in this project
     await Page.updateMany({ projectId: project._id }, { isDeleted: true });
 
-    res.status(204).json({
+    res.status(200).json({
       status: 'success',
-      data: null,
+      message: 'Project deleted successfully',
     });
   } catch (err) {
     next(err);

@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { getProjects, saveProjects, generateToken, type Project } from "./ProjectsPage";
+import { projectsApi } from "@/services/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { copyToClipboard } from "@/lib/utils";
 
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script" | "iframe";
@@ -21,11 +23,15 @@ const categories = [
 
 const CreateProjectFlow = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("form");
   const [tokenCopied, setTokenCopied] = useState(false);
-  const [createdProject, setCreatedProject] = useState<Project | null>(null);
+  const [createdProject, setCreatedProject] = useState<any>(null);
   const [selectedMethod, setSelectedMethod] = useState<IntegrationMethod>("wordpress");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scriptCopied, setScriptCopied] = useState(false);
+  const [iframeCopied, setIframeCopied] = useState(false);
 
   // Form fields
   const [name, setName] = useState("");
@@ -33,35 +39,47 @@ const CreateProjectFlow = () => {
   const [category, setCategory] = useState("Agency");
   const [description, setDescription] = useState("");
 
-  const handleCreate = () => {
+  const createMutation = useMutation({
+    mutationFn: projectsApi.create,
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setCreatedProject(res.data.project);
+      setStep("integration");
+      toast.success("Project created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create project");
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    }
+  });
+
+  const handleCreate = async () => {
     if (!name.trim()) {
       toast.error("Project Name is required.");
       return;
     }
-    const newProject: Project = {
-      id: Date.now().toString(),
+
+    setIsSubmitting(true);
+    createMutation.mutate({
       name: name.trim(),
       url: websiteUrl.trim(),
       category,
       description: description.trim(),
-      token: generateToken(),
-      pages: [],
-      createdAt: new Date().toLocaleDateString("en-IN", {
-        day: "numeric", month: "short", year: "numeric",
-      }),
-    };
-    const projects = getProjects();
-    saveProjects([...projects, newProject]);
-    setCreatedProject(newProject);
-    setStep("integration");
+    });
   };
 
-  const copyToken = () => {
+  const copyToken = async () => {
     if (!createdProject) return;
-    navigator.clipboard.writeText(createdProject.token);
-    setTokenCopied(true);
-    toast.success("Token copied!");
-    setTimeout(() => setTokenCopied(false), 2500);
+    const success = await copyToClipboard(createdProject.apiToken);
+    if (success) {
+      setTokenCopied(true);
+      toast.success("Token copied!");
+      setTimeout(() => setTokenCopied(false), 2500);
+    } else {
+      toast.error("Failed to copy token");
+    }
   };
 
   const integrationMethods = [
@@ -88,12 +106,14 @@ const CreateProjectFlow = () => {
   const wordpressSteps = [
     {
       num: 1,
-      title: "Install WordPress Plugin",
+      title: "Download & Activate WordPress Plugin",
       desc: `Download and install the "PPC Landing Builder" plugin from WordPress plugin directory.`,
       action: (
-        <button className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 mt-2 transition-colors">
-          <Download className="h-3.5 w-3.5" /> Download Plugin
-        </button>
+        <a href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/plugin/download`} download className="block mt-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-2">
+            <Download className="h-3 w-3" /> Download Plugin
+          </Button>
+        </a>
       ),
     },
     {
@@ -101,27 +121,32 @@ const CreateProjectFlow = () => {
       title: "Generate Access Token",
       desc: "Copy the access token below and paste it in the plugin settings panel.",
       action: createdProject ? (
-        <div
-          className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 mt-2 cursor-pointer hover:bg-muted/80 transition-colors w-fit"
-          onClick={copyToken}
-        >
-          <span className="text-xs font-mono text-foreground">{createdProject.token}</span>
-          {tokenCopied
-            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-            : <Copy className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+        <div className="flex items-center gap-2 mt-2">
+          <div
+            className="flex items-center gap-2 bg-muted hover:bg-muted/80 border border-border rounded-lg px-3 py-2 cursor-pointer transition-all active:scale-95"
+            onClick={copyToken}
+            title="Click to copy token"
+          >
+            <span className="text-xs font-mono text-foreground font-semibold">{createdProject.apiToken}</span>
+            <div className="border-l border-border pl-2 ml-1">
+              {tokenCopied
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+            </div>
+          </div>
         </div>
       ) : null,
     },
     {
       num: 3,
-      title: "Download & Activate",
-      desc: "Activate plugin, go to Settings → PPC Landing Builder and save your token.",
+      title: "Save Your Token",
+      desc: "In WordPress, go to Settings → Domain Mapper and save your Project API Token.",
       action: null,
     },
   ];
 
   const scriptCode = createdProject
-    ? `<script src="https://cdn.ppcbuilder.io/embed.js" data-token="${createdProject.token}" async></script>`
+    ? `<script src="${import.meta.env.VITE_API_BASE_URL}/embed.js" data-token="${createdProject.apiToken}" async></script>`
     : "";
   const iframeCode = `<iframe src="https://your-subdomain.ppcbuilder.io/lp/your-page-slug" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
@@ -199,9 +224,10 @@ const CreateProjectFlow = () => {
 
             <Button
               onClick={handleCreate}
+              disabled={isSubmitting}
               className="w-full h-12 text-base bg-primary hover:bg-primary/90 gap-2"
             >
-              <Rocket className="h-5 w-5" /> Create Project
+              <Rocket className="h-5 w-5" /> {isSubmitting ? "Creating..." : "Create Project"}
             </Button>
           </div>
         </div>
@@ -243,15 +269,13 @@ const CreateProjectFlow = () => {
               <button
                 key={m.id}
                 onClick={() => setSelectedMethod(m.id)}
-                className={`w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${
-                  selectedMethod === m.id
+                className={`w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${selectedMethod === m.id
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/30 bg-card"
-                }`}
+                  }`}
               >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  selectedMethod === m.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                }`}>
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  }`}>
                   {m.icon}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -260,9 +284,8 @@ const CreateProjectFlow = () => {
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
                 </div>
-                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  selectedMethod === m.id ? "border-primary bg-primary" : "border-border"
-                }`}>
+                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "border-primary bg-primary" : "border-border"
+                  }`}>
                   {selectedMethod === m.id && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                 </div>
               </button>
@@ -298,10 +321,23 @@ const CreateProjectFlow = () => {
               <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">Add to your website's &lt;head&gt;</p>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(scriptCode); toast.success("Code copied!"); }}
-                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80"
+                  onClick={async () => { 
+                    const success = await copyToClipboard(scriptCode); 
+                    if (success) {
+                      setScriptCopied(true);
+                      toast.success("Code copied!"); 
+                      setTimeout(() => setScriptCopied(false), 2000);
+                    } else {
+                      toast.error("Failed to copy code");
+                    }
+                  }}
+                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
                 >
-                  <Copy className="h-3.5 w-3.5" /> Copy
+                  {scriptCopied ? (
+                    <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
+                  ) : (
+                    <><Copy className="h-3.5 w-3.5" /> Copy</>
+                  )}
                 </button>
               </div>
               <div className="p-5">
@@ -316,10 +352,23 @@ const CreateProjectFlow = () => {
               <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">Embed iFrame Code</p>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(iframeCode); toast.success("Code copied!"); }}
-                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80"
+                  onClick={async () => { 
+                    const success = await copyToClipboard(iframeCode); 
+                    if (success) {
+                      setIframeCopied(true);
+                      toast.success("Code copied!"); 
+                      setTimeout(() => setIframeCopied(false), 2000);
+                    } else {
+                      toast.error("Failed to copy code");
+                    }
+                  }}
+                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
                 >
-                  <Copy className="h-3.5 w-3.5" /> Copy
+                  {iframeCopied ? (
+                    <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
+                  ) : (
+                    <><Copy className="h-3.5 w-3.5" /> Copy</>
+                  )}
                 </button>
               </div>
               <div className="p-5">
@@ -330,12 +379,12 @@ const CreateProjectFlow = () => {
 
           {/* CTA */}
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="h-12" onClick={() => navigate(`/dashboard/projects/${createdProject.id}`)}>
+            <Button variant="outline" className="h-12" onClick={() => navigate(`/dashboard/projects/${createdProject._id}`)}>
               View Project
             </Button>
             <Button
               className="h-12 gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => navigate(`/dashboard/projects/${createdProject.id}?createPage=1`)}
+              onClick={() => navigate(`/dashboard/projects/${createdProject._id}?createPage=1`)}
             >
               <FileText className="h-4 w-4" /> Create First Page <ChevronRight className="h-4 w-4" />
             </Button>

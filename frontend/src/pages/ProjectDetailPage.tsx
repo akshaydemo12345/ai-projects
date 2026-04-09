@@ -8,12 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import {
-  getProjects, saveProjects,
-  type Project, type LandingPage
-} from "./ProjectsPage";
-import { generateLandingPageHtml } from "../lib/landingPageTemplates";
+import { copyToClipboard } from "@/lib/utils";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -54,13 +52,14 @@ interface CreatePageModalProps {
   project: Project;
   onClose: () => void;
   onCreate: (page: LandingPage) => void;
+  isCreating: boolean;
 }
 
-const CreatePageModal = ({ project, onClose, onCreate }: CreatePageModalProps) => {
+const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageModalProps) => {
   const [method, setMethod] = useState<CreateMethod>("choose");
   const [aiPrompt, setAiPrompt] = useState("");
   const [analyzeUrl, setAnalyzeUrl] = useState("https://");
-  const [loading, setLoading] = useState(false);
+
 
   // Per-page branding
   const [primaryColor, setPrimaryColor] = useState("#7c3aed");
@@ -76,46 +75,34 @@ const CreatePageModal = ({ project, onClose, onCreate }: CreatePageModalProps) =
     setLogoUrl(url);
   };
 
-  const buildPage = (partial: Partial<LandingPage>): LandingPage => ({
-    id: Date.now().toString(),
+  const buildPage = (partial: Partial<LandingPage>): Partial<LandingPage> => ({
     name: "",
     slug: "",
     metaTitle: "",
     metaDescription: "",
-    description: "",
     primaryColor,
     secondaryColor,
     logoUrl,
     accentColor: "#6366f1",
     type: "ppc",
     status: "draft",
-    leads: 0,
-    views: 0,
-    createdAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
     ...partial,
   });
 
   const handleAiGenerate = () => {
     if (!aiPrompt.trim()) { toast.error("Please describe your page."); return; }
-    setLoading(true);
-    setTimeout(() => {
-      const partial = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
-      const page = buildPage(partial);
-      setLoading(false);
-      onCreate(page);
-    }, 1500);
+    const partial = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+    const page = buildPage(partial);
+    onCreate(page as LandingPage);
   };
 
   const handleAnalyze = () => {
     if (!analyzeUrl.trim() || analyzeUrl === "https://") { toast.error("Please enter a URL."); return; }
-    setLoading(true);
-    setTimeout(() => {
-      const partial = generateAnalyzedPage(analyzeUrl, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
-      const page = buildPage(partial);
-      setLoading(false);
-      onCreate(page);
-    }, 2000);
+    const partial = generateAnalyzedPage(analyzeUrl, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+    const page = buildPage(partial);
+    onCreate(page as LandingPage);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -270,15 +257,16 @@ const CreatePageModal = ({ project, onClose, onCreate }: CreatePageModalProps) =
 
             <Button
               onClick={handleAiGenerate}
-              disabled={loading || !aiPrompt.trim()}
+              disabled={isCreating || !aiPrompt.trim()}
               className="w-full h-11 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
             >
-              {loading ? (
+              {isCreating ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generating Page...</>
               ) : (
                 <><Sparkles className="h-4 w-4" /> Generate with AI</>
               )}
             </Button>
+
           </div>
         )}
 
@@ -359,15 +347,16 @@ const CreatePageModal = ({ project, onClose, onCreate }: CreatePageModalProps) =
 
             <Button
               onClick={handleAnalyze}
-              disabled={loading}
+              disabled={isCreating}
               className="w-full h-11 gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white border-0"
             >
-              {loading ? (
+              {isCreating ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing Website...</>
               ) : (
                 <><Search className="h-4 w-4" /> Analyze & Generate</>
               )}
             </Button>
+
           </div>
         )}
       </div>
@@ -402,7 +391,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
     setLogoUrl(url);
   };
 
-  const liveUrl = `${projectUrl.replace(/\/$/, "")}/lp/${slug || "page-slug"}`;
+  const liveUrl = `${window.location.origin}/${slug || "page-slug"}`;
 
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) { toast.error("Name and slug are required."); return; }
@@ -521,19 +510,26 @@ type IntegrationTab = "wordpress" | "script" | "iframe";
 const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps) => {
   const [tab, setTab] = useState<IntegrationTab>("wordpress");
   const [urlCopied, setUrlCopied] = useState(false);
-  const publishUrl = page.publishUrl || `https://pub.ppcbuilder.io/p/${project.id.slice(-6)}/${page.slug}`;
-  const scriptCode = `<script src="https://cdn.ppcbuilder.io/embed.js" data-token="${project.token}" data-page="${page.slug}" async></script>`;
+  const [tokenCopiedLocal, setTokenCopiedLocal] = useState(false);
+  const [scriptCopied, setScriptCopied] = useState(false);
+  const [iframeCopied, setIframeCopied] = useState(false);
+  
+  const publishUrl = page.publishedUrl || `${window.location.origin}/${page.slug}`;
+  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL}/embed.js" data-token="${project.apiToken}" data-page="${page.slug}" async></script>`;
   const iframeCode = `<iframe src="${publishUrl}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
   const handlePublish = () => {
-    onPublished({ ...page, status: "published", publishUrl });
+    onPublished({ ...page, status: "published", publishedUrl: publishUrl });
     toast.success("🚀 Page published!");
   };
 
-  const copyUrl = () => {
-    navigator.clipboard.writeText(publishUrl);
-    setUrlCopied(true);
-    setTimeout(() => setUrlCopied(false), 2000);
+  const copyUrl = async () => {
+    const success = await copyToClipboard(publishUrl);
+    if (success) {
+      setUrlCopied(true);
+      toast.success("URL copied!");
+      setTimeout(() => setUrlCopied(false), 2000);
+    }
   };
 
   const tabs = [
@@ -600,10 +596,17 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground">{s.text}</p>
                       {s.num === 2 && (
-                        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 mt-1.5 cursor-pointer hover:bg-muted/80"
-                          onClick={() => { navigator.clipboard.writeText(project.token); toast.success("Token copied!"); }}>
-                          <span className="text-xs font-mono text-foreground">{project.token}</span>
-                          <Copy className="h-3 w-3 text-muted-foreground" />
+                        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 mt-1.5 cursor-pointer hover:bg-muted/80 transition-all active:scale-95"
+                          onClick={async () => { 
+                            const success = await copyToClipboard(project.apiToken); 
+                            if (success) {
+                              setTokenCopiedLocal(true);
+                              toast.success("Token copied!"); 
+                              setTimeout(() => setTokenCopiedLocal(false), 2000);
+                            }
+                          }}>
+                          <span className="text-xs font-mono text-foreground">{project.apiToken}</span>
+                          {tokenCopiedLocal ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                         </div>
                       )}
                     </div>
@@ -617,8 +620,18 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-xs text-muted-foreground">Add to your &lt;head&gt; tag:</p>
-                  <button onClick={() => { navigator.clipboard.writeText(scriptCode); toast.success("Copied!"); }} className="text-xs text-primary flex items-center gap-1">
-                    <Copy className="h-3 w-3" /> Copy
+                  <button 
+                    onClick={async () => { 
+                      const success = await copyToClipboard(scriptCode); 
+                      if (success) {
+                        setScriptCopied(true);
+                        toast.success("Code copied!"); 
+                        setTimeout(() => setScriptCopied(false), 2000);
+                      }
+                    }} 
+                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80 transition-all active:scale-95"
+                  >
+                    {scriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
                   </button>
                 </div>
                 <pre className="text-[11px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-foreground">{scriptCode}</pre>
@@ -630,8 +643,18 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-xs text-muted-foreground">Embed anywhere that accepts HTML:</p>
-                  <button onClick={() => { navigator.clipboard.writeText(iframeCode); toast.success("Copied!"); }} className="text-xs text-primary flex items-center gap-1">
-                    <Copy className="h-3 w-3" /> Copy
+                  <button 
+                    onClick={async () => { 
+                      const success = await copyToClipboard(iframeCode); 
+                      if (success) {
+                        setIframeCopied(true);
+                        toast.success("Code copied!"); 
+                        setTimeout(() => setIframeCopied(false), 2000);
+                      }
+                    }} 
+                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80 transition-all active:scale-95"
+                  >
+                    {iframeCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
                   </button>
                 </div>
                 <pre className="text-[11px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-foreground">{iframeCode}</pre>
@@ -660,79 +683,108 @@ const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const [projects, setProjects] = useState<Project[]>(getProjects());
+  // Queries
+  const { data: project, isLoading, error } = useQuery({
+    queryKey: ["project", id],
+    queryFn: () => projectsApi.getById(id!),
+    enabled: !!id,
+  });
+
   const [createOpen, setCreateOpen] = useState(searchParams.get("createPage") === "1");
   const [editingPage, setEditingPage] = useState<LandingPage | null>(null);
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
   const [deletePageId, setDeletePageId] = useState<string | null>(null);
   const [tokenCopied, setTokenCopied] = useState(false);
 
-  const project = projects.find((p) => p.id === id);
+  // Mutations
+  const createPageMutation = useMutation({
+    mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
+    onSuccess: (newPage) => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setCreateOpen(false);
+      toast.success("Page created!");
+      // Handle navigation to editor or similar
+      navigate(`/editor/${id}/${newPage._id}`);
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to create page"),
+  });
+
+  const deletePageMutation = useMutation({
+    mutationFn: (pageId: string) => pagesApi.delete(id!, pageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setDeletePageId(null);
+      toast.success("Page deleted");
+    },
+    onError: () => toast.error("Failed to delete page"),
+  });
+
+  const updatePageMutation = useMutation({
+    mutationFn: (page: LandingPage) => pagesApi.update(id!, page._id, page),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setEditingPage(null);
+      setPublishingPage(null);
+      toast.success("Page updated");
+    },
+    onError: () => toast.error("Failed to update page"),
+  });
 
   useEffect(() => {
-    if (!project) {
-      navigate("/dashboard");
-      return;
-    }
-    const pubId = searchParams.get("publish");
-    if (pubId) {
-      const page = project.pages.find(p => p.id === pubId);
-      if (page) {
-        setPublishingPage(page);
+    if (project) {
+      const pubId = searchParams.get("publish");
+      if (pubId) {
+        const page = project.pages?.find(p => p._id === pubId);
+        if (page) {
+          setPublishingPage(page);
+        }
+        navigate(`/dashboard/projects/${project._id}`, { replace: true });
       }
-      navigate(`/dashboard/projects/${project.id}`, { replace: true });
     }
   }, [project, searchParams, navigate]);
 
-  if (!project) return null;
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 
-  const updateProject = (updated: Project) => {
-    const all = projects.map((p) => (p.id === id ? updated : p));
-    saveProjects(all);
-    setProjects(all);
-  };
+  if (error || !project) return (
+    <div className="text-center py-20">
+      <h2 className="text-xl font-bold mb-2">Project not found</h2>
+      <Button onClick={() => navigate("/dashboard")}>Back to Projects</Button>
+    </div>
+  );
 
   const handlePageCreated = (page: LandingPage) => {
-    const updated = { ...project, pages: [...project.pages, page] };
-    updateProject(updated);
-    setCreateOpen(false);
-    // Store page data for the editor
-    localStorage.setItem("editor_project_id", project.id);
-    localStorage.setItem("editor_page_id", page.id);
-    // Generate AI/analyzed HTML for editor
-    const html = buildPageHtml(page, project);
-    localStorage.setItem("grapes-initial-html", html.body);
-    localStorage.setItem("grapes-initial-css", html.css);
-    toast.success("Page created! Opening editor…");
-    setTimeout(() => navigate("/editor"), 600);
+    createPageMutation.mutate(page);
   };
 
   const handleEditSave = (page: LandingPage) => {
-    const newPages = project.pages.map((p) => (p.id === page.id ? page : p));
-    updateProject({ ...project, pages: newPages });
-    setEditingPage(null);
-    toast.success("Page settings saved!");
+    updatePageMutation.mutate(page);
   };
 
   const handlePublished = (page: LandingPage) => {
-    const newPages = project.pages.map((p) => (p.id === page.id ? page : p));
-    updateProject({ ...project, pages: newPages });
-    setPublishingPage(null);
+    updatePageMutation.mutate({ ...page, status: "published" });
   };
 
   const confirmDelete = () => {
-    if (!deletePageId) return;
-    updateProject({ ...project, pages: project.pages.filter((p) => p.id !== deletePageId) });
-    toast.success("Page deleted.");
-    setDeletePageId(null);
+    if (deletePageId) {
+      deletePageMutation.mutate(deletePageId);
+    }
   };
 
-  const copyToken = () => {
-    navigator.clipboard.writeText(project.token);
-    setTokenCopied(true);
-    toast.success("Token copied!");
-    setTimeout(() => setTokenCopied(false), 2000);
+  const copyToken = async () => {
+    if (project.apiToken) {
+      const success = await copyToClipboard(project.apiToken);
+      if (success) {
+        setTokenCopied(true);
+        toast.success("Token copied!");
+        setTimeout(() => setTokenCopied(false), 2000);
+      }
+    }
   };
 
   // ── Page card ──
@@ -740,9 +792,9 @@ const ProjectDetailPage = () => {
     <div className="rounded-xl border border-border bg-card overflow-hidden hover:shadow-sm transition-all group">
       {/* Color bar */}
       <div className="h-1.5 flex">
-        <div className="flex-1" style={{ background: page.primaryColor || project.primaryColor }} />
-        <div className="flex-1" style={{ background: `linear-gradient(to right, ${page.primaryColor || project.primaryColor}, ${page.secondaryColor || project.secondaryColor})` }} />
-        <div className="flex-1" style={{ background: page.secondaryColor || project.secondaryColor }} />
+        <div className="flex-1" style={{ background: page.primaryColor || "#7c3aed" }} />
+        <div className="flex-1" style={{ background: `linear-gradient(to right, ${page.primaryColor || "#7c3aed"}, ${page.secondaryColor || "#6366f1"})` }} />
+        <div className="flex-1" style={{ background: page.secondaryColor || "#6366f1" }} />
       </div>
 
       <div className="p-5">
@@ -777,7 +829,7 @@ const ProjectDetailPage = () => {
               <Settings2 className="h-3.5 w-3.5" />
             </button>
             <button
-              onClick={() => setDeletePageId(page.id)}
+              onClick={() => setDeletePageId(page._id)}
               title="Delete"
               className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
             >
@@ -788,21 +840,20 @@ const ProjectDetailPage = () => {
 
         {/* Stats */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {page.views} views</span>
-          <span className="flex items-center gap-1"><UsersIcon className="h-3 w-3" /> {page.leads} leads</span>
+          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {page.views || 0} views</span>
         </div>
 
-        {/* Leads panel */}
-        <div className="flex items-center gap-3 bg-amber-50 rounded-lg px-3 py-2 mb-3">
-          <UsersIcon className="h-4 w-4 text-amber-600 flex-shrink-0" />
+        {/* Leads panel - Simpler version */}
+        <div className="flex items-center gap-3 bg-violet-50 rounded-lg px-3 py-2 mb-3">
+          <UsersIcon className="h-4 w-4 text-violet-600 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-amber-700 font-semibold">{page.leads} Leads captured</p>
-            <p className="text-[10px] text-amber-600">
-              {page.views} views • {page.views > 0 ? ((page.leads / page.views) * 100).toFixed(1) : 0}% conv.
+            <p className="text-xs text-violet-700 font-semibold">Leads captured</p>
+            <p className="text-[10px] text-violet-600">
+              {page.views || 0} views total
             </p>
           </div>
           <button
-            onClick={() => navigate(`/dashboard/leads?page=${page.id}&project=${project.id}`)}
+            onClick={() => navigate(`/dashboard/leads?page=${page._id}&project=${project._id}`)}
             className="text-[10px] font-semibold text-amber-700 hover:text-amber-900 underline"
           >
             View All
@@ -812,16 +863,7 @@ const ProjectDetailPage = () => {
         {/* 4 Action Buttons */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => {
-              localStorage.setItem("editor_project_id", project.id);
-              localStorage.setItem("editor_page_id", page.id);
-              if (!localStorage.getItem(`grapes-lp-${page.id}-html`)) {
-                const html = buildPageHtml(page, project);
-                localStorage.setItem("grapes-initial-html", html.body);
-                localStorage.setItem("grapes-initial-css", html.css);
-              }
-              navigate("/editor");
-            }}
+            onClick={() => navigate(`/editor/${project._id}/${page._id}`)}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
           >
             <FileEdit className="h-3.5 w-3.5" /> Editor
@@ -838,7 +880,7 @@ const ProjectDetailPage = () => {
             {page.status === "published" ? "Published ✓" : "Publish"}
           </button>
           <button
-            onClick={() => navigate(`/dashboard/leads?page=${page.id}&project=${project.id}`)}
+            onClick={() => navigate(`/dashboard/leads?page=${page._id}&project=${project._id}`)}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
           >
             <UsersIcon className="h-3.5 w-3.5" /> Leads
@@ -863,7 +905,9 @@ const ProjectDetailPage = () => {
           project={project}
           onClose={() => setCreateOpen(false)}
           onCreate={handlePageCreated}
+          isCreating={createPageMutation.isPending}
         />
+
       )}
       {editingPage && (
         <EditPageModal
@@ -913,7 +957,7 @@ const ProjectDetailPage = () => {
       <div className="flex items-start justify-between mb-8 gap-4">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl overflow-hidden border border-border flex items-center justify-center bg-primary"
-            style={{ backgroundImage: `linear-gradient(135deg, ${project.pages[0]?.primaryColor || '#7c3aed'}, ${project.pages[0]?.secondaryColor || '#6366f1'})` }}>
+            style={{ backgroundImage: `linear-gradient(135deg, ${project.pages?.[0]?.primaryColor || '#7c3aed'}, ${project.pages?.[0]?.secondaryColor || '#6366f1'})` }}>
             <Globe className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -946,7 +990,7 @@ const ProjectDetailPage = () => {
              <div className="flex items-center gap-2">
                <span className="relative flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>
                <span className="text-sm font-semibold text-foreground">
-                 {project.pages.filter(p => p.status === 'published').length} <span className="text-muted-foreground font-medium">Active</span>
+                 {project.pages?.filter(p => p.status === 'published').length || 0} <span className="text-muted-foreground font-medium">Active</span>
                </span>
              </div>
              <div className="flex items-center gap-2">
@@ -958,16 +1002,16 @@ const ProjectDetailPage = () => {
              <div className="flex items-center gap-2">
                <span className="h-2.5 w-2.5 rounded-full bg-amber-500"/>
                <span className="text-sm font-semibold text-foreground">
-                 {project.pages.filter(p => p.status !== 'published').length} <span className="text-muted-foreground font-medium">Draft</span>
+                 {project.pages?.filter(p => p.status !== 'published').length || 0} <span className="text-muted-foreground font-medium">Draft</span>
                </span>
              </div>
           </div>
 
           {/* Stats Summary */}
           <div className="flex items-center gap-6 flex-shrink-0 text-sm">
-             <span className="text-muted-foreground">Total Pages: <strong className="text-foreground text-lg ml-1">{project.pages.length}</strong></span>
-             <span className="text-muted-foreground">Leads: <strong className="text-foreground text-lg ml-1">{project.pages.reduce((s, p) => s+p.leads, 0)}</strong></span>
-             <span className="text-muted-foreground">Views: <strong className="text-foreground text-lg ml-1">{project.pages.reduce((s, p) => s+p.views, 0)}</strong></span>
+             <span className="text-muted-foreground">Total Pages: <strong className="text-foreground text-lg ml-1">{project.pages?.length || 0}</strong></span>
+             <span className="text-muted-foreground">Leads: <strong className="text-foreground text-lg ml-1">{project.pages?.reduce((s, p) => s + (p.stats?.leads || 0), 0) || 0}</strong></span>
+             <span className="text-muted-foreground">Views: <strong className="text-foreground text-lg ml-1">{project.pages?.reduce((s, p) => s + (p.stats?.views || 0), 0) || 0}</strong></span>
           </div>
         </div>
         
@@ -984,8 +1028,10 @@ const ProjectDetailPage = () => {
                  Copy Token
               </Button>
               <Button variant="outline" size="sm" onClick={() => {
-                navigator.clipboard.writeText(project.url || "http://localhost:8080");
-                toast.success("Project URL copied!");
+                if (project.url) {
+                  navigator.clipboard.writeText(project.url);
+                  toast.success("Project URL copied!");
+                }
               }} className="gap-2 h-9 font-semibold hover:bg-muted transition-colors">
                  <Link className="h-4 w-4" /> Copy Project URL
               </Button>
@@ -1004,7 +1050,7 @@ const ProjectDetailPage = () => {
               <Sparkles className="h-3.5 w-3.5 text-violet-600" />
             </div>
             <h2 className="text-base font-semibold text-foreground">Landing Pages</h2>
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{project.pages.length}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{project.pages?.length || 0}</span>
           </div>
           <button
             onClick={() => setCreateOpen(true)}
@@ -1014,7 +1060,7 @@ const ProjectDetailPage = () => {
           </button>
         </div>
 
-        {project.pages.length === 0 ? (
+        {!project.pages || project.pages.length === 0 ? (
           <div
             onClick={() => setCreateOpen(true)}
             className="rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center py-20 text-center cursor-pointer hover:border-primary/40 transition-colors"
@@ -1028,7 +1074,7 @@ const ProjectDetailPage = () => {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {project.pages.map((page) => (
-              <PageCard key={page.id} page={page} />
+              <PageCard key={page._id} page={page} />
             ))}
             {/* Add card */}
             <div
@@ -1047,23 +1093,5 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
-
-// ─── HTML Generator helper ────────────────────────────────────────────────────
-function buildPageHtml(page: LandingPage, project: Project): { body: string; css: string } {
-  const result = generateLandingPageHtml({
-    businessName: project.name,
-    industry: project.category,
-    pageType: page.type || "landing",
-    businessDesc: project.description,
-    targetAudience: "Customers",
-    ctaText: "Get Started Now",
-    aiPrompt: page.aiPrompt || page.name,
-    primaryColor: page.primaryColor || "#7c3aed",
-    secondaryColor: page.secondaryColor || "#6366f1",
-    accentColor: page.accentColor || "#6366f1",
-    websiteUrl: project.url,
-  });
-  return { body: result.html, css: result.css };
-}
 
 export default ProjectDetailPage;

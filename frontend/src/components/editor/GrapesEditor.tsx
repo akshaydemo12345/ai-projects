@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import grapesjs from 'grapesjs';
 import type { Editor } from 'grapesjs';
@@ -9,11 +9,36 @@ import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import './grapes-custom.css';
-import { getProjects, saveProjects } from '../../pages/ProjectsPage';
+import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const GrapesEditor = () => {
+  const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
+  const queryClient = useQueryClient();
   const editorRef = useRef<Editor | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ['project', projId],
+    queryFn: () => projectsApi.getById(projId!),
+    enabled: !!projId,
+  });
+
+  const { data: page, isLoading: pageLoading } = useQuery({
+    queryKey: ['page', projId, pageId],
+    queryFn: () => pagesApi.getById(projId!, pageId!),
+    enabled: !!projId && !!pageId,
+  });
+
+  const updatePageMutation = useMutation({
+    mutationFn: (data: Partial<LandingPage>) => pagesApi.update(projId!, pageId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projId] });
+    }
+  });
+
   const [codeView, setCodeView] = useState(false);
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -26,57 +51,120 @@ const GrapesEditor = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [editAiOpen, setEditAiOpen] = useState(false);
   const [editAiPrompt, setEditAiPrompt] = useState('');
-  
+
   // AI Chat Assistant
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([
     { role: 'ai', content: 'Hi! I am your AI Assistant. Select an element and tell me how you want to change it (e.g. "make it red", "change text to Hello").' }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  
+
   // Publish
   const [isPublishing, setIsPublishing] = useState(false);
   // SEO Settings
   const [seoOpen, setSeoOpen] = useState(false);
-  const [pageTitle, setPageTitle] = useState('Landing Page');
+  const [pageTitle, setPageTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
 
   useEffect(() => {
-    // Load SEO Data on mount
-    const projId = localStorage.getItem('editor_project_id');
-    const pageId = localStorage.getItem('editor_page_id');
-    if (projId && pageId) {
-      const proj = getProjects().find(p => p.id === projId);
-      const page = proj?.pages.find(p => p.id === pageId);
-      if (page) {
-        setPageTitle(page.metaTitle || page.name || 'Landing Page');
-        setMetaDesc(page.metaDescription || '');
+    if (page) {
+      setPageTitle(page.metaTitle || page.name || 'Landing Page');
+      setMetaDesc(page.metaDescription || '');
+    }
+  }, [page]);
+
+
+  // Ref to track page data for closures
+  const pageDataRef = useRef(page);
+  useEffect(() => {
+    pageDataRef.current = page;
+  }, [page]);
+
+  // Handle content application
+  const applyContentToEditor = (editor: any) => {
+    const currentPage = pageDataRef.current;
+    if (!editor || !currentPage) return;
+
+    console.log('🔄 Applying content to editor. Page status:', currentPage.status);
+
+    let dbContent: any = typeof currentPage.content === 'object' && (currentPage.content as any)?.fullHtml
+      ? (currentPage.content as any).fullHtml
+      : (currentPage?.content as any);
+    
+    let dbStyles: any = typeof currentPage.content === 'object' && (currentPage.content as any)?.fullCss
+      ? (currentPage.content as any).fullCss
+      : (currentPage as any)?.styles;
+
+    // Handle full HTML documents from AI
+    if (typeof dbContent === 'string' && (dbContent.toLowerCase().includes('<html') || dbContent.toLowerCase().includes('<body'))) {
+      console.log('📄 Full HTML detected, extracting body and styles...');
+      
+      const bodyMatch = dbContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      const styleMatches = dbContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+
+      if (bodyMatch) {
+        dbContent = bodyMatch[1];
+        console.log('✅ Body extracted, length:', dbContent.length);
+      } else if (dbContent.toLowerCase().includes('<html')) {
+        // If no body tag but html exists, strip everything up to the first div or section
+        const firstTag = dbContent.match(/<(div|section|header|main)[\s\S]*$/i);
+        if (firstTag) {
+          dbContent = firstTag[0].replace(/<\/body>[\s\S]*$/i, '').replace(/<\/html>[\s\S]*$/i, '');
+        }
+      }
+
+      if (styleMatches) {
+        let extractedStyles = '';
+        styleMatches.forEach((tag: string) => {
+          const m = tag.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+          if (m) extractedStyles += m[1] + '\n';
+        });
+        if (extractedStyles) {
+          dbStyles = (dbStyles || '') + '\n' + extractedStyles;
+          console.log('✅ Styles extracted, length:', extractedStyles.length);
+        }
       }
     }
 
-    if (editorRef.current) return;
+    if (dbContent && typeof dbContent === 'string' && dbContent.trim().length > 5) {
+      console.log('✅ GrapesJS: Setting Components (length:', dbContent.length, ')');
+      editor.setComponents(''); // Clear first
+      editor.setComponents(dbContent);
+      
+      if (dbStyles && typeof dbStyles === 'string' && dbStyles.trim().length > 0) {
+        console.log('✅ GrapesJS: Setting Styles (length:', dbStyles.length, ')');
+        editor.setStyle(dbStyles);
+      }
+    } else {
+      console.warn('⚠️ GrapesJS: No valid content to apply or content too short');
+      // If it's a new draft with no content, maybe don't clear? 
+      // Or set a default placeholder if it's completely empty
+      if (!dbContent || dbContent === '{}') {
+        editor.setComponents('<div style="padding: 50px; text-align: center; color: #999;">Start building your page here...</div>');
+      }
+    }
+  };
 
+  // Effect to handle editor initialization (ONCE per pageId)
+  useEffect(() => {
+    if (projectLoading || pageLoading || !page || !project || editorRef.current) return;
+
+    console.log('🚀 Initializing GrapesJS Editor...');
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
       width: 'auto',
       fromElement: false,
-      storageManager: {
-        type: 'local',
-        autosave: true,
-        autoload: true,
-        stepsBeforeSave: 1,
-        id: `grapes-lp-${pageId || 'default'}-`,
-      },
+      storageManager: false,
       undoManager: { trackSelection: false },
       plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
       pluginsOpts: {
-        [grapesjsPresetWebpage]: {
+        'grapesjs-preset-webpage': {
           blocksBasicOpts: { flexGrid: true },
           addBasicStyle: true,
         },
-        [grapesjsBlocksBasic]: { flexGrid: true },
+        'grapesjs-blocks-basic': { flexGrid: true },
       },
       canvas: {
         styles: ['https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'],
@@ -84,8 +172,8 @@ const GrapesEditor = () => {
       deviceManager: {
         devices: [
           { id: 'desktop', name: 'Desktop', width: '' },
-          { id: 'tablet',  name: 'Tablet',  width: '768px',  widthMedia: '992px' },
-          { id: 'mobile',  name: 'Mobile',  width: '375px',  widthMedia: '480px' },
+          { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
+          { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '480px' },
         ],
       },
       panels: { defaults: [] },
@@ -108,132 +196,31 @@ const GrapesEditor = () => {
       blockManager: { appendTo: '#blocks-container' },
     });
 
-    // Fix color picker positioning — runs continuously to catch every picker open
-    const fixAllPickers = () => {
-      // Target all possible color picker containers GrapesJS uses
-      const selectors = [
-        '.sp-container:not(.sp-hidden)',
-        '.gjs-color-picker',
-        '.pcr-app.visible',
-      ];
-      selectors.forEach(sel => {
-        document.querySelectorAll(sel).forEach((el) => {
-          const htmlEl = el as HTMLElement;
-          // Skip if already fixed or hidden
-          if (htmlEl.dataset.fixed === '1' && htmlEl.style.position === 'fixed') return;
-          if (htmlEl.offsetParent === null && !htmlEl.classList.contains('visible')) return;
-
-          // Find the color swatch trigger
-          const allSwatches = document.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .sp-replacer');
-          let triggerRect: DOMRect | null = null;
-          allSwatches.forEach(sw => {
-            const r = sw.getBoundingClientRect();
-            if (r.width > 0 && r.height > 0 && r.top > 0) {
-              triggerRect = r;
-            }
-          });
-
-          const pickerH = htmlEl.offsetHeight || 260;
-          const pickerW = htmlEl.offsetWidth || 250;
-          const vh = window.innerHeight;
-          const vw = window.innerWidth;
-
-          htmlEl.style.position = 'fixed';
-          htmlEl.style.zIndex = '99999';
-          htmlEl.dataset.fixed = '1';
-
-          if (triggerRect) {
-            const tr = triggerRect as DOMRect;
-            // Position to the left of the sidebar trigger
-            let left = tr.left - pickerW - 12;
-            if (left < 8) left = tr.right + 8;
-            if (left + pickerW > vw) left = vw - pickerW - 8;
-
-            let top = tr.top;
-            if (top + pickerH > vh) top = vh - pickerH - 8;
-            if (top < 8) top = 8;
-
-            htmlEl.style.top = `${top}px`;
-            htmlEl.style.left = `${left}px`;
-          } else {
-            // Center on screen
-            htmlEl.style.top = `${Math.max(8, (vh - pickerH) / 2)}px`;
-            htmlEl.style.left = `${Math.max(8, (vw - pickerW) / 2)}px`;
-          }
-        });
-      });
-    };
-
-    // Poll every 100ms to catch pickers as they appear
-    const pickerInterval = setInterval(fixAllPickers, 100);
-
-    // Also run on click
-    document.addEventListener('click', () => {
-      setTimeout(fixAllPickers, 30);
-      setTimeout(fixAllPickers, 150);
+    editor.on('load', () => {
+      console.log('📤 GrapesJS Loaded - applying content');
+      applyContentToEditor(editor);
     });
 
-    // Load initial HTML + CSS from CreatePageFlow if available
-    const initialHtml = localStorage.getItem('grapes-initial-html');
-    const initialCss = localStorage.getItem('grapes-initial-css');
-    if (initialHtml) {
-      // Clear saved project to show the new HTML for this specific page
-      const pId = pageId || 'default';
-      localStorage.removeItem(`grapes-lp-${pId}-html`);
-      localStorage.removeItem(`grapes-lp-${pId}-components`);
-      localStorage.removeItem(`grapes-lp-${pId}-css`);
-      localStorage.removeItem(`grapes-lp-${pId}-styles`);
-      localStorage.removeItem(`grapes-lp-${pId}-assets`);
-
-      editor.on('load', () => {
-        editor.setComponents(initialHtml);
-        if (initialCss) {
-          editor.setStyle(initialCss);
-        }
-        localStorage.removeItem('grapes-initial-html');
-        localStorage.removeItem('grapes-initial-css');
-      });
-    }
-
-    // Add custom AI command to open our React Modal
-    editor.Commands.add('open-ai-modal', {
-      run() {
-        setAiOpen(true);
-      }
-    });
-
-    editor.Commands.add('open-edit-ai-modal', {
-      run() {
-        setEditAiOpen(true);
-      }
-    });
-
-    // Add AI icon to element toolbar when selected
-    editor.on('component:selected', (model) => {
-      const toolbar = model.get('toolbar');
-      const id = 'custom-ai-action';
-      if (toolbar && !toolbar.some((t: any) => t.id === id)) {
-        // unshift adds it to the beginning of the toolbar, we will add it to the beginning
-        toolbar.unshift({
-          id,
-          command: 'open-edit-ai-modal',
-          // using the Sparkles icon SVG but in string format
-          label: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5" class="gjs-no-pointer" style="margin-top:2px"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/></svg>`,
-        });
-        model.set('toolbar', toolbar);
-      }
-    });
+    // Fallback if load already happened
+    setTimeout(() => applyContentToEditor(editor), 1000);
 
     editorRef.current = editor;
 
     return () => {
-      clearInterval(pickerInterval);
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
       }
     };
-  }, []);
+  }, [pageId, projectLoading, pageLoading]);
+
+  // Effect to re-apply content if page data updates (e.g. after AI edit)
+  useEffect(() => {
+    if (editorRef.current && page) {
+      applyContentToEditor(editorRef.current);
+    }
+  }, [page]);
+
 
   // ─── Device ───
   const switchDevice = (d: 'desktop' | 'tablet' | 'mobile') => {
@@ -242,18 +229,33 @@ const GrapesEditor = () => {
   };
 
   // ─── Save ───
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editorRef.current) return;
-    localStorage.setItem('grapes-preview-html', buildFullHtml(editorRef.current.getHtml(), editorRef.current.getCss() ?? '', pageTitle, metaDesc));
-    toast.success('Page saved!');
+    const html = editorRef.current.getHtml();
+    const css = editorRef.current.getCss() || '';
+
+    updatePageMutation.mutate({
+      content: html,
+      // @ts-ignore
+      styles: css,
+      metaTitle: pageTitle,
+      metaDescription: metaDesc,
+    });
+
+    toast.success('Page saved to cloud!');
   };
 
   // ─── Preview ───
   const handlePreview = () => {
-    if (!editorRef.current) return;
-    localStorage.setItem('grapes-preview-html', buildFullHtml(editorRef.current.getHtml(), editorRef.current.getCss() ?? '', pageTitle, metaDesc));
-    window.open('/preview', '_blank');
+    if (!page?.slug) {
+      toast.error('Please save your page first to generate a slug');
+      return;
+    }
+    const previewUrl = `${window.location.origin}/preview/${page.slug}`;
+    console.log('🔗 Opening Preview URL:', previewUrl);
+    window.open(previewUrl, '_blank');
   };
+
 
   // ─── Code ───
   const openCode = () => {
@@ -282,184 +284,105 @@ const GrapesEditor = () => {
   };
 
   // ─── Publish ───
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!editorRef.current) return;
     setIsPublishing(true);
-    
-    // Simulate token verification delay
-    setTimeout(() => {
-      localStorage.setItem('grapes-preview-html', buildFullHtml(editorRef.current!.getHtml(), editorRef.current!.getCss() ?? '', pageTitle, metaDesc));
-      
-      // Save current status to local storage page metadata
-      const projId = localStorage.getItem('editor_project_id');
-      const pageId = localStorage.getItem('editor_page_id');
-      if (projId && pageId) {
-        const projects = getProjects();
-        const updated = projects.map(proj => {
-          if (proj.id === projId) {
-            return {
-              ...proj,
-              pages: proj.pages.map(page => page.id === pageId ? { ...page, status: "published" as const } : page)
-            };
-          }
-          return proj;
-        });
-        saveProjects(updated);
-      }
-      
+
+    try {
+      const html = editorRef.current.getHtml();
+      const css = editorRef.current.getCss() || '';
+
+      await updatePageMutation.mutateAsync({
+        content: html,
+        // @ts-ignore
+        styles: css,
+        status: 'published',
+        metaTitle: pageTitle,
+        metaDescription: metaDesc,
+      });
+
       setIsPublishing(false);
-      toast.success('Token Verified & Page published!');
-      if (projId && pageId) navigate(`/dashboard/published?project=${projId}&page=${pageId}`);
-      else navigate('/dashboard/published');
-    }, 1500);
+      toast.success('Page published successfully!');
+      navigate(`/dashboard/published?project=${projId}&page=${pageId}`);
+    } catch (err) {
+      setIsPublishing(false);
+      toast.error('Failed to publish page');
+    }
   };
 
   // ─── AI prompt ───
-  const handleAiGenerate = () => {
+  const handleAiGenerate = async () => {
     if (!aiPrompt.trim() || !editorRef.current) return;
     setAiLoading(true);
 
-    // Get selected component
     const selected = editorRef.current.getSelected();
     const prompt = aiPrompt.trim();
 
-    // Simulate AI response with generated HTML based on prompt
-    setTimeout(() => {
-      let generatedHtml = '';
+    try {
+      const res = await aiApi.improve({
+        sectionType: selected ? selected.get('tagName') || 'section' : 'new section',
+        currentContent: selected ? selected.toHTML() : '<div>New AI Content</div>',
+        aiPrompt: prompt,
+        pageId
+      });
 
-      if (prompt.toLowerCase().includes('form') || prompt.toLowerCase().includes('contact')) {
-        generatedHtml = `
-<section style="background:#fff;padding:60px 40px;font-family:'Inter',sans-serif;">
-  <div style="max-width:600px;margin:0 auto;text-align:center;">
-    <h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 10px;">${prompt.slice(0, 50)}</h2>
-    <p style="font-size:15px;color:#64748b;margin:0 0 30px;">Fill out the form below and we'll get back to you shortly.</p>
-    <form action="#" method="POST" style="text-align:left;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <input type="text" name="name" placeholder="Your Name" required style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:14px;box-sizing:border-box;font-family:inherit;" />
-        <input type="email" name="email" placeholder="Email Address" required style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:14px;box-sizing:border-box;font-family:inherit;" />
-      </div>
-      <textarea name="message" rows="4" placeholder="Your message..." style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:14px;box-sizing:border-box;font-family:inherit;resize:vertical;margin-bottom:12px;"></textarea>
-      <button type="submit" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;">Submit</button>
-    </form>
-  </div>
-</section>`;
-      } else if (prompt.toLowerCase().includes('hero') || prompt.toLowerCase().includes('banner')) {
-        generatedHtml = `
-<section style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:80px 40px;font-family:'Inter',sans-serif;text-align:center;">
-  <div style="max-width:800px;margin:0 auto;">
-    <h1 style="font-size:48px;font-weight:800;color:#fff;line-height:1.2;margin:0 0 20px;">${prompt.slice(0, 60)}</h1>
-    <p style="font-size:18px;color:rgba(255,255,255,0.7);line-height:1.7;margin:0 0 32px;">Transform your business with our proven solutions. Get started today and see results within 30 days.</p>
-    <div style="display:flex;gap:16px;justify-content:center;">
-      <a href="#" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Get Started</a>
-      <a href="#" style="background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.4);padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">Learn More</a>
-    </div>
-  </div>
-</section>`;
-      } else if (prompt.toLowerCase().includes('pricing') || prompt.toLowerCase().includes('plan')) {
-        generatedHtml = `
-<section style="background:#f8fafc;padding:80px 40px;font-family:'Inter',sans-serif;">
-  <div style="max-width:1000px;margin:0 auto;text-align:center;">
-    <h2 style="font-size:36px;font-weight:800;color:#0f172a;margin:0 0 40px;">Choose Your Plan</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-      <div style="background:#fff;border-radius:14px;padding:32px;border:1px solid #e2e8f0;">
-        <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px;">Basic</div>
-        <div style="font-size:42px;font-weight:800;color:#7c3aed;">$29<span style="font-size:14px;color:#64748b;">/mo</span></div>
-        <p style="font-size:13px;color:#64748b;margin:12px 0 24px;">For individuals.</p>
-        <a href="#" style="display:block;background:#7c3aed;color:#fff;padding:12px;border-radius:8px;font-weight:700;text-decoration:none;">Choose Plan</a>
-      </div>
-      <div style="background:linear-gradient(135deg,#7c3aed,#6366f1);border-radius:14px;padding:32px;position:relative;">
-        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:3px 14px;border-radius:100px;">POPULAR</div>
-        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">Pro</div>
-        <div style="font-size:42px;font-weight:800;color:#fff;">$79<span style="font-size:14px;color:rgba(255,255,255,0.7);">/mo</span></div>
-        <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:12px 0 24px;">For teams.</p>
-        <a href="#" style="display:block;background:#fff;color:#7c3aed;padding:12px;border-radius:8px;font-weight:700;text-decoration:none;">Choose Plan</a>
-      </div>
-      <div style="background:#fff;border-radius:14px;padding:32px;border:1px solid #e2e8f0;">
-        <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px;">Enterprise</div>
-        <div style="font-size:42px;font-weight:800;color:#7c3aed;">Custom</div>
-        <p style="font-size:13px;color:#64748b;margin:12px 0 24px;">For large teams.</p>
-        <a href="#" style="display:block;background:#7c3aed;color:#fff;padding:12px;border-radius:8px;font-weight:700;text-decoration:none;">Contact Us</a>
-      </div>
-    </div>
-  </div>
-</section>`;
-      } else if (prompt.toLowerCase().includes('testimonial') || prompt.toLowerCase().includes('review')) {
-        generatedHtml = `
-<section style="background:#fff;padding:80px 40px;font-family:'Inter',sans-serif;">
-  <div style="max-width:1000px;margin:0 auto;text-align:center;">
-    <h2 style="font-size:36px;font-weight:800;color:#0f172a;margin:0 0 40px;">What People Say</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-      <div style="background:#f8fafc;border-radius:14px;padding:28px;text-align:left;">
-        <div style="color:#f59e0b;margin-bottom:12px;">★★★★★</div>
-        <p style="font-size:14px;color:#0f172a;line-height:1.7;margin:0 0 20px;font-style:italic;">"Absolutely incredible results. Our traffic increased by 300% in just 3 months."</p>
-        <div style="font-weight:700;font-size:14px;color:#0f172a;">John Smith</div>
-        <div style="font-size:12px;color:#64748b;">CEO, Tech Corp</div>
-      </div>
-      <div style="background:#f8fafc;border-radius:14px;padding:28px;text-align:left;">
-        <div style="color:#f59e0b;margin-bottom:12px;">★★★★★</div>
-        <p style="font-size:14px;color:#0f172a;line-height:1.7;margin:0 0 20px;font-style:italic;">"Best investment we've made for our marketing. Highly recommend their services."</p>
-        <div style="font-weight:700;font-size:14px;color:#0f172a;">Jane Doe</div>
-        <div style="font-size:12px;color:#64748b;">CMO, StartupXYZ</div>
-      </div>
-      <div style="background:#f8fafc;border-radius:14px;padding:28px;text-align:left;">
-        <div style="color:#f59e0b;margin-bottom:12px;">★★★★★</div>
-        <p style="font-size:14px;color:#0f172a;line-height:1.7;margin:0 0 20px;font-style:italic;">"Revenue doubled in a year. The team is professional and delivers on every promise."</p>
-        <div style="font-weight:700;font-size:14px;color:#0f172a;">Mike Johnson</div>
-        <div style="font-size:12px;color:#64748b;">Founder, LocalBiz</div>
-      </div>
-    </div>
-  </div>
-</section>`;
-      } else {
-        // Generic section
-        generatedHtml = `
-<section style="background:#f8fafc;padding:60px 40px;font-family:'Inter',sans-serif;">
-  <div style="max-width:900px;margin:0 auto;text-align:center;">
-    <h2 style="font-size:32px;font-weight:800;color:#0f172a;margin:0 0 16px;">${prompt.slice(0, 60)}</h2>
-    <p style="font-size:16px;color:#64748b;line-height:1.7;margin:0 0 24px;">This section was generated from your AI prompt. Click to select and edit any element to customize it to your needs.</p>
-    <a href="#" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Learn More</a>
-  </div>
-</section>`;
-      }
+      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
 
       if (selected) {
-        // Replace selected component content
-        selected.replaceWith(generatedHtml);
+        selected.replaceWith(improvedHtml);
       } else {
-        // Add at the end
-        editorRef.current?.addComponents(generatedHtml);
+        editorRef.current.addComponents(improvedHtml);
       }
 
       setAiLoading(false);
       setAiPrompt('');
       setAiOpen(false);
       toast.success('✨ AI section generated!');
-    }, 1500);
+    } catch (err: any) {
+      setAiLoading(false);
+      toast.error(err.message || 'Failed to generate AI content');
+    }
   };
 
-  const handleEditAiGenerate = () => {
+  const handleEditAiGenerate = async () => {
     if (!editAiPrompt.trim() || !editorRef.current) return;
-    setAiLoading(true);
-
     const selected = editorRef.current.getSelected();
+    if (!selected) return;
+
+    setAiLoading(true);
     const prompt = editAiPrompt.trim();
 
-    setTimeout(() => {
-      let generatedHtml = `
-<div style="padding:20px;border:2px dashed #7c3aed;background:#f8fafc;border-radius:8px;">
-  <p style="color:#7c3aed;font-weight:700;margin:0;">✨ AI Edited: ${prompt.slice(0, 30)}...</p>
-</div>`;
+    try {
+      const res = await aiApi.improve({
+        sectionType: selected.get('tagName') || 'component',
+        currentContent: selected.toHTML(),
+        aiPrompt: prompt,
+        pageId
+      });
 
-      if (selected) {
-        selected.replaceWith(generatedHtml);
-      }
+      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
+      selected.replaceWith(improvedHtml);
 
       setAiLoading(false);
       setEditAiPrompt('');
       setEditAiOpen(false);
       toast.success('✨ Component edited with AI!');
-    }, 1200);
+    } catch (err: any) {
+      setAiLoading(false);
+      toast.error(err.message || 'Failed to edit with AI');
+    }
   };
+
+  if (projectLoading || pageLoading || !page || !project) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a2e]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-white font-medium">Loading Editor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, system-ui, sans-serif', background: '#f5f5f5', overflow: 'hidden' }}>
@@ -485,13 +408,14 @@ const GrapesEditor = () => {
 
         {/* Device */}
         <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
-        <TBtn title="Tablet"  active={activeDevice === 'tablet'}  onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
-        <TBtn title="Mobile"  active={activeDevice === 'mobile'}  onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
+        <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
+        <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
 
         <Sep />
 
         {/* FullScreen preview inside GrapesJS */}
-        <TBtn title="Preview" onClick={() => editorRef.current?.runCommand('preview')}><EyeIcon /></TBtn>
+        <TBtn title="Preview" onClick={handlePreview}><EyeIcon /></TBtn>
+
 
         <Sep />
 
@@ -556,7 +480,7 @@ const GrapesEditor = () => {
           </div>
           <div id="blocks-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'blocks' ? 'block' : 'none' }} />
           <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none' }} />
-          
+
           {/* Settings Button */}
           <div style={{ padding: '12px', borderTop: '1px solid #2a2a3e', background: '#111122' }}>
             <button onClick={() => setSeoOpen(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: '#252540', color: '#e2e8f0', border: '1px solid #2a2a3e', cursor: 'pointer', padding: '10px', borderRadius: 8, transition: 'all 0.2s', fontSize: 13, fontWeight: 600 }}>
@@ -568,7 +492,7 @@ const GrapesEditor = () => {
         {/* ══ CANVAS (white background) ══ */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
-          
+
           {/* AI Chat Sidebar Overlay */}
           {chatOpen && (
             <div style={{
@@ -586,7 +510,7 @@ const GrapesEditor = () => {
                 </div>
                 <button onClick={() => setChatOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16 }}>✕</button>
               </div>
-              
+
               {/* Messages */}
               <div style={{ flex: 1, padding: 16, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {chatMessages.map((msg, i) => (
@@ -609,7 +533,7 @@ const GrapesEditor = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Input */}
               <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -622,12 +546,12 @@ const GrapesEditor = () => {
                         setChatInput('');
                         setChatMessages(m => [...m, { role: 'user', content: val }]);
                         setChatLoading(true);
-                        
+
                         setTimeout(() => {
                           const selected = editorRef.current?.getSelected();
                           const lowerVal = val.toLowerCase();
                           let reply = "I've generated a new section for you at the bottom!";
-                          
+
                           if (selected) {
                             if (lowerVal.includes('color') || lowerVal.includes('red') || lowerVal.includes('blue') || lowerVal.includes('bg') || lowerVal.includes('background')) {
                               // Simulate CSS style change
@@ -641,19 +565,19 @@ const GrapesEditor = () => {
                                 reply = `I changed the background to ${color}.`;
                               }
                             } else if (lowerVal.includes('text') || lowerVal.includes('change') || lowerVal.includes('say')) {
-                               selected.components(val);
-                               reply = "I've updated the text content.";
+                              selected.components(val);
+                              reply = "I've updated the text content.";
                             } else {
-                               // Default replace
-                               selected.addStyle({ border: '2px dashed #10b981' });
-                               reply = "I've highlighted the element and applied custom styling based on your prompt.";
+                              // Default replace
+                              selected.addStyle({ border: '2px dashed #10b981' });
+                              reply = "I've highlighted the element and applied custom styling based on your prompt.";
                             }
                           } else {
-                             // Create dummy block
-                             let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0,30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
-                             editorRef.current?.addComponents(html);
+                            // Create dummy block
+                            let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0, 30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
+                            editorRef.current?.addComponents(html);
                           }
-                          
+
                           setChatMessages(m => [...m, { role: 'ai', content: reply }]);
                           setChatLoading(false);
                         }, 1200);
@@ -663,42 +587,42 @@ const GrapesEditor = () => {
                     disabled={chatLoading}
                     style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none' }}
                   />
-                  <button 
+                  <button
                     disabled={!chatInput.trim() || chatLoading}
                     onClick={() => {
-                        const val = chatInput.trim();
-                        setChatInput('');
-                        setChatMessages(m => [...m, { role: 'user', content: val }]);
-                        setChatLoading(true);
-                        setTimeout(() => {
-                          const selected = editorRef.current?.getSelected();
-                          const lowerVal = val.toLowerCase();
-                          let reply = "I've generated a new section for you at the bottom!";
-                          if (selected) {
-                            if (lowerVal.includes('color') || lowerVal.includes('red') || lowerVal.includes('blue') || lowerVal.includes('bg') || lowerVal.includes('background')) {
-                              const colorMatch = lowerVal.match(/(red|blue|green|purple|black|white|gray|yellow|orange|#\w+)/);
-                              const color = colorMatch ? colorMatch[0] : '#7c3aed';
-                              if (lowerVal.includes('text') || lowerVal.includes('font')) {
-                                selected.addStyle({ color });
-                                reply = `I changed the text color to ${color}.`;
-                              } else {
-                                selected.addStyle({ 'background-color': color });
-                                reply = `I changed the background to ${color}.`;
-                              }
-                            } else if (lowerVal.includes('text') || lowerVal.includes('change') || lowerVal.includes('say')) {
-                               selected.components(val);
-                               reply = "I've updated the text content.";
+                      const val = chatInput.trim();
+                      setChatInput('');
+                      setChatMessages(m => [...m, { role: 'user', content: val }]);
+                      setChatLoading(true);
+                      setTimeout(() => {
+                        const selected = editorRef.current?.getSelected();
+                        const lowerVal = val.toLowerCase();
+                        let reply = "I've generated a new section for you at the bottom!";
+                        if (selected) {
+                          if (lowerVal.includes('color') || lowerVal.includes('red') || lowerVal.includes('blue') || lowerVal.includes('bg') || lowerVal.includes('background')) {
+                            const colorMatch = lowerVal.match(/(red|blue|green|purple|black|white|gray|yellow|orange|#\w+)/);
+                            const color = colorMatch ? colorMatch[0] : '#7c3aed';
+                            if (lowerVal.includes('text') || lowerVal.includes('font')) {
+                              selected.addStyle({ color });
+                              reply = `I changed the text color to ${color}.`;
                             } else {
-                               selected.addStyle({ border: '2px dashed #10b981' });
-                               reply = "I've highlighted the element and applied custom styling based on your prompt.";
+                              selected.addStyle({ 'background-color': color });
+                              reply = `I changed the background to ${color}.`;
                             }
+                          } else if (lowerVal.includes('text') || lowerVal.includes('change') || lowerVal.includes('say')) {
+                            selected.components(val);
+                            reply = "I've updated the text content.";
                           } else {
-                             let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0,30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
-                             editorRef.current?.addComponents(html);
+                            selected.addStyle({ border: '2px dashed #10b981' });
+                            reply = "I've highlighted the element and applied custom styling based on your prompt.";
                           }
-                          setChatMessages(m => [...m, { role: 'ai', content: reply }]);
-                          setChatLoading(false);
-                        }, 1200);
+                        } else {
+                          let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0, 30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
+                          editorRef.current?.addComponents(html);
+                        }
+                        setChatMessages(m => [...m, { role: 'ai', content: reply }]);
+                        setChatLoading(false);
+                      }, 1200);
                     }}
                     style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontWeight: 600, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', opacity: chatInput.trim() ? 1 : 0.5 }}
                   >
@@ -708,7 +632,7 @@ const GrapesEditor = () => {
               </div>
             </div>
           )}
-          <style dangerouslySetInnerHTML={{__html: "@keyframes spin { 100% { transform: rotate(360deg); } }"}} />
+          <style dangerouslySetInnerHTML={{ __html: "@keyframes spin { 100% { transform: rotate(360deg); } }" }} />
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}
@@ -857,49 +781,33 @@ const GrapesEditor = () => {
             <div style={{ padding: 24 }}>
               <div style={{ marginBottom: 18 }}>
                 <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Page Title</label>
-                <input 
-                  type="text" 
-                  value={pageTitle} 
-                  onChange={e => setPageTitle(e.target.value)} 
+                <input
+                  type="text"
+                  value={pageTitle}
+                  onChange={e => setPageTitle(e.target.value)}
                   placeholder="E.g. My Awesome Landing Page"
                   style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Meta Description</label>
-                <textarea 
-                  value={metaDesc} 
-                  onChange={e => setMetaDesc(e.target.value)} 
+                <textarea
+                  value={metaDesc}
+                  onChange={e => setMetaDesc(e.target.value)}
                   placeholder="Brief description of your page for search engines..."
                   rows={4}
                   style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
                 />
               </div>
-              <button 
+              <button
                 onClick={() => {
-                  const projId = localStorage.getItem('editor_project_id');
-                  const pageId = localStorage.getItem('editor_page_id');
-                  if (projId && pageId) {
-                    const projects = getProjects();
-                    const nextProjects = projects.map(proj => {
-                      if (proj.id === projId) {
-                        return {
-                          ...proj,
-                          pages: proj.pages.map(page => {
-                            if (page.id === pageId) {
-                              return { ...page, metaTitle: pageTitle, metaDescription: metaDesc };
-                            }
-                            return page;
-                          })
-                        }
-                      }
-                      return proj;
-                    });
-                    saveProjects(nextProjects);
-                  }
-                  setSeoOpen(false); 
-                  toast.success('SEO Settings saved!'); 
-                }} 
+                  updatePageMutation.mutate({
+                    metaTitle: pageTitle,
+                    metaDescription: metaDesc,
+                  });
+                  setSeoOpen(false);
+                  toast.success('SEO Settings updated!');
+                }}
                 style={{ width: '100%', background: 'linear-gradient(135deg,#10b981,#3b82f6)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'opacity 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
@@ -917,7 +825,7 @@ const GrapesEditor = () => {
           <div style={{ height: 48, background: '#1a1a2e', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10 }}>
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Code Editor</span>
             <div style={{ flex: 1 }} />
-            <button onClick={applyCode}    style={{ ...modalBtn, background: '#7c3aed' }}>Apply Code</button>
+            <button onClick={applyCode} style={{ ...modalBtn, background: '#7c3aed' }}>Apply Code</button>
             <button onClick={downloadHtml} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
             <button onClick={() => setCodeView(false)} style={{ ...modalBtn, background: '#374151' }}>Close</button>
           </div>
@@ -955,8 +863,8 @@ const TBtn = ({ children, onClick, title, active = false }: { children: React.Re
     border: 'none', borderRadius: 5, padding: '5px 8px', cursor: 'pointer',
     transition: 'all .12s', minWidth: 30, height: 30,
   }}
-  onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#252540'; (e.currentTarget as HTMLButtonElement).style.color = '#e2e8f0'; } }}
-  onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
+    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#252540'; (e.currentTarget as HTMLButtonElement).style.color = '#e2e8f0'; } }}
+    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
   >{children}</button>
 );
 
@@ -982,17 +890,17 @@ const modalBtn: React.CSSProperties = {
 };
 
 /* ── SVG Icons ── */
-const CodeIcon     = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>;
-const DesktopIcon  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
-const TabletIcon   = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
-const MobileIcon   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
-const UndoIcon     = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>;
-const RedoIcon     = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>;
-const TrashIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
-const EyeIcon      = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-const SaveIcon     = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
-const SparklesIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/></svg>;
-const SettingsIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const CodeIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>;
+const DesktopIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>;
+const TabletIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
+const MobileIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
+const UndoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" /></svg>;
+const RedoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 14 20 9 15 4" /><path d="M4 20v-7a4 4 0 0 1 4-4h12" /></svg>;
+const TrashIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>;
+const EyeIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
+const SaveIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
+const SparklesIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" /></svg>;
+const SettingsIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
 
 /* ── Build full HTML ── */
 const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '') => `<!DOCTYPE html>
