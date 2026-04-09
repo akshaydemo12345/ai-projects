@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const pageSchema = new mongoose.Schema({
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    required: [true, 'Page must belong to a project'],
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -14,12 +19,16 @@ const pageSchema = new mongoose.Schema({
   slug: {
     type: String,
     required: true,
-    unique: true,
     lowercase: true,
+    trim: true,
   },
   content: {
     type: mongoose.Schema.Types.Mixed,
-    required: true,
+    default: {},
+  },
+  styles: {
+    type: String,
+    default: '',
   },
   template: {
     type: String,
@@ -29,9 +38,17 @@ const pageSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  previewUrl: {
+    type: String,
+    trim: true,
+  },
+  aiPrompt: {
+    type: String,
+    trim: true,
+  },
   status: {
     type: String,
-    enum: ['draft', 'published'],
+    enum: ['draft', 'published', 'generating'],
     default: 'draft',
   },
   domain: {
@@ -72,6 +89,11 @@ const pageSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    select: false,
+  },
   publishedAt: {
     type: Date,
   },
@@ -85,8 +107,22 @@ const pageSchema = new mongoose.Schema({
   },
 });
 
+// Ensure slug is unique WITHIN A PROJECT
+pageSchema.index({ projectId: 1, slug: 1 }, { unique: true });
+
+// Soft delete query middleware
+pageSchema.pre(/^find/, function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
 pageSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
+  
+  if (this.isModified('status') && this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = Date.now();
+  }
+  
   next();
 });
 

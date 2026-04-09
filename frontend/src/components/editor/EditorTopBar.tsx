@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 interface EditorTopBarProps {
   title: string;
   onSave: () => void;
-  onImprove?: () => void; // New prop
 }
 
-const EditorTopBar = ({ title, onSave, onImprove }: EditorTopBarProps) => {
+const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between border-b border-border bg-[hsl(240,20%,12%)] px-4">
       <div className="flex items-center gap-3">
@@ -27,14 +26,6 @@ const EditorTopBar = ({ title, onSave, onImprove }: EditorTopBarProps) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onImprove} 
-          className="text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 gap-1.5 text-xs font-medium"
-        >
-          <Zap className="h-3.5 w-3.5" /> Improve with AI
-        </Button>
         <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 gap-1.5 text-xs">
           <Eye className="h-3.5 w-3.5" /> Preview
         </Button>

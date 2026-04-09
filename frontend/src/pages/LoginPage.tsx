@@ -1,48 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, CheckCircle2, Star, Loader2 } from "lucide-react";
+import { Zap, CheckCircle2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { authService } from "@/services/authService";
+
+import { useAuth } from "@/hooks/useAuth";
+import { authApi } from "@/services/api";
 import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      const payload = isSignUp 
-        ? { name, email, password } 
-        : { email, password };
-
-      const response = await (isSignUp 
-        ? authService.signup(payload) 
-        : authService.login(payload));
-
-      const finalToken = response.accessToken || response.token || response.data?.token;
-
-      if (response.status === "success" && (finalToken && response.data?.user)) {
-        authService.setToken(finalToken);
-        authService.setUser(response.data.user);
-        toast.success(isSignUp ? "Account created successfully!" : "Welcome back!");
-        navigate("/dashboard");
+      let response;
+      if (isSignUp) {
+        response = await authApi.signup({ name, email, password });
+        toast.success("Account created successfully!");
       } else {
-        toast.error(response.message || "An error occurred");
+        response = await authApi.login({ email, password });
+        toast.success("Welcome back!");
       }
-    } catch (err: any) {
-      toast.error("Internal Server Error. Please try again later.");
-      console.error(err);
+
+      const { accessToken, data } = response;
+      login(accessToken, data.user);
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Authentication failed");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -215,14 +210,10 @@ const LoginPage = () => {
             </div>
             <Button
               type="submit"
-              disabled={loading}
               className="w-full h-12 text-base bg-primary hover:bg-primary/90"
+              disabled={isLoading}
             >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                isSignUp ? "Create Account" : "Sign In"
-              )}
+              {isLoading ? "Processing..." : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
 

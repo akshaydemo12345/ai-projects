@@ -1,28 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Users, Search, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { leadsApi, type Lead } from "@/services/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const LeadsPage = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    leadsApi.getAll().then((data) => {
-      setLeads(data);
-      setLoading(false);
-    });
-  }, []);
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => leadsApi.getAll(),
+  });
 
-  const filtered = leads.filter(
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => leadsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast.success("Lead deleted successfully");
+    }
+  });
+
+  const filtered = (leads as Lead[]).filter(
     (l) => l.name.toLowerCase().includes(search.toLowerCase()) || l.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleDelete = async (id: string) => {
-    await leadsApi.delete(id);
-    setLeads(leads.filter((l) => l.id !== id));
+    deleteMutation.mutate(id);
   };
 
   return (
@@ -60,21 +66,21 @@ const LeadsPage = () => {
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Actions</th>
               </tr>
-            </thead>
+             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">Loading...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">No leads found</td></tr>
               ) : (
                 filtered.map((lead) => (
-                  <tr key={lead.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                  <tr key={lead._id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm text-foreground font-medium">{lead.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{lead.email}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{lead.phone}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{lead.createdAt}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(lead.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleDelete(lead.id)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                      <button onClick={() => handleDelete(lead._id)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
