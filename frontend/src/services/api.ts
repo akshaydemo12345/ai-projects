@@ -30,6 +30,9 @@ export interface Project {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
   pages?: LandingPage[];
   stats?: {
     views: number;
@@ -157,23 +160,53 @@ export const projectsApi = {
 export const pagesApi = {
   getPagesByProject: async (projectId: string) => {
     const res = await apiFetch(`/projects/${projectId}/pages`);
-    return res.data.pages;
+    if (!res.data || !res.data.pages) return [];
+    return res.data.pages.map((p: any) => ({
+      ...p,
+      name: p.title || p.name || 'Untitled Page'
+    }));
   },
   getById: async (projectId: string, pageId: string) => {
     const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`);
-    return res.data.page;
+    if (!res.data || !res.data.page) return null;
+    return {
+      ...res.data.page,
+      name: res.data.page.title || res.data.page.name || 'Untitled Page'
+    };
   },
   create: async (projectId: string, data: any) => {
+    // Map frontend fields to backend schema fields
+    const payload = {
+      ...data,
+      // Backend schema uses 'title', frontend uses 'name' — send both
+      title: data.name || data.title || 'Untitled Page',
+      name: data.name || data.title || 'Untitled Page',
+      // Map AI prompt fields
+      aiPrompt: data.aiPrompt || data.ai_prompt || '',
+      ai_prompt: data.aiPrompt || data.ai_prompt || '',
+      // Map branding
+      primaryColor: data.primaryColor,
+      secondaryColor: data.secondaryColor,
+      logoUrl: data.logoUrl,
+    };
     const res = await apiFetch(`/projects/${projectId}/pages`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
+    // Ensure the returned object has 'name' mapped from 'title'
+    if (res.data && res.data.title) {
+      res.data.name = res.data.title;
+    }
     return res.data;
   },
   update: async (projectId: string, pageId: string, data: any) => {
+    const payload = {
+      ...data,
+      ...(data.name ? { title: data.name } : {}),
+    };
     const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res.data;
   },

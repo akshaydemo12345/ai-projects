@@ -14,15 +14,7 @@ const PublicLandingPage = () => {
 
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['public-page', slug],
-    queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/page/${slug}`);
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Page not found');
-      
-      // result.data is page.content
-      // result.meta contains title, seo etc.
-      return result;
-    },
+    queryFn: () => pagesApi.getBySlug(slug!),
     enabled: !!slug,
     retry: 1,
   });
@@ -116,21 +108,34 @@ const PublicLandingPage = () => {
       let finalHtml = aiHtml;
 
       // Ensure styles and scripts are injected even into full documents
-      if (finalHtml.toLowerCase().includes('</body>')) {
-        // Inject styles into head
-        if (aiCss && aiCss.trim()) {
+      const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
+      
+      if (isFullDoc) {
+        // Inject styles into head of full document if provided separately
+        if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
           const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
           if (finalHtml.toLowerCase().includes('</head>')) {
             finalHtml = finalHtml.replace(/<\/head>/i, styleTag + '</head>');
+          } else if (finalHtml.toLowerCase().includes('<head>')) {
+            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag);
           } else {
-            finalHtml = finalHtml.replace(/<html>/i, '<html><head>' + styleTag + '</head>');
+            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + '</head>');
           }
         }
         
-        // Inject lead capture at end of body
-        finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        // Inject lead capture
+        if (finalHtml.toLowerCase().includes('</body>')) {
+          finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        } else {
+          finalHtml += leadCaptureScript;
+        }
       } else {
-        // Fallback or fragment: Wrap it with proper metadata and reset styles
+        // It's a fragment: Wrap it with proper metadata and reset styles
+        // Strip <body> and </body> if they exist to avoid nesting
+        const bodyInner = finalHtml
+          .replace(/<body[^>]*>/i, '')
+          .replace(/<\/body>/i, '');
+
         finalHtml = `
           <!DOCTYPE html>
           <html>
@@ -150,7 +155,7 @@ const PublicLandingPage = () => {
               </style>
             </head>
             <body>
-              ${aiHtml}
+              ${bodyInner}
               <script>${aiJs}</script>
               ${leadCaptureScript}
             </body>

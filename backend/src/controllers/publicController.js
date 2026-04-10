@@ -18,7 +18,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles seo template domain status previewToken projectId');
+    ).select('title slug content styles seo template domain status previewToken projectId views');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -51,14 +51,16 @@ exports.getPublicPage = async (req, res, next) => {
     const { slug } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { slug, status: 'published' },
+      { slug, isDeleted: { $ne: true } }, // Allow drafts to be viewed at this URL
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views projectId');
+    ).select('title slug content seo template domain publishedAt views projectId status');
 
-    if (!page) return next(new AppError('Page not found or not published', 404));
+    if (!page) return next(new AppError('Page not found', 404));
 
-    // Token check removed as per requirements for public pages
+    // If it's not published, we just serve it normally for the dashboard "View" click
+    // This solves the 'Page Not Found' issue after generation
+    
     res.status(200).json({
       status: 'success',
       data: { page },
@@ -174,7 +176,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     if (!normalizedSlug) return next(new AppError('Page not found', 404));
 
     const page = await Page.findOneAndUpdate(
-      { slug: normalizedSlug, status: 'published' },
+      { slug: normalizedSlug, isDeleted: { $ne: true } },
       { $inc: { views: 1 } },
       { new: true }
     );

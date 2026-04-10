@@ -13,7 +13,7 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
   const [copiedToken, setCopiedToken] = useState(false);
 
   const script = token
-    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${pageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL}/sdk/loader.js" async defer></script>`
+    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${pageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/sdk/loader.js" async defer></script>`
     : '';
 
   const copyToken = async () => { 
@@ -110,7 +110,7 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
 const ScriptIntegration = ({ project, pageSlug }: { project: Project, pageSlug: string }) => {
   const [copied, setCopied] = useState(false);
   const token = project.apiToken || 'PC-TOKEN-PENDING';
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL}/sdk/embed.js?token=${token}&page=${pageSlug}" async></script>`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/sdk/embed.js?token=${token}&page=${pageSlug}" async></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
@@ -163,7 +163,7 @@ const PublishedPage = () => {
     );
   }
 
-  const liveUrl = `${window.location.origin}/${page.slug}`;
+  const liveUrl = `${window.location.origin}/p/${page.slug}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
     if (success) {

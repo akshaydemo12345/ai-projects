@@ -1,196 +1,181 @@
 'use strict';
 
-const https = require('https');
+const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
+const logger = require('../utils/logger');
 
 /**
- * Builds the structured landing page content prompt.
- * @param {Object} input - Business details from the request body
- * @returns {string} - Full prompt string
+ * Build SYSTEM prompt (Claude-Level Master UI Designer)
  */
-const buildPrompt = ({
-  businessName,
-  template,
-  businessDescription,
-  targetAudience,
-  ctaText,
-  aiPrompt,
-  pageId,
-}) => {
-  const industries = {
-    medical: 'clean, blue, trust-focused',
-    real_estate: 'luxury, dark, premium-focused',
-    saas: 'modern, gradients, minimal-focused',
-    fitness: 'bold, dark, energetic-focused',
-    education: 'friendly, structured, academic-focused',
-    default: 'modern, professional, conversion-focused'
-  };
-
-  const styleContext = industries[template] || industries.default;
-
+const buildSystemPrompt = () => {
   return `
-You are an advanced AI landing page engine designed for SaaS automation platforms.
-Generate a HIGH-CONVERTING, VISUALLY RICH, MOBILE-FIRST landing page for:
-Business: ${businessName}
-Description: ${businessDescription}
-Target Audience: ${targetAudience}
-Primary CTA: ${ctaText}
-Custom Instructions: ${aiPrompt}
+You are a WORLD-CLASS UI/UX Designer and Lead Frontend Architect from a top-tier digital agency (like Stripe, Vercel, or Apple).
+Your task is to generate a landing page that looks and feels like a $25,000+ premium custom-built masterpiece.
 
----
-## 🧱 MANDATORY SECTIONS
-1. HERO: Background image, H1 Headline + subheadline, Capture Form (Name, Phone, Email), Trust badge.
-2. FEATURES / SERVICES: Grid cards with icons and benefit-driven copy.
-3. MID FORM: Full capture form (Name, Email, Phone, Message, Service Dropdown).
-4. TESTIMONIALS: 3 realistic user reviews.
-5. FAQ: FAQ section.
-6. FINAL CTA & FOOTER.
+# CORE DESIGN LAWS (NON-NEGOTIABLE):
+1. **TYPOGRAPHY (The Foundation)**: 
+   - Use 'Plus Jakarta Sans' or 'Inter' from Google Fonts.
+   - HERO HEADLINES: 700+ weight, letter-spacing: -0.04em, line-height: 1.1. Use solid [PRIMARY_HEX] for highlights.
+2. **COLOR & BRANDING (SOLID ONLY)**:
+   - **NO GRADIENTS**: Do not use linear-gradients or radial-gradients for buttons or backgrounds.
+   - Use the provided PRIMARY and SECONDARY hex codes as SOLID colors.
+   - SECTION ALTERNATION: Use [PRIMARY_HEX] for the Hero section background, and use [SECONDARY_HEX] or a light/dark neutral for subsequent sections to create contrast.
+3. **BUTTON ARCHITECTURE**:
+   - Primary Buttons: SOLID background [PRIMARY_HEX], rounded-lg (8px), bold, high-contrast text.
+   - Secondary Buttons: SOLID [SECONDARY_HEX] or bordered.
+4. **MODERN LAYOUTS**:
+   - BENTO GRIDS: Use for features. Cards should be solid containers with 1px borders.
+   - DEPTH: Use soft shadows (0 10px 30px rgba(0,0,0,0.1)) rather than blurs or gradients.
+5. **SPACING**: Sections must have 100px+ vertical padding.
 
----
-## 🎨 DESIGN & ASSET RULES (STRICT)
-- Style: ${styleContext}.
-- **CSS**: Use ONLY inline <style> tags in the <head>. NEVER use external .css files or relative links.
-- **Images**: Use ONLY absolute https://images.unsplash.com URLs. NO relative paths (e.g., "img/hero.jpg").
-- **Gradients & Shadows**: Use modern, premium visual styling (glassmorphism if appropriate).
-- **Fonts**: Use Google Fonts via @import in the <style> block.
+# CONTENT QUALITY:
+- Write compelling, conversion-focused copy.
+- Structure: Clear Hero -> Trusted By -> Features (Bento) -> Social Proof -> FAQ -> conversion-focused Footer.
+- Ensure 100% Mobile Responsiveness.
 
-## ⚙️ FUNCTIONALITY (MUST IMPLEMENT)
-- Fully responsive (mobile-first).
-- Form validation (HTML5 + JS).
-- AJAX Submission: Include a global <script> that intercepts ALL form submissions:
-  - Endpoint: "/api/leads"
-  - Method: POST
-  - Payload: { name, email, phone, message, pageSlug: window.location.pathname.split("/").pop(), projectId: "${pageId}" }
-  - Handle Loading: Disable button during fetch.
-  - Handle Success: Replace form with "Thank you! We will contact you soon." message.
-  - Handle Error: Show alert "Submission failed, please try again."
-
-OUTPUT REQUIREMENT:
-Return ONLY the raw HTML code. Do NOT wrap in markdown fences. Do NOT add explanation text. Start with <!DOCTYPE html>.
+# TECHNICAL REQUIREMENTS:
+- LOGO INTEGRATION: Place the logo image (use src="{{LOGO_URL}}") in the Navbar. Ensure it has a professional max-height (45px). If no logo is provided, use the Business Name as a text-brand.
+- Return ONLY full HTML (<!DOCTYPE html>).
+- All CSS must be inside a <style> tag.
+- Load Lucide Icons: <script src="https://unpkg.com/lucide@latest"></script>. Call lucide.createIcons() at the end.
+- STARS: For ratings (★★★★★), use Lucide 'star' icons instead of text.
+- Use only Vanilla CSS (No Tailwind, No Bootstrap).
 `;
 };
 
 /**
- * Makes a raw HTTPS POST request to OpenAI Chat Completions.
- * @param {string} prompt
- * @returns {Promise<Object>} - Parsed JSON content
+ * Build USER prompt (Business Context + Branding)
  */
-const callOpenAI = (prompt) => {
-  return new Promise((resolve, reject) => {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return reject(new Error('OPENAI_API_KEY is not configured in environment'));
+const buildUserPrompt = ({
+  businessName,
+  industry,
+  businessDescription,
+  targetAudience,
+  ctaText,
+  aiPrompt,
+  primaryColor,
+  secondaryColor,
+  logoUrl,
+}) => {
+  return `
+# BRAND IDENTITY (TRUTH):
+- PRIMARY COLOR: ${primaryColor || '#d23f1b'}
+- SECONDARY COLOR: ${secondaryColor || '#c7d186'}
+- LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
+
+**CRITICAL**: Ignore any other colors mentioned in the text below. Use ONLY these HEX codes.
+
+# PROJECT CONTEXT:
+- Name: ${businessName}
+- Industry: ${industry || 'Service'}
+- Goal: ${businessDescription}
+- Audience: ${targetAudience}
+- Main CTA: ${ctaText}
+
+# USER'S VISION (CUSTOM PROMPT):
+"${aiPrompt || 'Create a world-class, modern, high-conversion SaaS landing page.'}"
+
+# FINAL TASK: 
+Build a pixel-perfect, premium landing page using the custom prompt's structure but with the high-fidelity designer persona and my branding assets.
+`;
+};
+
+/**
+ * Call AI models with fallback
+ */
+const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (!anthropicKey && !openaiKey) {
+    logger.error('No API keys configured');
+    throw new Error('API keys are not configured in .env');
+  }
+
+  // Inject colors into system prompt
+  const primaryHex = userPrompt.match(/- PRIMARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed';
+  const secondaryHex = userPrompt.match(/- SECONDARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
+
+  const finalSystemPrompt = systemPrompt
+    .replace(/\[PRIMARY_HEX\]/g, primaryHex)
+    .replace(/\[SECONDARY_HEX\]/g, secondaryHex);
+
+  // --- Try OpenAI First ---
+  if (openaiKey) {
+    const openai = new OpenAI({ apiKey: openaiKey });
+    try {
+      logger.info(`[AI] Attempting OpenAI GPT-4o...`);
+      const response = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4o',
+        messages: [
+          { role: 'system', content: finalSystemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      });
+      return processResult(response.choices[0].message.content, logoUrl);
+    } catch (err) {
+      logger.error(`[AI] OpenAI failed: ${err.message}`);
     }
+  }
 
-    const body = JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an advanced AI landing page engine. You generate complete, production-ready HTML code without any JSON or conversational text.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 4096,
-      // Removed response_format: { type: 'json_object' } to allow raw HTML
-    });
-
-    const options = {
-      hostname: 'api.openai.com',
-      path: '/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Length': Buffer.byteLength(body),
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-
-      res.on('data', (chunk) => {
-        data += chunk;
+  // --- Try Anthropic Fallback ---
+  if (anthropicKey) {
+    const anthropic = new Anthropic({ apiKey: anthropicKey });
+    try {
+      logger.info(`[AI] Attempting Claude...`);
+      const response = await anthropic.messages.create({
+        model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest',
+        max_tokens: 4048,
+        system: finalSystemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
       });
+      return processResult(res.content[0].text, logoUrl);
+    } catch (err) {
+      logger.error(`[AI] Anthropic failed: ${err.message}`);
+    }
+  }
 
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-
-          if (parsed.error) {
-            return reject(new Error(`OpenAI API Error: ${parsed.error.message}`));
-          }
-
-          const raw = parsed.choices?.[0]?.message?.content;
-          if (!raw) {
-            return reject(new Error('No content returned from OpenAI'));
-          }
-
-          const cleaned = raw.replace(/```html\s*/gi, '').replace(/```/g, '').trim();
-
-          // HEURISTIC: If it starts with JSON curly brace, attempt parse. 
-          // Otherwise, treat as raw HTML and wrap in a compatible structure.
-          if (cleaned.startsWith('{')) {
-            try {
-              const content = JSON.parse(cleaned);
-              return resolve(content);
-            } catch (err) {
-              // Fallback if it looks like JSON but fails
-              return resolve({ fullHtml: cleaned });
-            }
-          }
-
-          // RAW HTML MODE: Wrap for backward compatibility with controllers
-          resolve({
-            fullHtml: cleaned,
-            fullCss: '', // CSS is expected to be inline in head
-            fullJs: '',  // JS is expected to be inline in body
-            pageContent: [], // Structured sidebar won't be available in raw mode
-            seo: { title: 'Generated Page', description: '', keywords: [] }
-          });
-
-        } catch (err) {
-          reject(new Error(`Failed to process OpenAI response: ${err.message}`));
-        }
-      });
-    });
-
-    req.on('error', (err) => {
-      reject(new Error(`Network error calling OpenAI: ${err.message}`));
-    });
-
-    req.setTimeout(120000, () => {
-      req.destroy();
-      reject(new Error('OpenAI request timed out after 120 seconds. Generation of full HTML/CSS takes extra time.'));
-    });
-
-    req.write(body);
-    req.end();
-  });
+  throw new Error('All AI providers failed.');
 };
 
 /**
- * Generates structured landing page content via OpenAI.
+ * Post-Processing
  */
+const processResult = (raw, logoUrl) => {
+  let clean = cleanHTML(raw);
+  if (logoUrl) clean = clean.replace(/\{\{LOGO_URL\}\}/g, logoUrl);
+
+  const titleMatch = clean.match(/<title>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : 'Landing Page';
+
+  let css = '';
+  const styleMatches = clean.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+  if (styleMatches) {
+    css = styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n');
+  }
+
+  return { fullHtml: clean, fullCss: css, fullJs: '', seo: { title } };
+};
+
+const cleanHTML = (raw) => {
+  const codeBlockMatch = raw.match(/```html\s*([\s\S]*?)```/i) || raw.match(/```\s*([\s\S]*?)```/i);
+  if (codeBlockMatch) return codeBlockMatch[1].trim();
+  const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
+  if (htmlMatch) return htmlMatch[1].trim();
+  return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
+};
+
 const generateLandingPageContent = async (input) => {
-  const prompt = buildPrompt(input);
-  return await callOpenAI(prompt);
+  const systemPrompt = buildSystemPrompt();
+  const userPrompt = buildUserPrompt(input);
+  return await callAI(userPrompt, input.logoUrl, systemPrompt);
 };
 
-/**
- * Improves a specific section's content via OpenAI.
- */
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
-  const prompt = `
-    Analyze and improve the following "${sectionType}" content.
-    ${JSON.stringify(currentContent)}
-    Instruction: ${aiPrompt || 'Make it better.'}
-    Return improved JSON only.
-  `;
-  return await callOpenAI(prompt);
+  const prompt = `Improve this ${sectionType}: ${JSON.stringify(currentContent)}. Instruction: ${aiPrompt}`;
+  return await callAI(prompt);
 };
 
 module.exports = { generateLandingPageContent, improveSectionContent };

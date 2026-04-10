@@ -14,6 +14,7 @@ export interface LandingPageConfig {
   secondaryColor: string;
   accentColor: string;
   websiteUrl?: string;
+  logoUrl?: string;
 }
 
 export function generateLandingPageHtml(cfg: LandingPageConfig): { html: string; css: string } {
@@ -25,11 +26,17 @@ export function generateLandingPageHtml(cfg: LandingPageConfig): { html: string;
   const audience = cfg.targetAudience || 'business owners';
   const cta = cfg.ctaText || 'Get Started Free';
   const industry = cfg.industry || 'SaaS';
+  const logo = cfg.logoUrl;
 
   const css = `
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif}
 img{max-width:100%;height:auto}
+
+.lp-navbar{height:70px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
+.lp-navbar-inner{max-width:1140px;margin:0 auto;width:100%;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.lp-logo{height:32px;object-contain:fit}
+.lp-logo-text{font-size:20px;font-weight:800;color:#0f172a;text-decoration:none}
 
 .lp-container{max-width:1140px;margin:0 auto;padding:0 20px}
 .lp-section{padding:60px 20px;font-family:'Inter',system-ui,sans-serif}
@@ -104,6 +111,16 @@ img{max-width:100%;height:auto}
 `;
 
   const html = `
+<!-- ========== NAVBAR ========== -->
+<header class="lp-navbar">
+  <div class="lp-navbar-inner">
+    <a href="#" class="lp-logo-text">
+      ${logo ? `<img src="${logo}" alt="${biz}" class="lp-logo" />` : biz}
+    </a>
+    <a href="#contact" class="lp-btn" style="width:auto;padding:10px 24px;background:${p}">${cta}</a>
+  </div>
+</header>
+
 <!-- ========== HERO + LEAD FORM ========== -->
 <section class="lp-hero">
   <div class="lp-hero-inner">
