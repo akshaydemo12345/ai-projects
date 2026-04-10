@@ -42,12 +42,16 @@ const CreatePageFlow = () => {
   const [secondaryColor, setSecondaryColor] = useState("#a855f7");
   const [accentColor, setAccentColor] = useState("#6366f1");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setLogoPreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => setLogoUrl(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -81,6 +85,7 @@ const CreatePageFlow = () => {
       secondaryColor,
       accentColor,
       websiteUrl,
+      logoUrl,
     });
 
     // Store in localStorage for the editor to pick up

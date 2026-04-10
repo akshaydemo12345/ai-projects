@@ -14,15 +14,7 @@ const PublicLandingPage = () => {
 
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['public-page', slug],
-    queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/page/${slug}`);
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Page not found');
-      
-      // result.data is page.content
-      // result.meta contains title, seo etc.
-      return result;
-    },
+    queryFn: () => pagesApi.getBySlug(slug!),
     enabled: !!slug,
     retry: 1,
   });
@@ -37,11 +29,11 @@ const PublicLandingPage = () => {
       }
 
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-      const aiCss = (typeof content === 'object' ? (content?.fullCss || '') : '') || (meta?.styles || '');
-      const aiJs = (typeof content === 'object' ? (content?.fullJs || '') : '') || '';
+      const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
+      const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
       
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-      const PROJECT_ID = meta?.projectId || '';
+      const PAGE_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
 
       const leadCaptureScript = `
@@ -100,7 +92,7 @@ const PublicLandingPage = () => {
               const formData = new FormData(form);
               const data = {
                 pageSlug: "${PAGE_SLUG}",
-                projectId: "${PROJECT_ID}",
+                projectId: "${PAGE_ID}",
                 name: formData.get('name') || formData.get('first_name') || '',
                 email: formData.get('email') || '',
                 phone: formData.get('phone') || formData.get('tel') || '',
@@ -115,22 +107,35 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
-      // If it's a full HTML already, inject script and styles
-      if (finalHtml.toLowerCase().includes('</body>')) {
-        // Inject Lead Capture Script
-        finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+      // Ensure styles and scripts are injected even into full documents
+      const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
+      
+      if (isFullDoc) {
+        // Inject styles into head of full document if provided separately
+        if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
+          const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
+          if (finalHtml.toLowerCase().includes('</head>')) {
+            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + '</head>');
+          } else if (finalHtml.toLowerCase().includes('<head>')) {
+            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag);
+          } else {
+            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + '</head>');
+          }
+        }
         
-        // Inject Styles if they are not already in the HTML and we have them
-        if (aiCss && !finalHtml.toLowerCase().includes('<style')) {
-           if (finalHtml.toLowerCase().includes('</head>')) {
-             finalHtml = finalHtml.replace(/<\/head>/i, `<style>${aiCss}</style></head>`);
-           } else {
-             // If no head, just prepend styles
-             finalHtml = `<style>${aiCss}</style>` + finalHtml;
-           }
+        // Inject lead capture
+        if (finalHtml.toLowerCase().includes('</body>')) {
+          finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        } else {
+          finalHtml += leadCaptureScript;
         }
       } else {
-        // Fragment: Wrap it in a full document structure
+        // It's a fragment: Wrap it with proper metadata and reset styles
+        // Strip <body> and </body> if they exist to avoid nesting
+        const bodyInner = finalHtml
+          .replace(/<body[^>]*>/i, '')
+          .replace(/<\/body>/i, '');
+
         finalHtml = `
           <!DOCTYPE html>
           <html>
@@ -140,7 +145,6 @@ const PublicLandingPage = () => {
               <meta name="viewport" content="width=device-width, initial-scale=1">
               ${meta?.seo?.description ? `<meta name="description" content="${meta.seo.description}">` : ''}
               <base href="${window.location.origin}">
-              <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
               <style>
                 /* Modern Reset */
                 * { box-sizing: border-box; }
@@ -151,7 +155,7 @@ const PublicLandingPage = () => {
               </style>
             </head>
             <body>
-              ${aiHtml}
+              ${bodyInner}
               <script>${aiJs}</script>
               ${leadCaptureScript}
             </body>

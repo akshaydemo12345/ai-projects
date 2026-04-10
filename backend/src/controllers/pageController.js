@@ -28,6 +28,10 @@ const createPageSchema = z.object({
   aiPrompt: z.string().optional(),
   industry: z.string().optional(),
   styles: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  accentColor: z.string().optional(),
+  logoUrl: z.string().optional(),
 }).transform(data => ({
   ...data,
   title: data.title || data.name || 'Untitled Page'
@@ -38,10 +42,16 @@ const createPageSchema = z.object({
 
 const updatePageSchema = z.object({
   title: z.string().min(1).optional(),
+  name: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
   content: z.any().optional(),
   styles: z.string().optional(),
   status: z.enum(['draft', 'published']).optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  logoUrl: z.string().optional(),
   seo: z
     .object({
       title: z.string().optional(),
@@ -50,6 +60,10 @@ const updatePageSchema = z.object({
     })
     .optional(),
   designUrl: z.string().url('Invalid Figma or Stitch URL').optional(),
+}).transform(data => {
+  const result = { ...data };
+  if (data.name) result.title = data.name;
+  return result;
 });
 
 const publishPageSchema = z.object({
@@ -112,7 +126,7 @@ exports.getPagesInProject = async (req, res, next) => {
         .sort('-createdAt')
         .skip(skip)
         .limit(parseInt(limit))
-        .select('-leads -__v'),
+        .select('-__v'),
       Page.countDocuments(filter),
     ]);
 
@@ -120,7 +134,7 @@ exports.getPagesInProject = async (req, res, next) => {
       success: true,
       message: 'Pages retrieved successfully',
       data: { 
-        pages,
+        pages: pages.map(p => ({ ...p.toObject(), name: p.title })),
         results: pages.length,
         total,
         page: parseInt(page),
@@ -151,7 +165,13 @@ exports.getPage = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Page retrieved successfully',
-      data: { page: { ...page.toObject(), previewUrl } },
+      data: { 
+        page: { 
+          ...page.toObject(), 
+          name: page.title,
+          previewUrl 
+        } 
+      },
     });
   } catch (err) {
     next(err);
@@ -196,7 +216,11 @@ exports.createPage = async (req, res, next) => {
       ai_prompt,
       aiPrompt: camelAiPrompt,
       industry,
-      styles: initialStyles
+      styles: initialStyles,
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      logoUrl
     } = parsed.data;
 
     // 3. Project Existence Check
@@ -231,6 +255,14 @@ exports.createPage = async (req, res, next) => {
       aiPrompt: ai_prompt || camelAiPrompt,
       content: initialContent || {},
       styles: initialStyles || '',
+      primaryColor: primaryColor || project.primaryColor || '#7c3aed',
+      secondaryColor: secondaryColor || project.secondaryColor || '#6366f1',
+      accentColor: accentColor || project.secondaryColor || '#6366f1',
+      logoUrl: logoUrl || project.logoUrl || '',
+      industry: industry || project.industry || 'Service',
+      metaTitle: req.body.metaTitle || '',
+      metaDescription: req.body.metaDescription || '',
+      generationMethod: req.body.generationMethod || 'ai',
       status: 'generating',
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
@@ -245,11 +277,14 @@ exports.createPage = async (req, res, next) => {
       logger.info(`Starting AI generation for page ${page._id}`);
       const generated = await AIService.generateLandingPageContent({
         businessName: business_name || title,
-        industry: industry || 'Service',
+        industry: page.industry || 'Service',
         businessDescription: business_description || '',
         targetAudience: target_audience || 'General',
         ctaText: cta_text || 'Get Started',
         aiPrompt: camelAiPrompt || ai_prompt || '',
+        primaryColor: page.primaryColor,
+        secondaryColor: page.secondaryColor,
+        logoUrl: page.logoUrl || '',
         pageId: page._id
       });
 
@@ -283,16 +318,29 @@ exports.createPage = async (req, res, next) => {
 
     // 8. Update Page with AI Results
     if (aiResponse.fullHtml) {
-      logger.info('--- AI Output snippet ---');
-      logger.info(aiResponse.fullHtml.substring(0, 100));
       page.content = aiResponse.fullHtml;
-      page.styles = aiResponse.fullCss || '';
+      // Prepend branding variables to styles for editor consistency
+      const brandingStyles = `
+:root {
+  --primary: ${page.primaryColor};
+  --secondary: ${page.secondaryColor};
+  --accent: ${page.secondaryColor};
+  --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
+}
+`;
+      page.styles = brandingStyles + (aiResponse.fullCss || '');
     } else {
       page.content = initialContent || page.content;
       page.styles = initialStyles || page.styles || '';
     }
     
     page.seo = aiResponse.seo || {};
+    
+    // If we have a generic title, try to use the AI-generated one
+    if ((page.title === 'Untitled Page' || page.title === 'AI Generated Page') && page.seo.title) {
+      page.title = page.seo.title.split('|')[0].trim();
+    }
+    
     page.previewUrl = previewUrl;
     page.status = 'draft';
     await page.save();
@@ -368,7 +416,15 @@ exports.updatePage = async (req, res, next) => {
       SyncService.flushWordPressCache(updatedPage.domain, updatedPage.apiToken);
     }
 
-    return res.status(200).json({ status: 'success', data: { page: updatedPage } });
+    return res.status(200).json({ 
+      status: 'success', 
+      data: { 
+        page: {
+          ...updatedPage.toObject(),
+          name: updatedPage.title
+        }
+      } 
+    });
   } catch (err) {
     next(err);
   }

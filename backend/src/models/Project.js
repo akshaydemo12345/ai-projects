@@ -49,24 +49,31 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-}, {
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
-
-projectSchema.virtual('url').get(function() {
-  return this.websiteUrl;
+  logoUrl: {
+    type: String,
+  },
+  industry: {
+    type: String,
+  },
+  primaryColor: {
+    type: String,
+    default: '#7c3aed',
+  },
+  secondaryColor: {
+    type: String,
+    default: '#6366f1',
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken
 projectSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
-  
+
   if (!this.apiToken) {
     const crypto = require('crypto');
     this.apiToken = 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
   }
-  
+
   next();
 });
 

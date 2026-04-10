@@ -15,26 +15,27 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     const { slug } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { 
+      {
         $or: [
-          { slug }, 
-          { previewToken: slug }, 
+          { slug },
+          { previewToken: slug },
           { _id: slug.length === 24 ? slug : null }
         ],
-        isDeleted: { $ne: true } 
+        isDeleted: { $ne: true }
       },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles seo template domain status previewToken projectId');
+    ).select('title slug content styles seo template domain status previewToken projectId views');
 
     if (!page) return next(new AppError('Page not found', 404));
 
     // For public published pages, we don't check status strictly here if we want same logic for preview
     // But the requirements say "published URL should work", so we can check if it's published or if it's a preview request
-    
+
     res.status(200).json({
       status: 'success',
       data: page.content,
+      styles: page.styles,
       // We also include meta for the frontend to set title/description
       meta: {
         title: page.title,
@@ -58,14 +59,16 @@ exports.getPublicPage = async (req, res, next) => {
     const { slug } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { slug, status: 'published' },
+      { slug, isDeleted: { $ne: true } }, // Allow drafts to be viewed at this URL
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles seo template domain publishedAt views projectId');
+    ).select('title slug content seo template domain publishedAt views projectId status');
 
-    if (!page) return next(new AppError('Page not found or not published', 404));
+    if (!page) return next(new AppError('Page not found', 404));
 
-    // Token check removed as per requirements for public pages
+    // If it's not published, we just serve it normally for the dashboard "View" click
+    // This solves the 'Page Not Found' issue after generation
+
     res.status(200).json({
       status: 'success',
       data: { page },
@@ -84,11 +87,11 @@ exports.getPublicPage = async (req, res, next) => {
 const renderFullHTML = (page) => {
   const { title, content, seo, _id } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
-  
+
   // Handle content being a string (full document) or an object (structured)
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-  const aiCss = (typeof content === 'object' ? (content?.fullCss || '') : '') || (page.styles || '');
-  const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
+  const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || '');
+  const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
   // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
   // If the AI generated a full document (doctype or html tag), serve it with styles.
@@ -103,7 +106,7 @@ const renderFullHTML = (page) => {
     }
     return finalDoc;
   }
-  
+
   // ─── 1. Legacy/Structured Mapper (Fallback) ────────────────────────────────
   const pageData = content.pageContent || content;
   const design = pageData.design || {};
@@ -136,7 +139,7 @@ const renderFullHTML = (page) => {
     body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
   `;
 
-    const leadCaptureScript = `
+  const leadCaptureScript = `
     <script>
       (function() {
         const API_URL = "${process.env.APP_BASE_URL || 'http://localhost:5000'}";
@@ -196,7 +199,7 @@ const renderFullHTML = (page) => {
       })();
     </script>`;
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -222,11 +225,11 @@ exports.getPreviewHTML = async (req, res, next) => {
     const { token } = req.params;
     const page = await Page.findOne({
       $or: [
-        { previewToken: token }, 
-        { slug: token }, 
+        { previewToken: token },
+        { slug: token },
         { _id: token && token.length === 24 ? token : null }
       ],
-    }).select('title content seo status');
+    }).select('title content styles seo status');
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
 
@@ -249,7 +252,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     if (!normalizedSlug) return next(new AppError('Page not found', 404));
 
     const page = await Page.findOneAndUpdate(
-      { slug: normalizedSlug, status: 'published' },
+      { slug: normalizedSlug, isDeleted: { $ne: true } },
       { $inc: { views: 1 } },
       { new: true }
     );
@@ -259,7 +262,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     // Security: Domain Lock for proxied requests
     const project = await Project.findById(page.projectId);
     const proxyHost = req.headers['x-forwarded-host'] || req.headers['x-proxy-domain'];
-    
+
     if (project && project.websiteUrl && proxyHost) {
       const normalize = (u) => u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '').split('/')[0].toLowerCase();
       const projectDomain = normalize(project.websiteUrl);
@@ -342,7 +345,7 @@ exports.verifyPlugin = async (req, res, next) => {
 
     const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
     const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
-    
+
     res.status(200).json({
       status: 'active',
       plan: 'pro',
@@ -366,12 +369,12 @@ exports.getPreview = async (req, res, next) => {
     const { token } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { 
+      {
         $or: [
-          { previewToken: token }, 
-          { slug: token }, 
+          { previewToken: token },
+          { slug: token },
           { _id: token.length === 24 ? token : null }
-        ] 
+        ]
       },
       { $inc: { views: 1 } },
       { new: true }

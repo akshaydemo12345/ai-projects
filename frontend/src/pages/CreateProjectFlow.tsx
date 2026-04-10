@@ -38,14 +38,57 @@ const CreateProjectFlow = () => {
   const [websiteUrl, setWebsiteUrl] = useState("https://");
   const [category, setCategory] = useState("Agency");
   const [description, setDescription] = useState("");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo size must be less than 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      // Compress image using canvas to reduce base64 payload size
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 256;
+        let { width, height } = img;
+        if (width > height) {
+          if (width > MAX_SIZE) { height = Math.round(height * MAX_SIZE / width); width = MAX_SIZE; }
+        } else {
+          if (height > MAX_SIZE) { width = Math.round(width * MAX_SIZE / height); height = MAX_SIZE; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/webp', 0.85);
+        setLogoPreview(compressed);
+        setLogoBase64(compressed);
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogoPreview(null);
+    setLogoBase64(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
 
   const createMutation = useMutation({
     mutationFn: projectsApi.create,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setCreatedProject(res.data.project);
-      setStep("integration");
+      const project = res.data.project;
       toast.success("Project created successfully!");
+      // Skip integration step — go directly to project detail page
+      navigate(`/dashboard/projects/${project._id}`);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create project");
@@ -67,6 +110,7 @@ const CreateProjectFlow = () => {
       url: websiteUrl.trim(),
       category,
       description: description.trim(),
+      logoUrl: logoBase64 || undefined,
     });
   };
 
@@ -146,7 +190,7 @@ const CreateProjectFlow = () => {
   ];
 
   const scriptCode = createdProject
-    ? `<script src="${import.meta.env.VITE_API_BASE_URL}/embed.js" data-token="${createdProject.apiToken}" async></script>`
+    ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
     : "";
   const iframeCode = `<iframe src="https://your-subdomain.ppcbuilder.io/lp/your-page-slug" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
@@ -209,6 +253,62 @@ const CreateProjectFlow = () => {
                 >
                   {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </div>
+
+              {/* Logo Upload */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">Project Logo <span className="text-muted-foreground font-normal">(optional)</span></label>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoChange}
+                />
+                {logoPreview ? (
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
+                    <div className="h-14 w-14 rounded-xl border border-border bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Logo uploaded</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Click change to update</p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-lg border border-primary/30 hover:bg-primary/5 transition-all"
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removeLogo}
+                        className="text-xs text-muted-foreground hover:text-destructive font-medium px-2 py-1.5 rounded-lg border border-border hover:border-destructive/30 hover:bg-destructive/5 transition-all"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 bg-muted/20 py-6 cursor-pointer transition-all group"
+                  >
+                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <ImageIcon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Upload Logo</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG, SVG — max 2MB</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-primary font-medium mt-1">
+                      <Upload className="h-3 w-3" /> Browse files
+                    </div>
+                  </button>
+                )}
               </div>
 
               <div>

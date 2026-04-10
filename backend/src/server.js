@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config(); // API Key Fixed (Leading dash removed)
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -97,7 +97,7 @@ mongoose
   .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     logger.info('✅ MongoDB Connected Successfully');
-    
+
     // Auto-drop unique domain index to support multi-page WordPress mapping
     try {
       const collection = mongoose.connection.collection('pages');

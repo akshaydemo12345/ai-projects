@@ -7,7 +7,7 @@ exports.createProject = async (req, res, next) => {
   try {
     const { name, description, websiteUrl, url, category } = req.body;
     const finalWebsiteUrl = websiteUrl || url;
-    
+
     // Generate unique API Token if not provided
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
@@ -17,7 +17,11 @@ exports.createProject = async (req, res, next) => {
       websiteUrl: finalWebsiteUrl,
       category,
       userId: req.user._id,
-      apiToken
+      apiToken,
+      logoUrl: req.body.logoUrl,
+      industry: req.body.category || req.body.industry,
+      primaryColor: req.body.primaryColor,
+      secondaryColor: req.body.secondaryColor,
     });
 
     res.status(201).json({
@@ -74,8 +78,8 @@ exports.getProject = async (req, res, next) => {
     }
 
     // Also fetch pages for this project to ensure frontend has them
-    const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } }).select('-leads');
-    
+    const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } });
+
     // Ensure pageCount is accurate (sync it just in case)
     const pageCount = pages.length;
     if (project.pageCount !== pageCount) {
@@ -85,10 +89,13 @@ exports.getProject = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { 
+      data: {
         project: {
           ...project.toObject(),
-          pages
+          pages: pages.map(p => ({
+            ...p.toObject(),
+            name: p.title
+          }))
         }
       },
     });
@@ -105,12 +112,11 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description, websiteUrl, url, category } = req.body;
+    const { name, description, logoUrl, websiteUrl, url, category, industry, primaryColor, secondaryColor } = req.body;
     const finalWebsiteUrl = websiteUrl || url;
-
     const project = await Project.findOneAndUpdate(
       { _id: id, userId: req.user._id },
-      { name, description, websiteUrl: finalWebsiteUrl, category, updatedAt: Date.now() },
+      { name, description, logoUrl, websiteUrl: finalWebsiteUrl, category, industry, primaryColor, secondaryColor, updatedAt: Date.now() },
       { new: true, runValidators: true }
     );
 

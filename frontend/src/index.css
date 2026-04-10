@@ -95,13 +95,6 @@
     @apply border-border;
   }
 
-  html, body, #root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
@@ -112,6 +105,7 @@
   .gradient-hero {
     background: var(--hero-gradient);
   }
+
   .gradient-cta {
     background: var(--cta-gradient);
   }
