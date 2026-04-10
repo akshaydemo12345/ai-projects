@@ -331,10 +331,13 @@ class DomainMapper_Settings_Page {
             wp_send_json_error( [ 'message' => 'API Key is too short.' ] );
         }
 
-        $response = wp_remote_post( 'http://my-ai-backend.test:5000/verify-api-key', [
+        $response = wp_remote_post( 'http://localhost:5000/verify-api-key', [
             'timeout' => 15,
             'headers' => [ 'Content-Type' => 'application/json' ],
-            'body'    => json_encode( [ 'api_key' => $api_key ] )
+            'body'    => json_encode( [ 
+                'api_key' => $api_key,
+                'domain'  => get_site_url() 
+            ] )
         ]);
 
         if ( is_wp_error( $response ) ) {

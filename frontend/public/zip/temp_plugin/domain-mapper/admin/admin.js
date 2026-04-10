@@ -42,6 +42,7 @@
             } else {
                 var msg = ( res.data && res.data.message ) ? res.data.message : i18n.failed;
                 $status.css( { color: '#d63638', display: 'inline' } ).text( '❌ ' + msg );
+                showNotice( msg, 'error' );
             }
         } )
         .fail( function () {

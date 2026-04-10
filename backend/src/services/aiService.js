@@ -57,7 +57,7 @@ Custom Instructions: ${aiPrompt}
 - Fully responsive (mobile-first).
 - Form validation (HTML5 + JS).
 - AJAX Submission: Include a global <script> that intercepts ALL form submissions:
-  - Endpoint: "/api/leads"
+  - Endpoint: "${process.env.APP_BASE_URL || 'http://localhost:5000'}/api/leads"
   - Method: POST
   - Payload: { name, email, phone, message, pageSlug: window.location.pathname.split("/").pop(), projectId: "${pageId}" }
   - Handle Loading: Disable button during fetch.
@@ -70,41 +70,38 @@ Return ONLY the raw HTML code. Do NOT wrap in markdown fences. Do NOT add explan
 };
 
 /**
- * Makes a raw HTTPS POST request to OpenAI Chat Completions.
+ * Makes a raw HTTPS POST request to Anthropic Claude Messages API.
  * @param {string} prompt
  * @returns {Promise<Object>} - Parsed JSON content
  */
-const callOpenAI = (prompt) => {
+const callAnthropic = (prompt) => {
   return new Promise((resolve, reject) => {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return reject(new Error('OPENAI_API_KEY is not configured in environment'));
+      return reject(new Error('ANTHROPIC_API_KEY is not configured in environment'));
     }
 
     const body = JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620',
+      max_tokens: 4096,
+      system: 'You are an advanced AI landing page engine. You generate complete, production-ready HTML code without any JSON or conversational text.',
       messages: [
-        {
-          role: 'system',
-          content: 'You are an advanced AI landing page engine. You generate complete, production-ready HTML code without any JSON or conversational text.',
-        },
         {
           role: 'user',
           content: prompt,
         },
       ],
       temperature: 0.7,
-      max_tokens: 4096,
-      // Removed response_format: { type: 'json_object' } to allow raw HTML
     });
 
     const options = {
-      hostname: 'api.openai.com',
-      path: '/v1/chat/completions',
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(body),
       },
     };
@@ -121,12 +118,13 @@ const callOpenAI = (prompt) => {
           const parsed = JSON.parse(data);
 
           if (parsed.error) {
-            return reject(new Error(`OpenAI API Error: ${parsed.error.message}`));
+            console.error('Anthropic API Error details:', parsed.error);
+            return reject(new Error(`Anthropic API Error: ${parsed.error.message || 'Unknown error'} (${parsed.error.type})`));
           }
 
-          const raw = parsed.choices?.[0]?.message?.content;
+          const raw = parsed.content?.filter(block => block.type === 'text').map(block => block.text).join('\n');
           if (!raw) {
-            return reject(new Error('No content returned from OpenAI'));
+            return reject(new Error('No content returned from Anthropic'));
           }
 
           const cleaned = raw.replace(/```html\s*/gi, '').replace(/```/g, '').trim();
@@ -153,18 +151,18 @@ const callOpenAI = (prompt) => {
           });
 
         } catch (err) {
-          reject(new Error(`Failed to process OpenAI response: ${err.message}`));
+          reject(new Error(`Failed to process Anthropic response: ${err.message}`));
         }
       });
     });
 
     req.on('error', (err) => {
-      reject(new Error(`Network error calling OpenAI: ${err.message}`));
+      reject(new Error(`Network error calling Anthropic: ${err.message}`));
     });
 
-    req.setTimeout(120000, () => {
+    req.setTimeout(180000, () => {
       req.destroy();
-      reject(new Error('OpenAI request timed out after 120 seconds. Generation of full HTML/CSS takes extra time.'));
+      reject(new Error('Anthropic request timed out after 180 seconds.'));
     });
 
     req.write(body);
@@ -173,15 +171,15 @@ const callOpenAI = (prompt) => {
 };
 
 /**
- * Generates structured landing page content via OpenAI.
+ * Generates structured landing page content via Anthropic.
  */
 const generateLandingPageContent = async (input) => {
   const prompt = buildPrompt(input);
-  return await callOpenAI(prompt);
+  return await callAnthropic(prompt);
 };
 
 /**
- * Improves a specific section's content via OpenAI.
+ * Improves a specific section's content via Anthropic.
  */
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
   const prompt = `
@@ -190,7 +188,7 @@ const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) 
     Instruction: ${aiPrompt || 'Make it better.'}
     Return improved JSON only.
   `;
-  return await callOpenAI(prompt);
+  return await callAnthropic(prompt);
 };
 
 module.exports = { generateLandingPageContent, improveSectionContent };

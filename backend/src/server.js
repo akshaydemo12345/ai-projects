@@ -41,7 +41,11 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: '*',
+  origin: function (origin, callback) {
+    // Allow all origins (standard for public landing pages)
+    // Echoing back the origin satisfies browsers that reject '*' with credentials
+    callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token']

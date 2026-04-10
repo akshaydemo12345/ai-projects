@@ -15,10 +15,17 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     const { slug } = req.params;
 
     const page = await Page.findOneAndUpdate(
-      { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
+      { 
+        $or: [
+          { slug }, 
+          { previewToken: slug }, 
+          { _id: slug.length === 24 ? slug : null }
+        ],
+        isDeleted: { $ne: true } 
+      },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain status previewToken projectId');
+    ).select('title slug content styles seo template domain status previewToken projectId');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -31,6 +38,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       // We also include meta for the frontend to set title/description
       meta: {
         title: page.title,
+        styles: page.styles,
         seo: page.seo,
         status: page.status,
         projectId: page.projectId
@@ -53,7 +61,7 @@ exports.getPublicPage = async (req, res, next) => {
       { slug, status: 'published' },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views projectId');
+    ).select('title slug content styles seo template domain publishedAt views projectId');
 
     if (!page) return next(new AppError('Page not found or not published', 404));
 
@@ -79,14 +87,21 @@ const renderFullHTML = (page) => {
   
   // Handle content being a string (full document) or an object (structured)
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-  const aiCss = typeof content === 'string' ? '' : (content?.fullCss || '');
+  const aiCss = (typeof content === 'object' ? (content?.fullCss || '') : '') || (page.styles || '');
   const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
 
   // ─── 0. SMART REDETECT: Full Document vs Fragment ────────────────────────
-  // If the AI generated a full document (doctype or html tag), serve it DIRECTLY.
-  // This prevents double-nested <html> and <body> tags which break styles/scripts.
+  // If the AI generated a full document (doctype or html tag), serve it with styles.
   if (aiHtml.toLowerCase().includes('<!doctype') || aiHtml.toLowerCase().includes('<html')) {
-    return aiHtml;
+    let finalDoc = aiHtml;
+    if (aiCss && !finalDoc.toLowerCase().includes('<style')) {
+      if (finalDoc.toLowerCase().includes('</head>')) {
+        finalDoc = finalDoc.replace(/<\/head>/i, `<style>${aiCss}</style></head>`);
+      } else {
+        finalDoc = `<style>${aiCss}</style>` + finalDoc;
+      }
+    }
+    return finalDoc;
   }
   
   // ─── 1. Legacy/Structured Mapper (Fallback) ────────────────────────────────
@@ -121,7 +136,67 @@ const renderFullHTML = (page) => {
     body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
   `;
 
-  return `<!DOCTYPE html>
+    const leadCaptureScript = `
+    <script>
+      (function() {
+        const API_URL = "${process.env.APP_BASE_URL || 'http://localhost:5000'}";
+        const PAGE_SLUG = "${page.slug}";
+        const PROJECT_ID = "${page.projectId}";
+
+        async function submitLead(data, form, btn, originalBtnText) {
+          console.log("Attempting lead submission to:", API_URL + "/api/leads", data);
+          try {
+            const response = await fetch(API_URL + "/api/leads", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+              mode: 'cors'
+            });
+
+            console.log("Response status:", response.status);
+            const result = await response.json();
+            if (result.status === 'success') {
+              form.innerHTML = '<div style="text-align:center; padding: 40px 20px;"><h3 style="color:#059669; font-size: 24px; margin-bottom: 10px;">Thank you!</h3><p style="color:#4b5563;">Your inquiry was sent successfully. We will contact you soon.</p></div>';
+            } else {
+              throw new Error(result.message || 'Server error');
+            }
+          } catch (err) {
+            alert("Submission failed. Please try again later.");
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = originalBtnText;
+            }
+          }
+        }
+
+        document.addEventListener('submit', function(e) {
+          const form = e.target;
+          if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            const originalBtnText = btn ? btn.innerHTML : 'Submit';
+            if (btn) {
+              btn.disabled = true;
+              btn.innerHTML = 'Sending...';
+            }
+
+            const formData = new FormData(form);
+            const data = {
+              pageSlug: PAGE_SLUG,
+              projectId: PROJECT_ID,
+              name: formData.get('name') || formData.get('first_name') || '',
+              email: formData.get('email') || '',
+              phone: formData.get('phone') || formData.get('tel') || '',
+              message: formData.get('message') || ''
+            };
+
+            submitLead(data, form, btn, originalBtnText);
+          }
+        });
+      })();
+    </script>`;
+
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -133,6 +208,7 @@ const renderFullHTML = (page) => {
 <body>
     ${bodyContent}
     <script>${aiJs || ''}</script>
+    ${leadCaptureScript}
 </body>
 </html>`;
 };
@@ -179,6 +255,20 @@ exports.getPublicPageHTML = async (req, res, next) => {
     );
 
     if (!page) return next(new AppError('Page not found or not published', 404));
+
+    // Security: Domain Lock for proxied requests
+    const project = await Project.findById(page.projectId);
+    const proxyHost = req.headers['x-forwarded-host'] || req.headers['x-proxy-domain'];
+    
+    if (project && project.websiteUrl && proxyHost) {
+      const normalize = (u) => u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '').split('/')[0].toLowerCase();
+      const projectDomain = normalize(project.websiteUrl);
+      const requestDomain = normalize(proxyHost);
+
+      if (projectDomain && requestDomain && projectDomain !== requestDomain) {
+        return next(new AppError(`Unauthorized: This page is locked to ${projectDomain}.`, 403));
+      }
+    }
 
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(renderFullHTML(page));
@@ -234,6 +324,18 @@ exports.verifyPlugin = async (req, res, next) => {
       return next(new AppError('Invalid API token. No project found.', 401));
     }
 
+    // Security: Match installing domain with saved websiteUrl
+    const requestOrigin = domain || req.headers.origin || req.headers.referer || '';
+    if (project.websiteUrl && requestOrigin) {
+      const normalize = (u) => u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '').split('/')[0].toLowerCase();
+      const projectDomain = normalize(project.websiteUrl);
+      const originDomain = normalize(requestOrigin);
+
+      if (projectDomain && originDomain && projectDomain !== originDomain) {
+        return next(new AppError(`Licensing Error: This token is locked to "${projectDomain}". You are currently on "${originDomain}". Please update the Website URL in your Project Settings if this is correct.`, 403));
+      }
+    }
+
     const pages = await Page.find({ projectId: project._id, status: 'published' }).select(
       'title slug content seo template domain publishedAt'
     );
@@ -273,7 +375,7 @@ exports.getPreview = async (req, res, next) => {
       },
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain status previewToken previewUrl');
+    ).select('title slug content styles seo template domain status previewToken previewUrl');
 
     if (!page) return next(new AppError('Preview expired or invalid link', 404));
 

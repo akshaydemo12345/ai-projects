@@ -5,7 +5,8 @@ const crypto = require('crypto');
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, websiteUrl, url, category } = req.body;
+    const finalWebsiteUrl = websiteUrl || url;
     
     // Generate unique API Token if not provided
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
@@ -13,6 +14,8 @@ exports.createProject = async (req, res, next) => {
     const project = await Project.create({
       name,
       description,
+      websiteUrl: finalWebsiteUrl,
+      category,
       userId: req.user._id,
       apiToken
     });
@@ -102,10 +105,12 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description } = req.body;
+    const { name, description, websiteUrl, url, category } = req.body;
+    const finalWebsiteUrl = websiteUrl || url;
+
     const project = await Project.findOneAndUpdate(
       { _id: id, userId: req.user._id },
-      { name, description, updatedAt: Date.now() },
+      { name, description, websiteUrl: finalWebsiteUrl, category, updatedAt: Date.now() },
       { new: true, runValidators: true }
     );
 

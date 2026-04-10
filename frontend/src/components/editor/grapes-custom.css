@@ -4,7 +4,11 @@
 ══════════════════════════════════════════════════════════ */
 
 /* ── Main editor fills container ── */
-#gjs { border: none !important; }
+#gjs { 
+  border: none !important; 
+  height: 100% !important;
+  width: 100% !important;
+}
 
 .gjs-editor-cont { height: 100% !important; }
 
@@ -219,7 +223,7 @@
   color: #c4b5fd !important;
 }
 
-/* ══════ COLOR PICKER — only style, don't override positioning ══════ */
+/* ══════ COLOR PICKER — compatible positioning ══════ */
 
 #styles-container .gjs-field-colorp {
   border: 1px solid #252545 !important;
@@ -228,16 +232,21 @@
 
 /* High z-index so the popup is always on top */
 .gjs-color-picker {
-  z-index: 99999 !important;
+  z-index: 100000 !important;
 }
 
-/* Style the popup container — DO NOT override position/top/bottom/left */
+/* Style the popup container - let spectrum handle positioning */
 .sp-container {
   background: #1a1a2e !important;
   border: 1px solid #2a2a3e !important;
   border-radius: 8px !important;
   box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
-  z-index: 99999 !important;
+  z-index: 100000 !important;
+  width: 220px !important;
+  max-height: 280px !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  position: absolute !important;
 }
 
 .sp-container.sp-hidden { display: none !important; }

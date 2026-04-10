@@ -37,11 +37,11 @@ const PublicLandingPage = () => {
       }
 
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-      const aiCss = typeof content === 'string' ? '' : (content?.fullCss || '');
-      const aiJs = typeof content === 'string' ? '' : (content?.fullJs || '');
+      const aiCss = (typeof content === 'object' ? (content?.fullCss || '') : '') || (meta?.styles || '');
+      const aiJs = (typeof content === 'object' ? (content?.fullJs || '') : '') || '';
       
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-      const PAGE_ID = meta?.projectId || '';
+      const PROJECT_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
 
       const leadCaptureScript = `
@@ -100,7 +100,7 @@ const PublicLandingPage = () => {
               const formData = new FormData(form);
               const data = {
                 pageSlug: "${PAGE_SLUG}",
-                projectId: "${PAGE_ID}",
+                projectId: "${PROJECT_ID}",
                 name: formData.get('name') || formData.get('first_name') || '',
                 email: formData.get('email') || '',
                 phone: formData.get('phone') || formData.get('tel') || '',
@@ -115,11 +115,22 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
-      // If it's a full HTML already, inject script before </body>
+      // If it's a full HTML already, inject script and styles
       if (finalHtml.toLowerCase().includes('</body>')) {
-         finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        // Inject Lead Capture Script
+        finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        
+        // Inject Styles if they are not already in the HTML and we have them
+        if (aiCss && !finalHtml.toLowerCase().includes('<style')) {
+           if (finalHtml.toLowerCase().includes('</head>')) {
+             finalHtml = finalHtml.replace(/<\/head>/i, `<style>${aiCss}</style></head>`);
+           } else {
+             // If no head, just prepend styles
+             finalHtml = `<style>${aiCss}</style>` + finalHtml;
+           }
+        }
       } else {
-        // Fallback or fragment: Wrap it
+        // Fragment: Wrap it in a full document structure
         finalHtml = `
           <!DOCTYPE html>
           <html>
@@ -129,6 +140,7 @@ const PublicLandingPage = () => {
               <meta name="viewport" content="width=device-width, initial-scale=1">
               ${meta?.seo?.description ? `<meta name="description" content="${meta.seo.description}">` : ''}
               <base href="${window.location.origin}">
+              <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
               <style>
                 /* Modern Reset */
                 * { box-sizing: border-box; }

@@ -166,6 +166,10 @@ const GrapesEditor = () => {
         },
         'grapesjs-blocks-basic': { flexGrid: true },
       },
+      colorPicker: {
+        appendTo: 'body',
+        offset: { top: 2, left: 2 },
+      },
       canvas: {
         styles: ['https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'],
       },
@@ -385,7 +389,7 @@ const GrapesEditor = () => {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, system-ui, sans-serif', background: '#f5f5f5', overflow: 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, system-ui, sans-serif', background: '#f5f5f5', overflow: 'hidden' }}>
 
       {/* ═══════════════ TOP BAR ═══════════════ */}
       <div style={{
@@ -491,7 +495,7 @@ const GrapesEditor = () => {
 
         {/* ══ CANVAS (white background) ══ */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
+          <div id="gjs" style={{ flex: '1 1 auto', height: 0, overflow: 'hidden' }} />
 
           {/* AI Chat Sidebar Overlay */}
           {chatOpen && (

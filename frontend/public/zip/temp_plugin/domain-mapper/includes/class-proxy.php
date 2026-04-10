@@ -72,11 +72,13 @@ class DomainMapper_Proxy {
             return;
         }
 
-        // Check if plugin is configured (has source and target domains)
+        // Check if plugin is configured and ACTIVE
         $target = $this->settings['target_domain'] ?? '';
         $source = $this->settings['source_domain'] ?? '';
-        if ( empty( $target ) || empty( $source ) ) {
-            DomainMapper_Loader::log( 'Proxy: plugin not configured', true );
+        $status = $this->settings['status'] ?? 'inactive';
+
+        if ( 'active' !== $status || empty( $target ) || empty( $source ) ) {
+            DomainMapper_Loader::log( 'Proxy: skipping (status=' . $status . ')', true );
             return;
         }
 

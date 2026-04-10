@@ -15,6 +15,15 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  websiteUrl: {
+    type: String,
+    trim: true,
+  },
+  category: {
+    type: String,
+    trim: true,
+    default: 'Other'
+  },
   isDeleted: {
     type: Boolean,
     default: false,
@@ -40,6 +49,13 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+projectSchema.virtual('url').get(function() {
+  return this.websiteUrl;
 });
 
 // Middleware to update updatedAt and generate apiToken
