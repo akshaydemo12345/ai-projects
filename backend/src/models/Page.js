@@ -30,6 +30,21 @@ const pageSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  primaryColor: {
+    type: String,
+    default: '#7c3aed',
+  },
+  secondaryColor: {
+    type: String,
+    default: '#6366f1',
+  },
+  accentColor: {
+    type: String,
+    default: '#6366f1',
+  },
+  logoUrl: {
+    type: String,
+  },
   template: {
     type: String,
     default: 'blank',
@@ -45,6 +60,23 @@ const pageSchema = new mongoose.Schema({
   aiPrompt: {
     type: String,
     trim: true,
+  },
+  metaTitle: {
+    type: String,
+    trim: true,
+  },
+  metaDescription: {
+    type: String,
+    trim: true,
+  },
+  industry: {
+    type: String,
+    trim: true,
+  },
+  generationMethod: {
+    type: String,
+    enum: ['ai', 'analyze', 'manual'],
+    default: 'ai',
   },
   status: {
     type: String,

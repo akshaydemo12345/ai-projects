@@ -40,6 +40,20 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  logoUrl: {
+    type: String,
+  },
+  industry: {
+    type: String,
+  },
+  primaryColor: {
+    type: String,
+    default: '#7c3aed',
+  },
+  secondaryColor: {
+    type: String,
+    default: '#6366f1',
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken

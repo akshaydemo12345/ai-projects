@@ -4,9 +4,13 @@
 ══════════════════════════════════════════════════════════ */
 
 /* ── Main editor fills container ── */
-#gjs { border: none !important; }
+#gjs {
+  border: none !important;
+}
 
-.gjs-editor-cont { height: 100% !important; }
+.gjs-editor-cont {
+  height: 100% !important;
+}
 
 .gjs-editor {
   background: #f5f5f5 !important;
@@ -15,7 +19,10 @@
 }
 
 /* Hide default GrapesJS panels — we use our own */
-.gjs-pn-panel, .gjs-pn-panels { display: none !important; }
+.gjs-pn-panel,
+.gjs-pn-panels {
+  display: none !important;
+}
 
 /* ── Canvas: white background ── */
 .gjs-cv-canvas {
@@ -25,10 +32,12 @@
   width: 100% !important;
 }
 
-.gjs-frame-wrapper { padding: 16px !important; }
+.gjs-frame-wrapper {
+  padding: 16px !important;
+}
 
 .gjs-frame {
-  box-shadow: 0 4px 24px rgba(0,0,0,.08) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, .08) !important;
   border-radius: 4px !important;
   background: #fff !important;
 }
@@ -69,7 +78,7 @@
   border-color: #7c3aed !important;
   color: #c4b5fd !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px rgba(124,58,237,.2) !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, .2) !important;
 }
 
 #blocks-container .gjs-block__media {
@@ -83,7 +92,7 @@
 }
 
 /* Block categories */
-#blocks-container .gjs-block-category > .gjs-title {
+#blocks-container .gjs-block-category>.gjs-title {
   padding: 8px 10px !important;
   background: #0f0f22 !important;
   color: #4a4a6a !important;
@@ -96,7 +105,7 @@
   cursor: pointer !important;
 }
 
-#blocks-container .gjs-block-category > .gjs-title:hover {
+#blocks-container .gjs-block-category>.gjs-title:hover {
   color: #a78bfa !important;
 }
 
@@ -115,16 +124,23 @@
 }
 
 #layers-container .gjs-layer.gjs-selected {
-  background: rgba(124,58,237,.15) !important;
+  background: rgba(124, 58, 237, .15) !important;
   color: #c4b5fd !important;
 }
 
-#layers-container .gjs-layer-title { padding: 6px 10px !important; }
-#layers-container .gjs-layer-name { color: inherit !important; }
+#layers-container .gjs-layer-title {
+  padding: 6px 10px !important;
+}
+
+#layers-container .gjs-layer-name {
+  color: inherit !important;
+}
 
 /* ══════ STYLE MANAGER (right sidebar) ══════ */
 
-#styles-container .gjs-sm-sectors { background: transparent !important; }
+#styles-container .gjs-sm-sectors {
+  background: transparent !important;
+}
 
 #styles-container .gjs-sm-sector {
   background: transparent !important;
@@ -193,7 +209,7 @@
 #traits-container input:focus,
 #traits-container select:focus {
   border-color: #7c3aed !important;
-  box-shadow: 0 0 0 2px rgba(124,58,237,.12) !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, .12) !important;
 }
 
 /* SM buttons */
@@ -214,37 +230,95 @@
 }
 
 #styles-container .gjs-sm-btn-active {
-  background: rgba(124,58,237,.2) !important;
+  background: rgba(124, 58, 237, .2) !important;
   border-color: #7c3aed !important;
   color: #c4b5fd !important;
 }
 
-/* ══════ COLOR PICKER — only style, don't override positioning ══════ */
+/* ══════ COLOR PICKER — fix overflow clipping + z-index ══════ */
 
-#styles-container .gjs-field-colorp {
-  border: 1px solid #252545 !important;
-  border-radius: 5px !important;
+/* Allow color picker fields to show popup without clipping */
+#styles-container .gjs-field-colorp,
+#styles-container .gjs-sm-property,
+#styles-container .gjs-field {
+  overflow: visible !important;
+  position: relative !important;
 }
 
-/* High z-index so the popup is always on top */
+/* Prevent the color swatch from causing layout shifts when the
+   picker opens — the picker renders via React portal (position:fixed)
+   so nothing in the DOM tree should move */
+#styles-container .gjs-field-colorp {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+#styles-container,
+#traits-container {
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  position: relative !important;
+}
+
+/* Right sidebar wrapper — must allow overflow so picker floats out */
+#styles-container .gjs-sm-sectors {
+  overflow: visible !important;
+}
+
+/* Color picker trigger button */
 .gjs-color-picker {
   z-index: 99999 !important;
+  position: relative !important;
+  cursor: pointer !important;
 }
 
-/* Style the popup container — DO NOT override position/top/bottom/left */
-.sp-container {
-  background: #1a1a2e !important;
-  border: 1px solid #2a2a3e !important;
-  border-radius: 8px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
-  z-index: 99999 !important;
+/* The color swatch/field click target */
+.gjs-field-color-picker,
+.gjs-checker-bg {
+  cursor: pointer !important;
+  border-radius: 3px !important;
+  pointer-events: all !important;
 }
 
-.sp-container.sp-hidden { display: none !important; }
+/* ── Spectrum.js color picker popup (sp-container) ─────────
+   appendTo:'parent' is used to show it near the property.
+─────────────────────────────────────────────────────────── */
 
-/* Inner elements styling */
-.sp-picker-container { border: none !important; }
-.sp-palette-container { border-right: 1px solid #2a2a3e !important; }
+/* Only hide when Spectrum explicitly marks it hidden */
+.sp-container.sp-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Inner layout */
+.sp-picker-container {
+  border: none !important;
+  overflow: visible !important;
+}
+
+.sp-palette-container {
+  border-right: 1px solid #2a2a3e !important;
+  overflow: visible !important;
+}
+
+/* Gradient + hue/alpha sliders */
+.sp-color,
+.sp-hue,
+.sp-alpha {
+  pointer-events: all !important;
+}
+
+.sp-fill {
+  pointer-events: all !important;
+}
+
+.sp-dragger,
+.sp-slider,
+.sp-alpha-handle {
+  pointer-events: all !important;
+  cursor: pointer !important;
+}
 
 .sp-thumb-el {
   border: 1px solid #2a2a3e !important;
@@ -258,9 +332,12 @@
   border-radius: 4px !important;
   font-size: 11px !important;
   padding: 4px 6px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-.sp-cancel, .sp-choose {
+.sp-cancel,
+.sp-choose {
   background: #252545 !important;
   color: #e2e8f0 !important;
   border: none !important;
@@ -275,26 +352,34 @@
   color: #fff !important;
 }
 
-/* Color swatch button */
-.gjs-checker-bg,
-.gjs-field-color-picker {
-  cursor: pointer !important;
-  border-radius: 3px !important;
-}
-
 .sp-replacer {
   background: #12122a !important;
   border: 1px solid #252545 !important;
   border-radius: 4px !important;
   padding: 2px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  pointer-events: all !important;
 }
 
 .sp-preview {
   border: none !important;
   border-radius: 3px !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
-.sp-dd { color: #8888aa !important; }
+.sp-dd {
+  color: #8888aa !important;
+  pointer-events: all !important;
+}
+
+/* Ensure the top-level body has no transform that breaks fixed positioning */
+body {
+  transform: none !important;
+  /* prevent stacking context breaking fixed */
+}
 
 /* ══════ TRAITS / PROPERTIES ══════ */
 
@@ -339,7 +424,7 @@
 
 .gjs-toolbar-item:hover {
   opacity: 1 !important;
-  background: rgba(255,255,255,.15) !important;
+  background: rgba(255, 255, 255, .15) !important;
 }
 
 /* Badge */
@@ -355,17 +440,24 @@
 /* Drag placeholder */
 .gjs-placeholder {
   border: 2px dashed #7c3aed !important;
-  background: rgba(124,58,237,.08) !important;
+  background: rgba(124, 58, 237, .08) !important;
   border-radius: 4px !important;
 }
 
-.gjs-placeholder-int { background: #7c3aed !important; }
+.gjs-placeholder-int {
+  background: #7c3aed !important;
+}
 
 /* Resize handles */
-.gjs-resizer-h { border-color: #7c3aed !important; }
+.gjs-resizer-h {
+  border-color: #7c3aed !important;
+}
 
 /* Selector manager */
-.gjs-clm-tags { background: #1a1a2e !important; padding: 8px !important; }
+.gjs-clm-tags {
+  background: #1a1a2e !important;
+  padding: 8px !important;
+}
 
 .gjs-clm-tag {
   background: #12122a !important;
@@ -380,12 +472,16 @@
 #blocks-container::-webkit-scrollbar,
 #layers-container::-webkit-scrollbar,
 #styles-container::-webkit-scrollbar,
-#traits-container::-webkit-scrollbar { width: 4px !important; }
+#traits-container::-webkit-scrollbar {
+  width: 4px !important;
+}
 
 #blocks-container::-webkit-scrollbar-track,
 #layers-container::-webkit-scrollbar-track,
 #styles-container::-webkit-scrollbar-track,
-#traits-container::-webkit-scrollbar-track { background: #0f0f22 !important; }
+#traits-container::-webkit-scrollbar-track {
+  background: #0f0f22 !important;
+}
 
 #blocks-container::-webkit-scrollbar-thumb,
 #layers-container::-webkit-scrollbar-thumb,
@@ -396,17 +492,25 @@
 }
 
 #blocks-container::-webkit-scrollbar-thumb:hover,
-#styles-container::-webkit-scrollbar-thumb:hover { background: #3a3a5a !important; }
+#styles-container::-webkit-scrollbar-thumb:hover {
+  background: #3a3a5a !important;
+}
 
 /* ══════ MISC ══════ */
 
-.gjs-off-prv { display: none !important; }
+.gjs-off-prv {
+  display: none !important;
+}
 
-.gjs-one-bg, .gjs-two-bg, .gjs-three-bg, .gjs-four-bg {
+.gjs-one-bg,
+.gjs-two-bg,
+.gjs-three-bg,
+.gjs-four-bg {
   background: transparent !important;
 }
 
-.gjs-four-color, .gjs-four-color-h:hover {
+.gjs-four-color,
+.gjs-four-color-h:hover {
   color: #7c3aed !important;
 }
 
@@ -417,8 +521,8 @@
   color: #8888aa !important;
 }
 
-#styles-container .gjs-radio-item input:checked + label {
-  background: rgba(124,58,237,.2) !important;
+#styles-container .gjs-radio-item input:checked+label {
+  background: rgba(124, 58, 237, .2) !important;
   color: #c4b5fd !important;
 }
 
