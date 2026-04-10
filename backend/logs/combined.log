@@ -2862,3 +2862,6 @@ Require stack:
 [2026-04-09T09:07:41.988Z] [HTTP] GET /projects/69d76b40c3cb4facc10ceb8e 304 11ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
 [2026-04-09T09:07:43.710Z] [HTTP] GET /api/public/page/real-estate-listing-page 200 5ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
 [2026-04-09T09:07:56.019Z] [HTTP] GET /real-estate-listing-page?name=Test&phone=7845784578&email=yeyos8096%40gmail.com 200 4ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-04-10T04:13:48.425Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-10T04:13:48.433Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-10T04:13:48.434Z] [INFO] 🚀 Server running on port 5000
