@@ -485,7 +485,7 @@ exports.publishPage = async (req, res, next) => {
       page.domain = `${parsed.data.subdomain}.${process.env.APP_DOMAIN || 'pages.yourdomain.com'}`;
       liveUrl = `https://${page.domain}`;
     } else {
-      liveUrl = `${baseAppUrl}/p/${page.slug}`;
+      liveUrl = `${baseAppUrl}/${page.slug}`;
     }
 
     page.status = 'published';

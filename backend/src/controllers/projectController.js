@@ -1,6 +1,7 @@
 const Project = require('../models/Project');
 const Page = require('../models/Page');
 const crypto = require('crypto');
+const { normalizeDomain } = require('../utils/validation');
 
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
@@ -19,6 +20,7 @@ exports.createProject = async (req, res, next) => {
       industry: req.body.category || req.body.industry,
       primaryColor: req.body.primaryColor,
       secondaryColor: req.body.secondaryColor,
+      websiteUrl: req.body.websiteUrl || req.body.url,
     });
 
     res.status(201).json({
@@ -109,10 +111,16 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description, logoUrl, industry, primaryColor, secondaryColor } = req.body;
+    const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl } = req.body;
+    const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, updatedAt: Date.now() };
+    
+    if (websiteUrl !== undefined) {
+      updateData.websiteUrl = websiteUrl ? normalizeDomain(websiteUrl) : "";
+    }
+
     const project = await Project.findOneAndUpdate(
       { _id: id, userId: req.user._id },
-      { name, description, logoUrl, industry, primaryColor, secondaryColor, updatedAt: Date.now() },
+      updateData,
       { new: true, runValidators: true }
     );
 

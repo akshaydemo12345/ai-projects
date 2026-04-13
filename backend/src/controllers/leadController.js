@@ -10,7 +10,7 @@ const logger = require('../utils/logger');
  */
 exports.createLead = async (req, res) => {
   try {
-    const { name, email, phone, message, pageSlug, projectId } = req.body;
+    const { name, email, phone, message, pageSlug, pageId, projectId } = req.body;
 
     // Basic validation
     if (!email || !pageSlug) {
@@ -36,6 +36,7 @@ exports.createLead = async (req, res) => {
       phone,
       message,
       pageSlug,
+      pageId,
       projectId: finalProjectId,
       ip: req.ip,
       userAgent: req.get('User-Agent')
@@ -80,23 +81,82 @@ exports.createLead = async (req, res) => {
  * @route   GET /api/leads
  * @access  Private (Admin/User)
  */
-exports.getLeads = async (req, res) => {
+exports.getLeads = async (req, res, next) => {
   try {
-    const { projectId, pageSlug } = req.query;
-    const filter = { userId: req.user._id }; // Security: only user's own projects
+    const { projectId, pageSlug, pageId } = req.query;
+    
+    // Security check: Find all projects belonging to this user
+    const userProjects = await Project.find({ userId: req.user._id }).select('_id');
+    const userProjectIds = userProjects.map(p => p._id);
+    console.log(`🔒 User ${req.user.email} owns projects: ${userProjectIds.join(', ')}`);
 
-    // Actually we need to cross-ref with projects the user owns
-    // For now, simplify and just filter by query params if provided
-    const query = {};
-    if (projectId) query.projectId = projectId;
-    if (pageSlug) query.pageSlug = pageSlug;
+    // Build the query starting with user's project restriction and soft delete check
+    const query = { 
+      projectId: { $in: userProjectIds },
+      isDeleted: { $ne: true }
+    };
+    
+    // Apply optional sub-filters
+    if (projectId) {
+      // Ensure the requested projectId is actually owned by the user
+      if (!userProjectIds.map(id => id.toString()).includes(projectId)) {
+        return res.status(200).json({ status: 'success', results: 0, data: { leads: [] } });
+      }
+      query.projectId = projectId;
+    }
+    
+    if (pageId && require('mongoose').Types.ObjectId.isValid(pageId)) {
+      const page = await Page.findById(pageId);
+      if (page) {
+        console.log(`🔍 Filtering by page slug: ${page.slug} or ID: ${pageId}`);
+        query.$or = [
+          { pageId: pageId },
+          { pageSlug: page.slug }
+        ];
+      } else {
+        query.pageId = pageId;
+      }
+    } else if (pageSlug) {
+      query.pageSlug = pageSlug;
+    }
 
+    console.log('📋 Lead Query:', JSON.stringify(query));
     const leads = await Lead.find(query).sort('-createdAt');
+    console.log(`✅ Leads found: ${leads.length}`);
 
     return res.status(200).json({
       status: 'success',
       results: leads.length,
       data: { leads }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete a lead (Soft Delete)
+ * @route   DELETE /api/leads/:id
+ * @access  Private
+ */
+exports.deleteLead = async (req, res, next) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) return res.status(404).json({ status: 'error', message: 'Lead not found' });
+
+    // Security check: Verify project ownership
+    const project = await Project.findOne({ _id: lead.projectId, userId: req.user._id });
+    if (!project) {
+      return res.status(403).json({ status: 'error', message: 'Not authorized to delete this lead' });
+    }
+
+    // Soft delete
+    lead.isDeleted = true;
+    await lead.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Lead deleted successfully'
     });
   } catch (error) {
     next(error);
