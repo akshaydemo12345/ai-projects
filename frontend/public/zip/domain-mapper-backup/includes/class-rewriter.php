@@ -246,11 +246,10 @@ class DomainMapper_Rewriter {
 
         $base_tag = '<base href="http://' . esc_attr( $source ) . '/">';
 
-        // Build the fetch/XHR interceptor.
         $interceptor = '';
         if ( class_exists( 'DomainMapper_Form_Interceptor' ) ) {
-            $fi          = new DomainMapper_Form_Interceptor( $this->settings );
-            $interceptor = $fi->get_script();
+            // Serve the interceptor cleanly via an external virtual path
+            $interceptor = '<script src="http://' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
         }
 
         $inject = "\n" . $base_tag . "\n" . $interceptor . "\n";

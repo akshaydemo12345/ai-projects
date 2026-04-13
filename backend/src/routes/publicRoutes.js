@@ -8,7 +8,9 @@ const {
   getPreview, 
   getPreviewHTML, 
   getPublicPageHTML, 
-  downloadPlugin 
+  downloadPlugin,
+  getSitemap,
+  getRobotsTxt,
 } = require('../controllers/publicController');
 
 const router = express.Router();
@@ -25,6 +27,10 @@ router.get('/domain/:domain', getPublicPageByDomain);
 router.post('/plugin/verify', verifyPlugin);
 router.post('/verify-api-key', verifyPlugin);
 router.get('/plugin/download', downloadPlugin);
+
+// ─── SEO: Sitemap & Robots ────────────────────────────────────────────────────
+router.get('/sitemap.xml', getSitemap);
+router.get('/robots.txt', getRobotsTxt);
 
 // ─── Smart Slug Route (HTML for browsers/WP, JSON for API clients) ───────────
 /**
@@ -47,3 +53,4 @@ router.get('/:slug(*)', (req, res, next) => {
 });
 
 module.exports = router;
+

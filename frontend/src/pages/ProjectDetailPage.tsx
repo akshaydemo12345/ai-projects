@@ -1122,9 +1122,18 @@ const ProjectDetailPage = () => {
                       <span>{page.views || 0}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground">
-                      <UsersIcon className="h-3 w-3" />
-                      <span>{(page as any).leads?.length || 0}</span>
+                    <div className="flex items-center justify-start md:justify-center">
+                      <div 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          navigate(`/dashboard/leads?page=${page._id}`); 
+                        }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
+                        title="View Leads"
+                      >
+                        <UsersIcon className="h-3 w-3" />
+                        <span>{(page as any).leads?.length || 0}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1 justify-end">

@@ -2,14 +2,11 @@
 /**
  * Form Interceptor.
  *
- * Injects a JavaScript shim into every proxied HTML page that:
- *  1. Intercepts all fetch() and XMLHttpRequest calls made by the page JS.
- *  2. If the target URL is a known external domain (agencyplatform subdomains etc.),
- *     rewrites it to go through /dm-relay/ instead.
- *  3. Adds CORS credentials to all requests so cookies are forwarded.
+ * Provides two APIs:
+ *   get_script()   — emits a single clean external <script src="..."> tag into the HTML.
+ *   get_js_body()  — returns the raw JS body served by class-proxy.php at /dm-interceptor.js.
  *
- * This solves the "form JS fetches from dashboard.agencyplatform.com at runtime"
- * problem without needing to statically rewrite every JS file.
+ * This keeps ALL proxy logic out of "View Page Source" on the client domain.
  *
  * @package DomainMapper
  */
@@ -24,172 +21,136 @@ class DomainMapper_Form_Interceptor {
         $this->settings = $settings;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Public API
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * Build the JS interceptor script tag to inject into <head>.
-     *
-     * @return string   A <script> block (no src, inline).
+     * Returns a single clean external <script> tag.
+     * The JS body is served at /dm-interceptor.js by class-proxy.php.
      */
     public function get_script(): string {
-        $source       = $this->settings['source_domain'] ?? '';
-        $target       = $this->strip_scheme( $this->settings['target_domain'] ?? '' );
-        $bare         = preg_replace( '/^www\./i', '', $target );
-        $relay_prefix = 'http://' . $source . '/dm-relay/';
+        $source = $this->strip_scheme( $this->settings['source_domain'] ?? '' );
+        if ( empty( $source ) ) {
+            return '';
+        }
+        return '<script src="http://' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
+    }
 
-        // Build list of domains that need to go through relay.
+    /**
+     * Returns the raw JS interceptor body (no surrounding <script> tags).
+     * Called by class-proxy.php to serve /dm-interceptor.js.
+     */
+    public function get_js_body(): string {
+        $source       = $this->strip_scheme( $this->settings['source_domain'] ?? '' );
+        $target       = $this->strip_scheme( $this->settings['target_domain'] ?? '' );
+        $bare         = (string) preg_replace( '/^www\./i', '', $target );
+        $relay_prefix = 'http://' . $source . '/dm-relay/';
         $relay_domains = $this->get_relay_domains( $bare );
 
-        // Encode for JS.
-        $relay_prefix_js  = esc_js( $relay_prefix );
-        $relay_domains_js = wp_json_encode( $relay_domains );
-        $source_js        = esc_js( $source );
-        $target_js        = esc_js( $target );
+        $rp  = addslashes( $relay_prefix );
+        $rds = wp_json_encode( $relay_domains );
+        $sh  = addslashes( $source );
+        $th  = addslashes( $target );
 
         return <<<JS
-<script id="dm-interceptor">
 (function() {
     'use strict';
 
-    var DEBUG         = true;
-    var RELAY_PREFIX  = '{$relay_prefix_js}';
-    var SOURCE_HOST   = '{$source_js}';
-    var TARGET_HOST   = '{$target_js}';
-    var RELAY_DOMAINS = {$relay_domains_js};
+    var SOURCE_HOST   = '{$sh}';
+    var TARGET_HOST   = '{$th}';
+    var RELAY_PREFIX  = '{$rp}';
+    var RELAY_DOMAINS = {$rds};
 
-    /**
-     * Rewrite a URL: if it points to a relay domain, route via /dm-relay/.
-     */
     function rewriteUrl(url) {
         if (!url || typeof url !== 'string') return url;
-        var oldUrl = url;
+        url = url.replace(/([^:])\/\//g, '\$1/');
+        if (
+            url.indexOf('data:')     === 0 ||
+            url.indexOf('blob:')     === 0 ||
+            url.indexOf('dm-relay')  !== -1
+        ) return url;
 
-        // 1. Clean up double slashes (except protocol) e.g. host//path -> host/path
-        url = url.replace(/([^:])\/\//g, "$1/");
-
-        if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('dm-relay') !== -1) return url;
-
-        // Normalize // to http:// or https:// if it's a protocol-relative URL
+        // Protocol-relative
         if (url.indexOf('//') === 0 && url.indexOf('//' + SOURCE_HOST) === -1) {
-             // If it's something like //signup_v2.php, it's actually root-relative but formatted weirdly by some scripts
-             if (url.indexOf('//') === 0 && url.split('/').length < 4) {
-                 url = '/' + url.substring(2);
-             }
+            if (url.split('/').length < 4) { url = '/' + url.substring(2); }
         }
 
-        // Handle root-relative paths (e.g. /signup_v2.php)
-        if (url.startsWith('/') && !url.startsWith('//')) {
-            // These are almost always intended for the upstream target. 
-            // We route them through relay to ensures they hit the target even on a subsite.
-            var newUrl = 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + url;
-            if (DEBUG) console.log('[DomainMapper] Relaying root-relative:', url, '->', newUrl);
-            return newUrl;
+        // Root-relative
+        if (url.charAt(0) === '/' && url.charAt(1) !== '/') {
+            return 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + url;
         }
 
-        // Handle absolute URLs
+        // Absolute
         try {
             var u = new URL(url, window.location.href);
-            
-            // 2. Handle absolute URLs to permitted relay domains
             for (var i = 0; i < RELAY_DOMAINS.length; i++) {
                 if (u.hostname === RELAY_DOMAINS[i] || u.hostname.endsWith('.' + RELAY_DOMAINS[i])) {
-                    var relayed = 'http://' + SOURCE_HOST + '/dm-relay/' + u.hostname + u.pathname + u.search + u.hash;
-                    if (DEBUG) console.log('[DomainMapper] Relaying absolute:', url, '->', relayed);
-                    return relayed;
+                    return 'http://' + SOURCE_HOST + '/dm-relay/' + u.hostname + u.pathname + u.search + u.hash;
                 }
             }
-
-            // 3. Handle absolute/relative URLs pointing back to SOURCE_HOST root (forms/AJAX)
             if (u.hostname === SOURCE_HOST) {
                 var p = u.pathname;
-                // If it's a known white-label endpoint at the root, relay it to the TARGET.
-                // We exclude WP core paths to avoid breaking local admin.
                 if ((p.indexOf('.php') !== -1 || u.search.indexOf('action=') !== -1) && !p.startsWith('/wp-')) {
-                     var relayedSource = 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + p + u.search + u.hash;
-                     if (DEBUG) console.log('[DomainMapper] Relaying source-target:', url, '->', relayedSource);
-                     return relayedSource;
+                    return 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + p + u.search + u.hash;
                 }
             }
         } catch(e) {}
-
         return url;
     }
 
-    // ── Intercept fetch() ────────────────────────────────────────────────────
-    var _originalFetch = window.fetch;
+    // Intercept fetch()
+    var _origFetch = window.fetch;
     window.fetch = function(input, init) {
         try {
             if (typeof input === 'string') {
                 input = rewriteUrl(input);
             } else if (input && input.url) {
-                var newUrl = rewriteUrl(input.url);
-                if (newUrl !== input.url) {
-                    input = new Request(newUrl, input);
-                }
+                var nu = rewriteUrl(input.url);
+                if (nu !== input.url) input = new Request(nu, input);
             }
             init = init || {};
             init.credentials = init.credentials || 'include';
         } catch(e) {}
-        return _originalFetch.call(this, input, init);
+        return _origFetch.call(this, input, init);
     };
 
-    // ── Intercept XMLHttpRequest ─────────────────────────────────────────────
-    var _XHROpen = XMLHttpRequest.prototype.open;
+    // Intercept XHR
+    var _origXHROpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function(method, url) {
-        try {
-            url = rewriteUrl(url);
-        } catch(e) {}
+        try { url = rewriteUrl(url); } catch(e) {}
         this.withCredentials = true;
         var args = Array.prototype.slice.call(arguments);
         args[1] = url;
-        return _XHROpen.apply(this, args);
+        return _origXHROpen.apply(this, args);
     };
 
-    // ── Intercept Beacon / EventSource ───────────────────────────────────────
+    // Intercept sendBeacon
     if (navigator.sendBeacon) {
         var _origBeacon = navigator.sendBeacon.bind(navigator);
-        navigator.sendBeacon = function(url, data) {
-            return _origBeacon(rewriteUrl(url), data);
-        };
-    }
-    if (window.EventSource) {
-        var _origES = window.EventSource;
-        window.EventSource = function(url, config) {
-            return new _origES(rewriteUrl(url), config);
-        };
+        navigator.sendBeacon = function(url, data) { return _origBeacon(rewriteUrl(url), data); };
     }
 
-    // ── Intercept dynamic <script> / <link> / <img> injection ────────────────
-    var _origCreateElement = document.createElement.bind(document);
+    // Intercept createElement src/href/action setters
+    var _origCE = document.createElement.bind(document);
     document.createElement = function(tag) {
-        var el = _origCreateElement(tag);
-        var t = (tag || '').toLowerCase();
+        var el  = _origCE(tag);
+        var t   = (tag || '').toLowerCase();
         if (t === 'script' || t === 'link' || t === 'img' || t === 'iframe' || t === 'form') {
-            var _origSetAttr = el.setAttribute.bind(el);
+            var _origSA = el.setAttribute.bind(el);
             el.setAttribute = function(name, value) {
                 if ((name === 'src' || name === 'href' || name === 'action') && typeof value === 'string') {
                     value = rewriteUrl(value);
                 }
-                return _origSetAttr(name, value);
+                return _origSA(name, value);
             };
-            try {
-                var props = (t === 'form') ? ['action'] : ['src', 'href'];
-                props.forEach(function(prop) {
-                    var proto = Object.getPrototypeOf(el);
-                    var orig = Object.getOwnPropertyDescriptor(proto, prop);
-                    if (!orig) return;
-                    Object.defineProperty(el, prop, {
-                        set: function(v) { orig.set.call(this, rewriteUrl(v)); },
-                        get: function()  { return orig.get.call(this); },
-                        configurable: true
-                    });
-                });
-            } catch(e) {}
         }
         return el;
     };
 
-    // ── Intercept Image / Script Prototypes ───────────────────────────────
+    // Hook prototype src property on img/script/iframe
     try {
-        var _hookProp = function(proto, prop) {
+        var _hook = function(proto, prop) {
             var orig = Object.getOwnPropertyDescriptor(proto, prop);
             if (!orig) return;
             Object.defineProperty(proto, prop, {
@@ -198,19 +159,12 @@ class DomainMapper_Form_Interceptor {
                 configurable: true
             });
         };
-        _hookProp(HTMLImageElement.prototype, 'src');
-        _hookProp(HTMLScriptElement.prototype, 'src');
-        _hookProp(HTMLIFrameElement.prototype, 'src');
+        _hook(HTMLImageElement.prototype,  'src');
+        _hook(HTMLScriptElement.prototype, 'src');
+        _hook(HTMLIFrameElement.prototype,  'src');
     } catch(e) {}
 
-    // ── Intercept window.open (some popups use this) ─────────────────────────
-    var _origOpen = window.open;
-    window.open = function(url, target, features) {
-        url = rewriteUrl(url);
-        return _origOpen.call(this, url, target, features);
-    };
-
-    // ── Intercept Form Actions ───────────────────────────────────────────────
+    // Intercept form.submit()
     try {
         var _origSubmit = HTMLFormElement.prototype.submit;
         HTMLFormElement.prototype.submit = function() {
@@ -219,99 +173,33 @@ class DomainMapper_Form_Interceptor {
         };
     } catch(e) {}
 
-    // ── Intercept document.write (legacy form loaders) ───────────────────────
-    var _origWrite = document.write.bind(document);
-    document.write = function(markup) {
-        if (typeof markup === 'string') {
-            // High-res replacement for common domains in markup
-            for (var i = 0; i < RELAY_DOMAINS.length; i++) {
-                var d = RELAY_DOMAINS[i];
-                var re = new RegExp('https?:\\\\/\\\\/([a-z0-9\\\\-\\.]*'+d.replace('.', '\\\\.')+')', 'gi');
-                markup = markup.replace(re, function(m, host) {
-                   return 'http://' + SOURCE_HOST + '/dm-relay/' + host;
-                });
-            }
-        }
-        return _origWrite(markup);
-    };
-
-    // ── MutationObserver: catch dynamically injected script/link nodes ────────
-    var _observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(node) {
-                if (!node || !node.tagName) return;
-                var tag = node.tagName.toLowerCase();
-                if (tag === 'script' && node.src) {
-                    var rewritten = rewriteUrl(node.src);
-                    if (rewritten !== node.src) {
-                        node.src = rewritten;
-                    }
-                }
-                if (tag === 'link' && node.href) {
-                    var rewrittenHref = rewriteUrl(node.href);
-                    if (rewrittenHref !== node.href) {
-                        node.href = rewrittenHref;
-                    }
-                }
-                if (tag === 'iframe' && node.src) {
-                    var rewrittenIframe = rewriteUrl(node.src);
-                    if (rewrittenIframe !== node.src) {
-                        node.src = rewrittenIframe;
-                    }
-                }
-            });
-        });
-    });
-    _observer.observe(document.documentElement, { childList: true, subtree: true });
-
-    console.log('[DomainMapper] Interceptor v2 active. Relay domains:', RELAY_DOMAINS);
 })();
-</script>
 JS;
     }
 
-    /**
-     * Return the full list of domains that should route through relay.
-     *
-     * @param  string $bare_domain  e.g. agencyplatform.com
-     * @return string[]
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function get_relay_domains( string $bare_domain ): array {
         $domains = [];
-
-        // Standard subdomains.
         foreach ( [ 'dashboard', 'cdn', 'static', 'assets', 'api', 'app', 'media', 'img' ] as $sub ) {
             $domains[] = $sub . '.' . $bare_domain;
         }
-
-        // Extra relay domains from settings.
         $extra = $this->settings['extra_relay_domains'] ?? '';
         if ( ! empty( $extra ) ) {
             foreach ( preg_split( '/[\r\n,]+/', $extra ) as $line ) {
-                $line = trim( preg_replace( '#^https?://#i', '', $line ) );
+                $line = trim( (string) preg_replace( '#^https?://#i', '', $line ) );
                 if ( $line !== '' && ! in_array( $line, $domains, true ) ) {
                     $domains[] = $line;
                 }
             }
         }
-
-        // Auto-detect base white-label domains for wildcard matching in JS.
-        $base_wildcards = [
-            'kxcdn.com',
-            'cloudfront.net',
-            'agencyplatform.com',
-            'edeveloperz.com',
-            'crazyegg.com',
-            'analytics.edeveloperz.com',
-            'script.crazyegg.com',
-        ];
-
-        foreach ( $base_wildcards as $d ) {
+        foreach ( [ 'kxcdn.com', 'cloudfront.net', 'agencyplatform.com', 'edeveloperz.com', 'crazyegg.com' ] as $d ) {
             if ( ! in_array( $d, $domains, true ) ) {
                 $domains[] = $d;
             }
         }
-
         return array_values( array_unique( array_filter( $domains ) ) );
     }
 
