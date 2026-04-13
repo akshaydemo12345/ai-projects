@@ -14,6 +14,8 @@ import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/
 import { toast } from "sonner";
 import { copyToClipboard } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -417,6 +419,12 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
   const [logoPreview, setLogoPreview] = useState<string | null>(page.logoUrl ?? null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(page.logoUrl);
 
+  const [mainHeader, setMainHeader] = useState(page.mainHeader ?? "None");
+  const [mainFooter, setMainFooter] = useState(page.mainFooter ?? "None");
+  const [thankYouHeader, setThankYouHeader] = useState(page.thankYouHeader ?? "None");
+  const [thankYouFooter, setThankYouFooter] = useState(page.thankYouFooter ?? "None");
+  const [thankYouUrl, setThankYouUrl] = useState(page.thankYouUrl ?? "");
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -431,7 +439,21 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
 
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) { toast.error("Name and slug are required."); return; }
-    onSave({ ...page, name: name.trim(), slug: slug.trim(), metaTitle, metaDescription, primaryColor, secondaryColor, logoUrl });
+    onSave({
+      ...page,
+      name: name.trim(),
+      slug: slug.trim(),
+      metaTitle,
+      metaDescription,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
+      mainHeader,
+      mainFooter,
+      thankYouHeader,
+      thankYouFooter,
+      thankYouUrl
+    });
   };
 
   return (
@@ -471,22 +493,86 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Meta Title</label>
-            <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="SEO title for search engines" className="h-10 text-sm" />
-            <p className="text-xs text-muted-foreground mt-1">Ideal: 50–60 characters</p>
-          </div>
+          <Tabs defaultValue="main" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm border border-border">
+              <TabsTrigger value="main" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-bold">Main Page</TabsTrigger>
+              <TabsTrigger value="thankyou" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-bold">Thank You Page</TabsTrigger>
+            </TabsList>
 
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Meta Description</label>
-            <Textarea
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="Page description for search results..."
-              className="min-h-[65px] resize-none text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-1 mb-4">Ideal: 150–160 characters</p>
-          </div>
+            <TabsContent value="main" className="space-y-4 pt-2">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-foreground mb-1.5 block">Header Script</label>
+                  <Textarea
+                    value={mainHeader === "None" ? "" : mainHeader}
+                    onChange={(e) => setMainHeader(e.target.value)}
+                    placeholder="<!-- Paste custom header scripts, CSS, or pixel scripts here -->"
+                    className="min-h-[70px] font-mono text-xs bg-muted/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-foreground mb-1.5 block">Footer Script</label>
+                  <Textarea
+                    value={mainFooter === "None" ? "" : mainFooter}
+                    onChange={(e) => setMainFooter(e.target.value)}
+                    placeholder="<!-- Paste custom footer scripts or tracking code here -->"
+                    className="min-h-[70px] font-mono text-xs bg-muted/30"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-border/50">
+                <label className="text-sm font-bold text-foreground mb-1.5 block">Meta Title</label>
+                <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="SEO title for search engines" className="h-10 text-sm" />
+                <p className="text-[10px] text-muted-foreground mt-1">Ideal: 50–60 characters</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-foreground mb-1.5 block">Meta Description</label>
+                <Textarea
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Page description for search results..."
+                  className="min-h-[85px] resize-none text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 mb-2">Ideal: 150–160 characters</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="thankyou" className="space-y-4 pt-2">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-foreground mb-1.5 block">Header Script (Thank You)</label>
+                  <Textarea
+                    value={thankYouHeader === "None" ? "" : thankYouHeader}
+                    onChange={(e) => setThankYouHeader(e.target.value)}
+                    placeholder="<!-- Add custom code to the Thank You page header -->"
+                    className="min-h-[70px] font-mono text-xs bg-muted/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-foreground mb-1.5 block">Footer Script (Thank You)</label>
+                  <Textarea
+                    value={thankYouFooter === "None" ? "" : thankYouFooter}
+                    onChange={(e) => setThankYouFooter(e.target.value)}
+                    placeholder="<!-- Add custom code to the Thank You page footer -->"
+                    className="min-h-[70px] font-mono text-xs bg-muted/30"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-border/50">
+                <label className="text-sm font-bold text-foreground mb-1.5 block">Thank You URL (Redirect)</label>
+                <Input 
+                  value={thankYouUrl} 
+                  onChange={(e) => setThankYouUrl(e.target.value)} 
+                  placeholder="https://example.com/thank-you" 
+                  className="h-10 text-sm" 
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">The external URL where visitors land after form submission.</p>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <div className="rounded border border-border p-3 space-y-3 bg-muted/30">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Page Branding</p>

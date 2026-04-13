@@ -57,6 +57,11 @@ export interface LandingPage {
   secondaryColor?: string;
   accentColor?: string;
   logoUrl?: string;
+  mainHeader?: string;
+  mainFooter?: string;
+  thankYouHeader?: string;
+  thankYouFooter?: string;
+  thankYouUrl?: string;
   generationMethod?: "ai" | "analyze" | "manual";
   aiPrompt?: string;
   apiToken?: string;
