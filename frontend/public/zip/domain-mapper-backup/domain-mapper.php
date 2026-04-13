@@ -21,6 +21,7 @@ define( 'DM_DIR',          plugin_dir_path( __FILE__ ) );
 define( 'DM_URL',          plugin_dir_url( __FILE__ ) );
 define( 'DM_OPTION',       'dm_settings' );
 define( 'DM_LOG_FILE',     WP_CONTENT_DIR . '/dm-debug.log' );
+define( 'DM_API_BASE',     'http://192.168.1.24:5000' );
 
 require_once DM_DIR . 'includes/class-cache.php';
 require_once DM_DIR . 'includes/class-api.php';
@@ -128,10 +129,12 @@ final class DomainMapper_Loader {
                     }
                 }
             }
-        } else {
-            // No specific paths — proxy all non-WP paths
-            $path_rules = "    # Proxy all non-WP paths to plugin handler\n";
-            $path_rules .= "    RewriteRule ^(.*)$ index.php [QSA,L]\n";
+        }
+
+        if ( empty( $path_rules ) ) {
+            // No specific paths — NO global rules. 
+            // This prevents the plugin from breaking the site before paths are synced.
+            $path_rules = "    # No paths configured yet. Site runs normally.\n";
         }
 
         $dm_block = <<<HTACCESS
@@ -212,6 +215,38 @@ HTACCESS;
     public static function init(): void {
         if ( null === self::$instance ) {
             self::$instance = new self();
+            self::$instance->check_domain_change();
+        }
+    }
+
+    /**
+     * Automatically detect domain change and reset verification if needed.
+     */
+    private function check_domain_change(): void {
+        if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+            return;
+        }
+
+        $current_host = sanitize_text_field( $_SERVER['HTTP_HOST'] ?? '' );
+        $stored_host  = $this->settings['verified_domain'] ?? '';
+
+        if ( ! empty( $stored_host ) && $current_host !== $stored_host ) {
+             self::log( "Domain change detected: {$stored_host} -> {$current_host}. Resetting verification.", true );
+             $this->settings['status'] = 'inactive';
+             $this->settings['verified_domain'] = '';
+             update_option( DM_OPTION, $this->settings );
+        }
+
+        // Auto-verify in background if inactive or time elapsed (e.g. 24h)
+        $last_v = (int) ( $this->settings['last_verified'] ?? 0 );
+        if ( $this->settings['status'] !== 'active' || ( time() - $last_v ) > DAY_IN_SECONDS ) {
+            if ( ! empty( $this->settings['api_key'] ) ) {
+                // We use a non-blocking check or just do it once per hour via cron, 
+                // but for "auto-background" on init, we can do it if status is inactive.
+                if ( $this->settings['status'] !== 'active' ) {
+                   $this->api->verify( true );
+                }
+            }
         }
     }
 
@@ -231,15 +266,16 @@ HTACCESS;
 
     private function load_settings(): array {
         $defaults = [
-            'api_key'       => '',
-            'source_domain' => '',
-            'target_domain' => '',
-            'cache_time'    => 300,
-            'plan'          => '',
-            'status'        => 'inactive',
-            'debug_mode'    => false,
-            'last_verified' => 0,
-            'allowed_paths'  => '',
+            'api_key'         => '',
+            'source_domain'   => '',
+            'target_domain'   => '',
+            'cache_time'      => 300,
+            'plan'            => '',
+            'status'          => 'inactive',
+            'debug_mode'      => false,
+            'last_verified'   => 0,
+            'allowed_paths'   => '',
+            'verified_domain' => '',
         ];
         $stored = get_option( DM_OPTION, [] );
         return wp_parse_args( is_array( $stored ) ? $stored : [], $defaults );
@@ -265,6 +301,7 @@ HTACCESS;
         // returns early when no paths are configured, so it is safe to register
         // unconditionally here.
         add_action( 'init', [ $this->proxy, 'intercept' ], 1 );
+        add_action( 'template_redirect', [ $this->proxy, 'maybe_proxy_404' ] );
 
         // Only disable canonical redirects for paths that are actively proxied.
         // This prevents disrupting Divi Builder and native WP pages.

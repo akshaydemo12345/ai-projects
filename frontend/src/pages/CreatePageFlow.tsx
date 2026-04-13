@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { pagesApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
+import { ModernLoader } from "@/components/ui/ModernLoader";
 
 type Step = "methods" | "create-ai" | "analyze" | "crafting";
 
@@ -377,18 +378,7 @@ const CreatePageFlow = () => {
       )}
 
       {/* AI Crafting Loading */}
-      {step === "crafting" && (
-        <div className="flex flex-col items-center justify-center min-h-full py-20">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
-            <Sparkles className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">AI is crafting your page...</h2>
-          <p className="text-muted-foreground mb-8">Analyzing structure, generating copy, designing layout</p>
-          <div className="w-80">
-            <Progress value={progress} className="h-2" />
-          </div>
-        </div>
-      )}
+      {step === "crafting" && <ModernLoader />}
     </div>
   );
 };

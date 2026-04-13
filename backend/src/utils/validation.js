@@ -23,4 +23,13 @@ const validate = (schema) => (req, res, next) => {
   }
 };
 
-module.exports = { signupSchema, loginSchema, validate };
+const normalizeDomain = (url) => {
+  if (!url) return "";
+  return url.toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split("/")[0]
+    .split(":")[0];
+};
+
+module.exports = { signupSchema, loginSchema, validate, normalizeDomain };

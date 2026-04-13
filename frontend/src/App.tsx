@@ -52,7 +52,6 @@ const App = () => (
 
             {/* Public Landing Pages & Previews */}
             <Route path="/preview/:slug" element={<PublicLandingPage />} />
-            <Route path="/p/:slug" element={<PublicLandingPage />} />
             <Route path="/:slug" element={<PublicLandingPage />} />
 
             <Route path="*" element={<NotFound />} />
