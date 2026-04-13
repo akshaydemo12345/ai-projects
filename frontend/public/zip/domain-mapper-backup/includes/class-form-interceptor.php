@@ -169,9 +169,94 @@ class DomainMapper_Form_Interceptor {
         var _origSubmit = HTMLFormElement.prototype.submit;
         HTMLFormElement.prototype.submit = function() {
             this.action = rewriteUrl(this.action);
+            if (this.action.indexOf('/dm-relay/') !== -1) {
+                this.method = 'POST';
+            }
             return _origSubmit.apply(this, arguments);
         };
     } catch(e) {}
+
+    // Lead Capture Logic
+    async function submitLead(data, form, btn, originalBtnText) {
+        try {
+            var response = await fetch(RELAY_PREFIX + TARGET_HOST + '/api/leads', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+                mode: 'cors'
+            });
+
+            var result = await response.json();
+            if (result.status === 'success') {
+                form.reset();
+                var currentPath = window.location.pathname;
+                var thankYouPath = currentPath.endsWith('/') ? currentPath + 'thank-you' : currentPath + '/thank-you';
+                window.location.href = thankYouPath;
+            } else {
+                throw new Error(result.message || 'Server error');
+            }
+        } catch (err) {
+            console.error("Lead Error:", err);
+            // Fallback to traditional submission if AJAX fails
+            form.method = 'POST';
+            form.action = rewriteUrl(form.action);
+            form.submit();
+        }
+    }
+
+    // High-priority interceptor for natural form submissions
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        if (form && form.tagName === 'FORM') {
+            form.method = 'POST'; // Force POST exactly at submission
+            form.action = rewriteUrl(form.action);
+
+            // Check if it's a lead form (has email or specific ID)
+            if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+                e.preventDefault();
+                
+                var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
+                var originalText = btn ? btn.innerHTML : 'Submit';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = 'Sending...';
+                }
+
+                var fd = new FormData(form);
+                var data = {
+                    pageSlug: window.location.pathname.split('/').filter(Boolean).pop() || '',
+                    name: fd.get('name') || fd.get('first_name') || '',
+                    email: fd.get('email') || '',
+                    phone: fd.get('phone') || fd.get('tel') || '',
+                    message: fd.get('message') || fd.get('comments') || ''
+                };
+
+                submitLead(data, form, btn, originalText);
+            }
+        }
+    }, true);
+
+    // Bulletproof: Force POST on click of any submit-like button
+    document.addEventListener('click', function(e) {
+        var el = e.target;
+        if (el && (el.type === 'submit' || el.tagName === 'BUTTON')) {
+            var form = el.form || el.closest('form');
+            if (form) {
+                form.method = 'POST';
+                form.action = rewriteUrl(form.action);
+            }
+        }
+    }, true);
+
+    // Initial pass for methods
+    function syncMethods() {
+        var forms = document.getElementsByTagName('form');
+        for (var i = 0; i < forms.length; i++) {
+            forms[i].method = 'POST';
+        }
+    }
+    syncMethods();
+    setInterval(syncMethods, 2000); // Repeat every 2s for dynamic forms
 
 })();
 JS;

@@ -8,6 +8,7 @@ const {
   getPreview, 
   getPreviewHTML, 
   getPublicPageHTML, 
+  handleFormSubmission,
   downloadPlugin,
   getSitemap,
   getRobotsTxt,
@@ -51,6 +52,13 @@ router.get('/:slug(*)', (req, res, next) => {
   // Default: render full HTML (for browsers, WordPress plugin, iframes)
   return getPublicPageHTML(req, res, next);
 });
+
+/**
+ * @route   POST /:slug
+ * @desc    Auto-handles form submissions POSTed directly to a page slug.
+ *          Redirects to /:slug/thank-you upon success.
+ */
+router.post('/:slug(*)', handleFormSubmission);
 
 module.exports = router;
 

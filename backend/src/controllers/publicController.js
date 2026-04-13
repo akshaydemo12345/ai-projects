@@ -2,6 +2,7 @@
 
 const Page = require('../models/Page');
 const Project = require('../models/Project');
+const Lead = require('../models/Lead');
 const AppError = require('../utils/AppError');
 const { normalizeDomain } = require('../utils/validation');
 const path = require('path');
@@ -295,8 +296,13 @@ exports.getPreviewHTML = async (req, res, next) => {
  */
 exports.getPublicPageHTML = async (req, res, next) => {
   try {
-    const slug = String(req.params.slug || req.params[0] || '').trim();
-    const normalizedSlug = slug.replace(/^\/+|\/+$/g, '');
+    const rawSlug = String(req.params.slug || req.params[0] || '').trim();
+    const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    
+    // Split slug to handle /slug/thank-you sub-paths
+    const slugParts = cleanSlug.split('/');
+    const normalizedSlug = slugParts[0]; // The actual page slug is always the first part
+    const isThankYou = slugParts.length > 1 && slugParts[1] === 'thank-you';
 
     if (!normalizedSlug) return next(new AppError('Page not found', 404));
 
@@ -370,8 +376,121 @@ exports.getPublicPageHTML = async (req, res, next) => {
       : '';
 
     res.setHeader('Content-Type', 'text/html');
+    
+    if (isThankYou) {
+      // Render the success/thank-you template
+      const brandColor = page.primaryColor || '#7c3aed';
+      const redirectUrl = page.websiteUrl || '#';
+      
+      const thankYouHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You | ${page.title}</title>
+    <style>
+      @keyframes pc-sparkle { 0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); } 50% { transform: scale(1.2); opacity: 1; filter: blur(1px); } }
+      @keyframes pc-float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, -25px); } 100% { transform: translate(-10px, -50px); } }
+      body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #ffffff; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; overflow: hidden; }
+      .pc-sparkle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1; }
+      .pc-content { position: relative; z-index: 10; max-width: 500px; padding: 40px; }
+      .pc-success-icon { width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; color: #10b981; box-shadow: 0 0 40px rgba(16, 185, 129, 0.3); }
+      .pc-title { font-size: 56px; font-weight: 900; color: #0f172a; margin: 0 0 16px; letter-spacing: -0.02em; }
+      .pc-desc { font-size: 18px; line-height: 1.6; color: #64748b; margin-bottom: 40px; }
+      .pc-btn { display: inline-flex; align-items: center; gap: 10px; background: ${brandColor} !important; color: white !important; padding: 18px 40px; border-radius: 100px; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; }
+      .pc-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="pc-content">
+        <div class="pc-success-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <h1 class="pc-title">Thank You!</h1>
+        <p class="pc-desc">Successfully received your request. Our team will reach out shortly.</p>
+        <a href="${redirectUrl}" class="pc-btn">Visit Our Website</a>
+    </div>
+    <script>
+      const colors = ['#ffffff', '#ffd700', '${brandColor}', '#ffffff'];
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('div');
+        s.className = 'pc-sparkle';
+        const size = Math.random() * 5 + 1;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        s.style.width = size + 'px'; s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 110 + '%';
+        s.style.background = color; s.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
+        const d = Math.random() * 4 + 3;
+        const dl = Math.random() * 8;
+        s.style.animation = 'pc-sparkle ' + d + 's infinite ' + dl + 's ease-in-out, pc-float ' + (d * 2) + 's infinite ' + dl + 's linear';
+        document.body.appendChild(s);
+      }
+    </script>
+</body>
+</html>`;
+      return res.status(200).send(thankYouHtml);
+    }
+
     res.status(200).send(renderFullHTML(page, canonicalUrl));
   } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /:slug
+ * Smart form handler that captures data and redirects to success page.
+ */
+exports.handleFormSubmission = async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug || req.params[0] || '').trim();
+    const normalizedSlug = slug.replace(/^\/+|\/+$/g, '');
+    
+    const page = await Page.findOne({ slug: normalizedSlug, isDeleted: { $ne: true } });
+    if (!page) return next(new AppError('Page not found', 404));
+
+    // Capture fields (handle both name and first_name/last_name combinations)
+    const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
+    
+    const leadName = name || (first_name ? `${first_name} ${last_name || ''}`.trim() : '');
+    const leadEmail = email || '';
+    const leadPhone = phone || tel || '';
+    const leadMessage = message || comments || '';
+
+    // Create the lead
+    const lead = await Lead.create({
+      name: leadName,
+      email: leadEmail,
+      phone: leadPhone,
+      message: leadMessage,
+      pageSlug: normalizedSlug,
+      pageId: page._id,
+      projectId: page.projectId,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Update Project lead count
+    if (page.projectId) {
+      await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
+    }
+
+    // Detect if AJAX or Natural Form
+    const isAjax = req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json');
+
+    if (isAjax) {
+      return res.status(201).json({
+        status: 'success',
+        message: 'Lead saved',
+        redirect: `/${normalizedSlug}/thank-you`
+      });
+    }
+
+    // Traditional Form Redirect
+    res.redirect(`/${normalizedSlug}/thank-you`);
+
+  } catch (err) {
+    console.error('❌ Form submission error:', err);
     next(err);
   }
 };

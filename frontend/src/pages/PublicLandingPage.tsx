@@ -8,6 +8,8 @@ const PublicLandingPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  const isThankYouPage = window.location.pathname.endsWith('/thank-you');
 
   // We might need the token from the URL if the backend requires it
   const token = searchParams.get('token');
@@ -37,143 +39,14 @@ const PublicLandingPage = () => {
       const PAGE_SLUG = slug || '';
       const BRAND_COLOR = pageData.primaryColor || '#7c3aed';
       const REDIRECT_URL = pageData.websiteUrl || '#';
+      const previewPrefix = window.location.pathname.startsWith('/preview/') ? '/preview/' : '/';
 
       const leadCaptureScript = `
         <script>
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
-          function showSuccessPage() {
-            // Remove existing modal if any
-            const existing = document.getElementById('pc-success-page');
-            if (existing) existing.remove();
-
-            const successPage = document.createElement('div');
-            successPage.id = 'pc-success-page';
-            successPage.style.cssText = "position:fixed; inset:0; z-index:999999; background:#ffffff; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; transition:opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Inter', system-ui, sans-serif; text-align:center; overflow:hidden;";
-
-            // Sparkle Background CSS
-            const style = document.createElement('style');
-            style.textContent = \`
-              @keyframes pc-sparkle {
-                0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); }
-                50% { transform: scale(1.2); opacity: 1; filter: blur(1px); }
-              }
-              @keyframes pc-float {
-                0% { transform: translate(0, 0); }
-                50% { transform: translate(15px, -25px); }
-                100% { transform: translate(-10px, -50px); }
-              }
-              .pc-sparkle {
-                position: absolute;
-                border-radius: 50%;
-                pointer-events: none;
-                z-index: 1;
-                transition: background 1s ease;
-              }
-              .pc-content {
-                position: relative;
-                z-index: 10;
-                max-width: 500px;
-                padding: 40px;
-                transform: translateY(30px);
-                transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-              }
-              .pc-success-icon {
-                width: 100px;
-                height: 100px;
-                background: rgba(16, 185, 129, 0.1);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 32px;
-                color: #10b981;
-                box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
-              }
-              .pc-title {
-                font-size: 56px;
-                font-weight: 900;
-                color: #0f172a;
-                margin: 0 0 16px;
-                letter-spacing: -0.02em;
-              }
-              .pc-desc {
-                font-size: 18px;
-                line-height: 1.6;
-                color: #64748b;
-                margin-bottom: 40px;
-              }
-              .pc-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 10px;
-                background: ${BRAND_COLOR};
-                color: white;
-                padding: 18px 40px;
-                border-radius: 100px;
-                font-size: 16px;
-                font-weight: 700;
-                text-decoration: none;
-                transition: all 0.3s ease;
-                box-shadow: 0 10px 25px -5px rgba(${BRAND_COLOR === '#7c3aed' ? '124, 58, 237' : '0,0,0'}, 0.4);
-              }
-              .pc-btn:hover {
-                transform: scale(1.05);
-                box-shadow: 0 20px 30px -10px rgba(${BRAND_COLOR === '#7c3aed' ? '124, 58, 237' : '0,0,0'}, 0.5);
-              }
-            \`;
-            document.head.appendChild(style);
-
-            // Generate Enhanced Sparkles
-            const colors = ['#ffffff', '#ffd700', '${BRAND_COLOR}', '#ffffff'];
-            for (let i = 0; i < 120; i++) {
-              const sparkle = document.createElement('div');
-              sparkle.className = 'pc-sparkle';
-              const size = Math.random() * 5 + 1;
-              const color = colors[Math.floor(Math.random() * colors.length)];
-              
-              sparkle.style.width = size + 'px';
-              sparkle.style.height = size + 'px';
-              sparkle.style.left = Math.random() * 100 + '%';
-              sparkle.style.top = Math.random() * 110 + '%'; // Start slightly lower
-              sparkle.style.background = color;
-              sparkle.style.boxShadow = \`0 0 \${size * 2}px \${color}\`;
-              
-              const duration = Math.random() * 4 + 3;
-              const delay = Math.random() * 8;
-              sparkle.style.animation = \`
-                pc-sparkle \${duration}s infinite \${delay}s ease-in-out,
-                pc-float \${duration * 2}s infinite \${delay}s linear
-              \`;
-              
-              successPage.appendChild(sparkle);
-            }
-
-
-            successPage.innerHTML += \`
-              <div class="pc-content" id="pc-content">
-                <div class="pc-success-icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                </div>
-                <h1 class="pc-title">Thank You!</h1>
-                <p class="pc-desc">
-                  We've received your consultation request. Our team of experts will review your details and reach out to you within 24 hours.
-                </p>
-                <a href="${REDIRECT_URL}" class="pc-btn">
-                  Visit Our Website
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-                <p style="margin-top:24px; font-size:13px; color:#94a3b8;">Need help? Contact us at support@example.com</p>
-              </div>
-            \`;
-
-            document.body.appendChild(successPage);
-
-            // Animate In
-            setTimeout(() => {
-              successPage.style.opacity = '1';
-              document.getElementById('pc-content').style.transform = 'translateY(0)';
-            }, 50);
+          function redirectToSuccessPage() {
+            window.top.location.href = "${previewPrefix}${PAGE_SLUG}/thank-you";
           }
 
           async function submitLead(data, form, btn, originalBtnText, attempt = 1) {
@@ -191,7 +64,7 @@ const PublicLandingPage = () => {
               console.log("📥 API Response:", result);
 
               if (result.status === 'success') {
-                showSuccessPage();
+                redirectToSuccessPage();
                 form.reset();
                 if (btn) {
                   btn.disabled = false;
@@ -222,6 +95,7 @@ const PublicLandingPage = () => {
             const form = e.target;
             // Only intercept forms that look like lead capture
             if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+              form.setAttribute('method', 'POST'); // Ensure POST method is used
               e.preventDefault();
               
               const btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
@@ -304,6 +178,138 @@ const PublicLandingPage = () => {
           </html>
         `;
       }
+      
+      if (isThankYouPage) {
+        // Render Thank You content directly into iframe
+        const thankYouHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Thank You | ${pageData.name}</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                @keyframes pc-sparkle {
+                  0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); }
+                  50% { transform: scale(1.2); opacity: 1; filter: blur(1px); }
+                }
+                @keyframes pc-float {
+                  0% { transform: translate(0, 0); }
+                  50% { transform: translate(15px, -25px); }
+                  100% { transform: translate(-10px, -50px); }
+                }
+                body { 
+                  margin: 0; 
+                  font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+                  background: #ffffff;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                  text-align: center;
+                  overflow: hidden;
+                }
+                .pc-sparkle {
+                  position: absolute;
+                  border-radius: 50%;
+                  pointer-events: none;
+                  z-index: 1;
+                }
+                .pc-content {
+                  position: relative;
+                  z-index: 10;
+                  max-width: 500px;
+                  padding: 40px;
+                }
+                .pc-success-icon {
+                  width: 100px;
+                  height: 100px;
+                  background: rgba(16, 185, 129, 0.1);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin: 0 auto 32px;
+                  color: #10b981;
+                  box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+                }
+                .pc-title {
+                  font-size: 56px;
+                  font-weight: 900;
+                  color: #0f172a;
+                  margin: 0 0 16px;
+                  letter-spacing: -0.02em;
+                }
+                .pc-desc {
+                  font-size: 18px;
+                  line-height: 1.6;
+                  color: #64748b;
+                  margin-bottom: 40px;
+                }
+                .pc-btn {
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 10px;
+                  background: ${BRAND_COLOR} !important;
+                  color: white !important;
+                  padding: 18px 40px;
+                  border-radius: 100px;
+                  font-size: 16px;
+                  font-weight: 700;
+                  text-decoration: none;
+                  transition: all 0.3s ease;
+                }
+                .pc-btn:hover {
+                  transform: scale(1.05);
+                }
+              </style>
+            </head>
+            <body>
+              <div class="pc-content">
+                <div class="pc-success-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <h1 class="pc-title">Thank You!</h1>
+                <p class="pc-desc">
+                  We've received your consultation request. Our team of experts will review your details and reach out to you within 24 hours.
+                </p>
+                <a href="${REDIRECT_URL}" class="pc-btn">
+                  Visit Our Website
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+                <p style="margin-top:24px; font-size:13px; color:#94a3b8;">Need help? Contact us at support@example.com</p>
+              </div>
+              <script>
+                // Generate Dynamic Sparkles
+                const colors = ['#ffffff', '#ffd700', '${BRAND_COLOR}', '#ffffff'];
+                for (let i = 0; i < 120; i++) {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'pc-sparkle';
+                  const size = Math.random() * 5 + 1;
+                  const color = colors[Math.floor(Math.random() * colors.length)];
+                  sparkle.style.width = size + 'px';
+                  sparkle.style.height = size + 'px';
+                  sparkle.style.left = Math.random() * 100 + '%';
+                  sparkle.style.top = Math.random() * 110 + '%';
+                  sparkle.style.background = color;
+                  sparkle.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
+                  const duration = Math.random() * 4 + 3;
+                  const delay = Math.random() * 8;
+                  sparkle.style.animation = 'pc-sparkle ' + duration + 's infinite ' + delay + 's ease-in-out, pc-float ' + (duration * 2) + 's infinite ' + delay + 's linear';
+                  document.body.appendChild(sparkle);
+                }
+              </script>
+            </body>
+          </html>
+        `;
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(thankYouHtml);
+          doc.close();
+        }
+        return;
+      }
 
       const doc = iframeRef.current.contentDocument;
       if (doc) {
@@ -312,7 +318,7 @@ const PublicLandingPage = () => {
         doc.close();
       }
     }
-  }, [pageData]);
+  }, [pageData, window.location.pathname]);
 
   if (isLoading) {
     return (
@@ -349,7 +355,7 @@ const PublicLandingPage = () => {
         ref={iframeRef}
         title={pageData?.meta?.title || "Landing Page"}
         className="w-full h-full border-none"
-        sandbox="allow-scripts allow-forms allow-same-origin"
+        sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-top-navigation-by-user-activation"
       />
     </div>
   );

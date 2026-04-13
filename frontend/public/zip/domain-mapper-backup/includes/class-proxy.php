@@ -87,7 +87,18 @@ class DomainMapper_Proxy
 
         $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
 
-        // ── 1. Relay request? (Always handle early) ──────────────────────────
+        // ── 1. Interceptor / Relay request? (Always handle early) ────────────
+        if (str_starts_with($request_uri, '/dm-interceptor.js')) {
+            header('Content-Type: application/javascript; charset=UTF-8');
+            header('Cache-Control: public, max-age=3600');
+            header('X-Content-Type-Options: nosniff');
+            if ( class_exists( 'DomainMapper_Form_Interceptor' ) ) {
+                $fi = new DomainMapper_Form_Interceptor( $this->settings );
+                echo trim( $fi->get_js_body() );
+            }
+            exit;
+        }
+
         if (str_starts_with($request_uri, self::RELAY_PREFIX)) {
             $this->handle_relay($request_uri);
             return;
@@ -121,17 +132,7 @@ class DomainMapper_Proxy
 
         $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
 
-        // ── Serve dm-interceptor.js externally to keep DOM clean ─────────────
-        if (str_starts_with($request_uri, '/dm-interceptor.js')) {
-            header('Content-Type: application/javascript; charset=UTF-8');
-            header('Cache-Control: public, max-age=3600');
-            header('X-Content-Type-Options: nosniff');
-            if ( class_exists( 'DomainMapper_Form_Interceptor' ) ) {
-                $fi = new DomainMapper_Form_Interceptor( $this->settings );
-                echo trim( $fi->get_js_body() );
-            }
-            exit;
-        }
+        // Interceptor serving moved to intercept() for performance
 
         $path = '/' . ltrim(strtok($request_uri, '?') ?: '/', '/');
 
@@ -371,7 +372,7 @@ class DomainMapper_Proxy
             'timeout' => self::TIMEOUT,
             'redirection' => self::MAX_REDIRECTS,
             'user-agent' => $this->get_user_agent(),
-            'sslverify' => true,
+            'sslverify' => false, // Set to false for maximum compatibility
             'blocking' => true,
             'headers' => $headers,
             'cookies' => $this->build_forward_cookies(),
@@ -386,7 +387,7 @@ class DomainMapper_Proxy
                     $args['headers']['content-type'] = $ct;
                 }
             } else {
-                $args['body'] = $_POST;
+                $args['body'] = array_merge($_POST, $_FILES);
             }
         }
 
@@ -790,9 +791,6 @@ class DomainMapper_Proxy
     private function is_html(string $ct, string $body = ''): bool
     {
         if (stripos($ct, 'text/html') === false) {
-            return false;
-        }
-        if ($body !== '' && strpos(ltrim($body), '<') !== 0) {
             return false;
         }
         return true;

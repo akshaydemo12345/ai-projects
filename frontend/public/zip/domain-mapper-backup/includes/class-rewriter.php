@@ -193,14 +193,45 @@ class DomainMapper_Rewriter {
                     '#(<' . preg_quote( $tag, '#' ) . '(?:\s[^>]*)?\s'
                     . preg_quote( $attr, '#' )
                     . '\s*=\s*)(["\'])([^"\']*)\2#i',
-                    function ( array $m ) use ( $base ): string {
-                        $url = $this->resolve_url( $m[3], $base );
+                    function ( array $m ) use ( $base, $tag, $attr ): string {
+                        $url = $m[3];
+                        
+                        // Special handling for form actions — route through relay if root-relative
+                        if ($tag === 'form' && $attr === 'action' && str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+                            $target = $this->target_host;
+                            if ($target) {
+                                return $m[1] . $m[2] . 'http://' . $this->source_host . '/dm-relay/' . $target . $url . $m[2];
+                            }
+                        }
+
+                        $url = $this->resolve_url( $url, $base );
                         return $m[1] . $m[2] . $url . $m[2];
                     },
                     $html
                 ) ?? $html;
             }
         }
+
+        // Force method="POST" on all forms to avoid URL exposure
+        $html = preg_replace_callback(
+            '#(<form(?:\s[^>]*)?)(\s+method\s*=\s*["\'])(get)(["\'])#i',
+            function ( array $m ): string {
+                return $m[1] . $m[2] . 'POST' . $m[4];
+            },
+            $html
+        ) ?? $html;
+
+        // Ensure all forms have method="POST" if missing
+        $html = preg_replace_callback(
+            '#<form(?:\s[^>]*)?>#i',
+            function ( array $m ): string {
+                if (stripos($m[0], 'method=') === false) {
+                    return str_replace('<form', '<form method="POST"', $m[0]);
+                }
+                return $m[0];
+            },
+            $html
+        ) ?? $html;
 
         return $html;
     }
