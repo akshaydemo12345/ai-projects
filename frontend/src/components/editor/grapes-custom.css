@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════
-   GrapesJS Custom Theme — Purple UI, White Canvas
+   GrapesJS Custom Theme — Purple UI, Dark Mode
    Matches the app's primary color: #7c3aed
+   Focus on readability and premium contrast.
 ══════════════════════════════════════════════════════════ */
 
 /* ── Main editor fills container ── */
@@ -10,10 +11,11 @@
 
 .gjs-editor-cont {
   height: 100% !important;
+  background-color: #0f0f1a !important;
 }
 
 .gjs-editor {
-  background: #f5f5f5 !important;
+  background: #0f0f1a !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   height: 100% !important;
 }
@@ -24,31 +26,31 @@
   display: none !important;
 }
 
-/* ── Canvas: white background ── */
+/* ── Canvas: background ── */
 .gjs-cv-canvas {
-  background: #e8e8ed !important;
+  background: #1e1e2d !important;
   top: 0 !important;
   height: 100% !important;
   width: 100% !important;
 }
 
 .gjs-frame-wrapper {
-  padding: 16px !important;
+  padding: 24px !important;
 }
 
 .gjs-frame {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, .08) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .25) !important;
   border-radius: 4px !important;
   background: #fff !important;
 }
 
-/* ══════ BLOCK MANAGER (left sidebar) ══════ */
+/* ══════ BLOCK MANAGER ══════ */
 
 #blocks-container .gjs-blocks-c {
   display: flex !important;
   flex-wrap: wrap !important;
-  padding: 10px 8px !important;
-  gap: 6px !important;
+  padding: 12px !important;
+  gap: 10px !important;
   background: transparent !important;
 }
 
@@ -57,51 +59,52 @@
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  width: calc(50% - 3px) !important;
-  min-height: 72px !important;
+  width: calc(50% - 5px) !important;
+  min-height: 80px !important;
   margin: 0 !important;
-  padding: 10px 6px !important;
-  background: #12122a !important;
-  border: 1px solid #252545 !important;
-  border-radius: 8px !important;
-  color: #8888aa !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
+  padding: 12px 6px !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 12px !important;
+  color: #e2e8f0 !important; /* Brighter for readability */
+  font-size: 11px !important; 
+  font-weight: 700 !important;
   text-align: center !important;
   cursor: grab !important;
-  transition: all .15s ease !important;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-sizing: border-box !important;
 }
 
 #blocks-container .gjs-block:hover {
-  background: #1e1b4b !important;
+  background: #12121e !important;
   border-color: #7c3aed !important;
-  color: #c4b5fd !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, .2) !important;
+  color: #fff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .3) !important;
 }
 
 #blocks-container .gjs-block__media {
-  font-size: 22px !important;
-  margin-bottom: 4px !important;
+  font-size: 24px !important;
+  margin-bottom: 6px !important;
   line-height: 1 !important;
+  opacity: 0.9 !important;
 }
 
 #blocks-container .gjs-block:hover .gjs-block__media {
-  color: #c4b5fd !important;
+  color: #7c3aed !important;
+  opacity: 1 !important;
 }
 
 /* Block categories */
 #blocks-container .gjs-block-category>.gjs-title {
-  padding: 8px 10px !important;
-  background: #0f0f22 !important;
-  color: #4a4a6a !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1.2px !important;
+  padding: 14px 16px !important;
+  background: transparent !important;
+  color: #fff !important; 
+  font-size: 11px !important; 
+  font-weight: 800 !important;
+  letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
-  border-bottom: 1px solid #1e1e3a !important;
-  border-top: none !important;
+  border-bottom: 1px solid #1e1e2d !important;
   cursor: pointer !important;
 }
 
@@ -113,46 +116,35 @@
 
 #layers-container .gjs-layer {
   background: transparent !important;
-  color: #8888aa !important;
-  border-color: #1e1e3a !important;
-  font-size: 12px !important;
+  color: #e2e8f0 !important; 
+  border-color: #1e1e2d !important;
+  font-size: 13px !important; 
+  padding: 6px 0 !important;
 }
 
 #layers-container .gjs-layer:hover {
-  background: #12122a !important;
-  color: #e2e8f0 !important;
+  background: #1a1a2e !important;
+  color: #fff !important;
 }
 
 #layers-container .gjs-layer.gjs-selected {
-  background: rgba(124, 58, 237, .15) !important;
-  color: #c4b5fd !important;
+  background: rgba(124, 58, 237, 0.1) !important;
+  color: #a78bfa !important;
 }
 
-#layers-container .gjs-layer-title {
-  padding: 6px 10px !important;
-}
-
-#layers-container .gjs-layer-name {
-  color: inherit !important;
-}
-
-/* ══════ STYLE MANAGER (right sidebar) ══════ */
-
-#styles-container .gjs-sm-sectors {
-  background: transparent !important;
-}
+/* ══════ STYLE MANAGER ══════ */
 
 #styles-container .gjs-sm-sector {
   background: transparent !important;
-  border-bottom: 1px solid #1e1e3a !important;
+  border-bottom: 1px solid #1e1e2d !important;
 }
 
 #styles-container .gjs-sm-sector-title {
-  background: #0f0f22 !important;
-  color: #4a4a6a !important;
-  padding: 9px 12px !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
+  background: transparent !important;
+  color: #fff !important; 
+  padding: 16px 18px !important;
+  font-size: 11px !important; 
+  font-weight: 800 !important;
   letter-spacing: 1px !important;
   text-transform: uppercase !important;
   cursor: pointer !important;
@@ -164,26 +156,24 @@
 }
 
 #styles-container .gjs-sm-properties {
-  padding: 10px !important;
+  padding: 12px 18px 18px !important;
   background: transparent !important;
   display: flex !important;
   flex-wrap: wrap !important;
-  gap: 6px !important;
+  gap: 12px !important;
 }
 
 #styles-container .gjs-sm-property {
   margin: 0 !important;
-  flex: 1 1 auto !important;
-  min-width: 90px !important;
 }
 
 #styles-container .gjs-sm-label {
-  color: #5a5a7a !important;
-  font-size: 9px !important;
+  color: #cbd5e1 !important; 
+  font-size: 11px !important; 
   font-weight: 700 !important;
-  letter-spacing: 0.5px !important;
   text-transform: uppercase !important;
-  margin-bottom: 3px !important;
+  letter-spacing: 0.5px !important;
+  margin-bottom: 8px !important;
 }
 
 /* Inputs */
@@ -192,52 +182,45 @@
 #traits-container input,
 #traits-container select,
 #traits-container textarea {
-  background: #12122a !important;
-  color: #e2e8f0 !important;
-  border: 1px solid #252545 !important;
-  border-radius: 5px !important;
-  padding: 5px 8px !important;
-  font-size: 11px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  background: #0a0a14 !important;
+  color: #fff !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important; 
   outline: none !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
+  transition: border-color .2s !important;
 }
 
 #styles-container input:focus,
-#styles-container select:focus,
-#traits-container input:focus,
-#traits-container select:focus {
+#traits-container input:focus {
   border-color: #7c3aed !important;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, .12) !important;
 }
 
 /* SM buttons */
 #styles-container .gjs-sm-btn,
 #styles-container .gjs-btn {
-  background: #12122a !important;
-  color: #8888aa !important;
-  border: 1px solid #252545 !important;
+  background: #1a1a2e !important;
+  color: #cbd5e1 !important; 
+  border: 1px solid #2a2a3e !important;
   border-radius: 4px !important;
+  padding: 6px 10px !important;
   cursor: pointer !important;
-  transition: all .12s !important;
+  transition: all .2s !important;
 }
 
-#styles-container .gjs-sm-btn:hover,
-#styles-container .gjs-btn:hover {
-  background: #1e1b4b !important;
-  color: #e2e8f0 !important;
+#styles-container .gjs-sm-btn:hover {
+  color: #fff !important;
+  background: #2a2a3e !important;
 }
 
 #styles-container .gjs-sm-btn-active {
-  background: rgba(124, 58, 237, .2) !important;
-  border-color: #7c3aed !important;
-  color: #c4b5fd !important;
+  background: #7c3aed !important;
+  color: #fff !important;
 }
 
-/* ══════ COLOR PICKER — fix overflow clipping + z-index ══════ */
+/* ══════ COLOR PICKER ══════ */
 
-/* Allow color picker fields to show popup without clipping */
 #styles-container .gjs-field-colorp,
 #styles-container .gjs-sm-property,
 #styles-container .gjs-field {
@@ -245,9 +228,6 @@
   position: relative !important;
 }
 
-/* Prevent the color swatch from causing layout shifts when the
-   picker opens — the picker renders via React portal (position:fixed)
-   so nothing in the DOM tree should move */
 #styles-container .gjs-field-colorp {
   display: inline-flex !important;
   align-items: center !important;
@@ -260,19 +240,16 @@
   position: relative !important;
 }
 
-/* Right sidebar wrapper — must allow overflow so picker floats out */
 #styles-container .gjs-sm-sectors {
   overflow: visible !important;
 }
 
-/* Color picker trigger button */
 .gjs-color-picker {
   z-index: 99999 !important;
   position: relative !important;
   cursor: pointer !important;
 }
 
-/* The color swatch/field click target */
 .gjs-field-color-picker,
 .gjs-checker-bg {
   cursor: pointer !important;
@@ -280,18 +257,12 @@
   pointer-events: all !important;
 }
 
-/* ── Spectrum.js color picker popup (sp-container) ─────────
-   appendTo:'parent' is used to show it near the property.
-─────────────────────────────────────────────────────────── */
-
-/* Only hide when Spectrum explicitly marks it hidden */
 .sp-container.sp-hidden {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
-/* Inner layout */
 .sp-picker-container {
   border: none !important;
   overflow: visible !important;
@@ -302,7 +273,6 @@
   overflow: visible !important;
 }
 
-/* Gradient + hue/alpha sliders */
 .sp-color,
 .sp-hue,
 .sp-alpha {
@@ -327,11 +297,11 @@
 
 .sp-input {
   background: #12122a !important;
-  color: #e2e8f0 !important;
+  color: #fff !important;
   border: 1px solid #252545 !important;
   border-radius: 4px !important;
-  font-size: 11px !important;
-  padding: 4px 6px !important;
+  font-size: 13px !important;
+  padding: 6px 8px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -339,11 +309,11 @@
 .sp-cancel,
 .sp-choose {
   background: #252545 !important;
-  color: #e2e8f0 !important;
+  color: #fff !important;
   border: none !important;
   border-radius: 4px !important;
-  font-size: 11px !important;
-  padding: 4px 10px !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
   cursor: pointer !important;
 }
 
@@ -356,7 +326,7 @@
   background: #12122a !important;
   border: 1px solid #252545 !important;
   border-radius: 4px !important;
-  padding: 2px !important;
+  padding: 4px !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -366,33 +336,32 @@
 .sp-preview {
   border: none !important;
   border-radius: 3px !important;
-  width: 20px !important;
-  height: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .sp-dd {
-  color: #8888aa !important;
+  color: #cbd5e1 !important;
   pointer-events: all !important;
 }
 
-/* Ensure the top-level body has no transform that breaks fixed positioning */
 body {
   transform: none !important;
-  /* prevent stacking context breaking fixed */
 }
 
 /* ══════ TRAITS / PROPERTIES ══════ */
 
 #traits-container .gjs-trt-trait {
-  padding: 8px 10px !important;
-  border-bottom: 1px solid #12122a !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #1e1e2d !important;
 }
 
 #traits-container .gjs-trt-trait .gjs-label {
-  color: #5a5a7a !important;
-  font-size: 9px !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
+  margin-bottom: 6px !important;
 }
 
 /* ══════ CANVAS SELECTION ══════ */
@@ -411,30 +380,30 @@ body {
 .gjs-toolbar {
   background: #7c3aed !important;
   border-radius: 6px 6px 0 0 !important;
-  padding: 3px 6px !important;
+  padding: 4px 8px !important;
 }
 
 .gjs-toolbar-item {
   color: #fff !important;
   opacity: 0.9 !important;
-  padding: 2px 4px !important;
+  padding: 3px 6px !important;
   cursor: pointer !important;
   border-radius: 3px !important;
 }
 
 .gjs-toolbar-item:hover {
   opacity: 1 !important;
-  background: rgba(255, 255, 255, .15) !important;
+  background: rgba(255, 255, 255, .2) !important;
 }
 
 /* Badge */
 .gjs-badge {
   background: #7c3aed !important;
   color: #fff !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
+  font-size: 10px !important; 
+  font-weight: 800 !important;
   border-radius: 0 0 4px 0 !important;
-  padding: 2px 8px !important;
+  padding: 3px 10px !important;
 }
 
 /* Drag placeholder */
@@ -456,15 +425,16 @@ body {
 /* Selector manager */
 .gjs-clm-tags {
   background: #1a1a2e !important;
-  padding: 8px !important;
+  padding: 10px !important;
 }
 
 .gjs-clm-tag {
   background: #12122a !important;
-  color: #c4b5fd !important;
+  color: #fff !important;
   border: 1px solid #252545 !important;
   border-radius: 4px !important;
-  font-size: 10px !important;
+  font-size: 11px !important;
+  padding: 4px 8px !important;
 }
 
 /* ══════ SCROLLBARS ══════ */
@@ -473,7 +443,7 @@ body {
 #layers-container::-webkit-scrollbar,
 #styles-container::-webkit-scrollbar,
 #traits-container::-webkit-scrollbar {
-  width: 4px !important;
+  width: 6px !important;
 }
 
 #blocks-container::-webkit-scrollbar-track,
@@ -518,16 +488,30 @@ body {
 #styles-container .gjs-radio-item {
   background: #12122a !important;
   border: 1px solid #252545 !important;
-  color: #8888aa !important;
+  color: #cbd5e1 !important;
+  padding: 6px 10px !important;
 }
 
 #styles-container .gjs-radio-item input:checked+label {
   background: rgba(124, 58, 237, .2) !important;
-  color: #c4b5fd !important;
+  color: #fff !important;
 }
 
 /* Composite properties */
 #styles-container .gjs-sm-composite .gjs-sm-property {
-  min-width: 55px !important;
+  min-width: 65px !important;
   flex: 1 !important;
+}
+
+/* ── AI PROCESSING ANIMATION ── */
+@keyframes ai-pulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(124, 58, 237, 0)); }
+  50% { transform: scale(1.02); filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.6)); outline: 2px solid #7c3aed; }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(124, 58, 237, 0)); }
+}
+
+.ai-pulse-active {
+  animation: ai-pulse 0.8s ease-in-out infinite !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
 }
