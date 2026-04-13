@@ -107,7 +107,7 @@ const CreateProjectFlow = () => {
     setIsSubmitting(true);
     createMutation.mutate({
       name: name.trim(),
-      url: websiteUrl.trim(),
+      websiteUrl: websiteUrl.trim(),
       category,
       description: description.trim(),
       logoUrl: logoBase64 || undefined,
@@ -184,7 +184,7 @@ const CreateProjectFlow = () => {
     {
       num: 3,
       title: "Save Your Token",
-      desc: "In WordPress, go to Settings → Domain Mapper and save your Project API Token.",
+      desc: "In WordPress, go to Settings → AI Landing Page Publisher and save your Project API Token.",
       action: null,
     },
   ];

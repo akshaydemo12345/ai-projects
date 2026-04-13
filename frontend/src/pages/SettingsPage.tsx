@@ -80,8 +80,8 @@ const SettingsPage = () => {
             <div className="bg-muted/30 rounded-lg p-3 text-xs space-y-2">
               <p className="font-medium text-foreground">Steps to connect:</p>
               <ol className="list-decimal ml-4 space-y-1 text-muted-foreground">
-                <li>Download and install the <strong>Domain Mapper</strong> plugin on your WP site.</li>
-                <li>Go to <strong>Domain Mapper &gt; Settings</strong> in your WP admin.</li>
+                <li>Download and install the <strong>AI Landing Page Publisher</strong> plugin on your WP site.</li>
+                <li>Go to <strong>AI Landing Page Publisher &gt; Settings</strong> in your WP admin.</li>
                 <li>Paste your <strong>Project API Token</strong> and use the <strong>API Base URL</strong> above.</li>
                 <li>Save settings — your pages will start syncing automatically.</li>
               </ol>

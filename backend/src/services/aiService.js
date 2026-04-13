@@ -27,6 +27,11 @@ Your task is to generate a landing page that looks and feels like a $25,000+ pre
    - BENTO GRIDS: Use for features. Cards should be solid containers with 1px borders.
    - DEPTH: Use soft shadows (0 10px 30px rgba(0,0,0,0.1)) rather than blurs or gradients.
 5. **SPACING**: Sections must have 100px+ vertical padding.
+6. **LEAD CAPTURE FORM (CRITICAL)**:
+   - ALWAYS include a beautiful lead capture form section before the footer.
+   - The form MUST use a <form id="lead-form">.
+   - Inputs MUST be named: 'name', 'email', 'phone', and 'message' (textarea).
+   - Use the solid [PRIMARY_HEX] for the submit button.
 
 # CONTENT QUALITY:
 - Write compelling, conversion-focused copy.

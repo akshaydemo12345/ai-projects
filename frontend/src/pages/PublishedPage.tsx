@@ -163,7 +163,7 @@ const PublishedPage = () => {
     );
   }
 
-  const liveUrl = `${window.location.origin}/p/${page.slug}`;
+  const liveUrl = `${window.location.origin}/${page.slug}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
     if (success) {

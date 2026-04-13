@@ -11,6 +11,10 @@ const leadSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  pageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Page',
+  },
   name: {
     type: String,
     required: [true, 'Please provide a name'],
@@ -39,6 +43,10 @@ const leadSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
   },
 });
 
