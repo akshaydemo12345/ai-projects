@@ -1,0 +1,112 @@
+post: 
+http://localhost:5000/auth/signup
+
+{
+    "name":"Akshay",
+    "email":"akshay@gmail.com",
+    "password":"Tesing@123"
+}
+res:
+{"status":"success","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkYjVjNjVhZGIyY2ViNDcxYjY0MCIsImlhdCI6MTc3NTIyOTc4OCwiZXhwIjoxNzgzMDA1Nzg4fQ.b4lNekXfbWTvYSGFVQBdHLexm6jr043-fmQXzPLQMdc","data":{"user":{"name":"Akshay","email":"akshay@gmail.com","role":"user","isEmailVerified":false,"_id":"69cfdb5c65adb2ceb471b640","createdAt":"2026-04-03T15:23:08.205Z","__v":0}}}
+
+
+
+
+
+post
+http://localhost:5000/auth/login
+{
+    "email": "akshay@gmail.com",
+    "password":"Tesing@123"
+}
+
+res:
+{
+    "status": "success",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkYjVjNjVhZGIyY2ViNDcxYjY0MCIsImlhdCI6MTc3NTIzMDE0NSwiZXhwIjoxNzgzMDA2MTQ1fQ.uI-Uu3oazFDgnEr99Iod_gxEt6QbrI_Yv-PKH8l3abw",
+    "data": {
+        "user": {
+            "_id": "69cfdb5c65adb2ceb471b640",
+            "name": "Akshay",
+            "email": "akshay@gmail.com",
+            "role": "user",
+            "isEmailVerified": false,
+            "createdAt": "2026-04-03T15:23:08.205Z",
+            "__v": 0
+        }
+    }
+}
+
+
+
+
+
+profile show
+get
+http://localhost:5000/user/profile
+
+{
+    "userId":"69cfdb5c65adb2ceb471b640"
+}
+token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkYjVjNjVhZGIyY2ViNDcxYjY0MCIsImlhdCI6MTc3NTIzMDE0NSwiZXhwIjoxNzgzMDA2MTQ1fQ.uI-Uu3oazFDgnEr99Iod_gxEt6QbrI_Yv-PKH8l3abw
+
+res:
+{"status":"success","data":{"user":{"_id":"69cfdb5c65adb2ceb471b640","name":"AkshayTest","email":"akshay@gmail.com","role":"user","isEmailVerified":false,"createdAt":"2026-04-03T15:23:08.205Z","__v":0},"stats":{"totalPages":0,"totalLeads":0},"pages":[]}}
+
+
+
+
+create page
+post
+http://localhost:5000/pages
+{
+  "title": "My Landing Page2",
+  "slug": "my-landing-page2",
+  "template": "blank",
+  "content": {}
+}
+
+res:
+{"status":"success","data":{"page":{"userId":"69d3609680754e45822fc6c6","title":"My Landing Page2","slug":"my-landing-page2","template":"blank","status":"draft","seo":{"keywords":[]},"_id":"69d3805e4e9389ad9c3a451d","leads":[],"createdAt":"2026-04-06T09:43:58.712Z","updatedAt":"2026-04-06T09:43:58.712Z","__v":0}}}
+
+
+
+
+
+edit page
+put
+http://localhost:5000/pages/69d377c24e9389ad9c3a44ff
+{
+  "title": "Updated Title",
+  "content": {
+    "hero": {
+      "headline": "Grow Your Business Faster",
+      "subheadline": "AI-powered tools for modern teams",
+      "ctaText": "Get Started Free"
+    },
+    "features": [],
+    "benefits": [],
+    "testimonials": [],
+    "faq": []
+  },
+  "seo": {
+    "title": "Lumina AI | Build Landing Pages Fast",
+    "description": "Create high-converting landing pages with AI",
+    "keywords": ["ai landing page", "page builder", "saas"]
+  }
+}
+
+
+res:
+{"status":"success","data":{"page":{"seo":{"title":"Lumina AI | Build Landing Pages Fast","description":"Create high-converting landing pages with AI","keywords":["ai landing page","page builder","saas"]},"_id":"69d377c24e9389ad9c3a44ff","userId":"69d3609680754e45822fc6c6","title":"Updated Title","slug":"my-landing-page","template":"blank","status":"draft","leads":[],"createdAt":"2026-04-06T09:07:14.266Z","updatedAt":"2026-04-06T09:10:38.835Z","__v":0,"content":{"hero":{"headline":"Grow Your Business Faster","subheadline":"AI-powered tools for modern teams","ctaText":"Get Started Free"},"features":[],"benefits":[],"testimonials":[],"faq":[]}}}}
+
+
+
+
+
+fetch pages
+get
+http://localhost:5000/pages
+
+res:
+{"status":"success","results":2,"total":2,"page":1,"totalPages":1,"data":{"pages":[{"seo":{"keywords":[]},"_id":"69d3805e4e9389ad9c3a451d","userId":"69d3609680754e45822fc6c6","title":"My Landing Page2","slug":"my-landing-page2","template":"blank","status":"draft","createdAt":"2026-04-06T09:43:58.712Z","updatedAt":"2026-04-06T09:43:58.712Z"},{"seo":{"title":"Lumina AI | Build Landing Pages Fast","description":"Create high-converting landing pages with AI","keywords":["ai landing page","page builder","saas"]},"_id":"69d377c24e9389ad9c3a44ff","userId":"69d3609680754e45822fc6c6","title":"Updated Title","slug":"my-landing-page","template":"blank","status":"published","createdAt":"2026-04-06T09:07:14.266Z","updatedAt":"2026-04-06T09:13:06.981Z","content":{"hero":{"headline":"Grow Your Business Faster","subheadline":"AI-powered tools for modern teams","ctaText":"Get Started Free"},"features":[],"benefits":[],"testimonials":[],"faq":[]},"domain":"mysite.com","publishedAt":"2026-04-06T09:13:06.981Z"}]}}
