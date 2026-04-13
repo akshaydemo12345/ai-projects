@@ -32,7 +32,7 @@ const PublicLandingPage = () => {
       const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
       const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
       
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const PAGE_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
 
@@ -40,6 +40,35 @@ const PublicLandingPage = () => {
         <script>
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
+          function showSuccessModal() {
+            let modal = document.getElementById('pc-success-modal');
+            if (!modal) {
+              modal = document.createElement('div');
+              modal.id = 'pc-success-modal';
+              modal.innerHTML = \`
+                <div style="position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s ease; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+                  <div style="background:white; padding:40px; border-radius:30px; max-width:420px; width:90%; text-align:center; transform:translateY(20px); transition:transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+                    <div style="width:80px; height:80px; background:#ecfdf5; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h3 style="margin:0 0 12px; font-size:28px; font-weight:800; color:#111827;">Thank you!</h3>
+                    <p style="margin:0 0 32px; color:#4b5563; font-size:16px; line-height:1.6;">Your message has been sent successfully. We'll get back to you shortly.</p>
+                    <button onclick="document.getElementById('pc-success-modal').remove()" style="background:#111827; color:white; border:none; padding:16px 32px; border-radius:15px; font-size:16px; font-weight:600; cursor:pointer; width:100%; transition:all 0.2s;">Continue</button>
+                  </div>
+                </div>
+              \`;
+              document.body.appendChild(modal);
+              
+              // Trigger animation
+              setTimeout(() => {
+                const backdrop = modal.querySelector('div');
+                const content = backdrop.querySelector('div');
+                backdrop.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+              }, 10);
+            }
+          }
+
           async function submitLead(data, form, btn, originalBtnText, attempt = 1) {
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
             
@@ -55,7 +84,12 @@ const PublicLandingPage = () => {
               console.log("📥 API Response:", result);
 
               if (result.status === 'success') {
-                form.innerHTML = '<div style="text-align:center; padding: 40px 20px;"><h3 style="color:#059669; font-size: 24px; margin-bottom: 10px;">Thank you!</h3><p style="color:#4b5563;">Your inquiry was sent successfully. We will contact you soon.</p></div>';
+                showSuccessModal();
+                form.reset();
+                if (btn) {
+                  btn.disabled = false;
+                  btn.innerHTML = originalBtnText;
+                }
               } else {
                 throw new Error(result.message || 'Server returned error');
               }
@@ -82,7 +116,7 @@ const PublicLandingPage = () => {
             if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
               e.preventDefault();
               
-              const btn = form.querySelector('button[type="submit"]');
+              const btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
               const originalBtnText = btn ? btn.innerHTML : 'Submit';
               if (btn) {
                 btn.disabled = true;

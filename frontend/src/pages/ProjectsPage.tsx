@@ -46,11 +46,11 @@ const ProjectsPage = () => {
   const filtered = projects.filter(
     (p: any) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.url && p.url.toLowerCase().includes(search.toLowerCase()))
+      (p.websiteUrl && p.websiteUrl.toLowerCase().includes(search.toLowerCase()))
   );
 
   const totalLeads = projects.reduce(
-    (sum: number, p: any) => sum + (p.stats?.leads || 0), 0
+    (sum: number, p: any) => sum + (p.leadCount || 0), 0
   );
   const totalPages = projects.reduce((sum: number, p: any) => sum + (p.pageCount || 0), 0);
   const publishedPages = projects.reduce(
@@ -180,7 +180,7 @@ const ProjectsPage = () => {
                       <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
                       <div className="flex items-center gap-1 mt-0.5">
                         <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground truncate">{project.url || "No URL"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{project.websiteUrl || "No URL"}</p>
                       </div>
                     </div>
                   </div>
@@ -222,9 +222,9 @@ const ProjectsPage = () => {
                   <span>Pages: {project.pageCount || 0}</span>
 
                   <span className="text-muted-foreground/30">|</span>
-                  <span>Leads: {project.stats?.leads || 0}</span>
+                  <span>Leads: {project.leadCount || 0}</span>
                   <span className="text-muted-foreground/30">|</span>
-                  <span>Views: {project.stats?.views || 0}</span>
+                  <span>Views: {project.views || 0}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
@@ -277,7 +277,7 @@ const ProjectsPage = () => {
                   <td className="px-5 py-3.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{project.name}</p>
-                      <p className="text-xs text-muted-foreground">{project.url || "No URL"}</p>
+                      <p className="text-xs text-muted-foreground">{project.websiteUrl || "No URL"}</p>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">

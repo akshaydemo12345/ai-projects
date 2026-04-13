@@ -1,7 +1,7 @@
 // PageCraft API Service — Scalable modular API layer
 // Connects to Node.js/MongoDB backend
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 // Types
 export interface Site {
@@ -67,19 +67,12 @@ export interface LandingPage {
   updatedAt: string;
 }
 
-export interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  siteId: string;
-  createdAt: string;
-}
+
 
 // Helper for fetch with Auth
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('pagecraft_token');
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -100,7 +93,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 
   const result = await response.json();
-  
+
   if (!response.ok) {
     throw new Error(result.message || 'Something went wrong');
   }
@@ -220,7 +213,7 @@ export const pagesApi = {
     const response = await fetch(`${API_BASE_URL}/api/public/page/${slug}`);
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Page not found');
-    
+
     // Returns { status, data: content, meta: { title, seo } }
     return result;
   }
@@ -276,28 +269,56 @@ export const statsApi = {
 };
 
 // --- Leads API ---
+
+
 export interface Lead {
   _id: string;
   name: string;
   email: string;
-  phone: string;
-  pageId: string;
-  projectId: string;
-  data?: any;
+  phone?: string;
+  message?: string;
+  pageId?: string;
+  pageSlug?: string;
+  projectId?: string;
+  ip?: string;
+  userAgent?: string;
   createdAt: string;
 }
 
 export const leadsApi = {
-  getAll: async () => {
-    const res = await apiFetch('/leads');
-    return res.data;
+  getAll: async (params: { 
+    projectId?: string; 
+    pageId?: string; 
+    pageSlug?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) queryParams.append(key, String(value));
+    });
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/api/leads${queryString ? `?${queryString}` : ''}`;
+    
+    const res = await apiFetch(endpoint);
+    // Backend returns { status, results, data: { leads: [] } }
+    return {
+      leads: res.data.leads as Lead[],
+      total: res.results || 0
+    };
   },
-  getByPage: async (pageId: string) => {
-    const res = await apiFetch(`/leads?pageId=${pageId}`);
-    return res.data;
+  
+  create: async (data: Partial<Lead>) => {
+    return apiFetch('/api/leads', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
+
   delete: async (id: string) => {
-    return apiFetch(`/leads/${id}`, {
+    return apiFetch(`/api/leads/${id}`, {
       method: 'DELETE',
     });
   },

@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard } from "@/lib/utils";
+import { ModernLoader } from "@/components/ui/ModernLoader";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -218,7 +219,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                 <div>
                   <label className="text-sm font-semibold text-foreground mb-1.5 block">URL Slug</label>
                   <div className="flex items-center gap-0 rounded-md border border-input overflow-hidden">
-                    <span className="px-3 py-2 bg-muted text-xs text-muted-foreground border-r border-input whitespace-nowrap">/lp/</span>
+                    <span className="px-3 py-2 bg-muted text-[10px] font-bold text-muted-foreground border-r border-input whitespace-nowrap uppercase tracking-wider">SLUG</span>
                     <input
                       value={pageSlug}
                       onChange={(e) => setPageSlug(autoSlug(e.target.value))}
@@ -392,20 +393,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
       </div>
 
       {/* Full Page Generating Loader */}
-      {isCreating && (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center">
-          <div className="relative flex items-center justify-center mb-8">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <div className="h-24 w-24 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-3xl flex items-center justify-center shadow-2xl animate-bounce">
-              <Sparkles className="h-12 w-12 text-white animate-pulse" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight">Crafting Your Page...</h2>
-          <p className="text-lg text-muted-foreground max-w-[400px]">
-            Please wait while our AI builds the layout, writes the copy, and applies your branding. This usually takes 15-30 seconds.
-          </p>
-        </div>
-      )}
+      {isCreating && <ModernLoader />}
     </>
   );
 };
@@ -459,7 +447,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           <div>
             <label className="text-sm font-medium text-foreground mb-1.5 block">Page Name *</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Roofing Delhi Landing" className="h-10" />
@@ -468,7 +456,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
           <div>
             <label className="text-sm font-medium text-foreground mb-1.5 block">URL Slug *</label>
             <div className="flex items-center gap-0 rounded-md border border-input overflow-hidden">
-              <span className="px-3 py-2 bg-muted text-xs text-muted-foreground border-r border-input whitespace-nowrap">/lp/</span>
+              <span className="px-3 py-2 bg-muted text-[10px] font-bold text-muted-foreground border-r border-input whitespace-nowrap uppercase tracking-wider">URL</span>
               <input
                 value={slug}
                 onChange={(e) => setSlug(autoSlug(e.target.value))}
@@ -564,7 +552,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [iframeCopied, setIframeCopied] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const publishUrl = page.publishedUrl || `${window.location.origin}/p/${page.slug}`;
+  const publishUrl = page.publishedUrl || `${window.location.origin}/${page.slug}`;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${page.slug}" async></script>`;
   const iframeCode = `<iframe src="${publishUrl}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
@@ -680,7 +668,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Generated URL */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Live URL</p>
@@ -715,7 +703,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
             {tab === "wordpress" && (
               <div className="space-y-3">
                 {[
-                  { num: 1, text: "Install 'PPC Landing Builder' plugin from WordPress directory" },
+                  { num: 1, text: "Download and install our WordPress plugin:" },
                   { num: 2, text: "In plugin settings, paste your token:" },
                   { num: 3, text: "Save settings — pages will auto-sync" },
                 ].map((s) => (
@@ -723,6 +711,20 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                     <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</span>
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground">{s.text}</p>
+                      {s.num === 1 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-[10px] mt-2 gap-1.5"
+                          onClick={() => {
+                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+                            window.open(`${apiBaseUrl}/plugin/download`, '_blank');
+                            toast.success("Downloading plugin...");
+                          }}
+                        >
+                          <Download className="h-3 w-3" /> Download Plugin
+                        </Button>
+                      )}
                       {s.num === 2 && (
                         <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 mt-1.5 cursor-pointer hover:bg-muted/80 transition-all active:scale-95"
                           onClick={async () => {
@@ -925,8 +927,8 @@ const ProjectDetailPage = () => {
   const pages = project.pages || [];
   const publishedCount = pages.filter(p => p.status === "published").length;
   const draftCount = pages.filter(p => p.status !== "published").length;
-  const totalLeads = pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
-  const totalViews = pages.reduce((sum, p) => sum + (p.views || 0), 0);
+  const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
+  const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
   const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${project?.apiToken}" async></script>`;
   const iframeCode = `<iframe src="https://your-subdomain.ppcbuilder.io/lp/your-page-slug" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
@@ -1002,21 +1004,21 @@ const ProjectDetailPage = () => {
           <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{project.category}</span>
         </div>
-        <a href={project.url} target="_blank" rel="noopener noreferrer"
+        <a href={project.websiteUrl} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors flex-shrink-0">
-          <ExternalLink className="h-3.5 w-3.5" /> {project.url}
+          <ExternalLink className="h-3.5 w-3.5" /> {project.websiteUrl}
         </a>
       </div>
 
       {/* ─── MAIN CONTENT (full-width, single column) ─── */}
-      <div className="max-w-[1800px] mx-auto px-8 py-6 space-y-6">
+      <div className="max-w-[1800px] mx-auto px-8 py-6 space-y-8">
 
         {/* ─── Stats Summary Bar ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: "Total Pages", value: pages.length, icon: <FileText className="h-4 w-4" />, color: "from-violet-500 to-indigo-500", bg: "bg-violet-50 dark:bg-violet-950/30", textColor: "text-violet-700 dark:text-violet-400" },
             { label: "Published", value: publishedCount, icon: <Globe className="h-4 w-4" />, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", textColor: "text-emerald-700 dark:text-emerald-400" },
-            { label: "Drafts", value: draftCount, icon: <FileEdit className="h-4 w-4" />, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 dark:bg-amber-950/30", textColor: "text-amber-700 dark:text-amber-400" },
+            { label: "Total Leads", value: totalLeads, icon: <UsersIcon className="h-4 w-4" />, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 dark:bg-amber-950/30", textColor: "text-amber-700 dark:text-amber-400" },
             { label: "Total Views", value: totalViews, icon: <Eye className="h-4 w-4" />, color: "from-blue-500 to-cyan-500", bg: "bg-blue-50 dark:bg-blue-950/30", textColor: "text-blue-700 dark:text-blue-400" },
           ].map((stat) => (
             <div key={stat.label} className={`rounded-xl border border-border ${stat.bg} p-4 flex items-center gap-3 transition-all hover:shadow-md`}>
@@ -1031,313 +1033,196 @@ const ProjectDetailPage = () => {
           ))}
         </div>
 
-        {/* ─── Landing Pages Section ─── */}
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-
-          {/* Section Header */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground">Landing Pages</h2>
-                <p className="text-xs text-muted-foreground">{pages.length} page{pages.length !== 1 ? "s" : ""} in this project</p>
-              </div>
-            </div>
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="h-9 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-sm text-sm"
-            >
-              <Plus className="h-4 w-4" /> New Page
-            </Button>
-          </div>
-
-          {/* Table Header */}
-          {pages.length > 0 && (
-            <div className="hidden md:grid grid-cols-[1fr_120px_80px_80px_330px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <span>Page Name</span>
-              <span className="text-center">Status</span>
-              <span className="text-center">Views</span>
-              <span className="text-center">Leads</span>
-              <span className="text-right">Actions</span>
-            </div>
-          )}
-
-          {/* Page Rows (List Format) */}
-          <div className="divide-y divide-border">
-            {pages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg">
-                  <Zap className="h-7 w-7 text-white" />
+        {/* ─── Main Grid Layout: Landing Pages (Left) & Integration (Right) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
+          
+          {/* ─── Left Side: Landing Pages List ─── */}
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden min-h-[500px]">
+            {/* Section Header */}
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
+                  <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <p className="text-base font-bold text-foreground mb-1">No pages yet</p>
-                <p className="text-sm text-muted-foreground mb-5">Create your first landing page to get started</p>
-                <Button
-                  onClick={() => setCreateOpen(true)}
-                  className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
-                >
-                  <Plus className="h-4 w-4" /> Create Landing Page
-                </Button>
-              </div>
-            ) : (
-              pages.map((page) => (
-                <div
-                  key={page._id}
-                  className="grid grid-cols-1 md:grid-cols-[1fr_120px_80px_80px_330px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
-                >
-                  {/* Page Name + Slug + Method */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="h-10 w-10 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm"
-                      style={{
-                        background: `linear-gradient(135deg, ${page.primaryColor || '#7c3aed'}, ${page.secondaryColor || '#6366f1'})`,
-                      }}
-                    >
-                      <FileText className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-foreground truncate">
-                          {page.name || "Untitled Page"}
-                        </span>
-                        {page.generationMethod && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 flex-shrink-0 whitespace-nowrap">
-                            {page.generationMethod === "ai" ? "✨ AI" : page.generationMethod === "analyze" ? "🔍 Analyzed" : "Manual"}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">/lp/{page.slug}</p>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="flex justify-start md:justify-center">
-                    <span
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${page.status === "published"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
-                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                        }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${page.status === "published" ? "bg-emerald-500" : "bg-amber-500"
-                        }`} />
-                      {page.status === "published" ? "Live" : "Draft"}
-                    </span>
-                  </div>
-
-                  {/* Views */}
-                  <div className="flex items-center gap-1 justify-start md:justify-center text-sm text-muted-foreground">
-                    <Eye className="h-3.5 w-3.5" />
-                    <span className="font-medium">{page.views || 0}</span>
-                  </div>
-
-                  {/* Leads */}
-                  <div className="flex items-center gap-1 justify-start md:justify-center text-sm text-muted-foreground">
-                    <UsersIcon className="h-3.5 w-3.5" />
-                    <span className="font-medium">{(page as any).leads?.length || 0}</span>
-                  </div>
-
-                  {/* Actions — Always Visible */}
-                  <div className="flex items-center gap-0.5 justify-end flex-nowrap">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/editor/${project._id}/${page._id}`)}
-                      className="h-8 px-2 gap-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10"
-                    >
-                      <FileEdit className="h-3.5 w-3.5" /> Edit
-                    </Button>
-
-                    {page.status === "published" ? (
-                      <a
-                        href={page.publishedUrl || `${window.location.origin}/p/${page.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" /> View
-                        </Button>
-                      </a>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPublishingPage(page)}
-                        className="h-8 px-2 gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                      >
-                        <Rocket className="h-3.5 w-3.5" /> Publish
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/dashboard/leads?page=${page._id}&project=${project._id}`)}
-                      className="h-8 px-2 gap-1.5 text-xs text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                    >
-                      <UsersIcon className="h-3.5 w-3.5" /> Leads
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingPage(page)}
-                      className="h-8 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
-                    >
-                      <Settings2 className="h-3.5 w-3.5" /> Settings
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeletePageId(page._id)}
-                      className="h-8 px-2 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Landing Pages</h2>
+                  <p className="text-xs text-muted-foreground">{pages.length} page{pages.length !== 1 ? "s" : ""} in this project</p>
                 </div>
-              ))
+              </div>
+              <Button
+                onClick={() => setCreateOpen(true)}
+                className="h-9 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-sm text-sm"
+              >
+                <Plus className="h-4 w-4" /> New Page
+              </Button>
+            </div>
+
+            {/* Table Header */}
+            {pages.length > 0 && (
+              <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_140px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                <span>Page Name</span>
+                <span className="text-center">Status</span>
+                <span className="text-center">Views</span>
+                <span className="text-center">Leads</span>
+                <span className="text-right">Actions</span>
+              </div>
             )}
+
+            {/* Page Rows */}
+            <div className="divide-y divide-border">
+              {pages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg">
+                    <Zap className="h-7 w-7 text-white" />
+                  </div>
+                  <p className="text-base font-bold text-foreground mb-1">No pages yet</p>
+                  <p className="text-sm text-muted-foreground mb-5">Create your first landing page to get started</p>
+                  <Button
+                    onClick={() => setCreateOpen(true)}
+                    className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
+                  >
+                    <Plus className="h-4 w-4" /> Create Landing Page
+                  </Button>
+                </div>
+              ) : (
+                pages.map((page) => (
+                  <div
+                    key={page._id}
+                    className="grid grid-cols-1 md:grid-cols-[1fr_100px_80px_80px_140px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="h-10 w-10 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm"
+                        style={{ background: `linear-gradient(135deg, ${page.primaryColor || '#7c3aed'}, ${page.secondaryColor || '#6366f1'})` }}
+                      >
+                        <FileText className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          <span className="text-sm font-bold text-foreground truncate">{page.name || "Untitled Page"}</span>
+                          {page.generationMethod && (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 flex-shrink-0">
+                              {page.generationMethod === "ai" ? "✨ AI" : "🔍 Analyzed"}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 opacity-70">/{page.slug}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-start md:justify-center">
+                      <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${page.status === "published" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${page.status === "published" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {page.status === "published" ? "Live" : "Draft"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground">
+                      <Eye className="h-3 w-3" />
+                      <span>{page.views || 0}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground">
+                      <UsersIcon className="h-3 w-3" />
+                      <span>{(page as any).leads?.length || 0}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/editor/${project._id}/${page._id}`)} className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10" title="Edit Content"><FileEdit className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setPublishingPage(page)} className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Publish"><Rocket className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditingPage(page)} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Settings"><Settings2 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletePageId(page._id)} className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50" title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* ─── Integration Section (Collapsible) ─── */}
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-          <button
-            onClick={() => setIntegrationOpen(!integrationOpen)}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
-                <Link className="h-4 w-4 text-white" />
-              </div>
-              <div className="text-left">
+          {/* ─── Right Side: Integration & Embedding ─── */}
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-border bg-card flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
+                  <Link className="h-4 w-4 text-white" />
+                </div>
                 <h2 className="text-base font-bold text-foreground">Integration & Embedding</h2>
-                <p className="text-xs text-muted-foreground">WordPress plugin, Script embed, or iFrame</p>
               </div>
+              <p className="text-[11px] text-muted-foreground ml-11">WordPress, Script, or iFrame</p>
             </div>
-            <div className={`h-6 w-6 rounded-full bg-muted flex items-center justify-center transition-transform ${integrationOpen ? "rotate-180" : ""}`}>
-              <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </button>
 
-          {integrationOpen && (
-            <div className="px-6 pb-6 pt-2 border-t border-border space-y-5">
-              {/* Integration Method Selector (horizontal tabs) */}
+            <div className="p-6 space-y-6">
               <div className="flex gap-1 bg-muted p-1 rounded-xl">
                 {([
-                  { id: "wordpress" as const, icon: <Puzzle className="h-4 w-4" />, label: "WordPress" },
-                  { id: "script" as const, icon: <Code2 className="h-4 w-4" />, label: "Script Embed" },
-                  { id: "iframe" as const, icon: <Monitor className="h-4 w-4" />, label: "iFrame" },
+                  { id: "wordpress" as const, icon: <Puzzle className="h-3.5 w-3.5" />, label: "WP" },
+                  { id: "script" as const, icon: <Code2 className="h-3.5 w-3.5" />, label: "Script" },
+                  { id: "iframe" as const, icon: <Monitor className="h-3.5 w-3.5" />, label: "iFrame" },
                 ]).map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setIntegTab(m.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${integTab === m.id
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${integTab === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                   >
                     {m.icon} {m.label}
                   </button>
                 ))}
               </div>
 
-              {/* ── WordPress Instructions ── */}
-              {integTab === "wordpress" && (
-                <div className="space-y-4">
-                  {[
-                    {
-                      num: 1,
-                      title: "Download & Activate WordPress Plugin",
-                      desc: "Download and install the \"PPC Landing Builder\" plugin from WordPress plugin directory.",
-                      extra: (
-                        <a href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/plugin/download`} download className="block mt-2">
-                          <Button variant="outline" size="sm" className="h-8 text-xs gap-2">
-                            <Download className="h-3 w-3" /> Download Plugin
-                          </Button>
-                        </a>
-                      ),
-                    },
-                    {
-                      num: 2,
-                      title: "Generate Access Token",
-                      desc: "Copy the access token below and paste it in the plugin settings panel.",
-                      extra: (
-                        <div
-                          className="flex items-center gap-2 bg-muted hover:bg-muted/80 border border-border rounded-lg px-3 py-2 mt-2 cursor-pointer transition-all active:scale-95 w-fit"
-                          onClick={async () => {
-                            const ok = await copyToClipboard(project.apiToken);
-                            if (ok) { setIntegTokenCopied(true); toast.success("Token copied!"); setTimeout(() => setIntegTokenCopied(false), 2000); }
+              <div className="space-y-5">
+                {integTab === "wordpress" && (
+                  <div className="space-y-4">
+                    {[
+                      { num: 1, title: "Download Plugin", desc: "Install our WP plugin from the dashboard.", extra: (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-[10px] mt-1.5 gap-1.5"
+                          onClick={() => {
+                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+                            window.open(`${apiBaseUrl}/plugin/download`, '_blank');
+                            toast.success("Downloading plugin...");
                           }}
                         >
-                          <span className="text-xs font-mono text-foreground font-semibold">{project.apiToken}</span>
-                          <div className="border-l border-border pl-2 ml-1">
-                            {integTokenCopied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-                          </div>
+                          <Download className="h-3 w-3" /> Download
+                        </Button>
+                      ) },
+                      { num: 2, title: "Enter Token", desc: "Paste your API token in settings.", extra: <div onClick={copyToken} className="flex items-center gap-2 bg-muted border border-border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between"><span className="text-[10px] font-mono truncate max-w-[150px]">{project.apiToken}</span><Copy className="h-3 w-3 text-muted-foreground" /></div> },
+                      { num: 3, title: "Sync Pages", desc: "Pages will auto-sync to your WP site." },
+                    ].map((s) => (
+                      <div key={s.num} className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-foreground">{s.title}</p>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
+                          {s.extra}
                         </div>
-                      ),
-                    },
-                    { num: 3, title: "Save Your Token", desc: "In WordPress, go to Settings → Domain Mapper and save your Project API Token." },
-                  ].map((step) => (
-                    <div key={step.num} className="flex gap-4">
-                      <div className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{step.num}</div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
-                        {step.extra}
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {integTab === "script" && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs font-medium">Add to &lt;head&gt;</p>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1.5" onClick={() => copyToClipboard(scriptCode)}><Copy className="h-3 w-3" /> Copy</Button>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Script Code ── */}
-              {integTab === "script" && (
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium text-foreground">Add to your website's &lt;head&gt;</p>
-                    <button
-                      onClick={async () => {
-                        const ok = await copyToClipboard(scriptCode);
-                        if (ok) { setIntegScriptCopied(true); toast.success("Code copied!"); setTimeout(() => setIntegScriptCopied(false), 2000); }
-                      }}
-                      className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
-                    >
-                      {integScriptCopied ? <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy Code</>}
-                    </button>
+                    <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                   </div>
-                  <pre className="text-xs text-foreground font-mono bg-muted rounded-xl p-4 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
-                </div>
-              )}
+                )}
 
-              {/* ── iFrame Code ── */}
-              {integTab === "iframe" && (
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium text-foreground">Embed iFrame Code</p>
-                    <button
-                      onClick={async () => {
-                        const ok = await copyToClipboard(iframeCode);
-                        if (ok) { setIntegIframeCopied(true); toast.success("Code copied!"); setTimeout(() => setIntegIframeCopied(false), 2000); }
-                      }}
-                      className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
-                    >
-                      {integIframeCopied ? <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy Code</>}
-                    </button>
+                {integTab === "iframe" && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs font-medium">Embed Code</p>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1.5" onClick={() => copyToClipboard(iframeCode)}><Copy className="h-3 w-3" /> Copy</Button>
+                    </div>
+                    <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{iframeCode}</pre>
                   </div>
-                  <pre className="text-xs text-foreground font-mono bg-muted rounded-xl p-4 overflow-x-auto whitespace-pre-wrap break-all border border-border">{iframeCode}</pre>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

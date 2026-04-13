@@ -224,6 +224,34 @@ const GrapesEditor = () => {
       applyContentToEditor(editor);
       // Set up custom color picker injection after load
       setTimeout(() => injectCustomColorPickers(editor), 500);
+
+      // ─── Add Custom Lead Form Block ───
+      editor.BlockManager.add('lead-form', {
+        label: 'Lead Form',
+        category: 'Forms',
+        content: `
+          <div class="lead-form-container" style="padding: 40px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; font-family: sans-serif;">
+            <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #1e293b; text-align: center;">Get Started Now</h3>
+            <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b; text-align: center;">Fill out your details and we will get back to you.</p>
+            <form id="lead-form" style="display: flex; flexDirection: column; gap: 16px;">
+              <div style="display: flex; flexDirection: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Name</label>
+                <input type="text" name="name" required placeholder="Your Name" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
+              </div>
+              <div style="display: flex; flexDirection: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Email</label>
+                <input type="email" name="email" required placeholder="email@example.com" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
+              </div>
+              <div style="display: flex; flexDirection: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Phone</label>
+                <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
+              </div>
+              <button type="submit" style="margin-top: 10px; padding: 14px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Send Inquiry</button>
+            </form>
+          </div>
+        `,
+        attributes: { class: 'fa fa-paper-plane' }
+      });
     });
 
     // Fallback if load already happened
@@ -443,7 +471,7 @@ const GrapesEditor = () => {
       setIsPublishing(false);
       // Build the public URL for display
       const slug = pageDataRef.current?.slug || pageId;
-      const url = `${window.location.origin}/p/${slug}`;
+      const url = `${window.location.origin}/${slug}`;
       setPublishedUrl(url);
       setPublishModalOpen(true);
     } catch (err) {

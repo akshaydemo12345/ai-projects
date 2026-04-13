@@ -326,22 +326,34 @@ class DomainMapper_Settings_Page {
         check_ajax_referer( 'dm_admin_nonce', 'nonce' );
         
         $api_key = isset( $_POST['api_key'] ) ? $this->sanitize_api_key( $_POST['api_key'] ) : '';
+        $domain  = $_SERVER['HTTP_HOST'] ?? '';
 
         if ( empty( $api_key ) || strlen( $api_key ) < 10 ) {
             wp_send_json_error( [ 'message' => 'API Key is too short.' ] );
         }
 
-        $response = wp_remote_post( 'http://my-ai-backend.test:5000/verify-api-key', [
+        $endpoint = DM_API_BASE . '/verify-api-key';
+        $actual_key = $api_key;
+        if ( strpos( $api_key, '@@' ) !== false ) {
+            list( $override_url, $actual_key ) = explode( '@@', $api_key, 2 );
+            $endpoint = rtrim( $override_url, '/' ) . '/verify-api-key';
+        }
+
+        $response = wp_remote_post( $endpoint, [
             'timeout' => 15,
             'headers' => [ 'Content-Type' => 'application/json' ],
-            'body'    => json_encode( [ 'api_key' => $api_key ] )
+            'body'    => json_encode( [ 
+                'api_key' => $actual_key,
+                'domain'  => $domain
+            ] )
         ]);
 
         if ( is_wp_error( $response ) ) {
-            wp_send_json_error( [ 'message' => 'Connection to server failed.' ] );
+            wp_send_json_error( [ 'message' => 'Connection to server failed. Please check your backend URL.' ] );
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $body_raw = wp_remote_retrieve_body( $response );
+        $body = json_decode( $body_raw, true );
         
         if ( isset( $body['status'] ) && 'active' === $body['status'] ) {
             wp_send_json_success([
