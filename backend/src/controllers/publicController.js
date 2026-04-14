@@ -2,6 +2,7 @@
 
 const Page = require('../models/Page');
 const Project = require('../models/Project');
+const Lead = require('../models/Lead');
 const AppError = require('../utils/AppError');
 const { normalizeDomain } = require('../utils/validation');
 const path = require('path');
@@ -114,100 +115,15 @@ const buildLeadCaptureScript = (page) => {
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
 
-  return `
-<script>
-(function() {
-  var API_URL = "${apiBaseUrl}";
-  var PAGE_SLUG = "${pageSlug}";
-  var PAGE_ID = "${pageId}";
-  var PROJECT_ID = "${projectId}";
-
-  function showSuccessModal() {
-    var modal = document.getElementById("pc-success-modal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "pc-success-modal";
-      modal.innerHTML = \`
-        <div style="position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s ease; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
-          <div style="background:white; padding:40px; border-radius:30px; max-width:420px; width:90%; text-align:center; transform:translateY(20px); transition:transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
-            <div style="width:80px; height:80px; background:#ecfdf5; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-            <h3 style="margin:0 0 12px; font-size:28px; font-weight:800; color:#111827;">Thank you!</h3>
-            <p style="margin:0 0 32px; color:#4b5563; font-size:16px; line-height:1.6;">Your message has been sent successfully. We'll get back to you shortly.</p>
-            <button onclick="document.getElementById('pc-success-modal').remove()" style="background:#111827; color:white; border:none; padding:16px 32px; border-radius:15px; font-size:16px; font-weight:600; cursor:pointer; width:100%; transition:all 0.2s;">Continue</button>
-          </div>
-        </div>
-      \`;
-      document.body.appendChild(modal);
-      
-      setTimeout(function() {
-        var backdrop = modal.querySelector("div");
-        var content = backdrop.querySelector("div");
-        backdrop.style.opacity = "1";
-        content.style.transform = "translateY(0)";
-      }, 10);
-    }
-  }
-
-  function submitLead(data, form, btn, originalBtnText, attempt) {
-    attempt = attempt || 1;
-    fetch(API_URL + "/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      mode: "cors"
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(result) {
-      if (result.status === "success") {
-        showSuccessModal();
-        form.reset();
-        if (btn) { btn.disabled = false; btn.textContent = originalBtnText; }
-      } else {
-        throw new Error(result.message || "Server error");
-      }
-    })
-    .catch(function(err) {
-      if (attempt < 3) {
-        if (btn) btn.textContent = "Retrying...";
-        setTimeout(function() { submitLead(data, form, btn, originalBtnText, attempt + 1); }, 2000);
-      } else {
-        alert("Submission failed: " + err.message);
-        if (btn) { btn.disabled = false; btn.textContent = originalBtnText; }
-      }
-    });
-  }
-
-  document.addEventListener("submit", function(e) {
-    var form = e.target;
-    if (!form.querySelector('input[type="email"]') && form.id !== "lead-form") return;
-    e.preventDefault();
-
-    var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
-    var originalBtnText = btn ? (btn.textContent || "Submit") : "Submit";
-    if (btn) { btn.disabled = true; btn.textContent = "Sending..."; }
-
-    var fd = new FormData(form);
-    submitLead({
-      pageSlug: PAGE_SLUG,
-      pageId:   PAGE_ID,
-      projectId: PROJECT_ID,
-      name:    fd.get("name") || fd.get("first_name") || "",
-      email:   fd.get("email") || "",
-      phone:   fd.get("phone") || fd.get("tel") || "",
-      message: fd.get("message") || fd.get("comments") || ""
-    }, form, btn, originalBtnText, 1);
-  });
-})();
-</script>`;
+  // Serve a secure, clean external script tag instead of a massive inline blob
+  return `<script src="${apiBaseUrl}/api/leads/tracker.js" id="dm-lead-tracker" data-api-url="${apiBaseUrl}" data-page-slug="${pageSlug}" data-page-id="${pageId}" data-project-id="${projectId}" defer></script>`;
 };
 
 /**
  * Shared helper to render a high-converting landing page from AI-generated content.
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
-const renderFullHTML = (page) => {
+const renderFullHTML = (page, canonicalUrl = '') => {
   const { title, content, seo } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
@@ -217,12 +133,132 @@ const renderFullHTML = (page) => {
 
   const leadScript = buildLeadCaptureScript(page);
 
-  // Full document (AI returned <!DOCTYPE html>) — inject script before </body>
+  // ── Resolved SEO values from DB (always authoritative) ──────────────────
+  // The Page Settings modal saves to page.metaTitle / page.metaDescription (flat fields)
+  // page.seo.title / page.seo.description are legacy fallbacks
+  const seoTitle       = (page.metaTitle       || seo?.title       || title || 'Landing Page').trim();
+  const seoDescription = (page.metaDescription || seo?.description || '').trim();
+  const seoKeywords    = Array.isArray(seo?.keywords) ? seo.keywords.join(', ') : (seo?.keywords || '');
+
+  // ── Inject Branding Variables ─────────────────────────────────────────────
+  const pColor = page.primaryColor || '#7c3aed';
+  const sColor = page.secondaryColor || '#6366f1';
+  const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-slate-950') || aiHtml.includes('bg-[#0f172a]'));
+  
+  const brandingStyles = `
+<style id="branding-vars">
+  :root {
+    --primary: ${pColor};
+    --secondary: ${sColor};
+    --accent: ${sColor};
+    --button-gradient: linear-gradient(135deg, ${pColor}, ${sColor});
+  }
+  body { 
+    background-color: ${detectDark ? '#0f172a' : '#ffffff'}; 
+    color: ${detectDark ? '#f8fafc' : '#0f172a'}; 
+    margin: 0; 
+    overflow-x: hidden;
+  }
+  /* Guarantee form input visibility overrides */
+  input, textarea, select {
+    color: #0f172a !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+</style>`;
+
+  // ── JSON-LD WebPage Schema ────────────────────────────────────────────────
+  const schemaOrg = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    'name': seoTitle,
+    'description': seoDescription,
+    ...(canonicalUrl ? { 'url': canonicalUrl } : {}),
+    'inLanguage': 'en',
+  };
+
+  // ── Full SEO head block ───────────────────────────────────────────────────
+  const seoMetaBlock = [
+    `<title>${seoTitle}</title>`,
+    `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`,
+    seoKeywords ? `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">` : '',
+    `<meta name="robots" content="index, follow">`,
+    canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
+    `<link rel="preconnect" href="https://fonts.googleapis.com">`,
+    `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
+    `<link rel="dns-prefetch" href="//fonts.googleapis.com">`,
+    `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`,
+    `<script src="https://cdn.tailwindcss.com"></script>`,
+    `<script type="application/ld+json">${JSON.stringify(schemaOrg)}</script>`,
+  ].filter(Boolean).join('\n    ');
+
+
+  // ── Full document (AI returned <!DOCTYPE html>) ───────────────────────────
   if (aiHtml.toLowerCase().includes('<!doctype') || aiHtml.toLowerCase().includes('<html')) {
-    if (aiHtml.toLowerCase().includes('</body>')) {
-      return aiHtml.replace(/<\/body>/i, leadScript + '\n</body>');
+    let html = aiHtml;
+
+    // 1. Replace existing <title>...</title> with DB value
+    if (/<title[\s>]/i.test(html)) {
+      html = html.replace(/<title[^>]*>.*?<\/title>/is, `<title>${seoTitle}</title>`);
     }
-    return aiHtml + leadScript;
+
+    // 2. Replace existing meta description with DB value (or add if missing)
+    if (/<meta[^>]+name=["']description["'][^>]*>/i.test(html)) {
+      html = html.replace(
+        /<meta[^>]+name=["']description["'][^>]*>/i,
+        `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`
+      );
+    } else {
+      // Inject after <title> if no description meta exists
+      html = html.replace(
+        /(<title[^>]*>.*?<\/title>)/is,
+        `$1\n    <meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`
+      );
+    }
+
+    // 3. Replace or inject keywords meta
+    if (seoKeywords) {
+      if (/<meta[^>]+name=["']keywords["'][^>]*>/i.test(html)) {
+        html = html.replace(
+          /<meta[^>]+name=["']keywords["'][^>]*>/i,
+          `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">`
+        );
+      } else {
+        html = html.replace(
+          /(<meta[^>]+name=["']description["'][^>]*>)/i,
+          `$1\n    <meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">`
+        );
+      }
+    }
+
+    // 4. Strip any AI-generated OG/Twitter tags (not needed)
+    html = html.replace(/<meta[^>]+property=["']og:[^"']*["'][^>]*>/gi, '');
+    html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
+
+    if (/<\/head>/i.test(html)) {
+      // Force inject Tailwind, Fonts, and Branding if missing
+      if (!html.includes('cdn.tailwindcss.com')) {
+        html = html.replace(/<\/head>/i, `  <script src="https://cdn.tailwindcss.com"></script>\n</head>`);
+      }
+      if (!html.includes('fonts.googleapis.com')) {
+        html = html.replace(/<\/head>/i, `  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">\n</head>`);
+      }
+      if (!html.includes('--primary:')) {
+        html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
+      }
+    }
+
+    // 5. Inject lead script before </body>
+    if (/<\/body>/i.test(html)) {
+      html = html.replace(/<\/body>/i, `${leadScript}\n</body>`);
+    } else {
+      html = html + leadScript;
+    }
+
+    return html;
   }
 
   // ─── Legacy/Structured fragment fallback ──────────────────────────────────
@@ -259,17 +295,18 @@ const renderFullHTML = (page) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title || (seo ? seo.title : 'AI Created Site')}</title>
+    ${seoMetaBlock}
+    ${brandingStyles}
     <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
-    ${seo ? `<meta name="description" content="${seo.description || ''}">` : ''}
 </head>
 <body>
     ${bodyContent}
-    <script>${aiJs || ''}</script>
+    ${aiJs ? `<script>${aiJs}</script>` : ''}
     ${leadScript}
 </body>
 </html>`;
 };
+
 
 /**
  * GET /preview/:token/html
@@ -301,8 +338,13 @@ exports.getPreviewHTML = async (req, res, next) => {
  */
 exports.getPublicPageHTML = async (req, res, next) => {
   try {
-    const slug = String(req.params.slug || req.params[0] || '').trim();
-    const normalizedSlug = slug.replace(/^\/+|\/+$/g, '');
+    const rawSlug = String(req.params.slug || req.params[0] || '').trim();
+    const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    
+    // Split slug to handle /slug/thank-you sub-paths
+    const slugParts = cleanSlug.split('/');
+    const normalizedSlug = slugParts[0]; // The actual page slug is always the first part
+    const isThankYou = slugParts.length > 1 && slugParts[1] === 'thank-you';
 
     if (!normalizedSlug) return next(new AppError('Page not found', 404));
 
@@ -367,9 +409,130 @@ exports.getPublicPageHTML = async (req, res, next) => {
       }
     }
 
+    // ── Build canonical URL from the requesting host (WP domain) ─────────
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const hostHeader   = req.headers['host'];
+    const requestHost  = forwardedHost || hostHeader || '';
+    const canonicalUrl = requestHost
+      ? `http${req.secure ? 's' : ''}://${requestHost}/${normalizedSlug}`
+      : '';
+
     res.setHeader('Content-Type', 'text/html');
-    res.status(200).send(renderFullHTML(page));
+    
+    if (isThankYou) {
+      // Render the success/thank-you template
+      const brandColor = page.primaryColor || '#7c3aed';
+      const redirectUrl = page.websiteUrl || '#';
+      
+      const thankYouHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You | ${page.title}</title>
+    <style>
+      @keyframes pc-sparkle { 0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); } 50% { transform: scale(1.2); opacity: 1; filter: blur(1px); } }
+      @keyframes pc-float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, -25px); } 100% { transform: translate(-10px, -50px); } }
+      body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #ffffff; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; overflow: hidden; }
+      .pc-sparkle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1; }
+      .pc-content { position: relative; z-index: 10; max-width: 500px; padding: 40px; }
+      .pc-success-icon { width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; color: #10b981; box-shadow: 0 0 40px rgba(16, 185, 129, 0.3); }
+      .pc-title { font-size: 56px; font-weight: 900; color: #0f172a; margin: 0 0 16px; letter-spacing: -0.02em; }
+      .pc-desc { font-size: 18px; line-height: 1.6; color: #64748b; margin-bottom: 40px; }
+      .pc-btn { display: inline-flex; align-items: center; gap: 10px; background: ${brandColor} !important; color: white !important; padding: 18px 40px; border-radius: 100px; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; }
+      .pc-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="pc-content">
+        <div class="pc-success-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <h1 class="pc-title">Thank You!</h1>
+        <p class="pc-desc">Successfully received your request. Our team will reach out shortly.</p>
+        <a href="${redirectUrl}" class="pc-btn">Visit Our Website</a>
+    </div>
+    <script>
+      const colors = ['#ffffff', '#ffd700', '${brandColor}', '#ffffff'];
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('div');
+        s.className = 'pc-sparkle';
+        const size = Math.random() * 5 + 1;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        s.style.width = size + 'px'; s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 110 + '%';
+        s.style.background = color; s.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
+        const d = Math.random() * 4 + 3;
+        const dl = Math.random() * 8;
+        s.style.animation = 'pc-sparkle ' + d + 's infinite ' + dl + 's ease-in-out, pc-float ' + (d * 2) + 's infinite ' + dl + 's linear';
+        document.body.appendChild(s);
+      }
+    </script>
+</body>
+</html>`;
+      return res.status(200).send(thankYouHtml);
+    }
+
+    res.status(200).send(renderFullHTML(page, canonicalUrl));
   } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /:slug
+ * Smart form handler that captures data and redirects to success page.
+ */
+exports.handleFormSubmission = async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug || req.params[0] || '').trim();
+    const normalizedSlug = slug.replace(/^\/+|\/+$/g, '');
+    
+    const page = await Page.findOne({ slug: normalizedSlug, isDeleted: { $ne: true } });
+    if (!page) return next(new AppError('Page not found', 404));
+
+    // Capture fields (handle both name and first_name/last_name combinations)
+    const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
+    
+    const leadName = name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Unknown Lead');
+    const leadEmail = email || `missing-email-${Date.now()}@unknown.com`;
+    const leadPhone = phone || tel || '';
+    const leadMessage = message || comments || '';
+
+    // Create the lead
+    const lead = await Lead.create({
+      name: leadName,
+      email: leadEmail,
+      phone: leadPhone,
+      message: leadMessage,
+      pageSlug: normalizedSlug,
+      pageId: page._id,
+      projectId: page.projectId,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Update Project lead count
+    if (page.projectId) {
+      await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
+    }
+
+    // Detect if AJAX or Natural Form
+    const isAjax = req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json');
+
+    if (isAjax) {
+      return res.status(201).json({
+        status: 'success',
+        message: 'Lead saved',
+        redirect: `/${normalizedSlug}/thank-you`
+      });
+    }
+
+    // Traditional Form Redirect
+    res.redirect(`/${normalizedSlug}/thank-you`);
+
+  } catch (err) {
+    console.error('❌ Form submission error:', err);
     next(err);
   }
 };
@@ -529,4 +692,54 @@ exports.downloadPlugin = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+/**
+ * GET /sitemap.xml
+ * Auto-generates a sitemap for all published pages bound to a project websiteUrl.
+ */
+exports.getSitemap = async (req, res) => {
+  try {
+    const pages = await Page.find({ isDeleted: { $ne: true } })
+      .select('slug metaTitle publishedAt updatedAt projectId')
+      .populate({ path: 'projectId', select: 'websiteUrl' })
+      .lean();
+
+    const host = req.headers['x-forwarded-host'] || req.headers['host'] || '';
+    const baseUrl = `http${req.secure ? 's' : ''}://${host}`;
+
+    const urlEntries = pages
+      .filter(p => p.slug)
+      .map(p => {
+        const loc = `${baseUrl}/${p.slug}`;
+        const lastmod = (p.publishedAt || p.updatedAt || new Date()).toISOString().split('T')[0];
+        return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+      })
+      .join('\n');
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=UTF-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.status(200).send(xml);
+  } catch (err) {
+    res.status(500).send('<?xml version="1.0"?><urlset />');
+  }
+};
+
+/**
+ * GET /robots.txt
+ * Serves a permissive robots.txt that points to sitemap.
+ */
+exports.getRobotsTxt = (req, res) => {
+  const host = req.headers['x-forwarded-host'] || req.headers['host'] || '';
+  const baseUrl = `http${req.secure ? 's' : ''}://${host}`;
+  const txt = [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    `Sitemap: ${baseUrl}/sitemap.xml`,
+  ].join('\n');
+  res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.status(200).send(txt);
 };
