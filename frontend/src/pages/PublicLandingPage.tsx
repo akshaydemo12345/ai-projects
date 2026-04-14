@@ -93,8 +93,8 @@ const PublicLandingPage = () => {
 
           document.addEventListener('submit', function(e) {
             const form = e.target;
-            // Only intercept forms that look like lead capture
-            if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+            
+            if (form && form.tagName === 'FORM') {
               form.setAttribute('method', 'POST'); // Ensure POST method is used
               e.preventDefault();
               
@@ -109,10 +109,10 @@ const PublicLandingPage = () => {
               const data = {
                 pageSlug: "${PAGE_SLUG}",
                 projectId: "${PAGE_ID}",
-                name: formData.get('name') || formData.get('first_name') || '',
-                email: formData.get('email') || '',
-                phone: formData.get('phone') || formData.get('tel') || '',
-                message: formData.get('message') || formData.get('comments') || ''
+                name: formData.get('name') || formData.get('first_name') || (form.querySelector('input[type="text"]') ? form.querySelector('input[type="text"]').value : ''),
+                email: formData.get('email') || (form.querySelector('input[type="email"]') ? form.querySelector('input[type="email"]').value : ''),
+                phone: formData.get('phone') || formData.get('tel') || (form.querySelector('input[type="tel"]') ? form.querySelector('input[type="tel"]').value : ''),
+                message: formData.get('message') || formData.get('comments') || (form.querySelector('textarea') ? form.querySelector('textarea').value : '')
               };
 
               submitLead(data, form, btn, originalBtnText);
@@ -123,6 +123,40 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
+      const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-[#0f172a]') || aiHtml.includes('bg-slate-950'));
+      const brandingStyles = `
+        <style id="branding-vars">
+          :root {
+            --primary: ${BRAND_COLOR};
+            --secondary: ${pageData.secondaryColor || '#6366f1'};
+            --accent: ${pageData.secondaryColor || '#6366f1'};
+            --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${pageData.secondaryColor || '#6366f1'});
+          }
+          body { 
+            background-color: ${detectDark ? '#0f172a' : '#ffffff'};
+            color: ${detectDark ? '#f8fafc' : '#0f172a'};
+            overflow-x: hidden;
+          }
+          /* Guarantee form input visibility overrides */
+          input, textarea, select {
+            color: #0f172a !important;
+            background-color: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+          }
+          input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+          }
+        </style>
+      `;
+
+      const coreDependencies = `
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        ${brandingStyles}
+      `;
+
       // Ensure styles and scripts are injected even into full documents
       const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
       
@@ -131,11 +165,15 @@ const PublicLandingPage = () => {
         if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
           const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
           if (finalHtml.toLowerCase().includes('</head>')) {
-            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + '</head>');
+            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + coreDependencies + '</head>');
           } else if (finalHtml.toLowerCase().includes('<head>')) {
-            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag);
+            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag + coreDependencies);
           } else {
-            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + '</head>');
+            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + coreDependencies + '</head>');
+          }
+        } else {
+          if (finalHtml.toLowerCase().includes('</head>')) {
+            finalHtml = finalHtml.replace(/<\/head>/i, coreDependencies + '</head>');
           }
         }
         
@@ -161,6 +199,7 @@ const PublicLandingPage = () => {
               <meta name="viewport" content="width=device-width, initial-scale=1">
               ${meta?.seo?.description ? `<meta name="description" content="${meta.seo.description}">` : ''}
               <base href="${window.location.origin}">
+              ${coreDependencies}
               <style>
                 /* Modern Reset */
                 * { box-sizing: border-box; }

@@ -208,6 +208,9 @@ const GrapesEditor = () => {
         styles: [
           'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap',
         ],
+        scripts: [
+          'https://cdn.tailwindcss.com'
+        ],
       },
       deviceManager: {
         devices: [

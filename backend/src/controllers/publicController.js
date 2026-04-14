@@ -140,6 +140,36 @@ const renderFullHTML = (page, canonicalUrl = '') => {
   const seoDescription = (page.metaDescription || seo?.description || '').trim();
   const seoKeywords    = Array.isArray(seo?.keywords) ? seo.keywords.join(', ') : (seo?.keywords || '');
 
+  // ── Inject Branding Variables ─────────────────────────────────────────────
+  const pColor = page.primaryColor || '#7c3aed';
+  const sColor = page.secondaryColor || '#6366f1';
+  const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-slate-950') || aiHtml.includes('bg-[#0f172a]'));
+  
+  const brandingStyles = `
+<style id="branding-vars">
+  :root {
+    --primary: ${pColor};
+    --secondary: ${sColor};
+    --accent: ${sColor};
+    --button-gradient: linear-gradient(135deg, ${pColor}, ${sColor});
+  }
+  body { 
+    background-color: ${detectDark ? '#0f172a' : '#ffffff'}; 
+    color: ${detectDark ? '#f8fafc' : '#0f172a'}; 
+    margin: 0; 
+    overflow-x: hidden;
+  }
+  /* Guarantee form input visibility overrides */
+  input, textarea, select {
+    color: #0f172a !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+</style>`;
+
   // ── JSON-LD WebPage Schema ────────────────────────────────────────────────
   const schemaOrg = {
     '@context': 'https://schema.org',
@@ -160,6 +190,8 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
     `<link rel="dns-prefetch" href="//fonts.googleapis.com">`,
+    `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`,
+    `<script src="https://cdn.tailwindcss.com"></script>`,
     `<script type="application/ld+json">${JSON.stringify(schemaOrg)}</script>`,
   ].filter(Boolean).join('\n    ');
 
@@ -207,7 +239,16 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
 
     if (/<\/head>/i.test(html)) {
-      // nothing extra to inject — OG/Twitter removed
+      // Force inject Tailwind, Fonts, and Branding if missing
+      if (!html.includes('cdn.tailwindcss.com')) {
+        html = html.replace(/<\/head>/i, `  <script src="https://cdn.tailwindcss.com"></script>\n</head>`);
+      }
+      if (!html.includes('fonts.googleapis.com')) {
+        html = html.replace(/<\/head>/i, `  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">\n</head>`);
+      }
+      if (!html.includes('--primary:')) {
+        html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
+      }
     }
 
     // 5. Inject lead script before </body>
@@ -255,6 +296,7 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${seoMetaBlock}
+    ${brandingStyles}
     <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
 </head>
 <body>
@@ -452,8 +494,8 @@ exports.handleFormSubmission = async (req, res, next) => {
     // Capture fields (handle both name and first_name/last_name combinations)
     const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
     
-    const leadName = name || (first_name ? `${first_name} ${last_name || ''}`.trim() : '');
-    const leadEmail = email || '';
+    const leadName = name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Unknown Lead');
+    const leadEmail = email || `missing-email-${Date.now()}@unknown.com`;
     const leadPhone = phone || tel || '';
     const leadMessage = message || comments || '';
 

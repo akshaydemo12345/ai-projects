@@ -1203,7 +1203,14 @@ const ProjectDetailPage = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground">
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(page.status === "published" ? `/${page.slug}` : `/preview/${page.slug}`, '_blank');
+                      }}
+                      className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
+                      title={page.status === "published" ? "View Live Page" : "Preview Draft"}
+                    >
                       <Eye className="h-3 w-3" />
                       <span>{page.views || 0}</span>
                     </div>
