@@ -9723,3 +9723,8 @@ Require stack:
 [2026-04-14T11:39:00.058Z] [HTTP] GET /projects/69de153907cbc7342bdd7773 304 17ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
 [2026-04-14T11:39:02.058Z] [HTTP] GET /api/leads 304 29ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
 [2026-04-14T12:08:22.722Z] [HTTP] GET /api/public/page/roofing-company 304 34ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
+[2026-04-14T12:27:42.869Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-14T12:27:42.892Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-14T12:27:42.895Z] [INFO] 🚀 Server running on port 5000
+[2026-04-14T12:27:43.569Z] [HTTP] GET /projects/69ddc70228982d62ff52e47c 304 44ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-04-14T12:27:43.579Z] [HTTP] GET /projects/69ddc70228982d62ff52e47c/pages/69de06b5199344b13002cbf2 304 34ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
