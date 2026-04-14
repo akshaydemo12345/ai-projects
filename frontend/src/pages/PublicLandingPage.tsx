@@ -8,6 +8,8 @@ const PublicLandingPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  const isThankYouPage = window.location.pathname.endsWith('/thank-you');
 
   // We might need the token from the URL if the backend requires it
   const token = searchParams.get('token');
@@ -35,38 +37,16 @@ const PublicLandingPage = () => {
       const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const PAGE_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
+      const BRAND_COLOR = pageData.primaryColor || '#7c3aed';
+      const REDIRECT_URL = pageData.websiteUrl || '#';
+      const previewPrefix = window.location.pathname.startsWith('/preview/') ? '/preview/' : '/';
 
       const leadCaptureScript = `
         <script>
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
-          function showSuccessModal() {
-            let modal = document.getElementById('pc-success-modal');
-            if (!modal) {
-              modal = document.createElement('div');
-              modal.id = 'pc-success-modal';
-              modal.innerHTML = \`
-                <div style="position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s ease; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
-                  <div style="background:white; padding:40px; border-radius:30px; max-width:420px; width:90%; text-align:center; transform:translateY(20px); transition:transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
-                    <div style="width:80px; height:80px; background:#ecfdf5; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <h3 style="margin:0 0 12px; font-size:28px; font-weight:800; color:#111827;">Thank you!</h3>
-                    <p style="margin:0 0 32px; color:#4b5563; font-size:16px; line-height:1.6;">Your message has been sent successfully. We'll get back to you shortly.</p>
-                    <button onclick="document.getElementById('pc-success-modal').remove()" style="background:#111827; color:white; border:none; padding:16px 32px; border-radius:15px; font-size:16px; font-weight:600; cursor:pointer; width:100%; transition:all 0.2s;">Continue</button>
-                  </div>
-                </div>
-              \`;
-              document.body.appendChild(modal);
-              
-              // Trigger animation
-              setTimeout(() => {
-                const backdrop = modal.querySelector('div');
-                const content = backdrop.querySelector('div');
-                backdrop.style.opacity = '1';
-                content.style.transform = 'translateY(0)';
-              }, 10);
-            }
+          function redirectToSuccessPage() {
+            window.top.location.href = "${previewPrefix}${PAGE_SLUG}/thank-you";
           }
 
           async function submitLead(data, form, btn, originalBtnText, attempt = 1) {
@@ -84,7 +64,7 @@ const PublicLandingPage = () => {
               console.log("📥 API Response:", result);
 
               if (result.status === 'success') {
-                showSuccessModal();
+                redirectToSuccessPage();
                 form.reset();
                 if (btn) {
                   btn.disabled = false;
@@ -110,10 +90,12 @@ const PublicLandingPage = () => {
             }
           }
 
+
           document.addEventListener('submit', function(e) {
             const form = e.target;
-            // Only intercept forms that look like lead capture
-            if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+            
+            if (form && form.tagName === 'FORM') {
+              form.setAttribute('method', 'POST'); // Ensure POST method is used
               e.preventDefault();
               
               const btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
@@ -127,10 +109,10 @@ const PublicLandingPage = () => {
               const data = {
                 pageSlug: "${PAGE_SLUG}",
                 projectId: "${PAGE_ID}",
-                name: formData.get('name') || formData.get('first_name') || '',
-                email: formData.get('email') || '',
-                phone: formData.get('phone') || formData.get('tel') || '',
-                message: formData.get('message') || formData.get('comments') || ''
+                name: formData.get('name') || formData.get('first_name') || (form.querySelector('input[type="text"]') ? form.querySelector('input[type="text"]').value : ''),
+                email: formData.get('email') || (form.querySelector('input[type="email"]') ? form.querySelector('input[type="email"]').value : ''),
+                phone: formData.get('phone') || formData.get('tel') || (form.querySelector('input[type="tel"]') ? form.querySelector('input[type="tel"]').value : ''),
+                message: formData.get('message') || formData.get('comments') || (form.querySelector('textarea') ? form.querySelector('textarea').value : '')
               };
 
               submitLead(data, form, btn, originalBtnText);
@@ -141,6 +123,40 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
+      const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-[#0f172a]') || aiHtml.includes('bg-slate-950'));
+      const brandingStyles = `
+        <style id="branding-vars">
+          :root {
+            --primary: ${BRAND_COLOR};
+            --secondary: ${pageData.secondaryColor || '#6366f1'};
+            --accent: ${pageData.secondaryColor || '#6366f1'};
+            --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${pageData.secondaryColor || '#6366f1'});
+          }
+          body { 
+            background-color: ${detectDark ? '#0f172a' : '#ffffff'};
+            color: ${detectDark ? '#f8fafc' : '#0f172a'};
+            overflow-x: hidden;
+          }
+          /* Guarantee form input visibility overrides */
+          input, textarea, select {
+            color: #0f172a !important;
+            background-color: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+          }
+          input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+          }
+        </style>
+      `;
+
+      const coreDependencies = `
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        ${brandingStyles}
+      `;
+
       // Ensure styles and scripts are injected even into full documents
       const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
       
@@ -149,11 +165,15 @@ const PublicLandingPage = () => {
         if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
           const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
           if (finalHtml.toLowerCase().includes('</head>')) {
-            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + '</head>');
+            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + coreDependencies + '</head>');
           } else if (finalHtml.toLowerCase().includes('<head>')) {
-            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag);
+            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag + coreDependencies);
           } else {
-            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + '</head>');
+            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + coreDependencies + '</head>');
+          }
+        } else {
+          if (finalHtml.toLowerCase().includes('</head>')) {
+            finalHtml = finalHtml.replace(/<\/head>/i, coreDependencies + '</head>');
           }
         }
         
@@ -179,6 +199,7 @@ const PublicLandingPage = () => {
               <meta name="viewport" content="width=device-width, initial-scale=1">
               ${meta?.seo?.description ? `<meta name="description" content="${meta.seo.description}">` : ''}
               <base href="${window.location.origin}">
+              ${coreDependencies}
               <style>
                 /* Modern Reset */
                 * { box-sizing: border-box; }
@@ -196,6 +217,138 @@ const PublicLandingPage = () => {
           </html>
         `;
       }
+      
+      if (isThankYouPage) {
+        // Render Thank You content directly into iframe
+        const thankYouHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Thank You | ${pageData.name}</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                @keyframes pc-sparkle {
+                  0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); }
+                  50% { transform: scale(1.2); opacity: 1; filter: blur(1px); }
+                }
+                @keyframes pc-float {
+                  0% { transform: translate(0, 0); }
+                  50% { transform: translate(15px, -25px); }
+                  100% { transform: translate(-10px, -50px); }
+                }
+                body { 
+                  margin: 0; 
+                  font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+                  background: #ffffff;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                  text-align: center;
+                  overflow: hidden;
+                }
+                .pc-sparkle {
+                  position: absolute;
+                  border-radius: 50%;
+                  pointer-events: none;
+                  z-index: 1;
+                }
+                .pc-content {
+                  position: relative;
+                  z-index: 10;
+                  max-width: 500px;
+                  padding: 40px;
+                }
+                .pc-success-icon {
+                  width: 100px;
+                  height: 100px;
+                  background: rgba(16, 185, 129, 0.1);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin: 0 auto 32px;
+                  color: #10b981;
+                  box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+                }
+                .pc-title {
+                  font-size: 56px;
+                  font-weight: 900;
+                  color: #0f172a;
+                  margin: 0 0 16px;
+                  letter-spacing: -0.02em;
+                }
+                .pc-desc {
+                  font-size: 18px;
+                  line-height: 1.6;
+                  color: #64748b;
+                  margin-bottom: 40px;
+                }
+                .pc-btn {
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 10px;
+                  background: ${BRAND_COLOR} !important;
+                  color: white !important;
+                  padding: 18px 40px;
+                  border-radius: 100px;
+                  font-size: 16px;
+                  font-weight: 700;
+                  text-decoration: none;
+                  transition: all 0.3s ease;
+                }
+                .pc-btn:hover {
+                  transform: scale(1.05);
+                }
+              </style>
+            </head>
+            <body>
+              <div class="pc-content">
+                <div class="pc-success-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <h1 class="pc-title">Thank You!</h1>
+                <p class="pc-desc">
+                  We've received your consultation request. Our team of experts will review your details and reach out to you within 24 hours.
+                </p>
+                <a href="${REDIRECT_URL}" class="pc-btn">
+                  Visit Our Website
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+                <p style="margin-top:24px; font-size:13px; color:#94a3b8;">Need help? Contact us at support@example.com</p>
+              </div>
+              <script>
+                // Generate Dynamic Sparkles
+                const colors = ['#ffffff', '#ffd700', '${BRAND_COLOR}', '#ffffff'];
+                for (let i = 0; i < 120; i++) {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'pc-sparkle';
+                  const size = Math.random() * 5 + 1;
+                  const color = colors[Math.floor(Math.random() * colors.length)];
+                  sparkle.style.width = size + 'px';
+                  sparkle.style.height = size + 'px';
+                  sparkle.style.left = Math.random() * 100 + '%';
+                  sparkle.style.top = Math.random() * 110 + '%';
+                  sparkle.style.background = color;
+                  sparkle.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
+                  const duration = Math.random() * 4 + 3;
+                  const delay = Math.random() * 8;
+                  sparkle.style.animation = 'pc-sparkle ' + duration + 's infinite ' + delay + 's ease-in-out, pc-float ' + (duration * 2) + 's infinite ' + delay + 's linear';
+                  document.body.appendChild(sparkle);
+                }
+              </script>
+            </body>
+          </html>
+        `;
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(thankYouHtml);
+          doc.close();
+        }
+        return;
+      }
 
       const doc = iframeRef.current.contentDocument;
       if (doc) {
@@ -204,7 +357,7 @@ const PublicLandingPage = () => {
         doc.close();
       }
     }
-  }, [pageData]);
+  }, [pageData, window.location.pathname]);
 
   if (isLoading) {
     return (
@@ -241,7 +394,7 @@ const PublicLandingPage = () => {
         ref={iframeRef}
         title={pageData?.meta?.title || "Landing Page"}
         className="w-full h-full border-none"
-        sandbox="allow-scripts allow-forms allow-same-origin"
+        sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-top-navigation-by-user-activation"
       />
     </div>
   );
