@@ -9722,3 +9722,4 @@ Require stack:
 [2026-04-14T11:38:57.965Z] [HTTP] GET /projects/69de153907cbc7342bdd7773 200 35ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
 [2026-04-14T11:39:00.058Z] [HTTP] GET /projects/69de153907cbc7342bdd7773 304 17ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
 [2026-04-14T11:39:02.058Z] [HTTP] GET /api/leads 304 29ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
+[2026-04-14T12:08:22.722Z] [HTTP] GET /api/public/page/roofing-company 304 34ms {"ip":"::ffff:127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
