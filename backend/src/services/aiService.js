@@ -121,11 +121,18 @@ const buildUserPrompt = ({
 }) => {
   return `
 # BRAND IDENTITY (TRUTH):
-- PRIMARY COLOR: ${primaryColor || '#d23f1b'}
-- SECONDARY COLOR: ${secondaryColor || '#c7d186'}
+- PRIMARY COLOR PREVIEW: ${primaryColor || '#d23f1b'}
+- SECONDARY COLOR PREVIEW: ${secondaryColor || '#c7d186'}
 - LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
 
-**CRITICAL**: Ignore any other colors mentioned in the text below. Use ONLY these HEX codes.
+**CRITICAL RULE FOR COLORS**: 
+You MUST NEVER use exact HEX codes (like bg-[#d23f1b]) or Tailwind base colors (like bg-blue-500) for brand elements.
+You MUST ALWAYS use the dynamic CSS variables: \`[var(--primary)]\` and \`[var(--secondary)]\`.
+Examples of ONLY ALLOWED syntax for brand colors:
+- \`bg-[var(--primary)]\`
+- \`text-[var(--primary)]\`
+- \`border-[var(--secondary)]\`
+- \`hover:bg-[var(--primary)]\`
 
 # PROJECT CONTEXT:
 - Name: ${businessName}

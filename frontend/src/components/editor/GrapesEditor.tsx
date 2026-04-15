@@ -11,6 +11,8 @@ import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import './grapes-custom.css';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import BlocksPanel from './BlocksPanel';
+import GlobalStylesPanel from './GlobalStylesPanel';
 
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
@@ -43,7 +45,7 @@ const GrapesEditor = () => {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [leftTab, setLeftTab] = useState<'blocks' | 'layers' | 'ai' | 'seo'>('blocks');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
   // AI Prompt
   const [aiOpen, setAiOpen] = useState(false);
@@ -85,6 +87,8 @@ const GrapesEditor = () => {
 
   // UI Panels
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const cpObserverRef = useRef<MutationObserver | null>(null);
@@ -159,20 +163,75 @@ const GrapesEditor = () => {
       // Clear then set
       editor.setComponents('');
 
-      // Ensure variables are in the global style manager
-      const rootVars = `:root { 
-        --primary: ${currentPage.primaryColor}; 
-        --secondary: ${currentPage.secondaryColor}; 
-        --accent: ${currentPage.secondaryColor};
-        --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor}, ${currentPage.secondaryColor});
-      }`;
+      // Inject :root CSS variables directly into canvas <head> as a style tag
+      // (Do NOT use editor.setStyle for root vars — it conflicts with GlobalStylesPanel)
+      const canvasDoc = editor.Canvas.getDocument();
+      if (canvasDoc) {
+        let brandingTag = canvasDoc.getElementById('branding-vars-init') as HTMLStyleElement | null;
+        if (!brandingTag) {
+          brandingTag = canvasDoc.createElement('style');
+          brandingTag.id = 'branding-vars-init';
+          canvasDoc.head.appendChild(brandingTag);
+        }
+        brandingTag.innerHTML = `:root { 
+          --primary: ${currentPage.primaryColor || '#7c3aed'}; 
+          --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
+          --accent: ${currentPage.secondaryColor || '#6366f1'};
+          --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
+        }`;
+      }
 
-      editor.setStyle(rootVars + (dbStyles || ''));
+      editor.setStyle(dbStyles || '');
 
       // Apply body/wrapper style explicitly if detected
       if (dbStyles.includes('#0f172a') || dbStyles.includes('rgba(15, 23, 42') || dbStyles.includes('var(--slate-950)')) {
         editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
       }
+
+      // Convert static hardcoded HEX colors to dynamic CSS variables
+      if (currentPage.primaryColor) {
+        let pColor = currentPage.primaryColor.trim();
+        if (pColor && pColor !== '#ffffff' && pColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(pColor, 'gi'), 'var(--primary)');
+          if (pColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(pColor.slice(0, 7), 'gi'), 'var(--primary)');
+          }
+          // Also catch variations that AI might have hallucinated without alpha or slightly off
+          // E.g. user had #b24732ab, pColor.slice(0, 7) is #b24732.
+        }
+      }
+      if (currentPage.secondaryColor) {
+        let sColor = currentPage.secondaryColor.trim();
+        if (sColor && sColor !== '#ffffff' && sColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(sColor, 'gi'), 'var(--secondary)');
+          if (sColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(sColor.slice(0, 7), 'gi'), 'var(--secondary)');
+          }
+        }
+      }
+
+      // Add a smart replacement for any common tailwind hex backgrounds if they specifically match primary
+      // Make sure Tailwind renders them via CSS Variables safely
+      dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
+      dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
+
+      // Inject Tailwind Config inside GrapesJS to support our variables directly!
+      const configHTML = `
+      <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: 'var(--primary)',
+                secondary: 'var(--secondary)',
+                accent: 'var(--accent)'
+              }
+            }
+          }
+        }
+      </script>
+      `;
+      dbContent = configHTML + dbContent;
 
       editor.setComponents(dbContent);
     } else {
@@ -209,7 +268,7 @@ const GrapesEditor = () => {
           'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap',
         ],
         scripts: [
-          'https://cdn.tailwindcss.com'
+          'https://cdn.tailwindcss.com',
         ],
       },
       deviceManager: {
@@ -245,6 +304,41 @@ const GrapesEditor = () => {
       // Set up custom color picker injection after load
       setTimeout(() => injectCustomColorPickers(editor), 500);
 
+      // ─── Add Native GrapesJS Custom Blocks ───
+      const bm = editor.BlockManager;
+
+      // 1. BASIC CATEGORY
+      bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
+      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:20px; min-height: 50px; justify-content:center;"><div style="flex:1;">1 Column</div></div>' });
+      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 2</div></div>' });
+      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 2</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 3</div></div>' });
+      bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
+      bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
+      bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
+      bm.add('custom-image', { label: 'Image', category: 'Basic', attributes: { class: 'fa fa-picture-o' }, content: { type: 'image', style: { color: 'black' }, activeOnRender: 1 } });
+      bm.add('custom-quote', { label: 'Quote', category: 'Basic', attributes: { class: 'fa fa-quote-right' }, content: '<blockquote style="border-left: 4px solid var(--primary); padding-left: 15px; margin: 20px 0; font-style: italic; color: #4b5563;">Insert your quote here.</blockquote>' });
+      bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
+
+      // 2. FORMS CATEGORY
+      bm.add('custom-form', { label: 'Form', category: 'Forms', attributes: { class: 'fa fa-wpforms' }, content: '<form style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;"><div style="margin-bottom: 15px;"><label>Email</label><input type="email" style="width: 100%; padding: 8px;" /></div><button type="submit" style="padding: 10px 20px; background: var(--primary); color: #fff; border:none; border-radius: 4px;">Submit</button></form>' });
+      bm.add('custom-input', { label: 'Input', category: 'Forms', attributes: { class: 'fa fa-keyboard-o' }, content: '<input type="text" placeholder="Type here..." style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px;" />' });
+      bm.add('custom-textarea', { label: 'Textarea', category: 'Forms', attributes: { class: 'fa fa-file-text-o' }, content: '<textarea placeholder="Type message..." style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px; min-height: 100px;"></textarea>' });
+      bm.add('custom-select', { label: 'Select', category: 'Forms', attributes: { class: 'fa fa-caret-square-o-down' }, content: '<select style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"><option>Option 1</option><option>Option 2</option></select>' });
+      bm.add('custom-check', { label: 'Checkbox', category: 'Forms', attributes: { class: 'fa fa-check-square-o' }, content: '<div style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" /><span>Checkbox Label</span></div>' });
+      bm.add('custom-radio', { label: 'Radio', category: 'Forms', attributes: { class: 'fa fa-dot-circle-o' }, content: '<div style="display:flex; align-items:center; gap: 8px;"><input type="radio" name="radioGrp" /><span>Radio Label</span></div>' });
+      bm.add('custom-button', { label: 'Button', category: 'Forms', attributes: { class: 'fa fa-hand-pointer-o' }, content: '<a href="#" style="display: inline-block; padding: 12px 24px; background-color: var(--primary); color: #ffffff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; text-align: center;">Button Text</a>' });
+      bm.add('custom-label', { label: 'Label', category: 'Forms', attributes: { class: 'fa fa-tag' }, content: '<label style="font-size: 14px; font-weight: 500; color: #374151;">Field Label</label>' });
+
+      // 3. EXTRA CATEGORY
+      bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
+      bm.add('custom-map', { label: 'Google Maps', category: 'Extra', attributes: { class: 'fa fa-map-marker' }, content: { type: 'map', style: { height: '350px' } } });
+      bm.add('custom-linkblock', { label: 'Link Block', category: 'Extra', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: '<div>Link Block Content</div>', style: { display: 'inline-block', padding: '10px' } } });
+      bm.add('custom-countdown', { label: 'Countdown', category: 'Extra', attributes: { class: 'fa fa-clock-o' }, content: '<div data-gjs-type="countdown" style="text-align: center; font-size: 2rem; font-weight: bold; padding: 20px;">00:00:00:00</div>' });
+
+      // 4. DATA CATEGORY
+      bm.add('custom-table', { label: 'Data Table', category: 'Data', attributes: { class: 'fa fa-table' }, content: '<table style="width:100%; border-collapse: collapse; margin: 20px 0;"><tr style="background:#f1f5f9;"><th style="border:1px solid #ccc; padding:10px;">Header 1</th><th style="border:1px solid #ccc; padding:10px;">Header 2</th></tr><tr><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 1</td><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 2</td></tr></table>' });
+      bm.add('custom-dynamic-fields', { label: 'Dynamic Fields', category: 'Data', attributes: { class: 'fa fa-database' }, content: '<div style="padding: 15px; border: 1px dashed var(--primary); background: rgba(124,58,237,0.05); text-align: center; font-family: monospace; color: var(--primary);">{{ DYNAMIC_CONTENT }}</div>' });
+
       // ─── Add Custom Lead Form Block ───
       editor.BlockManager.add('lead-form', {
         label: 'Lead Form',
@@ -266,7 +360,7 @@ const GrapesEditor = () => {
                 <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Phone</label>
                 <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
               </div>
-              <button type="submit" style="margin-top: 10px; padding: 14px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Send Inquiry</button>
+              <button type="submit" style="margin-top: 10px; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Send Inquiry</button>
             </form>
           </div>
         `,
@@ -278,6 +372,7 @@ const GrapesEditor = () => {
     setTimeout(() => applyContentToEditor(editor), 1000);
 
     editorRef.current = editor;
+    setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
 
     return () => {
       if (cpObserverRef.current) {
@@ -585,6 +680,114 @@ const GrapesEditor = () => {
     }
   };
 
+  // ─── AI Chat Processor ───
+  const processAiChat = () => {
+    if (chatInput.trim() && !chatLoading && editorRef.current) {
+      const val = chatInput.trim();
+      setChatInput('');
+      const selected = activeComponent || editorRef.current.getSelected();
+      if (!selected) {
+        toast.error('Please select an element first');
+        return;
+      }
+
+      setChatLoading(true);
+      const el = selected.getEl();
+      if (el) el.classList.add('ai-pulse-active');
+
+      setTimeout(() => {
+        try {
+          const cmd = val.toLowerCase();
+          let applied = false;
+
+          // 1. COLORS
+          const colors: Record<string, string> = {
+            'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e',
+            'black': '#000000', 'white': '#ffffff', 'yellow': '#fbbf24',
+            'orange': '#f97316', 'purple': '#7c3aed', 'pink': '#ec4899',
+            'grey': '#64748b', 'gray': '#64748b'
+          };
+
+          Object.keys(colors).forEach(c => {
+            if (cmd.includes(c)) {
+              const currentStyle = selected.getStyle() || {};
+              if (cmd.includes('bg') || cmd.includes('background')) {
+                selected.setStyle({ ...currentStyle, 'background-color': colors[c] });
+              } else {
+                selected.setStyle({ ...currentStyle, 'color': colors[c] });
+              }
+              applied = true;
+            }
+          });
+
+          // 2. LAYOUT & STYLE
+          const currentStyle = selected.getStyle() || {};
+          let nextStyle = { ...currentStyle };
+          let styleChanged = false;
+
+          if (cmd.includes('center')) { nextStyle['text-align'] = 'center'; styleChanged = true; }
+          if (cmd.includes('right')) { nextStyle['text-align'] = 'right'; styleChanged = true; }
+          if (cmd.includes('left')) { nextStyle['text-align'] = 'left'; styleChanged = true; }
+          if (cmd.includes('big') || cmd.includes('large')) { nextStyle['font-size'] = '42px'; styleChanged = true; }
+          if (cmd.includes('small')) { nextStyle['font-size'] = '12px'; styleChanged = true; }
+          if (cmd.includes('round')) { nextStyle['border-radius'] = '15px'; styleChanged = true; }
+          if (cmd.includes('circle')) { nextStyle['border-radius'] = '50%'; styleChanged = true; }
+          if (cmd.includes('padding')) { nextStyle['padding'] = '24px'; styleChanged = true; }
+          if (cmd.includes('margin')) { nextStyle['margin'] = '24px'; styleChanged = true; }
+
+          if (styleChanged) {
+            selected.setStyle(nextStyle);
+            applied = true;
+          }
+
+          // 3. TEXT CONTENT
+          const textKeywords = ['change text to', 'set text to', 'update text to', 'write', 'change text to'];
+          let newText = '';
+
+          for (const kw of textKeywords) {
+            if (cmd.includes(kw)) {
+              const regex = new RegExp(`${kw}\\s*(.*)`, 'i');
+              const match = val.match(regex);
+              if (match && match[1]) {
+                newText = match[1].trim();
+                break;
+              }
+            }
+          }
+
+          const isStyleOnly = cmd.includes('color') || cmd.includes('bg') || cmd.includes('background') || cmd.includes('size') || cmd.includes('padding') || cmd.includes('margin') || cmd.includes('align');
+
+          if (newText) {
+            if (selected.get('type') === 'wrapper' || selected.get('tagName')?.toLowerCase() === 'body') {
+              toast.warning('Select a specific element to edit text.');
+            } else {
+              selected.components(newText);
+              applied = true;
+            }
+          } else if (!isStyleOnly && cmd.includes('text') && val.split(' ').length > 2) {
+            const possibleContent = val.replace(/text/i, '').trim();
+            if (possibleContent && !colors[possibleContent]) {
+              selected.components(possibleContent);
+              applied = true;
+            }
+          }
+
+          if (applied) {
+            toast.success('✨ AI updated it successfully!');
+          } else {
+            toast.info('Try: "red color" or "write welcome"');
+          }
+        } catch (err) {
+          console.error('AI Error:', err);
+          toast.error('AI failed to update. Try again.');
+        } finally {
+          if (el) el.classList.remove('ai-pulse-active');
+          setChatLoading(false);
+        }
+      }, 600);
+    }
+  };
+
   if (projectLoading || pageLoading || !page || !project) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a2e]">
@@ -673,6 +876,7 @@ const GrapesEditor = () => {
             padding: '16px 0', gap: 20, borderRight: '1px solid #1e1e2d'
           }}>
             <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'seo'} onClick={() => { if (leftTab === 'seo') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('seo'); setIsSidebarOpen(true); } }}><SettingsIcon /><span>SEO</span></NavIcon>
@@ -699,20 +903,48 @@ const GrapesEditor = () => {
 
           {/* Panel Content (Dynamic) */}
           <div style={{
-            width: isSidebarOpen ? 250 : 0,
+            width: isSidebarOpen ? 280 : 0,
             opacity: isSidebarOpen ? 1 : 0,
             flexShrink: 0, background: '#12121e',
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             borderRight: isSidebarOpen ? '1px solid #1e1e2d' : 'none'
           }}>
-            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 250 }}>
+            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
               <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{leftTab}</span>
               <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#4a4a6a', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
             </div>
 
-            {/* Blocks */}
-            <div id="blocks-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'blocks' ? 'block' : 'none' }} />
+            <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <BlocksPanel
+                onAdd={(type) => {
+                  if (!editorRef.current) return;
+                  const block = editorRef.current.BlockManager.get(type);
+                  if (block) {
+                    editorRef.current.addComponents(block.get('content'));
+                  }
+                }}
+                onDragStart={(type, ev) => {
+                  if (!editorRef.current) return;
+                  const block = editorRef.current.BlockManager.get(type);
+                  if (block) {
+                    editorRef.current.BlockManager.startDrag(block, { event: ev.nativeEvent } as any);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Hidden Native Blocks Container */}
+            <div id="blocks-container" style={{ display: 'none' }} />
+
+            {/* Theme / Styles */}
+            <div style={{ flex: 1, display: leftTab === 'theme' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <GlobalStylesPanel 
+                editor={editorInstance} 
+                initialPrimary={page?.primaryColor}
+                initialSecondary={page?.secondaryColor}
+              />
+            </div>
 
             {/* Layers */}
             <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
@@ -753,113 +985,7 @@ const GrapesEditor = () => {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        if (chatInput.trim() && !chatLoading && editorRef.current) {
-                          const val = chatInput.trim();
-                          setChatInput('');
-                          const selected = activeComponent || editorRef.current.getSelected();
-                          if (!selected) {
-                            toast.error('Please select an element first');
-                            return;
-                          }
-
-                          setChatLoading(true);
-                          const el = selected.getEl();
-                          if (el) el.classList.add('ai-pulse-active');
-
-                          setTimeout(() => {
-                            try {
-                              const cmd = val.toLowerCase();
-                              let applied = false;
-
-                              // 1. COLORS
-                              const colors: Record<string, string> = {
-                                'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e', 
-                                'black': '#000000', 'white': '#ffffff', 'yellow': '#fbbf24',
-                                'orange': '#f97316', 'purple': '#7c3aed', 'pink': '#ec4899',
-                                'grey': '#64748b', 'gray': '#64748b'
-                              };
-
-                              Object.keys(colors).forEach(c => {
-                                if (cmd.includes(c)) {
-                                  const currentStyle = selected.getStyle() || {};
-                                  if (cmd.includes('bg') || cmd.includes('background')) {
-                                    selected.setStyle({ ...currentStyle, 'background-color': colors[c] });
-                                  } else {
-                                    selected.setStyle({ ...currentStyle, 'color': colors[c] });
-                                  }
-                                  applied = true;
-                                }
-                              });
-
-                              // 2. LAYOUT & STYLE
-                              const currentStyle = selected.getStyle() || {};
-                              let nextStyle = { ...currentStyle };
-                              let styleChanged = false;
-
-                              if (cmd.includes('center')) { nextStyle['text-align'] = 'center'; styleChanged = true; }
-                              if (cmd.includes('right')) { nextStyle['text-align'] = 'right'; styleChanged = true; }
-                              if (cmd.includes('left')) { nextStyle['text-align'] = 'left'; styleChanged = true; }
-                              if (cmd.includes('big') || cmd.includes('large')) { nextStyle['font-size'] = '42px'; styleChanged = true; }
-                              if (cmd.includes('small')) { nextStyle['font-size'] = '12px'; styleChanged = true; }
-                              if (cmd.includes('round')) { nextStyle['border-radius'] = '15px'; styleChanged = true; }
-                              if (cmd.includes('circle')) { nextStyle['border-radius'] = '50%'; styleChanged = true; }
-                              if (cmd.includes('padding')) { nextStyle['padding'] = '24px'; styleChanged = true; }
-                              if (cmd.includes('margin')) { nextStyle['margin'] = '24px'; styleChanged = true; }
-
-                              if (styleChanged) {
-                                selected.setStyle(nextStyle);
-                                applied = true;
-                              }
-
-                              // 3. TEXT CONTENT (Only if explicitly requested)
-                              const textKeywords = ['change text to', 'set text to', 'update text to', 'write', 'change text to'];
-                              let newText = '';
-                              
-                              // Check for explicit "write" or "change text to"
-                              for (const kw of textKeywords) {
-                                if (cmd.includes(kw)) {
-                                  const regex = new RegExp(`${kw}\\s*(.*)`, 'i');
-                                  const match = val.match(regex);
-                                  if (match && match[1]) {
-                                    newText = match[1].trim();
-                                    break;
-                                  }
-                                }
-                              }
-
-                              // ONLY overwrite content if we have a clear NEW text and it's not just a style command
-                              const isStyleOnly = cmd.includes('color') || cmd.includes('bg') || cmd.includes('background') || cmd.includes('size') || cmd.includes('padding') || cmd.includes('margin') || cmd.includes('align');
-
-                              if (newText) {
-                                if (selected.get('type') === 'wrapper' || selected.get('tagName')?.toLowerCase() === 'body') {
-                                  toast.warning('Select a specific element to edit text.');
-                                } else {
-                                  selected.components(newText);
-                                  applied = true;
-                                }
-                              } else if (!isStyleOnly && cmd.includes('text') && val.split(' ').length > 2) {
-                                  // This handles cases like "text Hello World" without keywords
-                                  const possibleContent = val.replace(/text/i, '').trim();
-                                  if (possibleContent && !colors[possibleContent]) {
-                                      selected.components(possibleContent);
-                                      applied = true;
-                                  }
-                              }
-
-                              if (applied) {
-                                toast.success('✨ AI updated it successfully!');
-                              } else {
-                                toast.info('Try: "red color" or "write welcome"');
-                              }
-                            } catch (err) {
-                              console.error('AI Error:', err);
-                              toast.error('AI failed to update. Try again.');
-                            } finally {
-                              if (el) el.classList.remove('ai-pulse-active');
-                              setChatLoading(false);
-                            }
-                          }, 600);
-                        }
+                        processAiChat();
                       }
                     }}
                     placeholder="Ask AI anything..."
@@ -868,7 +994,7 @@ const GrapesEditor = () => {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ color: '#4a4a6a', fontSize: 10 }}>Press Enter</span>
                     <button
-                      onClick={() => { }}
+                      onClick={processAiChat}
                       style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                     >Send <SparklesIcon /></button>
                   </div>
@@ -1439,6 +1565,7 @@ const GridIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const LayersIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>;
 const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
 
 /* ── Build full HTML ── */
 const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '') => `<!DOCTYPE html>
