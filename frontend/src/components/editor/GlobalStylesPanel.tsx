@@ -6,6 +6,7 @@ interface GlobalStylesPanelProps {
   editor: Editor | null;
   initialPrimary?: string;
   initialSecondary?: string;
+  onBrandingColorsChange?: (colors: { primary: string; secondary: string }) => void;
 }
 
 interface StyleConfig {
@@ -56,13 +57,20 @@ const INIT_STYLES: StyleConfig = {
     bg: { label: 'Background', type: 'color', varName: '--btn-bg', value: '#fa0000' },
     text: { label: 'Color', type: 'color', varName: '--btn-text', value: '#ffffff' },
     radius: { label: 'Radius', type: 'number', varName: '--btn-radius', value: '8', unit: 'px' },
+  },
+  Forms: {
+    bg: { label: 'Form Background', type: 'color', varName: '--form-bg', value: '#ffffff' },
+    inputBg: { label: 'Input Background', type: 'color', varName: '--input-bg', value: '#ffffff' },
+    inputText: { label: 'Input Text Color', type: 'color', varName: '--input-text', value: '#0f172a' },
+    inputBorder: { label: 'Input Border', type: 'color', varName: '--input-border', value: '#cbd5e1' },
+    labelColor: { label: 'Label Color', type: 'color', varName: '--label-color', value: '#475569' },
   }
 };
 
-const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary }: GlobalStylesPanelProps) => {
+const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandingColorsChange }: GlobalStylesPanelProps) => {
   const [styles, setStyles] = useState<StyleConfig>(INIT_STYLES);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    Colors: true, Body: true, Heading: false, Subheading: false, Buttons: false
+    Colors: true, Body: true, Heading: false, Subheading: false, Buttons: false, Forms: false
   });
 
   // Sync initial colors from the project settings
@@ -111,6 +119,10 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary }: GlobalS
     css += 'h1 { font-size: var(--heading-size); }\n';
     css += 'h2, h3 { font-size: var(--subheading-size); color: var(--subheading-color); line-height: var(--subheading-line-height); font-family: var(--subheading-font); }\n';
     css += '.primary-button, button[type="submit"], .btn { background-color: var(--btn-bg) !important; color: var(--btn-text) !important; border-radius: var(--btn-radius) !important; }\n';
+    css += 'form, .lead-form-container { background-color: var(--form-bg) !important; }\n';
+    css += 'input, textarea, select { color: var(--input-text) !important; background-color: var(--input-bg) !important; border: 1px solid var(--input-border) !important; }\n';
+    css += 'label { color: var(--label-color) !important; }\n';
+    css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     return css;
   };
@@ -153,6 +165,14 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary }: GlobalS
       // Silently ignore if CSS parsing fails
     }
   }, [styles, editor]);
+
+  useEffect(() => {
+    if (!onBrandingColorsChange) return;
+    onBrandingColorsChange({
+      primary: styles.Colors.primary.value,
+      secondary: styles.Colors.secondary.value,
+    });
+  }, [styles.Colors.primary.value, styles.Colors.secondary.value, onBrandingColorsChange]);
 
   return (
     <div className="w-full flex-shrink-0 flex flex-col bg-[#12121e] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>

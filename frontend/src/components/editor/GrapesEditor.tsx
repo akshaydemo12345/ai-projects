@@ -8,6 +8,7 @@ import 'grapesjs/dist/css/grapes.min.css';
 import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
+import JSZip from 'jszip';
 import './grapes-custom.css';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -70,6 +71,8 @@ const GrapesEditor = () => {
   const [seoOpen, setSeoOpen] = useState(false);
   const [pageTitle, setPageTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
+  const [themePrimary, setThemePrimary] = useState('#7c3aed');
+  const [themeSecondary, setThemeSecondary] = useState('#6366f1');
   // Custom Color Picker
   const [colorPicker, setColorPicker] = useState<{
     visible: boolean;
@@ -98,6 +101,8 @@ const GrapesEditor = () => {
     if (page) {
       setPageTitle(page.metaTitle || page.name || 'Landing Page');
       setMetaDesc(page.metaDescription || '');
+      setThemePrimary(page.primaryColor || '#7c3aed');
+      setThemeSecondary(page.secondaryColor || '#6366f1');
     }
   }, [page]);
 
@@ -178,7 +183,15 @@ const GrapesEditor = () => {
           --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
           --accent: ${currentPage.secondaryColor || '#6366f1'};
           --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
-        }`;
+        }
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
+        `;
       }
 
       editor.setStyle(dbStyles || '');
@@ -300,6 +313,81 @@ const GrapesEditor = () => {
 
     editor.on('load', () => {
       console.log('📤 GrapesJS Loaded - applying content');
+
+      // ─── Register Form Traits (Automatic mapping to HTML tags) ───
+      editor.DomComponents.addType('form', {
+        isComponent: el => el.tagName === 'FORM',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'title', label: 'Title' },
+              { type: 'text', name: 'action', label: 'Action URL' },
+              { type: 'select', name: 'method', label: 'Method', options: [{ id: 'POST', name: 'POST' }, { id: 'GET', name: 'GET' }] },
+              { type: 'text', name: 'success-msg', label: 'Success Message' },
+              { type: 'text', name: 'redirect-url', label: 'Redirect URL' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('input', {
+        isComponent: el => el.tagName === 'INPUT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'select', name: 'type', label: 'Type', options: [
+                { id: 'text', name: 'Text' },
+                { id: 'email', name: 'Email' },
+                { id: 'number', name: 'Number' },
+                { id: 'tel', name: 'Phone' },
+                { id: 'password', name: 'Password' },
+              ]},
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('textarea', {
+        isComponent: el => el.tagName === 'TEXTAREA',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('select', {
+        isComponent: el => el.tagName === 'SELECT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              {
+                type: 'button',
+                name: 'add-option',
+                text: 'Add Option',
+                command: (ed: any, trait: any) => {
+                  const model = trait.target;
+                  model.components().add({ type: 'option', content: 'New Option', attributes: { value: 'new' } });
+                }
+              }
+            ],
+          },
+        },
+      });
+
       applyContentToEditor(editor);
       // Set up custom color picker injection after load
       setTimeout(() => injectCustomColorPickers(editor), 500);
@@ -320,14 +408,119 @@ const GrapesEditor = () => {
       bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
 
       // 2. FORMS CATEGORY
-      bm.add('custom-form', { label: 'Form', category: 'Forms', attributes: { class: 'fa fa-wpforms' }, content: '<form style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;"><div style="margin-bottom: 15px;"><label>Email</label><input type="email" style="width: 100%; padding: 8px;" /></div><button type="submit" style="padding: 10px 20px; background: var(--primary); color: #fff; border:none; border-radius: 4px;">Submit</button></form>' });
-      bm.add('custom-input', { label: 'Input', category: 'Forms', attributes: { class: 'fa fa-keyboard-o' }, content: '<input type="text" placeholder="Type here..." style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px;" />' });
-      bm.add('custom-textarea', { label: 'Textarea', category: 'Forms', attributes: { class: 'fa fa-file-text-o' }, content: '<textarea placeholder="Type message..." style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px; min-height: 100px;"></textarea>' });
-      bm.add('custom-select', { label: 'Select', category: 'Forms', attributes: { class: 'fa fa-caret-square-o-down' }, content: '<select style="padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"><option>Option 1</option><option>Option 2</option></select>' });
-      bm.add('custom-check', { label: 'Checkbox', category: 'Forms', attributes: { class: 'fa fa-check-square-o' }, content: '<div style="display:flex; align-items:center; gap: 8px;"><input type="checkbox" /><span>Checkbox Label</span></div>' });
-      bm.add('custom-radio', { label: 'Radio', category: 'Forms', attributes: { class: 'fa fa-dot-circle-o' }, content: '<div style="display:flex; align-items:center; gap: 8px;"><input type="radio" name="radioGrp" /><span>Radio Label</span></div>' });
-      bm.add('custom-button', { label: 'Button', category: 'Forms', attributes: { class: 'fa fa-hand-pointer-o' }, content: '<a href="#" style="display: inline-block; padding: 12px 24px; background-color: var(--primary); color: #ffffff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; text-align: center;">Button Text</a>' });
-      bm.add('custom-label', { label: 'Label', category: 'Forms', attributes: { class: 'fa fa-tag' }, content: '<label style="font-size: 14px; font-weight: 500; color: #374151;">Field Label</label>' });
+      bm.add('custom-form', { 
+        label: 'Form', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-wpforms' }, 
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '20px', border: '1px solid var(--input-border)', borderRadius: '8px', minHeight: '100px', backgroundColor: 'var(--form-bg)' },
+          components: [
+            {
+              type: 'label',
+              content: 'Email',
+              editable: true,
+              style: { color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+            },
+            {
+              type: 'input',
+              attributes: { type: 'email', placeholder: 'your@email.com' },
+              style: { width: '100%', padding: '8px', color: 'var(--input-text)', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '4px', marginBottom: '15px' }
+            },
+            {
+              type: 'button',
+              content: 'Submit',
+              attributes: { type: 'submit' },
+              style: { padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }
+            }
+          ]
+        }
+      });
+
+      bm.add('custom-input', { 
+        label: 'Input', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-keyboard-o' }, 
+        content: {
+          type: 'input',
+          attributes: { placeholder: 'Type here...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-textarea', { 
+        label: 'Textarea', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-file-text-o' }, 
+        content: {
+          type: 'textarea',
+          attributes: { placeholder: 'Type message...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', minHeight: '100px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-select', { 
+        label: 'Select', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-caret-square-o-down' }, 
+        content: {
+          type: 'select',
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
+          components: [
+            { type: 'option', content: 'Option 1', attributes: { value: '1' } },
+            { type: 'option', content: 'Option 2', attributes: { value: '2' } }
+          ]
+        }
+      });
+
+      bm.add('custom-check', { 
+        label: 'Checkbox', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-check-square-o' }, 
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'checkbox', style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Checkbox Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-radio', { 
+        label: 'Radio', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-dot-circle-o' }, 
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'radio', attributes: { name: 'radioGrp' }, style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Radio Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-button', { 
+        label: 'Button', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-hand-pointer-o' }, 
+        content: {
+          type: 'button',
+          content: 'Button Text',
+          style: { display: 'inline-block', padding: '12px 24px', backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }
+        }
+      });
+
+      bm.add('custom-label', { 
+        label: 'Label', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-tag' }, 
+        content: {
+          type: 'label',
+          content: 'Field Label',
+          style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+        }
+      });
 
       // 3. EXTRA CATEGORY
       bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
@@ -343,28 +536,53 @@ const GrapesEditor = () => {
       editor.BlockManager.add('lead-form', {
         label: 'Lead Form',
         category: 'Forms',
-        content: `
-          <div class="lead-form-container" style="padding: 40px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; font-family: sans-serif;">
-            <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #1e293b; text-align: center;">Get Started Now</h3>
-            <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b; text-align: center;">Fill out your details and we will get back to you.</p>
-            <form id="lead-form" style="display: flex; flexDirection: column; gap: 16px;">
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Name</label>
-                <input type="text" name="name" required placeholder="Your Name" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Email</label>
-                <input type="email" name="email" required placeholder="email@example.com" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Phone</label>
-                <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <button type="submit" style="margin-top: 10px; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Send Inquiry</button>
-            </form>
-          </div>
-        `,
-        attributes: { class: 'fa fa-paper-plane' }
+        attributes: { class: 'fa fa-paper-plane' },
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '40px', background: 'var(--form-bg)', border: '1px solid var(--input-border)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto' },
+          components: [
+            { type: 'text', tagName: 'h3', content: 'Get Started Now', editable: true, style: { margin: '0 0 10px 0', fontSize: '24px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' } },
+            { type: 'text', tagName: 'p', content: 'Fill out your details and we will get back to you.', editable: true, style: { margin: '0 0 20px 0', fontSize: '14px', color: '#64748b', textAlign: 'center' } },
+            {
+              tagName: 'div',
+              droppable: true,
+              style: { display: 'flex', flexDirection: 'column', gap: '16px' },
+              components: [
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Name', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'text', name: 'name', required: 'true', placeholder: 'Your Name' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Email', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'email', name: 'email', required: 'true', placeholder: 'email@example.com' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Phone', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'tel', name: 'phone', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  type: 'button',
+                  content: 'Send Inquiry',
+                  attributes: { type: 'submit' },
+                  style: { marginTop: '10px', padding: '14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }
+                }
+              ]
+            }
+          ]
+        }
       });
     });
 
@@ -521,6 +739,13 @@ const GrapesEditor = () => {
           --accent: ${page.accentColor || page.secondaryColor || '#6366f1'};
           --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
         }
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
       `;
     }
   }, [page, page?.primaryColor, page?.secondaryColor]);
@@ -544,6 +769,9 @@ const GrapesEditor = () => {
       styles: css,
       metaTitle: pageTitle,
       metaDescription: metaDesc,
+      primaryColor: themePrimary,
+      secondaryColor: themeSecondary,
+      accentColor: themeSecondary,
     });
 
     toast.success('Page saved to cloud!');
@@ -564,8 +792,10 @@ const GrapesEditor = () => {
   // ─── Code ───
   const openCode = () => {
     if (!editorRef.current) return;
-    setHtmlCode(editorRef.current.getHtml());
-    setCssCode(editorRef.current.getCss() ?? '');
+    const rawHtml = editorRef.current.getHtml();
+    const rawCss = editorRef.current.getCss() ?? '';
+    setHtmlCode(formatHtmlPretty(rawHtml));
+    setCssCode(formatCssPretty(rawCss));
     setCodeView(true);
   };
 
@@ -578,13 +808,31 @@ const GrapesEditor = () => {
     setCodeView(false);
   };
 
-  const downloadHtml = () => {
-    const blob = new Blob([buildFullHtml(htmlCode, cssCode, pageTitle, metaDesc)], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'landing-page.html';
-    a.click();
-    toast.success('HTML downloaded!');
+  const downloadHtml = async () => {
+    const formattedHtml = formatHtmlPretty(htmlCode);
+    const formattedCss = formatCssPretty(cssCode);
+    const cssFileName = 'landing-page.css';
+
+    const finalHtml = buildFullHtml(formattedHtml, formattedCss, pageTitle, metaDesc, cssFileName);
+    const zip = new JSZip();
+    const folder = zip.folder('landing-page');
+    if (!folder) {
+      toast.error('Failed to create download package');
+      return;
+    }
+
+    folder.file('landing-page.html', finalHtml);
+    folder.file(cssFileName, formattedCss);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const zipAnchor = document.createElement('a');
+    zipAnchor.href = zipUrl;
+    zipAnchor.download = 'landing-page-files.zip';
+    zipAnchor.click();
+    URL.revokeObjectURL(zipUrl);
+
+    toast.success('HTML + CSS folder downloaded!');
   };
 
   // ─── Publish ───
@@ -603,6 +851,9 @@ const GrapesEditor = () => {
         status: 'published',
         metaTitle: pageTitle,
         metaDescription: metaDesc,
+        primaryColor: themePrimary,
+        secondaryColor: themeSecondary,
+        accentColor: themeSecondary,
       });
 
       setIsPublishing(false);
@@ -943,6 +1194,10 @@ const GrapesEditor = () => {
                 editor={editorInstance} 
                 initialPrimary={page?.primaryColor}
                 initialSecondary={page?.secondaryColor}
+                onBrandingColorsChange={({ primary, secondary }) => {
+                  setThemePrimary(primary);
+                  setThemeSecondary(secondary);
+                }}
               />
             </div>
 
@@ -1568,17 +1823,79 @@ const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="n
 const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
 
 /* ── Build full HTML ── */
-const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '') => `<!DOCTYPE html>
+const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${title}</title>
   ${desc ? `<meta name="description" content="${desc}"/>` : ''}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}${css}</style>
+  <link rel="stylesheet" href="./${externalCssFile}"/>
+  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}</style>
 </head>
 <body>${html}</body>
 </html>`;
+
+const formatCssPretty = (css: string): string => {
+  return css
+    .replace(/\s+/g, ' ')
+    .replace(/\s*{\s*/g, ' {\n  ')
+    .replace(/;\s*/g, ';\n  ')
+    .replace(/\s*}\s*/g, '\n}\n\n')
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+};
+
+const formatHtmlPretty = (html: string): string => {
+  if (!html.trim()) return '';
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const formatNode = (node: Node, indentLevel: number): string => {
+    const indent = '  '.repeat(indentLevel);
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = (node.textContent || '').trim();
+      return text ? `${indent}${text}\n` : '';
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+    const attrs = Array.from(el.attributes)
+      .map((attr) => `${attr.name}="${attr.value}"`)
+      .join(' ');
+    const openTag = attrs ? `<${tag} ${attrs}>` : `<${tag}>`;
+    const closeTag = `</${tag}>`;
+    const children = Array.from(el.childNodes);
+
+    if (!children.length) {
+      return `${indent}${openTag}${closeTag}\n`;
+    }
+
+    const childrenTextOnly = children.every(
+      (child) => child.nodeType === Node.TEXT_NODE && (child.textContent || '').trim()
+    );
+
+    if (childrenTextOnly) {
+      const inlineText = children.map((child) => (child.textContent || '').trim()).join(' ');
+      return `${indent}${openTag}${inlineText}${closeTag}\n`;
+    }
+
+    let result = `${indent}${openTag}\n`;
+    children.forEach((child) => {
+      result += formatNode(child, indentLevel + 1);
+    });
+    result += `${indent}${closeTag}\n`;
+    return result;
+  };
+
+  return Array.from(container.childNodes)
+    .map((node) => formatNode(node, 0))
+    .join('')
+    .trim();
+};
 
 export default GrapesEditor;

@@ -6,8 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { pagesApi, aiApi } from "@/services/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 
 type Step = "methods" | "create-ai" | "analyze" | "crafting";
@@ -69,74 +67,96 @@ const CreatePageFlow = () => {
   // Crafting progress
   const [progress, setProgress] = useState(0);
 
-  const startCrafting = () => {
+  const startCrafting = async () => {
     setStep("crafting");
     setProgress(0);
-
-    // Generate the landing page HTML + CSS
-    const { html, css } = generateLandingPageHtml({
-      businessName,
-      industry,
-      pageType: selectedPageType,
-      businessDesc,
-      targetAudience,
-      ctaText,
-      aiPrompt,
-      primaryColor,
-      secondaryColor,
-      accentColor,
-      websiteUrl,
-      logoUrl,
-    });
-
-    // Store in localStorage for the editor to pick up
-    localStorage.setItem('grapes-initial-html', html);
-    localStorage.setItem('grapes-initial-css', css);
-
+    let done = false;
+    let hasError = false;
+    let progressValue = 0;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        if (done) {
           clearInterval(interval);
-          setTimeout(() => navigate("/editor"), 500);
           return 100;
         }
-        return prev + 2;
+        progressValue = Math.min(92, prev + 3);
+        return progressValue;
       });
-    }, 80);
+    }, 120);
+
+    try {
+      const res = await aiApi.generate({
+        businessName,
+        industry,
+        pageType: selectedPageType === "landing" ? "lead generation" : "lead generation",
+        businessDescription: businessDesc,
+        targetAudience,
+        ctaText,
+        aiPrompt,
+        primaryColor,
+        secondaryColor,
+        logoUrl,
+      });
+
+      const aiContent = res?.data?.content;
+      if (aiContent?.fullHtml) {
+        localStorage.setItem("grapes-initial-html", aiContent.fullHtml);
+        localStorage.setItem("grapes-initial-css", aiContent.fullCss || "");
+      } else {
+        throw new Error("AI response missing HTML.");
+      }
+    } catch {
+      hasError = true;
+    } finally {
+      done = true;
+      if (hasError) {
+        setProgress(0);
+        setStep("create-ai");
+        window.alert("Claude generation failed. Please check API key, credits, or try again.");
+      } else {
+        setProgress(100);
+        setTimeout(() => navigate("/editor"), 350);
+      }
+    }
   };
 
-  const startAnalyze = () => {
+  const startAnalyze = async () => {
     setStep("crafting");
     setProgress(0);
-
-    // Generate page from URL (we use the URL as context)
-    const { html: urlHtml, css: urlCss } = generateLandingPageHtml({
-      businessName: websiteUrl.replace(/https?:\/\//, '').replace(/\.\w+.*/, ''),
-      industry: 'Other',
-      pageType: 'landing',
-      businessDesc: `Professional services from ${websiteUrl}`,
-      targetAudience: 'business owners',
-      ctaText: 'Get Free Quote',
-      aiPrompt: '',
-      primaryColor,
-      secondaryColor,
-      accentColor,
-      websiteUrl,
-    });
-
-    localStorage.setItem('grapes-initial-html', urlHtml);
-    localStorage.setItem('grapes-initial-css', urlCss);
-
+    let done = false;
+    let hasError = false;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        if (done) {
           clearInterval(interval);
-          setTimeout(() => navigate("/editor"), 500);
           return 100;
         }
-        return prev + 2;
+        return Math.min(92, prev + 3);
       });
-    }, 80);
+    }, 120);
+
+    try {
+      const res = await aiApi.analyze(websiteUrl);
+      const aiContent = res?.data?.content;
+      if (aiContent?.fullHtml) {
+        localStorage.setItem("grapes-initial-html", aiContent.fullHtml);
+        localStorage.setItem("grapes-initial-css", aiContent.fullCss || "");
+      } else {
+        throw new Error("AI response missing HTML.");
+      }
+    } catch {
+      hasError = true;
+    } finally {
+      done = true;
+      if (hasError) {
+        setProgress(0);
+        setStep("analyze");
+        window.alert("Claude analyze failed. Please check API key, credits, or try again.");
+      } else {
+        setProgress(100);
+        setTimeout(() => navigate("/editor"), 350);
+      }
+    }
   };
 
   return (

@@ -156,12 +156,16 @@
   color: #a78bfa !important;
 }
 
-#styles-container .gjs-sm-properties {
+#styles-container .gjs-sm-sector .gjs-sm-properties {
   padding: 12px 18px 18px !important;
   background: transparent !important;
-  display: flex !important;
+  display: none; /* Hidden by default */
   flex-wrap: wrap !important;
   gap: 12px !important;
+}
+
+#styles-container .gjs-sm-sector.gjs-sm-open .gjs-sm-properties {
+  display: flex;
 }
 
 #styles-container .gjs-sm-property {

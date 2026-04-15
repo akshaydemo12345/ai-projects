@@ -44,6 +44,28 @@ exports.generateContent = async (req, res, next) => {
     }
 
     const input = parsed.data;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ status: 'fail', message: 'User not found' });
+    }
+    if (user.credits <= 0) {
+      return res.status(402).json({ status: 'fail', message: 'Insufficient credits' });
+    }
+
+    // No pageId: generate synchronously so frontend can consume real AI HTML/CSS immediately.
+    if (!input.pageId) {
+      const aiContent = await generateLandingPageContent(input);
+      user.credits = Math.max(0, user.credits - 1);
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          content: aiContent,
+          creditsRemaining: user.credits,
+        },
+      });
+    }
 
     // 4. Update page status to 'generating' early if pageId provided
     if (input.pageId) {
@@ -53,7 +75,7 @@ exports.generateContent = async (req, res, next) => {
       );
     }
 
-    // 5. Respond immediately (Background process begins)
+    // 5. Respond immediately for page-linked generation (background process begins)
     res.status(202).json({
       status: 'success',
       message: 'AI generation started in the background.',

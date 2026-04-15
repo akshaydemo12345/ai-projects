@@ -235,7 +235,7 @@ export const aiApi = {
   analyze: async (url: string) => {
     return apiFetch('/ai/analyze-website', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ websiteUrl: url }),
     });
   },
   improve: async (sectionData: any) => {
