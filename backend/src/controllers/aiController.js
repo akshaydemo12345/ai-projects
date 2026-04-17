@@ -4,7 +4,9 @@ const { z } = require('zod');
 const { generateLandingPageContent } = require('../services/aiService');
 const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
+const { scrapeWebsiteStructure } = require('../services/structuredScrapeService');
 const Page = require('../models/Page');
+const Project = require('../models/Project');
 const User = require('../models/User');
 
 // ─── Zod Validation Schema ─────────────────────────────────────────────────────
@@ -33,6 +35,10 @@ const analyzeWebsiteSchema = z.object({
   pageId: z.string().optional(),
 });
 
+const structuredScrapeSchema = z.object({
+  websiteUrl: z.string().url('Invalid website URL required'),
+});
+
 // ─── POST /ai/generate ────────────────────────────────────────────────────────
 exports.generateContent = async (req, res, next) => {
   try {
@@ -55,9 +61,28 @@ exports.generateContent = async (req, res, next) => {
       return res.status(402).json({ status: 'fail', message: 'Insufficient credits' });
     }
 
+    // Fetch project scraped images if pageId is provided
+    let scrapedImages = input.scrapedImages || [];
+    if (input.pageId) {
+      try {
+        const page = await Page.findById(input.pageId);
+        if (page && page.projectId) {
+          const project = await Project.findById(page.projectId);
+          if (project && project.scrapedImages && project.scrapedImages.length > 0) {
+            scrapedImages = project.scrapedImages;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching project scraped images:', err.message);
+      }
+    }
+
     // No pageId: generate synchronously so frontend can consume real AI HTML/CSS immediately.
     if (!input.pageId) {
-      const aiContent = await generateLandingPageContent(input);
+      const aiContent = await generateLandingPageContent({
+        ...input,
+        scrapedImages
+      });
       user.credits = Math.max(0, user.credits - 1);
       await user.save({ validateBeforeSave: false });
 
@@ -101,10 +126,11 @@ exports.generateContent = async (req, res, next) => {
           }
         }
 
-        // B. Call AI service
+        // B. Call AI service with scraped images
         const aiContent = await generateLandingPageContent({
           ...input,
           figmaData,
+          scrapedImages
         });
 
     // D. Deduct 1 credit on success
@@ -270,6 +296,38 @@ exports.extractProject = async (req, res, next) => {
   } catch (err) {
     console.error('Extraction error:', err.message);
     console.error('Error stack:', err.stack);
+    next(err);
+  }
+};
+
+/**
+ * @route   POST /ai/structured-scrape
+ * @desc    Scrape website and return structured data for landing page generation
+ * @access  Private
+ */
+exports.structuredScrape = async (req, res, next) => {
+  try {
+    const parsed = structuredScrapeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Validation failed',
+        errors: parsed.error.flatten().fieldErrors,
+      });
+    }
+
+    const { websiteUrl } = parsed.data;
+
+    console.log('Starting structured scrape for URL:', websiteUrl);
+    const result = await scrapeWebsiteStructure(websiteUrl);
+    console.log('Structured scrape completed successfully');
+
+    res.status(200).json({
+      status: 'success',
+      data: result
+    });
+  } catch (err) {
+    console.error('Structured scrape error:', err.message);
     next(err);
   }
 };
