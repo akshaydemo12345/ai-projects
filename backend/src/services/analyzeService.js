@@ -616,9 +616,9 @@ const extractProjectData = async (url) => {
       });
 
       // Convert RGB to hex and filter neutrals
-      colors = Array.from(colorSet)
+      colors = Array.from(colorSet || [])
         .map(rgbToHex)
-        .filter(c => c.startsWith('#'))
+        .filter(c => c && c.startsWith('#'))
         .sort((a, b) => getSaturation(b) - getSaturation(a)); // Sort by saturation descending
 
       const vibrantColors = colors.filter(c => !isNeutralColor(c));
@@ -741,7 +741,7 @@ const extractProjectData = async (url) => {
     // ============ STEP 4: ENHANCED KEYWORD EXTRACTION ============
     let keywords = [];
     try {
-      keywords = $('meta[name="keywords"]').attr('content')?.split(',').map(k => k.trim()).filter(k => k) || [];
+      keywords = $('meta[name="keywords"]').attr('content')?.split(',')?.map(k => k.trim()).filter(k => k) || [];
 
       // FALLBACK: Use keywords if no services found
       if (services.size < 3 && keywords.length > 0) {
@@ -841,6 +841,11 @@ const extractProjectData = async (url) => {
 
     const bulkMedia = extractBulkMedia($, normalizedUrl);
     const structuredData = extractStructuredData($);
+    
+    // Add form fields to scrapedData if not already present
+    if (structuredData.forms && structuredData.forms.length > 0) {
+      structuredData.forms = structuredData.forms;
+    }
 
     return {
       websiteUrl: normalizedUrl,
@@ -855,7 +860,6 @@ const extractProjectData = async (url) => {
       keywords,
       industry: detectedIndustry,
       themeSystem, // Complete theme system for design
-      scrapedImages: bulkImages, // Top-level scraped images for easy access
       scrapedData: {
         images: bulkMedia.images,
         videos: bulkMedia.videos,
@@ -1265,10 +1269,10 @@ const extractColorPalette = (data, channels) => {
   }
 
   // Sort by frequency
-  const sortedColors = Object.entries(colorCounts)
+  const sortedColors = Object.entries(colorCounts || {})
     .sort((a, b) => b[1] - a[1])
     .map(([colorKey]) => {
-      const [r, g, b] = colorKey.split(',').map(Number);
+      const [r, g, b] = (colorKey || '').split(',').map(Number);
       return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     });
 
@@ -1372,21 +1376,14 @@ const extractBulkMedia = ($, baseUrl) => {
     videos: []
   };
 
-<<<<<<< HEAD
-  // 1. Extract Images
-=======
-const extractBulkImages = ($, baseUrl) => {
   const images = [];
   const seenUrls = new Set();
 
-  // Unwanted image patterns - these should be filtered out
+  // Unwanted image patterns - these should be filtered out (less strict)
   const unwantedPatterns = [
-    /icon/i, /sprite/i, /tracking/i, /pixel/i, /beacon/i, /analytics/i,
-    /1x1/i, /spacer/i, /dot\.gif/i, /clear\.gif/i, /placeholder/i,
-    /favicon/i, /apple-touch-icon/i, /loading/i, /spinner/i,
-    /arrow/i, /bullet/i, /check/i, /close/i, /menu/i, /hamburger/i,
-    /social.*icon/i, /facebook.*icon/i, /twitter.*icon/i, /linkedin.*icon/i,
-    /bg\.png/i, /background.*small/i, /pattern/i, /texture/i
+    /tracking/i, /pixel/i, /beacon/i, /analytics/i,
+    /1x1/i, /spacer/i, /dot\.gif/i, /clear\.gif/i,
+    /favicon/i, /apple-touch-icon/i
   ];
 
   // Relevant image patterns - prioritize these
@@ -1397,7 +1394,6 @@ const extractBulkImages = ($, baseUrl) => {
     /screenshot/i, /dashboard/i, /interface/i, /app/i, /software/i
   ];
 
->>>>>>> 58f8dc16610b4a30b80186049492da49a6cd1dbf
   $('img').each((i, el) => {
     const src = $(el).attr('src');
     const alt = $(el).attr('alt')?.trim() || '';
@@ -1444,12 +1440,19 @@ const extractBulkImages = ($, baseUrl) => {
         else if (metaText.includes('product') || metaText.includes('item') || metaText.includes('service')) type = 'product';
         else if (metaText.includes('gallery') || metaText.includes('portfolio')) type = 'gallery';
 
-        media.images.push({ url: fullUrl, alt, type, context: title || cls });
+        images.push({ url: fullUrl, alt, type, context: title || cls });
       } catch (e) { }
-    }
-    // Prefer images with better alt text
-    return (b.alt?.length || 0) - (a.alt?.length || 0);
+    } catch (e) { }
   });
+
+  // Sort images by relevance and add to media
+  images.sort((a, b) => {
+    const aRelevance = relevantPatterns.some(p => p.test(a.context || '')) ? 1 : 0;
+    const bRelevance = relevantPatterns.some(p => p.test(b.context || '')) ? 1 : 0;
+    return bRelevance - aRelevance || (b.alt?.length || 0) - (a.alt?.length || 0);
+  });
+
+  media.images = images;
 
   // 2. Extract Videos (iframes and video tags)
   $('video, iframe[src*="youtube.com"], iframe[src*="vimeo.com"], iframe[src*="dailymotion.com"]').each((i, el) => {
@@ -1480,6 +1483,42 @@ const extractStructuredData = ($) => {
     ctas: [],
     forms: []
   };
+
+  // 0. Form Fields Extraction (detailed)
+  $('form').each((i, formEl) => {
+    const $form = $(formEl);
+    const fields = [];
+    
+    $form.find('input, select, textarea').each((j, fieldEl) => {
+      const $field = $(fieldEl);
+      const type = $field.attr('type') || $field.prop('tagName').toLowerCase();
+      const name = $field.attr('name') || '';
+      const placeholder = $field.attr('placeholder') || '';
+      const label = $field.closest('label').text().trim() || 
+                   $field.prev('label').text().trim() || 
+                   $field.parent().find('label').first().text().trim() || '';
+      const required = $field.attr('required') !== undefined;
+      
+      if (type !== 'hidden' && type !== 'submit' && type !== 'button') {
+        fields.push({
+          type,
+          name: name || `field_${fields.length}`,
+          label: label || placeholder,
+          placeholder,
+          required
+        });
+      }
+    });
+    
+    if (fields.length > 0) {
+      data.forms.push({
+        id: $form.attr('id') || `form_${i}`,
+        action: $form.attr('action') || '',
+        method: $form.attr('method') || 'POST',
+        fields
+      });
+    }
+  });
 
   // 1. CTA Detection
   $('a, button').each((i, el) => {

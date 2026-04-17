@@ -23,6 +23,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const images = extractImages($, baseUrl);
     const videos = extractVideos($, baseUrl);
     const textContent = extractTextContent($);
+    const formFields = extractFormFields($);
 
     // STEP 3: DETECT STRUCTURE
     const structuredContent = detectStructure($, images, textContent);
@@ -36,6 +37,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     // OUTPUT FORMAT
     return {
       website: websiteUrl,
+      formFields: formFields,
       assets: [
         ...images.map(img => ({
           type: 'image',
@@ -185,6 +187,51 @@ const detectImageSection = ($, el, alt, parentClass) => {
   }
 
   return 'unknown';
+};
+
+/**
+ * Extract form fields from website
+ */
+const extractFormFields = ($) => {
+  const forms = [];
+  
+  $('form').each((i, formEl) => {
+    const $form = $(formEl);
+    const fields = [];
+    
+    // Extract all input fields
+    $form.find('input, select, textarea').each((j, fieldEl) => {
+      const $field = $(fieldEl);
+      const type = $field.attr('type') || $field.prop('tagName').toLowerCase();
+      const name = $field.attr('name') || '';
+      const placeholder = $field.attr('placeholder') || '';
+      const label = $field.closest('label').text().trim() || 
+                   $field.prev('label').text().trim() || 
+                   $field.parent().find('label').first().text().trim() || '';
+      const required = $field.attr('required') !== undefined;
+      
+      // Skip hidden fields and submit buttons
+      if (type === 'hidden' || type === 'submit' || type === 'button') return;
+      
+      fields.push({
+        type,
+        name: name || `field_${fields.length}`,
+        label: label || placeholder,
+        placeholder,
+        required
+      });
+    });
+    
+    if (fields.length > 0) {
+      forms.push({
+        action: $form.attr('action') || '',
+        method: $form.attr('method') || 'POST',
+        fields
+      });
+    }
+  });
+  
+  return forms;
 };
 
 /**

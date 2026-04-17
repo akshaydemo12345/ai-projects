@@ -89,16 +89,17 @@ CRITICAL RULES:
 const buildUserPrompt = ({
   businessName,
   industry,
-  businessDescription,
+  pageType,
   targetAudience,
+  businessDescription,
   ctaText,
+  tone,
   aiPrompt,
+  logoUrl,
   primaryColor,
   secondaryColor,
-  logoUrl,
   services = [],
   keywords = [],
-  scrapedImages = [],
   noIndex = false,
   noFollow = false,
   scrapedData = {},
@@ -109,26 +110,26 @@ const buildUserPrompt = ({
   const trustSignals = businessDescription ? (businessDescription.match(/(\d+,?\d*\+?|\d+%\+?)/g) || []) : [];
   const topServices = services.slice(0, 6); // Focus on top 6 services
 
+  // Extract scrapedImages from scrapedData
+  const scrapedImages = scrapedData?.images || [];
+
   // Prepare scraped images for the prompt
   let imageInstructions = '';
   if (scrapedImages && scrapedImages.length > 0) {
-    // Filter for high-relevance images only (banners, products, screenshots)
+    // Filter for relevant images by type (banners, products, screenshots, environment)
     const relevantImages = scrapedImages.filter(img =>
-      img.relevance === 'high' &&
-      (img.type === 'banner' || img.type === 'product' || img.type === 'screenshot' || img.type === 'environment')
+      img.type === 'banner' || img.type === 'product' || img.type === 'screenshot' || img.type === 'environment' || img.type === 'general'
     ).slice(0, 8); // Use up to 8 relevant images
 
     if (relevantImages.length > 0) {
       imageInstructions = `
 # SCRAPED IMAGES FROM WEBSITE (USE THESE INSTEAD OF PLACEHOLDERS):
-You have access to ${relevantImages.length} relevant images scraped from the website. Use them strategically:
+You have access to ${relevantImages?.length || 0} relevant images scraped from the website. Use them strategically:
 
-${relevantImages.map((img, idx) => `
-${idx + 1}. URL: ${img.url}
+${relevantImages && Array.isArray(relevantImages) ? relevantImages.map((img, idx) => `-${idx + 1}. URL: ${img.url}
    - Type: ${img.type}
-   - Alt: ${img.alt || 'No description'}
-   - Context: ${img.context || ''}
-`).join('')}
+   - Section: ${img.section || 'unknown'}
+   - Relevance: ${img.relevance || 'medium'}`).join('\n') : 'No relevant images available'}
 
 **IMAGE USAGE RULES:**
 - Use banner-type images for Hero sections or major visual areas
@@ -171,6 +172,7 @@ ${imageInstructions}
 2. Structure: 
    - Hero: Catchy headline incorporating "${businessName}". Subtitle should expand on the value prop.
    - Services: Detail blocks for ${topServices.slice(0, 4).join(', ')}.
+   - Lead Form: ${(scrapedData && Array.isArray(scrapedData.forms) && scrapedData.forms.length > 0) ? `Form includes these fields: ${scrapedData.forms.filter(f => f.fields && Array.isArray(f.fields)).map(f => f.fields.map(field => `${field.label || field.name} (${field.type})`).join(', ')).join('; ')}. Use these exact field names: ${scrapedData.forms.filter(f => f.fields && Array.isArray(f.fields)).map(f => f.fields.map(field => field.name).join(', ')).join(', ')}` : 'Standard lead capture form (name, email, phone, message)'}
    - Features: Explain HOW you help "${targetAudience}".
    - Social Proof: Use the industry context to create realistic testimonial names and high-authority trust badges.
 3. Call to Action: Use "${ctaText || 'Get Started'}" as the primary command.
@@ -178,14 +180,19 @@ ${imageInstructions}
 # DIVERSITY + STRUCTURE INSTRUCTIONS:
 - Treat this request as a fresh creative direction focused on FAST, high-converting delivery.
 - You MUST provide a minimum of 5 visual sections if no specific list is provided.
+- **ABSOLUTE MANDATE**: A lead capture form MUST be included in every generated page. This is not optional.
 - **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections, you MUST treat this as a strict requirement. 
 - DO NOT OMIT anything requested.
+- **ELABORATION REQUIREMENT**: Each section must have substantial, meaningful content. Do not use placeholder text or generic filler. Write detailed descriptions, benefits, and explanations for each service, feature, and value proposition.
 
-# LEAD FORM INSTRUCTION:
+# LEAD FORM INSTRUCTION (MANDATORY):
+- You MUST ALWAYS include a lead capture form on EVERY landing page. NO EXCEPTIONS.
 - You MUST prioritize using the 'REAL FORM STRUCTURES' detected from the website for your lead capture section.
-- If the USER'S VISION or the SCRAPED DATA mentions a 'Trial', 'Sign up', or 'Contact' form, build it as a high-conversion, premium component.
-- Display it either as a prominent Hero-section form OR a sticky/floating CTA that opens a modal form.
+- If REAL FORM STRUCTURES are provided, use the EXACT field names (name attributes) from those structures in your generated form.
+- Display the form either as a prominent Hero-section form OR a dedicated Contact section with a sticky/floating CTA that opens a modal form.
 - Apply semantic HTML and premium styling with [var(--primary)] buttons.
+- IMPORTANT: Use the same field names as detected (e.g., if the website uses 'first_name', use 'first_name' instead of 'name'). This ensures form submission works correctly with the lead tracking script.
+- The form MUST be visible and accessible to users. Do not hide it or make it difficult to find.
 
 ${imageInstructions ? '# IMAGE INSTRUCTION: Use the scraped images provided above. Only fallback to picsum.photos if you need additional images beyond what was scraped.' : '# IMMUTABLE OVERRIDE (CRITICAL): You MUST STILL ONLY USE \'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800\' directly to prevent 404 errors. No exceptions. Do not use Unsplash, Pexels, or any other external API.'}
 
@@ -267,7 +274,7 @@ const processResult = (raw, logoUrl) => {
 
   let css = '';
   const styleMatches = clean.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
-  if (styleMatches) {
+  if (styleMatches && Array.isArray(styleMatches)) {
     css = styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n');
   }
 
@@ -305,6 +312,9 @@ const generateLandingPageContent = async (input) => {
   // 2. Build the Persona-based System Prompt
   const systemPrompt = input.templateHtml ? buildTemplateSystemPrompt() : buildSystemPrompt();
 
+  // Extract scrapedImages from scrapedData if available
+  const scrapedImages = input.scrapedData?.images || [];
+
   // 3. Build a detailed user prompt that combines identity and goal
   let userPrompt = `
 ${buildUserPrompt(input)}
@@ -314,7 +324,7 @@ Generate this page FAST. Do not over-elaborate.
 
 # MANDATORY LAYOUT SECTIONS:
 1. Hero Section with dynamic branding and a clear Call to Action.
-2. Lead Generation Form (Name, Email, Phone, Message) - MUST BE VISIBLE.
+2. Lead Generation Form (Name, Email, Phone, Message) - MUST BE VISIBLE AND FUNCTIONAL. This is NON-NEGOTIABLE.
 3. Industry Context (Benefits and Features).
 4. Social Proof / Reviews.
 5. Simple Footer.
