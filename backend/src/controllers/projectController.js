@@ -17,9 +17,13 @@ exports.createProject = async (req, res, next) => {
       userId: req.user._id,
       apiToken,
       logoUrl: req.body.logoUrl,
+      services: req.body.services || [],
+      keywords: req.body.keywords || [],
       industry: req.body.category || req.body.industry,
-      primaryColor: req.body.primaryColor,
+      primaryColor: req.body.primaryColor || req.body.themeColor,
       secondaryColor: req.body.secondaryColor,
+      colors: req.body.colors || [],
+      themeSystem: req.body.themeSystem || {},
       websiteUrl: req.body.websiteUrl || req.body.url,
     });
 
