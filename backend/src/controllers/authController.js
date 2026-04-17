@@ -33,15 +33,30 @@ exports.signup = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
 
     const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.comparePassword(password))) {
+    console.log('User found:', !!user);
+    
+    if (!user) {
+      console.log('User not found');
+      return next(new AppError('Invalid email or password', 401));
+    }
+    
+    console.log('Comparing password...');
+    const passwordMatch = await user.comparePassword(password);
+    console.log('Password match:', passwordMatch);
+    
+    if (!passwordMatch) {
       return next(new AppError('Invalid email or password', 401));
     }
 
     logger.info('User logged in', { userId: user._id });
+    console.log('Sending token...');
     sendToken(user, 200, res);
   } catch (err) {
+    console.error('Login error:', err.message);
+    console.error('Error stack:', err.stack);
     next(err);
   }
 };

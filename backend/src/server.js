@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const passport = require('passport');
 const session = require('express-session');
 require('./config/passport');
+const config = require('./config'); // Import centralized config
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -85,11 +86,8 @@ app.use('/', publicRoutes);
 app.use(errorMiddleware);
 
 // DATABASE CONNECTION
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-landing-page';
-
 mongoose
-  .connect(MONGO_URI)
+  .connect(config.database.uri)
   .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     logger.info('✅ MongoDB Connected Successfully');
@@ -104,11 +102,13 @@ mongoose
       // Index likely already doesn't exist
     }
 
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      logger.info(`🚀 Server running on port ${PORT}`);
+    const server = app.listen(config.port, config.host, () => {
+      console.log(`🚀 Server running on port ${config.port}`);
+      logger.info(`🚀 Server running on port ${config.port}`);
+      console.log(`🌍 Environment: ${config.env}`);
+      console.log(`🔗 API Base URL: ${config.api.baseUrl}`);
     });
-    server.timeout = 120000; // Increase server timeout to match AI generation time
+    server.timeout = 300000; // Increase server timeout to 5 minutes for AI generation
   })
   .catch((err) => {
     logger.error('❌ MongoDB Connection Error:', err);
