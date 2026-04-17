@@ -178,12 +178,24 @@ const GrapesEditor = () => {
           brandingTag.id = 'branding-vars-init';
           canvasDoc.head.appendChild(brandingTag);
         }
-        brandingTag.innerHTML = `:root { 
+        brandingTag.innerHTML = `
+        :root { 
           --primary: ${currentPage.primaryColor || '#7c3aed'}; 
           --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
           --accent: ${currentPage.secondaryColor || '#6366f1'};
           --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
         }
+        /* Aggressive Button & Badge Branding */
+        .btn-primary, .button-primary, button[type="submit"], button.btn-primary, .bg-primary,
+        .form-box button, .footer-action button, .cta-band button, .badge {
+          background-color: var(--primary) !important;
+          background: var(--primary) !important;
+          color: white !important;
+          border-color: var(--primary) !important;
+        }
+        .text-primary { color: var(--primary) !important; }
+        .border-primary { border-color: var(--primary) !important; }
+        
         input, textarea, select {
           color: #0f172a !important;
           background-color: #ffffff !important;
@@ -192,6 +204,13 @@ const GrapesEditor = () => {
           color: #94a3b8 !important;
         }
         `;
+        // Force all template buttons to be submit types so they trigger our tracker
+        const allButtons = canvasDoc.querySelectorAll('form button');
+        allButtons.forEach(btn => {
+          if (btn.getAttribute('type') === 'button') {
+            btn.setAttribute('type', 'submit');
+          }
+        });
       }
 
       editor.setStyle(dbStyles || '');
@@ -247,6 +266,22 @@ const GrapesEditor = () => {
       dbContent = configHTML + dbContent;
 
       editor.setComponents(dbContent);
+
+      // Inject logo if available (AFTER components are set, with a small delay for safety)
+      setTimeout(() => {
+        if (currentPage.logoUrl) {
+          const wrapper = editor.DomComponents.getWrapper();
+          const logoComp = wrapper.find('#page-logo')[0];
+          if (logoComp) {
+            logoComp.set('attributes', { ...logoComp.get('attributes'), src: currentPage.logoUrl });
+          } else {
+            const logoByClass = wrapper.find('.logo-img')[0];
+            if (logoByClass) {
+              logoByClass.set('attributes', { ...logoByClass.get('attributes'), src: currentPage.logoUrl });
+            }
+          }
+        }
+      }, 100);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
       editor.setComponents('<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">' +
@@ -763,10 +798,15 @@ const GrapesEditor = () => {
     const html = editorRef.current.getHtml();
     const css = editorRef.current.getCss() || '';
 
+    // Capture internal global styles injected by GlobalStylesPanel
+    const canvasDoc = editorRef.current.Canvas.getDocument();
+    const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+    const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+
     updatePageMutation.mutate({
       content: html,
-      // @ts-ignore
-      styles: css,
+      styles: globalCss + '\n' + css,
       metaTitle: pageTitle,
       metaDescription: metaDesc,
       primaryColor: themePrimary,

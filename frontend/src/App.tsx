@@ -10,6 +10,7 @@ import PublishedPage from "./pages/PublishedPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import CreateProjectFlow from "./pages/CreateProjectFlow";
+import CreatePagePage from "./pages/CreatePagePage";
 import LeadsPage from "./pages/LeadsPage";
 import SettingsPage from "./pages/SettingsPage";
 import PlansPage from "./pages/PlansPage";
@@ -41,6 +42,7 @@ const App = () => (
                 <Route index element={<ProjectsPage />} />
                 <Route path="projects/new" element={<CreateProjectFlow />} />
                 <Route path="projects/:id" element={<ProjectDetailPage />} />
+                <Route path="projects/:id/create-page" element={<CreatePagePage />} />
                 <Route path="published" element={<PublishedPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
