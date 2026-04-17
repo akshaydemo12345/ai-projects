@@ -55,7 +55,9 @@ LENGTH + COMPLETENESS:
 - NEVER use placeholders. Keep HTML semantic and clean.
 
 PLANNING:
-- Budget roughly 300 tokens per section to ensure you reach the Footer.
+- Budget strictly 350-400 tokens per section. 
+- You MUST reach the Footer before hitting the 2000 token limit. 
+- If tokens are running low, sacrifice detail to ensure the Footer is generated.
 
 OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
 `;
@@ -97,6 +99,7 @@ const buildUserPrompt = ({
   keywords = [],
   noIndex = false,
   noFollow = false,
+  scrapedData = {},
 }) => {
   const robots = [noIndex ? 'noindex' : '', noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
 
@@ -109,6 +112,10 @@ const buildUserPrompt = ({
 - PRIMARY COLOR PREVIEW: ${primaryColor || '#d23f1b'}
 - SECONDARY COLOR PREVIEW: ${secondaryColor || '#c7d186'}
 - LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
+- REAL IMAGES FROM WEBSITE: ${scrapedData?.images?.length > 0 ? JSON.stringify(scrapedData.images.slice(0, 15).map(img => ({ ...img, url: img.url.length > 300 ? img.url.substring(0, 100) + '...' : img.url }))) : 'None provided'}
+- REAL VIDEOS FROM WEBSITE: ${scrapedData?.videos?.length > 0 ? JSON.stringify(scrapedData.videos.slice(0, 5)) : 'None provided'}
+- REAL CTA TEXTS FROM WEBSITE: ${scrapedData?.ctas?.length > 0 ? JSON.stringify(scrapedData.ctas) : 'None provided'}
+- REAL FORM STRUCTURES FROM WEBSITE: ${scrapedData?.forms?.length > 0 ? JSON.stringify(scrapedData.forms) : 'None provided'}
 
 **CRITICAL RULE FOR COLORS**: 
 You MUST NEVER use exact HEX codes (like bg-[#d23f1b]) or Tailwind base colors (like bg-blue-500) for brand elements.
@@ -138,11 +145,15 @@ Examples of ONLY ALLOWED syntax for brand colors:
 - DO NOT OMIT anything requested.
 
 # LEAD FORM INSTRUCTION:
-- If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
+- You MUST prioritize using the 'REAL FORM STRUCTURES' detected from the website for your lead capture section.
+- If the USER'S VISION or the SCRAPED DATA mentions a 'Trial', 'Sign up', or 'Contact' form, build it as a high-conversion, premium component.
+- Display it either as a prominent Hero-section form OR a sticky/floating CTA that opens a modal form.
 - Apply semantic HTML and premium styling with [var(--primary)] buttons.
 
 # IMMUTABLE OVERRIDE (CRITICAL):
-- You MUST STILL ONLY USE 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800' directly to prevent 404 errors. No exceptions.
+- PRIORITIZE using the REAL IMAGES and VIDEOS provided in the BRAND IDENTITY section above. 
+- Map them intelligently: Hero background should use banner-type images. Feature sections should use product or service images.
+- If no suitable real image is found for a specific section, ONLY then use 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800'.
 - Do not use Unsplash, Pexels, or any other external API.
 
 # FINAL TASK: 
@@ -183,7 +194,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 2000, // Reduced for cost-saving testing
+        max_tokens: 4096, // Increased to support full long-form landing pages
         temperature: 0.7,
         system: finalSystemPrompt,
         messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],

@@ -77,6 +77,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  scrapedData: {
+    type: Object,
+    default: {},
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken

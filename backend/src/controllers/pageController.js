@@ -323,7 +323,9 @@ exports.createPage = async (req, res, next) => {
         // Pass the template HTML to the AI if it's a template enrichment task
         templateHtml: isTemplateWithPrompt ? page.content : null,
         // Pass figma image if available
-        figmaImage: figmaImage || null
+        figmaImage: figmaImage || null,
+        // Pass scraped data from project (contains images/videos from website)
+        scrapedData: project.scrapedData || {}
       };
 
       const generated = await AIService.generateLandingPageContent(aiInput);
