@@ -142,6 +142,38 @@ const pageSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  thankYouConfig: {
+    layout: {
+      type: String,
+      enum: ['roofing', 'real_estate', 'healthcare', 'legal', 'education', 'home_services', 'finance', 'default'],
+      default: 'default'
+    },
+    content: {
+      heading: { type: String, default: 'Thank You!' },
+      subheading: { type: String, default: 'We have received your request and will contact you soon.' },
+      ctaText: { type: String, default: 'Return to Website' },
+      ctaUrl: { type: String, default: '#' },
+      phoneNumber: String,
+      offerText: String,
+      customMessage: String
+    },
+    tracking: {
+      ga4MeasurementId: String,
+      ga4EventName: { type: String, default: 'lead_submission' },
+      googleAdsConversionId: String,
+      googleAdsLabel: String,
+      metaPixelId: String,
+      metaEventName: { type: String, default: 'Lead' },
+      customTracking: [String]
+    },
+    branding: {
+      logoUrl: String,
+      primaryColor: String,
+      secondaryColor: String
+    },
+    customTemplate: String,
+    customCss: String
+  },
   isDeleted: {
     type: Boolean,
     default: false,

@@ -51,8 +51,8 @@ OUTPUT FORMATTING:
 
 LENGTH + COMPLETENESS:
 - Generate a full, high-impact landing page. 
-- Aim for a total output around 6,000 to 8,000 characters for maximum speed.
-- You MUST finish within a 3000 token limit.
+- Aim for a total output around 3,000 to 4,500 characters for ultra-fast and ultra-cheap testing.
+- You MUST finish within a 2000 token limit. DO NOT EXCEED.
 - NEVER use placeholders. Keep HTML semantic and clean.
 
 PLANNING:
@@ -218,7 +218,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 5000,
+        max_tokens: 2000, // Reduced for cost-saving testing
         temperature: 0.7,
         system: finalSystemPrompt,
         messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],

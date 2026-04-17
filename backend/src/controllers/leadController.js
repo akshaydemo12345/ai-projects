@@ -61,6 +61,21 @@ exports.createLead = async (req, res) => {
       await Project.findByIdAndUpdate(finalProjectId, { $inc: { leadCount: 1 } });
     }
 
+    // Set cookie with landing page context for Thank You page
+    const lpContext = JSON.stringify({
+      pageSlug: pageSlug,
+      pageId: pageId || null,
+      projectId: finalProjectId || null,
+      timestamp: Date.now()
+    });
+
+    res.cookie('lp_context', lpContext, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 300000 // 5 minutes
+    });
+
     return res.status(201).json({
       status: 'success',
       message: 'Lead saved successfully',

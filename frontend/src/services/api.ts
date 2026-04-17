@@ -359,3 +359,85 @@ export const leadsApi = {
     });
   },
 };
+
+// --- Thank You API ---
+
+export interface ThankYouLayout {
+  id: string;
+  name: string;
+  description: string;
+  preview: string;
+  industry: string;
+  defaultContent: {
+    heading: string;
+    subheading: string;
+    ctaText: string;
+    ctaUrl: string;
+    phoneNumber?: string;
+    offerText?: string;
+    customMessage?: string;
+  };
+  theme: {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+  };
+  features: string[];
+}
+
+export interface ThankYouConfig {
+  layout: string;
+  content: {
+    heading?: string;
+    subheading?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    phoneNumber?: string;
+    offerText?: string;
+    customMessage?: string;
+  };
+  tracking: {
+    ga4MeasurementId?: string;
+    ga4EventName?: string;
+    googleAdsConversionId?: string;
+    googleAdsLabel?: string;
+    metaPixelId?: string;
+    metaEventName?: string;
+    customTracking?: string[];
+  };
+  branding: {
+    logoUrl?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
+  customTemplate?: string;
+  customCss?: string;
+}
+
+export const thankYouApi = {
+  getLayouts: async (): Promise<ThankYouLayout[]> => {
+    const res = await apiFetch('/api/thank-you/layouts');
+    return res.data.layouts;
+  },
+
+  getConfig: async (pageId: string): Promise<{ config: ThankYouConfig; pageId: string; industry?: string }> => {
+    const res = await apiFetch(`/api/thank-you/config/${pageId}`);
+    return res.data;
+  },
+
+  updateConfig: async (pageId: string, config: Partial<ThankYouConfig>): Promise<ThankYouConfig> => {
+    const res = await apiFetch(`/api/thank-you/config/${pageId}`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+    return res.data.config;
+  },
+
+  preview: async (config: { layout: string; content?: any; branding?: any }): Promise<string> => {
+    const res = await apiFetch('/api/thank-you/preview', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+    return res; // Returns HTML directly
+  },
+};

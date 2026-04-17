@@ -1,0 +1,180 @@
+{
+  "layouts": [
+    {
+      "id": "roofing",
+      "name": "Roofing",
+      "description": "Professional roofing services with inspection focus",
+      "preview": "/layouts/roofing/preview.png",
+      "industry": "roofing",
+      "defaultContent": {
+        "heading": "Thank You for Contacting Us!",
+        "subheading": "Our roofing experts will review your request and contact you within 24 hours to schedule your free inspection.",
+        "ctaText": "Schedule Free Inspection",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "Get 10% off your first roof inspection",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#f59e0b",
+        "secondaryColor": "#d97706",
+        "accentColor": "#fbbf24"
+      },
+      "features": ["phone-cta", "offer-badge", "trust-badges"]
+    },
+    {
+      "id": "real_estate",
+      "name": "Real Estate",
+      "description": "Property listings and real estate services",
+      "preview": "/layouts/real_estate/preview.png",
+      "industry": "real_estate",
+      "defaultContent": {
+        "heading": "Thank You for Your Interest!",
+        "subheading": "Our real estate team will contact you shortly to help you find your perfect property.",
+        "ctaText": "View Available Properties",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "Free property valuation included",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#3b82f6",
+        "secondaryColor": "#2563eb",
+        "accentColor": "#60a5fa"
+      },
+      "features": ["property-gallery", "cta-button", "contact-form"]
+    },
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "description": "Medical and healthcare services",
+      "preview": "/layouts/healthcare/preview.png",
+      "industry": "healthcare",
+      "defaultContent": {
+        "heading": "Thank You for Reaching Out!",
+        "subheading": "Our healthcare team will review your information and contact you within 24 hours to schedule your appointment.",
+        "ctaText": "Book Your Appointment",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "New patient special: 20% off first visit",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#10b981",
+        "secondaryColor": "#059669",
+        "accentColor": "#34d399"
+      },
+      "features": ["appointment-cta", "trust-badges", "phone-cta"]
+    },
+    {
+      "id": "legal",
+      "name": "Legal",
+      "description": "Law firm and legal services",
+      "preview": "/layouts/legal/preview.png",
+      "industry": "legal",
+      "defaultContent": {
+        "heading": "Thank You for Contacting Our Firm",
+        "subheading": "Our legal team will review your case and contact you within 24 hours for a free consultation.",
+        "ctaText": "Schedule Free Consultation",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "Free initial consultation",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#6366f1",
+        "secondaryColor": "#4f46e5",
+        "accentColor": "#818cf8"
+      },
+      "features": ["consultation-cta", "trust-badges", "phone-cta"]
+    },
+    {
+      "id": "education",
+      "name": "Education",
+      "description": "Educational institutions and courses",
+      "preview": "/layouts/education/preview.png",
+      "industry": "education",
+      "defaultContent": {
+        "heading": "Thank You for Your Interest!",
+        "subheading": "Our admissions team will contact you shortly with more information about our programs.",
+        "ctaText": "Explore Our Programs",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "Apply now and get $500 scholarship",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#8b5cf6",
+        "secondaryColor": "#7c3aed",
+        "accentColor": "#a78bfa"
+      },
+      "features": ["program-cta", "scholarship-badge", "phone-cta"]
+    },
+    {
+      "id": "home_services",
+      "name": "Home Services",
+      "description": "General home services and maintenance",
+      "preview": "/layouts/home_services/preview.png",
+      "industry": "home_services",
+      "defaultContent": {
+        "heading": "Thank You for Choosing Us!",
+        "subheading": "Our service team will contact you within 24 hours to schedule your appointment.",
+        "ctaText": "Book Your Service",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "First service at 15% off",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#ec4899",
+        "secondaryColor": "#db2777",
+        "accentColor": "#f472b6"
+      },
+      "features": ["service-cta", "offer-badge", "phone-cta"]
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "description": "Financial services and consulting",
+      "preview": "/layouts/finance/preview.png",
+      "industry": "finance",
+      "defaultContent": {
+        "heading": "Thank You for Your Inquiry!",
+        "subheading": "Our financial advisors will contact you within 24 hours to discuss your needs.",
+        "ctaText": "Schedule Free Consultation",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "Free financial assessment included",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#14b8a6",
+        "secondaryColor": "#0d9488",
+        "accentColor": "#2dd4bf"
+      },
+      "features": ["consultation-cta", "trust-badges", "phone-cta"]
+    },
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Universal layout for any industry",
+      "preview": "/layouts/default/preview.png",
+      "industry": "general",
+      "defaultContent": {
+        "heading": "Thank You!",
+        "subheading": "We have received your request and will contact you soon.",
+        "ctaText": "Return to Website",
+        "ctaUrl": "#",
+        "phoneNumber": "",
+        "offerText": "",
+        "customMessage": ""
+      },
+      "theme": {
+        "primaryColor": "#7c3aed",
+        "secondaryColor": "#6366f1",
+        "accentColor": "#8b5cf6"
+      },
+      "features": ["cta-button", "phone-cta"]
+    }
+  ]
+}
