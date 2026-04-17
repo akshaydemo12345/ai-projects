@@ -254,9 +254,8 @@ const AIPromptModal = ({ open, onClose, onApply }: AIPromptModalProps) => {
                   <button
                     key={p.id}
                     onClick={() => { setProvider(p.id); setShowProviderDrop(false); }}
-                    className={`flex w-full items-center gap-2 px-3 py-2.5 text-xs transition-colors ${
-                      provider === p.id ? "text-violet-400 bg-violet-500/10" : "text-white/70 hover:bg-white/5 hover:text-white"
-                    }`}
+                    className={`flex w-full items-center gap-2 px-3 py-2.5 text-xs transition-colors ${provider === p.id ? "text-violet-400 bg-violet-500/10" : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}
                   >
                     {p.label}
                     {p.id === "simulate" && (

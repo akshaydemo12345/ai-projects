@@ -36,21 +36,28 @@ CRITICAL DESIGN RULES:
 - TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
 - GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
 
-REQUIRED COVERAGE (ORDER IS FLEXIBLE - BE CREATIVE):
-1. Hero/banner section with logo only (no nav links)
-2. Trusted Brands (logo cloud or partner strip)
-3. Core Solutions/Services (Grid, List, Timeline, or Tabs)
-4. Social Proof (testimonials, case study strip, or impact stats)
-5. Deep detail section (process, feature breakdown, comparison, or use-cases)
-6. At least one high-intent CTA zone
-7. Footer with useful links/contact
+REQUIRED COVERAGE (MANDATORY LONG-FORM EXPERIENCE):
+1. You MUST generate a minimum of 8 visual sections by default.
+2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar, 3. Why Choose Us...") you MUST include EVERY SINGLE ONE of them in the exact order requested. 
+3. DO NOT MERGE sections. DO NOT SKIP sections. If the user asks for 15 sections, you generate 15 distinct, high-fidelity sections.
+4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
+
+OUTPUT FORMATTING:
+- YOU MUST OUTPUT EVERYTHING IN ONE SINGLE \`\`\`html BLOCK.
+- BE EXTREMELY CONCISE TO MINIMIZE COST. Every section should be roughly 600-800 characters of high-impact code. 
+- Avoid any redundant Tailwind classes or overly wordy descriptions.
+- DO NOT split the page into multiple code blocks.
 
 LENGTH + COMPLETENESS:
-- Generate a full landing page, not a single hero block.
-- Include at least 6 major visual sections.
-- If output looks short or single-section, expand it with missing sections before finalizing.
+- Generate a full, deep-scroll landing page with ALL requested sections.
+- For 15 sections, aim for a total output around 12,000 to 15,000 characters. 
+- You MUST finish all sections within a 5000 token limit.
+- NEVER use placeholders. Keep HTML semantic and clean.
 
-OUTPUT: Full complete HTML enclosed in \`\`\`html block. No explanation.
+PLANNING:
+- Budget roughly 300 tokens per section to ensure you reach the Footer.
+
+OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
 `;
 };
 
@@ -93,16 +100,24 @@ Examples of ONLY ALLOWED syntax for brand colors:
 # USER'S VISION (CUSTOM PROMPT):
 "${aiPrompt || 'Create a world-class, modern, high-conversion SaaS landing page.'}"
 
-# IMMUTABLE OVERRIDE (CRITICAL):
-If the user's custom prompt below requests "Unsplash images" or any other specific API, IGNORE IT. You MUST STILL ONLY USE 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800' directly to prevent 404 errors. No exceptions.
-
-# DIVERSITY INSTRUCTIONS:
+# DIVERSITY + STRUCTURE INSTRUCTIONS:
 - Treat this request as a fresh creative direction.
-- Do not reuse previously seen block ordering conventions.
-- Choose a non-generic section transition style and a distinct hero composition.
+- You MUST provide a minimum of 8 visual sections if no specific list is provided.
+- **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections (like Hero, FAQ, Pricing, etc.), you MUST treat this as a strict requirement. 
+- You MUST generate EVERY SINGLE SECTION mentioned in the user's prompt. 
+- DO NOT OMIT anything. If the user asks for 15 sections, you produce 15 high-quality sections.
+- Every section must have a unique layout and high-fidelity copy.
+
+# LEAD FORM INSTRUCTION:
+- If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
+- Apply semantic HTML and premium styling with [var(--primary)] buttons.
+
+# IMMUTABLE OVERRIDE (CRITICAL):
+- You MUST STILL ONLY USE 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800' directly to prevent 404 errors. No exceptions.
+- Do not use Unsplash, Pexels, or any other external API.
 
 # FINAL TASK: 
-Build a pixel-perfect, premium landing page using the custom prompt's structure but with the high-fidelity designer persona and my branding assets.
+Build a pixel-perfect, premium landing page using the user's custom prompt's structure as a STRICT BLUEPRINT. Ensure EVERY requested section is built with unique, premium design and deep content. LONG-FORM ONLY.
 `;
 };
 
@@ -133,12 +148,16 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       logger.info(`[AI] Attempting Claude model: ${model}`);
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 4048,
-        temperature: Number(process.env.ANTHROPIC_TEMPERATURE || 0.9),
+        max_tokens: 5000,
+        temperature: 0.7,
         system: finalSystemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       });
-      return processResult(response.content[0].text, logoUrl);
+
+      const rawText = response.content[0].text;
+      logger.info(`[AI] Raw response received. Length: ${rawText.length} characters.`);
+
+      return processResult(rawText, logoUrl);
     } catch (err) {
       lastError = err;
       logger.error(`[AI] Claude model failed (${model}): ${err.message}`);
@@ -176,10 +195,27 @@ const processResult = (raw, logoUrl) => {
 };
 
 const cleanHTML = (raw) => {
-  const codeBlockMatch = raw.match(/```html\s*([\s\S]*?)```/i) || raw.match(/```\s*([\s\S]*?)```/i);
-  if (codeBlockMatch) return codeBlockMatch[1].trim();
+  // Enhanced regex to find all ```html ... ``` blocks.
+  // The closing ``` is now optional (?) to handle truncated responses.
+  const regex = /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
+  let matches = [];
+  let match;
+  while ((match = regex.exec(raw)) !== null) {
+    if (match[1]) {
+      let content = match[1].trim();
+      // If content ends with backticks that weren't captured by the non-greedy match, clean them
+      content = content.replace(/```$/g, '').trim();
+      matches.push(content);
+    }
+  }
+
+  // If we found any blocks, join them.
+  if (matches.length > 0) return matches.join('\n');
+
+  // fallback logic if no code blocks are found at all
   const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
   if (htmlMatch) return htmlMatch[1].trim();
+
   return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
 };
 
