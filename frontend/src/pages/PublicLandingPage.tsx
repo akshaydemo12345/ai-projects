@@ -227,117 +227,108 @@ const PublicLandingPage = () => {
               <meta charset="utf-8">
               <title>Thank You | ${pageData.name}</title>
               <meta name="viewport" content="width=device-width, initial-scale=1">
+              <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"><\/script>
               <style>
-                @keyframes pc-sparkle {
-                  0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); }
-                  50% { transform: scale(1.2); opacity: 1; filter: blur(1px); }
-                }
-                @keyframes pc-float {
-                  0% { transform: translate(0, 0); }
-                  50% { transform: translate(15px, -25px); }
-                  100% { transform: translate(-10px, -50px); }
-                }
-                body { 
-                  margin: 0; 
-                  font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-                  background: #ffffff;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  min-height: 100vh;
-                  text-align: center;
-                  overflow: hidden;
-                }
-                .pc-sparkle {
-                  position: absolute;
-                  border-radius: 50%;
-                  pointer-events: none;
-                  z-index: 1;
-                }
-                .pc-content {
-                  position: relative;
-                  z-index: 10;
-                  max-width: 500px;
-                  padding: 40px;
-                }
-                .pc-success-icon {
-                  width: 100px;
-                  height: 100px;
-                  background: #7c3aed;
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  margin: 0 auto 32px;
-                  color: #ffffffff;
-                  box-shadow: 0 0 40px #7c3aed36;
-                }
-                .pc-title {
-                  font-size: 56px;
-                  font-weight: 900;
-                  color: #0f172a;
-                  margin: 0 0 16px;
-                  letter-spacing: -0.02em;
-                }
-                .pc-desc {
-                  font-size: 18px;
-                  line-height: 1.6;
-                  color: #64748b;
-                  margin-bottom: 40px;
-                }
-                .pc-btn {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 10px;
-                  background: ${BRAND_COLOR} !important;
-                  color: white !important;
-                  padding: 18px 40px;
-                  border-radius: 100px;
-                  font-size: 16px;
-                  font-weight: 700;
-                  text-decoration: none;
-                  transition: all 0.3s ease;
-                }
-                .pc-btn:hover {
-                  transform: scale(1.05);
-                }
+                *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+                @keyframes bgPulse { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+                @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+                @keyframes checkPop { 0%{transform:scale(0) rotate(-15deg);opacity:0} 60%{transform:scale(1.15) rotate(4deg);opacity:1} 80%{transform:scale(0.95) rotate(-2deg)} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+                @keyframes ringPulse { 0%{box-shadow:0 0 0 0 rgba(124,58,237,0.7)} 70%{box-shadow:0 0 0 30px rgba(124,58,237,0)} 100%{box-shadow:0 0 0 0 rgba(124,58,237,0)} }
+                @keyframes floatOrb { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-40px) scale(1.05)} 66%{transform:translate(-20px,20px) scale(0.97)} }
+                @keyframes starTwinkle { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+                @keyframes btnShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+                @keyframes btnGlow { 0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.5),0 8px 32px rgba(99,102,241,0.4)} 50%{box-shadow:0 0 40px rgba(124,58,237,0.8),0 12px 48px rgba(99,102,241,0.6)} }
+                @keyframes arrowBounce { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
+                body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; background:#050816; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow-x:hidden; position:relative; }
+                .orb { position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none; z-index:0; animation:floatOrb 12s ease-in-out infinite; }
+                .orb-1 { width:500px; height:500px; background:radial-gradient(circle,rgba(124,58,237,0.35) 0%,transparent 70%); top:-10%; left:-10%; }
+                .orb-2 { width:400px; height:400px; background:radial-gradient(circle,rgba(99,102,241,0.3) 0%,transparent 70%); top:40%; right:-8%; animation-delay:3s; }
+                .orb-3 { width:350px; height:350px; background:radial-gradient(circle,rgba(16,185,129,0.2) 0%,transparent 70%); bottom:-5%; left:20%; animation-delay:6s; }
+                .stars-layer { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+                .star { position:absolute; border-radius:50%; background:#fff; animation:starTwinkle ease-in-out infinite; }
+                #lottie-confetti { position:fixed; inset:0; z-index:5; pointer-events:none; width:100%; height:100%; }
+                .ty-card { position:relative; z-index:10; background:rgba(255,255,255,0.04); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:32px; padding:56px 52px; max-width:520px; width:90%; text-align:center; box-shadow:0 32px 64px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1); animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s both; }
+                .check-wrap { display:inline-flex; align-items:center; justify-content:center; width:96px; height:96px; background:linear-gradient(135deg,${BRAND_COLOR},#6366f1); border-radius:50%; margin:0 auto 32px; animation:checkPop 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.8s both,ringPulse 2.5s ease-out 1.5s infinite; box-shadow:0 16px 48px rgba(124,58,237,0.5); }
+                .check-wrap svg { color:white; }
+                .ty-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:100px; padding:6px 16px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#10b981; margin-bottom:20px; animation:fadeUp 0.6s ease 0.5s both; }
+                .ty-badge::before { content:''; width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981; animation:starTwinkle 1.2s ease infinite; display:inline-block; }
+                .ty-title { font-size:clamp(38px,6vw,58px); font-weight:900; color:#ffffff; letter-spacing:-0.03em; line-height:1.05; margin-bottom:8px; animation:fadeUp 0.6s ease 0.9s both; }
+                .ty-title span { background:linear-gradient(135deg,${BRAND_COLOR},#818cf8,#10b981); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+                .ty-sub { font-size:17px; color:rgba(255,255,255,0.55); line-height:1.65; margin-bottom:36px; animation:fadeUp 0.6s ease 1.1s both; }
+                .ty-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent); margin:0 0 32px; animation:fadeUp 0.6s ease 1.2s both; }
+                .ty-stats { display:flex; justify-content:center; gap:32px; margin-bottom:36px; animation:fadeUp 0.6s ease 1.3s both; }
+                .ty-stat { text-align:center; }
+                .ty-stat-num { font-size:26px; font-weight:800; color:#ffffff; display:block; line-height:1; margin-bottom:4px; }
+                .ty-stat-lbl { font-size:11px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; }
+                .ty-btn { display:inline-flex; align-items:center; justify-content:center; gap:12px; background:linear-gradient(135deg,${BRAND_COLOR} 0%,#6366f1 50%,${BRAND_COLOR} 100%); background-size:200% auto; color:#ffffff !important; padding:18px 44px; border-radius:100px; font-size:16px; font-weight:700; text-decoration:none; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.25s ease; animation:btnShimmer 3s linear infinite,btnGlow 2.5s ease-in-out infinite,fadeUp 0.6s ease 1.4s both; letter-spacing:0.01em; position:relative; overflow:hidden; }
+                .ty-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.25) 50%,transparent 100%); background-size:200% auto; animation:btnShimmer 2.5s linear infinite; border-radius:inherit; }
+                .ty-btn:hover { transform:scale(1.06) translateY(-2px); box-shadow:0 0 50px rgba(124,58,237,0.7),0 16px 48px rgba(99,102,241,0.6); }
+                .ty-btn:active { transform:scale(0.98); }
+                .ty-btn .arrow-icon { animation:arrowBounce 1.2s ease-in-out infinite; }
+                .ty-footer { margin-top:28px; font-size:13px; color:rgba(255,255,255,0.3); animation:fadeUp 0.6s ease 1.5s both; }
+                .ty-footer a { color:rgba(255,255,255,0.5); text-decoration:underline; transition:color 0.2s; }
+                .ty-footer a:hover { color:white; }
               </style>
             </head>
             <body>
-              <div class="pc-content">
-                <div class="pc-success-icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div class="orb orb-1"></div>
+              <div class="orb orb-2"></div>
+              <div class="orb orb-3"></div>
+              <div class="stars-layer" id="stars-layer"></div>
+              <div id="lottie-confetti"></div>
+              <div class="ty-card">
+                <div class="ty-badge">Submission Confirmed</div>
+                <div class="check-wrap">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
                 </div>
-                <h1 class="pc-title">Thank You!</h1>
-                <p class="pc-desc">
-                  We've received your consultation request. Our team of experts will review your details and reach out to you within 24 hours.
-                </p>
-                <a href="${REDIRECT_URL}" class="pc-btn">
+                <h1 class="ty-title">Thank <span>You!</span></h1>
+                <p class="ty-sub">We've received your request and our team of experts<br>will get back to you within <strong style="color:rgba(255,255,255,0.7)">24 hours</strong>.</p>
+                <div class="ty-divider"></div>
+                <div class="ty-stats">
+                  <div class="ty-stat"><span class="ty-stat-num">~1h</span><span class="ty-stat-lbl">Avg. Response</span></div>
+                  <div class="ty-stat"><span class="ty-stat-num">98%</span><span class="ty-stat-lbl">Satisfaction</span></div>
+                  <div class="ty-stat"><span class="ty-stat-num">5&#9733;</span><span class="ty-stat-lbl">Rated Service</span></div>
+                </div>
+                <a href="${REDIRECT_URL}" class="ty-btn">
                   Visit Our Website
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                  <svg class="arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
                 </a>
-                <p style="margin-top:24px; font-size:13px; color:#94a3b8;">Need help? Contact us at support@example.com</p>
+                <p class="ty-footer">Need help? <a href="mailto:support@example.com">Contact Support</a></p>
               </div>
               <script>
-                // Generate Dynamic Sparkles
-                const colors = ['#ffffff', '#ffd700', '${BRAND_COLOR}', '#ffffff'];
-                for (let i = 0; i < 120; i++) {
-                  const sparkle = document.createElement('div');
-                  sparkle.className = 'pc-sparkle';
-                  const size = Math.random() * 5 + 1;
-                  const color = colors[Math.floor(Math.random() * colors.length)];
-                  sparkle.style.width = size + 'px';
-                  sparkle.style.height = size + 'px';
-                  sparkle.style.left = Math.random() * 100 + '%';
-                  sparkle.style.top = Math.random() * 110 + '%';
-                  sparkle.style.background = color;
-                  sparkle.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
-                  const duration = Math.random() * 4 + 3;
-                  const delay = Math.random() * 8;
-                  sparkle.style.animation = 'pc-sparkle ' + duration + 's infinite ' + delay + 's ease-in-out, pc-float ' + (duration * 2) + 's infinite ' + delay + 's linear';
-                  document.body.appendChild(sparkle);
-                }
-              </script>
+                (function() {
+                  var layer = document.getElementById('stars-layer');
+                  for (var i = 0; i < 90; i++) {
+                    var s = document.createElement('div');
+                    s.className = 'star';
+                    var size = Math.random() * 2.5 + 0.5;
+                    s.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;opacity:'+(Math.random()*0.6+0.1)+';animation-duration:'+(Math.random()*3+2)+'s;animation-delay:'+Math.random()*5+'s';
+                    layer.appendChild(s);
+                  }
+                })();
+                (function() {
+                  var anim = lottie.loadAnimation({
+                    container: document.getElementById('lottie-confetti'),
+                    renderer: 'svg',
+                    loop: false,
+                    autoplay: true,
+                    path: '/assets/thankyou.json'
+                  });
+                  anim.addEventListener('complete', function() {
+                    var el = document.getElementById('lottie-confetti');
+                    el.style.transition = 'opacity 1s ease';
+                    el.style.opacity = '0';
+                    setTimeout(function() { el.style.display = 'none'; }, 1000);
+                  });
+                })();
+              <\/script>
             </body>
           </html>
         `;

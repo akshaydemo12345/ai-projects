@@ -73,6 +73,110 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     Colors: true, Body: true, Heading: false, Subheading: false, Buttons: false, Forms: false
   });
 
+  const [selectedVars, setSelectedVars] = useState<string[]>([]);
+
+  // 1. Listen for component selection and detect used variables
+  useEffect(() => {
+    if (!editor) return;
+
+    const updateSelectedVars = () => {
+      const selected = editor.getSelected();
+      if (!selected) {
+        setSelectedVars([]);
+        return;
+      }
+
+      const componentStyles = selected.getStyle();
+      const el = selected.getEl();
+      const usedVars: string[] = [];
+
+      // 1. Detect variables from explicit override styles
+      Object.values(componentStyles).forEach((val: any) => {
+        if (typeof val === 'string' && val.includes('var(')) {
+          const matches = val.match(/var\(([^)]+)\)/g);
+          if (matches) {
+            matches.forEach(m => {
+              const varName = m.replace('var(', '').replace(')', '').trim();
+              if (!usedVars.includes(varName)) usedVars.push(varName);
+            });
+          }
+        }
+      });
+
+      // 2. Computed Style Detection (Very Accurate)
+      if (el) {
+        const win = el.ownerDocument.defaultView;
+        if (win) {
+          const computed = win.getComputedStyle(el);
+          const textColor = computed.color;
+          const bgColor = computed.backgroundColor;
+          
+          // Check if computed color matches any of our variables
+          // This is harder because computed is HEX/RGB, but we can check if the element has classes
+        }
+      }
+
+      // 3. PRIORITY MAPPING (Exclusive logic)
+      const tagName = selected.get('tagName')?.toLowerCase();
+      const classes = (selected.getAttributes().class || '').toLowerCase();
+      
+      let specificVars: string[] = [];
+
+      // Check for specific UI elements first (Highest Priority)
+      if (classes.includes('badge')) {
+        specificVars = ['--primary']; // Changed from secondary to primary
+      } else if (tagName === 'button' || classes.includes('btn')) {
+        specificVars = ['--btn-bg', '--btn-text', '--primary'];
+      } else if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3' || classes.includes('headline')) {
+        // If it's a heading, it usually uses Heading theme or Secondary in saasHero
+        if (classes.includes('offer-box') || classes.includes('content-area')) {
+          specificVars = ['--secondary', '--heading-font'];
+        } else {
+          specificVars = ['--heading-color', '--heading-font', '--heading-size'];
+        }
+      } else if (tagName === 'p' || tagName === 'span') {
+        specificVars = ['--body-text', '--body-font'];
+      } else if (classes.includes('form') || tagName === 'input') {
+        specificVars = ['--form-bg', '--input-bg', '--label-color'];
+      }
+
+      // Merge detected vars with specific ones
+      const finalVars = Array.from(new Set([...usedVars, ...specificVars]));
+      setSelectedVars(finalVars);
+
+      // 4. AUTO-EXPAND (Only most relevant)
+      if (finalVars.length > 0) {
+        setExpanded(prev => {
+          const next = { ...prev };
+          let changed = false;
+          
+          Object.entries(INIT_STYLES).forEach(([cat, properties]) => {
+            // Only expand if the main identity of the section matches
+            const hasMatch = Object.values(properties).some(p => finalVars.includes(p.varName));
+            if (hasMatch && !next[cat]) {
+              // Priority: Don't expand Body if we are looking at a Heading, etc.
+              if (cat === 'Body' && finalVars.includes('--heading-color')) return;
+              next[cat] = true;
+              changed = true;
+            }
+          });
+          
+          return changed ? next : prev;
+        });
+      }
+    };
+
+    editor.on('component:selected', updateSelectedVars);
+    editor.on('component:toggled', updateSelectedVars); // For deselection too
+    editor.on('component:styleUpdate', updateSelectedVars);
+
+    return () => {
+      editor.off('component:selected', updateSelectedVars);
+      editor.off('component:toggled', updateSelectedVars);
+      editor.off('component:styleUpdate', updateSelectedVars);
+    };
+  }, [editor]);
+
   // Sync initial colors from the project settings
   useEffect(() => {
     setStyles(prev => {
@@ -201,7 +305,11 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                     </span>
                     
                     {/* Controls Rendering */}
-                    <div className="flex bg-[#0a0a14] border border-[#2a2a3e] rounded-[4px] min-w-[140px] items-center p-1 transition-colors hover:border-[#4f46e5]">
+                    <div className={`flex bg-[#0a0a14] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${
+                      selectedVars.includes(prop.varName) 
+                        ? 'border-violet-500 shadow-[0_0_10px_rgba(124,58,237,0.3)] bg-violet-500/10' 
+                        : 'border-[#2a2a3e] hover:border-[#4f46e5]'
+                    }`}>
                       
                       {prop.type === 'color' && (
                         <>

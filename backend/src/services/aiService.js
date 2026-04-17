@@ -37,10 +37,10 @@ CRITICAL DESIGN RULES:
 - TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
 - GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
 
-REQUIRED COVERAGE (MANDATORY LONG-FORM EXPERIENCE):
-1. You MUST generate a minimum of 8 visual sections by default.
-2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar, 3. Why Choose Us...") you MUST include EVERY SINGLE ONE of them in the exact order requested. 
-3. DO NOT MERGE sections. DO NOT SKIP sections. If the user asks for 15 sections, you generate 15 distinct, high-fidelity sections.
+REQUIRED COVERAGE (MANDATORY SPEED OPTIMIZED):
+1. You MUST generate a minimum of 5 visual sections by default. (Reduced for speed).
+2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar...") you MUST include EVERY SINGLE ONE of them. 
+3. DO NOT MERGE sections. Every section must be distinct.
 4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
 
 OUTPUT FORMATTING:
@@ -50,15 +50,34 @@ OUTPUT FORMATTING:
 - DO NOT split the page into multiple code blocks.
 
 LENGTH + COMPLETENESS:
-- Generate a full, deep-scroll landing page with ALL requested sections.
-- For 15 sections, aim for a total output around 12,000 to 15,000 characters. 
-- You MUST finish all sections within a 5000 token limit.
+- Generate a full, high-impact landing page. 
+- Aim for a total output around 6,000 to 8,000 characters for maximum speed.
+- You MUST finish within a 3000 token limit.
 - NEVER use placeholders. Keep HTML semantic and clean.
 
 PLANNING:
 - Budget roughly 300 tokens per section to ensure you reach the Footer.
 
 OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
+`;
+};
+
+/**
+ * Build SYSTEM prompt for Smart Template Enrichment (Content Injector)
+ */
+const buildTemplateSystemPrompt = () => {
+  return `
+Act as a Precision Content Engineer.
+Your ONLY task is to take the provided HTML template and replace its text content and images based on the user's business context.
+
+CRITICAL RULES:
+1. YOU MUST NOT ALTER THE HTML STRUCTURE, CLASSES, OR IDS. 
+2. YOU MUST NOT ADD OR REMOVE ANY SECTIONS.
+3. You are a content injector, not a designer. Maintain the exact layout provided.
+4. Replace placeholder text with high-quality, conversion-focused copy.
+5. Update <img> src attributes using 'https://picsum.photos/seed/[KEYWORD]/1200/800'.
+6. If the user asks for specific form fields, you MAY modify the <input> tags inside the existing <form>, but DO NOT change the form's layout or container.
+7. Return the FULL updated HTML in a single \`\`\`html block. No explanation.
 `;
 };
 
@@ -150,12 +169,10 @@ ${imageInstructions}
 3. Call to Action: Use "${ctaText || 'Get Started'}" as the primary command.
 
 # DIVERSITY + STRUCTURE INSTRUCTIONS:
-- Treat this request as a fresh creative direction.
-- You MUST provide a minimum of 8 visual sections if no specific list is provided.
-- **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections (like Hero, FAQ, Pricing, etc.), you MUST treat this as a strict requirement. 
-- You MUST generate EVERY SINGLE SECTION mentioned in the user's prompt. 
-- DO NOT OMIT anything. If the user asks for 15 sections, you produce 15 high-quality sections.
-- Every section must have a unique layout and high-fidelity copy.
+- Treat this request as a fresh creative direction focused on FAST, high-converting delivery.
+- You MUST provide a minimum of 5 visual sections if no specific list is provided.
+- **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections, you MUST treat this as a strict requirement. 
+- DO NOT OMIT anything requested.
 
 # LEAD FORM INSTRUCTION:
 - If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
@@ -193,12 +210,18 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   for (const model of CLAUDE_MODEL_CANDIDATES) {
     try {
       logger.info(`[AI] Attempting Claude model: ${model}`);
+      
+      // Handle both string prompt and structured messages (for Vision)
+      const messageContent = typeof userPrompt === 'string' 
+        ? userPrompt 
+        : userPrompt;
+
       const response = await anthropic.messages.create({
         model,
         max_tokens: 5000,
         temperature: 0.7,
         system: finalSystemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
       });
 
       const rawText = response.content[0].text;
@@ -243,6 +266,7 @@ const processResult = (raw, logoUrl) => {
 };
 
 const cleanHTML = (raw) => {
+  if (typeof raw !== 'string') return '';
   // Enhanced regex to find all ```html ... ``` blocks.
   // The closing ``` is now optional (?) to handle truncated responses.
   const regex = /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
@@ -268,48 +292,53 @@ const cleanHTML = (raw) => {
 };
 
 const generateLandingPageContent = async (input) => {
-  // 1. Generate a Strategic Conversion Plan (CRO Analyst)
-  logger.info(`[AI] Generating Strategic Plan for ${input.businessName}...`);
-  const strategicPlan = await generateStrategicStructure(input);
-
+  // 1. SKIP separate strategy call for speed!
   // 2. Build the Persona-based System Prompt
-  const systemPrompt = buildSystemPrompt();
+  const systemPrompt = input.templateHtml ? buildTemplateSystemPrompt() : buildSystemPrompt();
 
-  // 3. Build a detailed User Prompt that incorporates the plan
-  const userPrompt = `
-${buildUserPrompt({
-  ...input,
-  scrapedImages: input.scrapedImages || []
-})}
+  // 3. Build a detailed user prompt that combines identity and goal
+  let userPrompt = `
+${buildUserPrompt(input)}
 
-# STRATEGIC INNOVATION PLAN (MANDATORY EXECUTION):
-This blueprint was created by a Lead UX Strategist for ${strategicPlan.industry_context.category}.
+# SPEED OPTIMIZATION:
+Generate this page FAST. Do not over-elaborate. 
 
-## 1. DESIGN DIRECTION:
-- Color Mood: ${strategicPlan.industry_context.color_mood}
-- Typography Style: ${strategicPlan.industry_context.typography_style}
-- Overall Feel: ${strategicPlan.industry_context.overall_feel}
-- Audience Profile: ${strategicPlan.industry_context.target_audience_profile}
-- The "Big Idea" (Hook): ${strategicPlan.page_strategy.strategic_hook}
-
-## 2. INNOVATIVE SECTIONS:
-${strategicPlan.sections.map(s => `
-### ${s.name}
-- Strategic Purpose: ${s.purpose}
-- Content: ${s.content.headline} | ${s.content.subheadline}
-- Innovation Idea (MUST IMPLEMENT): ${s.innovation_idea}
-- UI/UX Directive: ${s.ui_ux_suggestion}
-`).join('\n')}
-
-## 3. SMART FORM STRATEGY:
-- Innovation: ${strategicPlan.form_innovation.type}
-- UX Interaction: ${strategicPlan.form_innovation.interaction_ux}
-- Placement: ${strategicPlan.form_innovation.placement}
-- Essential Fields: ${strategicPlan.form_innovation.fields.join(', ')}
-
-# FINAL INSTRUCTION:
-Do NOT follow a generic template. Execute the INNOVATION ideas provided for each section. Use the Color Mood and Typography directives to make this page feel premium and visually distinct.
+# MANDATORY LAYOUT SECTIONS:
+1. Hero Section with dynamic branding and a clear Call to Action.
+2. Lead Generation Form (Name, Email, Phone, Message) - MUST BE VISIBLE.
+3. Industry Context (Benefits and Features).
+4. Social Proof / Reviews.
+5. Simple Footer.
 `;
+
+  // 4. Handle Template Enrichment if applicable
+  if (input.templateHtml) {
+    userPrompt = `
+    # CRITICAL TASK: SMART TEMPLATE CONTENT REPLACEMENT
+    ${input.templateHtml}
+    
+    USER'S VISION: "${input.aiPrompt}"
+    `;
+  }
+
+  // 5. Handle Vision / Image-to-Design
+  if (input.figmaImage) {
+    logger.info(`[AI] Image-to-Design detected. Incorporating vision analysis.`);
+    // (Existing vision logic remains same but within one call)
+    const imageMatch = input.figmaImage.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (imageMatch) {
+      const messages = [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imageMatch[1], data: imageMatch[2] } },
+            { type: 'text', text: `Design this EXACT layout immediately. ${userPrompt}` }
+          ]
+        }
+      ];
+      return await callAI(messages, input.logoUrl, systemPrompt);
+    }
+  }
 
   return await callAI(userPrompt, input.logoUrl, systemPrompt);
 };
@@ -419,12 +448,40 @@ Generate ONLY the JSON object.
 `;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  
+  let messages = [
+    { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
+  ];
+
+  if (input.figmaImage) {
+    const imageMatch = input.figmaImage.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (imageMatch) {
+      messages = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: imageMatch[1],
+                data: imageMatch[2]
+              }
+            },
+            {
+              type: 'text',
+              text: `${systemPrompt}\n\n${userPrompt}\n\nIMPORTANT: Use the provided design image as the master reference for the sections and layout in the JSON response.`
+            }
+          ]
+        }
+      ];
+    }
+  }
+
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL_CANDIDATES[0],
     max_tokens: 8192,
-    messages: [
-      { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
-    ],
+    messages: messages,
   });
 
   try {

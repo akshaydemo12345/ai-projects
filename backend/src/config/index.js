@@ -13,7 +13,7 @@ const config = {
   isTest: process.env.NODE_ENV === 'test',
 
   // Server
-  port: parseInt(process.env.PORT, 10) || 6000,
+  port: parseInt(process.env.PORT, 10) || 5000,
   host: process.env.HOST || '0.0.0.0',
 
   // Database
@@ -28,7 +28,7 @@ const config = {
 
   // API Configuration
   api: {
-    baseUrl: process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 6000}`,
+    baseUrl: process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`,
     version: process.env.API_VERSION || 'v1',
   },
 
