@@ -15,28 +15,93 @@ const PROVIDERS = [
 ];
 
 const SUGGESTIONS = [
-  'Create a hero section for an SEO agency',
-  'Add a features grid with 6 benefits',
-  'Generate 3 customer testimonials with 5 stars',
-  'Create a pricing section with 3 plans',
-  'Add a FAQ with 5 common SEO questions',
-  'Create a contact form with name, email, phone',
-  'Add a stats bar with 4 impressive numbers',
-  'Create a CTA banner with a free audit offer',
+  'Modern Hero for a high-performance AI SaaS',
+  'Feature grid with elegant glassmorphism cards',
+  'Premium pricing table with "Most Popular" highlight',
+  'Conversion-optimized Lead Form with 5 fields',
+  'Testimonial section with avatars and star ratings',
+  'Sleek FAQ accordion for an enterprise agency',
+  'Hero with a split-screen image and CTA',
+  'Call to Action banner with a vibrant gradient background',
 ];
 
 const demoGenerate = (prompt: string): Omit<Block, 'id'> => {
   const p = prompt.toLowerCase();
-  if (p.includes('hero')) return { type: 'hero', content: { badge: '🚀 Best in Class', heading: 'Grow Your Business with AI-Powered Marketing', subtext: 'We combine AI with human expertise to deliver 10x better results for your business.', trust: ['ROI Guaranteed', 'No Long Contracts', '24/7 Support'], formTitle: 'Book a Free Demo', formFields: ['Your Name', 'Work Email', 'Phone', 'Company'], formButton: 'Book My Free Demo →', formDisclaimer: 'No spam. Cancel anytime.' } };
-  if (p.includes('feature')) return { type: 'features', content: { heading: 'Everything You Need to Rank on Page 1', subtext: 'Our comprehensive SEO platform covers every aspect of search.', features: [{ icon: '🔍', title: 'Keyword Research', desc: 'Find high-value keywords your customers are searching for.' }, { icon: '📊', title: 'Rank Tracking', desc: 'Monitor your positions daily across all your target keywords.' }, { icon: '🔗', title: 'Backlink Analysis', desc: 'See who links to you and find new link opportunities.' }, { icon: '🛠', title: 'Technical Audit', desc: 'Find and fix the issues holding your site back.' }, { icon: '✍️', title: 'Content Optimizer', desc: 'Create content that outranks your competitors.' }, { icon: '📈', title: 'ROI Reporting', desc: 'See exactly how SEO is driving revenue for your business.' }] } };
-  if (p.includes('testimonial')) return { type: 'testimonials', content: { heading: 'Trusted by 500+ Growing Businesses', subtext: 'Real results from real customers.', testimonials: [{ name: 'Alex Thompson', title: 'CEO, GrowthBox', text: 'We went from 0 to 50,000 monthly visitors in 8 months. Unbelievable ROI.', stars: 5 }, { name: 'Priya Patel', title: 'CMO, SaaSify', text: 'Our leads went up 3x within the first quarter. Best marketing investment we made.', stars: 5 }, { name: 'David Kim', title: 'Founder, LocalPro', text: "We dominate every local keyword in our city now. Our phone hasn't stopped ringing.", stars: 5 }] } };
-  if (p.includes('pricing')) return { type: 'pricing', content: { heading: 'Simple, Transparent Pricing', subtext: 'No hidden fees. Cancel anytime.', plans: [{ name: 'Basic', price: '$299', period: '/mo', desc: 'For solopreneurs.', features: ['10 Keywords', 'Weekly Reports', 'Basic SEO', 'Email Support'], cta: 'Start Free Trial', highlighted: false }, { name: 'Pro', price: '$699', period: '/mo', desc: 'For growing teams.', features: ['50 Keywords', 'Daily Reports', 'Full Link Building', 'Phone Support', 'Content Calendar'], cta: 'Get Started', highlighted: true }, { name: 'Agency', price: '$1,499', period: '/mo', desc: 'For agencies managing multiple clients.', features: ['Unlimited Keywords', 'White-Label Reports', 'Dedicated Manager', 'API Access', 'Priority Support'], cta: 'Contact Sales', highlighted: false }] } };
-  if (p.includes('faq')) return { type: 'faq', content: { heading: 'Common Questions', subtext: 'Everything you need to know.', faqs: [{ q: 'How quickly will I see results?', a: 'Most clients see measurable improvements in rankings and traffic within 60–90 days.' }, { q: 'Is my industry too competitive for SEO?', a: 'No niche is too competitive. We use smarter targeting to find the right opportunities for your business.' }, { q: 'What does the onboarding process look like?', a: 'After signing up, we schedule a discovery call, audit your site, and deliver a custom strategy within 7 days.' }, { q: 'Do I need to sign a long-term contract?', a: 'No. We work month-to-month. Most clients stay because of results, not contracts.' }, { q: 'Can I track my results myself?', a: 'Yes. You get access to a live dashboard showing rankings, traffic, and conversions 24/7.' }] } };
-  if (p.includes('stats') || p.includes('number')) return { type: 'stats', content: { stats: [{ value: '10,000+', label: 'Pages Ranked' }, { value: '98%', label: 'Client Satisfaction' }, { value: '5x', label: 'Average ROI' }, { value: '$50M+', label: 'Revenue Generated' }] } };
-  if (p.includes('cta')) return { type: 'cta-banner', content: { heading: 'Start Getting More Leads Today', subtext: 'Join thousands of businesses growing with our platform. No contracts, cancel anytime.', cta: 'Start Your Free Trial', secondary: 'See Case Studies' } };
-  if (p.includes('form') || p.includes('contact')) return { type: 'lead-form', content: { heading: 'Let\'s Talk About Your Growth Goals', subtext: 'Our team will review your info and reach out within 24 hours.', fields: [{ label: 'Full Name', type: 'text', required: true }, { label: 'Business Email', type: 'email', required: true }, { label: 'Phone Number', type: 'tel', required: false }, { label: 'Website URL', type: 'url', required: true }, { label: 'Current Monthly Revenue', type: 'select', options: ['< $10K', '$10K–$50K', '$50K–$200K', '$200K+'], required: false }, { label: 'What\'s your biggest challenge?', type: 'textarea', required: false }], button: 'Let\'s Talk Growth →', disclaimer: 'Your data is 100% secure. We\'ll never share it.' } };
-  // Default text block
-  return { type: 'text-block', content: { text: prompt, align: 'left' } };
+  
+  if (p.includes('hero')) return { 
+    type: 'hero', 
+    content: { 
+      badge: '✨ THE FUTURE OF GROWTH', 
+      heading: 'Transform Your Digital Presence with Precision Engineering', 
+      subtext: 'We help high-growth companies scale their business through data-driven design and elite conversion strategies that deliver measurable ROI.', 
+      trust: ['Rated 4.9/5 by Industry Leaders', 'SOC2 Type II Certified', 'Used by 500+ Global Teams'], 
+      formTitle: 'Accelerate Your Growth', 
+      formFields: ['Full Name', 'Business Email', 'Company Website'], 
+      formButton: 'Start Free Analysis →', 
+      formDisclaimer: 'No credit card required. Cancel anytime.' 
+    } 
+  };
+
+  if (p.includes('feature') || p.includes('benefit')) return { 
+    type: 'features', 
+    content: { 
+      heading: 'Engineered for Scale, Built for Performance', 
+      subtext: 'Our specialized platform combines advanced analytics with intuitive UI to give you an unfair advantage in your market.', 
+      features: [
+        { icon: '💎', title: 'Premium Aesthetics', desc: 'Interfaces that don\'t just look good, they command respect and trust.' }, 
+        { icon: '⚡️', title: 'Lightning Fast', desc: 'Proprietary technology ensuring sub-second load times across every device.' }, 
+        { icon: '📈', title: 'Growth Analytics', desc: 'Real-time insights into every click, scroll, and conversion on your landing page.' }, 
+        { icon: '🔐', title: 'Enterprise Security', desc: 'Bank-grade encryption protecting your leads and customer data at all times.' }, 
+        { icon: '🔄', title: 'Seamless Sync', desc: 'Sync your data with 2,000+ marketing tools including Zapier and Salesforce.' }, 
+        { icon: '📱', title: 'Adaptive Design', desc: 'A multi-viewport system that ensures pixel-perfection on every screen size.' }
+      ] 
+    } 
+  };
+
+  if (p.includes('testimonial')) return { 
+    type: 'testimonials', 
+    content: { 
+      heading: 'Validated by the World\'s Boldest Innovators', 
+      subtext: 'See why top-tier organizations trust us with their digital growth.', 
+      testimonials: [
+        { name: 'Sarah Jenkins', title: 'Head of Growth, NexaFlow', text: "The conversion lift we saw within 30 days was staggering. It completely changed our CAC economics.", stars: 5 }, 
+        { name: 'Michael Chen', title: 'Founder, TechSphere', text: "Professional, efficient, and results-oriented. The design quality is leagues ahead of anything else.", stars: 5 }, 
+        { name: 'Elena Rodriguez', title: 'CMO, Horizon Labs', text: "Finally, a solution that understands the nuance of enterprise-grade landing pages.", stars: 5 }
+      ] 
+    } 
+  };
+
+  if (p.includes('pricing')) return { 
+    type: 'pricing', 
+    content: { 
+      heading: 'Flexible Investment for Every Growth Stage', 
+      subtext: 'Choose the plan that fits your current trajectory. Upgrade as you scale.', 
+      plans: [
+        { name: 'Startup', price: '$499', period: '/mo', desc: 'Perfect for local heroes.', features: ['3 Active Pages', 'Basic A/B Testing', 'Standard Support', '5,000 Monthly Visitors'], cta: 'Get Started', highlighted: false }, 
+        { name: 'Pro', price: '$1,299', period: '/mo', desc: 'Our most popular tier.', features: ['Unlimited Pages', 'Advanced A/B Testing', '24/7 Priority Support', '50,000 Monthly Visitors', 'Custom Domains'], cta: 'Claim Pro Access', highlighted: true }, 
+        { name: 'Enterprise', price: 'Custom', period: '', desc: 'For high-volume operations.', features: ['SLA Guarantee', 'Dedicated Growth Manager', 'API Access', 'Custom Integrations', 'White-labeling'], cta: 'Contact Strategy Team', highlighted: false }
+      ] 
+    } 
+  };
+
+  if (p.includes('form') || p.includes('contact')) return { 
+    type: 'lead-form', 
+    content: { 
+      heading: 'Design Your Future Success', 
+      subtext: 'Our senior strategy team will review your project and prepare a custom roadmap within 24 hours.', 
+      fields: [
+        { label: 'Name', type: 'text', required: true }, 
+        { label: 'Email', type: 'email', required: true }, 
+        { label: 'Current Revenue', type: 'select', options: ['$0-$1M', '$1M-$10M', '$10M+'], required: true },
+        { label: 'Describe Your Goal', type: 'textarea', required: false }
+      ], 
+      button: 'Request Strategic Review →', 
+      disclaimer: 'We value your privacy. Your information is never shared.' 
+    } 
+  };
+
+  // Generic fallback with better text
+  return { type: 'text-block', content: { text: prompt, align: 'center' } };
 };
 
 const AIPanel = ({ open, onClose, onAddBlock }: AIPanelProps) => {
@@ -53,12 +118,92 @@ const AIPanel = ({ open, onClose, onAddBlock }: AIPanelProps) => {
       if (provider === 'claude' && apiKey) {
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
-          headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-          body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 2048, messages: [{ role: 'user', content: `You are a landing page builder. Return ONLY valid JSON (no markdown) matching: {"type":"hero"|"features"|"stats"|"testimonials"|"pricing"|"faq"|"lead-form"|"cta-banner"|"text-block"|"heading-block"|"image-block","content":{...}}. Request: "${prompt}"` }] }),
+          headers: { 
+            'x-api-key': apiKey, 
+            'anthropic-version': '2023-06-01', 
+            'content-type': 'application/json',
+            'anthropic-beta': 'structured-outputs-2025-11-13',
+            'dangerously-allow-browser': 'true'
+          },
+          body: JSON.stringify({ 
+            model: 'claude-3-5-sonnet-20240620', 
+            max_tokens: 4096, 
+            temperature: 0,
+            system: `You are a Supreme UI/UX Architect. 
+Your goal is to generate UNIQUE, world-class landing page blocks. 
+
+CREATIVITY MODES:
+1. STANDARD: Use 'hero', 'features', etc. for standard structured data.
+2. CUSTOM: If the user request is highly specific, creative, or needs a complex layout NOT possible in standard blocks, use 'custom-html'.
+
+FOR 'custom-html':
+- Return {"type": "custom-html", "content": {"html": "..."}}.
+- Generate full, premium HTML using Tailwind CSS classes.
+- Use 'https://picsum.photos/seed/[id]/1200/800' for images.
+- Make it look like a high-end agency site (Stripe, Apple, or Linear style).
+
+Return ONLY perfect JSON matching the schema.`,
+            messages: [{ role: 'user', content: `Generate a high-converting, extremely creative landing page block for: "${prompt}"` }],
+            output_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: "landing_page_block",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    type: { 
+                      type: "string", 
+                      enum: ["hero", "features", "stats", "testimonials", "pricing", "faq", "lead-form", "cta-banner", "text-block", "custom-html"] 
+                    },
+                    content: { 
+                      type: "object",
+                      oneOf: [
+                        {
+                          properties: { html: { type: "string", description: "Raw Tailwind HTML for high-end creative layouts" } },
+                          required: ["html"]
+                        },
+                        {
+                          properties: {
+                            badge: { type: "string" },
+                            heading: { type: "string" },
+                            subtext: { type: "string" },
+                            trust: { type: "array", items: { type: "string" } },
+                            formTitle: { type: "string" },
+                            formFields: { type: "array", items: { type: "string" } },
+                            formButton: { type: "string" },
+                            formDisclaimer: { type: "string" }
+                          },
+                          required: ["badge", "heading", "subtext", "trust", "formTitle", "formFields", "formButton", "formDisclaimer"]
+                        },
+                        {
+                          properties: {
+                            heading: { type: "string" },
+                            subtext: { type: "string" },
+                            features: { 
+                              type: "array", 
+                              items: { 
+                                type: "object", 
+                                properties: { icon: { type: "string" }, title: { type: "string" }, desc: { type: "string" } },
+                                required: ["icon", "title", "desc"]
+                              } 
+                            }
+                          },
+                          required: ["heading", "subtext", "features"]
+                        }
+                      ]
+                    }
+                  },
+                  required: ["type", "content"],
+                  additionalProperties: false
+                }
+              }
+            }
+          }),
         });
         const d = await res.json();
         const raw = d.content?.[0]?.text ?? '{}';
-        const parsed = JSON.parse(raw.match(/\{[\s\S]+\}/)?.[0] ?? '{}');
+        const parsed = JSON.parse(raw);
         if (parsed.type && parsed.content) { onAddBlock(parsed); setPrompt(''); onClose(); return; }
       }
       if (provider === 'openai' && apiKey) {

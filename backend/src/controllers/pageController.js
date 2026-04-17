@@ -18,12 +18,15 @@ const AppError = require('../utils/AppError');
 const createPageSchema = z.object({
   title: z.string().optional(),
   name: z.string().optional(),
+  slug: z.string().optional(),
+  prefix: z.string().optional(),
   template: z.string().optional(),
   content: z.any().optional(),
   business_name: z.string().optional(),
+  businessDescription: z.string().optional(),
   business_description: z.string().optional(),
-  target_audience: z.string().optional(),
-  cta_text: z.string().optional(),
+  targetAudience: z.string().optional(),
+  ctaText: z.string().optional(),
   ai_prompt: z.string().optional(),
   aiPrompt: z.string().optional(),
   industry: z.string().optional(),
@@ -32,9 +35,16 @@ const createPageSchema = z.object({
   secondaryColor: z.string().optional(),
   accentColor: z.string().optional(),
   logoUrl: z.string().optional(),
+  noIndex: z.boolean().optional(),
+  noFollow: z.boolean().optional(),
+  services: z.array(z.string()).optional(),
+  keywords: z.array(z.string()).optional(),
+  pageType: z.string().optional(),
 }).transform(data => ({
   ...data,
-  title: data.title || data.name || 'Untitled Page'
+  title: data.title || data.name || 'Untitled Page',
+  slug: data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
+  finalSlug: data.prefix ? `${data.prefix}-${(data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')}` : (data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')
 })).refine(data => data.title.length > 0, {
   message: "Title or name is required",
   path: ["title"]
@@ -207,12 +217,16 @@ exports.createPage = async (req, res, next) => {
 
     const { 
       title, 
+      slug,
+      prefix,
+      finalSlug,
       template, 
       content: initialContent,
       business_name, 
-      business_description, 
-      target_audience, 
-      cta_text, 
+      businessDescription,
+      business_description,
+      targetAudience, 
+      ctaText, 
       ai_prompt,
       aiPrompt: camelAiPrompt,
       industry,
@@ -220,7 +234,12 @@ exports.createPage = async (req, res, next) => {
       primaryColor,
       secondaryColor,
       accentColor,
-      logoUrl
+      logoUrl,
+      noIndex,
+      noFollow,
+      services,
+      keywords,
+      pageType
     } = parsed.data;
 
     // 3. Project Existence Check
@@ -242,8 +261,8 @@ exports.createPage = async (req, res, next) => {
       });
     }
 
-    // 5. Slug Generation
-    const uniqueSlug = await generateUniqueSlug(title, projectId);
+    // 5. Slug Generation (use finalSlug if provided)
+    const uniqueSlug = finalSlug ? await generateUniqueSlug(finalSlug, projectId) : await generateUniqueSlug(slug || title, projectId);
 
     // 6. Initial Page Creation
     const page = await Page.create({
@@ -251,6 +270,7 @@ exports.createPage = async (req, res, next) => {
       userId: req.user._id,
       title,
       slug: uniqueSlug,
+      prefix: prefix || '',
       template: template || 'blank',
       aiPrompt: ai_prompt || camelAiPrompt,
       content: initialContent || {},
@@ -260,6 +280,9 @@ exports.createPage = async (req, res, next) => {
       accentColor: accentColor || project.secondaryColor || '#6366f1',
       logoUrl: logoUrl || project.logoUrl || '',
       industry: industry || project.industry || 'Service',
+      services: services || project.services || [],
+      noIndex: noIndex || false,
+      noFollow: noFollow || false,
       metaTitle: req.body.metaTitle || '',
       metaDescription: req.body.metaDescription || '',
       generationMethod: req.body.generationMethod || 'ai',
@@ -278,13 +301,17 @@ exports.createPage = async (req, res, next) => {
       const generated = await AIService.generateLandingPageContent({
         businessName: business_name || title,
         industry: page.industry || 'Service',
-        businessDescription: business_description || '',
-        targetAudience: target_audience || 'General',
-        ctaText: cta_text || 'Get Started',
+        businessDescription: businessDescription || business_description || project.description || '',
+        targetAudience: targetAudience || 'General',
+        ctaText: ctaText || 'Get Started',
         aiPrompt: camelAiPrompt || ai_prompt || '',
         primaryColor: page.primaryColor,
         secondaryColor: page.secondaryColor,
         logoUrl: page.logoUrl || '',
+        services: page.services || [],
+        keywords: keywords || [],
+        noIndex: page.noIndex || false,
+        noFollow: page.noFollow || false,
         pageId: page._id
       });
 
@@ -318,7 +345,25 @@ exports.createPage = async (req, res, next) => {
 
     // 8. Update Page with AI Results
     if (aiResponse.fullHtml) {
-      page.content = aiResponse.fullHtml;
+      let processedHtml = aiResponse.fullHtml;
+      
+      // Add SEO meta tags if needed
+      if (page.noIndex || page.noFollow) {
+        const robots = [page.noIndex ? 'noindex' : '', page.noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
+        const seoMeta = `<meta name="robots" content="${robots}">`;
+        
+        // Insert after <head> or before </head>
+        if (processedHtml.includes('<head>')) {
+          processedHtml = processedHtml.replace('<head>', `<head>${seoMeta}`);
+        } else if (processedHtml.includes('</head>')) {
+          processedHtml = processedHtml.replace('</head>', `${seoMeta}</head>`);
+        } else {
+          // Fallback: add at the beginning
+          processedHtml = `<head>${seoMeta}</head>` + processedHtml;
+        }
+      }
+      
+      page.content = processedHtml;
       // Prepend branding variables to styles for editor consistency
       const brandingStyles = `
 :root {
@@ -354,9 +399,15 @@ exports.createPage = async (req, res, next) => {
         _id: page._id,
         title: page.title,
         slug: page.slug,
+        prefix: page.prefix,
+        finalSlug: page.prefix ? `${page.prefix}-${page.slug}` : page.slug,
+        noIndex: page.noIndex,
+        noFollow: page.noFollow,
+        services: page.services,
         previewUrl: page.previewUrl,
         content: page.content,
-        styles: page.styles
+        styles: page.styles,
+        seo: page.seo
       }
     });
 
