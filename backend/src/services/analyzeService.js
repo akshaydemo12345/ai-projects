@@ -12,7 +12,7 @@ const logger = require('../utils/logger');
 const inspectWebsite = async (url) => {
   try {
     const response = await axios.get(url, {
-      timeout: 10000,
+      timeout: 30000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -855,6 +855,7 @@ const extractProjectData = async (url) => {
       keywords,
       industry: detectedIndustry,
       themeSystem, // Complete theme system for design
+      scrapedImages: bulkImages, // Top-level scraped images for easy access
       scrapedData: {
         images: bulkImages,
         ...structuredData,
@@ -1367,31 +1368,121 @@ const generateServicesFromProjectName = (projectName) => {
 
 const extractBulkImages = ($, baseUrl) => {
   const images = [];
+  const seenUrls = new Set();
+  
+  // Unwanted image patterns - these should be filtered out
+  const unwantedPatterns = [
+    /icon/i, /sprite/i, /tracking/i, /pixel/i, /beacon/i, /analytics/i,
+    /1x1/i, /spacer/i, /dot\.gif/i, /clear\.gif/i, /placeholder/i,
+    /favicon/i, /apple-touch-icon/i, /loading/i, /spinner/i,
+    /arrow/i, /bullet/i, /check/i, /close/i, /menu/i, /hamburger/i,
+    /social.*icon/i, /facebook.*icon/i, /twitter.*icon/i, /linkedin.*icon/i,
+    /bg\.png/i, /background.*small/i, /pattern/i, /texture/i
+  ];
+  
+  // Relevant image patterns - prioritize these
+  const relevantPatterns = [
+    /hero/i, /banner/i, /slider/i, /showcase/i, /feature/i,
+    /product/i, /service/i, /portfolio/i, /team/i, /testimonial/i,
+    /about/i, /office/i, /workspace/i, /meeting/i, /client/i,
+    /screenshot/i, /dashboard/i, /interface/i, /app/i, /software/i
+  ];
+  
   $('img').each((i, el) => {
     const src = $(el).attr('src');
     const alt = $(el).attr('alt')?.trim() || '';
     const title = $(el).attr('title')?.trim() || '';
     const cls = $(el).attr('class')?.trim() || '';
+    const width = $(el).attr('width') ? parseInt($(el).attr('width')) : 0;
+    const height = $(el).attr('height') ? parseInt($(el).attr('height')) : 0;
     
-    if (src && src.length > 5) {
+    if (!src || src.length < 5) return;
+    
+    // Skip data URIs and base64 images
+    if (src.startsWith('data:')) return;
+    
+    // Skip if URL already seen
+    if (seenUrls.has(src)) return;
+    
+    // Check for unwanted patterns in URL, alt, or class
+    const combinedText = `${src} ${alt} ${cls}`.toLowerCase();
+    const isUnwanted = unwantedPatterns.some(pattern => pattern.test(combinedText));
+    if (isUnwanted) return;
+    
+    // Skip very small images (likely icons or tracking pixels)
+    if ((width > 0 && width < 50) || (height > 0 && height < 50)) return;
+    
+    // Skip images with very small dimensions in filename
+    if (src.match(/\d+x\d+/i)) {
+      const dims = src.match(/(\d+)x(\d+)/i);
+      if (dims && (parseInt(dims[1]) < 100 || parseInt(dims[2]) < 100)) return;
+    }
+    
+    try {
       let fullUrl = src;
-      try {
-        if (!src.startsWith('http')) {
-          fullUrl = new URL(src, baseUrl).href;
-        }
-        
-        // Categorize images based on metadata
-        let type = 'general';
-        if (alt.toLowerCase().includes('logo') || cls.toLowerCase().includes('logo')) type = 'logo';
-        else if (alt.toLowerCase().includes('hero') || cls.toLowerCase().includes('banner')) type = 'banner';
-        else if (alt.toLowerCase().includes('testimonial') || alt.toLowerCase().includes('user')) type = 'person';
-        else if (alt.toLowerCase().includes('product') || cls.toLowerCase().includes('item')) type = 'product';
-
-        images.push({ url: fullUrl, alt, type, context: title || cls });
-      } catch (e) {}
+      if (!src.startsWith('http')) {
+        fullUrl = new URL(src, baseUrl).href;
+      }
+      
+      // Categorize images based on metadata
+      let type = 'general';
+      let relevance = 'medium';
+      
+      // Check for relevant patterns
+      const isRelevant = relevantPatterns.some(pattern => pattern.test(combinedText));
+      if (isRelevant) {
+        relevance = 'high';
+      }
+      
+      if (alt.toLowerCase().includes('logo') || cls.toLowerCase().includes('logo')) {
+        type = 'logo';
+        relevance = 'high';
+      } else if (alt.toLowerCase().includes('hero') || cls.toLowerCase().includes('banner') || cls.toLowerCase().includes('slider')) {
+        type = 'banner';
+        relevance = 'high';
+      } else if (alt.toLowerCase().includes('testimonial') || alt.toLowerCase().includes('user') || alt.toLowerCase().includes('person') || alt.toLowerCase().includes('team')) {
+        type = 'person';
+        relevance = 'medium';
+      } else if (alt.toLowerCase().includes('product') || cls.toLowerCase().includes('product') || cls.toLowerCase().includes('item')) {
+        type = 'product';
+        relevance = 'high';
+      } else if (alt.toLowerCase().includes('office') || alt.toLowerCase().includes('workspace') || alt.toLowerCase().includes('meeting')) {
+        type = 'environment';
+        relevance = 'medium';
+      } else if (alt.toLowerCase().includes('screenshot') || alt.toLowerCase().includes('dashboard') || alt.toLowerCase().includes('interface')) {
+        type = 'screenshot';
+        relevance = 'high';
+      }
+      
+      // Only add if it's relevant or general with good metadata
+      if (relevance === 'high' || (relevance === 'medium' && (alt.length > 10 || cls.length > 10))) {
+        images.push({
+          url: fullUrl,
+          alt,
+          type,
+          context: title || cls,
+          relevance,
+          width,
+          height
+        });
+        seenUrls.add(src);
+      }
+    } catch (e) {
+      // Skip invalid URLs
     }
   });
-  return images.slice(0, 30); // Cap at 30 images
+  
+  // Sort by relevance (high first), then by quality of metadata
+  images.sort((a, b) => {
+    if (a.relevance !== b.relevance) {
+      return a.relevance === 'high' ? -1 : 1;
+    }
+    // Prefer images with better alt text
+    return (b.alt?.length || 0) - (a.alt?.length || 0);
+  });
+  
+  // Return top relevant images, capped at 20
+  return images.slice(0, 20);
 };
 
 const extractStructuredData = ($) => {

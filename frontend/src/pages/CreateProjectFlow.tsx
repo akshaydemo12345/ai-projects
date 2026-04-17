@@ -67,6 +67,7 @@ const CreateProjectFlow = () => {
   const [themeSystem, setThemeSystem] = useState<any>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const [scrapedImages, setScrapedImages] = useState<any[]>([]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,6 +146,8 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
+      scrapedImages: scrapedImages.length > 0 ? scrapedImages : undefined,
+      scrapedData: scrapedImages.length > 0 ? { images: scrapedImages } : undefined,
     });
   };
 
@@ -200,7 +203,10 @@ const CreateProjectFlow = () => {
           return prev;
         });
       }
-      
+      if (meta.scrapedImages) {
+        setScrapedImages(meta.scrapedImages);
+      }
+
       toast.success("Website analyzed! Project details populated.");
     } catch (err: any) {
       toast.error(err.message || "Failed to analyze website");
@@ -479,6 +485,39 @@ const CreateProjectFlow = () => {
                   </button>
                 )}
               </div>
+
+              {/* Scraped Images Preview */}
+              {scrapedImages.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detected Images</p>
+                    <span className="text-xs text-muted-foreground">{scrapedImages.length} images found</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {scrapedImages.slice(0, 8).map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative aspect-video rounded-lg overflow-hidden border border-border bg-muted/30 group"
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt || `Image ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[10px] text-white text-center px-1">{img.type}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    These relevant images from the website will be used when generating landing pages.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-semibold text-foreground mb-1.5 block">Project Description</label>

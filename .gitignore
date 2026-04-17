@@ -7,6 +7,10 @@ build/
 logs/
 *.log
 
+# Ignore database files
+backend/data/db/
+backend/db/
+
 # Allow .env.example files for documentation
 !.env.example
 

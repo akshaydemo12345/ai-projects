@@ -77,6 +77,30 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  scrapedImages: {
+    type: [
+      {
+        url: String,
+        alt: String,
+        type: {
+          type: String,
+          enum: ['logo', 'banner', 'person', 'product', 'environment', 'screenshot', 'general'],
+        },
+        context: String,
+        relevance: {
+          type: String,
+          enum: ['high', 'medium', 'low'],
+        },
+        width: Number,
+        height: Number,
+      }
+    ],
+    default: [],
+  },
+  scrapedData: {
+    type: Object,
+    default: {},
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken
