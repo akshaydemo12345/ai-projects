@@ -3,7 +3,7 @@
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
 const { rateLimiter } = require('../middleware/rateLimiter');
-const { generateContent, analyzeWebsite } = require('../controllers/aiController');
+const { generateContent, analyzeWebsite, structuredScrape } = require('../controllers/aiController');
 
 const router = express.Router();
 
@@ -29,6 +29,13 @@ router.post('/generate', protect, aiRateLimit, generateContent);
 router.post('/analyze-website', protect, aiRateLimit, analyzeWebsite);
 router.post('/inspect-website', protect, aiRateLimit, require('../controllers/aiController').inspectWebsite);
 router.post('/extract-project', protect, aiRateLimit, require('../controllers/aiController').extractProject);
+
+/**
+ * @route   POST /ai/structured-scrape
+ * @desc    Scrape website and return structured data for landing page generation
+ * @access  Private (JWT)
+ */
+router.post('/structured-scrape', protect, aiRateLimit, structuredScrape);
 
 /**
  * @route   POST /ai/improve
