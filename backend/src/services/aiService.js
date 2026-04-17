@@ -30,7 +30,8 @@ CRITICAL DESIGN RULES:
 - DO NOT generate a navigation menu or navbar links.
 - Place only the brand logo near the top inside the hero/banner area: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
 - The top area should look like a clean branded banner, not a traditional website navbar.
-- Use high-quality images from 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800'. 
+- IMAGE USAGE: If scraped images are provided in the user prompt, use those images instead of placeholder images. Use them strategically based on their type (banner for hero, product for services, etc.).
+- FALLBACK: Only use 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800' if no scraped images are provided or if you need additional images beyond what was scraped.
 - BACKGROUND IMAGES: Use inline styles only: style="background-image: url('...'); background-size: cover; background-position: center;"
 - SECTION RHYTHM: Alternate backgrounds (e.g., bg-white, then bg-gray-50, then a dark section).
 - TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
@@ -76,6 +77,7 @@ const buildUserPrompt = ({
   logoUrl,
   services = [],
   keywords = [],
+  scrapedImages = [],
   noIndex = false,
   noFollow = false,
 }) => {
@@ -84,6 +86,39 @@ const buildUserPrompt = ({
   // Extract potential trust signals (numbers, awards, etc.) from description
   const trustSignals = businessDescription ? (businessDescription.match(/(\d+,?\d*\+?|\d+%\+?)/g) || []) : [];
   const topServices = services.slice(0, 6); // Focus on top 6 services
+
+  // Prepare scraped images for the prompt
+  let imageInstructions = '';
+  if (scrapedImages && scrapedImages.length > 0) {
+    // Filter for high-relevance images only (banners, products, screenshots)
+    const relevantImages = scrapedImages.filter(img => 
+      img.relevance === 'high' && 
+      (img.type === 'banner' || img.type === 'product' || img.type === 'screenshot' || img.type === 'environment')
+    ).slice(0, 8); // Use up to 8 relevant images
+
+    if (relevantImages.length > 0) {
+      imageInstructions = `
+# SCRAPED IMAGES FROM WEBSITE (USE THESE INSTEAD OF PLACEHOLDERS):
+You have access to ${relevantImages.length} relevant images scraped from the website. Use them strategically:
+
+${relevantImages.map((img, idx) => `
+${idx + 1}. URL: ${img.url}
+   - Type: ${img.type}
+   - Alt: ${img.alt || 'No description'}
+   - Context: ${img.context || ''}
+`).join('')}
+
+**IMAGE USAGE RULES:**
+- Use banner-type images for Hero sections or major visual areas
+- Use product-type images for service/product showcase sections
+- Use screenshot-type images for software/tech demonstrations
+- Use environment-type images for team/office/about sections
+- ONLY use these scraped images - do NOT use picsum.photos when scraped images are available
+- If you need more images than provided, you may use picsum.photos as fallback
+- Always use the exact URLs provided above
+`;
+    }
+  }
 
   return `
 # BRAND IDENTITY (TRUTH):
@@ -99,6 +134,8 @@ Examples of ONLY ALLOWED syntax for brand colors:
 - \`text-[var(--primary)]\`
 - \`border-[var(--secondary)]\`
 - \`hover:bg-[var(--primary)]\`
+
+${imageInstructions}
 
 # STRATEGIC GOAL:
 "${aiPrompt || 'Create a world-class landing page focusing on lead generation and brand authority.'}"
@@ -124,9 +161,7 @@ Examples of ONLY ALLOWED syntax for brand colors:
 - If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
 - Apply semantic HTML and premium styling with [var(--primary)] buttons.
 
-# IMMUTABLE OVERRIDE (CRITICAL):
-- You MUST STILL ONLY USE 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800' directly to prevent 404 errors. No exceptions.
-- Do not use Unsplash, Pexels, or any other external API.
+${imageInstructions ? '# IMAGE INSTRUCTION: Use the scraped images provided above. Only fallback to picsum.photos if you need additional images beyond what was scraped.' : '# IMMUTABLE OVERRIDE (CRITICAL): You MUST STILL ONLY USE \'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800\' directly to prevent 404 errors. No exceptions. Do not use Unsplash, Pexels, or any other external API.'}
 
 # FINAL TASK: 
 Build a pixel-perfect, premium landing page using the user's custom prompt's structure as a STRICT BLUEPRINT. Ensure EVERY requested section is built with unique, premium design and deep content. LONG-FORM ONLY.
@@ -242,7 +277,10 @@ const generateLandingPageContent = async (input) => {
 
   // 3. Build a detailed User Prompt that incorporates the plan
   const userPrompt = `
-${buildUserPrompt(input)}
+${buildUserPrompt({
+  ...input,
+  scrapedImages: input.scrapedImages || []
+})}
 
 # STRATEGIC INNOVATION PLAN (MANDATORY EXECUTION):
 This blueprint was created by a Lead UX Strategist for ${strategicPlan.industry_context.category}.

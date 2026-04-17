@@ -664,14 +664,32 @@ exports.getPreview = async (req, res, next) => {
 
 /**
  * GET /plugin/download
- * Serves the domain-mapper.zip file from the backend public directory.
+ * Serves the WordPress plugin ZIP file from the backend or frontend public directory.
  * Ensures correct headers for ZIP file downloads.
  */
 exports.downloadPlugin = async (req, res, next) => {
   try {
-    const zipPath = path.resolve(__dirname, '../../public/zip/domain-mapper.zip');
+    // Try multiple locations in order of preference
+    const possiblePaths = [
+      // Backend public/zip directory
+      path.resolve(__dirname, '../../public/zip/domain-mapper.zip'),
+      path.resolve(__dirname, '../../public/zip/domain-mapper-test.zip'),
+      path.resolve(__dirname, '../../public/zip/ai-landing-page-publisher.zip'),
+      // Frontend public/zip directory
+      path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper.zip'),
+      path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper-backup.zip'),
+    ];
 
-    if (!fs.existsSync(zipPath)) {
+    let zipPath = null;
+    for (const filePath of possiblePaths) {
+      if (fs.existsSync(filePath)) {
+        zipPath = filePath;
+        console.log(`Found plugin ZIP at: ${zipPath}`);
+        break;
+      }
+    }
+
+    if (!zipPath) {
       return next(new AppError('Plugin ZIP file not available on server. Please contact support.', 404));
     }
 
