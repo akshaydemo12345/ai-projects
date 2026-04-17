@@ -1,10 +1,14 @@
 node_modules/
 .env
-.env.*
+.env.local
+.env.*.local
 dist/
 build/
 logs/
 *.log
+
+# Allow .env.example files for documentation
+!.env.example
 
 # Explicitly allow domain-mapper.zip
 !domain-mapper.zip

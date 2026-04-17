@@ -255,13 +255,21 @@ exports.extractProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'URL is required' });
     }
 
+    console.log('Starting extraction for URL:', url);
     const data = await extractProjectData(url);
+    console.log('Extraction completed successfully:', JSON.stringify(data).substring(0, 200));
+
+    if (!data) {
+      return res.status(500).json({ status: 'fail', message: 'No data returned from extraction' });
+    }
 
     res.status(200).json({
       status: 'success',
       data
     });
   } catch (err) {
+    console.error('Extraction error:', err.message);
+    console.error('Error stack:', err.stack);
     next(err);
   }
 };

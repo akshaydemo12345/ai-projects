@@ -1,7 +1,9 @@
 // PageCraft API Service — Scalable modular API layer
 // Connects to Node.js/MongoDB backend
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import config from '../config';
+
+const API_BASE_URL = config.api.baseUrl;
 
 // Types
 export interface Site {
@@ -84,10 +86,18 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     ...options.headers,
   };
 
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeout = 300000; // 5 minutes timeout for AI generation
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    signal: controller.signal,
   });
+
+  clearTimeout(timeoutId);
 
   if (response.status === 401) {
     // Unauthorized - clear token and potentially redirect
