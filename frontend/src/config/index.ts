@@ -17,7 +17,7 @@ const config = {
 
   // API Configuration
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:6000',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
     version: 'v1',
     
     // API Endpoints (centralized route definitions)

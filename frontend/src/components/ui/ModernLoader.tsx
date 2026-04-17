@@ -1,67 +1,105 @@
 import { Sparkles } from "lucide-react";
+import Lottie from "lottie-react";
+import { useEffect, useState, useRef } from "react";
 
 export const ModernLoader = () => {
-  return (
-    <div className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-xl flex flex-col items-center justify-center p-4">
-      <div className="relative group">
-        {/* Outer Glow Effect */}
-        <div className="absolute inset-0 bg-primary/30 blur-[80px] rounded-full animate-pulse scale-150" />
-        <div className="absolute inset-0 bg-indigo-500/20 blur-[40px] rounded-full animate-pulse delay-700" />
-        
-        {/* Modern Glassmorphic Logo Container */}
-        <div className="relative h-32 w-32 md:h-40 md:w-40 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 backdrop-blur-md rounded-[2.5rem] border border-white/20 shadow-2xl flex items-center justify-center overflow-hidden transition-all duration-500 hover:scale-105">
-          {/* Animated Background Gradients */}
-          <div className="absolute inset-0 opacity-40">
-            <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-violet-500 rounded-full blur-[40px] animate-blob" />
-            <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-indigo-500 rounded-full blur-[40px] animate-blob animation-delay-2000" />
-            <div className="absolute top-[20%] right-[-20%] w-[50%] h-[50%] bg-fuchsia-500 rounded-full blur-[40px] animate-blob animation-delay-4000" />
-          </div>
+  const [animationData, setAnimationData] = useState<any>(null);
+  const lottieRef = useRef<any>(null);
 
-          {/* Logo Box with Gradient */}
-          <div className="relative z-10 h-16 w-16 md:h-20 md:w-20 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-500/20 transform animate-[float_4s_ease-in-out_infinite]">
-            <Sparkles className="h-8 w-8 md:h-10 md:w-10 text-white animate-pulse" />
-          </div>
+  useEffect(() => {
+    fetch("/assets/Loader Count.json")
+      .then((res) => res.json())
+      .then((data) => setAnimationData(data))
+      .catch((err) => console.error("Failed to load lottie:", err));
+  }, []);
+
+  useEffect(() => {
+    if (lottieRef.current) {
+      // Smart Progress Logic: 
+      // Start at a decent speed, then slow down as we get closer to 99%
+      let progress = 0;
+      const interval = setInterval(() => {
+        if (!lottieRef.current) return;
+        
+        progress += 0.5; // Increment
+        
+        // Dynamic Speed based on progress
+        let speed = 1.0;
+        if (progress > 80) speed = 0.3;
+        if (progress > 90) speed = 0.1;
+        if (progress > 98) speed = 0.02;
+        
+        lottieRef.current.setSpeed(speed);
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+        }
+      }, 100);
+      
+      return () => clearInterval(interval);
+    }
+  }, [animationData]);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-2xl flex flex-col items-center justify-center p-4">
+      <div className="relative group flex flex-col items-center">
+        {/* Outer Glow Effect */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-violet-500/10 blur-[100px] rounded-full animate-pulse" />
+        
+        {/* Lottie Animation Container */}
+        <div className="relative h-64 w-64 md:h-80 md:w-80 flex items-center justify-center">
+          {animationData && (
+            <Lottie 
+              lottieRef={lottieRef}
+              animationData={animationData} 
+              loop={false} 
+              autoplay={true}
+              className="w-full h-full"
+            />
+          )}
           
-          {/* Shine effect */}
-          <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-x-[-100%] animate-[shimmer_3s_infinite]" />
+          {/* Overlay Icon for extra branding */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+             <Sparkles className="h-12 w-12 text-violet-500 animate-spin-slow" />
+          </div>
         </div>
 
-        {/* Orbiting particles (optional, but adds "AI" feel) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 pointer-events-none">
-          <div className="absolute top-0 left-1/2 h-2 w-2 bg-violet-400 rounded-full animate-[orbit_3s_linear_infinite]" />
-          <div className="absolute top-1/2 right-0 h-1.5 w-1.5 bg-indigo-400 rounded-full animate-[orbit_4s_linear_infinite_reverse]" />
-          <div className="absolute bottom-0 left-1/2 h-2.5 w-2.5 bg-fuchsia-400 rounded-full animate-[orbit_5s_linear_infinite]" />
+        {/* Status Text Block */}
+        <div className="mt-8 text-center relative z-10 max-w-md px-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100 mb-4 animate-bounce">
+            <span className="h-2 w-2 bg-violet-600 rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-600">AI is at work</span>
+          </div>
+          
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
+            Crafting Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">Digital Experience</span>
+          </h2>
+          
+          <p className="text-gray-500 text-sm mt-4 font-medium leading-relaxed">
+            Please wait while our AI engine analyzes your requirements, 
+            generates optimized copy, and builds your pixel-perfect components.
+          </p>
+
+          {/* Progress Indicators */}
+          <div className="flex justify-center gap-2 mt-8">
+            {[0, 1, 2].map((i) => (
+              <div 
+                key={i} 
+                className="h-1.5 w-1.5 bg-violet-300 rounded-full animate-bounce" 
+                style={{ animationDelay: `${i * 200}ms` }} 
+              />
+            ))}
+          </div>
         </div>
       </div>
       
-      {/* Custom Styles for animations if not in tailwind.config */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        @keyframes orbit {
-          from { transform: rotate(0deg) translateX(80px) rotate(0deg); }
-          to { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-150%) skewX(-20deg); }
-          100% { transform: translateX(150%) skewX(-20deg); }
-        }
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animate-blob {
-          animation: blob 7s infinite alternate;
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
         }
       `}</style>
     </div>

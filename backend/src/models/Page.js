@@ -49,6 +49,10 @@ const pageSchema = new mongoose.Schema({
     type: String,
     default: 'blank',
   },
+  templateId: {
+    type: String,
+    trim: true,
+  },
   designUrl: {
     type: String,
     trim: true,
@@ -92,7 +96,7 @@ const pageSchema = new mongoose.Schema({
   },
   generationMethod: {
     type: String,
-    enum: ['ai', 'analyze', 'manual'],
+    enum: ['ai', 'analyze', 'manual', 'template', 'figma'],
     default: 'ai',
   },
   status: {

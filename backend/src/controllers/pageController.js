@@ -40,6 +40,7 @@ const createPageSchema = z.object({
   services: z.array(z.string()).optional(),
   keywords: z.array(z.string()).optional(),
   pageType: z.string().optional(),
+  figmaImage: z.string().optional(),
 }).transform(data => ({
   ...data,
   title: data.title || data.name || 'Untitled Page',
@@ -239,7 +240,8 @@ exports.createPage = async (req, res, next) => {
       noFollow,
       services,
       keywords,
-      pageType
+      pageType,
+      figmaImage
     } = parsed.data;
 
     // 3. Project Existence Check
@@ -294,11 +296,16 @@ exports.createPage = async (req, res, next) => {
     await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: 1 } });
 
 
-    // 7. AI Content Generation (Backgroundish)
+    // 7. AI Content Generation (Allows templates to be filled by AI if a prompt exists)
     let aiResponse = { sections: [], seo: {} };
-    try {
-      logger.info(`Starting AI generation for page ${page._id}`);
-      const generated = await AIService.generateLandingPageContent({
+    const isTemplateWithPrompt = page.generationMethod === 'template' && (camelAiPrompt || ai_prompt);
+    
+    if (page.generationMethod === 'ai' || isTemplateWithPrompt) {
+      try {
+        logger.info(`Starting AI generation for ${isTemplateWithPrompt ? 'template enrichment' : 'full page'} ${page._id}`);
+      
+      // If it's a template, we pass a hint to the AI service
+      const aiInput = {
         businessName: business_name || title,
         industry: page.industry || 'Service',
         businessDescription: businessDescription || business_description || project.description || '',
@@ -312,8 +319,14 @@ exports.createPage = async (req, res, next) => {
         keywords: keywords || [],
         noIndex: page.noIndex || false,
         noFollow: page.noFollow || false,
-        pageId: page._id
-      });
+        pageId: page._id,
+        // Pass the template HTML to the AI if it's a template enrichment task
+        templateHtml: isTemplateWithPrompt ? page.content : null,
+        // Pass figma image if available
+        figmaImage: figmaImage || null
+      };
+
+      const generated = await AIService.generateLandingPageContent(aiInput);
 
       if (generated) {
         aiResponse = {
@@ -324,19 +337,20 @@ exports.createPage = async (req, res, next) => {
           seo: generated.seo || {}
         };
       }
-    } catch (aiErr) {
-      logger.error('AI Generation Failed during page creation:', {
-        error: aiErr.message,
-        pageId: page._id
-      });
-      // Fallback: If AI fails on a purely AI-generated page, we should halt rather than giving a blank page.
-      if (!initialContent && (!template || template === 'blank')) {
-        await Page.findByIdAndDelete(page._id);
-        return res.status(502).json({
-           success: false,
-           message: `AI Generation Error: ${aiErr.message}`,
-           data: {}
+      } catch (aiErr) {
+        logger.error('AI Generation Failed during page creation:', {
+          error: aiErr.message,
+          pageId: page._id
         });
+        // Fallback: If AI fails on a purely AI-generated page, we should halt rather than giving a blank page.
+        if (!initialContent && (!template || template === 'blank')) {
+          await Page.findByIdAndDelete(page._id);
+          return res.status(502).json({
+             success: false,
+             message: `AI Generation Error: ${aiErr.message}`,
+             data: {}
+          });
+        }
       }
     }
 

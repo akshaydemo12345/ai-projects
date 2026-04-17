@@ -64,10 +64,13 @@ export interface LandingPage {
   thankYouHeader?: string;
   thankYouFooter?: string;
   thankYouUrl?: string;
-  generationMethod?: "ai" | "analyze" | "manual";
+  generationMethod?: "ai" | "analyze" | "manual" | "template";
   aiPrompt?: string;
   apiToken?: string;
   previewToken?: string;
+  template?: string;
+  templateId?: string;
+  figmaImage?: string;
   views: number;
   publishedAt?: string;
   createdAt: string;

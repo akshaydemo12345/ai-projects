@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { saasHeroHtml } from "../templates/saasHero";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -105,6 +106,7 @@ const CreatePagePage = () => {
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [figmaFile, setFigmaFile] = useState<File | null>(null);
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
+  const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -123,7 +125,12 @@ const CreatePagePage = () => {
   const handleFigmaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setFigmaFile(file);
-    if (file.type.startsWith("image/")) setFigmaPreview(URL.createObjectURL(file));
+    if (file.type.startsWith("image/")) {
+      setFigmaPreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => setFigmaBase64(reader.result as string);
+      reader.readAsDataURL(file);
+    }
     toast.success(`"${file.name}" selected`);
   };
 
@@ -136,10 +143,14 @@ const CreatePagePage = () => {
     mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Page created!");
-      navigate(`/editor/${id}/${newPage._id}`);
+      toast.success("Page generated successfully!");
+      // Small delay for smooth transition
+      setTimeout(() => navigate(`/editor/${id}/${newPage._id}`), 500);
     },
-    onError: (err: any) => toast.error(err.message || "Failed to create page"),
+    onError: (err: any) => {
+      console.error("Mutation Error:", err);
+      toast.error(err.message || "Failed to create page");
+    },
   });
 
   const handleGenerateMagicPrompt = async () => {
@@ -159,12 +170,43 @@ const CreatePagePage = () => {
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
 
-    const partial = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+    let basePayload: Partial<LandingPage> = {};
+    if (activeMethod === "template" && selectedTemplate === "saas-hero") {
+      let enrichedContent = saasHeroHtml;
+      if (project) {
+        // Smart replacements to make template dynamic
+        enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
+        enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, project.category + " solutions for your business");
+        enrichedContent = enrichedContent.replace(/Your locally owned Renewal by Andersen/g, `Your locally owned ${project.name}`);
+        // Remove specific brand mentions if any
+        enrichedContent = enrichedContent.replace(/Fibrex®/g, "Premium materials");
+
+        // Inject logo URL directly into template content
+        const finalLogo = logoUrl || project.logoUrl;
+        if (finalLogo) {
+          enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
+        }
+      }
+
+      basePayload = {
+        name: pageName.trim(),
+        slug: pageSlug.trim() || autoSlug(pageName),
+        generationMethod: "template" as const,
+        content: enrichedContent,
+        templateId: selectedTemplate,
+        template: "SaaS Hero"
+      };
+    } else {
+      basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+    }
+
     createPageMutation.mutate({
-      ...partial,
+      ...basePayload,
       name: pageName.trim(),
-      slug: pageSlug.trim() || partial.slug,
+      slug: pageSlug.trim() || basePayload.slug,
       primaryColor, secondaryColor, logoUrl,
+      aiPrompt: activeMethod === "figma" ? (aiPrompt || "Create a landing page based on this design.") : aiPrompt,
+      figmaImage: activeMethod === "figma" ? figmaBase64 : undefined,
       accentColor: "#6366f1", type: "ppc", status: "draft",
     });
   };
@@ -193,7 +235,8 @@ const CreatePagePage = () => {
       <div className="flex-1 flex min-h-0">
 
         {/* ─────────────────────── LEFT PANEL ─────────────────────────────── */}
-        <div className="w-full md:w-[52%] lg:w-[55%] border-r border-gray-100 flex flex-col overflow-y-auto">
+        <div className={`flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 ${activeMethod === 'template' ? 'w-full md:w-[52%] lg:w-[55%]' : 'w-full'
+          }`}>
 
           {/* Left Header */}
           <div className="px-8 pt-10 pb-6 border-b border-gray-50">
@@ -420,7 +463,8 @@ const CreatePagePage = () => {
         </div>
 
         {/* ─────────────────────── RIGHT PANEL ─────────────────────────────── */}
-        <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto">
+        {activeMethod === 'template' && (
+          <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100 animate-in fade-in slide-in-from-right-5 duration-300">
 
           {/* Right Header */}
           <div className="px-7 pt-10 pb-5 border-b border-gray-100">
@@ -510,6 +554,7 @@ const CreatePagePage = () => {
             </div>
           </div>
         </div>
+      )}
       </div>
     </div>
   );
