@@ -309,9 +309,9 @@ export interface Lead {
 }
 
 export const leadsApi = {
-  getAll: async (params: { 
-    projectId?: string; 
-    pageId?: string; 
+  getAll: async (params: {
+    projectId?: string;
+    pageId?: string;
     pageSlug?: string;
     search?: string;
     page?: number;
@@ -321,10 +321,10 @@ export const leadsApi = {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) queryParams.append(key, String(value));
     });
-    
+
     const queryString = queryParams.toString();
     const endpoint = `/api/leads${queryString ? `?${queryString}` : ''}`;
-    
+
     const res = await apiFetch(endpoint);
     // Backend returns { status, results, data: { leads: [] } }
     return {
@@ -332,7 +332,7 @@ export const leadsApi = {
       total: res.results || 0
     };
   },
-  
+
   create: async (data: Partial<Lead>) => {
     return apiFetch('/api/leads', {
       method: 'POST',

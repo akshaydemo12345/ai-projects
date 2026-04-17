@@ -1,38 +1,63 @@
 'use strict';
 
 const Anthropic = require('@anthropic-ai/sdk');
-const OpenAI = require('openai');
 const logger = require('../utils/logger');
+
+const CLAUDE_MODEL_CANDIDATES = [
+  process.env.ANTHROPIC_MODEL,
+  'claude-sonnet-4-6',
+  'claude-sonnet-4-5-20250929',
+  'claude-sonnet-4-20250514',
+  'claude-haiku-4-5-20251001',
+].filter(Boolean);
 
 /**
  * Build SYSTEM prompt (Claude-Level Master UI Designer)
  */
 const buildSystemPrompt = () => {
   return `
-Act as a world-class 20+ years experienced UI/UX design director, conversion strategist, frontend architect, and full-stack developer specializing in award-winning landing pages.
+Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
+Your goal is to generate a UNIQUE, premium, high-converting landing page.
 
-Your task is to generate a visually stunning, highly modern, conversion-focused landing page based on a provided STRATEGIC INNOVATION PLAN. You must NOT use a generic structure; instead, execute the "Innovation Ideas" and "Big Idea" precisely while applying premium UI aesthetics.
+VARIATION PRIORITY:
+- Never repeat a rigid template.
+- Pick a fresh visual direction based on user prompt + business context.
+- Vary section order, visual hierarchy, spacing rhythm, and composition.
+- Avoid producing "same skeleton with replaced text".
+- Use at least one distinctive design motif (timeline, bento cards, split hero, editorial layout, diagonal section transitions, or storytelling flow).
 
 CRITICAL DESIGN RULES:
-- MUST include a modern top navigation header with the brand LOGO: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
-- MUST use high-quality images matching the industry context from https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800.
-- EXTREMELY CRITICAL: DO NOT use 'unsplash.com' or 'source.unsplash.com' URLs ever!
-- BACKGROUND IMAGES: Use INLINE STYLES: style="background-image: url('...'); background-size: cover; background-position: center;"
-- SEMANTIC REFINEMENT: Use high-level HTML5 semantic tags (<header>, <main>, <section>, <footer>) with perfect accessibility.
-- CLAUDE-OPTIMIZED DESIGN: Leverage Claude's ability to create sophisticated layouts like Bento Grids, layered card stacks, and high-contrast professional color blocking.
-- DEPTH & MOTION: Use complex Tailwind utility combinations for depth (drop-shadow-2xl, backdrop-blur-md) and subtle hover-reveal states.
-- STRATEGIC EXECUTION: Transform the "Innovation Idea" provided for each section into a unique, functional UI component.
-- VISUAL STORYTELLING: Use advanced layouts (split-screens, card stacks, bento-grids, or reveal-on-scroll) to differentiate from templates.
-- FORM INNOVATION: Implement the suggested "Smart Form Strategy" (Multi-step, conversational, etc.).
-- AESTHETICS: Modern rounded corners (28px+), deep shadows, organic waves, or sharp professional geometries depending on the mood.
-- TYPOGRAPHY: Set the typography according to the suggested mood.
-- RESPONSIVENESS: Ensure innovation translates perfectly to mobile (e.g., sticky buttons, simplified multi-step forms).
+- DO NOT generate a navigation menu or navbar links.
+- Place only the brand logo near the top inside the hero/banner area: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
+- The top area should look like a clean branded banner, not a traditional website navbar.
+- Use high-quality images from 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800'. 
+- BACKGROUND IMAGES: Use inline styles only: style="background-image: url('...'); background-size: cover; background-position: center;"
+- SECTION RHYTHM: Alternate backgrounds (e.g., bg-white, then bg-gray-50, then a dark section).
+- TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
+- GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
 
-MANDATORY EXECUTION:
-1. Translate the "Strategic Conversion Plan" segments into high-fidelity HTML/CSS components.
-2. Ensure sections feel connected through consistent branding and design "rhythm".
-3. Add reveal animations and micro-interactions for a premium feel.
-4. Output FULL complete HTML document code enclosed in \`\`\`html block.
+REQUIRED COVERAGE (MANDATORY LONG-FORM EXPERIENCE):
+1. You MUST generate a minimum of 8 visual sections by default.
+2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar, 3. Why Choose Us...") you MUST include EVERY SINGLE ONE of them in the exact order requested. 
+3. DO NOT MERGE sections. DO NOT SKIP sections. If the user asks for 15 sections, you generate 15 distinct, high-fidelity sections.
+4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
+
+OUTPUT FORMATTING:
+- YOU MUST OUTPUT EVERYTHING IN ONE SINGLE \`\`\`html BLOCK.
+- BE EXTREMELY CONCISE TO MINIMIZE COST. Every section should be roughly 600-800 characters of high-impact code. 
+- Avoid any redundant Tailwind classes or overly wordy descriptions.
+- DO NOT split the page into multiple code blocks.
+
+LENGTH + COMPLETENESS:
+- Generate a full, deep-scroll landing page with ALL requested sections.
+- For 15 sections, aim for a total output around 12,000 to 15,000 characters. 
+- You MUST finish all sections within a 5000 token limit.
+- NEVER use placeholders. Keep HTML semantic and clean.
+
+PLANNING:
+- Budget roughly 300 tokens per section to ensure you reach the Footer.
+
+OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
 `;
 };
 
@@ -55,24 +80,25 @@ const buildUserPrompt = ({
   noFollow = false,
 }) => {
   const robots = [noIndex ? 'noindex' : '', noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
-  
+
   // Extract potential trust signals (numbers, awards, etc.) from description
   const trustSignals = businessDescription ? (businessDescription.match(/(\d+,?\d*\+?|\d+%\+?)/g) || []) : [];
   const topServices = services.slice(0, 6); // Focus on top 6 services
 
   return `
-# BRAND IDENTITY:
-- PRIMARY COLOR (Buttons/Accents): ${primaryColor || '#7c3aed'}
-- SECONDARY COLOR: ${secondaryColor || '#6366f1'}
-- LOGO: {{LOGO_URL}} (Use this tag exactly in the header)
+# BRAND IDENTITY (TRUTH):
+- PRIMARY COLOR PREVIEW: ${primaryColor || '#d23f1b'}
+- SECONDARY COLOR PREVIEW: ${secondaryColor || '#c7d186'}
+- LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
 
-# BUSINESS PROFILE:
-- Brand Name: ${businessName}
-- Industry: ${industry || 'Modern Business'}
-- Value Proposition: ${businessDescription}
-- Audience: ${targetAudience || 'Targeted Professionals'}
-- Core Services: ${topServices.join(', ')}
-${trustSignals.length > 0 ? `- KEY STATS/TRUST: ${trustSignals.join(', ')}` : ''}
+**CRITICAL RULE FOR COLORS**: 
+You MUST NEVER use exact HEX codes (like bg-[#d23f1b]) or Tailwind base colors (like bg-blue-500) for brand elements.
+You MUST ALWAYS use the dynamic CSS variables: \`[var(--primary)]\` and \`[var(--secondary)]\`.
+Examples of ONLY ALLOWED syntax for brand colors:
+- \`bg-[var(--primary)]\`
+- \`text-[var(--primary)]\`
+- \`border-[var(--secondary)]\`
+- \`hover:bg-[var(--primary)]\`
 
 # STRATEGIC GOAL:
 "${aiPrompt || 'Create a world-class landing page focusing on lead generation and brand authority.'}"
@@ -86,24 +112,36 @@ ${trustSignals.length > 0 ? `- KEY STATS/TRUST: ${trustSignals.join(', ')}` : ''
    - Social Proof: Use the industry context to create realistic testimonial names and high-authority trust badges.
 3. Call to Action: Use "${ctaText || 'Get Started'}" as the primary command.
 
-# IMMUTABLE RULES:
-- Only use https://picsum.photos for images.
-- Use {{LOGO_URL}} exactly in the header.
-- Apply ${primaryColor} for primary buttons.
-- Ensure the page feels unique and tailored to the "${industry}" niche.
+# DIVERSITY + STRUCTURE INSTRUCTIONS:
+- Treat this request as a fresh creative direction.
+- You MUST provide a minimum of 8 visual sections if no specific list is provided.
+- **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections (like Hero, FAQ, Pricing, etc.), you MUST treat this as a strict requirement. 
+- You MUST generate EVERY SINGLE SECTION mentioned in the user's prompt. 
+- DO NOT OMIT anything. If the user asks for 15 sections, you produce 15 high-quality sections.
+- Every section must have a unique layout and high-fidelity copy.
+
+# LEAD FORM INSTRUCTION:
+- If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
+- Apply semantic HTML and premium styling with [var(--primary)] buttons.
+
+# IMMUTABLE OVERRIDE (CRITICAL):
+- You MUST STILL ONLY USE 'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800' directly to prevent 404 errors. No exceptions.
+- Do not use Unsplash, Pexels, or any other external API.
+
+# FINAL TASK: 
+Build a pixel-perfect, premium landing page using the user's custom prompt's structure as a STRICT BLUEPRINT. Ensure EVERY requested section is built with unique, premium design and deep content. LONG-FORM ONLY.
 `;
 };
 
 /**
- * Call AI models with fallback
+ * Call Claude only
  */
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
 
-  if (!anthropicKey && !openaiKey) {
-    logger.error('No API keys configured');
-    throw new Error('API keys are not configured in .env');
+  if (!anthropicKey) {
+    logger.error('Anthropic API key is missing');
+    throw new Error('ANTHROPIC_API_KEY is not configured in .env');
   }
 
   // Inject colors into system prompt
@@ -114,45 +152,34 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
     .replace(/\[SECONDARY_HEX\]/g, secondaryHex);
 
-  // --- Try Anthropic (Claude 3.5 Sonnet) First for Design Quality ---
-  if (anthropicKey) {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
+  const anthropic = new Anthropic({ apiKey: anthropicKey });
+  let lastError = null;
+
+  for (const model of CLAUDE_MODEL_CANDIDATES) {
     try {
-      logger.info(`[AI] Attempting Newest Claude 3.5 Sonnet (2024-10-22) for premium design...`);
+      logger.info(`[AI] Attempting Claude model: ${model}`);
       const response = await anthropic.messages.create({
-        model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
-        max_tokens: 8192,
-        temperature: 0.1, // Lower temperature for more consistent, high-end code structure
+        model,
+        max_tokens: 5000,
+        temperature: 0.7,
         system: finalSystemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       });
-      return processResult(response.content[0].text, logoUrl);
+
+      const rawText = response.content[0].text;
+      logger.info(`[AI] Raw response received. Length: ${rawText.length} characters.`);
+
+      return processResult(rawText, logoUrl);
     } catch (err) {
-      logger.error(`[AI] Anthropic failed: ${err.message}`);
+      lastError = err;
+      logger.error(`[AI] Claude model failed (${model}): ${err.message}`);
+      const msg = String(err.message || '');
+      const isModelNotFound = msg.includes('not_found_error') || msg.includes('model:');
+      if (!isModelNotFound) break;
     }
   }
 
-  // --- Try OpenAI Fallback ---
-  if (openaiKey) {
-    const openai = new OpenAI({ apiKey: openaiKey });
-    try {
-      logger.info(`[AI] Attempting OpenAI fallback...`);
-      const response = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4o',
-        messages: [
-          { role: 'system', content: finalSystemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      });
-      return processResult(response.choices[0].message.content, logoUrl);
-    } catch (err) {
-      logger.error(`[AI] OpenAI failed: ${err.message}`);
-    }
-  }
-
-  throw new Error('All AI providers failed. Check your API keys.');
+  throw new Error(`Claude generation failed: ${lastError?.message || 'Unknown Claude error'}`);
 };
 
 /**
@@ -163,7 +190,7 @@ const processResult = (raw, logoUrl) => {
   // Case-insensitive replacement for logo tag
   const logoPlaceholder = 'https://placehold.co/200x60/f8fafc/6366f1?text=BRAND';
   const finalLogo = logoUrl && logoUrl.trim() !== '' ? logoUrl : logoPlaceholder;
-  
+
   clean = clean.replace(/\{\{LOGO_URL\}\}/gi, finalLogo);
   clean = clean.replace(/\{\{logoUrl\}\}/gi, finalLogo);
 
@@ -181,10 +208,27 @@ const processResult = (raw, logoUrl) => {
 };
 
 const cleanHTML = (raw) => {
-  const codeBlockMatch = raw.match(/```html\s*([\s\S]*?)```/i) || raw.match(/```\s*([\s\S]*?)```/i);
-  if (codeBlockMatch) return codeBlockMatch[1].trim();
+  // Enhanced regex to find all ```html ... ``` blocks.
+  // The closing ``` is now optional (?) to handle truncated responses.
+  const regex = /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
+  let matches = [];
+  let match;
+  while ((match = regex.exec(raw)) !== null) {
+    if (match[1]) {
+      let content = match[1].trim();
+      // If content ends with backticks that weren't captured by the non-greedy match, clean them
+      content = content.replace(/```$/g, '').trim();
+      matches.push(content);
+    }
+  }
+
+  // If we found any blocks, join them.
+  if (matches.length > 0) return matches.join('\n');
+
+  // fallback logic if no code blocks are found at all
   const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
   if (htmlMatch) return htmlMatch[1].trim();
+
   return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
 };
 
@@ -192,10 +236,10 @@ const generateLandingPageContent = async (input) => {
   // 1. Generate a Strategic Conversion Plan (CRO Analyst)
   logger.info(`[AI] Generating Strategic Plan for ${input.businessName}...`);
   const strategicPlan = await generateStrategicStructure(input);
-  
+
   // 2. Build the Persona-based System Prompt
   const systemPrompt = buildSystemPrompt();
-  
+
   // 3. Build a detailed User Prompt that incorporates the plan
   const userPrompt = `
 ${buildUserPrompt(input)}
@@ -259,7 +303,7 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc }
     Make it highly specific and conversion-focused.
     Return ONLY the raw string. No quotes.
   `;
-  
+
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -267,7 +311,7 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc }
     temperature: 0.7,
     max_tokens: 400,
   });
-  
+
   return response.choices[0].message.content.trim().replace(/^"|"$/g, '');
 };
 
@@ -437,10 +481,10 @@ Transform this existing structure into a high-converting masterpiece. Use the re
   }
 };
 
-module.exports = { 
-  generateLandingPageContent, 
-  improveSectionContent, 
-  generateDescriptionSuggestion, 
+module.exports = {
+  generateLandingPageContent,
+  improveSectionContent,
+  generateDescriptionSuggestion,
   generateStrategicStructure,
   optimizeStrategicStructure
 };

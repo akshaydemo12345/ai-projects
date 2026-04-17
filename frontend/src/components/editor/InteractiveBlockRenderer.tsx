@@ -58,7 +58,7 @@ const ins = (light = true): React.CSSProperties => ({
   borderRadius: 8, padding: '11px 14px', fontSize: 14,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   background: light ? '#fff' : 'rgba(255,255,255,.08)',
-  color: light ? DARK : '#fff',
+  color: light ? '#0f172a' : '#fff', // Explicitly use #0f172a for light
   marginBottom: 12,
 });
 
@@ -421,6 +421,7 @@ export const renderInteractiveBlock = (block: Block): React.ReactNode => {
     case 'divider': return <IDivider key={block.id} c={c} />;
     case 'spacer': return <ISpacer key={block.id} c={c} />;
     case 'footer': return <IFooter key={block.id} c={c} />;
+    case 'custom-html': return <div key={block.id} dangerouslySetInnerHTML={{ __html: block.content.html || '' }} />;
     default: return null;
   }
 };
