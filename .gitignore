@@ -1,5 +1,10 @@
 node_modules/
 .env
-.env.local
+.env.*
 dist/
 build/
+logs/
+*.log
+
+# Explicitly allow domain-mapper.zip
+!domain-mapper.zip
