@@ -8,7 +8,10 @@ const {
   getPreview, 
   getPreviewHTML, 
   getPublicPageHTML, 
-  downloadPlugin 
+  handleFormSubmission,
+  downloadPlugin,
+  getSitemap,
+  getRobotsTxt,
 } = require('../controllers/publicController');
 
 const router = express.Router();
@@ -25,6 +28,10 @@ router.get('/domain/:domain', getPublicPageByDomain);
 router.post('/plugin/verify', verifyPlugin);
 router.post('/verify-api-key', verifyPlugin);
 router.get('/plugin/download', downloadPlugin);
+
+// ─── SEO: Sitemap & Robots ────────────────────────────────────────────────────
+router.get('/sitemap.xml', getSitemap);
+router.get('/robots.txt', getRobotsTxt);
 
 // ─── Smart Slug Route (HTML for browsers/WP, JSON for API clients) ───────────
 /**
@@ -46,4 +53,12 @@ router.get('/:slug(*)', (req, res, next) => {
   return getPublicPageHTML(req, res, next);
 });
 
+/**
+ * @route   POST /:slug
+ * @desc    Auto-handles form submissions POSTed directly to a page slug.
+ *          Redirects to /:slug/thank-you upon success.
+ */
+router.post('/:slug(*)', handleFormSubmission);
+
 module.exports = router;
+

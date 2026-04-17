@@ -5,7 +5,7 @@ import { getEmailConfig, sendEmailJS } from '@/lib/emailService';
 // ─── Colours (same as BlockRenderer) ────────────────────────────────
 const P = '#2563eb';
 const DARK = '#0f172a';
-const MUTED = '#64748b';
+const MUTED = '#ebf4ffff';
 const LITE = '#f8fafc';
 
 // ─── Shared form hook ────────────────────────────────────────────────
@@ -58,7 +58,7 @@ const ins = (light = true): React.CSSProperties => ({
   borderRadius: 8, padding: '11px 14px', fontSize: 14,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   background: light ? '#fff' : 'rgba(255,255,255,.08)',
-  color: light ? DARK : '#fff',
+  color: light ? '#0f172a' : '#fff', // Explicitly use #0f172a for light
   marginBottom: 12,
 });
 
@@ -78,7 +78,7 @@ const INavbar = ({ c }: { c: any }) => (
     <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <span style={{ fontSize: 22, fontWeight: 800, color: DARK }}>{c.logo}</span>
       <div style={{ display: 'flex', gap: 28 }}>
-        {c.links?.map((l: string) => <a key={l} href={`#${l.toLowerCase().replace(/\s+/g,'-')}`} style={{ fontSize: 14, color: MUTED, textDecoration: 'none', fontWeight: 500 }}>{l}</a>)}
+        {c.links?.map((l: string) => <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, '-')}`} style={{ fontSize: 14, color: MUTED, textDecoration: 'none', fontWeight: 500 }}>{l}</a>)}
       </div>
       <a href="#contact" style={{ background: P, color: '#fff', textDecoration: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 600 }}>{c.cta}</a>
     </div>
@@ -421,6 +421,7 @@ export const renderInteractiveBlock = (block: Block): React.ReactNode => {
     case 'divider': return <IDivider key={block.id} c={c} />;
     case 'spacer': return <ISpacer key={block.id} c={c} />;
     case 'footer': return <IFooter key={block.id} c={c} />;
+    case 'custom-html': return <div key={block.id} dangerouslySetInnerHTML={{ __html: block.content.html || '' }} />;
     default: return null;
   }
 };

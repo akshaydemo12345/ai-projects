@@ -38,7 +38,7 @@ const HeroBlock = ({ c }: { c: any }) => (
       <div style={{ background: '#fff', borderRadius: 16, padding: 40, boxShadow: '0 25px 60px rgba(0,0,0,.3)' }}>
         <h3 style={{ fontSize: 20, fontWeight: 700, color: DARK, margin: '0 0 24px' }}>{c.formTitle}</h3>
         {c.formFields?.map((f: string) => (
-          <input key={f} placeholder={f} readOnly style={{ display: 'block', width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '11px 14px', fontSize: 14, marginBottom: 12, boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' }} />
+          <input key={f} placeholder={f} readOnly style={{ display: 'block', width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '11px 14px', fontSize: 14, marginBottom: 12, boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none', color: DARK, background: '#fff' }} />
         ))}
         <button style={{ width: '100%', background: P, color: '#fff', border: 'none', borderRadius: 8, padding: 15, fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 6 }}>{c.formButton}</button>
         <p style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', margin: '12px 0 0' }}>{c.formDisclaimer}</p>
@@ -192,7 +192,7 @@ const LeadFormBlock = ({ c }: { c: any }) => (
       <div style={{ background: LITE, borderRadius: 16, padding: 40, border: '1px solid #e2e8f0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {c.fields?.map((f: any) => {
-            const shared = { width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' as const };
+            const shared = { width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', color: DARK, boxSizing: 'border-box' as const };
             if (f.type === 'textarea') return (
               <div key={f.label} style={{ gridColumn: '1/-1' }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: DARK, display: 'block', marginBottom: 6 }}>{f.label}{f.required ? ' *' : ''}</label>

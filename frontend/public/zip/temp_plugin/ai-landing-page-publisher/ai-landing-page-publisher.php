@@ -90,7 +90,7 @@ function ailp_add_query_vars($vars)
 function ailp_handle_proxy()
 {
     $slug = get_query_var('ailp_slug', '');
-    
+
     // Fallback: if rewrite rules didn't catch it (e.g. permalinks off), check manually
     if ($slug === '') {
         $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
@@ -152,14 +152,14 @@ function ailp_handle_proxy()
     $body = wp_remote_retrieve_body($response);
     $content_type = wp_remote_retrieve_header($response, 'content-type');
 
-    // Rewrite domain references in the body so assets & links resolve correctly
+    // Rewrite domain references in the body and sanitize internal traces safely
     $source_host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
     if ($source_host && $target) {
-        $body = ailp_rewrite_body($body, $target, $source_host, $content_type);
+        $body = ailp_sanitize_and_rewrite_body($body, $target, $source_host, $content_type);
     }
 
     // Send response
-    status_header((int) $status_code ?: 200);
+    status_header((int)$status_code ?: 200);
 
     // Forward safe headers
     $skip = array(
@@ -241,23 +241,48 @@ function ailp_forward_headers($target_host)
 }
 
 /**
- * Rewrite domain references in HTML/CSS/JS so that the proxied page
- * renders correctly on the WordPress domain.
+ * Sanitize and Rewrite domain references in HTML/CSS/JS so that the proxied page
+ * renders cleanly, safely, and securely on the WordPress domain.
  */
-function ailp_rewrite_body($body, $target, $source_host, $content_type)
+function ailp_sanitize_and_rewrite_body($body, $target, $source_host, $content_type)
 {
     $ct = strtolower($content_type);
-    // Only rewrite text-based responses
-    if (strpos($ct, 'html') === false && strpos($ct, 'css') === false && strpos($ct, 'javascript') === false && strpos($ct, 'json') === false) {
+    $is_html = (strpos($ct, 'html') !== false);
+    
+    if (!$is_html && strpos($ct, 'css') === false && strpos($ct, 'javascript') === false && strpos($ct, 'json') === false) {
         return $body;
     }
 
     $target_bare = preg_replace('#^https?://#i', '', rtrim($target, '/'));
 
-    // Replace https and http references to target domain
-    $body = str_ireplace('https://' . $target_bare, 'http://' . $source_host, $body);
-    $body = str_ireplace('http://' . $target_bare, 'http://' . $source_host, $body);
+    // Aggressive masking: replace ALL target domain variations with client domain
+    $body = str_ireplace('https://' . $target_bare, 'https://' . $source_host, $body);
+    $body = str_ireplace('http://' . $target_bare, 'https://' . $source_host, $body); // Force HTTPS on frontend usually
     $body = str_ireplace('//' . $target_bare, '//' . $source_host, $body);
+    $body = str_ireplace('\/\/' . $target_bare, '\/\/' . $source_host, $body); // Handle JSON escaped slashes
+
+    if ($is_html) {
+        // 1. Remove HTML comments (except IE conditionals) securely
+        $body = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $body);
+        
+        // 2. Remove standard WordPress noise generators (useful if SaaS runs WP)
+        $body = preg_replace('/<meta name="?generator"?[^>]+>/i', '', $body);
+        $body = preg_replace('/<link rel="?https:\/\/api\.w\.org\/"?[^>]+>/i', '', $body);
+        $body = preg_replace('/<link rel="?(?:alternate|EditURI|wlwmanifest|shortlink)"?[^>]+>/i', '', $body);
+        
+        // 3. Remove WP Emoji Noise
+        $body = preg_replace('/<script[^>]*>window\._wpemojiSettings.*?<\/script>/is', '', $body);
+        $body = preg_replace('/<script[^>]+src="[^"]+wp-emoji-release\.min\.js"[^>]*><\/script>/is', '', $body);
+        
+        // 4. Remove WP Embed script
+        $body = preg_replace('/<script[^>]+src="[^"]+wp-embed\.min\.js"[^>]*><\/script>/is', '', $body);
+        
+        // 5. Remove builder trace comments (Divi/Elementor) or any left over footprints
+        $body = preg_replace('/<!--\s*(?:Divi|Elementor|WP|Plugin)[^>]*-->/i', '', $body);
+        
+        // 6. Cleanup excessive empty newlines created by regex stripping
+        $body = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $body);
+    }
 
     return $body;
 }
@@ -309,7 +334,7 @@ function ailp_render_settings_page()
     $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
     $target = isset($settings['target_domain']) ? $settings['target_domain'] : '';
     $paths = isset($settings['allowed_paths']) ? $settings['allowed_paths'] : '';
-    ?>
+?>
     <div class="wrap">
         <h1>🚀 AI Landing Page Publisher</h1>
 
@@ -352,7 +377,8 @@ function ailp_render_settings_page()
                             <?php if ($target): ?>
                                 <p class="description" style="margin-top:6px;">Connected to:
                                     <code><?php echo esc_html($target); ?></code></p>
-                            <?php endif; ?>
+                            <?php
+    endif; ?>
                         </td>
                     </tr>
                     <?php if ($paths): ?>
@@ -361,14 +387,17 @@ function ailp_render_settings_page()
                             <td>
                                 <?php foreach (explode(',', str_replace(array("\r", "\n"), ',', $paths)) as $p): ?>
                                     <?php $p = trim($p);
-                                    if ($p): ?>
+            if ($p): ?>
                                         <code
                                             style="display:inline-block;margin:2px 4px 2px 0;">/<?php echo esc_html(ltrim($p, '/')); ?></code>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
+                                    <?php
+            endif; ?>
+                                <?php
+        endforeach; ?>
                             </td>
                         </tr>
-                    <?php endif; ?>
+                    <?php
+    endif; ?>
                 </table>
             </div>
 
@@ -444,17 +473,18 @@ function ailp_ajax_verify()
 
     // Call the SaaS backend to verify
     $parts = explode('@@', $api_key, 2);
-    
+
     // Default backend if not provided in the token. 
     // Using the current detected machine IP (192.168.1.7) for local network reliability.
     $default_backend = 'http://192.168.1.7:5000';
 
     if (count($parts) === 2) {
         $endpoint = trim($parts[0]);
-        $token    = trim($parts[1]);
-    } else {
+        $token = trim($parts[1]);
+    }
+    else {
         $endpoint = $default_backend;
-        $token    = $api_key;
+        $token = $api_key;
     }
 
     if ($endpoint === '' || !filter_var($endpoint, FILTER_VALIDATE_URL)) {
@@ -473,7 +503,7 @@ function ailp_ajax_verify()
         'headers' => array('Content-Type' => 'application/json'),
         'body' => wp_json_encode(array(
             'api_key' => $token,
-            'domain'  => $calling_domain,
+            'domain' => $calling_domain,
         )),
     ));
 
@@ -491,19 +521,19 @@ function ailp_ajax_verify()
 
     // Save verified settings
     $settings = get_option(AILP_OPTION, array());
-    $settings['api_key']       = $api_key;
-    $settings['status']        = 'active';
+    $settings['api_key'] = $api_key;
+    $settings['status'] = 'active';
     // Mapping from backend response: target_url -> target_domain, allowed_paths -> allowed_paths
     $settings['target_domain'] = isset($body['target_url']) ? $body['target_url'] : '';
-    $settings['allowed_paths'] = isset($body['allowed_paths']) ? implode("\n", (array) $body['allowed_paths']) : '';
+    $settings['allowed_paths'] = isset($body['allowed_paths']) ? implode("\n", (array)$body['allowed_paths']) : '';
     update_option(AILP_OPTION, $settings);
 
     // Re-register rewrite rules with the new paths
     ailp_register_rewrite_rules();
     flush_rewrite_rules();
 
-    $project_name  = isset($body['projectName']) ? $body['projectName'] : 'Project';
-    $paths_display = isset($body['allowed_paths']) ? implode(', ', (array) $body['allowed_paths']) : '';
+    $project_name = isset($body['projectName']) ? $body['projectName'] : 'Project';
+    $paths_display = isset($body['allowed_paths']) ? implode(', ', (array)$body['allowed_paths']) : '';
     wp_send_json_success(array(
         'message' => '✅ Activated! "' . esc_html($project_name) . '" is live: ' . esc_html($paths_display),
     ));
