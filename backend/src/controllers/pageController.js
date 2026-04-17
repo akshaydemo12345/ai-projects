@@ -306,19 +306,21 @@ exports.createPage = async (req, res, next) => {
       
       // If it's a template, we pass a hint to the AI service
       const aiInput = {
-        businessName: business_name || title,
-        industry: page.industry || 'Service',
-        businessDescription: businessDescription || business_description || project.description || '',
-        targetAudience: targetAudience || 'General',
-        ctaText: ctaText || 'Get Started',
-        aiPrompt: camelAiPrompt || ai_prompt || '',
-        primaryColor: page.primaryColor,
-        secondaryColor: page.secondaryColor,
-        logoUrl: page.logoUrl || '',
-        services: page.services || [],
+        businessName: project.name,
+        industry: project.industry,
+        pageType: 'lead generation',
+        targetAudience: project.description || 'Business owners looking for ' + project.industry + ' services',
+        businessDescription: project.description,
+        ctaText: 'Get Started',
+        tone: 'Professional',
+        aiPrompt: '',
+        logoUrl: project.logoUrl || '',
+        primaryColor: page.primaryColor || project.primaryColor,
+        secondaryColor: page.secondaryColor || project.secondaryColor,
+        services: page.services || project.services || [],
         keywords: keywords || [],
-        noIndex: page.noIndex || false,
-        noFollow: page.noFollow || false,
+        noIndex: page.noIndex || project.noIndex || false,
+        noFollow: page.noFollow || project.noFollow || false,
         pageId: page._id,
         // Pass the template HTML to the AI if it's a template enrichment task
         templateHtml: isTemplateWithPrompt ? page.content : null,
@@ -699,7 +701,7 @@ exports.exportLeadsCsv = async (req, res, next) => {
     }
 
     const headers = 'Name,Email,Message,Date\n';
-    const rows = page.leads.map((l) => {
+    const rows = (page.leads || []).map((l) => {
       const safeName = `"${(l.name || '').replace(/"/g, '""')}"`;
       const safeEmail = `"${(l.email || '').replace(/"/g, '""')}"`;
       const safeMessage = `"${(l.message || '').replace(/"/g, '""')}"`;

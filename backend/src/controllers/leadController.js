@@ -198,16 +198,23 @@ exports.getTrackerJs = (req, res) => {
         PI = s.getAttribute("data-page-id") || "",
         PJ = s.getAttribute("data-project-id") || "";
 
+    console.log('[Lead Tracker] Initialized with API:', A, 'Slug:', SL);
+
     function send(d, f, b, t, n) {
       n = n || 1;
+      console.log('[Lead Tracker] Sending data (attempt ' + n + '):', d);
       fetch((A ? A : "") + "/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(d),
         mode: "cors"
       })
-      .then(function(r) { return r.json() })
+      .then(function(r) { 
+        console.log('[Lead Tracker] Response status:', r.status);
+        return r.json() 
+      })
       .then(function(r) {
+        console.log('[Lead Tracker] Response:', r);
         if (r.status === "success") {
           f.reset();
           // Redirect to the dedicated thank-you page
@@ -219,6 +226,7 @@ exports.getTrackerJs = (req, res) => {
         } else throw new Error(r.message || "Error")
       })
       .catch(function(e) {
+        console.error('[Lead Tracker] Error:', e);
         if (n < 3) {
           if (b) b.textContent = "Retrying...";
           setTimeout(function() { send(d, f, b, t, n + 1) }, 2000);
@@ -232,20 +240,30 @@ exports.getTrackerJs = (req, res) => {
     document.addEventListener("submit", function(e) {
       var f = e.target;
       if (f.tagName !== "FORM") return;
+      console.log('[Lead Tracker] Form submit intercepted');
       e.preventDefault();
       var b = f.querySelector('button[type="submit"]') || f.querySelector("button"),
           t = b ? (b.textContent || "Submit") : "Submit";
       if (b) { b.disabled = true; b.textContent = "Sending..." }
       var fd = new FormData(f);
+      
+      // Try multiple field name variations
       var data = {
         pageSlug: SL,
         pageId: PI,
         projectId: PJ,
-        name: fd.get("name") || fd.get("first_name") || (f.querySelector('input[type="text"]') ? f.querySelector('input[type="text"]').value : ""),
-        email: fd.get("email") || (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : ""),
-        phone: fd.get("phone") || fd.get("tel") || (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : ""),
-        message: fd.get("message") || fd.get("comments") || (f.querySelector('textarea') ? f.querySelector('textarea').value : "")
+        name: fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname") || 
+               (f.querySelector('input[name*="name"]') ? f.querySelector('input[name*="name"]').value : "") ||
+               (f.querySelector('input[type="text"]') ? f.querySelector('input[type="text"]').value : ""),
+        email: fd.get("email") || fd.get("email_address") || 
+               (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : ""),
+        phone: fd.get("phone") || fd.get("tel") || fd.get("telephone") || fd.get("mobile") ||
+               (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : ""),
+        message: fd.get("message") || fd.get("comments") || fd.get("comment") || fd.get("inquiry") ||
+                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")
       };
+      
+      console.log('[Lead Tracker] Collected data:', data);
       send(data, f, b, t, 1);
     })
   })();`;

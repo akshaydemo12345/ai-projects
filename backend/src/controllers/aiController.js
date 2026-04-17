@@ -68,8 +68,8 @@ exports.generateContent = async (req, res, next) => {
         const page = await Page.findById(input.pageId);
         if (page && page.projectId) {
           const project = await Project.findById(page.projectId);
-          if (project && project.scrapedImages && project.scrapedImages.length > 0) {
-            scrapedImages = project.scrapedImages;
+          if (project && project.scrapedData && project.scrapedData.images && project.scrapedData.images.length > 0) {
+            scrapedImages = project.scrapedData.images;
           }
         }
       } catch (err) {
@@ -80,8 +80,7 @@ exports.generateContent = async (req, res, next) => {
     // No pageId: generate synchronously so frontend can consume real AI HTML/CSS immediately.
     if (!input.pageId) {
       const aiContent = await generateLandingPageContent({
-        ...input,
-        scrapedImages
+        ...input
       });
       user.credits = Math.max(0, user.credits - 1);
       await user.save({ validateBeforeSave: false });
@@ -126,11 +125,10 @@ exports.generateContent = async (req, res, next) => {
           }
         }
 
-        // B. Call AI service with scraped images
+        // B. Call AI service with scraped data
         const aiContent = await generateLandingPageContent({
           ...input,
-          figmaData,
-          scrapedImages
+          figmaData
         });
 
     // D. Deduct 1 credit on success

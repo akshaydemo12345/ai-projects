@@ -25,7 +25,6 @@ exports.createProject = async (req, res, next) => {
       colors: req.body.colors || [],
       themeSystem: req.body.themeSystem || {},
       websiteUrl: req.body.websiteUrl || req.body.url,
-      scrapedImages: req.body.scrapedImages || [],
       scrapedData: req.body.scrapedData || {},
     });
 
