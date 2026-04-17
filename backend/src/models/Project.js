@@ -48,16 +48,30 @@ const projectSchema = new mongoose.Schema({
   logoUrl: {
     type: String,
   },
+  services: {
+    type: [String],
+    default: [],
+  },
+  keywords: {
+    type: [String],
+    default: [],
+  },
   industry: {
     type: String,
   },
   primaryColor: {
     type: String,
-    default: '#7c3aed',
   },
   secondaryColor: {
     type: String,
-    default: '#6366f1',
+  },
+  colors: {
+    type: [String],
+    default: [],
+  },
+  themeSystem: {
+    type: Object,
+    default: {},
   },
   websiteUrl: {
     type: String,

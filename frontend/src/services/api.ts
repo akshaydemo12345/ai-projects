@@ -57,6 +57,11 @@ export interface LandingPage {
   secondaryColor?: string;
   accentColor?: string;
   logoUrl?: string;
+  mainHeader?: string;
+  mainFooter?: string;
+  thankYouHeader?: string;
+  thankYouFooter?: string;
+  thankYouUrl?: string;
   generationMethod?: "ai" | "analyze" | "manual";
   aiPrompt?: string;
   apiToken?: string;
@@ -230,6 +235,18 @@ export const aiApi = {
   analyze: async (url: string) => {
     return apiFetch('/ai/analyze-website', {
       method: 'POST',
+      body: JSON.stringify({ websiteUrl: url }),
+    });
+  },
+  inspect: async (url: string) => {
+    return apiFetch('/ai/inspect-website', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+  extractProject: async (url: string) => {
+    return apiFetch('/ai/extract-project', {
+      method: 'POST',
       body: JSON.stringify({ url }),
     });
   },
@@ -237,6 +254,12 @@ export const aiApi = {
     return apiFetch('/ai/improve', {
       method: 'POST',
       body: JSON.stringify(sectionData),
+    });
+  },
+  generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string }) => {
+    return apiFetch('/ai/generate-description', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 };
@@ -286,9 +309,9 @@ export interface Lead {
 }
 
 export const leadsApi = {
-  getAll: async (params: { 
-    projectId?: string; 
-    pageId?: string; 
+  getAll: async (params: {
+    projectId?: string;
+    pageId?: string;
     pageSlug?: string;
     search?: string;
     page?: number;
@@ -298,10 +321,10 @@ export const leadsApi = {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) queryParams.append(key, String(value));
     });
-    
+
     const queryString = queryParams.toString();
     const endpoint = `/api/leads${queryString ? `?${queryString}` : ''}`;
-    
+
     const res = await apiFetch(endpoint);
     // Backend returns { status, results, data: { leads: [] } }
     return {
@@ -309,7 +332,7 @@ export const leadsApi = {
       total: res.results || 0
     };
   },
-  
+
   create: async (data: Partial<Lead>) => {
     return apiFetch('/api/leads', {
       method: 'POST',

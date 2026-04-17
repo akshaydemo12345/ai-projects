@@ -1,135 +1,84 @@
 ---
-description: This workflow manages the complete lifecycle of creating, optimizing, and publishing an AI-powered landing page. It includes user authentication, landing page creation, AI-based content generation, SEO keyword optimization, real-time editing, and pub
+description: Agent ko sirf frontend UI design 
 ---
 
-FULL SIMPLE FLOW:-
-Login → JWT → Dashboard → Create Page → AI Generate → Edit → Save → Publish → Domain Map → Live
+# 🚫 STRICT RULES: FRONTEND ONLY (NO BACKEND)
 
+## 🎯 Objective
+Agent ko sirf frontend UI design aur interaction banana hai. Backend ka koi bhi logic allowed nahi hai.
 
-1. User Login / Signup Flow
-[Frontend: Login/Signup Page]
-    ↓ (Enter: Name, Email, Password / Click Google)
-[API Call → POST /auth/signup OR /auth/login]
-    ↓
-[Backend]
-    ↓ Validate Input
-    ↓ Check User in DB
-    ↓ Hash Password / Verify Password
-    ↓ (If Google → verify token)
-    ↓ Generate JWT Token
-    ↓ Store user session (optional Redis)
-    ↓
-[Response → JWT + User Data]
-    ↓
-[Frontend]
-    ↓ Store Token (localStorage / cookie)
-    ↓ Redirect → Dashboard
-    
-    
-2. Dashboard Load Flow
-[Frontend: Dashboard खुला]
-    ↓
-[API Call → GET /user/profile]
-    ↓
-[Backend]
-    ↓ Verify JWT Middleware
-    ↓ Fetch User Data from DB
-    ↓
-[Response → User Info + Existing Pages]
-    ↓
-[Frontend]
-    ↓ Show "Create Landing Page"
-    
-    
-    
-3. Create Landing Page Flow
-[Frontend: Click "Create Page"]
-    ↓
-[User selects Template + enters Title]
-    ↓
-[API Call → POST /pages]
-    ↓
-[Backend]
-    ↓ Verify JWT
-    ↓ Create new record in landing_pages table
-    ↓ status = "draft"
-    ↓
-[Response → page_id]
-    ↓
-[Frontend]
-    ↓ Redirect → Page Editor
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-4. AI Content Generate Flow
-[Frontend: Click "Generate AI Content"]
-    ↓ (User inputs business info)
-[API Call → POST /ai/generate]
-    ↓
-[Backend]
-    ↓ Verify JWT
-    ↓ Send prompt → AI API (OpenAI)
-    ↓ Get Response (headline, content, CTA)
-    ↓ Save content in DB (optional)
-    ↓
-[Response → AI Content JSON]
-    ↓
-[Frontend]
-    ↓ Auto-fill Landing Page Editor
-    
-    
-    
-    
-    
-    
-5. Edit & Save Landing Page    
-[Frontend: User edits content/images]
-    ↓
-[Auto Save / Manual Save]
-    ↓
-[API Call → PUT /pages/:id]
-    ↓
-[Backend]
-    ↓ Verify JWT
-    ↓ Update landing_pages (JSON content store)
-    ↓
-[Response → Success]
+---
 
+## ❌ NOT ALLOWED (STRICTLY BAN)
+- Backend code (Node.js, Python, PHP, etc.)
+- APIs (fetch, axios, external requests)
+- Database (MongoDB, MySQL, Firebase, etc.)
+- Authentication logic (real login/signup)
+- Server-side rendering
+- Environment variables / API keys
 
+---
 
+## ✅ ALLOWED (ONLY THESE)
+- HTML
+- CSS
+- JavaScript (Vanilla)
+- UI interactions
+- Dummy/static data
+- Local state (variables, arrays)
 
+---
 
+## ⚙️ FUNCTIONALITY RULES
 
-6. Publish Landing Page Flow
+### 1. Authentication
+- Only UI form
+- Login button → next screen (no validation)
 
-[Frontend: Click "Publish"]
-    ↓
-[User enters Domain / Subdomain]
-    ↓
-[API Call → POST /pages/:id/publish]
-    ↓
-[Backend]
-    ↓ Verify JWT
-    ↓ Validate domain/subdomain
-    ↓ Update DB:
-        status = "published"
-        domain = user-domain.com
-    ↓
-    ↓ Generate Routing Config:
-        map domain → page_id
-    ↓
-    ↓ (Background Job Trigger)
-        → Create Nginx config OR update routing system
-        → Setup SSL (Let's Encrypt)
-    ↓
-[Response → "Published Successfully"]
-    ↓
-[Frontend]
-    ↓ Show Live URL
+---
+
+### 2. AI Generation
+- Use static/dummy content
+- “Generate” → show loader → replace content
+
+---
+
+### 3. SEO Optimization
+- Static score (e.g. 75%)
+- Fake keyword suggestions
+- No real calculation
+
+---
+
+### 4. Editor
+- Real-time preview using DOM manipulation
+- No saving to server
+- Changes only in UI
+
+---
+
+### 5. Publish
+- Show success message
+- Generate fake URL (example.com/page)
+- No actual hosting
+
+---
+
+## 🎨 UI BEHAVIOR
+- Smooth transitions
+- Loading animations (fake)
+- Interactive feel like real product
+
+---
+
+## ⚠️ FINAL INSTRUCTION
+If any feature requires backend:
+➡️ Replace it with dummy UI simulation  
+➡️ NEVER implement real backend logic  
+
+---
+
+## ✅ SUCCESS CONDITION
+- App fully working in browser
+- No backend dependency
+- Looks like real SaaS product

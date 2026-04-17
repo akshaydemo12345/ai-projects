@@ -27,6 +27,8 @@ router.post('/generate', protect, aiRateLimit, generateContent);
  * @access  Private (JWT)
  */
 router.post('/analyze-website', protect, aiRateLimit, analyzeWebsite);
+router.post('/inspect-website', protect, aiRateLimit, require('../controllers/aiController').inspectWebsite);
+router.post('/extract-project', protect, aiRateLimit, require('../controllers/aiController').extractProject);
 
 /**
  * @route   POST /ai/improve
@@ -34,5 +36,8 @@ router.post('/analyze-website', protect, aiRateLimit, analyzeWebsite);
  * @access  Private (JWT)
  */
 router.post('/improve', protect, aiRateLimit, require('../controllers/aiController').improveSection);
+router.post('/generate-description', protect, aiRateLimit, require('../controllers/aiController').generateDescription);
+router.post('/optimize-page', protect, aiRateLimit, require('../controllers/aiController').optimizePage);
+router.post('/strategic-plan', protect, aiRateLimit, require('../controllers/aiController').getStrategicPlan);
 
 module.exports = router;

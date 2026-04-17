@@ -8,9 +8,12 @@ import 'grapesjs/dist/css/grapes.min.css';
 import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
+import JSZip from 'jszip';
 import './grapes-custom.css';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import BlocksPanel from './BlocksPanel';
+import GlobalStylesPanel from './GlobalStylesPanel';
 
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
@@ -43,7 +46,7 @@ const GrapesEditor = () => {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [leftTab, setLeftTab] = useState<'blocks' | 'layers'>('blocks');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
   // AI Prompt
   const [aiOpen, setAiOpen] = useState(false);
@@ -68,6 +71,8 @@ const GrapesEditor = () => {
   const [seoOpen, setSeoOpen] = useState(false);
   const [pageTitle, setPageTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
+  const [themePrimary, setThemePrimary] = useState('#7c3aed');
+  const [themeSecondary, setThemeSecondary] = useState('#6366f1');
   // Custom Color Picker
   const [colorPicker, setColorPicker] = useState<{
     visible: boolean;
@@ -77,13 +82,27 @@ const GrapesEditor = () => {
     fieldEl: HTMLElement | null;
     cssProperty: string;
   }>({ visible: false, x: 0, y: 0, color: '#000000', fieldEl: null, cssProperty: '' });
+
+  // Selection Context
+  const [selectedLabel, setSelectedLabel] = useState<string>('Body');
+  const [activeComponent, setActiveComponent] = useState<any>(null);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+
+  // UI Panels
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const cpObserverRef = useRef<MutationObserver | null>(null);
+  const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (page) {
       setPageTitle(page.metaTitle || page.name || 'Landing Page');
       setMetaDesc(page.metaDescription || '');
+      setThemePrimary(page.primaryColor || '#7c3aed');
+      setThemeSecondary(page.secondaryColor || '#6366f1');
     }
   }, [page]);
 
@@ -93,6 +112,13 @@ const GrapesEditor = () => {
   useEffect(() => {
     pageDataRef.current = page;
   }, [page]);
+
+  // Auto-focus AI input when tab switches to AI
+  useEffect(() => {
+    if (leftTab === 'ai' && isSidebarOpen) {
+      setTimeout(() => aiInputRef.current?.focus(), 150);
+    }
+  }, [leftTab, isSidebarOpen]);
 
   // Handle content application
   const applyContentToEditor = (editor: any) => {
@@ -125,37 +151,100 @@ const GrapesEditor = () => {
         const doc = parser.parseFromString(dbContent, 'text/html');
         const styles = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
         if (styles) dbStyles = (dbStyles || '') + '\n' + styles;
-        
+
         // Take body content
         dbContent = doc.body.innerHTML;
 
         // Apply body style to wrapper
         const bodyStyle = doc.body.getAttribute('style');
         if (bodyStyle) editor.getWrapper().addStyle(bodyStyle);
-      } catch (e) {}
+      } catch (e) { }
     }
-    
+
     // 3. Set to Editor
     if (dbContent && dbContent.trim().length > 10) {
       console.log('💎 Injecting branding variables and setting content...');
-      
+
       // Clear then set
       editor.setComponents('');
-      
-      // Ensure variables are in the global style manager
-      const rootVars = `:root { 
-        --primary: ${currentPage.primaryColor}; 
-        --secondary: ${currentPage.secondaryColor}; 
-        --accent: ${currentPage.secondaryColor};
-        --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor}, ${currentPage.secondaryColor});
-      }`;
-      
-      editor.setStyle(rootVars + (dbStyles || ''));
+
+      // Inject :root CSS variables directly into canvas <head> as a style tag
+      // (Do NOT use editor.setStyle for root vars — it conflicts with GlobalStylesPanel)
+      const canvasDoc = editor.Canvas.getDocument();
+      if (canvasDoc) {
+        let brandingTag = canvasDoc.getElementById('branding-vars-init') as HTMLStyleElement | null;
+        if (!brandingTag) {
+          brandingTag = canvasDoc.createElement('style');
+          brandingTag.id = 'branding-vars-init';
+          canvasDoc.head.appendChild(brandingTag);
+        }
+        brandingTag.innerHTML = `:root { 
+          --primary: ${currentPage.primaryColor || '#7c3aed'}; 
+          --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
+          --accent: ${currentPage.secondaryColor || '#6366f1'};
+          --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
+        }
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
+        `;
+      }
+
+      editor.setStyle(dbStyles || '');
 
       // Apply body/wrapper style explicitly if detected
       if (dbStyles.includes('#0f172a') || dbStyles.includes('rgba(15, 23, 42') || dbStyles.includes('var(--slate-950)')) {
-          editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
+        editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
       }
+
+      // Convert static hardcoded HEX colors to dynamic CSS variables
+      if (currentPage.primaryColor) {
+        let pColor = currentPage.primaryColor.trim();
+        if (pColor && pColor !== '#ffffff' && pColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(pColor, 'gi'), 'var(--primary)');
+          if (pColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(pColor.slice(0, 7), 'gi'), 'var(--primary)');
+          }
+          // Also catch variations that AI might have hallucinated without alpha or slightly off
+          // E.g. user had #b24732ab, pColor.slice(0, 7) is #b24732.
+        }
+      }
+      if (currentPage.secondaryColor) {
+        let sColor = currentPage.secondaryColor.trim();
+        if (sColor && sColor !== '#ffffff' && sColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(sColor, 'gi'), 'var(--secondary)');
+          if (sColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(sColor.slice(0, 7), 'gi'), 'var(--secondary)');
+          }
+        }
+      }
+
+      // Add a smart replacement for any common tailwind hex backgrounds if they specifically match primary
+      // Make sure Tailwind renders them via CSS Variables safely
+      dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
+      dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
+
+      // Inject Tailwind Config inside GrapesJS to support our variables directly!
+      const configHTML = `
+      <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: 'var(--primary)',
+                secondary: 'var(--secondary)',
+                accent: 'var(--accent)'
+              }
+            }
+          }
+        }
+      </script>
+      `;
+      dbContent = configHTML + dbContent;
 
       editor.setComponents(dbContent);
     } else {
@@ -191,6 +280,9 @@ const GrapesEditor = () => {
         styles: [
           'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap',
         ],
+        scripts: [
+          'https://cdn.tailwindcss.com',
+        ],
       },
       deviceManager: {
         devices: [
@@ -221,36 +313,276 @@ const GrapesEditor = () => {
 
     editor.on('load', () => {
       console.log('📤 GrapesJS Loaded - applying content');
+
+      // ─── Register Form Traits (Automatic mapping to HTML tags) ───
+      editor.DomComponents.addType('form', {
+        isComponent: el => el.tagName === 'FORM',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'title', label: 'Title' },
+              { type: 'text', name: 'action', label: 'Action URL' },
+              { type: 'select', name: 'method', label: 'Method', options: [{ id: 'POST', name: 'POST' }, { id: 'GET', name: 'GET' }] },
+              { type: 'text', name: 'success-msg', label: 'Success Message' },
+              { type: 'text', name: 'redirect-url', label: 'Redirect URL' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('input', {
+        isComponent: el => el.tagName === 'INPUT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'select', name: 'type', label: 'Type', options: [
+                { id: 'text', name: 'Text' },
+                { id: 'email', name: 'Email' },
+                { id: 'number', name: 'Number' },
+                { id: 'tel', name: 'Phone' },
+                { id: 'password', name: 'Password' },
+              ]},
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('textarea', {
+        isComponent: el => el.tagName === 'TEXTAREA',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('select', {
+        isComponent: el => el.tagName === 'SELECT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              {
+                type: 'button',
+                name: 'add-option',
+                text: 'Add Option',
+                command: (ed: any, trait: any) => {
+                  const model = trait.target;
+                  model.components().add({ type: 'option', content: 'New Option', attributes: { value: 'new' } });
+                }
+              }
+            ],
+          },
+        },
+      });
+
       applyContentToEditor(editor);
       // Set up custom color picker injection after load
       setTimeout(() => injectCustomColorPickers(editor), 500);
+
+      // ─── Add Native GrapesJS Custom Blocks ───
+      const bm = editor.BlockManager;
+
+      // 1. BASIC CATEGORY
+      bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
+      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:20px; min-height: 50px; justify-content:center;"><div style="flex:1;">1 Column</div></div>' });
+      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 2</div></div>' });
+      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 2</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 3</div></div>' });
+      bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
+      bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
+      bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
+      bm.add('custom-image', { label: 'Image', category: 'Basic', attributes: { class: 'fa fa-picture-o' }, content: { type: 'image', style: { color: 'black' }, activeOnRender: 1 } });
+      bm.add('custom-quote', { label: 'Quote', category: 'Basic', attributes: { class: 'fa fa-quote-right' }, content: '<blockquote style="border-left: 4px solid var(--primary); padding-left: 15px; margin: 20px 0; font-style: italic; color: #4b5563;">Insert your quote here.</blockquote>' });
+      bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
+
+      // 2. FORMS CATEGORY
+      bm.add('custom-form', { 
+        label: 'Form', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-wpforms' }, 
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '20px', border: '1px solid var(--input-border)', borderRadius: '8px', minHeight: '100px', backgroundColor: 'var(--form-bg)' },
+          components: [
+            {
+              type: 'label',
+              content: 'Email',
+              editable: true,
+              style: { color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+            },
+            {
+              type: 'input',
+              attributes: { type: 'email', placeholder: 'your@email.com' },
+              style: { width: '100%', padding: '8px', color: 'var(--input-text)', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '4px', marginBottom: '15px' }
+            },
+            {
+              type: 'button',
+              content: 'Submit',
+              attributes: { type: 'submit' },
+              style: { padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }
+            }
+          ]
+        }
+      });
+
+      bm.add('custom-input', { 
+        label: 'Input', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-keyboard-o' }, 
+        content: {
+          type: 'input',
+          attributes: { placeholder: 'Type here...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-textarea', { 
+        label: 'Textarea', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-file-text-o' }, 
+        content: {
+          type: 'textarea',
+          attributes: { placeholder: 'Type message...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', minHeight: '100px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-select', { 
+        label: 'Select', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-caret-square-o-down' }, 
+        content: {
+          type: 'select',
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
+          components: [
+            { type: 'option', content: 'Option 1', attributes: { value: '1' } },
+            { type: 'option', content: 'Option 2', attributes: { value: '2' } }
+          ]
+        }
+      });
+
+      bm.add('custom-check', { 
+        label: 'Checkbox', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-check-square-o' }, 
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'checkbox', style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Checkbox Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-radio', { 
+        label: 'Radio', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-dot-circle-o' }, 
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'radio', attributes: { name: 'radioGrp' }, style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Radio Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-button', { 
+        label: 'Button', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-hand-pointer-o' }, 
+        content: {
+          type: 'button',
+          content: 'Button Text',
+          style: { display: 'inline-block', padding: '12px 24px', backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }
+        }
+      });
+
+      bm.add('custom-label', { 
+        label: 'Label', 
+        category: 'Forms', 
+        attributes: { class: 'fa fa-tag' }, 
+        content: {
+          type: 'label',
+          content: 'Field Label',
+          style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+        }
+      });
+
+      // 3. EXTRA CATEGORY
+      bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
+      bm.add('custom-map', { label: 'Google Maps', category: 'Extra', attributes: { class: 'fa fa-map-marker' }, content: { type: 'map', style: { height: '350px' } } });
+      bm.add('custom-linkblock', { label: 'Link Block', category: 'Extra', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: '<div>Link Block Content</div>', style: { display: 'inline-block', padding: '10px' } } });
+      bm.add('custom-countdown', { label: 'Countdown', category: 'Extra', attributes: { class: 'fa fa-clock-o' }, content: '<div data-gjs-type="countdown" style="text-align: center; font-size: 2rem; font-weight: bold; padding: 20px;">00:00:00:00</div>' });
+
+      // 4. DATA CATEGORY
+      bm.add('custom-table', { label: 'Data Table', category: 'Data', attributes: { class: 'fa fa-table' }, content: '<table style="width:100%; border-collapse: collapse; margin: 20px 0;"><tr style="background:#f1f5f9;"><th style="border:1px solid #ccc; padding:10px;">Header 1</th><th style="border:1px solid #ccc; padding:10px;">Header 2</th></tr><tr><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 1</td><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 2</td></tr></table>' });
+      bm.add('custom-dynamic-fields', { label: 'Dynamic Fields', category: 'Data', attributes: { class: 'fa fa-database' }, content: '<div style="padding: 15px; border: 1px dashed var(--primary); background: rgba(124,58,237,0.05); text-align: center; font-family: monospace; color: var(--primary);">{{ DYNAMIC_CONTENT }}</div>' });
 
       // ─── Add Custom Lead Form Block ───
       editor.BlockManager.add('lead-form', {
         label: 'Lead Form',
         category: 'Forms',
-        content: `
-          <div class="lead-form-container" style="padding: 40px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; font-family: sans-serif;">
-            <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #1e293b; text-align: center;">Get Started Now</h3>
-            <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b; text-align: center;">Fill out your details and we will get back to you.</p>
-            <form id="lead-form" style="display: flex; flexDirection: column; gap: 16px;">
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Name</label>
-                <input type="text" name="name" required placeholder="Your Name" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Email</label>
-                <input type="email" name="email" required placeholder="email@example.com" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <div style="display: flex; flexDirection: column; gap: 6px;">
-                <label style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase;">Phone</label>
-                <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-              </div>
-              <button type="submit" style="margin-top: 10px; padding: 14px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Send Inquiry</button>
-            </form>
-          </div>
-        `,
-        attributes: { class: 'fa fa-paper-plane' }
+        attributes: { class: 'fa fa-paper-plane' },
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '40px', background: 'var(--form-bg)', border: '1px solid var(--input-border)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto' },
+          components: [
+            { type: 'text', tagName: 'h3', content: 'Get Started Now', editable: true, style: { margin: '0 0 10px 0', fontSize: '24px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' } },
+            { type: 'text', tagName: 'p', content: 'Fill out your details and we will get back to you.', editable: true, style: { margin: '0 0 20px 0', fontSize: '14px', color: '#64748b', textAlign: 'center' } },
+            {
+              tagName: 'div',
+              droppable: true,
+              style: { display: 'flex', flexDirection: 'column', gap: '16px' },
+              components: [
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Name', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'text', name: 'name', required: 'true', placeholder: 'Your Name' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Email', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'email', name: 'email', required: 'true', placeholder: 'email@example.com' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Phone', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'tel', name: 'phone', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  type: 'button',
+                  content: 'Send Inquiry',
+                  attributes: { type: 'submit' },
+                  style: { marginTop: '10px', padding: '14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }
+                }
+              ]
+            }
+          ]
+        }
       });
     });
 
@@ -258,6 +590,7 @@ const GrapesEditor = () => {
     setTimeout(() => applyContentToEditor(editor), 1000);
 
     editorRef.current = editor;
+    setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
 
     return () => {
       if (cpObserverRef.current) {
@@ -332,7 +665,29 @@ const GrapesEditor = () => {
     cpObserverRef.current = obs;
 
     // Also re-inject when component is selected
-    editor.on('component:selected', () => setTimeout(processFields, 200));
+    editor.on('component:selected', (model) => {
+      setTimeout(processFields, 200);
+
+      // Auto-switch to AI tab on selection
+      setLeftTab('ai');
+      setIsSidebarOpen(true);
+      setActiveComponent(model);
+
+      // Update Selection Label for AI
+      const tagName = model.get('tagName') || 'div';
+      const type = model.get('type') || '';
+      const name = model.get('name') || type || tagName;
+
+      // Capitalize first letter and format
+      let readableName = name.charAt(0).toUpperCase() + name.slice(1);
+      if (readableName === 'Wrapper') readableName = 'Body';
+      setSelectedLabel(readableName);
+    });
+
+    editor.on('component:deselected', () => {
+      setSelectedLabel('Body');
+    });
+
     editor.on('styleManager:sector:open', () => setTimeout(processFields, 150));
   };
 
@@ -364,7 +719,7 @@ const GrapesEditor = () => {
   useEffect(() => {
     if (editorRef.current && page) {
       applyContentToEditor(editorRef.current);
-      
+
       // Dynamically inject/update branding variables in the canvas head
       const canvas = editorRef.current.Canvas;
       const doc = canvas.getDocument();
@@ -383,6 +738,13 @@ const GrapesEditor = () => {
           --secondary: ${page.secondaryColor || '#6366f1'};
           --accent: ${page.accentColor || page.secondaryColor || '#6366f1'};
           --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
+        }
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
         }
       `;
     }
@@ -407,6 +769,9 @@ const GrapesEditor = () => {
       styles: css,
       metaTitle: pageTitle,
       metaDescription: metaDesc,
+      primaryColor: themePrimary,
+      secondaryColor: themeSecondary,
+      accentColor: themeSecondary,
     });
 
     toast.success('Page saved to cloud!');
@@ -427,8 +792,10 @@ const GrapesEditor = () => {
   // ─── Code ───
   const openCode = () => {
     if (!editorRef.current) return;
-    setHtmlCode(editorRef.current.getHtml());
-    setCssCode(editorRef.current.getCss() ?? '');
+    const rawHtml = editorRef.current.getHtml();
+    const rawCss = editorRef.current.getCss() ?? '';
+    setHtmlCode(formatHtmlPretty(rawHtml));
+    setCssCode(formatCssPretty(rawCss));
     setCodeView(true);
   };
 
@@ -441,13 +808,31 @@ const GrapesEditor = () => {
     setCodeView(false);
   };
 
-  const downloadHtml = () => {
-    const blob = new Blob([buildFullHtml(htmlCode, cssCode, pageTitle, metaDesc)], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'landing-page.html';
-    a.click();
-    toast.success('HTML downloaded!');
+  const downloadHtml = async () => {
+    const formattedHtml = formatHtmlPretty(htmlCode);
+    const formattedCss = formatCssPretty(cssCode);
+    const cssFileName = 'landing-page.css';
+
+    const finalHtml = buildFullHtml(formattedHtml, formattedCss, pageTitle, metaDesc, cssFileName);
+    const zip = new JSZip();
+    const folder = zip.folder('landing-page');
+    if (!folder) {
+      toast.error('Failed to create download package');
+      return;
+    }
+
+    folder.file('landing-page.html', finalHtml);
+    folder.file(cssFileName, formattedCss);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const zipAnchor = document.createElement('a');
+    zipAnchor.href = zipUrl;
+    zipAnchor.download = 'landing-page-files.zip';
+    zipAnchor.click();
+    URL.revokeObjectURL(zipUrl);
+
+    toast.success('HTML + CSS folder downloaded!');
   };
 
   // ─── Publish ───
@@ -466,6 +851,9 @@ const GrapesEditor = () => {
         status: 'published',
         metaTitle: pageTitle,
         metaDescription: metaDesc,
+        primaryColor: themePrimary,
+        secondaryColor: themeSecondary,
+        accentColor: themeSecondary,
       });
 
       setIsPublishing(false);
@@ -543,6 +931,114 @@ const GrapesEditor = () => {
     }
   };
 
+  // ─── AI Chat Processor ───
+  const processAiChat = () => {
+    if (chatInput.trim() && !chatLoading && editorRef.current) {
+      const val = chatInput.trim();
+      setChatInput('');
+      const selected = activeComponent || editorRef.current.getSelected();
+      if (!selected) {
+        toast.error('Please select an element first');
+        return;
+      }
+
+      setChatLoading(true);
+      const el = selected.getEl();
+      if (el) el.classList.add('ai-pulse-active');
+
+      setTimeout(() => {
+        try {
+          const cmd = val.toLowerCase();
+          let applied = false;
+
+          // 1. COLORS
+          const colors: Record<string, string> = {
+            'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e',
+            'black': '#000000', 'white': '#ffffff', 'yellow': '#fbbf24',
+            'orange': '#f97316', 'purple': '#7c3aed', 'pink': '#ec4899',
+            'grey': '#64748b', 'gray': '#64748b'
+          };
+
+          Object.keys(colors).forEach(c => {
+            if (cmd.includes(c)) {
+              const currentStyle = selected.getStyle() || {};
+              if (cmd.includes('bg') || cmd.includes('background')) {
+                selected.setStyle({ ...currentStyle, 'background-color': colors[c] });
+              } else {
+                selected.setStyle({ ...currentStyle, 'color': colors[c] });
+              }
+              applied = true;
+            }
+          });
+
+          // 2. LAYOUT & STYLE
+          const currentStyle = selected.getStyle() || {};
+          let nextStyle = { ...currentStyle };
+          let styleChanged = false;
+
+          if (cmd.includes('center')) { nextStyle['text-align'] = 'center'; styleChanged = true; }
+          if (cmd.includes('right')) { nextStyle['text-align'] = 'right'; styleChanged = true; }
+          if (cmd.includes('left')) { nextStyle['text-align'] = 'left'; styleChanged = true; }
+          if (cmd.includes('big') || cmd.includes('large')) { nextStyle['font-size'] = '42px'; styleChanged = true; }
+          if (cmd.includes('small')) { nextStyle['font-size'] = '12px'; styleChanged = true; }
+          if (cmd.includes('round')) { nextStyle['border-radius'] = '15px'; styleChanged = true; }
+          if (cmd.includes('circle')) { nextStyle['border-radius'] = '50%'; styleChanged = true; }
+          if (cmd.includes('padding')) { nextStyle['padding'] = '24px'; styleChanged = true; }
+          if (cmd.includes('margin')) { nextStyle['margin'] = '24px'; styleChanged = true; }
+
+          if (styleChanged) {
+            selected.setStyle(nextStyle);
+            applied = true;
+          }
+
+          // 3. TEXT CONTENT
+          const textKeywords = ['change text to', 'set text to', 'update text to', 'write', 'change text to'];
+          let newText = '';
+
+          for (const kw of textKeywords) {
+            if (cmd.includes(kw)) {
+              const regex = new RegExp(`${kw}\\s*(.*)`, 'i');
+              const match = val.match(regex);
+              if (match && match[1]) {
+                newText = match[1].trim();
+                break;
+              }
+            }
+          }
+
+          const isStyleOnly = cmd.includes('color') || cmd.includes('bg') || cmd.includes('background') || cmd.includes('size') || cmd.includes('padding') || cmd.includes('margin') || cmd.includes('align');
+
+          if (newText) {
+            if (selected.get('type') === 'wrapper' || selected.get('tagName')?.toLowerCase() === 'body') {
+              toast.warning('Select a specific element to edit text.');
+            } else {
+              selected.components(newText);
+              applied = true;
+            }
+          } else if (!isStyleOnly && cmd.includes('text') && val.split(' ').length > 2) {
+            const possibleContent = val.replace(/text/i, '').trim();
+            if (possibleContent && !colors[possibleContent]) {
+              selected.components(possibleContent);
+              applied = true;
+            }
+          }
+
+          if (applied) {
+            toast.success('✨ AI updated it successfully!');
+          } else {
+            toast.info('Try: "red color" or "write welcome"');
+          }
+        } catch (err) {
+          console.error('AI Error:', err);
+          toast.error('AI failed to update. Try again.');
+        } finally {
+          if (el) el.classList.remove('ai-pulse-active');
+          setChatLoading(false);
+        }
+      }, 600);
+    }
+  };
+
   if (projectLoading || pageLoading || !page || !project) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a2e]">
@@ -559,362 +1055,237 @@ const GrapesEditor = () => {
 
       {/* ═══════════════ TOP BAR ═══════════════ */}
       <div style={{
-        height: 48, flexShrink: 0,
-        background: '#1a1a2e', borderBottom: '1px solid #2a2a3e',
-        display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6,
+        height: 54, flexShrink: 0,
+        background: '#0f0f1a', borderBottom: '1px solid #1e1e2d',
+        display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
+        zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
       }}>
         {/* Logo & Page Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginRight: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 800 }}>P</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>G</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>PageBuilder</span>
-            <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>Grapes Studio</span>
+            <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
 
         <Sep />
 
         {/* Code */}
-        <TBtn title="Code" onClick={openCode}><CodeIcon /><span style={{ fontSize: 11, marginLeft: 3 }}>Code</span></TBtn>
+        <TBtn title="Code" onClick={openCode}><CodeIcon /><span style={{ fontSize: 11, marginLeft: 6, fontWeight: 600 }}>Code</span></TBtn>
 
         <Sep />
 
-        {/* Device */}
-        <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
-        <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
-        <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
+        {/* Device Switcher (Centered look) */}
+        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+          <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
+          <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
+          <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
+        </div>
 
         <Sep />
 
-        {/* FullScreen preview inside GrapesJS */}
-        <TBtn title="Preview" onClick={handlePreview}><EyeIcon /></TBtn>
-
-
-        <Sep />
-
-        {/* Undo / Redo */}
-        <TBtn title="Undo" onClick={() => editorRef.current?.UndoManager.undo()}><UndoIcon /></TBtn>
-        <TBtn title="Redo" onClick={() => editorRef.current?.UndoManager.redo()}><RedoIcon /></TBtn>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <TBtn title="Undo" onClick={() => editorRef.current?.UndoManager.undo()}><UndoIcon /></TBtn>
+          <TBtn title="Redo" onClick={() => editorRef.current?.UndoManager.redo()}><RedoIcon /></TBtn>
+        </div>
 
         <Sep />
 
-        {/* Clear */}
-        <TBtn title="Clear Canvas" onClick={() => { editorRef.current?.runCommand('core:canvas-clear'); toast.success('Canvas cleared'); }}><TrashIcon /></TBtn>
-
-        <Sep />
-
-        {/* AI Chat Button */}
-        <button onClick={() => setChatOpen(!chatOpen)} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: chatOpen ? 'rgba(124,58,237,0.2)' : 'transparent',
-          color: chatOpen ? '#a78bfa' : '#94a3b8',
-          border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-        }}>
-          <SparklesIcon /> AI Chat
-        </button>
+        <TBtn title="Clear Canvas" onClick={() => { if (confirm('Clear entire canvas?')) { editorRef.current?.runCommand('core:canvas-clear'); toast.success('Canvas cleared'); } }}><TrashIcon /></TBtn>
 
         <div style={{ flex: 1 }} />
 
-        {/* AI Button */}
-        <button onClick={() => setAiOpen(true)} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff',
-          border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-        }}>
-          <SparklesIcon /> AI Generate
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={handlePreview} style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} title="Live Preview"><EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span></button>
+          <button onClick={handleSave} style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px' }} title="Save Changes"><SaveIcon /> <span style={{ marginLeft: 6 }}>Save</span></button>
+        </div>
 
-        <Sep />
-
-        {/* Save */}
-        <button onClick={handleSave} style={outlineBtn}><SaveIcon /><span style={{ marginLeft: 4 }}>Save</span></button>
-
-        {/* Publish */}
-        <button onClick={handlePublish} disabled={isPublishing} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 7,
-          padding: '7px 18px', fontSize: 12, fontWeight: 700, cursor: isPublishing ? 'not-allowed' : 'pointer',
-          boxShadow: isPublishing ? 'none' : '0 2px 10px rgba(124,58,237,0.4)',
-          transition: 'all 0.2s',
-        }}>
-          {isPublishing ? (
-            <>
-              <div style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              Verifying Token...
-            </>
-          ) : (
-            <>
-              <RocketIcon /> Publish
-            </>
-          )}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
+          <button onClick={handlePublish} disabled={isPublishing} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
+            padding: '7px 22px', fontSize: 13, fontWeight: 800, cursor: isPublishing ? 'not-allowed' : 'pointer',
+            boxShadow: isPublishing ? 'none' : '0 4px 15px rgba(124,58,237,0.4)',
+            transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
+          }}>
+            {isPublishing ? 'Publishing...' : <><RocketIcon /> Publish</>}
+          </button>
+        </div>
       </div>
 
       {/* ═══════════════ MAIN BODY ═══════════════ */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* ══ LEFT SIDEBAR ══ */}
-        <div style={{
-          width: 220, flexShrink: 0, background: '#1a1a2e',
-          borderRight: '1px solid #2a2a3e', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid #2a2a3e' }}>
-            <SideTab label="Blocks" active={leftTab === 'blocks'} onClick={() => setLeftTab('blocks')} />
-            <SideTab label="Layers" active={leftTab === 'layers'} onClick={() => setLeftTab('layers')} />
-          </div>
-          <div id="blocks-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'blocks' ? 'block' : 'none' }} />
-          <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none' }} />
-
-          {/* Quick AI Prompt Box */}
-          <div style={{ padding: '12px', borderTop: '1px solid #2a2a3e', background: '#111122' }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.03)',
-              borderRadius: 12,
-              border: '1px solid #2a2a3e',
-              padding: '10px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
-              <textarea
-                placeholder="Ask anything..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (chatInput.trim() && !chatLoading) {
-                      setChatOpen(true);
-                      // Trigger same logic as full chat
-                      const val = chatInput.trim();
-                      setChatInput('');
-                      setChatMessages(m => [...m, { role: 'user', content: val }]);
-                      setChatLoading(true);
-                      // Mocking the AI response here as well
-                      setTimeout(() => {
-                        const reply = "I've analyzed your request and I'm ready to help. Select an element on the canvas to apply specific changes.";
-                        setChatMessages(m => [...m, { role: 'ai', content: reply }]);
-                        setChatLoading(false);
-                      }, 1000);
-                    }
-                  }
-                }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#e2e8f0',
-                  fontSize: 13,
-                  resize: 'none',
-                  outline: 'none',
-                  width: '100%',
-                  minHeight: 40,
-                  fontFamily: 'Inter, sans-serif'
-                }}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', gap: 12, color: '#94a3b8' }}>
-                  <button title="Add attachment" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                  </button>
-                  <button title="Voice input" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                  </button>
-                </div>
-                <button
-                  onClick={() => {
-                    if (chatInput.trim() && !chatLoading) {
-                      setChatOpen(true);
-                      const val = chatInput.trim();
-                      setChatInput('');
-                      setChatMessages(m => [...m, { role: 'user', content: val }]);
-                      setChatLoading(true);
-                      setTimeout(() => {
-                        const reply = "I've analyzed your request. Please select an element to apply changes.";
-                        setChatMessages(m => [...m, { role: 'ai', content: reply }]);
-                        setChatLoading(false);
-                      }, 1000);
-                    }
-                  }}
-                  style={{
-                    width: 28, height: 28,
-                    borderRadius: '50%',
-                    background: '#2a2a3e',
-                    border: '1px solid #3a3a4e',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#e2e8f0',
-                    cursor: 'pointer'
-                  }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1" /></svg>
-                </button>
-              </div>
+        {/* ══ DUAL-COLUMN LEFT SIDEBAR ══ */}
+        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #1e1e2d' }}>
+          {/* Vertical Toolbar (Narrow) */}
+          <div style={{
+            width: 56, flexShrink: 0, background: '#0a0a14',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            padding: '16px 0', gap: 20, borderRight: '1px solid #1e1e2d'
+          }}>
+            <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'seo'} onClick={() => { if (leftTab === 'seo') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('seo'); setIsSidebarOpen(true); } }}><SettingsIcon /><span>SEO</span></NavIcon>
+            <div style={{ flex: 1 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 12 }}>
+              <button
+                onClick={() => navigate('/dashboard')}
+                title="Go to Projects"
+                style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <div style={{ padding: 8, borderRadius: 10, border: '1px solid #1e1e2d' }}><HomeIcon /></div>
+                <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Projects</span>
+              </button>
+              <button
+                onClick={() => { toast.info('Logged out'); navigate('/login'); }}
+                title="Logout"
+                style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <div style={{ padding: 8, borderRadius: 10, border: '1px solid #1e1e2d' }}><LogoutIcon /></div>
+                <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Logout</span>
+              </button>
             </div>
           </div>
 
-          {/* Settings Button */}
-          <div style={{ padding: '12px', borderTop: '1px solid #2a2a3e', background: '#111122' }}>
-            <button onClick={() => setSeoOpen(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: '#252540', color: '#e2e8f0', border: '1px solid #2a2a3e', cursor: 'pointer', padding: '10px', borderRadius: 8, transition: 'all 0.2s', fontSize: 13, fontWeight: 600 }}>
-              <SettingsIcon /> SEO Settings
-            </button>
+          {/* Panel Content (Dynamic) */}
+          <div style={{
+            width: isSidebarOpen ? 280 : 0,
+            opacity: isSidebarOpen ? 1 : 0,
+            flexShrink: 0, background: '#12121e',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            borderRight: isSidebarOpen ? '1px solid #1e1e2d' : 'none'
+          }}>
+            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{leftTab}</span>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#4a4a6a', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            </div>
+
+            <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <BlocksPanel
+                onAdd={(type) => {
+                  if (!editorRef.current) return;
+                  const block = editorRef.current.BlockManager.get(type);
+                  if (block) {
+                    editorRef.current.addComponents(block.get('content'));
+                  }
+                }}
+                onDragStart={(type, ev) => {
+                  if (!editorRef.current) return;
+                  const block = editorRef.current.BlockManager.get(type);
+                  if (block) {
+                    editorRef.current.BlockManager.startDrag(block, { event: ev.nativeEvent } as any);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Hidden Native Blocks Container */}
+            <div id="blocks-container" style={{ display: 'none' }} />
+
+            {/* Theme / Styles */}
+            <div style={{ flex: 1, display: leftTab === 'theme' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <GlobalStylesPanel 
+                editor={editorInstance} 
+                initialPrimary={page?.primaryColor}
+                initialSecondary={page?.secondaryColor}
+                onBrandingColorsChange={({ primary, secondary }) => {
+                  setThemePrimary(primary);
+                  setThemeSecondary(secondary);
+                }}
+              />
+            </div>
+
+            {/* Layers */}
+            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
+
+            {/* AI Panel */}
+            <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, padding: 18, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 14, padding: 16 }}>
+                  <p style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+                    Select any element and ask me to edit it. I can change text, colors, styles, or generate entire sections!
+                  </p>
+                </div>
+
+                {/* Selection Info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                  <span style={{ color: '#cbd5e1', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Editing context:</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#1a1a2e', padding: '8px 12px', borderRadius: 10, border: '1px solid #2a2a3e', width: 'fit-content', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{selectedLabel}</span>
+                  <button onClick={() => setSelectedLabel('Body')} style={{ color: '#cbd5e1', background: 'none', border: 'none', marginLeft: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                </div>
+              </div>
+
+              {/* Input Area (Bottom) */}
+              <div style={{ padding: 18, borderTop: '1px solid #1e1e2d', background: '#0a0a14' }}>
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a3e', borderRadius: 14,
+                  padding: '12px', display: 'flex', flexDirection: 'column', gap: 10,
+                  transition: 'border-color 0.2s',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  <textarea
+                    ref={aiInputRef}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        processAiChat();
+                      }
+                    }}
+                    placeholder="Ask AI anything..."
+                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 13, resize: 'none', outline: 'none', minHeight: 60, fontFamily: 'inherit' }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#4a4a6a', fontSize: 10 }}>Press Enter</span>
+                    <button
+                      onClick={processAiChat}
+                      style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >Send <SparklesIcon /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEO Panel */}
+            <div style={{ flex: 1, display: leftTab === 'seo' ? 'flex' : 'none', flexDirection: 'column', padding: 20, gap: 20 }}>
+              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Page Meta Title</label>
+                <input type="text" value={pageTitle} onChange={e => setPageTitle(e.target.value)} placeholder="Enter page title..." style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
+              </div>
+              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Meta Description</label>
+                <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} placeholder="Enter SEO description..." rows={5} style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', resize: 'none' }} />
+              </div>
+              <button onClick={() => { updatePageMutation.mutate({ metaTitle: pageTitle, metaDescription: metaDesc }); toast.success('SEO Settings Saved'); }} style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Update Settings</button>
+            </div>
           </div>
         </div>
 
-        {/* ══ CANVAS (white background) ══ */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* ══ CANVAS (light grey bg) ══ */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e2e8f0' }}>
           <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
-
-          {/* AI Chat Sidebar Overlay */}
-          {chatOpen && (
-            <div style={{
-              position: 'absolute', top: 12, right: 12, bottom: 12, width: 340,
-              background: 'rgba(26,26,46,0.95)', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(124,58,237,0.3)', borderRadius: 12,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.4)', zIndex: 100,
-              display: 'flex', flexDirection: 'column', overflow: 'hidden'
-            }}>
-              {/* Header */}
-              <div style={{ padding: '12px 16px', background: 'rgba(124,58,237,0.1)', borderBottom: '1px solid rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 6, background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><SparklesIcon /></div>
-                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>AI Assistant</span>
-                </div>
-                <button onClick={() => setChatOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16 }}>✕</button>
-              </div>
-
-              {/* Messages */}
-              <div style={{ flex: 1, padding: 16, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {chatMessages.map((msg, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
-                    {msg.role === 'ai' && <div style={{ width: 24, height: 24, borderRadius: 12, background: 'rgba(124,58,237,0.2)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginTop: 2 }}><SparklesIcon /></div>}
-                    <div style={{
-                      background: msg.role === 'user' ? '#7c3aed' : 'rgba(255,255,255,0.05)',
-                      color: '#fff', padding: '10px 14px', borderRadius: 12, fontSize: 13, lineHeight: 1.5,
-                      borderTopRightRadius: msg.role === 'user' ? 2 : 12,
-                      borderTopLeftRadius: msg.role === 'ai' ? 2 : 12,
-                    }}>
-                      {msg.content}
-                    </div>
-                  </div>
-                ))}
-                {chatLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#a78bfa', fontSize: 12 }}>
-                    <div style={{ width: 14, height: 14, border: '2px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    Applying changes...
-                  </div>
-                )}
-              </div>
-
-              {/* Input */}
-              <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && chatInput.trim() && !chatLoading && editorRef.current) {
-                        const val = chatInput.trim();
-                        setChatInput('');
-                        setChatMessages(m => [...m, { role: 'user', content: val }]);
-                        setChatLoading(true);
-
-                        setTimeout(() => {
-                          const selected = editorRef.current?.getSelected();
-                          const lowerVal = val.toLowerCase();
-                          let reply = "I've generated a new section for you at the bottom!";
-
-                          if (selected) {
-                            if (lowerVal.includes('color') || lowerVal.includes('red') || lowerVal.includes('blue') || lowerVal.includes('bg') || lowerVal.includes('background')) {
-                              // Simulate CSS style change
-                              const colorMatch = lowerVal.match(/(red|blue|green|purple|black|white|gray|yellow|orange|#\w+)/);
-                              const color = colorMatch ? colorMatch[0] : '#7c3aed';
-                              if (lowerVal.includes('text') || lowerVal.includes('font')) {
-                                selected.addStyle({ color });
-                                reply = `I changed the text color to ${color}.`;
-                              } else {
-                                selected.addStyle({ 'background-color': color });
-                                reply = `I changed the background to ${color}.`;
-                              }
-                            } else if (lowerVal.includes('text') || lowerVal.includes('change') || lowerVal.includes('say')) {
-                              selected.components(val);
-                              reply = "I've updated the text content.";
-                            } else {
-                              // Default replace
-                              selected.addStyle({ border: '2px dashed #10b981' });
-                              reply = "I've highlighted the element and applied custom styling based on your prompt.";
-                            }
-                          } else {
-                            // Create dummy block
-                            let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0, 30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
-                            editorRef.current?.addComponents(html);
-                          }
-
-                          setChatMessages(m => [...m, { role: 'ai', content: reply }]);
-                          setChatLoading(false);
-                        }, 1200);
-                      }
-                    }}
-                    placeholder="E.g. change text to 'Buy Now'"
-                    disabled={chatLoading}
-                    style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none' }}
-                  />
-                  <button
-                    disabled={!chatInput.trim() || chatLoading}
-                    onClick={() => {
-                      const val = chatInput.trim();
-                      setChatInput('');
-                      setChatMessages(m => [...m, { role: 'user', content: val }]);
-                      setChatLoading(true);
-                      setTimeout(() => {
-                        const selected = editorRef.current?.getSelected();
-                        const lowerVal = val.toLowerCase();
-                        let reply = "I've generated a new section for you at the bottom!";
-                        if (selected) {
-                          if (lowerVal.includes('color') || lowerVal.includes('red') || lowerVal.includes('blue') || lowerVal.includes('bg') || lowerVal.includes('background')) {
-                            const colorMatch = lowerVal.match(/(red|blue|green|purple|black|white|gray|yellow|orange|#\w+)/);
-                            const color = colorMatch ? colorMatch[0] : '#7c3aed';
-                            if (lowerVal.includes('text') || lowerVal.includes('font')) {
-                              selected.addStyle({ color });
-                              reply = `I changed the text color to ${color}.`;
-                            } else {
-                              selected.addStyle({ 'background-color': color });
-                              reply = `I changed the background to ${color}.`;
-                            }
-                          } else if (lowerVal.includes('text') || lowerVal.includes('change') || lowerVal.includes('say')) {
-                            selected.components(val);
-                            reply = "I've updated the text content.";
-                          } else {
-                            selected.addStyle({ border: '2px dashed #10b981' });
-                            reply = "I've highlighted the element and applied custom styling based on your prompt.";
-                          }
-                        } else {
-                          let html = `<section style="background:#fff;padding:60px 40px;text-align:center;font-family:'Inter',sans-serif;"><h2 style="font-size:28px;font-weight:800;color:#0f172a;margin:0 0 16px;">AI: ${val.slice(0, 30)}</h2><p style="font-size:15px;color:#64748b;">Generated from Chat AI prompt.</p></section>`;
-                          editorRef.current?.addComponents(html);
-                        }
-                        setChatMessages(m => [...m, { role: 'ai', content: reply }]);
-                        setChatLoading(false);
-                      }, 1200);
-                    }}
-                    style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontWeight: 600, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', opacity: chatInput.trim() ? 1 : 0.5 }}
-                  >
-                    ↑
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <style dangerouslySetInnerHTML={{ __html: "@keyframes spin { 100% { transform: rotate(360deg); } }" }} />
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}
         <div style={{
-          width: 260, flexShrink: 0, background: '#1a1a2e',
-          borderLeft: '1px solid #2a2a3e', display: 'flex', flexDirection: 'column',
+          width: 280, flexShrink: 0, background: '#0f0f1a',
+          borderLeft: '1px solid #1e1e2d', display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid #2a2a3e' }}>
-            <SideTab label="Styles" active={rightTab === 'styles'} onClick={() => setRightTab('styles')} />
-            <SideTab label="Properties" active={rightTab === 'traits'} onClick={() => setRightTab('traits')} />
+          {/* Tabs */}
+          <div style={{ display: 'flex', padding: '0 10px', borderBottom: '1px solid #1e1e2d', height: 48, alignItems: 'center', background: '#0a0a14' }}>
+            <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
+            <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
           <div id="styles-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none' }} />
           <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none' }} />
@@ -1397,22 +1768,35 @@ const TBtn = ({ children, onClick, title, active = false }: { children: React.Re
     onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
   >{children}</button>
 );
-
-const SideTab = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+const TabButton = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
   <button onClick={onClick} style={{
-    flex: 1, padding: '10px 0', fontSize: 11, fontWeight: 600, border: 'none',
-    background: 'none', cursor: 'pointer', letterSpacing: 0.3,
-    color: active ? '#a78bfa' : '#4a4a6a',
+    padding: '12px 16px', fontSize: 11, fontWeight: 700, border: 'none',
+    background: 'none', cursor: 'pointer', letterSpacing: 0.5,
+    color: active ? '#fff' : '#64748b',
     borderBottom: `2px solid ${active ? '#7c3aed' : 'transparent'}`,
-    transition: 'all .15s',
-  }}>{label}</button>
+    transition: 'all .2s',
+    textTransform: 'uppercase'
+  }}>{children}</button>
+);
+
+const NavIcon = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
+  <button onClick={onClick} style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+    width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+    color: active ? '#a78bfa' : '#94a3b8', transition: 'all .2s'
+  }}>
+    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(124,58,237,0.1)' : 'transparent' }}>
+      {children[0]}
+    </div>
+    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{children[1]}</span>
+  </button>
 );
 
 /* ── Styles ── */
 const outlineBtn: React.CSSProperties = {
   display: 'flex', alignItems: 'center', background: 'transparent',
   border: '1px solid #2a2a3e', borderRadius: 7, padding: '6px 12px',
-  fontSize: 12, fontWeight: 500, color: '#94a3b8', cursor: 'pointer',
+  fontSize: 13, fontWeight: 500, color: '#e2e8f0', cursor: 'pointer',
 };
 const modalBtn: React.CSSProperties = {
   color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px',
@@ -1432,19 +1816,86 @@ const SaveIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="non
 const SparklesIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" /></svg>;
 const SettingsIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
 const RocketIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></svg>;
+const GridIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>;
+const LayersIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>;
+const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
+const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
 
 /* ── Build full HTML ── */
-const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '') => `<!DOCTYPE html>
+const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${title}</title>
   ${desc ? `<meta name="description" content="${desc}"/>` : ''}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}${css}</style>
+  <link rel="stylesheet" href="./${externalCssFile}"/>
+  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}</style>
 </head>
 <body>${html}</body>
 </html>`;
+
+const formatCssPretty = (css: string): string => {
+  return css
+    .replace(/\s+/g, ' ')
+    .replace(/\s*{\s*/g, ' {\n  ')
+    .replace(/;\s*/g, ';\n  ')
+    .replace(/\s*}\s*/g, '\n}\n\n')
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+};
+
+const formatHtmlPretty = (html: string): string => {
+  if (!html.trim()) return '';
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const formatNode = (node: Node, indentLevel: number): string => {
+    const indent = '  '.repeat(indentLevel);
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = (node.textContent || '').trim();
+      return text ? `${indent}${text}\n` : '';
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+    const attrs = Array.from(el.attributes)
+      .map((attr) => `${attr.name}="${attr.value}"`)
+      .join(' ');
+    const openTag = attrs ? `<${tag} ${attrs}>` : `<${tag}>`;
+    const closeTag = `</${tag}>`;
+    const children = Array.from(el.childNodes);
+
+    if (!children.length) {
+      return `${indent}${openTag}${closeTag}\n`;
+    }
+
+    const childrenTextOnly = children.every(
+      (child) => child.nodeType === Node.TEXT_NODE && (child.textContent || '').trim()
+    );
+
+    if (childrenTextOnly) {
+      const inlineText = children.map((child) => (child.textContent || '').trim()).join(' ');
+      return `${indent}${openTag}${inlineText}${closeTag}\n`;
+    }
+
+    let result = `${indent}${openTag}\n`;
+    children.forEach((child) => {
+      result += formatNode(child, indentLevel + 1);
+    });
+    result += `${indent}${closeTag}\n`;
+    return result;
+  };
+
+  return Array.from(container.childNodes)
+    .map((node) => formatNode(node, 0))
+    .join('')
+    .trim();
+};
 
 export default GrapesEditor;

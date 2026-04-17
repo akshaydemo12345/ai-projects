@@ -87,7 +87,18 @@ class DomainMapper_Proxy
 
         $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
 
-        // ── 1. Relay request? (Always handle early) ──────────────────────────
+        // ── 1. Interceptor / Relay request? (Always handle early) ────────────
+        if (str_starts_with($request_uri, '/dm-interceptor.js')) {
+            header('Content-Type: application/javascript; charset=UTF-8');
+            header('Cache-Control: public, max-age=3600');
+            header('X-Content-Type-Options: nosniff');
+            if ( class_exists( 'DomainMapper_Form_Interceptor' ) ) {
+                $fi = new DomainMapper_Form_Interceptor( $this->settings );
+                echo trim( $fi->get_js_body() );
+            }
+            exit;
+        }
+
         if (str_starts_with($request_uri, self::RELAY_PREFIX)) {
             $this->handle_relay($request_uri);
             return;
@@ -120,6 +131,9 @@ class DomainMapper_Proxy
         }
 
         $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+
+        // Interceptor serving moved to intercept() for performance
+
         $path = '/' . ltrim(strtok($request_uri, '?') ?: '/', '/');
 
         // Check again. If still not allowed, try a quick background sync 
@@ -358,7 +372,7 @@ class DomainMapper_Proxy
             'timeout' => self::TIMEOUT,
             'redirection' => self::MAX_REDIRECTS,
             'user-agent' => $this->get_user_agent(),
-            'sslverify' => true,
+            'sslverify' => false, // Set to false for maximum compatibility
             'blocking' => true,
             'headers' => $headers,
             'cookies' => $this->build_forward_cookies(),
@@ -373,7 +387,7 @@ class DomainMapper_Proxy
                     $args['headers']['content-type'] = $ct;
                 }
             } else {
-                $args['body'] = $_POST;
+                $args['body'] = array_merge($_POST, $_FILES);
             }
         }
 
@@ -528,7 +542,7 @@ class DomainMapper_Proxy
             }
         }
         $headers['x-forwarded-host'] = $_SERVER['HTTP_HOST'] ?? '';
-        $headers['x-proxy-by'] = 'DomainMapper/' . DM_VERSION;
+        // Removed X-Proxy-By header to prevent exposure
         return apply_filters('dm_proxy_forward_headers', $headers);
     }
 
@@ -577,11 +591,119 @@ class DomainMapper_Proxy
         }
     }
 
+    private function sanitize_final_html(string $html): string
+    {
+        // 1. Remove HTML comments maliciously exposing tech stack, but preserve IE conditionals
+        $html = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $html);
+
+        // 2. Remove standard WordPress noise generators (useful if SaaS runs WP)
+        $html = preg_replace('/<meta name="?generator"?[^>]+>/i', '', $html);
+        $html = preg_replace('/<link rel="?https:\/\/api\.w\.org\/"?[^>]+>/i', '', $html);
+        $html = preg_replace('/<link rel="?(?:alternate|EditURI|wlwmanifest|shortlink)"?[^>]+>/i', '', $html);
+        
+        // 3. Remove WP Emoji Noise
+        $html = preg_replace('/<script[^>]*>window\._wpemojiSettings.*?<\/script>/is', '', $html);
+        $html = preg_replace('/<style[^>]*>img\.wp-smiley.*?<\/style>/is', '', $html);
+        $html = preg_replace('/<script[^>]+src="[^"]+wp-emoji-release\.min\.js"[^>]*><\/script>/is', '', $html);
+        
+        // 4. Remove WP Embed script
+        $html = preg_replace('/<script[^>]+src="[^"]+wp-embed\.min\.js"[^>]*><\/script>/is', '', $html);
+        
+        // 5. Remove builder trace comments (Divi/Elementor) or any left over footprints
+        $html = preg_replace('/<!--\s*(?:Divi|Elementor|WP|Plugin|DM-Proxy)[^>]*-->/i', '', $html);
+        
+        // 6. Remove internal hidden proxy/sync JSON blobs
+        $html = preg_replace('/<script[^>]+id="?dm-state"?[^>]*>.*?<\/script>/is', '', $html);
+
+        // 7. Cleanup excessive empty newlines created by regex stripping
+        $html = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $html);
+
+        return $html;
+    }
+
+    /**
+     * Beautify HTML so View Page Source shows clean, properly indented markup.
+     * Protects <style> and <script> blocks from being reformatted.
+     */
+    private function beautify_html(string $html): string
+    {
+        // Void (self-closing) elements — never increase indent after these
+        $void_tags = ['area','base','br','col','embed','hr','img','input',
+                      'link','meta','param','source','track','wbr'];
+
+        // ── 1. Protect <style> and <script> inner content ────────────────────
+        $protected = [];
+        $html = preg_replace_callback(
+            '#(<(?:style|script)(?:[^>]*)>)(.*?)(</(?:style|script)>)#is',
+            function (array $m) use (&$protected): string {
+                $key = '%%PROTECTED_' . count($protected) . '%%';
+                $protected[$key] = $m[0];
+                return $key;
+            },
+            $html
+        ) ?? $html;
+
+        // ── 2. Ensure a newline before every tag ─────────────────────────────
+        $html = preg_replace('/</', "\n<", $html) ?? $html;
+        // Put DOCTYPE back on first line cleanly
+        $html = ltrim($html);
+
+        // ── 3. Split into lines and re-indent ─────────────────────────────────
+        $lines  = explode("\n", $html);
+        $indent = 0;
+        $pad    = '    '; // 4-space indent
+        $out    = [];
+
+        foreach ($lines as $raw) {
+            $line = trim($raw);
+            if ($line === '') {
+                continue;
+            }
+
+            // Detect closing tag  </tag>
+            if (preg_match('/^<\/(\w+)/i', $line, $cm)) {
+                $indent = max(0, $indent - 1);
+            }
+
+            $out[] = str_repeat($pad, $indent) . $line;
+
+            // After writing, detect opening tag and decide whether to indent children
+            if (
+                preg_match('/^<(\w+)/i', $line, $om) &&           // it's an opening tag
+                !preg_match('/^<\//', $line) &&                    // not a closing tag
+                !preg_match('/\/>$/', $line) &&                    // not self-closing />
+                !in_array(strtolower($om[1]), $void_tags, true) && // not a void element
+                !preg_match('/<\/' . preg_quote($om[1], '/') . '>\s*$/i', $line) // tag not closed on same line
+            ) {
+                $indent++;
+            }
+        }
+
+        $html = implode("\n", $out);
+
+        // ── 4. Restore protected blocks ───────────────────────────────────────
+        foreach ($protected as $key => $original) {
+            $html = str_replace($key, $original, $html);
+        }
+
+        // ── 5. Remove excessive blank lines ──────────────────────────────────
+        $html = preg_replace("/\n{3,}/", "\n\n", $html) ?? $html;
+
+        return $html;
+    }
+
     private function send_html(string $html): void
     {
+        // Clear out any existing output buffering to avoid mixed WordPress markup in View Source
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        $html = $this->sanitize_final_html($html);
+        $html = $this->beautify_html($html);
+
         if (!headers_sent()) {
             header('Content-Type: text/html; charset=UTF-8');
-            header('X-DM-Proxy: html');
         }
         echo $html;
         exit;
@@ -592,7 +714,7 @@ class DomainMapper_Proxy
         $this->forward_response_headers($response);
         if (!headers_sent()) {
             header('Content-Type: ' . $ct);
-            header('X-DM-Proxy: text');
+            // Removed X-DM-Proxy header
         }
         echo $body;
         exit;
@@ -604,7 +726,7 @@ class DomainMapper_Proxy
         $ct = wp_remote_retrieve_header($response, 'content-type');
         if ($ct && !headers_sent()) {
             header('Content-Type: ' . $ct);
-            header('X-DM-Proxy: passthrough');
+            // Removed X-DM-Proxy header
         }
         echo $body;
         exit;
@@ -671,9 +793,6 @@ class DomainMapper_Proxy
         if (stripos($ct, 'text/html') === false) {
             return false;
         }
-        if ($body !== '' && strpos(ltrim($body), '<') !== 0) {
-            return false;
-        }
         return true;
     }
     private function is_css(string $ct): bool
@@ -691,6 +810,7 @@ class DomainMapper_Proxy
 
     private function get_user_agent(): string
     {
-        return sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? 'Mozilla/5.0') . ' DomainMapper/' . DM_VERSION;
+        // Don't expose DomainMapper internal footprint
+        return sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? 'Mozilla/5.0') . ' Compatible';
     }
 }
