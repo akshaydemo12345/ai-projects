@@ -65,6 +65,7 @@ const CreateProjectFlow = () => {
   const [secondaryColor, setSecondaryColor] = useState("");
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
+  const [scrapedData, setScrapedData] = useState<any>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [scrapedImages, setScrapedImages] = useState<any[]>([]);
@@ -146,8 +147,7 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
-      scrapedImages: scrapedImages.length > 0 ? scrapedImages : undefined,
-      scrapedData: scrapedImages.length > 0 ? { images: scrapedImages } : undefined,
+      scrapedData: scrapedData,
     });
   };
 
@@ -192,6 +192,9 @@ const CreateProjectFlow = () => {
       }
       if (meta.keywords) {
         setExtractedKeywords(meta.keywords);
+      }
+      if (meta.scrapedData) {
+        setScrapedData(meta.scrapedData);
       }
       if (meta.industry) {
         setCategory(meta.industry);
@@ -382,11 +385,11 @@ const CreateProjectFlow = () => {
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input 
-                        type="color" 
-                        value={primaryColor || "#000000"} 
-                        onChange={(e) => setPrimaryColor(e.target.value)} 
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" 
+                      <input
+                        type="color"
+                        value={primaryColor || "#000000"}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
                       />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
                     </div>
@@ -394,11 +397,11 @@ const CreateProjectFlow = () => {
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input 
-                        type="color" 
-                        value={secondaryColor || "#000000"} 
-                        onChange={(e) => setSecondaryColor(e.target.value)} 
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" 
+                      <input
+                        type="color"
+                        value={secondaryColor || "#000000"}
+                        onChange={(e) => setSecondaryColor(e.target.value)}
+                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
                       />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
                     </div>
@@ -578,8 +581,8 @@ const CreateProjectFlow = () => {
                 key={m.id}
                 onClick={() => setSelectedMethod(m.id)}
                 className={`w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${selectedMethod === m.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/30 bg-card"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/30 bg-card"
                   }`}
               >
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
@@ -629,11 +632,11 @@ const CreateProjectFlow = () => {
               <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">Add to your website's &lt;head&gt;</p>
                 <button
-                  onClick={async () => { 
-                    const success = await copyToClipboard(scriptCode); 
+                  onClick={async () => {
+                    const success = await copyToClipboard(scriptCode);
                     if (success) {
                       setScriptCopied(true);
-                      toast.success("Code copied!"); 
+                      toast.success("Code copied!");
                       setTimeout(() => setScriptCopied(false), 2000);
                     } else {
                       toast.error("Failed to copy code");
@@ -660,11 +663,11 @@ const CreateProjectFlow = () => {
               <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">Embed iFrame Code</p>
                 <button
-                  onClick={async () => { 
-                    const success = await copyToClipboard(iframeCode); 
+                  onClick={async () => {
+                    const success = await copyToClipboard(iframeCode);
                     if (success) {
                       setIframeCopied(true);
-                      toast.success("Code copied!"); 
+                      toast.success("Code copied!");
                       setTimeout(() => setIframeCopied(false), 2000);
                     } else {
                       toast.error("Failed to copy code");

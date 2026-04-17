@@ -25,11 +25,11 @@ const inspectWebsite = async (url) => {
     // 1. Basic SEO
     const title = $('title').text().trim() || $('meta[property="og:title"]').attr('content') || '';
     const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
-    
+
     // 2. Favicon
-    let favicon = $('link[rel="shortcut icon"]').attr('href') || 
-                  $('link[rel="icon"]').attr('href') || 
-                  $('link[rel="apple-touch-icon"]').attr('href');
+    let favicon = $('link[rel="shortcut icon"]').attr('href') ||
+      $('link[rel="icon"]').attr('href') ||
+      $('link[rel="apple-touch-icon"]').attr('href');
     if (favicon && !favicon.startsWith('http')) {
       favicon = new URL(favicon, url).href;
     } else if (!favicon) {
@@ -41,7 +41,7 @@ const inspectWebsite = async (url) => {
       'img[id*="logo" i]', 'img[class*="logo" i]', 'img[src*="logo" i]', 'img[alt*="logo" i]',
       '.header img', 'header img', '.navbar img'
     ];
-    
+
     for (const selector of logoSelectors) {
       const found = $(selector).first();
       if (found.length) {
@@ -128,18 +128,18 @@ function rgbToHex(color) {
 // Helper to calculate color distance (simple Euclidean)
 function getColorDistance(hex1, hex2) {
   if (!hex1 || !hex2 || !hex1.startsWith('#') || !hex2.startsWith('#')) return 0;
-  
+
   const r1 = parseInt(hex1.slice(1, 3), 16);
   const g1 = parseInt(hex1.slice(3, 5), 16);
   const b1 = parseInt(hex1.slice(5, 7), 16);
-  
+
   const r2 = parseInt(hex2.slice(1, 3), 16);
   const g2 = parseInt(hex2.slice(3, 5), 16);
   const b2 = parseInt(hex2.slice(5, 7), 16);
-  
+
   return Math.sqrt(
-    Math.pow(r1 - r2, 2) + 
-    Math.pow(g1 - g2, 2) + 
+    Math.pow(r1 - r2, 2) +
+    Math.pow(g1 - g2, 2) +
     Math.pow(b1 - b2, 2)
   );
 }
@@ -150,11 +150,11 @@ function getSaturation(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
-  
+
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const d = max - min;
-  
+
   return max === 0 ? 0 : d / max;
 }
 
@@ -163,19 +163,19 @@ function isNeutralColor(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  
+
   // Stricter neutral check: check if R, G, B are very close to each other
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const diff = max - min;
-  
+
   // If r, g, b are within 30 units of each other, it's likely a grey/white/black
   if (diff < 30) return true;
-  
+
   // Filter out extremes
   if (max < 40) return true; // Too dark
   if (min > 230) return true; // Too light
-  
+
   return false;
 }
 
@@ -222,7 +222,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
   let secondaryColor = '';
   let confidence = 'low';
   const buttonColors = { primaryBg: '', primaryText: '', primaryHover: '', secondaryBg: '', secondaryText: '' };
-  
+
   // PRIORITY 1: Logo colors (as requested - primary source)
   if (logoUrl) {
     try {
@@ -242,13 +242,13 @@ const analyzeBrandColors = async ($, logoUrl) => {
   } else {
     logger.warn('No logo URL provided for color extraction');
   }
-  
+
   // PRIORITY 2: CSS variables (--primary, --secondary, --brand, --main)
   if (!primaryColor) {
     let cssColorsFound = [];
     $('style').each((i, el) => {
       const styleContent = $(el).html();
-      
+
       // Common brand variables
       const patterns = [
         /--(?:primary|brand|main|accent|theme|theme-primary|primary-color)[^:]*:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/gi,
@@ -273,11 +273,11 @@ const analyzeBrandColors = async ($, logoUrl) => {
     });
     logger.info(`CSS variables found: ${JSON.stringify(cssColorsFound)}`);
   }
-  
+
   // PRIORITY 3: Button classes
   if (!primaryColor) {
     const primarySelectors = [
-      '.btn-primary', '.button-primary', '.btn_red', '.btn_blue', '.btn_green', 
+      '.btn-primary', '.button-primary', '.btn_red', '.btn_blue', '.btn_green',
       '.button_red', '.button_blue', '.button_green', '.btn-main', '.btn-theme'
     ];
     for (const selector of primarySelectors) {
@@ -297,7 +297,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
       }
     }
   }
-  
+
   if (!secondaryColor) {
     const secondaryBtnColor = $('.btn-secondary, .button-secondary').first().css('background-color');
     logger.info(`Secondary button color: ${secondaryBtnColor}`);
@@ -308,7 +308,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
       }
     }
   }
-  
+
   // PRIORITY 4: Meta theme-color
   if (!primaryColor) {
     const metaColor = $('meta[name="theme-color"]').attr('content')?.trim() || '';
@@ -317,18 +317,18 @@ const analyzeBrandColors = async ($, logoUrl) => {
       confidence = 'medium';
     }
   }
-  
+
   // PRIORITY 5: CTA/Button colors from inline styles
   if (!primaryColor) {
     const ctaSelectors = ['button', 'a.btn', 'a.button', '[class*="cta"]'];
     const buttonBgColors = [];
     const buttonTextColors = [];
-    
+
     ctaSelectors.forEach(selector => {
       $(selector).each((i, el) => {
         if (i >= 10) return false;
         const style = $(el).attr('style') || '';
-        
+
         const bgMatch = style.match(/background(?:-color)?:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
         if (bgMatch) {
           const color = rgbToHex(bgMatch[1].trim());
@@ -336,7 +336,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
             buttonBgColors.push(color);
           }
         }
-        
+
         const textMatch = style.match(/color:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
         if (textMatch) {
           const color = rgbToHex(textMatch[1].trim());
@@ -346,7 +346,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
         }
       });
     });
-    
+
     if (buttonBgColors.length > 0) {
       const colorCounts = {};
       buttonBgColors.forEach(color => {
@@ -361,7 +361,7 @@ const analyzeBrandColors = async ($, logoUrl) => {
         secondaryColor = sorted[1][0];
       }
     }
-    
+
     // Store button colors for theme system
     if (buttonBgColors.length > 0) {
       const colorCounts = {};
@@ -388,12 +388,12 @@ const analyzeBrandColors = async ($, logoUrl) => {
       }
     }
   }
-  
+
   // Fallback: if still no secondary color, use button text color
   if (!secondaryColor && buttonColors.primaryText) {
     secondaryColor = buttonColors.primaryText;
   }
-  
+
   // Ultimate fallback: if still no colors, use common brand colors
   if (!primaryColor) {
     primaryColor = '#7c3aed'; // Default purple
@@ -402,9 +402,9 @@ const analyzeBrandColors = async ($, logoUrl) => {
   if (!secondaryColor) {
     secondaryColor = '#6366f1'; // Default indigo
   }
-  
+
   logger.info(`Final colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Confidence: ${confidence}`);
-  
+
   return {
     primaryColor,
     secondaryColor,
@@ -423,7 +423,7 @@ const extractProjectData = async (url) => {
     if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
       normalizedUrl = 'https://' + normalizedUrl;
     }
-    
+
     let response;
     try {
       response = await axios.get(normalizedUrl, {
@@ -449,15 +449,15 @@ const extractProjectData = async (url) => {
       const domainParts = new URL(normalizedUrl).hostname.replace('www.', '').split('.');
       const rawName = domainParts[0] || 'My Brand';
       const projectName = rawName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      
+
       const primaryColor = '#4f46e5';
       const secondaryColor = '#0ea5e9';
-      
+
       return {
         websiteUrl: normalizedUrl,
         projectName: projectName,
         projectDesc: `${projectName} - Modern business solutions.`,
-        projectLogo: '', 
+        projectLogo: '',
         theme: primaryColor,
         primaryColor,
         secondaryColor,
@@ -470,42 +470,42 @@ const extractProjectData = async (url) => {
     }
 
     const $ = cheerio.load(response.data);
-    
+
     // ============ STEP 1: CLEAN BRAND NAME EXTRACTION ============
     let projectName = '';
     try {
       // Priority 1: og:site_name
       projectName = $('meta[property="og:site_name"]').attr('content')?.trim() || '';
-      
+
       // Priority 2: application-name
       if (!projectName) {
         projectName = $('meta[name="application-name"]').attr('content')?.trim() || '';
       }
-      
+
       // Priority 3: Logo alt text (cleaned)
       if (!projectName) {
         const logoAlt = $('img[alt*="logo" i], img[class*="logo" i], img[src*="logo" i]').first().attr('alt') || '';
         projectName = logoAlt.replace(/logo/gi, '').trim();
       }
-      
+
       // Priority 4: Title cleaning
       if (!projectName) {
         const title = $('title').text().trim();
         if (title) {
           const parts = title.split(/[|:\-]/).map(p => p.trim());
-          const meaningfulParts = parts.filter(p => 
-            p.length > 2 && 
-            p.length < 30 && 
-            !p.includes('Home') && 
+          const meaningfulParts = parts.filter(p =>
+            p.length > 2 &&
+            p.length < 30 &&
+            !p.includes('Home') &&
             !p.includes('Page') &&
             !p.includes('Official')
           );
-          projectName = meaningfulParts.length > 0 ? 
-            meaningfulParts.reduce((shortest, current) => current.length < shortest.length ? current : shortest) : 
+          projectName = meaningfulParts.length > 0 ?
+            meaningfulParts.reduce((shortest, current) => current.length < shortest.length ? current : shortest) :
             parts[0];
         }
       }
-      
+
       // Priority 5: Domain fallback
       if (!projectName) {
         try {
@@ -521,7 +521,7 @@ const extractProjectData = async (url) => {
           projectName = 'Unknown Brand';
         }
       }
-      
+
       // Clean project name - remove marketing words
       projectName = projectName
         .replace(/\b(get|start|learn|discover|boost|grow|improve|transform)\b/gi, '')
@@ -531,21 +531,21 @@ const extractProjectData = async (url) => {
       logger.warn(`Brand name extraction failed: ${e.message}`);
       projectName = normalizedUrl.split('//')[1]?.split('/')[0] || 'Unknown Brand';
     }
-    
+
     // ============ STEP 2: SEO DATA EXTRACTION ============
     let projectDesc = '';
     let projectLogo = '';
-    
+
     try {
-      projectDesc = $('meta[name="description"]').attr('content')?.trim() || 
-                   $('meta[property="og:description"]').attr('content')?.trim() || '';
-      
+      projectDesc = $('meta[name="description"]').attr('content')?.trim() ||
+        $('meta[property="og:description"]').attr('content')?.trim() || '';
+
       // LOGO EXTRACTION REFINEMENT: Prioritize actual logo elements over OG:Image (which is often a banner)
       const logoSelectors = [
         'img[id*="logo" i]', 'img[class*="logo" i]', 'img[src*="logo" i]', 'img[alt*="logo" i]',
         '.header img', 'header img', '.navbar img', '.nav img'
       ];
-      
+
       for (const selector of logoSelectors) {
         const found = $(selector).first();
         if (found.length) {
@@ -569,7 +569,7 @@ const extractProjectData = async (url) => {
     } catch (e) {
       logger.warn(`SEO/Logo extraction failed: ${e.message}`);
     }
-    
+
     // Color extraction - deterministic brand color analysis
     let primaryColor = '';
     let secondaryColor = '';
@@ -582,7 +582,7 @@ const extractProjectData = async (url) => {
       primaryColor = brandColors.primaryColor;
       secondaryColor = brandColors.secondaryColor;
       buttonColors = brandColors.buttonColors;
-      
+
       // Extract colors from CSS and inline styles
       // From inline styles
       $('[style*="color"]').each((i, el) => {
@@ -597,7 +597,7 @@ const extractProjectData = async (url) => {
           });
         }
       });
-      
+
       // From CSS classes that commonly contain colors
       const colorClasses = ['primary', 'secondary', 'accent', 'main', 'brand', 'theme'];
       colorClasses.forEach(className => {
@@ -614,69 +614,69 @@ const extractProjectData = async (url) => {
           }
         });
       });
-      
+
       // Convert RGB to hex and filter neutrals
       colors = Array.from(colorSet)
         .map(rgbToHex)
         .filter(c => c.startsWith('#'))
         .sort((a, b) => getSaturation(b) - getSaturation(a)); // Sort by saturation descending
-      
+
       const vibrantColors = colors.filter(c => !isNeutralColor(c));
-      
+
       // Set primary color from vibrant list
       if (!primaryColor && vibrantColors.length > 0) {
         primaryColor = vibrantColors[0];
       }
-      
+
       // If primary is still empty, take best from any colors
       if (!primaryColor && colors.length > 0) {
         primaryColor = colors[0];
       }
-      
+
       // Set secondary color (must be distinct)
       if (!secondaryColor) {
         // First try to find another vibrant color that is distinct
         secondaryColor = vibrantColors.find(c => getColorDistance(primaryColor, c) > 60) || '';
-        
+
         // If not found, try ANY distinct color (including darker/lighter neutrals)
         if (!secondaryColor) {
           secondaryColor = colors.find(c => getColorDistance(primaryColor, c) > 80) || '';
         }
       }
-      
+
       // Final "emergency" color generation if they are still too similar
       if (primaryColor && (!secondaryColor || getColorDistance(primaryColor, secondaryColor) < 50)) {
         // Generate a distinct version of primary (darker/lighter or shifted)
         const r = parseInt(primaryColor.slice(1, 3), 16);
         const g = parseInt(primaryColor.slice(3, 5), 16);
         const b = parseInt(primaryColor.slice(5, 7), 16);
-        
+
         // If it's a light color, make it much darker; if dark, make it lighter
         const brightness = (r + g + b) / 3;
         if (brightness > 128) {
           // Make it a dark contrast
-          secondaryColor = `#${Math.max(0, r-100).toString(16).padStart(2, '0')}${Math.max(0, g-100).toString(16).padStart(2, '0')}${Math.max(0, b-100).toString(16).padStart(2, '0')}`;
+          secondaryColor = `#${Math.max(0, r - 100).toString(16).padStart(2, '0')}${Math.max(0, g - 100).toString(16).padStart(2, '0')}${Math.max(0, b - 100).toString(16).padStart(2, '0')}`;
         } else {
           // Make it a light accent
-          secondaryColor = `#${Math.min(255, r+100).toString(16).padStart(2, '0')}${Math.min(255, g+100).toString(16).padStart(2, '0')}${Math.min(255, b+100).toString(16).padStart(2, '0')}`;
+          secondaryColor = `#${Math.min(255, r + 100).toString(16).padStart(2, '0')}${Math.min(255, g + 100).toString(16).padStart(2, '0')}${Math.min(255, b + 100).toString(16).padStart(2, '0')}`;
         }
       }
     } catch (e) {
       logger.warn(`Color extraction failed: ${e.message}`);
     }
-    
+
     // Hard defaults if everything failed
     if (!primaryColor) primaryColor = '#4f46e5';
     if (!secondaryColor) secondaryColor = '#0ea5e9';
-    
+
     // Ensure they are NEVER the same color in the final output
     if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
       secondaryColor = '#1e293b'; // Default dark slate secondary
     }
-    
+
     // ============ STEP 3: SMART SERVICE EXTRACTION ============
     const services = new Set();
-    
+
     try {
       // LAYER 1: URL-based extraction
       $('a[href*="service" i], a[href*="product" i], a[href*="solution" i], a[href*="seo" i], a[href*="marketing" i], a[href*="design" i], a[href*="development" i]').each((i, el) => {
@@ -685,16 +685,16 @@ const extractProjectData = async (url) => {
           services.add(text);
         }
       });
-      
+
       // LAYER 2: Section-based extraction
       $('section, div, article').each((i, el) => {
         const id = $(el).attr('id')?.toLowerCase() || '';
         const cls = $(el).attr('class')?.toLowerCase() || '';
-        
+
         if (id.includes('service') || id.includes('feature') || id.includes('solution') ||
-            cls.includes('service') || cls.includes('feature') || cls.includes('solution') ||
-            cls.includes('offering') || cls.includes('product')) {
-          
+          cls.includes('service') || cls.includes('feature') || cls.includes('solution') ||
+          cls.includes('offering') || cls.includes('product')) {
+
           $(el).find('h2, h3, h4, h5, h6').each((j, item) => {
             const text = $(item).text().trim();
             if (text && text.length > 2 && text.length < 60 && !isCTA(text) && !isSentence(text)) {
@@ -703,15 +703,15 @@ const extractProjectData = async (url) => {
           });
         }
       });
-      
+
       // LAYER 3: Structured lists in service sections
       $('section, div, article').each((i, el) => {
         const id = $(el).attr('id')?.toLowerCase() || '';
         const cls = $(el).attr('class')?.toLowerCase() || '';
-        
+
         if (id.includes('service') || id.includes('feature') || id.includes('solution') ||
-            cls.includes('service') || cls.includes('feature') || cls.includes('solution')) {
-          
+          cls.includes('service') || cls.includes('feature') || cls.includes('solution')) {
+
           $(el).find('li').each((j, item) => {
             const text = $(item).text().trim();
             if (text && text.length > 2 && text.length < 60 && !isCTA(text) && !isSentence(text)) {
@@ -720,7 +720,7 @@ const extractProjectData = async (url) => {
           });
         }
       });
-      
+
       // LAYER 4: Schema markup extraction
       $('script[type="application/ld+json"]').each((i, el) => {
         try {
@@ -737,12 +737,12 @@ const extractProjectData = async (url) => {
     } catch (e) {
       logger.warn(`Service extraction failed: ${e.message}`);
     }
-    
+
     // ============ STEP 4: ENHANCED KEYWORD EXTRACTION ============
     let keywords = [];
     try {
       keywords = $('meta[name="keywords"]').attr('content')?.split(',').map(k => k.trim()).filter(k => k) || [];
-      
+
       // FALLBACK: Use keywords if no services found
       if (services.size < 3 && keywords.length > 0) {
         keywords.slice(0, 10).forEach(keyword => {
@@ -754,43 +754,43 @@ const extractProjectData = async (url) => {
     } catch (e) {
       logger.warn(`Keyword/Fallback extraction failed: ${e.message}`);
     }
-    
+
     // FALLBACK: Generate services from project name
     if (services.size < 3) {
       const generatedServices = generateServicesFromProjectName(projectName);
       generatedServices.forEach(service => services.add(service));
     }
-    
+
     // Clean and filter services
     const cleanedServices = [...services]
-      .filter(service => 
-        service.length > 2 && 
-        service.length < 60 && 
-        !isCTA(service) && 
+      .filter(service =>
+        service.length > 2 &&
+        service.length < 60 &&
+        !isCTA(service) &&
         !isSentence(service) &&
         !service.includes('©') &&
         !service.includes('All rights reserved')
       )
       .slice(0, 15);
-    
+
     // If no meta keywords, generate from services and content
     if (keywords.length === 0) {
       const generatedKeywords = new Set();
-      
+
       // Add services as keywords
       cleanedServices.forEach(service => {
         if (service.length > 2 && service.length < 30) {
           generatedKeywords.add(service.toLowerCase());
         }
       });
-      
+
       // Extract keywords from title and description
       const titleWords = projectName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
       const descWords = projectDesc.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      
+
       titleWords.forEach(word => generatedKeywords.add(word));
       descWords.slice(0, 10).forEach(word => generatedKeywords.add(word));
-      
+
       // Common industry keywords based on content
       const content = $('body').text().toLowerCase();
       const industryKeywords = [
@@ -798,25 +798,25 @@ const extractProjectData = async (url) => {
         'social media', 'ppc', 'advertising', 'branding', 'content',
         'development', 'consulting', 'strategy', 'optimization', 'analytics'
       ];
-      
+
       industryKeywords.forEach(keyword => {
         if (content.includes(keyword)) {
           generatedKeywords.add(keyword);
         }
       });
-      
+
       keywords = Array.from(generatedKeywords).slice(0, 15);
     }
-    
+
     // Detect industry from services
     const detectedIndustry = detectIndustryFromServices(cleanedServices);
-    
+
     // Detect brand personality from content
     const brandPersonality = detectBrandPersonality(projectDesc, $('body').text());
-    
+
     // Extract dynamic page sections from website structure
     const dynamicSections = extractDynamicSections($);
-    
+
     // Generate complete advanced branding system
     const themeSystem = generateAdvancedBrandingSystem(
       projectName || 'Unknown Brand',
@@ -829,7 +829,7 @@ const extractProjectData = async (url) => {
       projectDesc,
       dynamicSections
     );
-    
+
     // Get all extracted colors (for database storage)
     const allColors = colors.length > 0 ? colors.slice(0, 10) : [];
     if (primaryColor && !allColors.includes(primaryColor)) {
@@ -838,8 +838,8 @@ const extractProjectData = async (url) => {
     if (secondaryColor && !allColors.includes(secondaryColor)) {
       allColors.push(secondaryColor);
     }
-    
-    const bulkImages = extractBulkImages($, normalizedUrl);
+
+    const bulkMedia = extractBulkMedia($, normalizedUrl);
     const structuredData = extractStructuredData($);
 
     return {
@@ -857,7 +857,8 @@ const extractProjectData = async (url) => {
       themeSystem, // Complete theme system for design
       scrapedImages: bulkImages, // Top-level scraped images for easy access
       scrapedData: {
-        images: bulkImages,
+        images: bulkMedia.images,
+        videos: bulkMedia.videos,
         ...structuredData,
         rawText: $('body').text().replace(/\s+/g, ' ').trim().substring(0, 5000)
       }
@@ -877,15 +878,15 @@ const generateAccentColor = (primaryColor) => {
       b: parseInt(result[3], 16)
     } : null;
   };
-  
+
   const rgb = hexToRgb(primaryColor);
   if (!rgb) return '#f59e0b'; // Default amber
-  
+
   // Generate a complementary color
   const compR = 255 - rgb.r;
   const compG = 255 - rgb.g;
   const compB = 255 - rgb.b;
-  
+
   return `#${compR.toString(16).padStart(2, '0')}${compG.toString(16).padStart(2, '0')}${compB.toString(16).padStart(2, '0')}`;
 };
 
@@ -905,14 +906,14 @@ const generateHoverColor = (color) => {
     if (g > 255) g = 255; else if (g < 0) g = 0;
     return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
   };
-  
+
   if (!color || !color.startsWith('#')) return color;
   return lightenDarkenColor(color, -20);
 };
 
 const extractDynamicSections = ($) => {
   const sections = new Set();
-  
+
   // Extract from navigation links
   $('nav a, header a, .navigation a, .menu a').each((i, el) => {
     const text = $(el).text().trim().toLowerCase();
@@ -924,12 +925,12 @@ const extractDynamicSections = ($) => {
       }
     }
   });
-  
+
   // Extract from section IDs and classes
   $('section[id], div[id*="section"], div[class*="section"]').each((i, el) => {
     const id = $(el).attr('id')?.toLowerCase() || '';
     const cls = $(el).attr('class')?.toLowerCase() || '';
-    
+
     // Extract from ID
     if (id) {
       const sectionName = normalizeSectionName(id.replace(/section|-|_/g, ' '));
@@ -937,7 +938,7 @@ const extractDynamicSections = ($) => {
         sections.add(sectionName);
       }
     }
-    
+
     // Extract from class
     if (cls) {
       const classParts = cls.split(/\s+/);
@@ -951,7 +952,7 @@ const extractDynamicSections = ($) => {
       });
     }
   });
-  
+
   // Extract from heading structure
   $('h1, h2, h3').each((i, el) => {
     const text = $(el).text().trim().toLowerCase();
@@ -962,7 +963,7 @@ const extractDynamicSections = ($) => {
       }
     }
   });
-  
+
   // Extract from footer links
   $('footer a').each((i, el) => {
     const text = $(el).text().trim().toLowerCase();
@@ -973,20 +974,20 @@ const extractDynamicSections = ($) => {
       }
     }
   });
-  
+
   // Convert to array and ensure common sections are present
   const sectionArray = Array.from(sections);
-  
+
   // Ensure hero is present (almost always needed)
   if (!sectionArray.includes('hero')) {
     sectionArray.unshift('hero');
   }
-  
+
   // Ensure contact/cta is present
   if (!sectionArray.includes('contact') && !sectionArray.includes('cta')) {
     sectionArray.push('cta');
   }
-  
+
   // Limit to reasonable number
   return sectionArray.slice(0, 8);
 };
@@ -1016,34 +1017,34 @@ const normalizeSectionName = (text) => {
     'shop': 'products',
     'features': 'features'
   };
-  
+
   const normalized = text.trim().toLowerCase();
-  
+
   // Check if it matches a known section
   if (sectionMappings[normalized]) {
     return sectionMappings[normalized];
   }
-  
+
   // Check for partial matches
   for (const [key, value] of Object.entries(sectionMappings)) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return value;
     }
   }
-  
+
   // Return original if no mapping found
   // Filter out common non-section words
   const nonSectionWords = ['click', 'here', 'read', 'more', 'view', 'all', 'see', 'get', 'now', 'learn', 'about'];
   if (nonSectionWords.some(word => normalized === word)) {
     return null;
   }
-  
+
   return normalized.replace(/\s+/g, '-');
 };
 
 const detectBrandPersonality = (description, bodyText) => {
   const text = (description + ' ' + bodyText).toLowerCase();
-  
+
   const personalityIndicators = {
     'Professional': ['professional', 'expert', 'experienced', 'quality', 'reliable', 'trusted', 'certified', 'licensed'],
     'Corporate': ['enterprise', 'corporate', 'business', 'global', 'international', ' Fortune', 'industry leader'],
@@ -1053,18 +1054,18 @@ const detectBrandPersonality = (description, bodyText) => {
     'Local Service': ['local', 'community', 'neighborhood', 'nearby', 'serving', 'your area', 'hometown'],
     'Premium': ['premium', 'luxury', 'exclusive', 'high-end', 'elite', 'bespoke', 'custom', 'premium quality']
   };
-  
+
   let scores = {};
   for (const [personality, indicators] of Object.entries(personalityIndicators)) {
     scores[personality] = indicators.reduce((count, indicator) => {
       return count + (text.includes(indicator) ? 1 : 0);
     }, 0);
   }
-  
+
   // Find highest scoring personality
   const maxScore = Math.max(...Object.values(scores));
   if (maxScore === 0) return 'Professional'; // Default fallback
-  
+
   return Object.entries(scores).find(([_, score]) => score === maxScore)[0];
 };
 
@@ -1080,7 +1081,7 @@ const generateAdvancedBrandingSystem = (projectName, industry, brandPersonality,
     }
     return rgb;
   };
-  
+
   const lightenDarkenColor = (col, amt) => {
     let usePound = false;
     if (col[0] === '#') {
@@ -1096,21 +1097,21 @@ const generateAdvancedBrandingSystem = (projectName, industry, brandPersonality,
     if (g > 255) g = 255; else if (g < 0) g = 0;
     return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
   };
-  
+
   // Ensure colors are in HEX format
   const primary = primaryColor ? rgbToHex(primaryColor) : '#7c3aed';
   const secondary = secondaryColor ? rgbToHex(secondaryColor) : '#6366f1';
-  
+
   // Accent color - use button color if available and distinct, otherwise generate
   let accent = buttonColors.primaryBg && buttonColors.primaryBg !== primary ? buttonColors.primaryBg : generateAccentColor(primary);
   accent = rgbToHex(accent);
-  
+
   // Background color - clean white/light
   const background = '#ffffff';
-  
+
   // Text color - high readability
   const text = '#1f2937';
-  
+
   // UI mapping based on brand personality
   const uiMapping = {
     buttonPrimary: 'accent',
@@ -1118,7 +1119,7 @@ const generateAdvancedBrandingSystem = (projectName, industry, brandPersonality,
     headerBackground: brandPersonality === 'Minimal' ? 'background' : 'primary',
     sectionAltBackground: brandPersonality === 'Modern' ? 'secondary' : 'background'
   };
-  
+
   // Font suggestions based on personality
   const fontSuggestions = {
     'Professional': { heading: 'Inter, system-ui, sans-serif', body: 'Inter, system-ui, sans-serif' },
@@ -1129,18 +1130,18 @@ const generateAdvancedBrandingSystem = (projectName, industry, brandPersonality,
     'Local Service': { heading: 'Open Sans, sans-serif', body: 'Open Sans, sans-serif' },
     'Premium': { heading: 'Playfair Display, serif', body: 'Lato, sans-serif' }
   };
-  
+
   const fonts = fontSuggestions[brandPersonality] || fontSuggestions['Professional'];
-  
+
   // Use dynamically extracted sections from website structure
-  const sections = dynamicSections && dynamicSections.length > 0 
-    ? dynamicSections 
+  const sections = dynamicSections && dynamicSections.length > 0
+    ? dynamicSections
     : ['hero', 'services', 'about', 'testimonials', 'cta']; // Fallback
-  
+
   // Generate headline from description
   const headline = description ? description.split('.')[0].substring(0, 60) : projectName;
   const subheadline = description ? description.substring(0, 120) : `Leading ${industry} solutions`;
-  
+
   return {
     projectName,
     industry,
@@ -1178,7 +1179,7 @@ const extractServicesFromSchema = (schema, services) => {
     if (schema.serviceType) services.add(schema.serviceType);
     if (schema.category) services.add(schema.category);
   }
-  
+
   if (schema.offers && Array.isArray(schema.offers)) {
     schema.offers.forEach(offer => {
       if (offer.itemOffered && offer.itemOffered.name) {
@@ -1192,7 +1193,7 @@ const extractBrandColorsFromLogo = async (logoUrl) => {
   try {
     let input;
     if (logoUrl.startsWith('http')) {
-      const response = await axios.get(logoUrl, { 
+      const response = await axios.get(logoUrl, {
         responseType: 'arraybuffer',
         timeout: 5000,
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' }
@@ -1210,14 +1211,14 @@ const extractBrandColorsFromLogo = async (logoUrl) => {
       })
       .raw()
       .toBuffer({ resolveWithObject: true });
-    
+
     // Analyze actual pixel data and extract color palette
     const colorPalette = extractColorPalette(data, info.channels);
-    
+
     if (!colorPalette || colorPalette.length === 0) {
       return null;
     }
-    
+
     // Return top 3 most dominant colors for brand palette
     return colorPalette.slice(0, 3);
   } catch (error) {
@@ -1228,41 +1229,41 @@ const extractBrandColorsFromLogo = async (logoUrl) => {
 
 const extractColorPalette = (data, channels) => {
   const colorCounts = {};
-  
+
   // Step size - use smaller step for better accuracy, but keep performance
-  const step = channels * 5; 
-  
+  const step = channels * 5;
+
   for (let i = 0; i < data.length; i += step) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
     const a = channels >= 4 ? data[i + 3] : 255;
-    
+
     // Skip fully transparent pixels
     if (a < 80) continue;
-    
+
     // Skip absolute extremes (white/black)
-    if (r > 250 && g > 250 && b > 250) continue; 
+    if (r > 250 && g > 250 && b > 250) continue;
     if (r < 5 && g < 5 && b < 5) continue;
-    
+
     // Simple quantization - group similar colors but keep more precision
     const quantize = (val) => Math.round(val / 8) * 8;
     const qr = quantize(r);
     const qg = quantize(g);
     const qb = quantize(b);
-    
+
     // Weighted score for colors: frequency + (saturation * 2)
     // We want brand colors to be vibrant, not just common
     const maxVal = Math.max(r, g, b);
     const minVal = Math.min(r, g, b);
     const saturation = maxVal === 0 ? 0 : (maxVal - minVal) / maxVal;
-    
+
     const colorKey = `${qr},${qg},${qb}`;
     // Score increases with frequency and substantially with saturation
-    const weight = 1 + (saturation * 5); 
+    const weight = 1 + (saturation * 5);
     colorCounts[colorKey] = (colorCounts[colorKey] || 0) + weight;
   }
-  
+
   // Sort by frequency
   const sortedColors = Object.entries(colorCounts)
     .sort((a, b) => b[1] - a[1])
@@ -1270,45 +1271,45 @@ const extractColorPalette = (data, channels) => {
       const [r, g, b] = colorKey.split(',').map(Number);
       return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     });
-  
+
   return sortedColors;
 };
 
 const detectIndustryFromServices = (services) => {
   if (!services || services.length === 0) return 'General';
-  
+
   const serviceText = services.join(' ').toLowerCase();
-  
+
   // Dynamic industry detection with context-aware logic
   const industryPatterns = {
     // Home Services - context-based detection
     'Home Services': ['roofing', 'plumbing', 'electrical', 'hvac', 'landscaping', 'cleaning', 'pest control', 'handyman', 'painting', 'carpentry', 'moving', 'storage'],
-    
+
     // SaaS / Software - technology and platform indicators
     'SaaS / Software': ['software', 'platform', 'dashboard', 'analytics', 'automation', 'cloud', 'saas', 'subscription', 'api', 'integration', 'workflow'],
-    
+
     // Digital Marketing - marketing and advertising
     'Digital Marketing': ['marketing', 'seo', 'ppc', 'advertising', 'social media', 'content', 'branding', 'lead generation', 'campaign'],
-    
+
     // Healthcare - medical and wellness
     'Healthcare': ['medical', 'healthcare', 'doctor', 'clinic', 'hospital', 'wellness', 'therapy', 'pharmacy', 'health'],
-    
+
     // Real Estate - property and housing
     'Real Estate': ['real estate', 'property', 'housing', 'rental', 'apartment', 'home buying', 'mortgage', 'listing'],
-    
+
     // E-commerce - online selling
     'E-commerce': ['ecommerce', 'online store', 'shopping cart', 'product catalog', 'shipping', 'checkout', 'payment processing'],
-    
+
     // Professional Services
     'Professional Services': ['consulting', 'legal', 'accounting', 'financial', 'advisory', 'professional'],
-    
+
     // Education
     'Education': ['training', 'course', 'learning', 'education', 'certification', 'teaching', 'tutorial'],
-    
+
     // Creative Services
     'Creative Services': ['design', 'creative', 'branding', 'logo', 'graphic', 'photography', 'video production']
   };
-  
+
   // Score each industry based on keyword matches
   let scores = {};
   for (const [industry, keywords] of Object.entries(industryPatterns)) {
@@ -1316,13 +1317,13 @@ const detectIndustryFromServices = (services) => {
       return count + (serviceText.includes(keyword) ? 1 : 0);
     }, 0);
   }
-  
+
   // Find highest scoring industry
   const maxScore = Math.max(...Object.values(scores));
   if (maxScore > 0) {
     return Object.entries(scores).find(([_, score]) => score === maxScore)[0];
   }
-  
+
   // Fallback to basic keyword matching
   const basicIndustryMap = {
     'web design': 'Web Design',
@@ -1334,19 +1335,19 @@ const detectIndustryFromServices = (services) => {
     'finance': 'Finance',
     'restaurant': 'Food & Restaurant'
   };
-  
+
   for (const [keyword, industry] of Object.entries(basicIndustryMap)) {
     if (serviceText.includes(keyword)) {
       return industry;
     }
   }
-  
+
   return 'General';
 };
 
 const generateServicesFromProjectName = (projectName) => {
   const name = projectName.toLowerCase();
-  
+
   if (name.includes('fitness') || name.includes('gym')) {
     return ['Personal Training', 'Gym Membership', 'Yoga Classes', 'Nutrition Coaching'];
   }
@@ -1362,14 +1363,22 @@ const generateServicesFromProjectName = (projectName) => {
   if (name.includes('consulting') || name.includes('advisor')) {
     return ['Business Consulting', 'Strategy Planning', 'Market Research', 'Growth Advisory'];
   }
-  
+
   return ['Professional Services', 'Expert Consulting', 'Custom Solutions', 'Quality Support'];
 };
+const extractBulkMedia = ($, baseUrl) => {
+  const media = {
+    images: [],
+    videos: []
+  };
 
+<<<<<<< HEAD
+  // 1. Extract Images
+=======
 const extractBulkImages = ($, baseUrl) => {
   const images = [];
   const seenUrls = new Set();
-  
+
   // Unwanted image patterns - these should be filtered out
   const unwantedPatterns = [
     /icon/i, /sprite/i, /tracking/i, /pixel/i, /beacon/i, /analytics/i,
@@ -1379,7 +1388,7 @@ const extractBulkImages = ($, baseUrl) => {
     /social.*icon/i, /facebook.*icon/i, /twitter.*icon/i, /linkedin.*icon/i,
     /bg\.png/i, /background.*small/i, /pattern/i, /texture/i
   ];
-  
+
   // Relevant image patterns - prioritize these
   const relevantPatterns = [
     /hero/i, /banner/i, /slider/i, /showcase/i, /feature/i,
@@ -1387,7 +1396,8 @@ const extractBulkImages = ($, baseUrl) => {
     /about/i, /office/i, /workspace/i, /meeting/i, /client/i,
     /screenshot/i, /dashboard/i, /interface/i, /app/i, /software/i
   ];
-  
+
+>>>>>>> 58f8dc16610b4a30b80186049492da49a6cd1dbf
   $('img').each((i, el) => {
     const src = $(el).attr('src');
     const alt = $(el).attr('alt')?.trim() || '';
@@ -1395,110 +1405,123 @@ const extractBulkImages = ($, baseUrl) => {
     const cls = $(el).attr('class')?.trim() || '';
     const width = $(el).attr('width') ? parseInt($(el).attr('width')) : 0;
     const height = $(el).attr('height') ? parseInt($(el).attr('height')) : 0;
-    
+
     if (!src || src.length < 5) return;
-    
+
     // Skip data URIs and base64 images
     if (src.startsWith('data:')) return;
-    
+
     // Skip if URL already seen
     if (seenUrls.has(src)) return;
-    
+
     // Check for unwanted patterns in URL, alt, or class
     const combinedText = `${src} ${alt} ${cls}`.toLowerCase();
     const isUnwanted = unwantedPatterns.some(pattern => pattern.test(combinedText));
     if (isUnwanted) return;
-    
+
     // Skip very small images (likely icons or tracking pixels)
     if ((width > 0 && width < 50) || (height > 0 && height < 50)) return;
-    
+
     // Skip images with very small dimensions in filename
     if (src.match(/\d+x\d+/i)) {
       const dims = src.match(/(\d+)x(\d+)/i);
       if (dims && (parseInt(dims[1]) < 100 || parseInt(dims[2]) < 100)) return;
     }
-    
+
     try {
       let fullUrl = src;
-      if (!src.startsWith('http')) {
-        fullUrl = new URL(src, baseUrl).href;
-      }
-      
-      // Categorize images based on metadata
-      let type = 'general';
-      let relevance = 'medium';
-      
-      // Check for relevant patterns
-      const isRelevant = relevantPatterns.some(pattern => pattern.test(combinedText));
-      if (isRelevant) {
-        relevance = 'high';
-      }
-      
-      if (alt.toLowerCase().includes('logo') || cls.toLowerCase().includes('logo')) {
-        type = 'logo';
-        relevance = 'high';
-      } else if (alt.toLowerCase().includes('hero') || cls.toLowerCase().includes('banner') || cls.toLowerCase().includes('slider')) {
-        type = 'banner';
-        relevance = 'high';
-      } else if (alt.toLowerCase().includes('testimonial') || alt.toLowerCase().includes('user') || alt.toLowerCase().includes('person') || alt.toLowerCase().includes('team')) {
-        type = 'person';
-        relevance = 'medium';
-      } else if (alt.toLowerCase().includes('product') || cls.toLowerCase().includes('product') || cls.toLowerCase().includes('item')) {
-        type = 'product';
-        relevance = 'high';
-      } else if (alt.toLowerCase().includes('office') || alt.toLowerCase().includes('workspace') || alt.toLowerCase().includes('meeting')) {
-        type = 'environment';
-        relevance = 'medium';
-      } else if (alt.toLowerCase().includes('screenshot') || alt.toLowerCase().includes('dashboard') || alt.toLowerCase().includes('interface')) {
-        type = 'screenshot';
-        relevance = 'high';
-      }
-      
-      // Only add if it's relevant or general with good metadata
-      if (relevance === 'high' || (relevance === 'medium' && (alt.length > 10 || cls.length > 10))) {
-        images.push({
-          url: fullUrl,
-          alt,
-          type,
-          context: title || cls,
-          relevance,
-          width,
-          height
-        });
-        seenUrls.add(src);
-      }
-    } catch (e) {
-      // Skip invalid URLs
-    }
-  });
-  
-  // Sort by relevance (high first), then by quality of metadata
-  images.sort((a, b) => {
-    if (a.relevance !== b.relevance) {
-      return a.relevance === 'high' ? -1 : 1;
+      try {
+        if (!src.startsWith('http')) {
+          fullUrl = new URL(src, baseUrl).href;
+        }
+
+        let type = 'general';
+        const metaText = (alt + ' ' + cls + ' ' + title).toLowerCase();
+
+        if (metaText.includes('logo')) type = 'logo';
+        else if (metaText.includes('hero') || metaText.includes('banner') || metaText.includes('slider')) type = 'banner';
+        else if (metaText.includes('testimonial') || metaText.includes('user') || metaText.includes('avatar') || metaText.includes('team')) type = 'person';
+        else if (metaText.includes('product') || metaText.includes('item') || metaText.includes('service')) type = 'product';
+        else if (metaText.includes('gallery') || metaText.includes('portfolio')) type = 'gallery';
+
+        media.images.push({ url: fullUrl, alt, type, context: title || cls });
+      } catch (e) { }
     }
     // Prefer images with better alt text
     return (b.alt?.length || 0) - (a.alt?.length || 0);
   });
-  
-  // Return top relevant images, capped at 20
-  return images.slice(0, 20);
-};
+
+  // 2. Extract Videos (iframes and video tags)
+  $('video, iframe[src*="youtube.com"], iframe[src*="vimeo.com"], iframe[src*="dailymotion.com"]').each((i, el) => {
+    let src = $(el).attr('src') || $(el).find('source').attr('src');
+
+    if (src && src.length > 5) {
+      try {
+        if (!src.startsWith('http') && !src.startsWith('//')) {
+          src = new URL(src, baseUrl).href;
+        }
+        media.videos.push({ url: src, type: el.name === 'video' ? 'direct' : 'embed' });
+      } catch (e) { }
+    }
+  });
+
+  return {
+    images: media.images.slice(0, 40),
+    videos: media.videos.slice(0, 10)
+  };
+};;
 
 const extractStructuredData = ($) => {
   const data = {
     testimonials: [],
     pricing: [],
     partners: [],
-    faq: []
+    faq: [],
+    ctas: [],
+    forms: []
   };
+
+  // 1. CTA Detection
+  $('a, button').each((i, el) => {
+    const text = $(el).text().trim();
+    const href = $(el).attr('href');
+    if (text.length > 3 && text.length < 50 && (text.toLowerCase().includes('start') || text.toLowerCase().includes('get') || text.toLowerCase().includes('trial') || text.toLowerCase().includes('sign up') || text.toLowerCase().includes('contact'))) {
+      if (!data.ctas.includes(text)) data.ctas.push(text);
+    }
+  });
+
+  // 2. Form & Input Detection (Aggressive)
+  let foundForm = false;
+  $('form').each((i, el) => {
+    foundForm = true;
+    const inputs = [];
+    $(el).find('input, textarea, select').each((j, input) => {
+      const type = $(input).attr('type');
+      if (type === 'hidden' || type === 'submit') return;
+      const placeholder = $(input).attr('placeholder') || $(input).prev('label').text().trim() || $(input).attr('name') || $(input).attr('id');
+      if (placeholder) inputs.push(placeholder);
+    });
+    if (inputs.length > 0) data.forms.push({ id: $(el).attr('id') || 'scraped-form', inputs });
+  });
+
+  // If no <form> tag, look for clusters of inputs (common in modern apps/popups)
+  if (!foundForm) {
+    const looseInputs = [];
+    $('input:not([type="hidden"]), textarea, select').each((i, input) => {
+      const placeholder = $(input).attr('placeholder') || $(input).prev('label').text().trim() || $(input).attr('name');
+      if (placeholder && !looseInputs.includes(placeholder)) looseInputs.push(placeholder);
+    });
+    if (looseInputs.length >= 2) {
+      data.forms.push({ id: 'detected-inputs', inputs: looseInputs.slice(0, 10) });
+    }
+  }
 
   // Testimonials heuristic
   $(':contains("testimonial"), :contains("what they say"), :contains("reviews")').each((i, el) => {
     const section = $(el).closest('section, div');
     const text = section.text().replace(/\s+/g, ' ').trim();
     if (text.length > 50 && text.length < 1000) {
-      data.testimonials.push(text);
+      if (data.testimonials.length < 5) data.testimonials.push(text);
     }
   });
 
@@ -1506,18 +1529,18 @@ const extractStructuredData = ($) => {
   $(':contains("$"), :contains("₹"), :contains("£"), :contains("/month"), :contains("/year")').each((i, el) => {
     const text = $(el).text().trim();
     if (text.length > 1 && text.length < 40) {
-      data.pricing.push(text);
+      if (data.pricing.length < 10) data.pricing.push(text);
     }
   });
 
   // Partners/Clients heuristic
   $('img[alt*="partner" i], img[alt*="client" i], img[alt*="logo" i]').each((i, el) => {
     const src = $(el).attr('src');
-    if (src) data.partners.push(src);
+    if (src && data.partners.length < 20) data.partners.push(src);
   });
 
   return data;
 };
 
-module.exports = { analyzeWebsite, inspectWebsite, extractProjectData, extractBulkImages, extractStructuredData };
+module.exports = { analyzeWebsite, inspectWebsite, extractProjectData, extractBulkMedia, extractStructuredData };
 

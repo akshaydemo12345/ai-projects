@@ -56,7 +56,9 @@ LENGTH + COMPLETENESS:
 - NEVER use placeholders. Keep HTML semantic and clean.
 
 PLANNING:
-- Budget roughly 300 tokens per section to ensure you reach the Footer.
+- Budget strictly 350-400 tokens per section. 
+- You MUST reach the Footer before hitting the 2000 token limit. 
+- If tokens are running low, sacrifice detail to ensure the Footer is generated.
 
 OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
 `;
@@ -99,6 +101,7 @@ const buildUserPrompt = ({
   scrapedImages = [],
   noIndex = false,
   noFollow = false,
+  scrapedData = {},
 }) => {
   const robots = [noIndex ? 'noindex' : '', noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
 
@@ -110,8 +113,8 @@ const buildUserPrompt = ({
   let imageInstructions = '';
   if (scrapedImages && scrapedImages.length > 0) {
     // Filter for high-relevance images only (banners, products, screenshots)
-    const relevantImages = scrapedImages.filter(img => 
-      img.relevance === 'high' && 
+    const relevantImages = scrapedImages.filter(img =>
+      img.relevance === 'high' &&
       (img.type === 'banner' || img.type === 'product' || img.type === 'screenshot' || img.type === 'environment')
     ).slice(0, 8); // Use up to 8 relevant images
 
@@ -144,6 +147,10 @@ ${idx + 1}. URL: ${img.url}
 - PRIMARY COLOR PREVIEW: ${primaryColor || '#d23f1b'}
 - SECONDARY COLOR PREVIEW: ${secondaryColor || '#c7d186'}
 - LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
+- REAL IMAGES FROM WEBSITE: ${scrapedData?.images?.length > 0 ? JSON.stringify(scrapedData.images.slice(0, 15).map(img => ({ ...img, url: img.url.length > 300 ? img.url.substring(0, 100) + '...' : img.url }))) : 'None provided'}
+- REAL VIDEOS FROM WEBSITE: ${scrapedData?.videos?.length > 0 ? JSON.stringify(scrapedData.videos.slice(0, 5)) : 'None provided'}
+- REAL CTA TEXTS FROM WEBSITE: ${scrapedData?.ctas?.length > 0 ? JSON.stringify(scrapedData.ctas) : 'None provided'}
+- REAL FORM STRUCTURES FROM WEBSITE: ${scrapedData?.forms?.length > 0 ? JSON.stringify(scrapedData.forms) : 'None provided'}
 
 **CRITICAL RULE FOR COLORS**: 
 You MUST NEVER use exact HEX codes (like bg-[#d23f1b]) or Tailwind base colors (like bg-blue-500) for brand elements.
@@ -175,7 +182,9 @@ ${imageInstructions}
 - DO NOT OMIT anything requested.
 
 # LEAD FORM INSTRUCTION:
-- If a 'Lead Form' or 'Contact Form' is requested, include inputs: Name, Email, Phone, and 'Submit' button.
+- You MUST prioritize using the 'REAL FORM STRUCTURES' detected from the website for your lead capture section.
+- If the USER'S VISION or the SCRAPED DATA mentions a 'Trial', 'Sign up', or 'Contact' form, build it as a high-conversion, premium component.
+- Display it either as a prominent Hero-section form OR a sticky/floating CTA that opens a modal form.
 - Apply semantic HTML and premium styling with [var(--primary)] buttons.
 
 ${imageInstructions ? '# IMAGE INSTRUCTION: Use the scraped images provided above. Only fallback to picsum.photos if you need additional images beyond what was scraped.' : '# IMMUTABLE OVERRIDE (CRITICAL): You MUST STILL ONLY USE \'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800\' directly to prevent 404 errors. No exceptions. Do not use Unsplash, Pexels, or any other external API.'}
@@ -210,15 +219,15 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   for (const model of CLAUDE_MODEL_CANDIDATES) {
     try {
       logger.info(`[AI] Attempting Claude model: ${model}`);
-      
+
       // Handle both string prompt and structured messages (for Vision)
-      const messageContent = typeof userPrompt === 'string' 
-        ? userPrompt 
+      const messageContent = typeof userPrompt === 'string'
+        ? userPrompt
         : userPrompt;
 
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 2000, // Reduced for cost-saving testing
+        max_tokens: 4096, // Increased to support full long-form landing pages
         temperature: 0.7,
         system: finalSystemPrompt,
         messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
@@ -448,7 +457,7 @@ Generate ONLY the JSON object.
 `;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  
+
   let messages = [
     { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
   ];
@@ -488,7 +497,7 @@ Generate ONLY the JSON object.
     let text = response.content[0].text;
     // Remove markdown code blocks if present
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+
     // Try to parse as JSON
     try {
       return JSON.parse(text);
