@@ -62,7 +62,31 @@ interface CreatePageModalProps {
 const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageModalProps) => {
   const [method, setMethod] = useState<CreateMethod>("choose");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [analyzeUrl, setAnalyzeUrl] = useState("https://");
+  const [analyzeUrl, setAnalyzeUrl] = useState("");
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+  const handleGenerateMagicPrompt = async () => {
+    if (!pageName.trim()) {
+      toast.error("Please enter a page name first.");
+      return;
+    }
+
+    setIsGeneratingPrompt(true);
+    try {
+      const res = await aiApi.generateDescription({
+        pageName,
+        industry: project.category || "Service",
+        projectDesc: project.description
+      });
+      setAiPrompt(res.data.suggestion);
+      toast.success("Magic prompt generated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate prompt");
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
 
   // Page identity fields
   const [pageName, setPageName] = useState("");
@@ -111,10 +135,46 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   };
 
   const handleAnalyze = () => {
-    if (!analyzeUrl.trim() || analyzeUrl === "https://") { toast.error("Please enter a URL."); return; }
-    const partial = generateAnalyzedPage(analyzeUrl, project, { primary: primaryColor, secondary: secondaryColor });
+    if (!analyzeUrl.trim()) { toast.error("Please enter a URL."); return; }
+    const partial = generateAnalyzedPage(analyzeUrl, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
     const page = buildPage(partial);
     onCreate(page as LandingPage);
+  };
+
+  const handleInspect = async () => {
+    if (!analyzeUrl.trim()) { toast.error("Please enter a URL first."); return; }
+    
+    let targetUrl = analyzeUrl.trim();
+    if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
+    setAnalyzeUrl(targetUrl);
+
+    setIsInspecting(true);
+    try {
+      const res = await aiApi.inspect(targetUrl);
+      const meta = res.data.metadata;
+      
+      if (meta.logo) setLogoPreview(meta.logo);
+      if (meta.logo) setLogoUrl(meta.logo);
+      
+      if (meta.suggestedColors && meta.suggestedColors.length > 0) {
+        setPrimaryColor(meta.suggestedColors[0]);
+        if (meta.suggestedColors.length > 1) {
+          setSecondaryColor(meta.suggestedColors[1]);
+        }
+      }
+      
+      if (meta.title && !pageName) {
+        const cleanName = meta.title.split('|')[0].trim();
+        setPageName(cleanName);
+        setPageSlug(autoSlug(cleanName));
+      }
+      
+      toast.success("Website analysis complete!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to analyze website");
+    } finally {
+      setIsInspecting(false);
+    }
   };
 
 
@@ -140,7 +200,6 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
             <h2 className="text-base font-semibold text-foreground flex-1">
               {method === "choose" && "Create New Page"}
               {method === "ai" && "Describe Your Page"}
-              {method === "analyze" && "Analyze a Website"}
             </h2>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
               <X className="h-5 w-5" />
@@ -150,9 +209,9 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
           {/* ── Method Selection ── */}
           {method === "choose" && (
             <div className="p-6 space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">
+              {/* <p className="text-sm text-muted-foreground mb-4">
                 How would you like to create this landing page?
-              </p>
+              </p> */}
 
               {/* AI Option */}
               <button
@@ -174,7 +233,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
               </button>
 
               {/* Analyze Option */}
-              <button
+              {/* <button
                 onClick={() => setMethod("analyze")}
                 className="w-full rounded-xl border-2 border-border hover:border-blue-400/50 bg-card hover:bg-blue-50/50 p-5 text-left transition-all group"
               >
@@ -190,7 +249,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                     <p className="text-xs text-blue-600 font-medium mt-2">Great for cloning or inspiration</p>
                   </div>
                 </div>
-              </button>
+              </button> */}
             </div>
           )}
 
@@ -252,11 +311,29 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   </div>
                 </div>
               </div>
+
               {/* AI Prompt */}
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Describe your page <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-foreground block">
+                    Describe your page <span className="text-red-500">*</span>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[11px] text-primary hover:bg-primary/5 gap-1.5"
+                    disabled={!pageName.trim() || isGeneratingPrompt}
+                    onClick={handleGenerateMagicPrompt}
+                  >
+                    {isGeneratingPrompt ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    Magic Write
+                  </Button>
+                </div>
                 <Textarea
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
@@ -293,7 +370,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                 className="w-full h-11 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
               >
                 {isCreating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating Page...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> AI is thinking & planning...</>
                 ) : (
                   <><Sparkles className="h-4 w-4" /> Generate with AI</>
                 )}
@@ -305,6 +382,38 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
           {/* ── Analyze Website Flow ── */}
           {method === "analyze" && (
             <div className="p-6 space-y-4">
+
+               {/* Page Identity Fields (Appears/Updated after scan) */}
+              <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Page Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={pageName}
+                    onChange={(e) => {
+                      setPageName(e.target.value);
+                      setPageSlug(autoSlug(e.target.value));
+                    }}
+                    placeholder="e.g. My Analyzed Page"
+                    className="h-10"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">URL Slug</label>
+                  <div className="flex items-center gap-0 rounded-md border border-input overflow-hidden">
+                    <span className="px-3 py-2 bg-muted text-[10px] font-bold text-muted-foreground border-r border-input whitespace-nowrap uppercase tracking-wider">SLUG</span>
+                    <input
+                      value={pageSlug}
+                      onChange={(e) => setPageSlug(autoSlug(e.target.value))}
+                      placeholder="analyzed-page"
+                      className="flex-1 px-3 py-2 text-sm bg-background outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              
               <div className="rounded-xl border border-border bg-card p-4 space-y-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Page Branding</p>
 
@@ -339,41 +448,6 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                     </label>
                     {logoPreview && <button onClick={() => { setLogoPreview(null); setLogoUrl(undefined); }} className="text-xs text-muted-foreground hover:text-red-500">Remove</button>}
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Website URL to analyze <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={analyzeUrl}
-                    onChange={(e) => setAnalyzeUrl(e.target.value)}
-                    placeholder="https://competitor.com/landing-page"
-                    className="pl-9 h-11"
-                    autoFocus
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter a full URL including https://
-                </p>
-              </div>
-
-              {/* Examples */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Examples:</p>
-                <div className="space-y-1.5">
-                  {["https://example.com/lp/roofing", "https://competitor.co/landing", "https://brand.com/offer"].map((ex) => (
-                    <button
-                      key={ex}
-                      onClick={() => setAnalyzeUrl(ex)}
-                      className="w-full text-left text-xs font-mono text-muted-foreground hover:text-primary bg-muted hover:bg-primary/5 rounded-lg px-3 py-2 transition-colors"
-                    >
-                      {ex}
-                    </button>
-                  ))}
                 </div>
               </div>
 

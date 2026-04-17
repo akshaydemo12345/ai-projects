@@ -11,6 +11,21 @@ import { projectsApi } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard } from "@/lib/utils";
 
+// ─── Helper Functions ────────────────────────────────────────────
+const cleanUrl = (url: string) => {
+  if (!url) return "#";
+  // If URL already has protocol, return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // If it's a localhost URL without protocol
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    return `http://${url}`;
+  }
+  // Otherwise, add https://
+  return `https://${url}`;
+};
+
 // ─── Component ────────────────────────────────────────────
 const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -180,7 +195,12 @@ const ProjectsPage = () => {
                       <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
                       <div className="flex items-center gap-1 mt-0.5">
                         <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground truncate">{project.websiteUrl || "No URL"}</p>
+                        <a className="text-xs text-muted-foreground truncate"
+                          target="_blank"
+                          href={cleanUrl(project.websiteUrl)}
+                        >
+                          {cleanUrl(project.websiteUrl)}
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -210,9 +230,9 @@ const ProjectsPage = () => {
                   </div>
                 </div>
 
-                <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-3 ${categoryColors[project.category] || categoryColors.Other}`}>
+                <a className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-3 ${categoryColors[project.category] || categoryColors.Other}`}>
                   {project.category || "General"}
-                </span>
+                </a>
 
                 <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8">
                   {project.description || "No description added yet."}
@@ -277,7 +297,7 @@ const ProjectsPage = () => {
                   <td className="px-5 py-3.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{project.name}</p>
-                      <p className="text-xs text-muted-foreground">{project.websiteUrl || "No URL"}</p>
+                      <a className="text-xs text-muted-foreground" href={project.websiteUrl}>{project.websiteUrl || "No URL"}</a>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
