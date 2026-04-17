@@ -1,15 +1,11 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft, Globe, FileText, Copy, CheckCircle2,
-  ChevronRight, Rocket, Download, Code2, Puzzle, Monitor,
-  Upload, X, ImageIcon
-} from "lucide-react";
+import { ArrowLeft, Globe, FileText, Copy, CheckCircle2, ChevronRight, Rocket, Download, Code2, Puzzle, Monitor, Upload, X, ImageIcon, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { projectsApi } from "@/services/api";
+import { projectsApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { copyToClipboard } from "@/lib/utils";
 
@@ -17,8 +13,30 @@ type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script" | "iframe";
 
 const categories = [
-  "SaaS", "E-commerce", "Agency", "Healthcare",
-  "Education", "Finance", "Real Estate", "Other",
+  "General",
+  "Digital Agency",
+  "Digital Marketing",
+  "SEO & Digital Marketing",
+  "Web Design",
+  "Design",
+  "Software Development",
+  "Technology",
+  "Consulting",
+  "Advertising",
+  "Branding",
+  "Analytics",
+  "Health & Fitness",
+  "Education",
+  "Real Estate",
+  "Insurance",
+  "Finance",
+  "Legal",
+  "Healthcare",
+  "Food & Restaurant",
+  "E-commerce",
+  "SaaS",
+  "Agency",
+  "Other",
 ];
 
 const CreateProjectFlow = () => {
@@ -37,7 +55,16 @@ const CreateProjectFlow = () => {
   const [name, setName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("https://");
   const [category, setCategory] = useState("Agency");
+  const [availableCategories, setAvailableCategories] = useState(categories);
   const [description, setDescription] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [extractedServices, setExtractedServices] = useState<string[]>([]);
+  const [extractedKeywords, setExtractedKeywords] = useState<string[]>([]);
+  const [themeColor, setThemeColor] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("");
+  const [secondaryColor, setSecondaryColor] = useState("");
+  const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  const [themeSystem, setThemeSystem] = useState<any>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
 
@@ -111,7 +138,75 @@ const CreateProjectFlow = () => {
       category,
       description: description.trim(),
       logoUrl: logoBase64 || undefined,
+      themeColor: themeColor || undefined,
+      primaryColor: primaryColor || undefined,
+      secondaryColor: secondaryColor || undefined,
+      colors: extractedColors.length > 0 ? extractedColors : [primaryColor, secondaryColor].filter(c => c),
+      themeSystem: themeSystem,
+      services: extractedServices,
+      keywords: extractedKeywords,
     });
+  };
+
+  const handleAnalyzeWebsite = async () => {
+    if (!websiteUrl || websiteUrl === "https://" || websiteUrl.length < 8) {
+      toast.error("Please enter a valid website URL to analyze.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const res = await aiApi.extractProject(websiteUrl);
+      const meta = res.data;
+
+      if (meta.projectName) {
+        setName(meta.projectName);
+      }
+      if (meta.projectDesc) {
+        setDescription(meta.projectDesc);
+      }
+      if (meta.projectLogo) {
+        setLogoPreview(meta.projectLogo);
+        setLogoBase64(meta.projectLogo);
+      }
+      if (meta.theme) {
+        setThemeColor(meta.theme);
+      }
+      if (meta.primaryColor) {
+        setPrimaryColor(meta.primaryColor);
+      }
+      if (meta.secondaryColor) {
+        setSecondaryColor(meta.secondaryColor);
+      }
+      if (meta.colors) {
+        setExtractedColors(meta.colors);
+      }
+      if (meta.themeSystem) {
+        setThemeSystem(meta.themeSystem);
+      }
+      if (meta.services) {
+        setExtractedServices(meta.services);
+      }
+      if (meta.keywords) {
+        setExtractedKeywords(meta.keywords);
+      }
+      if (meta.industry) {
+        setCategory(meta.industry);
+        // Add detected industry to available categories if not already present
+        setAvailableCategories(prev => {
+          if (!prev.includes(meta.industry)) {
+            return [...prev, meta.industry];
+          }
+          return prev;
+        });
+      }
+      
+      toast.success("Website analyzed! Project details populated.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to analyze website");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const copyToken = async () => {
@@ -220,40 +315,114 @@ const CreateProjectFlow = () => {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Info</p>
 
               <div>
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">Website URL</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      placeholder="https://yourclient.com"
+                      className="h-11 pl-9"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-11 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                    onClick={handleAnalyzeWebsite}
+                    disabled={isAnalyzing || !websiteUrl || websiteUrl === "https://"}
+                  >
+                    {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    Analyze
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  Enter a URL and click Analyze to automatically fetch project name, logo and description.
+                </p>
+              </div>
+
+              <div>
                 <label className="text-sm font-semibold text-foreground mb-1.5 block">
                   Project Name <span className="text-red-500">*</span>
                 </label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Rahul Roofing Company"
+                  placeholder="e.g. Roofing Company"
                   className="h-11"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Website URL</label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://yourclient.com"
-                    className="h-11 pl-9"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Category</label>
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                  Industry <span className="text-red-500">*</span>
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  Auto-detected from services. You can manually select if needed.
+                </p>
               </div>
+
+              {/* Branding Colors */}
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Branding</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
+                    <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
+                      <input 
+                        type="color" 
+                        value={primaryColor || "#000000"} 
+                        onChange={(e) => setPrimaryColor(e.target.value)} 
+                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" 
+                      />
+                      <span className="text-xs font-mono text-muted-foreground">{primaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
+                    <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
+                      <input 
+                        type="color" 
+                        value={secondaryColor || "#000000"} 
+                        onChange={(e) => setSecondaryColor(e.target.value)} 
+                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" 
+                      />
+                      <span className="text-xs font-mono text-muted-foreground">{secondaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Extracted Services */}
+              {/* {extractedServices.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detected Services</p>
+                  <div className="flex flex-wrap gap-2">
+                    {extractedServices.map((service, idx) => (
+                      <div 
+                        key={idx} 
+                        className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg px-2.5 py-1 text-xs font-medium"
+                      >
+                        {service}
+                        <button 
+                          onClick={() => setExtractedServices(prev => prev.filter((_, i) => i !== idx))}
+                          className="hover:text-primary/70"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">These services will be used to generate your landing pages.</p>
+                </div>
+              )} */}
 
               {/* Logo Upload */}
               <div>
@@ -355,7 +524,7 @@ const CreateProjectFlow = () => {
             </div>
             {/* Brand color swatches */}
             <div className="flex gap-1.5 flex-shrink-0">
-              <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.primaryColor }} title="Primary" />
+              <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.primaryColor || createdProject.themeColor || '#7c3aed' }} title="Primary" />
               <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.secondaryColor }} title="Secondary" />
             </div>
           </div>

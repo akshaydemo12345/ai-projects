@@ -73,6 +73,23 @@ const pageSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  services: {
+    type: [String],
+    default: [],
+  },
+  noIndex: {
+    type: Boolean,
+    default: false,
+  },
+  noFollow: {
+    type: Boolean,
+    default: false,
+  },
+  prefix: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   generationMethod: {
     type: String,
     enum: ['ai', 'analyze', 'manual'],
@@ -139,8 +156,14 @@ const pageSchema = new mongoose.Schema({
   },
 });
 
-// Ensure slug is unique WITHIN A PROJECT
-pageSchema.index({ projectId: 1, slug: 1 }, { unique: true });
+// Ensure slug is unique WITHIN A PROJECT (only for non-deleted pages)
+pageSchema.index(
+  { projectId: 1, slug: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { isDeleted: false } 
+  }
+);
 
 // Soft delete query middleware
 pageSchema.pre(/^find/, function (next) {

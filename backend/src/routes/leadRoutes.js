@@ -12,6 +12,9 @@ router.options('/', (req, res) => {
   return res.sendStatus(204);
 });
 
+// ─── Public: serve secure tracking JS to proxied landing pages ─────────────
+router.get('/tracker.js', leadController.getTrackerJs);
+
 // ─── Public: form submission from any landing page ───────────────────────────
 router.post('/', leadController.createLead);
 
