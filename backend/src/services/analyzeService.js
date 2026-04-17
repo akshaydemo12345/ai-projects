@@ -839,7 +839,7 @@ const extractProjectData = async (url) => {
       allColors.push(secondaryColor);
     }
     
-    const bulkImages = extractBulkImages($, normalizedUrl);
+    const bulkMedia = extractBulkMedia($, normalizedUrl);
     const structuredData = extractStructuredData($);
 
     return {
@@ -856,7 +856,8 @@ const extractProjectData = async (url) => {
       industry: detectedIndustry,
       themeSystem, // Complete theme system for design
       scrapedData: {
-        images: bulkImages,
+        images: bulkMedia.images,
+        videos: bulkMedia.videos,
         ...structuredData,
         rawText: $('body').text().replace(/\s+/g, ' ').trim().substring(0, 5000)
       }
@@ -1364,9 +1365,13 @@ const generateServicesFromProjectName = (projectName) => {
   
   return ['Professional Services', 'Expert Consulting', 'Custom Solutions', 'Quality Support'];
 };
+const extractBulkMedia = ($, baseUrl) => {
+  const media = {
+    images: [],
+    videos: []
+  };
 
-const extractBulkImages = ($, baseUrl) => {
-  const images = [];
+  // 1. Extract Images
   $('img').each((i, el) => {
     const src = $(el).attr('src');
     const alt = $(el).attr('alt')?.trim() || '';
@@ -1380,34 +1385,91 @@ const extractBulkImages = ($, baseUrl) => {
           fullUrl = new URL(src, baseUrl).href;
         }
         
-        // Categorize images based on metadata
         let type = 'general';
-        if (alt.toLowerCase().includes('logo') || cls.toLowerCase().includes('logo')) type = 'logo';
-        else if (alt.toLowerCase().includes('hero') || cls.toLowerCase().includes('banner')) type = 'banner';
-        else if (alt.toLowerCase().includes('testimonial') || alt.toLowerCase().includes('user')) type = 'person';
-        else if (alt.toLowerCase().includes('product') || cls.toLowerCase().includes('item')) type = 'product';
+        const metaText = (alt + ' ' + cls + ' ' + title).toLowerCase();
+        
+        if (metaText.includes('logo')) type = 'logo';
+        else if (metaText.includes('hero') || metaText.includes('banner') || metaText.includes('slider')) type = 'banner';
+        else if (metaText.includes('testimonial') || metaText.includes('user') || metaText.includes('avatar') || metaText.includes('team')) type = 'person';
+        else if (metaText.includes('product') || metaText.includes('item') || metaText.includes('service')) type = 'product';
+        else if (metaText.includes('gallery') || metaText.includes('portfolio')) type = 'gallery';
 
-        images.push({ url: fullUrl, alt, type, context: title || cls });
+        media.images.push({ url: fullUrl, alt, type, context: title || cls });
       } catch (e) {}
     }
   });
-  return images.slice(0, 30); // Cap at 30 images
-};
+
+  // 2. Extract Videos (iframes and video tags)
+  $('video, iframe[src*="youtube.com"], iframe[src*="vimeo.com"], iframe[src*="dailymotion.com"]').each((i, el) => {
+    let src = $(el).attr('src') || $(el).find('source').attr('src');
+    
+    if (src && src.length > 5) {
+      try {
+        if (!src.startsWith('http') && !src.startsWith('//')) {
+          src = new URL(src, baseUrl).href;
+        }
+        media.videos.push({ url: src, type: el.name === 'video' ? 'direct' : 'embed' });
+      } catch (e) {}
+    }
+  });
+
+  return {
+    images: media.images.slice(0, 40),
+    videos: media.videos.slice(0, 10)
+  };
+};;
 
 const extractStructuredData = ($) => {
   const data = {
     testimonials: [],
     pricing: [],
     partners: [],
-    faq: []
+    faq: [],
+    ctas: [],
+    forms: []
   };
+
+  // 1. CTA Detection
+  $('a, button').each((i, el) => {
+    const text = $(el).text().trim();
+    const href = $(el).attr('href');
+    if (text.length > 3 && text.length < 50 && (text.toLowerCase().includes('start') || text.toLowerCase().includes('get') || text.toLowerCase().includes('trial') || text.toLowerCase().includes('sign up') || text.toLowerCase().includes('contact'))) {
+      if (!data.ctas.includes(text)) data.ctas.push(text);
+    }
+  });
+
+  // 2. Form & Input Detection (Aggressive)
+  let foundForm = false;
+  $('form').each((i, el) => {
+    foundForm = true;
+    const inputs = [];
+    $(el).find('input, textarea, select').each((j, input) => {
+      const type = $(input).attr('type');
+      if (type === 'hidden' || type === 'submit') return;
+      const placeholder = $(input).attr('placeholder') || $(input).prev('label').text().trim() || $(input).attr('name') || $(input).attr('id');
+      if (placeholder) inputs.push(placeholder);
+    });
+    if (inputs.length > 0) data.forms.push({ id: $(el).attr('id') || 'scraped-form', inputs });
+  });
+
+  // If no <form> tag, look for clusters of inputs (common in modern apps/popups)
+  if (!foundForm) {
+    const looseInputs = [];
+    $('input:not([type="hidden"]), textarea, select').each((i, input) => {
+      const placeholder = $(input).attr('placeholder') || $(input).prev('label').text().trim() || $(input).attr('name');
+      if (placeholder && !looseInputs.includes(placeholder)) looseInputs.push(placeholder);
+    });
+    if (looseInputs.length >= 2) {
+      data.forms.push({ id: 'detected-inputs', inputs: looseInputs.slice(0, 10) });
+    }
+  }
 
   // Testimonials heuristic
   $(':contains("testimonial"), :contains("what they say"), :contains("reviews")').each((i, el) => {
     const section = $(el).closest('section, div');
     const text = section.text().replace(/\s+/g, ' ').trim();
     if (text.length > 50 && text.length < 1000) {
-      data.testimonials.push(text);
+      if (data.testimonials.length < 5) data.testimonials.push(text);
     }
   });
 
@@ -1415,18 +1477,18 @@ const extractStructuredData = ($) => {
   $(':contains("$"), :contains("₹"), :contains("£"), :contains("/month"), :contains("/year")').each((i, el) => {
     const text = $(el).text().trim();
     if (text.length > 1 && text.length < 40) {
-      data.pricing.push(text);
+      if (data.pricing.length < 10) data.pricing.push(text);
     }
   });
 
   // Partners/Clients heuristic
   $('img[alt*="partner" i], img[alt*="client" i], img[alt*="logo" i]').each((i, el) => {
     const src = $(el).attr('src');
-    if (src) data.partners.push(src);
+    if (src && data.partners.length < 20) data.partners.push(src);
   });
 
   return data;
 };
 
-module.exports = { analyzeWebsite, inspectWebsite, extractProjectData, extractBulkImages, extractStructuredData };
+module.exports = { analyzeWebsite, inspectWebsite, extractProjectData, extractBulkMedia, extractStructuredData };
 

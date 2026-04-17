@@ -186,6 +186,24 @@ const CreatePagePage = () => {
         if (finalLogo) {
           enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
         }
+
+        // Inject real images from scrapedData if available
+        if (project.scrapedData?.images?.length > 0) {
+          const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
+          const generalImages = project.scrapedData.images.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
+
+          // Replace hero background (Unsplash link)
+          if (bannerImages.length > 0) {
+            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
+          } else if (generalImages.length > 0) {
+            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
+          }
+
+          // Replace other content images
+          if (generalImages.length > 1) {
+            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
+          }
+        }
       }
 
       basePayload = {

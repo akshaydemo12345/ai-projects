@@ -65,6 +65,7 @@ const CreateProjectFlow = () => {
   const [secondaryColor, setSecondaryColor] = useState("");
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
+  const [scrapedData, setScrapedData] = useState<any>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
 
@@ -145,6 +146,7 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
+      scrapedData: scrapedData,
     });
   };
 
@@ -189,6 +191,9 @@ const CreateProjectFlow = () => {
       }
       if (meta.keywords) {
         setExtractedKeywords(meta.keywords);
+      }
+      if (meta.scrapedData) {
+        setScrapedData(meta.scrapedData);
       }
       if (meta.industry) {
         setCategory(meta.industry);
