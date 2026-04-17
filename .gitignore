@@ -16,3 +16,4 @@ backend/db/
 
 # Explicitly allow domain-mapper.zip
 !domain-mapper.zip
+backend/logs/*

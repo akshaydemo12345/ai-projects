@@ -106,7 +106,7 @@ const projectSchema = new mongoose.Schema({
 // Middleware to update updatedAt and generate apiToken
 projectSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
-  
+
   if (!this.apiToken) {
     const crypto = require('crypto');
     this.apiToken = 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
@@ -115,7 +115,7 @@ projectSchema.pre('save', function (next) {
   if (this.websiteUrl) {
     this.websiteUrl = normalizeDomain(this.websiteUrl);
   }
-  
+
   next();
 });
 

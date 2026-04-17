@@ -7,7 +7,7 @@ const { normalizeDomain } = require('../utils/validation');
 exports.createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
-    
+
     // Generate unique API Token if not provided
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
@@ -84,7 +84,7 @@ exports.getProject = async (req, res, next) => {
 
     // Also fetch pages for this project to ensure frontend has them
     const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } });
-    
+
     // Ensure pageCount is accurate (sync it just in case)
     const pageCount = pages.length;
     if (project.pageCount !== pageCount) {
@@ -94,7 +94,7 @@ exports.getProject = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { 
+      data: {
         project: {
           ...project.toObject(),
           pages: pages.map(p => ({
@@ -119,7 +119,7 @@ exports.updateProject = async (req, res, next) => {
 
     const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl } = req.body;
     const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, updatedAt: Date.now() };
-    
+
     if (websiteUrl !== undefined) {
       updateData.websiteUrl = websiteUrl ? normalizeDomain(websiteUrl) : "";
     }
