@@ -2,7 +2,7 @@
 
 const { z } = require('zod');
 const { generateLandingPageContent } = require('../services/aiService');
-const { analyzeWebsite: analyzeService } = require('../services/analyzeService');
+const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
 const Page = require('../models/Page');
 const User = require('../models/User');
@@ -23,11 +23,14 @@ const generateSchema = z.object({
   aiPrompt: z.string().optional(),
   figmaUrl: z.string().url('Invalid Figma URL').nullable().or(z.literal('')).optional(),
   pageId: z.string().optional(),
+  services: z.array(z.string()).optional(),
+  websiteContent: z.string().optional(),
 });
 
 const analyzeWebsiteSchema = z.object({
   websiteUrl: z.string().url('Invalid website URL required'),
-  pageId: z.string().optional(), // Optional: if provided, update existing page with the analysis
+  url: z.string().url().optional(), // Support both for compatibility
+  pageId: z.string().optional(),
 });
 
 // ─── POST /ai/generate ────────────────────────────────────────────────────────
@@ -82,25 +85,34 @@ exports.generateContent = async (req, res, next) => {
           figmaData,
         });
 
-        // C. Update Page with AI content and set status back to 'draft'
-        if (input.pageId) {
-          await Page.findOneAndUpdate(
-            { _id: input.pageId, userId: req.user._id },
-            {
-              content: aiContent,
-              seo: aiContent.seo || { 
-                title: `${input.businessName} - High Converting Landing Page`,
-                description: input.businessDescription.substring(0, 160)
-              },
-              status: 'draft',
-              updatedAt: Date.now(),
-              ...(input.figmaUrl && { designUrl: input.figmaUrl })
-            }
-          );
-        }
+    // D. Deduct 1 credit on success
+    await User.findByIdAndUpdate(req.user._id, { $inc: { credits: -1 } });
+    
+    // E. Add default SEO metadata if not present
+    const finalContent = { ...aiContent };
+    if (!finalContent.seo) {
+      finalContent.seo = {
+        title: `${input.businessName} - Professional ${input.industry} Services`,
+        description: input.businessDescription.substring(0, 160),
+        keywords: input.keywords || []
+      };
+    }
 
-        // D. Deduct 1 credit on success
-        await User.findByIdAndUpdate(req.user._id, { $inc: { credits: -1 } });
+    // F. Update Page with AI content and set status back to 'draft'
+    if (input.pageId) {
+      const pageUpdate = {
+        content: finalContent,
+        seo: finalContent.seo,
+        status: 'draft',
+        updatedAt: Date.now(),
+        ...(input.figmaUrl && { designUrl: input.figmaUrl })
+      };
+      
+      await Page.findOneAndUpdate(
+        { _id: input.pageId, userId: req.user._id },
+        pageUpdate
+      );
+    }
         
         console.log(`AI Page Generation successful for user ${req.user._id}`);
 
@@ -114,6 +126,31 @@ exports.generateContent = async (req, res, next) => {
       }
     });
 
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route   POST /ai/inspect-website
+ * @desc    Quickly fetch metadata (logo, colors, title) from a URL without generating a full page
+ * @access  Private
+ */
+exports.inspectWebsite = async (req, res, next) => {
+  try {
+    const { url, websiteUrl } = req.body;
+    const targetUrl = url || websiteUrl;
+
+    if (!targetUrl) {
+      return res.status(400).json({ status: 'fail', message: 'URL is required' });
+    }
+
+    const metadata = await inspectService(targetUrl);
+
+    res.status(200).json({
+      status: 'success',
+      data: { metadata }
+    });
   } catch (err) {
     next(err);
   }
@@ -135,7 +172,8 @@ exports.analyzeWebsite = async (req, res, next) => {
       });
     }
 
-    const { websiteUrl, pageId } = parsed.data;
+    const { websiteUrl, url, pageId } = parsed.data;
+    const targetUrl = websiteUrl || url;
 
     // Credit check
     const user = await User.findById(req.user._id);
@@ -144,7 +182,7 @@ exports.analyzeWebsite = async (req, res, next) => {
     }
 
     // Call service
-    const aiContent = await analyzeService(websiteUrl);
+    const aiContent = await analyzeService(targetUrl);
 
     // Deduct 1 credit
     user.credits = Math.max(0, user.credits - 1);
@@ -184,6 +222,29 @@ exports.analyzeWebsite = async (req, res, next) => {
 };
 
 /**
+ * @route   POST /ai/extract-project
+ * @desc    Extract SEO data, services, and branding from a URL for project prefill
+ * @access  Private
+ */
+exports.extractProject = async (req, res, next) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ status: 'fail', message: 'URL is required' });
+    }
+
+    const data = await extractProjectData(url);
+
+    res.status(200).json({
+      status: 'success',
+      data
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * @route   POST /ai/improve
  * @desc    Improve a specific section using AI
  * @access  Private
@@ -213,6 +274,83 @@ exports.improveSection = async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       data: { improvedContent: improved, creditsRemaining: user.credits }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+/**
+ * @route   POST /ai/generate-description
+ * @desc    Generate a suggested AI prompt for a landing page
+ * @access  Private
+ */
+exports.generateDescription = async (req, res, next) => {
+  try {
+    const { pageName, industry, projectDesc } = req.body;
+
+    if (!pageName || !industry) {
+      return res.status(400).json({ status: 'fail', message: 'pageName and industry are required' });
+    }
+
+    const { generateDescriptionSuggestion } = require('../services/aiService');
+    const suggestion = await generateDescriptionSuggestion({ pageName, industry, projectDesc });
+
+    return res.status(200).json({
+      status: 'success',
+      data: { suggestion }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+/**
+ * @route   POST /ai/strategic-plan
+ * @desc    Generate a conversion-optimized landing page structure and form strategy
+ * @access  Private
+ */
+exports.getStrategicPlan = async (req, res, next) => {
+  try {
+    const { businessName, industry, businessDescription, services, websiteContent } = req.body;
+
+    if (!businessName || !industry || !businessDescription) {
+      return res.status(400).json({ 
+        status: 'fail', 
+        message: 'businessName, industry, and businessDescription are required' 
+      });
+    }
+
+    const { generateStrategicStructure } = require('../services/aiService');
+    const plan = await generateStrategicStructure({
+      businessName,
+      industry,
+      businessDescription,
+      services: services || [],
+      websiteContent: websiteContent || ''
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: { plan }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+/**
+ * @route   POST /ai/optimize-page
+ * @desc    Upgrade an existing landing page using scraped data and CRO logic
+ * @access  Private
+ */
+exports.optimizePage = async (req, res, next) => {
+  try {
+    const { projectData, scrapedData, existingPage } = req.body;
+
+    const { optimizeStrategicStructure } = require('../services/aiService');
+    const optimizedPlan = await optimizeStrategicStructure({ projectData, scrapedData, existingPage });
+
+    return res.status(200).json({
+      status: 'success',
+      data: optimizedPlan
     });
   } catch (err) {
     next(err);

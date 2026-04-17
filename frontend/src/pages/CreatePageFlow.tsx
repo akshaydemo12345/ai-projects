@@ -1,37 +1,38 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, Link2, Upload, CheckCircle2, Rocket, ImagePlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Sparkles, Link2, Upload, CheckCircle2, Rocket, ImagePlus, Globe, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { pagesApi, aiApi } from "@/services/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { pagesApi, aiApi, projectsApi, type Project } from "@/services/api";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { toast } from "sonner";
 
 type Step = "methods" | "create-ai" | "analyze" | "crafting";
 
-const pageTypes = [
-  { id: "landing", label: "Landing Page", icon: <Rocket className="h-6 w-6" /> },
-];
-
-const industries = ["SaaS", "E-commerce", "Agency", "Healthcare", "Education", "Finance", "Real Estate", "Other"];
-
-const extractItems = [
-  "Logo & brand colors",
-  "Page structure & layout",
-  "Content & copy text",
-  "SEO metadata",
-  "Images & media",
-  "Call-to-action buttons",
-];
-
 const CreatePageFlow = () => {
   const navigate = useNavigate();
+  const { projectId } = useParams();
+  const queryClient = useQueryClient();
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: () => projectsApi.getById(projectId!),
+    enabled: !!projectId,
+  });
+
   const [step, setStep] = useState<Step>("methods");
 
   // Create with AI form state
+  const [pageName, setPageName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [noIndex, setNoIndex] = useState(false);
+  const [noFollow, setNoFollow] = useState(false);
+  
   const [businessName, setBusinessName] = useState("");
   const [industry, setIndustry] = useState("SaaS");
   const [selectedPageType, setSelectedPageType] = useState("landing");
@@ -45,6 +46,42 @@ const CreatePageFlow = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const industries = ["SaaS", "E-commerce", "Agency", "Healthcare", "Education", "Finance", "Real Estate", "Other"];
+  const pageTypes = [
+    { id: "landing", label: "Landing Page", icon: <Rocket className="h-6 w-6" /> },
+  ];
+  const extractItems = [
+    "Logo & brand colors",
+    "Page structure & layout",
+    "Content & copy text",
+    "SEO metadata",
+    "Images & media",
+    "Call-to-action buttons",
+  ];
+
+  useEffect(() => {
+    if (project) {
+      setBusinessName(project.name);
+      setBusinessDesc(project.description || "");
+      setPrimaryColor(project.primaryColor || "#7c3aed");
+      setSecondaryColor(project.secondaryColor || "#a855f7");
+      setLogoUrl(project.logoUrl);
+      setIndustry(project.industry || "SaaS");
+    }
+  }, [project]);
+
+  const autoSlug = (v: string) => v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+  const handlePageNameChange = (name: string) => {
+    setPageName(name);
+    if (!slug || slug === autoSlug(pageName)) {
+      setSlug(autoSlug(name));
+    }
+  };
+
+  const finalSlug = prefix ? `${prefix}-${slug}` : slug;
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,40 +106,41 @@ const CreatePageFlow = () => {
   // Crafting progress
   const [progress, setProgress] = useState(0);
 
-  const startCrafting = () => {
-    setStep("crafting");
-    setProgress(0);
+  const handleAiGenerate = async () => {
+    if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
+    if (!aiPrompt.trim()) { toast.error("Please describe your page."); return; }
+    
+    setIsCreating(true);
+    try {
+      const payload = {
+        projectId,
+        title: pageName,
+        slug: finalSlug,
+        prefix,
+        noIndex,
+        noFollow,
+        businessName,
+        industry,
+        businessDescription: businessDesc,
+        primaryColor,
+        secondaryColor,
+        logoUrl,
+        aiPrompt,
+        pageType: selectedPageType,
+        targetAudience,
+        ctaText,
+        services: project?.services || [],
+        keywords: project?.keywords || [],
+      };
 
-    // Generate the landing page HTML + CSS
-    const { html, css } = generateLandingPageHtml({
-      businessName,
-      industry,
-      pageType: selectedPageType,
-      businessDesc,
-      targetAudience,
-      ctaText,
-      aiPrompt,
-      primaryColor,
-      secondaryColor,
-      accentColor,
-      websiteUrl,
-      logoUrl,
-    });
-
-    // Store in localStorage for the editor to pick up
-    localStorage.setItem('grapes-initial-html', html);
-    localStorage.setItem('grapes-initial-css', css);
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => navigate("/editor"), 500);
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 80);
+      const res = await pagesApi.create(projectId!, payload);
+      toast.success("Page creation started!");
+      navigate(`/dashboard/projects/${projectId}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create page");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const startAnalyze = () => {
@@ -183,6 +221,81 @@ const CreatePageFlow = () => {
           <p className="text-muted-foreground mb-8">Fill in your details and let AI generate an optimized landing page for you.</p>
 
           <div className="rounded-xl border border-border bg-card p-8 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground">Page Name *</label>
+                <Input 
+                  value={pageName} 
+                  onChange={(e) => handlePageNameChange(e.target.value)} 
+                  placeholder="e.g. Digital Marketing" 
+                  className="mt-1.5 h-11" 
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground">Prefix (Optional)</label>
+                <Input 
+                  value={prefix} 
+                  onChange={(e) => setPrefix(e.target.value)} 
+                  placeholder="e.g. landing" 
+                  className="mt-1.5 h-11" 
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">Final Slug Preview</label>
+              <div className="mt-1.5 p-3 bg-muted rounded-lg font-mono text-sm border border-border">
+                {finalSlug || "your-page-slug"}
+              </div>
+            </div>
+
+            {/* Service Selection */}
+            {project?.services && project.services.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-foreground">Select a Service</label>
+                <div className="grid grid-cols-2 gap-2 mt-1.5">
+                  {project.services.map((service: string) => (
+                    <button
+                      key={service}
+                      onClick={() => handlePageNameChange(service)}
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                        pageName === service 
+                          ? "border-primary bg-primary/10 text-primary" 
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {service}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SEO Settings */}
+            <div className="space-y-3 pt-2">
+              <p className="text-sm font-medium text-foreground">SEO Settings</p>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={noIndex} 
+                    onChange={(e) => setNoIndex(e.target.checked)}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-muted-foreground">No Index</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={noFollow} 
+                    onChange={(e) => setNoFollow(e.target.checked)}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-muted-foreground">No Follow</span>
+                </label>
+              </div>
+            </div>
+
             {/* Business Name & Industry */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -323,8 +436,9 @@ const CreatePageFlow = () => {
               </div>
             </div>
 
-            <Button onClick={startCrafting} className="w-full h-12 text-base bg-primary hover:bg-primary/90 gap-2">
-              <Sparkles className="h-5 w-5" /> Generate with AI
+            <Button onClick={handleAiGenerate} disabled={isCreating} className="w-full h-12 text-base bg-primary hover:bg-primary/90 gap-2">
+              {isCreating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+              {isCreating ? "Creating..." : "Generate with AI"}
             </Button>
           </div>
 

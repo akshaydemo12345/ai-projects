@@ -235,6 +235,18 @@ export const aiApi = {
   analyze: async (url: string) => {
     return apiFetch('/ai/analyze-website', {
       method: 'POST',
+      body: JSON.stringify({ websiteUrl: url }),
+    });
+  },
+  inspect: async (url: string) => {
+    return apiFetch('/ai/inspect-website', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+  extractProject: async (url: string) => {
+    return apiFetch('/ai/extract-project', {
+      method: 'POST',
       body: JSON.stringify({ url }),
     });
   },
@@ -242,6 +254,12 @@ export const aiApi = {
     return apiFetch('/ai/improve', {
       method: 'POST',
       body: JSON.stringify(sectionData),
+    });
+  },
+  generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string }) => {
+    return apiFetch('/ai/generate-description', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 };
