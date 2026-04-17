@@ -14,7 +14,7 @@ export type BlockType =
 
   | 'video' | 'google-map' | 'link-block' | 'countdown'
 
-  | 'custom-data-table' | 'dynamic-fields';
+  | 'custom-data-table' | 'dynamic-fields' | 'custom-html';
 
 
 

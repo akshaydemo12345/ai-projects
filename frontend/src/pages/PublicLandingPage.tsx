@@ -8,7 +8,7 @@ const PublicLandingPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  
+
   const isThankYouPage = window.location.pathname.endsWith('/thank-you');
 
   // We might need the token from the URL if the backend requires it
@@ -24,7 +24,7 @@ const PublicLandingPage = () => {
   useEffect(() => {
     if (pageData && iframeRef.current) {
       const { data: content, meta } = pageData;
-      
+
       // Update browser tab title
       if (meta?.title) {
         document.title = meta.title;
@@ -33,7 +33,7 @@ const PublicLandingPage = () => {
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
       const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
       const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
-      
+
       const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const PAGE_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
@@ -159,7 +159,7 @@ const PublicLandingPage = () => {
 
       // Ensure styles and scripts are injected even into full documents
       const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
-      
+
       if (isFullDoc) {
         // Inject styles into head of full document if provided separately
         if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
@@ -176,7 +176,7 @@ const PublicLandingPage = () => {
             finalHtml = finalHtml.replace(/<\/head>/i, coreDependencies + '</head>');
           }
         }
-        
+
         // Inject lead capture
         if (finalHtml.toLowerCase().includes('</body>')) {
           finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
@@ -217,7 +217,7 @@ const PublicLandingPage = () => {
           </html>
         `;
       }
-      
+
       if (isThankYouPage) {
         // Render Thank You content directly into iframe
         const thankYouHtml = `
@@ -263,14 +263,14 @@ const PublicLandingPage = () => {
                 .pc-success-icon {
                   width: 100px;
                   height: 100px;
-                  background: rgba(16, 185, 129, 0.1);
+                  background: #7c3aed;
                   border-radius: 50%;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   margin: 0 auto 32px;
-                  color: #10b981;
-                  box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+                  color: #ffffffff;
+                  box-shadow: 0 0 40px #7c3aed36;
                 }
                 .pc-title {
                   font-size: 56px;
@@ -378,8 +378,8 @@ const PublicLandingPage = () => {
         <p className="text-slate-600 max-w-md mx-auto mb-6">
           The landing page you are looking for doesn't exist or is not currently published.
         </p>
-        <a 
-          href="/" 
+        <a
+          href="/"
           className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
         >
           Go to Home
