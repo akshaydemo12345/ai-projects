@@ -304,15 +304,14 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc }
     Return ONLY the raw string. No quotes.
   `;
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const response = await anthropic.messages.create({
+    model: CLAUDE_MODEL_CANDIDATES[0],
     max_tokens: 400,
+    messages: [{ role: 'user', content: prompt }],
   });
 
-  return response.choices[0].message.content.trim().replace(/^"|"$/g, '');
+  return response.content[0].text.trim().replace(/^"|"$/g, '');
 };
 
 /**
@@ -381,19 +380,37 @@ Think before generating. Adapt based on the industry automatically. Focus on con
 Generate ONLY the JSON object.
 `;
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const response = await anthropic.messages.create({
+    model: CLAUDE_MODEL_CANDIDATES[0],
+    max_tokens: 8192,
     messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
     ],
-    temperature: 0.7,
-    response_format: { type: 'json_object' }
   });
 
   try {
-    return JSON.parse(response.choices[0].message.content);
+    let text = response.content[0].text;
+    // Remove markdown code blocks if present
+    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Try to parse as JSON
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      // Fallback: try to extract JSON from the text
+      logger.warn('Initial JSON parse failed, attempting extraction:', parseErr.message);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch (extractErr) {
+          logger.error('JSON extraction also failed:', extractErr.message);
+          throw new Error('Strategic Plan Generation Failed');
+        }
+      }
+      throw new Error('Strategic Plan Generation Failed');
+    }
   } catch (err) {
     logger.error('Failed to parse CRO strategy JSON:', err.message);
     throw new Error('Strategic Plan Generation Failed');
@@ -464,7 +481,7 @@ Transform this existing structure into a high-converting masterpiece. Use the re
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: CLAUDE_MODEL_CANDIDATES[0],
     max_tokens: 4000,
     temperature: 0.1,
     system: systemPrompt,
