@@ -982,7 +982,7 @@ const ProjectDetailPage = () => {
     enabled: !!id,
   });
 
-  const [createOpen, setCreateOpen] = useState(searchParams.get("createPage") === "1");
+  const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
   const [editingPage, setEditingPage] = useState<LandingPage | null>(null);
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
   const [deletePageId, setDeletePageId] = useState<string | null>(null);
@@ -1099,14 +1099,7 @@ const ProjectDetailPage = () => {
     <div className="flex-1 overflow-y-auto" style={{ background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)" }}>
 
       {/* Modals */}
-      {createOpen && (
-        <CreatePageModal
-          project={project}
-          onClose={() => setCreateOpen(false)}
-          onCreate={handlePageCreated}
-          isCreating={createPageMutation.isPending}
-        />
-      )}
+      {/* CreatePageModal removed – now a full page at /dashboard/projects/:id/create-page */}
       {editingPage && (
         <EditPageModal
           page={editingPage}
@@ -1210,7 +1203,7 @@ const ProjectDetailPage = () => {
                 </div>
               </div>
               <Button
-                onClick={() => setCreateOpen(true)}
+                onClick={() => navigate(`/dashboard/projects/${id}/create-page`)}
                 className="h-9 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-sm text-sm"
               >
                 <Plus className="h-4 w-4" /> New Page
@@ -1238,7 +1231,7 @@ const ProjectDetailPage = () => {
                   <p className="text-base font-bold text-foreground mb-1">No pages yet</p>
                   <p className="text-sm text-muted-foreground mb-5">Create your first landing page to get started</p>
                   <Button
-                    onClick={() => setCreateOpen(true)}
+                    onClick={() => navigate(`/dashboard/projects/${id}/create-page`)}
                     className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
                   >
                     <Plus className="h-4 w-4" /> Create Landing Page
