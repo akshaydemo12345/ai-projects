@@ -491,13 +491,31 @@ exports.handleFormSubmission = async (req, res, next) => {
     const page = await Page.findOne({ slug: normalizedSlug, isDeleted: { $ne: true } });
     if (!page) return next(new AppError('Page not found', 404));
 
-    // Capture fields (handle both name and first_name/last_name combinations)
+    // Capture fields
     const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
     
-    const leadName = name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Unknown Lead');
-    const leadEmail = email || `missing-email-${Date.now()}@unknown.com`;
-    const leadPhone = phone || tel || '';
-    const leadMessage = message || comments || '';
+    // ─── STRICT VALIDATION: Stop "Unknown Lead" ───
+    if (!email) {
+      console.warn(`⚠️ Blocking anonymous form submission for slug: ${normalizedSlug}`);
+      return res.status(400).json({ status: 'error', message: 'Email is required' });
+    }
+
+    const leadName = (name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Contact')).trim();
+    const leadEmail = email.trim().toLowerCase();
+    const leadPhone = (phone || tel || '').trim();
+    const leadMessage = (message || comments || '').trim();
+
+    // ─── DUPLICATE PROTECTION: Millisecond gap check ───
+    const recentLead = await Lead.findOne({
+      email: leadEmail,
+      pageSlug: normalizedSlug,
+      createdAt: { $gt: new Date(Date.now() - 5000) } // 5 second window
+    });
+
+    if (recentLead) {
+      console.log(`♻️ Skipping duplicate lead for ${leadEmail} on ${normalizedSlug}`);
+      return res.redirect(`/${normalizedSlug}/thank-you?status=already_sent`);
+    }
 
     // Create the lead
     const lead = await Lead.create({

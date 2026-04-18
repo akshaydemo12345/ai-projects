@@ -20,6 +20,21 @@ exports.createLead = async (req, res) => {
       });
     }
 
+    // ─── DUPLICATE PROTECTION: Prevent multiple leads within seconds ───
+    const recentLead = await Lead.findOne({
+      email: email.toLowerCase(),
+      pageSlug: pageSlug,
+      createdAt: { $gt: new Date(Date.now() - 5000) } // 5 second window
+    });
+
+    if (recentLead) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'Lead already captured',
+        data: { leadId: recentLead._id, duplicate: true }
+      });
+    }
+
     // Try to find the page to verify it exists and get projectId if missing
     let finalProjectId = projectId;
     if (!finalProjectId) {
@@ -240,11 +255,30 @@ exports.getTrackerJs = (req, res) => {
     document.addEventListener("submit", function(e) {
       var f = e.target;
       if (f.tagName !== "FORM") return;
+      
+      // 1. Check if already submitting to prevent double-clicks
+      if (f.getAttribute("data-submitting") === "true") {
+        e.preventDefault();
+        return;
+      }
+
       console.log('[Lead Tracker] Form submit intercepted');
+      
+      // 2. Mark as submitting and prevent default
+      f.setAttribute("data-submitting", "true");
       e.preventDefault();
+      e.stopImmediatePropagation();
+
       var b = f.querySelector('button[type="submit"]') || f.querySelector("button"),
           t = b ? (b.textContent || "Submit") : "Submit";
-      if (b) { b.disabled = true; b.textContent = "Sending..." }
+      
+      if (b) { 
+        b.disabled = true; 
+        b.textContent = "Sending...";
+        b.style.opacity = "0.7";
+        b.style.cursor = "not-allowed";
+      }
+
       var fd = new FormData(f);
       
       // Try multiple field name variations
@@ -252,20 +286,29 @@ exports.getTrackerJs = (req, res) => {
         pageSlug: SL,
         pageId: PI,
         projectId: PJ,
-        name: fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname") || 
+        name: (fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname") || 
                (f.querySelector('input[name*="name"]') ? f.querySelector('input[name*="name"]').value : "") ||
-               (f.querySelector('input[type="text"]') ? f.querySelector('input[type="text"]').value : ""),
-        email: fd.get("email") || fd.get("email_address") || 
-               (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : ""),
-        phone: fd.get("phone") || fd.get("tel") || fd.get("telephone") || fd.get("mobile") ||
-               (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : ""),
-        message: fd.get("message") || fd.get("comments") || fd.get("comment") || fd.get("inquiry") ||
-                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")
+               (f.querySelector('input[type="text"]') ? f.querySelector('input[type="text"]').value : "")).trim(),
+        email: (fd.get("email") || fd.get("email_address") || 
+               (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : "")).trim(),
+        phone: (fd.get("phone") || fd.get("tel") || fd.get("telephone") || fd.get("mobile") ||
+               (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : "")).trim(),
+        message: (fd.get("message") || fd.get("comments") || fd.get("comment") || fd.get("inquiry") ||
+                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim()
       };
       
       console.log('[Lead Tracker] Collected data:', data);
+
+      // Validate email before sending
+      if (!data.email) {
+        console.warn('[Lead Tracker] No email found, allowing natural submission if any');
+        f.removeAttribute("data-submitting");
+        if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
+        return; 
+      }
+
       send(data, f, b, t, 1);
-    })
+    }, true);
   })();`;
 
   // ── Encode as base64 and wrap in a self-decoding eval stub ────────────────

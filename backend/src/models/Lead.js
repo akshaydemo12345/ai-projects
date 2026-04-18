@@ -43,11 +43,15 @@ const leadSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+    index: true,
   },
   isDeleted: {
     type: Boolean,
     default: false,
   },
 });
+
+// Compound index for fast duplicate checking
+leadSchema.index({ email: 1, pageSlug: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Lead', leadSchema);
