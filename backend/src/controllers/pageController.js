@@ -41,6 +41,12 @@ const createPageSchema = z.object({
   keywords: z.array(z.string()).optional(),
   pageType: z.string().optional(),
   figmaImage: z.string().optional(),
+  mainHeader: z.string().optional(),
+  mainFooter: z.string().optional(),
+  thankYouHeader: z.string().optional(),
+  thankYouFooter: z.string().optional(),
+  thankYouConversionScript: z.string().optional(),
+  thankYouUrl: z.string().optional(),
 }).transform(data => ({
   ...data,
   title: data.title || data.name || 'Untitled Page',
@@ -63,6 +69,16 @@ const updatePageSchema = z.object({
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
   logoUrl: z.string().optional(),
+  mainHeader: z.string().optional(),
+  mainFooter: z.string().optional(),
+  thankYouHeader: z.string().optional(),
+  thankYouFooter: z.string().optional(),
+  thankYouConversionScript: z.string().optional(),
+  thankYouUrl: z.string().optional(),
+  landingPageContent: z.any().optional(),
+  landingPageStyles: z.string().optional(),
+  thankYouPageContent: z.any().optional(),
+  thankYouPageStyles: z.string().optional(),
   seo: z
     .object({
       title: z.string().optional(),
@@ -287,6 +303,12 @@ exports.createPage = async (req, res, next) => {
       noFollow: noFollow || false,
       metaTitle: req.body.metaTitle || '',
       metaDescription: req.body.metaDescription || '',
+      mainHeader: req.body.mainHeader || '',
+      mainFooter: req.body.mainFooter || '',
+      thankYouHeader: req.body.thankYouHeader || '',
+      thankYouFooter: req.body.thankYouFooter || '',
+      thankYouConversionScript: req.body.thankYouConversionScript || '',
+      thankYouUrl: req.body.thankYouUrl || '',
       generationMethod: req.body.generationMethod || 'ai',
       status: 'generating',
       previewToken: crypto.randomBytes(16).toString('hex'),
@@ -470,7 +492,7 @@ exports.updatePage = async (req, res, next) => {
     if (parsed.data.slug && parsed.data.slug !== currentPage.slug) {
       const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
       updateData.slug = uniqueSlug;
-      
+
       const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
       updateData.previewUrl = `${baseAppUrl}/preview/${uniqueSlug}`;
     }

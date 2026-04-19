@@ -72,12 +72,6 @@ const LANDING_TEMPLATES = [
   },
 ];
 
-const QUICK_PROMPTS = [
-  "PPC landing page for a local service business",
-  "Lead generation page for a SaaS product",
-  "Real estate listing inquiry page",
-  "Healthcare clinic consultation page",
-];
 
 type CreationMethod = "ai" | "figma" | "template";
 
@@ -92,6 +86,15 @@ const CreatePagePage = () => {
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
   });
+
+  // Fetch dynamic suggestions based on project data
+  const { data: suggestionsData } = useQuery({
+    queryKey: ["project-suggestions", id],
+    queryFn: () => aiApi.projectSuggestions(id!),
+    enabled: !!id,
+  });
+
+  const dynamicSuggestions = suggestionsData?.data?.suggestions || [];
 
   const [activeMethod, setActiveMethod] = useState<CreationMethod>("ai");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -157,11 +160,26 @@ const CreatePagePage = () => {
     if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
     setIsGeneratingPrompt(true);
     try {
-      const res = await aiApi.generateDescription({ pageName, industry: project?.category || "Service", projectDesc: project?.description });
+      const res = await aiApi.generateDescription({ 
+        pageName, 
+        industry: project?.category || "Service", 
+        projectDesc: project?.description,
+        currentPrompt: aiPrompt.trim() || undefined
+      });
+      
+      // If expanding/improving, show a slightly different success message
+      if (aiPrompt.trim()) {
+        toast.success("Prompt expanded and improved!");
+      } else {
+        toast.success("Magic prompt generated!");
+      }
+      
       setAiPrompt(res.data.suggestion);
-      toast.success("Magic prompt generated!");
-    } catch (err: any) { toast.error(err.message || "Failed"); }
-    finally { setIsGeneratingPrompt(false); }
+    } catch (err: any) { 
+      toast.error(err.message || "Failed"); 
+    } finally { 
+      setIsGeneratingPrompt(false); 
+    }
   };
 
   const handleCreate = () => {
@@ -391,12 +409,28 @@ const CreatePagePage = () => {
                   className="w-full min-h-[130px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-300 outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all resize-none"
                 />
                 <div className="flex flex-wrap gap-2">
-                  {QUICK_PROMPTS.map((q) => (
-                    <button key={q} onClick={() => setAiPrompt(q)}
-                      className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all">
-                      {q}
-                    </button>
-                  ))}
+                  {dynamicSuggestions.length > 0 ? (
+                    dynamicSuggestions.slice(0, 6).map((suggestion: string) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => {
+                          setAiPrompt(suggestion);
+                          // Auto-run Magic Write after selecting suggestion
+                          setTimeout(() => handleGenerateMagicPrompt(), 100);
+                        }}
+                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
+                        title={suggestion}
+                      >
+                        {suggestion}
+                      </button>
+                    ))
+                  ) : (
+                    // Fallback while loading or if no suggestions
+                    <div className="flex gap-2">
+                      <div className="h-6 w-32 bg-gray-100 animate-pulse rounded-lg" />
+                      <div className="h-6 w-24 bg-gray-100 animate-pulse rounded-lg" />
+                    </div>
+                  )}
                 </div>
               </section>
             )}

@@ -44,6 +44,8 @@ router.post('/structured-scrape', protect, aiRateLimit, structuredScrape);
  */
 router.post('/improve', protect, aiRateLimit, require('../controllers/aiController').improveSection);
 router.post('/generate-description', protect, aiRateLimit, require('../controllers/aiController').generateDescription);
+router.post('/project-suggestions', protect, aiRateLimit, require('../controllers/aiController').getProjectSuggestions);
+router.post('/pages/project-suggestions', protect, aiRateLimit, require('../controllers/aiController').getProjectSuggestions);
 router.post('/optimize-page', protect, aiRateLimit, require('../controllers/aiController').optimizePage);
 router.post('/strategic-plan', protect, aiRateLimit, require('../controllers/aiController').getStrategicPlan);
 

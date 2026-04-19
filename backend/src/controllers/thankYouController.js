@@ -262,16 +262,16 @@ exports.previewThankYouPage = async (req, res, next) => {
   try {
     const { layout, content, branding } = req.body;
 
-    const registryPath = path.join(__dirname, '../../../dynamic-thank-you-system/config/layout-registry.json');
+    const registryPath = path.join(__dirname, '../thank-you-layouts/layout-registry.json');
     const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
     
     const layoutConfig = registry.layouts.find(l => l.id === layout) || registry.layouts.find(l => l.id === 'default');
-    const templatePath = path.join(__dirname, '../../../dynamic-thank-you-system/layouts', layout, 'template.html');
+    const templatePath = path.join(__dirname, '../thank-you-layouts', layout, 'template.html');
     let actualTemplatePath = templatePath;
 
     if (!fs.existsSync(templatePath)) {
       // Fallback to default template
-      actualTemplatePath = path.join(__dirname, '../../../dynamic-thank-you-system/layouts/default/template.html');
+      actualTemplatePath = path.join(__dirname, '../thank-you-layouts/default/template.html');
       if (!fs.existsSync(actualTemplatePath)) {
         return res.status(500).json({
           status: 'error',

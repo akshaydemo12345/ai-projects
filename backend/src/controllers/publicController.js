@@ -9,6 +9,23 @@ const path = require('path');
 const fs = require('fs');
 
 /**
+ * Normalizes script content - wraps in script tags if not already present
+ */
+const normalizeScript = (value = '') => {
+  const trimmed = value.trim();
+
+  if (!trimmed) return '';
+
+  const hasScriptTag = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(trimmed);
+
+  if (hasScriptTag) {
+    return trimmed;
+  }
+
+  return `<script>${trimmed}</script>`;
+};
+
+/**
  * GET /api/public/page/:slug
  * 100% Public endpoint — serves content WITHOUT requiring tokens.
  */
@@ -132,6 +149,55 @@ const renderFullHTML = (page, canonicalUrl = '') => {
   const aiJs   = typeof content === 'object' ? (content?.fullJs || '') : '';
 
   const leadScript = buildLeadCaptureScript(page);
+  const mainHeaderScript = normalizeScript(page.mainHeader);
+  const mainFooterScript = normalizeScript(page.mainFooter);
+  const thankYouHeaderScript = normalizeScript(page.thankYouHeader);
+  const thankYouFooterScript = normalizeScript(page.thankYouFooter);
+  const thankYouConversionScript = normalizeScript(page.thankYouConversionScript);
+
+  // ── Thank You Redirect Script ────────────────────────────────────────────
+  // Handles Gravity Forms and generic form submission success events
+  const thankYouUrl = page.thankYouUrl?.trim() || '';
+  const thankYouRedirectScript = `<script>
+    (function() {
+      window.pageThankYouUrl = ${JSON.stringify(thankYouUrl)};
+      window.pageSlug = ${JSON.stringify(page.slug)};
+      
+      function doRedirect() {
+        if (window.pageThankYouUrl && window.pageThankYouUrl.trim()) {
+          window.location.replace(window.pageThankYouUrl);
+        } else if (window.pageSlug) {
+          window.location.replace('/' + window.pageSlug + '/thank-you');
+        }
+      }
+
+      // Gravity Forms confirmation handler
+      document.addEventListener('gform_confirmation_loaded', function(event) {
+        doRedirect();
+      });
+      
+      // Generic form submit-success handler
+      document.addEventListener('submit-success', function(event) {
+        doRedirect();
+      });
+
+      // Special handling for Gravity Forms anchor redirects
+      if (window.location.hash && window.location.hash.includes('gf_')) {
+        doRedirect();
+      }
+      
+      // Intercept all form submissions
+      document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(function(form) {
+          if (form.hasAttribute('data-no-redirect')) return;
+          form.addEventListener('submit', function(e) {
+            // Placeholder for custom tracking if needed
+          });
+        });
+      });
+    })();
+  </script>`;
 
   // ── Resolved SEO values from DB (always authoritative) ──────────────────
   // The Page Settings modal saves to page.metaTitle / page.metaDescription (flat fields)
@@ -249,13 +315,21 @@ const renderFullHTML = (page, canonicalUrl = '') => {
       if (!html.includes('--primary:')) {
         html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
       }
+      if (mainHeaderScript) {
+        html = html.replace(/<\/head>/i, `${mainHeaderScript}\n</head>`);
+      }
+      // Inject Thank You URL config in head so it's available early
+      html = html.replace(/<\/head>/i, `${thankYouRedirectScript}\n</head>`);
     }
 
     // 5. Inject lead script before </body>
     if (/<\/body>/i.test(html)) {
-      html = html.replace(/<\/body>/i, `${leadScript}\n</body>`);
+      html = html.replace(
+        /<\/body>/i,
+        `${leadScript}\n${mainFooterScript}\n</body>`
+      );
     } else {
-      html = html + leadScript;
+      html = html + leadScript + mainFooterScript;
     }
 
     return html;
@@ -297,12 +371,14 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${seoMetaBlock}
     ${brandingStyles}
+    ${mainHeaderScript}
     <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
 </head>
 <body>
     ${bodyContent}
     ${aiJs ? `<script>${aiJs}</script>` : ''}
     ${leadScript}
+    ${mainFooterScript}
 </body>
 </html>`;
 };
@@ -383,23 +459,14 @@ exports.getPublicPageHTML = async (req, res, next) => {
           const isOwnerDomain = (incomingRequestDomain === saasDomain);
           const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
 
-          console.log(`🔍 DOMAIN CHECK for ${normalizedSlug}: Request from [${incomingRequestDomain}] | Bound to [${project.websiteUrl}] | SaaS [${saasDomain}]`);
-
           if (!isOwnerDomain && !isAuthorizedDomain) {
-            console.error(`🛑 BLOCKING ACCESS: Domain [${incomingRequestDomain}] is not authorized for Project [${project.name}]. Only [${project.websiteUrl}] or [${saasDomain}] are allowed.`);
-            
             return res.status(403).send(`
               <html>
                 <body style="font-family:sans-serif; text-align:center; padding:100px 20px; color:#64748b; background:#f8fafc;">
                   <div style="max-width:500px; margin:0 auto; background:white; padding:40px; border-radius:32px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
                     <div style="font-size:64px; margin-bottom:24px;">🔒</div>
                     <h1 style="color:#0f172a; margin-bottom:12px;">Domain Unauthorized</h1>
-                    <p style="margin-bottom:24px; line-height:1.6;">This landing page is securely locked to its registered domain of record. It cannot be displayed here.</p>
-                    <div style="text-align:left; background:#f1f5f9; padding:20px; border-radius:16px; font-size:13px;">
-                      <div style="margin-bottom:8px;"><b>Registered Domain:</b> <span style="color:#2563eb;">${project.websiteUrl}</span></div>
-                      <div><b>Attempted Domain:</b> <span style="color:#dc2626;">${incomingRequestDomain || 'unknown'}</span></div>
-                    </div>
-                    <p style="font-size:12px; margin-top:30px; color:#94a3b8;">Ref ID: ${project._id}</p>
+                    <p style="margin-bottom:24px; line-height:1.6;">This landing page is securely locked to its registered domain of record.</p>
                   </div>
                 </body>
               </html>
@@ -423,6 +490,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
       // Render the success/thank-you template
       const brandColor = page.primaryColor || '#7c3aed';
       const redirectUrl = page.websiteUrl || '#';
+      const thankYouHeader = normalizeScript(page.thankYouHeader);
+      const thankYouFooter = normalizeScript(page.thankYouFooter);
+      const thankYouConversionScript = normalizeScript(page.thankYouConversionScript);
       
       const thankYouHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -430,6 +500,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thank You | ${page.title}</title>
+    ${thankYouHeader}
     <style>
       @keyframes pc-sparkle { 0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); } 50% { transform: scale(1.2); opacity: 1; filter: blur(1px); } }
       @keyframes pc-float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, -25px); } 100% { transform: translate(-10px, -50px); } }
@@ -468,6 +539,8 @@ exports.getPublicPageHTML = async (req, res, next) => {
         document.body.appendChild(s);
       }
     </script>
+    ${thankYouFooter}
+    ${thankYouConversionScript}
 </body>
 </html>`;
       return res.status(200).send(thankYouHtml);
@@ -538,16 +611,21 @@ exports.handleFormSubmission = async (req, res, next) => {
     // Detect if AJAX or Natural Form
     const isAjax = req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json');
 
+    // Determine thank you URL (custom or default)
+    const thankYouUrl = page.thankYouUrl?.trim()
+      ? page.thankYouUrl
+      : `/${normalizedSlug}/thank-you`;
+
     if (isAjax) {
       return res.status(201).json({
         status: 'success',
         message: 'Lead saved',
-        redirect: `/${normalizedSlug}/thank-you`
+        redirect: thankYouUrl
       });
     }
 
     // Traditional Form Redirect
-    res.redirect(`/${normalizedSlug}/thank-you`);
+    res.redirect(thankYouUrl);
 
   } catch (err) {
     console.error('❌ Form submission error:', err);

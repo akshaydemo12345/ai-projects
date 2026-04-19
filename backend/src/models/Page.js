@@ -30,6 +30,18 @@ const pageSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  landingPageContent: {
+    type: mongoose.Schema.Types.Mixed,
+  },
+  landingPageStyles: {
+    type: String,
+  },
+  thankYouPageContent: {
+    type: mongoose.Schema.Types.Mixed,
+  },
+  thankYouPageStyles: {
+    type: String,
+  },
   primaryColor: {
     type: String,
     default: '#7c3aed',
@@ -72,6 +84,31 @@ const pageSchema = new mongoose.Schema({
   metaDescription: {
     type: String,
     trim: true,
+  },
+  mainHeader: {
+    type: String,
+    default: '',
+  },
+  mainFooter: {
+    type: String,
+    default: '',
+  },
+  thankYouHeader: {
+    type: String,
+    default: '',
+  },
+  thankYouFooter: {
+    type: String,
+    default: '',
+  },
+  thankYouConversionScript: {
+    type: String,
+    default: '',
+  },
+  thankYouUrl: {
+    type: String,
+    trim: true,
+    default: '',
   },
   industry: {
     type: String,
