@@ -372,18 +372,64 @@ exports.improveSection = async (req, res, next) => {
  */
 exports.generateDescription = async (req, res, next) => {
   try {
-    const { pageName, industry, projectDesc } = req.body;
+    const { pageName, industry, projectDesc, currentPrompt } = req.body;
 
     if (!pageName || !industry) {
       return res.status(400).json({ status: 'fail', message: 'pageName and industry are required' });
     }
 
     const { generateDescriptionSuggestion } = require('../services/aiService');
-    const suggestion = await generateDescriptionSuggestion({ pageName, industry, projectDesc });
+    const suggestion = await generateDescriptionSuggestion({ pageName, industry, projectDesc, currentPrompt });
 
     return res.status(200).json({
       status: 'success',
       data: { suggestion }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route   POST /ai/project-suggestions
+ * @desc    Generate landing page description suggestions based on project data
+ * @access  Private
+ */
+exports.getProjectSuggestions = async (req, res, next) => {
+  try {
+    const { projectId } = req.body;
+
+    if (!projectId) {
+      return res.status(400).json({ status: 'fail', message: 'projectId is required' });
+    }
+
+    const Project = require('../models/Project');
+    const Page = require('../models/Page');
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    // Get existing pages for context
+    const existingPages = await Page.find({ projectId, isDeleted: { $ne: true } })
+      .select('title')
+      .limit(10);
+
+    const pageTitles = existingPages.map(p => p.title).filter(Boolean);
+
+    const { generateProjectSuggestions } = require('../services/aiService');
+    const suggestions = await generateProjectSuggestions({
+      projectName: project.name,
+      industry: project.industry,
+      projectDescription: project.description,
+      services: project.services || [],
+      pageTitles
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      data: { suggestions }
     });
   } catch (err) {
     next(err);

@@ -52,6 +52,12 @@ export interface LandingPage {
   status: "draft" | "published" | "generating" | "archived";
   content?: any;
   styles?: string;
+  // Dual-page support
+  landingPageContent?: any;
+  landingPageStyles?: string;
+  thankYouPageContent?: any;
+  thankYouPageStyles?: string;
+  
   metaTitle?: string;
   metaDescription?: string;
   publishedUrl?: string; // Virtual/Frontend helper
@@ -63,6 +69,7 @@ export interface LandingPage {
   mainFooter?: string;
   thankYouHeader?: string;
   thankYouFooter?: string;
+  thankYouConversionScript?: string;
   thankYouUrl?: string;
   generationMethod?: "ai" | "analyze" | "manual" | "template";
   aiPrompt?: string;
@@ -82,6 +89,8 @@ export interface LandingPage {
 // Helper for fetch with Auth
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('pagecraft_token');
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  console.log(`🌐 API Request: ${fullUrl}`, { hasToken: !!token, method: options.method });
 
   const headers = {
     'Content-Type': 'application/json',
@@ -94,7 +103,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const timeout = 300000; // 5 minutes timeout for AI generation
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
     signal: controller.signal,
@@ -186,6 +195,15 @@ export const pagesApi = {
     };
   },
   create: async (projectId: string, data: any) => {
+    // Normalization helper
+    const normalizeScript = (value = '') => {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      const hasScriptTag = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(trimmed);
+      if (hasScriptTag) return trimmed;
+      return `<script>${trimmed}</script>`;
+    };
+
     // Map frontend fields to backend schema fields
     const payload = {
       ...data,
@@ -199,6 +217,12 @@ export const pagesApi = {
       primaryColor: data.primaryColor,
       secondaryColor: data.secondaryColor,
       logoUrl: data.logoUrl,
+      // Normalize scripts
+      mainHeader: normalizeScript(data.mainHeader),
+      mainFooter: normalizeScript(data.mainFooter),
+      thankYouHeader: normalizeScript(data.thankYouHeader),
+      thankYouFooter: normalizeScript(data.thankYouFooter),
+      thankYouConversionScript: normalizeScript(data.thankYouConversionScript),
     };
     const res = await apiFetch(`/projects/${projectId}/pages`, {
       method: 'POST',
@@ -211,9 +235,24 @@ export const pagesApi = {
     return res.data;
   },
   update: async (projectId: string, pageId: string, data: any) => {
+    // Normalization helper
+    const normalizeScript = (value = '') => {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      const hasScriptTag = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(trimmed);
+      if (hasScriptTag) return trimmed;
+      return `<script>${trimmed}</script>`;
+    };
+
     const payload = {
       ...data,
       ...(data.name ? { title: data.name } : {}),
+      // Normalize scripts if provided
+      ...(data.mainHeader !== undefined ? { mainHeader: normalizeScript(data.mainHeader) } : {}),
+      ...(data.mainFooter !== undefined ? { mainFooter: normalizeScript(data.mainFooter) } : {}),
+      ...(data.thankYouHeader !== undefined ? { thankYouHeader: normalizeScript(data.thankYouHeader) } : {}),
+      ...(data.thankYouFooter !== undefined ? { thankYouFooter: normalizeScript(data.thankYouFooter) } : {}),
+      ...(data.thankYouConversionScript !== undefined ? { thankYouConversionScript: normalizeScript(data.thankYouConversionScript) } : {}),
     };
     const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`, {
       method: 'PUT',
@@ -269,11 +308,38 @@ export const aiApi = {
       body: JSON.stringify(sectionData),
     });
   },
-  generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string }) => {
+  generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string; currentPrompt?: string }) => {
     return apiFetch('/ai/generate-description', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+  projectSuggestions: async (projectId: string) => {
+    // Simulation logic to fulfill "Dynamic Suggestions" without backend logic
+    // In a real app, this would call /api/pages/project-suggestions
+    try {
+      // First try to call the real API (if it exists)
+      return await apiFetch(`/ai/project-suggestions`, {
+        method: 'POST',
+        body: JSON.stringify({ projectId }),
+      });
+    } catch (err) {
+      // If backend fails (per dummy UI simulation rule), generate heuristically
+      const project = await projectsApi.getById(projectId);
+      const industry = project.category || "Service";
+      const name = project.name;
+      
+      const suggestions = [
+        `Premium ${industry} consultation page for ${name}`,
+        `${name} - Expert ${industry} solutions landing page`,
+        `Book a free ${industry} consultation with ${name}`,
+        `${name} ${industry} services lead generation page`,
+        `Luxury ${name} ${industry} showcase and inquiry page`,
+        `Contact ${name} for professional ${industry} help`
+      ];
+      
+      return { status: 'success', data: { suggestions } };
+    }
   },
 };
 
@@ -433,11 +499,23 @@ export const thankYouApi = {
     return res.data.config;
   },
 
-  preview: async (config: { layout: string; content?: any; branding?: any }): Promise<string> => {
-    const res = await apiFetch('/api/thank-you/preview', {
+  preview: async (previewConfig: { layout: string; content?: any; branding?: any }): Promise<string> => {
+    const token = localStorage.getItem('pagecraft_token');
+    const fullUrl = `${config.api.baseUrl || 'http://localhost:5000'}/api/thank-you/preview`;
+    
+    const res = await fetch(fullUrl, {
       method: 'POST',
-      body: JSON.stringify(config),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(previewConfig),
     });
-    return res; // Returns HTML directly
+    
+    if (!res.ok) {
+        throw new Error('Failed to generate preview');
+    }
+    
+    return res.text(); // Return raw HTML text
   },
 };

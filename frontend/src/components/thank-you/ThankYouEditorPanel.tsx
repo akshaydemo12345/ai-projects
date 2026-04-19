@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { thankYouApi, ThankYouLayout, ThankYouConfig } from '@/services/api';
 
 interface ThankYouEditorPanelProps {
   pageId: string;
   industry?: string;
   onSave?: () => void;
+  onSelect?: (html: string, css?: string) => void;
 }
 
-export const ThankYouEditorPanel = ({ pageId, industry, onSave }: ThankYouEditorPanelProps) => {
+export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: ThankYouEditorPanelProps) => {
   const [config, setConfig] = useState<ThankYouConfig>({
     layout: 'default',
     content: {},
@@ -26,6 +27,30 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave }: ThankYouEditor
   useEffect(() => {
     loadData();
   }, [pageId]);
+
+  const isInitialMount = useRef(true);
+
+  // Sync canvas with config changes (debounced)
+  useEffect(() => {
+    if (loading) return;
+    
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      try {
+        console.log('🔄 Debounced update: Syncing Thank You config to canvas...');
+        const html = await thankYouApi.preview(config);
+        onSelect?.(html);
+      } catch (error) {
+        console.error('Error syncing preview:', error);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [config, loading]);
 
   const loadData = async () => {
     try {
@@ -80,24 +105,26 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave }: ThankYouEditor
   const handleLayoutChange = (layoutId: string) => {
     const selectedLayout = layouts.find(l => l.id === layoutId);
     if (selectedLayout) {
-      setConfig({
+      const newConfig = {
         ...config,
         layout: layoutId,
         content: {
-          heading: config.content.heading || selectedLayout.defaultContent.heading,
-          subheading: config.content.subheading || selectedLayout.defaultContent.subheading,
-          ctaText: config.content.ctaText || selectedLayout.defaultContent.ctaText,
-          ctaUrl: config.content.ctaUrl || selectedLayout.defaultContent.ctaUrl,
-          phoneNumber: config.content.phoneNumber || selectedLayout.defaultContent.phoneNumber,
-          offerText: config.content.offerText || selectedLayout.defaultContent.offerText,
-          customMessage: config.content.customMessage || selectedLayout.defaultContent.customMessage,
+          heading: selectedLayout.defaultContent.heading,
+          subheading: selectedLayout.defaultContent.subheading,
+          ctaText: selectedLayout.defaultContent.ctaText,
+          ctaUrl: selectedLayout.defaultContent.ctaUrl,
+          phoneNumber: selectedLayout.defaultContent.phoneNumber,
+          offerText: selectedLayout.defaultContent.offerText,
+          customMessage: selectedLayout.defaultContent.customMessage,
         },
         branding: {
-          primaryColor: config.branding.primaryColor || selectedLayout.theme.primaryColor,
-          secondaryColor: config.branding.secondaryColor || selectedLayout.theme.secondaryColor,
+          primaryColor: selectedLayout.theme.primaryColor,
+          secondaryColor: selectedLayout.theme.secondaryColor,
           logoUrl: config.branding.logoUrl,
         },
-      });
+      };
+      
+      setConfig(newConfig);
     }
   };
 

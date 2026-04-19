@@ -39,6 +39,7 @@ const PublicLandingPage = () => {
       const PAGE_SLUG = slug || '';
       const BRAND_COLOR = pageData.primaryColor || '#7c3aed';
       const REDIRECT_URL = pageData.websiteUrl || '#';
+      const THANK_YOU_URL = pageData.thankYouUrl || '';
       const previewPrefix = window.location.pathname.startsWith('/preview/') ? '/preview/' : '/';
 
       const leadCaptureScript = `
@@ -46,7 +47,12 @@ const PublicLandingPage = () => {
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
           function redirectToSuccessPage() {
-            window.top.location.href = "${previewPrefix}${PAGE_SLUG}/thank-you";
+            const thankYouUrl = "${THANK_YOU_URL}";
+            if (thankYouUrl && thankYouUrl.trim()) {
+              window.top.location.href = thankYouUrl;
+            } else {
+              window.top.location.href = "${previewPrefix}${PAGE_SLUG}/thank-you";
+            }
           }
 
           async function submitLead(data, form, btn, originalBtnText, attempt = 1) {

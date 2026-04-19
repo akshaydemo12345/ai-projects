@@ -65,6 +65,31 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [analyzeUrl, setAnalyzeUrl] = useState("");
   const [isInspecting, setIsInspecting] = useState(false);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  // Load project suggestions when modal opens
+  useEffect(() => {
+    if (method === "ai") {
+      loadSuggestions();
+    }
+  }, [method, project._id]);
+
+  const loadSuggestions = async () => {
+    console.log('🔄 Loading suggestions for project:', project._id);
+    setIsLoadingSuggestions(true);
+    try {
+      const res = await aiApi.projectSuggestions(project._id);
+      console.log('✅ Suggestions response:', res);
+      setSuggestions(res.data.suggestions || []);
+    } catch (err: any) {
+      console.error("❌ Failed to load suggestions:", err);
+      toast.error("Failed to load suggestions. Please try again.");
+      setSuggestions([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const handleGenerateMagicPrompt = async () => {
     if (!pageName.trim()) {
@@ -77,7 +102,8 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
       const res = await aiApi.generateDescription({
         pageName,
         industry: project.category || "Service",
-        projectDesc: project.description
+        projectDesc: project.description,
+        currentPrompt: aiPrompt.trim() || undefined
       });
       setAiPrompt(res.data.suggestion);
       toast.success("Magic prompt generated!");
@@ -341,27 +367,27 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   className="min-h-[100px] resize-none text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-1">Be specific — the more detail, the better the output.</p>
-              </div>
 
-              {/* Quick prompts */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Quick templates:</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "PPC landing page for a local service business",
-                    "Lead generation page for a SaaS product",
-                    "Real estate listing page",
-                    "Healthcare clinic inquiry page",
-                  ].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setAiPrompt(q)}
-                      className="text-xs bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border hover:border-primary/30 rounded-lg px-2.5 py-1.5 transition-all"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
+                {/* Project-based suggestions */}
+                {isLoadingSuggestions ? (
+                  <div className="flex items-center gap-2 mt-3">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Loading suggestions...</span>
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {suggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className="text-xs bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border hover:border-primary/30 rounded-full px-3 py-1.5 transition-all"
+                        onClick={() => setAiPrompt(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <Button
@@ -493,10 +519,11 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
   const [logoPreview, setLogoPreview] = useState<string | null>(page.logoUrl ?? null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(page.logoUrl);
 
-  const [mainHeader, setMainHeader] = useState(page.mainHeader ?? "None");
-  const [mainFooter, setMainFooter] = useState(page.mainFooter ?? "None");
-  const [thankYouHeader, setThankYouHeader] = useState(page.thankYouHeader ?? "None");
-  const [thankYouFooter, setThankYouFooter] = useState(page.thankYouFooter ?? "None");
+  const [mainHeader, setMainHeader] = useState(page.mainHeader ?? "");
+  const [mainFooter, setMainFooter] = useState(page.mainFooter ?? "");
+  const [thankYouHeader, setThankYouHeader] = useState(page.thankYouHeader ?? "");
+  const [thankYouFooter, setThankYouFooter] = useState(page.thankYouFooter ?? "");
+  const [thankYouConversionScript, setThankYouConversionScript] = useState(page.thankYouConversionScript ?? "");
   const [thankYouUrl, setThankYouUrl] = useState(page.thankYouUrl ?? "");
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,6 +553,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
       mainFooter,
       thankYouHeader,
       thankYouFooter,
+      thankYouConversionScript,
       thankYouUrl
     });
   };
@@ -578,7 +606,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
                 <div>
                   <label className="text-sm font-bold text-foreground mb-1.5 block">Header Script</label>
                   <Textarea
-                    value={mainHeader === "None" ? "" : mainHeader}
+                    value={mainHeader}
                     onChange={(e) => setMainHeader(e.target.value)}
                     placeholder="<!-- Paste custom header scripts, CSS, or pixel scripts here -->"
                     className="min-h-[70px] font-mono text-xs bg-muted/30"
@@ -587,7 +615,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
                 <div>
                   <label className="text-sm font-bold text-foreground mb-1.5 block">Footer Script</label>
                   <Textarea
-                    value={mainFooter === "None" ? "" : mainFooter}
+                    value={mainFooter}
                     onChange={(e) => setMainFooter(e.target.value)}
                     placeholder="<!-- Paste custom footer scripts or tracking code here -->"
                     className="min-h-[70px] font-mono text-xs bg-muted/30"
@@ -618,7 +646,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
                 <div>
                   <label className="text-sm font-bold text-foreground mb-1.5 block">Header Script (Thank You)</label>
                   <Textarea
-                    value={thankYouHeader === "None" ? "" : thankYouHeader}
+                    value={thankYouHeader}
                     onChange={(e) => setThankYouHeader(e.target.value)}
                     placeholder="<!-- Add custom code to the Thank You page header -->"
                     className="min-h-[70px] font-mono text-xs bg-muted/30"
@@ -627,11 +655,21 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
                 <div>
                   <label className="text-sm font-bold text-foreground mb-1.5 block">Footer Script (Thank You)</label>
                   <Textarea
-                    value={thankYouFooter === "None" ? "" : thankYouFooter}
+                    value={thankYouFooter}
                     onChange={(e) => setThankYouFooter(e.target.value)}
                     placeholder="<!-- Add custom code to the Thank You page footer -->"
                     className="min-h-[70px] font-mono text-xs bg-muted/30"
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-foreground mb-1.5 block">Lead Conversion Script</label>
+                  <Textarea
+                    value={thankYouConversionScript}
+                    onChange={(e) => setThankYouConversionScript(e.target.value)}
+                    placeholder="<script>\ngtag('event', 'conversion', {\n  send_to: 'AW-123456/test'\n});\n</script>"
+                    className="min-h-[70px] font-mono text-xs bg-muted/30"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Rendered only on the thank-you page after conversion.</p>
                 </div>
               </div>
 

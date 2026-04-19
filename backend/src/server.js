@@ -79,6 +79,7 @@ app.use('/user', userRoutes);
 app.use('/projects', projectRoutes);
 app.use('/pages', pageRoutes);
 app.use('/ai', aiRoutes);
+app.post('/api/pages/project-suggestions', require('./middleware/authMiddleware').protect, require('./controllers/aiController').getProjectSuggestions);
 app.use('/admin', adminRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/thank-you', thankYouRoutes);

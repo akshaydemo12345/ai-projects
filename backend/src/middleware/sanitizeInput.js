@@ -21,20 +21,34 @@ const sanitizeString = (str) => {
 };
 
 // ─── NoSQL injection: remove keys starting with $ ─────────────────────────────
-const sanitizeObject = (obj) => {
+const sanitizeObject = (obj, keyName = null) => {
   if (obj === null || typeof obj !== 'object') {
-    return typeof obj === 'string' ? sanitizeString(obj) : obj;
+    // Skip script stripping for fields that are intended to contain scripts or HTML
+    const skipFields = [
+      'mainHeader', 'mainFooter', 
+      'thankYouHeader', 'thankYouFooter', 
+      'thankYouConversionScript', 'content', 'styles'
+    ];
+    
+    if (typeof obj === 'string') {
+      if (keyName && skipFields.includes(keyName)) {
+        // Only strip MongoDB stuff, keep HTML/Scripts
+        return obj.trim();
+      }
+      return sanitizeString(obj);
+    }
+    return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
+    return obj.map(item => sanitizeObject(item, keyName));
   }
 
   return Object.keys(obj).reduce((acc, key) => {
     // Drop MongoDB operator keys
     if (key.startsWith('$')) return acc;
     // Recursively sanitize nested values
-    acc[key] = sanitizeObject(obj[key]);
+    acc[key] = sanitizeObject(obj[key], key);
     return acc;
   }, {});
 };

@@ -110,6 +110,23 @@ const buildUserPrompt = ({
   const trustSignals = businessDescription ? (businessDescription.match(/(\d+,?\d*\+?|\d+%\+?)/g) || []) : [];
   const topServices = services.slice(0, 6); // Focus on top 6 services
 
+  // Industry-specific form fields
+  const industryFormFields = {
+    'real estate': ['Full Name', 'Phone Number', 'Email', 'Property Type', 'Budget', 'Preferred Location'],
+    'property': ['Full Name', 'Phone Number', 'Email', 'Property Type', 'Budget', 'Preferred Location'],
+    'education': ['Student Name', 'Parent Name', 'Phone Number', 'Email', 'Course Interest', 'City'],
+    'healthcare': ['Patient Name', 'Phone Number', 'Email', 'Appointment Date', 'Service Required'],
+    'medical': ['Patient Name', 'Phone Number', 'Email', 'Appointment Date', 'Service Required'],
+    'travel': ['Full Name', 'Phone Number', 'Email', 'Destination', 'Travel Date', 'Number of People'],
+    'home services': ['Full Name', 'Phone Number', 'Email', 'Service Needed', 'Address', 'Preferred Time'],
+    'saas': ['Full Name', 'Company Name', 'Email', 'Phone Number', 'Team Size', 'Business Type'],
+    'software': ['Full Name', 'Company Name', 'Email', 'Phone Number', 'Team Size', 'Business Type'],
+    'default': ['Full Name', 'Email', 'Phone Number', 'Message']
+  };
+
+  const normalizedIndustry = industry.toLowerCase();
+  const formFields = industryFormFields[normalizedIndustry] || industryFormFields['default'];
+
   // Extract scrapedImages from scrapedData
   const scrapedImages = scrapedData?.images || [];
 
@@ -189,12 +206,46 @@ ${imageInstructions}
 - You MUST ALWAYS include a lead capture form on EVERY landing page. NO EXCEPTIONS.
 - You MUST prioritize using the 'REAL FORM STRUCTURES' detected from the website for your lead capture section.
 - If REAL FORM STRUCTURES are provided, use the EXACT field names (name attributes) from those structures in your generated form.
+- If no REAL FORM STRUCTURES are provided, use these industry-specific form fields: ${formFields.join(', ')}.
+- The form design and placement should vary depending on the page style: hero side form, sticky sidebar form, popup CTA form, bottom section form, or multi-step form.
+- Form should feel natural and relevant to the business.
 - Display the form either as a prominent Hero-section form OR a dedicated Contact section with a sticky/floating CTA that opens a modal form.
 - Apply semantic HTML and premium styling with [var(--primary)] buttons.
 - IMPORTANT: Use the same field names as detected (e.g., if the website uses 'first_name', use 'first_name' instead of 'name'). This ensures form submission works correctly with the lead tracking script.
 - The form MUST be visible and accessible to users. Do not hide it or make it difficult to find.
 
 ${imageInstructions ? '# IMAGE INSTRUCTION: Use the scraped images provided above. Only fallback to picsum.photos if you need additional images beyond what was scraped.' : '# IMMUTABLE OVERRIDE (CRITICAL): You MUST STILL ONLY USE \'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800\' directly to prevent 404 errors. No exceptions. Do not use Unsplash, Pexels, or any other external API.'}
+
+# IMAGE RULES (INDUSTRY-RELEVANT VISUALS):
+- Use industry-relevant visuals in your image choices.
+- Real Estate → homes, apartments, happy families, property interiors
+- Healthcare → doctors, patients, clinic interiors, medical equipment
+- Education → students, classrooms, online learning, graduation
+- Travel → destinations, hotels, beaches, landscapes
+- Home Services → technicians, tools, before/after results, service scenes
+- SaaS/Software → dashboards, charts, software UI, team collaboration
+- Always choose images that match the business context and create emotional connection.
+
+# VIDEO RULES:
+- Include relevant videos where useful to enhance the landing page.
+- Examples: customer testimonial video, product demo video, service explainer video, founder message, before/after transformation video, case study video.
+- Use video sections strategically to build trust and demonstrate value.
+
+# CONTENT REQUIREMENTS:
+- Always generate meaningful headlines with supporting subheadings
+- Include benefit-driven content that speaks to user pain points
+- Add service descriptions with clear value propositions
+- Include CTA sections with strong, action-oriented copy
+- Add testimonials section with realistic customer quotes
+- Include FAQs section addressing common objections
+- Add trust badges, stats, or achievements to build credibility
+- Include before/after content where relevant for the industry
+- Use SEO-friendly headings (H1, H2, H3) with proper hierarchy
+- Make layout depend on industry for better user experience
+- Form position should depend on business type (hero side, sticky, bottom, popup).
+- Content should be persuasive and conversion-focused.
+- Use modern landing page structure with alternating backgrounds.
+- Vary section designs (bento, grid, list, split, etc.) for visual interest.
 
 # FINAL TASK: 
 Build a pixel-perfect, premium landing page using the user's custom prompt's structure as a STRICT BLUEPRINT. Ensure EVERY requested section is built with unique, premium design and deep content. LONG-FORM ONLY.
@@ -320,14 +371,34 @@ const generateLandingPageContent = async (input) => {
 ${buildUserPrompt(input)}
 
 # SPEED OPTIMIZATION:
-Generate this page FAST. Do not over-elaborate. 
+Generate this page FAST. Do not over-elaborate.
 
-# MANDATORY LAYOUT SECTIONS:
-1. Hero Section with dynamic branding and a clear Call to Action.
-2. Lead Generation Form (Name, Email, Phone, Message) - MUST BE VISIBLE AND FUNCTIONAL. This is NON-NEGOTIABLE.
-3. Industry Context (Benefits and Features).
-4. Social Proof / Reviews.
-5. Simple Footer.
+# MANDATORY LAYOUT SECTIONS (HIGH-CONVERTING LANDING PAGE):
+1. Hero Section with dynamic branding, strong headline, and clear Call to Action.
+2. Lead Generation Form with industry-specific fields - MUST BE VISIBLE AND FUNCTIONAL. This is NON-NEGOTIABLE.
+3. Industry Context (Benefits, Features, and Value Propositions).
+4. Social Proof / Reviews / Testimonials.
+5. Trust Building Section (stats, achievements, certifications, trust badges).
+6. FAQs Section addressing common objections.
+7. Simple Footer with contact information.
+
+# CORE REQUIREMENTS:
+- Generate a complete, high-converting landing page.
+- Include strong hero section with compelling headline.
+- Include CTA in strategic positions.
+- Include industry-specific form with relevant fields.
+- Include meaningful, benefit-driven content throughout.
+- Include industry-relevant images (real estate: homes, healthcare: doctors, etc.).
+- Include relevant video suggestions where useful (testimonials, demos, explainers).
+- Include testimonials section with realistic customer quotes.
+- Include FAQs section addressing common objections.
+- Include trust-building sections (badges, stats, achievements).
+- Include SEO-friendly headings with proper hierarchy (H1, H2, H3).
+- Make layout depend on industry for optimal user experience.
+- Form position should depend on business type (hero side, sticky, bottom, popup).
+- Content should be persuasive and conversion-focused.
+- Use modern landing page structure with alternating backgrounds.
+- Vary section designs (bento, grid, list, split, etc.) for visual interest.
 `;
 
   // 4. Handle Template Enrichment if applicable
@@ -367,33 +438,135 @@ const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) 
   return await callAI(prompt);
 };
 
-const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc }) => {
+const generateProjectSuggestions = async ({ projectName, industry, projectDescription, services, pageTitles }) => {
+  const servicesText = services && services.length > 0 ? services.join(', ') : 'various services';
+  const pageTitlesText = pageTitles && pageTitles.length > 0 ? pageTitles.join(', ') : 'none';
+
   const prompt = `
-    You are an expert prompt engineer for an AI Landing Page Builder.
-    Your task is to generate an EXTRA DEEP and detailed landing page description for a page named "${pageName}" in the "${industry}" industry.
-    Project Context: ${projectDesc}.
+    Generate 6 short landing page description suggestions for this business.
 
-    The description MUST include the following important details to help the AI generate a world-class design:
-    1. TARGET AUDIENCE: Who is this for? (e.g. Busy homeowners, high-end investors)
-    2. PRIMARY HOOK: What is the main emotional or logical trigger?
-    3. KEY SECTIONS: Explicitly mention sections like:
-       - Visually strong Hero with a specific background idea.
-       - Trust building section (testimonials, partners, certifications).
-       - Detailed services or product showcase.
-       - Direct-action Lead Form or specialized interactive component.
-       - FAQ or Process section.
-    4. DESIGN FEEL: Suggest a specific aesthetic (e.g. "Clean, minimal white-space with high-end typography and subtle glassmorphism").
+    Project Name: ${projectName}
+    Industry: ${industry}
+    Business Description: ${projectDescription || 'Not provided'}
+    Services: ${servicesText}
+    Existing Pages: ${pageTitlesText}
 
-    OUTPUT FORMAT: 
-    Generate a 30-60 word prompt that starts with "Create a..." or "Design a...". 
-    Make it highly specific and conversion-focused.
-    Return ONLY the raw string. No quotes.
+    Each suggestion should:
+    - be 1 sentence
+    - be concise (10-20 words)
+    - be related to lead generation
+    - be useful for a landing page
+    - help the user quickly generate a page
+    - be different from existing pages
+
+    OUTPUT FORMAT:
+    Return ONLY a JSON array of strings, like this:
+    ["suggestion 1", "suggestion 2", "suggestion 3", "suggestion 4", "suggestion 5", "suggestion 6"]
+    No other text, no markdown, no code blocks.
   `;
+
+  const response = await callAI(prompt);
+  
+  try {
+    // Try to parse as JSON array
+    const parsed = JSON.parse(response);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    // If not an array, try to extract array from response
+    const arrayMatch = response.match(/\[.*\]/s);
+    if (arrayMatch) {
+      return JSON.parse(arrayMatch[0]);
+    }
+    // Fallback: split by newlines and clean up
+    return response.split('\n')
+      .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
+      .filter(line => line.length > 5)
+      .slice(0, 6);
+  } catch (e) {
+    // Fallback: split by newlines and clean up
+    return response.split('\n')
+      .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
+      .filter(line => line.length > 5)
+      .slice(0, 6);
+  }
+};
+
+const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt }) => {
+  let prompt;
+
+  if (!currentPrompt || currentPrompt.trim() === '') {
+    // Case 1: Empty input - generate full landing page brief from scratch
+    prompt = `
+      You are an expert prompt engineer for an AI Landing Page Builder.
+      Your task is to generate a detailed landing page description for a business in the "${industry}" industry.
+      Page Name: "${pageName}"
+      Project Context: ${projectDesc}
+
+      The response should include:
+      - business overview
+      - target audience
+      - key services
+      - unique selling points
+      - CTA goal
+      - preferred tone
+      - required sections (hero, services, testimonials, form, FAQ, contact)
+      - suggested form fields (industry-specific)
+      - image ideas
+      - video ideas
+      - trust building content
+      - FAQ ideas
+
+      Make the content suitable for generating a high-converting landing page.
+
+      OUTPUT FORMAT:
+      Generate a comprehensive landing page prompt that includes:
+      - A clear opening statement starting with "Create a..." or "Design a..."
+      - Target audience description
+      - Required sections (hero section with CTA, services/features, testimonials, lead form, FAQ, contact section)
+      - Specific form fields (name, phone, email, budget, etc. based on industry)
+      - Trust badges and social proof elements
+      - Design style recommendations
+      - Call-to-action placement
+
+      Make it 100-150 words, highly specific and conversion-focused.
+      Return ONLY the raw string. No quotes.
+    `;
+  } else {
+    // Case 2: User already typed something - expand and improve
+    prompt = `
+      Expand and improve this landing page idea into a complete landing page prompt.
+
+      Include:
+      - hero section
+      - CTA
+      - industry-specific form
+      - testimonials
+      - FAQs
+      - trust badges
+      - image ideas
+      - video ideas
+      - service sections
+      - strong conversion-focused content
+
+      User Input:
+      ${currentPrompt}
+      
+      Additional Context:
+      Page Name: "${pageName}"
+      Industry: "${industry}"
+      Project Description: ${projectDesc}
+
+      OUTPUT FORMAT:
+      Generate a comprehensive landing page prompt (150-250 words) that is ready to be used by an AI design engine.
+      Return ONLY the raw string. No quotes.
+    `;
+  }
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL_CANDIDATES[0],
-    max_tokens: 400,
+    max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -616,6 +789,7 @@ module.exports = {
   generateLandingPageContent,
   improveSectionContent,
   generateDescriptionSuggestion,
+  generateProjectSuggestions,
   generateStrategicStructure,
   optimizeStrategicStructure
 };

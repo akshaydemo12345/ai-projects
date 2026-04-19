@@ -49,6 +49,7 @@ const GrapesEditor = () => {
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
+  const [mode, setMode] = useState<'landing' | 'thank-you'>(searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing');
   // AI Prompt
   const [aiOpen, setAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -122,31 +123,40 @@ const GrapesEditor = () => {
   }, [leftTab, isSidebarOpen]);
 
   // Handle content application
-  const applyContentToEditor = (editor: any) => {
+  const applyContentToEditor = (editor: any, forcedMode?: 'landing' | 'thank-you') => {
     const currentPage = pageDataRef.current;
     if (!editor || !currentPage) return;
 
-    console.log('🔄 Applying content to editor. Page ID:', currentPage._id, 'Status:', currentPage.status);
+    const activeMode = forcedMode || mode;
+    console.log('🔄 Applying content to editor. Mode:', activeMode, 'Page ID:', currentPage._id);
 
     let dbContent: string = '';
     let dbStyles: string = '';
 
-    // 1. Resolve Content Structure
-    if (typeof currentPage.content === 'object' && currentPage.content !== null) {
-      dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
-      dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
-    } else if (typeof currentPage.content === 'string') {
-      dbContent = currentPage.content;
+    // 1. Resolve Content Structure based on Mode
+    if (activeMode === 'thank-you') {
+      dbContent = currentPage.thankYouPageContent || '';
+      dbStyles = currentPage.thankYouPageStyles || '';
+    } else {
+      // Landing Page Mode (Legacy Support)
+      if (currentPage.landingPageContent) {
+        dbContent = currentPage.landingPageContent;
+        dbStyles = currentPage.landingPageStyles || '';
+      } else if (typeof currentPage.content === 'object' && currentPage.content !== null) {
+        dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
+        dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
+      } else if (typeof currentPage.content === 'string') {
+        dbContent = currentPage.content;
+      }
+      
+      if (currentPage.styles && !dbStyles) {
+        dbStyles = currentPage.styles;
+      }
     }
 
-    // Use explicit styles field as priority or fallback
-    if (currentPage.styles) {
-      dbStyles = currentPage.styles;
-    }    // 2. Intelligent Extraction
+    // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head')) {
       console.log('📄 Full HTML detected. Using standard GrapesJS import...');
-      // If it's full HTML, we let GrapesJS handle it via setComponents
-      // But we extract styles just in case to avoid duplicates
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
@@ -168,9 +178,17 @@ const GrapesEditor = () => {
 
       // Clear then set
       editor.setComponents('');
+      try {
+        if (editor.DomComponents && editor.DomComponents.clear) editor.DomComponents.clear();
+        // @ts-ignore
+        if (editor.Css && editor.Css.clear) editor.Css.clear();
+        // @ts-ignore
+        if (editor.UndoManager && editor.UndoManager.clear) editor.UndoManager.clear();
+      } catch (e) {
+        console.warn('GrapesJS soft clear returned a warning:', e);
+      }
 
-      // Inject :root CSS variables directly into canvas <head> as a style tag
-      // (Do NOT use editor.setStyle for root vars — it conflicts with GlobalStylesPanel)
+      // Inject :root CSS variables
       const canvasDoc = editor.Canvas.getDocument();
       if (canvasDoc) {
         let brandingTag = canvasDoc.getElementById('branding-vars-init') as HTMLStyleElement | null;
@@ -186,7 +204,6 @@ const GrapesEditor = () => {
           --accent: ${currentPage.secondaryColor || '#6366f1'};
           --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
         }
-        /* Aggressive Button & Badge Branding */
         .btn-primary, .button-primary, button[type="submit"], button.btn-primary, .bg-primary,
         .form-box button, .footer-action button, .cta-band button, .badge {
           background-color: var(--primary) !important;
@@ -205,7 +222,6 @@ const GrapesEditor = () => {
           color: #94a3b8 !important;
         }
         `;
-        // Force all template buttons to be submit types so they trigger our tracker
         const allButtons = canvasDoc.querySelectorAll('form button');
         allButtons.forEach(btn => {
           if (btn.getAttribute('type') === 'button') {
@@ -214,14 +230,16 @@ const GrapesEditor = () => {
         });
       }
 
-      editor.setStyle(dbStyles || '');
+      // Safe-guard body styles from being purged by GrapesJS
+      dbStyles = (dbStyles || '').replace(/body\s*\{/g, 'body, .grapesjs-safeguard-wrapper {');
+      editor.getWrapper().addClass('grapesjs-safeguard-wrapper');
 
-      // Apply body/wrapper style explicitly if detected
+      editor.setStyle(dbStyles);
+
       if (dbStyles.includes('#0f172a') || dbStyles.includes('rgba(15, 23, 42') || dbStyles.includes('var(--slate-950)')) {
         editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
       }
 
-      // Convert static hardcoded HEX colors to dynamic CSS variables
       if (currentPage.primaryColor) {
         let pColor = currentPage.primaryColor.trim();
         if (pColor && pColor !== '#ffffff' && pColor !== '#000000') {
@@ -229,8 +247,6 @@ const GrapesEditor = () => {
           if (pColor.length === 9) {
             dbContent = dbContent.replace(new RegExp(pColor.slice(0, 7), 'gi'), 'var(--primary)');
           }
-          // Also catch variations that AI might have hallucinated without alpha or slightly off
-          // E.g. user had #b24732ab, pColor.slice(0, 7) is #b24732.
         }
       }
       if (currentPage.secondaryColor) {
@@ -243,12 +259,9 @@ const GrapesEditor = () => {
         }
       }
 
-      // Add a smart replacement for any common tailwind hex backgrounds if they specifically match primary
-      // Make sure Tailwind renders them via CSS Variables safely
       dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
       dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
 
-      // Inject Tailwind Config inside GrapesJS to support our variables directly!
       const configHTML = `
       <script>
         tailwind.config = {
@@ -268,7 +281,6 @@ const GrapesEditor = () => {
 
       editor.setComponents(dbContent);
 
-      // Inject logo if available (AFTER components are set, with a small delay for safety)
       setTimeout(() => {
         if (currentPage.logoUrl) {
           const wrapper = editor.DomComponents.getWrapper();
@@ -285,10 +297,10 @@ const GrapesEditor = () => {
       }, 100);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
-      editor.setComponents('<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">' +
-        '<h2 style="margin-bottom: 10px;">Your Landing Page is Ready</h2>' +
-        '<p>Start editing by choosing a block from the left or use the AI generator.</p>' +
-        '</div>');
+      editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
+        `<h2 style="margin-bottom: 10px;">${mode === 'thank-you' ? 'Thank You Page' : 'Landing Page'} is Ready</h2>` +
+        `<p>${mode === 'thank-you' ? 'Choose a Thank You layout from the left or build it manually.' : 'Start editing by choosing a block from the left or use the AI generator.'}</p>` +
+        `</div>`);
     }
   };
 
@@ -805,17 +817,77 @@ const GrapesEditor = () => {
     const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
     const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
-    updatePageMutation.mutate({
-      content: html,
-      styles: globalCss + '\n' + css,
+    const styleData = globalCss + '\n' + css;
+
+    const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
       metaDescription: metaDesc,
       primaryColor: themePrimary,
       secondaryColor: themeSecondary,
       accentColor: themeSecondary,
-    });
+      landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+      landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
+      thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+      thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
+    };
 
-    toast.success('Page saved to cloud!');
+    if (mode === 'landing') {
+      updateData.content = html;
+      updateData.styles = styleData;
+    } else {
+      updateData.content = page?.landingPageContent;
+      updateData.styles = page?.landingPageStyles;
+    }
+
+    updatePageMutation.mutate(updateData);
+    toast.success(`${mode === 'thank-you' ? 'Thank You' : 'Landing'} page saved!`);
+  };
+
+  const switchMode = (newMode: 'landing' | 'thank-you') => {
+    if (newMode === mode) return;
+
+    // 1. Save current editor state into memory/local page state
+    if (editorRef.current) {
+      const html = editorRef.current.getHtml();
+      const css = editorRef.current.getCss() || '';
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      
+      if (page) {
+        if (mode === 'landing') {
+          page.landingPageContent = html;
+          page.landingPageStyles = globalCss + '\n' + css;
+        } else {
+          page.thankYouPageContent = html;
+          page.thankYouPageStyles = globalCss + '\n' + css;
+        }
+      }
+    }
+
+    // 2. Switch Mode
+    setMode(newMode);
+    
+    // Sync URL
+    const newParams = new URLSearchParams(searchParams);
+    if (newMode === 'thank-you') newParams.set('mode', 'thankyou');
+    else newParams.delete('mode');
+    navigate(`?${newParams.toString()}`, { replace: true });
+    
+    // 3. Update Sidebar Tab if needed
+    if (newMode === 'thank-you') {
+      setLeftTab('thank-you');
+    } else if (leftTab === 'thank-you') {
+      setLeftTab('blocks');
+    }
+
+    // 4. Load content of new mode
+    setTimeout(() => {
+      if (editorRef.current) {
+        applyContentToEditor(editorRef.current, newMode);
+      }
+    }, 100);
   };
 
   // ─── Preview ───
@@ -885,17 +957,28 @@ const GrapesEditor = () => {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
 
-      await updatePageMutation.mutateAsync({
-        content: html,
-        // @ts-ignore
-        styles: css,
+      const updateData: Partial<LandingPage> = {
         status: 'published',
         metaTitle: pageTitle,
         metaDescription: metaDesc,
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
         accentColor: themeSecondary,
-      });
+        landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+        landingPageStyles: mode === 'landing' ? css : page?.landingPageStyles,
+        thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+        thankYouPageStyles: mode === 'thank-you' ? css : page?.thankYouPageStyles,
+      };
+
+      if (mode === 'landing') {
+        updateData.content = html;
+        updateData.styles = css;
+      } else {
+        updateData.content = page?.landingPageContent;
+        updateData.styles = page?.landingPageStyles;
+      }
+
+      await updatePageMutation.mutateAsync(updateData);
 
       setIsPublishing(false);
       // Build the public URL for display
@@ -1117,6 +1200,18 @@ const GrapesEditor = () => {
 
         <Sep />
 
+        {/* Mode Switcher */}
+        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+          <TBtn title="Edit Landing Page" active={mode === 'landing'} onClick={() => switchMode('landing')}>
+            <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, display: window.innerWidth > 1000 ? 'inline' : 'none' }}>Landing</span>
+          </TBtn>
+          <TBtn title="Edit Thank You Page" active={mode === 'thank-you'} onClick={() => switchMode('thank-you')}>
+            <HeartIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, display: window.innerWidth > 1000 ? 'inline' : 'none' }}>Thank You</span>
+          </TBtn>
+        </div>
+
+        <Sep />
+
         {/* Device Switcher (Centered look) */}
         <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
           <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
@@ -1172,7 +1267,7 @@ const GrapesEditor = () => {
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'seo'} onClick={() => { if (leftTab === 'seo') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('seo'); setIsSidebarOpen(true); } }}><SettingsIcon /><span>SEO</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); } }}><HeartIcon /><span>Thank You</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); switchMode('thank-you'); } }}><HeartIcon /><span>Thank You</span></NavIcon>
             <div style={{ flex: 1 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 12 }}>
               <button
@@ -1315,11 +1410,68 @@ const GrapesEditor = () => {
             {/* Thank You Panel */}
             <div style={{ flex: 1, display: leftTab === 'thank-you' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
               <ThankYouEditorPanel
+                key={`${pageId}-${mode}`}
                 pageId={pageId || ''}
                 industry={page?.industry}
                 onSave={() => {
                   toast.success('Thank You settings saved!');
+                  handleSave(); // 🚀 Also save the canvas HTML/CSS so they don't get out of sync!
                   queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
+                }}
+                onSelect={(html, css) => {
+                  if (editorRef.current) {
+                    console.log('🎬 Applying Thank You template to canvas...');
+                    
+                    let finalHtml = html;
+                    let finalCss = css || '';
+
+                    // Robust parsing for full HTML templates
+                    if (html.toLowerCase().includes('<body')) {
+                      try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extract styles from <style> tags
+                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                        if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+
+                        // Take body content
+                        finalHtml = doc.body.innerHTML;
+
+                        // Apply body style to wrapper accurately
+                        const bodyStyle = doc.body.getAttribute('style');
+                        if (bodyStyle) {
+                          editorRef.current.getWrapper().setStyle(bodyStyle);
+                        }
+                      } catch (e) {
+                         console.error('Failed to parse template HTML:', e);
+                      }
+                    }
+
+                    // 🛠️ CRITICAL: Clear both HTML and CSS to prevent merging
+                    editorRef.current.setComponents(''); 
+                    try {
+                      if (editorRef.current.DomComponents && editorRef.current.DomComponents.clear) {
+                        editorRef.current.DomComponents.clear();
+                      }
+                      // @ts-ignore
+                      if (editorRef.current.Css && editorRef.current.Css.clear) {
+                        editorRef.current.Css.clear();
+                      }
+                    } catch (e) {
+                      console.warn('GrapesJS clear warning:', e);
+                    }
+                    
+                    // Apply new content
+                    editorRef.current.setComponents(finalHtml);
+                    if (finalCss) {
+                      finalCss = finalCss.replace(/body\s*\{/g, 'body, .grapesjs-safeguard-wrapper {');
+                      editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
+                      editorRef.current.setStyle(finalCss);
+                    }
+                    
+                    toast.info('Thank You Template Applied');
+                  }
                 }}
               />
             </div>
@@ -1858,6 +2010,7 @@ const modalBtn: React.CSSProperties = {
 };
 
 /* ── SVG Icons ── */
+const LayoutIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /></svg>;
 const CodeIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>;
 const DesktopIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>;
 const TabletIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;

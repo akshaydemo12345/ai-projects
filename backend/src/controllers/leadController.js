@@ -232,11 +232,23 @@ exports.getTrackerJs = (req, res) => {
         console.log('[Lead Tracker] Response:', r);
         if (r.status === "success") {
           f.reset();
-          // Redirect to the dedicated thank-you page
-          if (SL) {
-            window.location.href = window.location.origin + "/" + SL + "/thank-you";
+          
+          // Dispatch success event for external scripts (pixels, etc.)
+          var ev = new CustomEvent('submit-success', { detail: { leadId: r.data?.leadId } });
+          document.dispatchEvent(ev);
+
+          // Redirect logic: prioritize window.pageThankYouUrl
+          var tyUrl = window.pageThankYouUrl || "";
+          if (tyUrl && tyUrl.trim() !== "") {
+            console.log('[Lead Tracker] Redirecting to custom URL:', tyUrl);
+            window.location.replace(tyUrl);
+          } else if (SL) {
+            console.log('[Lead Tracker] Redirecting to default Thank You page');
+            window.location.replace(window.location.origin + "/" + SL + "/thank-you");
           } else {
             alert("Thank you! Your message has been sent.");
+            if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
+            f.removeAttribute("data-submitting");
           }
         } else throw new Error(r.message || "Error")
       })
@@ -247,7 +259,8 @@ exports.getTrackerJs = (req, res) => {
           setTimeout(function() { send(d, f, b, t, n + 1) }, 2000);
         } else {
           alert("Failed: " + e.message);
-          if (b) { b.disabled = false; b.textContent = t; }
+          if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
+          f.removeAttribute("data-submitting");
         }
       })
     }
