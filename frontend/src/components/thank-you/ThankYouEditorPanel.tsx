@@ -178,7 +178,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
       </div>
 
       <div style={{ display: 'flex', borderBottom: '1px solid #1e1e2d', background: '#0a0a14' }}>
-        {['layout', 'content', 'tracking', 'branding', 'custom'].map((tab) => (
+        {['layout', 'content', 'branding'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -202,7 +202,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
         {activeTab === 'layout' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
             {layouts.map((layout) => (
               <div
                 key={layout.id}
@@ -237,42 +237,22 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
                     ✓
                   </div>
                 )}
-                <div
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${layout.theme.primaryColor}, ${layout.theme.secondaryColor})`,
-                    marginBottom: 12,
-                    color: '#fff',
-                  }}
-                >
-                  {getLayoutIcon(layout.id)}
-                </div>
-                <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{layout.name}</div>
-                <div style={{ color: '#64748b', fontSize: 10, lineHeight: 1.4 }}>{layout.description}</div>
-                <div style={{
-                  marginTop: 12,
-                  display: 'flex',
-                  gap: 6,
-                  flexWrap: 'wrap'
-                }}>
-                  {layout.features.slice(0, 2).map((feature) => (
-                    <span key={feature} style={{
-                      background: `${layout.theme.primaryColor}20`,
-                      color: layout.theme.primaryColor,
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      fontSize: 9,
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                    }}>
-                      {feature.replace('-', ' ')}
-                    </span>
-                  ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${layout.theme.primaryColor}, ${layout.theme.secondaryColor})`,
+                      color: '#fff',
+                    }}
+                  >
+                    {getLayoutIcon(layout.id)}
+                  </div>
+                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{layout.name}</div>
                 </div>
               </div>
             ))}
@@ -389,72 +369,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
           </div>
         )}
 
-        {activeTab === 'tracking' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                GA4 Measurement ID
-              </label>
-              <input
-                type="text"
-                value={config.tracking.ga4MeasurementId || ''}
-                onChange={(e) => setConfig({ ...config, tracking: { ...config.tracking, ga4MeasurementId: e.target.value } })}
-                placeholder="G-XXXXXXXXXX"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
 
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Google Ads Conversion ID
-              </label>
-              <input
-                type="text"
-                value={config.tracking.googleAdsConversionId || ''}
-                onChange={(e) => setConfig({ ...config, tracking: { ...config.tracking, googleAdsConversionId: e.target.value } })}
-                placeholder="AW-XXXXXXXXXX"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Meta Pixel ID
-              </label>
-              <input
-                type="text"
-                value={config.tracking.metaPixelId || ''}
-                onChange={(e) => setConfig({ ...config, tracking: { ...config.tracking, metaPixelId: e.target.value } })}
-                placeholder="XXXXXXXXXX"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         {activeTab === 'branding' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -539,144 +454,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
           </div>
         )}
 
-        {activeTab === 'custom' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Custom HTML Template
-              </label>
-              <textarea
-                value={customTemplate}
-                onChange={(e) => setCustomTemplate(e.target.value)}
-                placeholder="Enter custom HTML template (leave empty to use selected layout)"
-                rows={15}
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 12,
-                  fontFamily: 'monospace',
-                  resize: 'vertical',
-                }}
-              />
-            </div>
 
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Custom CSS
-              </label>
-              <textarea
-                value={customCss}
-                onChange={(e) => setCustomCss(e.target.value)}
-                placeholder="Enter custom CSS (leave empty to use default styles)"
-                rows={10}
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 12,
-                  fontFamily: 'monospace',
-                  resize: 'vertical',
-                }}
-              />
-            </div>
-
-            <div style={{ padding: '12px', background: '#1a1a2e', borderRadius: 8, border: '1px solid #2a2a3e' }}>
-              <p style={{ color: '#94a3b8', fontSize: 11, margin: 0 }}>
-                <strong style={{ color: '#fff' }}>Available Variables:</strong> {'{heading}'}, {'{subheading}'}, {'{ctaText}'}, {'{ctaUrl}'}, {'{phoneNumber}'}, {'{primaryColor}'}, {'{secondaryColor}'}, {'{businessName}'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'branding' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Logo URL
-              </label>
-              <input
-                type="text"
-                value={config.branding.logoUrl || ''}
-                onChange={(e) => setConfig({ ...config, branding: { ...config.branding, logoUrl: e.target.value } })}
-                placeholder="https://yourwebsite.com/logo.png"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Primary Color
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="color"
-                  value={config.branding.primaryColor || '#7c3aed'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, primaryColor: e.target.value } })}
-                  style={{ width: 50, height: 40, border: '1px solid #2a2a3e', borderRadius: 8, cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  value={config.branding.primaryColor || '#7c3aed'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, primaryColor: e.target.value } })}
-                  placeholder="#7c3aed"
-                  style={{
-                    flex: 1,
-                    background: '#0a0a14',
-                    border: '1px solid #2a2a3e',
-                    color: '#fff',
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Secondary Color
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="color"
-                  value={config.branding.secondaryColor || '#6366f1'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, secondaryColor: e.target.value } })}
-                  style={{ width: 50, height: 40, border: '1px solid #2a2a3e', borderRadius: 8, cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  value={config.branding.secondaryColor || '#6366f1'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, secondaryColor: e.target.value } })}
-                  placeholder="#6366f1"
-                  style={{
-                    flex: 1,
-                    background: '#0a0a14',
-                    border: '1px solid #2a2a3e',
-                    color: '#fff',
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <div style={{ padding: 16, borderTop: '1px solid #1e1e2d', display: 'flex', gap: 8, background: '#0a0a14' }}>
