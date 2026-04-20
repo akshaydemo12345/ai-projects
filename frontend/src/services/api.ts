@@ -6,6 +6,13 @@ import config from '../config';
 const API_BASE_URL = config.api.baseUrl;
 
 // Types
+export interface PageSection {
+  id: string;
+  type: "hero" | "features" | "pricing" | "faq" | "contact" | "footer" | "header" | "testimonials" | "gallery" | "form" | "stats" | "team" | "cta" | "image" | "text" | "grid";
+  title?: string;
+  content: Record<string, unknown>;
+}
+
 export interface Site {
   _id: string;
   name: string;
