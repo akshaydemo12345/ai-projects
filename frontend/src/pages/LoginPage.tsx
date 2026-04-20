@@ -25,10 +25,14 @@ const LoginPage = () => {
       let response;
       if (isSignUp) {
         response = await authApi.signup({ name, email, password });
-        toast.success("Account created successfully!");
+        toast.success("Account created successfully!", {
+          description: "Welcome to PageCraft! Let's start building your first project.",
+        });
       } else {
         response = await authApi.login({ email, password });
-        toast.success("Welcome back!");
+        toast.success("Welcome back!", {
+          description: "Successfully logged into your account.",
+        });
       }
 
       const { accessToken, data } = response;
