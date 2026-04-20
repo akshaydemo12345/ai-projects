@@ -87,7 +87,16 @@ const PublicLandingPage = () => {
                 if (btn) btn.innerHTML = 'Retrying...';
                 setTimeout(() => submitLead(data, form, btn, originalBtnText, attempt + 1), 2000);
               } else {
-                alert("Submission failed: " + err.message + ". Please try again later.");
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = "position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; borderRadius: 8px; boxShadow: 0 4px 12px rgba(0,0,0,0.15); zIndex: 9999; font-family: sans-serif; fontSize: 14px; fontWeight: 500; border-left: 4px solid #b91c1c; animation: slideIn 0.3s ease-out;";
+                errorDiv.innerHTML = "<b>Submission failed:</b> " + err.message;
+                document.body.appendChild(errorDiv);
+                setTimeout(() => {
+                  errorDiv.style.opacity = '0';
+                  errorDiv.style.transition = 'opacity 0.5s ease-out';
+                  setTimeout(() => errorDiv.remove(), 500);
+                }, 4000);
+
                 if (btn) {
                   btn.disabled = false;
                   btn.innerHTML = originalBtnText;
