@@ -115,7 +115,9 @@ const CreateProjectFlow = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       const project = res.data.project;
-      toast.success("Project created successfully!");
+      toast.success("Project created successfully!", {
+        description: `${project.name} is now ready for page generation.`,
+      });
       // Skip integration step — go directly to project detail page
       navigate(`/dashboard/projects/${project._id}`);
     },

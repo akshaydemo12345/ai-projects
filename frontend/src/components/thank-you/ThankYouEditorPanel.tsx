@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { thankYouApi, ThankYouLayout, ThankYouConfig } from '@/services/api';
+import { toast } from 'sonner';
 
 interface ThankYouEditorPanelProps {
   pageId: string;
@@ -93,10 +94,14 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
       }
       await thankYouApi.updateConfig(pageId, saveConfig);
       onSave?.();
-      alert('Thank You settings saved!');
+      toast.success('Thank You settings saved!', {
+        description: 'Your changes have been applied successfully.'
+      });
     } catch (error) {
       console.error('Error saving config:', error);
-      alert('Error saving settings');
+      toast.error('Error saving settings', {
+        description: 'There was a problem saving your configuration.'
+      });
     } finally {
       setSaving(false);
     }
@@ -139,7 +144,9 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
       setShowPreview(true);
     } catch (error) {
       console.error('Error previewing:', error);
-      alert('Error loading preview');
+      toast.error('Error loading preview', {
+        description: 'Failed to generate the thank you page preview.'
+      });
     }
   };
 

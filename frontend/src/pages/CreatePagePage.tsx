@@ -146,7 +146,9 @@ const CreatePagePage = () => {
     mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Page generated successfully!");
+      toast.success("Page generated successfully!", {
+        description: "Your AI-crafted landing page is ready for editing.",
+      });
       // Small delay for smooth transition
       setTimeout(() => navigate(`/editor/${id}/${newPage._id}`), 500);
     },

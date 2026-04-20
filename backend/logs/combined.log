@@ -13322,5 +13322,3 @@ Require stack:
 [2026-04-17T13:50:53.212Z] [HTTP] GET /projects/69e239efeee64bbb70dab03c/pages/69e23a00eee64bbb70dab048 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-04-17T13:50:53.217Z] [HTTP] GET /projects/69e239efeee64bbb70dab03c 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-04-17T13:50:55.556Z] [HTTP] GET /api/public/page/seo-reseller-program 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
-[2026-04-20T04:49:03.181Z] [INFO] ✅ MongoDB Connected Successfully
-[2026-04-20T04:49:03.193Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
