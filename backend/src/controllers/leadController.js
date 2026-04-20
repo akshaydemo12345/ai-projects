@@ -10,7 +10,11 @@ const logger = require('../utils/logger');
  */
 exports.createLead = async (req, res) => {
   try {
-    const { name, email, phone, message, pageSlug, pageId, projectId } = req.body;
+    const { name, email, phone, message, pageSlug, pageId, projectId, domain, url } = req.body;
+
+    // Determine domain and url if not provided in body (e.g. from headers)
+    const finalDomain = domain || req.get('origin') || req.get('host') || 'unknown';
+    const finalUrl = url || req.get('referer') || 'unknown';
 
     // Basic validation
     if (!email || !pageSlug) {
@@ -53,6 +57,8 @@ exports.createLead = async (req, res) => {
       pageSlug,
       pageId,
       projectId: finalProjectId,
+      domain: finalDomain,
+      url: finalUrl,
       ip: req.ip,
       userAgent: req.get('User-Agent')
     });
@@ -307,7 +313,9 @@ exports.getTrackerJs = (req, res) => {
         phone: (fd.get("phone") || fd.get("tel") || fd.get("telephone") || fd.get("mobile") ||
                (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : "")).trim(),
         message: (fd.get("message") || fd.get("comments") || fd.get("comment") || fd.get("inquiry") ||
-                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim()
+                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim(),
+        domain: window.location.hostname,
+        url: window.location.href
       };
       
       console.log('[Lead Tracker] Collected data:', data);

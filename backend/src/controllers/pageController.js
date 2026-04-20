@@ -352,15 +352,16 @@ exports.createPage = async (req, res, next) => {
         scrapedData: project.scrapedData || {}
       };
 
-      const generated = await AIService.generateLandingPageContent(aiInput);
+      const generatedResult = await AIService.generateLandingPageContent(aiInput);
 
-      if (generated) {
+      if (generatedResult) {
         aiResponse = {
-          sections: generated.pageContent || [],
-          fullHtml: generated.fullHtml,
-          fullCss: generated.fullCss,
-          fullJs: generated.fullJs,
-          seo: generated.seo || {}
+          sections: generatedResult.pageContent || [],
+          fullHtml: generatedResult.fullHtml,
+          fullCss: generatedResult.fullCss,
+          fullJs: generatedResult.fullJs,
+          seo: generatedResult.seo || {},
+          aiUsage: generatedResult.aiUsage
         };
       }
       } catch (aiErr) {
@@ -420,6 +421,27 @@ exports.createPage = async (req, res, next) => {
     }
     
     page.seo = aiResponse.seo || {};
+    
+    // 8. Update Page with Cumulative AI Usage and History
+    if (aiResponse.aiUsage) {
+      const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+      
+      page.aiUsage = {
+        promptTokens: (currentUsage.promptTokens || 0) + aiResponse.aiUsage.promptTokens,
+        completionTokens: (currentUsage.completionTokens || 0) + aiResponse.aiUsage.completionTokens,
+        totalTokens: (currentUsage.totalTokens || 0) + aiResponse.aiUsage.totalTokens,
+        cost: (currentUsage.cost || 0) + aiResponse.aiUsage.cost,
+        model: aiResponse.aiUsage.model,
+        currency: 'USD',
+        lastUsageAt: Date.now()
+      };
+      
+      page.aiUsageHistory.push({
+        action: 'Initial Creation',
+        ...aiResponse.aiUsage,
+        createdAt: Date.now()
+      });
+    }
     
     // If we have a generic title, try to use the AI-generated one
     if ((page.title === 'Untitled Page' || page.title === 'AI Generated Page') && page.seo.title) {

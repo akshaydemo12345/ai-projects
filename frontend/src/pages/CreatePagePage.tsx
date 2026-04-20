@@ -142,19 +142,28 @@ const CreatePagePage = () => {
     setAiPrompt(tpl.prompt);
   };
 
+  const [showLoader, setShowLoader] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [createdPage, setCreatedPage] = useState<any>(null);
+
   const createPageMutation = useMutation({
-    mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
+    mutationFn: async (page: Partial<LandingPage>) => {
+      // Add a 60 second timeout for safety
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 60000)
+      );
+      return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
+    },
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Page generated successfully!", {
-        description: "Your AI-crafted landing page is ready for editing.",
-      });
-      // Small delay for smooth transition
-      setTimeout(() => navigate(`/editor/${id}/${newPage._id}`), 500);
+      setCreatedPage(newPage);
+      setIsComplete(true);
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
       toast.error(err.message || "Failed to create page");
+      setShowLoader(false);
+      setIsComplete(false);
     },
   });
 
@@ -169,14 +178,17 @@ const CreatePagePage = () => {
         currentPrompt: aiPrompt.trim() || undefined
       });
       
-      // If expanding/improving, show a slightly different success message
       if (aiPrompt.trim()) {
         toast.success("Prompt expanded and improved!");
       } else {
         toast.success("Magic prompt generated!");
       }
       
-      setAiPrompt(res.data.suggestion);
+      const suggestionText = typeof res.data.suggestion === 'object' 
+        ? res.data.suggestion.suggestion 
+        : res.data.suggestion;
+
+      setAiPrompt(suggestionText);
     } catch (err: any) { 
       toast.error(err.message || "Failed"); 
     } finally { 
@@ -190,42 +202,27 @@ const CreatePagePage = () => {
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
 
+    setShowLoader(true);
+    setIsComplete(false);
+
     let basePayload: Partial<LandingPage> = {};
     if (activeMethod === "template" && selectedTemplate === "saas-hero") {
       let enrichedContent = saasHeroHtml;
       if (project) {
-        // Smart replacements to make template dynamic
         enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
         enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, project.category + " solutions for your business");
         enrichedContent = enrichedContent.replace(/Your locally owned Renewal by Andersen/g, `Your locally owned ${project.name}`);
-        // Remove specific brand mentions if any
         enrichedContent = enrichedContent.replace(/Fibrex®/g, "Premium materials");
-
-        // Inject logo URL directly into template content
         const finalLogo = logoUrl || project.logoUrl;
-        if (finalLogo) {
-          enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
-        }
-
-        // Inject real images from scrapedData if available
+        if (finalLogo) enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
         if (project.scrapedData?.images?.length > 0) {
           const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
           const generalImages = project.scrapedData.images.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
-
-          // Replace hero background (Unsplash link)
-          if (bannerImages.length > 0) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
-          } else if (generalImages.length > 0) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
-          }
-
-          // Replace other content images
-          if (generalImages.length > 1) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
-          }
+          if (bannerImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
+          else if (generalImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
+          if (generalImages.length > 1) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
         }
       }
-
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
@@ -249,8 +246,15 @@ const CreatePagePage = () => {
     });
   };
 
+  const handleLoaderFinished = () => {
+    if (createdPage) {
+      toast.success("Page generated successfully!");
+      navigate(`/editor/${id}/${createdPage._id}`);
+    }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
-  if (createPageMutation.isPending) return <ModernLoader />;
+  if (showLoader) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -412,20 +416,23 @@ const CreatePagePage = () => {
                 />
                 <div className="flex flex-wrap gap-2">
                   {dynamicSuggestions.length > 0 ? (
-                    dynamicSuggestions.slice(0, 6).map((suggestion: string) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => {
-                          setAiPrompt(suggestion);
-                          // Auto-run Magic Write after selecting suggestion
-                          setTimeout(() => handleGenerateMagicPrompt(), 100);
-                        }}
-                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
-                        title={suggestion}
-                      >
-                        {suggestion}
-                      </button>
-                    ))
+                    dynamicSuggestions.slice(0, 6).map((item: any) => {
+                      const suggestion = typeof item === 'string' ? item : item.suggestion;
+                      return (
+                        <button
+                          key={suggestion}
+                          onClick={() => {
+                            setAiPrompt(suggestion);
+                            // Auto-run Magic Write after selecting suggestion
+                            setTimeout(() => handleGenerateMagicPrompt(), 100);
+                          }}
+                          className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
+                          title={suggestion}
+                        >
+                          {suggestion}
+                        </button>
+                      );
+                    })
                   ) : (
                     // Fallback while loading or if no suggestions
                     <div className="flex gap-2">
