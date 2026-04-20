@@ -59,14 +59,10 @@ const PublicLandingPage = () => {
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
             
             try {
-              const response = await fetch("${API_URL}/api/leads", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-                mode: 'cors'
-              });
-
-              const result = await response.json();
+              // Dummy UI Simulation - NO BACKEND
+              console.log("Dummy API Call - Simulating Lead Creation", data);
+              await new Promise(r => setTimeout(r, 800)); // Fake network delay
+              const result = { status: 'success', dummy: true };
               console.log("📥 API Response:", result);
 
               if (result.status === 'success') {
