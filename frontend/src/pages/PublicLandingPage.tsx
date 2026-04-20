@@ -27,8 +27,26 @@ const PublicLandingPage = () => {
 
       // Update browser tab title
       if (meta?.title) {
-        document.title = meta.title;
+        document.title = `${meta.title} | Preview`;
       }
+
+      // Sync meta tags for the main document (to be visible in Inspect)
+      const targetDesc = pageData.metaDescription || pageData.seo?.description || 'High-converting AI landing page.';
+      const metaDescriptions = document.querySelectorAll('meta[name="description"]');
+      if (metaDescriptions.length > 0) {
+        metaDescriptions.forEach(tag => tag.setAttribute('content', targetDesc));
+      } else {
+        const newTag = document.createElement('meta');
+        newTag.setAttribute('name', 'description');
+        newTag.setAttribute('content', targetDesc);
+        document.head.appendChild(newTag);
+      }
+
+      // Update OG/Twitter tags if they exist for better SEO preview feel
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', meta?.title || 'Preview');
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute('content', targetDesc);
 
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
       const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
