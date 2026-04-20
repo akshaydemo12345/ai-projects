@@ -32,6 +32,9 @@ router.get('/plugin/download', downloadPlugin);
 // ─── SEO: Sitemap & Robots ────────────────────────────────────────────────────
 router.get('/sitemap.xml', getSitemap);
 router.get('/robots.txt', getRobotsTxt);
+router.get('/api/page', require('../controllers/publicController').getDynamicPage);
+router.post('/api/leads', require('../controllers/publicController').submitDynamicLead);
+
 
 // ─── Smart Slug Route (HTML for browsers/WP, JSON for API clients) ───────────
 /**

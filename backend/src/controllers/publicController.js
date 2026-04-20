@@ -5,6 +5,7 @@ const Project = require('../models/Project');
 const Lead = require('../models/Lead');
 const AppError = require('../utils/AppError');
 const { normalizeDomain } = require('../utils/validation');
+const { generateTrackingScripts } = require('../utils/tracking');
 const path = require('path');
 const fs = require('fs');
 
@@ -432,46 +433,51 @@ exports.getPublicPageHTML = async (req, res, next) => {
 
     if (!page) return next(new AppError('Page not found or not published', 404));
 
-    // ─── DOMAIN SECURITY: Verify match unconditionally if websiteUrl is set ───
+    // ─── SMART DOMAIN AUTHORIZATION ───
     if (page.projectId) {
       const project = await Project.findById(page.projectId);
       if (project) {
         // Increment project views
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
 
-        // Check lock only if websiteUrl is defined
-        if (project.websiteUrl) {
-          const forwardedHost = req.headers['x-forwarded-host'];
-          const referer = req.headers['referer'];
-          const host = req.headers['host'];
-          
-          // Determine the site domain requesting this page
-          let incomingRequestDomain = "";
-          if (forwardedHost) {
-            incomingRequestDomain = normalizeDomain(forwardedHost);
-          } else if (host) {
-            incomingRequestDomain = normalizeDomain(host);
-          } else if (referer) {
-            incomingRequestDomain = normalizeDomain(referer);
-          }
+        const forwardedHost = req.headers['x-forwarded-host'];
+        const hostHeader   = req.headers['host'];
+        const referer      = req.headers['referer'];
+        const host         = forwardedHost || hostHeader || (referer ? new URL(referer).hostname : '');
+        
+        let incomingRequestDomain = normalizeDomain(host);
+        const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
 
-          const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
-          const isOwnerDomain = (incomingRequestDomain === saasDomain);
-          const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
+        // 1. If no websiteUrl is set, lock it to this domain (Auto-Authorize)
+        if (!project.websiteUrl && incomingRequestDomain && incomingRequestDomain !== saasDomain) {
+          project.websiteUrl = incomingRequestDomain;
+          await project.save();
+          console.log(`✨ Auto-authorized project "${project.name}" to domain: ${incomingRequestDomain}`);
+        }
 
-          if (!isOwnerDomain && !isAuthorizedDomain) {
-            return res.status(403).send(`
-              <html>
-                <body style="font-family:sans-serif; text-align:center; padding:100px 20px; color:#64748b; background:#f8fafc;">
-                  <div style="max-width:500px; margin:0 auto; background:white; padding:40px; border-radius:32px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
-                    <div style="font-size:64px; margin-bottom:24px;">🔒</div>
-                    <h1 style="color:#0f172a; margin-bottom:12px;">Domain Unauthorized</h1>
-                    <p style="margin-bottom:24px; line-height:1.6;">This landing page is securely locked to its registered domain of record.</p>
-                  </div>
-                </body>
-              </html>
-            `);
-          }
+        // 2. Check Authorization
+        const isOwnerDomain = (incomingRequestDomain === saasDomain);
+        const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
+
+        if (!isOwnerDomain && !isAuthorizedDomain && project.websiteUrl) {
+          // Instead of a hard 403, we show a helpful "Setup Needed" page
+          console.warn(`🛑 Domain Blocked: ${incomingRequestDomain} is not ${project.websiteUrl}`);
+          return res.status(200).send(`
+            <html>
+              <head><title>Setup Required</title><script src="https://cdn.tailwindcss.com"></script></head>
+              <body class="bg-slate-50 flex items-center justify-center min-h-screen p-6 text-center">
+                <div class="max-width-md bg-white p-10 rounded-3xl shadow-xl border border-slate-100">
+                  <div class="text-6xl mb-6">⚙️</div>
+                  <h1 class="text-2xl font-bold text-slate-900 mb-4">Domain Authorization Required</h1>
+                  <p class="text-slate-600 mb-8 leading-relaxed">
+                    This landing page is currently locked to <strong>${project.websiteUrl}</strong>.<br>
+                    To use it on <strong>${incomingRequestDomain}</strong>, please update your project settings in the dashboard.
+                  </p>
+                  <a href="${process.env.APP_BASE_URL}/projects/${project._id}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-all">Go to Dashboard</a>
+                </div>
+              </body>
+            </html>
+          `);
         }
       }
     }
@@ -494,6 +500,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
       const thankYouFooter = normalizeScript(page.thankYouFooter);
       const thankYouConversionScript = normalizeScript(page.thankYouConversionScript);
       
+      // Auto-generate scripts from config
+      const configTrackingScripts = generateTrackingScripts(page.thankYouConfig?.tracking || {}, page._id, page.industry);
+      
       const thankYouHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -501,6 +510,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thank You | ${page.title}</title>
     ${thankYouHeader}
+    ${configTrackingScripts}
     <style>
       @keyframes pc-sparkle { 0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); } 50% { transform: scale(1.2); opacity: 1; filter: blur(1px); } }
       @keyframes pc-float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, -25px); } 100% { transform: translate(-10px, -50px); } }
@@ -857,3 +867,145 @@ exports.getRobotsTxt = (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.status(200).send(txt);
 };
+
+/**
+ * GET /api/page?domain={domain}&path={path}
+ * Dynamically returns landing page HTML for the tracker script.
+ */
+exports.getDynamicPage = async (req, res, next) => {
+  try {
+    const { domain, path: reqPath, apiKey } = req.query;
+
+    if (!domain || !reqPath) {
+      return res.status(400).json({ status: 'error', message: 'Domain and path are required' });
+    }
+
+    // Normalize path to slug
+    const cleanSlug = reqPath.replace(/^\/+|\/+$/g, '').split('/')[0];
+    
+    if (!cleanSlug) {
+      return res.status(404).json({ status: 'error', message: 'No slug found in path' });
+    }
+
+    // 1. Find the project first if apiKey is provided
+    let project = null;
+    if (apiKey) {
+      project = await Project.findOne({ apiToken: apiKey });
+    }
+
+    // 2. Find the page
+    const pageQuery = { 
+      slug: cleanSlug, 
+      isDeleted: { $ne: true },
+      status: 'published'
+    };
+
+    // If we have a project from apiKey, use its ID for strictness
+    if (project) {
+      pageQuery.projectId = project._id;
+    }
+
+    const page = await Page.findOneAndUpdate(
+      pageQuery,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+
+    if (!page) {
+      return res.status(404).json({ status: 'error', message: 'Landing page not found or not published' });
+    }
+
+    // 3. SMART DOMAIN AUTHORIZATION
+    if (page.projectId) {
+      if (!project) project = await Project.findById(page.projectId);
+      
+      if (project) {
+        const incomingRequestDomain = normalizeDomain(domain);
+        const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
+
+        // Allow auto-authorize if apiKey matches or if project has no domain yet
+        const isApiKeyMatch = (apiKey && project.apiToken === apiKey);
+        
+        if (!project.websiteUrl && incomingRequestDomain && incomingRequestDomain !== saasDomain) {
+          project.websiteUrl = incomingRequestDomain;
+          await project.save();
+        }
+
+        // Project-wide domain check (skip if valid API Key is present)
+        if (!isApiKeyMatch && project.websiteUrl && incomingRequestDomain !== project.websiteUrl && incomingRequestDomain !== saasDomain) {
+          return res.status(403).json({ status: 'error', message: `Domain ${incomingRequestDomain} is not authorized for this project.` });
+        }
+      }
+    }
+
+    const html = renderFullHTML(page, `http://${domain}/${cleanSlug}`);
+
+    res.status(200).json({
+      status: 'success',
+      html,
+      projectId: page.projectId,
+      pageId: page._id
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/leads
+ * Unified lead submission handler for dynamic landing pages.
+ */
+exports.submitDynamicLead = async (req, res, next) => {
+  try {
+    const data = req.body;
+    const { domain, pageUrl, path: reqPath, email } = data;
+
+    if (!email) {
+      return res.status(400).json({ status: 'error', message: 'Email is required' });
+    }
+
+    // Find the page associated with this submission
+    const cleanSlug = (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
+    const page = await Page.findOne({ 
+      slug: cleanSlug, 
+      isDeleted: { $ne: true } 
+    });
+
+    // Create the lead
+    const lead = await Lead.create({
+      name: data.name || data.first_name || 'Contact',
+      email: email.trim().toLowerCase(),
+      phone: data.phone || data.tel || '',
+      message: data.message || data.comments || '',
+      domain: domain || 'unknown',
+      url: pageUrl || 'unknown',
+      pageSlug: cleanSlug,
+      pageId: page ? page._id : null,
+      projectId: page ? page.projectId : null,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Update Project lead count
+    if (page && page.projectId) {
+      await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
+    }
+
+    // Return success with thank you info
+    const thankYouUrl = page && page.thankYouUrl 
+      ? page.thankYouUrl 
+      : (page ? `/${page.slug}/thank-you` : null);
+
+    res.status(201).json({
+      status: 'success',
+      success: true,
+      message: 'Lead captured successfully',
+      thankYouUrl,
+      gaEventLabel: page ? page.slug : 'direct'
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+

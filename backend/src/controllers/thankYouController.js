@@ -2,6 +2,7 @@ const Page = require('../models/Page');
 const logger = require('../utils/logger');
 const fs = require('fs');
 const path = require('path');
+const { generateTrackingScripts } = require('../utils/tracking');
 
 /**
  * @desc    Get all available Thank You layouts
@@ -330,73 +331,3 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-// Helper function to generate tracking scripts
-function generateTrackingScripts(tracking, pageId, industry) {
-  let scripts = '';
-
-  // GA4
-  if (tracking.ga4MeasurementId) {
-    scripts += `
-    <!-- GA4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${tracking.ga4MeasurementId}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '${tracking.ga4MeasurementId}');
-      gtag('event', '${tracking.ga4EventName || 'lead_submission'}', {
-        'page_id': '${pageId}',
-        'industry': '${industry || 'unknown'}'
-      });
-    </script>
-    `;
-  }
-
-  // Google Ads
-  if (tracking.googleAdsConversionId && tracking.googleAdsLabel) {
-    scripts += `
-    <!-- Google Ads -->
-    <script>
-      gtag('event', 'conversion', {
-        'send_to': '${tracking.googleAdsConversionId}/${tracking.googleAdsLabel}'
-      });
-    </script>
-    `;
-  }
-
-  // Meta Pixel
-  if (tracking.metaPixelId) {
-    scripts += `
-    <!-- Meta Pixel -->
-    <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '${tracking.metaPixelId}');
-      fbq('track', '${tracking.metaEventName || 'Lead'}', {
-        'page_id': '${pageId}',
-        'industry': '${industry || 'unknown'}'
-      });
-    </script>
-    <noscript>
-      <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=${tracking.metaPixelId}&ev=${tracking.metaEventName || 'Lead'}&noscript=1"/>
-    </noscript>
-    `;
-  }
-
-  // Custom tracking scripts
-  if (tracking.customTracking && tracking.customTracking.length > 0) {
-    scripts += '<!-- Custom Tracking -->\n';
-    tracking.customTracking.forEach(script => {
-      scripts += `<script>${script}</script>\n`;
-    });
-  }
-
-  return scripts;
-}
