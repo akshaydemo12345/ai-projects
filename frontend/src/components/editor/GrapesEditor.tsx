@@ -122,6 +122,27 @@ const GrapesEditor = () => {
     }
   }, [leftTab, isSidebarOpen]);
 
+  // ── Sync Document Metadata for SPA ──
+  useEffect(() => {
+    if (page) {
+      const currentTitle = page.metaTitle || page.name || 'Landing Page';
+      document.title = `${currentTitle} | AI Project Hub`;
+      
+      // Update ALL meta description tags to be sure
+      const metaDescriptions = document.querySelectorAll('meta[name="description"]');
+      const targetContent = page.metaDescription || 'High-converting AI landing page.';
+      
+      if (metaDescriptions.length > 0) {
+        metaDescriptions.forEach(tag => tag.setAttribute('content', targetContent));
+      } else {
+        const newTag = document.createElement('meta');
+        newTag.setAttribute('name', 'description');
+        newTag.setAttribute('content', targetContent);
+        document.head.appendChild(newTag);
+      }
+    }
+  }, [page?.name, page?.metaTitle, page?.metaDescription]);
+
   // Handle content application
   const applyContentToEditor = (editor: any, forcedMode?: 'landing' | 'thank-you') => {
     const currentPage = pageDataRef.current;
@@ -168,7 +189,7 @@ const GrapesEditor = () => {
 
         // Apply body style to wrapper
         const bodyStyle = doc.body.getAttribute('style');
-        if (bodyStyle) editor.getWrapper().addStyle(bodyStyle);
+        if (bodyStyle) editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
       } catch (e) { }
     }
 
@@ -922,30 +943,200 @@ const GrapesEditor = () => {
   };
 
   const downloadHtml = async () => {
-    const formattedHtml = formatHtmlPretty(htmlCode);
-    const formattedCss = formatCssPretty(cssCode);
-    const cssFileName = 'landing-page.css';
+    if (!editorRef.current) {
+        toast.error('Editor not ready');
+        return;
+    }
 
-    const finalHtml = buildFullHtml(formattedHtml, formattedCss, pageTitle, metaDesc, cssFileName);
+    // 1. Get raw content directly from editor to ensure latest state
+    const rawHtml = editorRef.current.getHtml();
+    const rawCss = editorRef.current.getCss() || '';
+    
+    let formattedHtml = formatHtmlPretty(rawHtml);
+    let formattedCss = formatCssPretty(rawCss);
+    const cssFileName = 'landing-page.css';
+    const pageTitle = page?.name || 'Landing Page';
+    const metaDesc = page?.metaDescription || '';
+
+    // 2. Setup Zip
     const zip = new JSZip();
-    const folder = zip.folder('landing-page');
-    if (!folder) {
+    const landingPageFolder = zip.folder('landing-page');
+    if (!landingPageFolder) {
       toast.error('Failed to create download package');
       return;
     }
+    const imagesFolder = landingPageFolder.folder('images');
 
-    folder.file('landing-page.html', finalHtml);
-    folder.file(cssFileName, formattedCss);
+    // 3. Extract Images
+    const imageUrls = new Set<string>();
+    
+    const getFullUrl = (url: string) => {
+      if (!url || url.startsWith('data:')) return null;
+      if (url.startsWith('http') || url.startsWith('//')) {
+        return url.startsWith('//') ? `https:${url}` : url;
+      }
+      // Handle relative URLs
+      try {
+        return new URL(url, window.location.origin).href;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    // Extract from HTML (src, data-src, poster attributes)
+    const imgRegex = /(?:src|data-src|poster)=["']([^"'>]+)["']/g;
+    let match;
+    while ((match = imgRegex.exec(formattedHtml)) !== null) {
+      const url = getFullUrl(match[1]);
+      if (url) imageUrls.add(url);
+    }
+
+    // Handle srcset
+    const srcsetRegex = /srcset=["']([^"'>]+)["']/g;
+    while ((match = srcsetRegex.exec(formattedHtml)) !== null) {
+      const srcset = match[1];
+      srcset.split(',').forEach(part => {
+        const urlPart = part.trim().split(/\s+/)[0];
+        const url = getFullUrl(urlPart);
+        if (url) imageUrls.add(url);
+      });
+    }
+
+    // Extract from style attributes and CSS
+    [formattedHtml, formattedCss].forEach(content => {
+        const cssUrlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
+        while ((match = cssUrlRegex.exec(content)) !== null) {
+            const url = getFullUrl(match[1]);
+            if (url) imageUrls.add(url);
+        }
+    });
+
+    // Fallback: Catch anything that looks like an image URL extension
+    [formattedHtml, formattedCss].forEach(content => {
+        const genericImageRegex = /(https?:\/\/[^"'\s)]+\.(?:png|jpg|jpeg|gif|webp|svg|avif)(?:\?[^"'\s)]+)?)[\s"')]?/gi;
+        while ((match = genericImageRegex.exec(content)) !== null) {
+            const url = getFullUrl(match[1]);
+            if (url) imageUrls.add(url);
+        }
+    });
+
+    // 4. Download and process images
+    let downloadedCount = 0;
+    let failedCount = 0;
+
+    toast.info(`Total content length: ${formattedHtml.length + formattedCss.length} bytes`);
+
+    if (imageUrls.size > 0) {
+      toast.info(`Found ${imageUrls.size} unique image URLs across HTML/CSS.`);
+    } else {
+      toast.warning('No image URLs detected in your code. Check if images have src attributes.');
+    }
+
+    const imageMap: Record<string, string> = {}; // [originalUrl]: newLocalPath
+    const downloadPromises = Array.from(imageUrls).map(async (origUrl) => {
+      try {
+        const fullUrl = origUrl.startsWith('//') ? `https:${origUrl}` : 
+                        (origUrl.startsWith('http') ? origUrl : new URL(origUrl, window.location.origin).href);
+        
+        let blob: Blob | null = null;
+        let finalStatus = 'ok';
+
+        // Try direct fetch first
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const response = await fetch(fullUrl, { mode: 'cors', signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
+            blob = await response.blob();
+          } else {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        } catch (directErr) {
+          console.warn(`Direct fetch failed for ${origUrl}, attempting proxy...`, directErr);
+          // Try via weserv.nl proxy as a fallback for CORS
+          try {
+            const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(fullUrl)}&default=${encodeURIComponent(fullUrl)}`;
+            const proxyResponse = await fetch(proxyUrl);
+            if (proxyResponse.ok) {
+              blob = await proxyResponse.blob();
+              finalStatus = 'proxied';
+            } else {
+              throw new Error(`Proxy failed: ${proxyResponse.status}`);
+            }
+          } catch (proxyErr) {
+            console.error(`Proxy also failed for ${origUrl}`, proxyErr);
+            throw proxyErr;
+          }
+        }
+
+        if (!blob) throw new Error('Blob is null');
+
+        // Generate a clean filename
+        const urlParts = fullUrl.split('/');
+        const rawFilename = urlParts[urlParts.length - 1].split('?')[0] || `img_${Math.random().toString(36).substr(2, 9)}`;
+        let cleanFilename = rawFilename.replace(/[^a-zA-Z0-9.-]/g, '_');
+        if (!cleanFilename.includes('.')) {
+          const type = blob.type.split('/')[1] || 'png';
+          cleanFilename += `.${type}`;
+        }
+        
+        // Ensure unique filename
+        let finalFilename = cleanFilename;
+        let counter = 1;
+        while (landingPageFolder.file(`images/${finalFilename}`)) {
+            const parts = cleanFilename.split('.');
+            const ext = parts.pop();
+            finalFilename = `${parts.join('.')}_${counter}.${ext}`;
+            counter++;
+        }
+        
+        // Add to zip
+        imagesFolder?.file(finalFilename, blob);
+        
+        // Map original URL to relative path
+        imageMap[origUrl] = `images/${finalFilename}`;
+        downloadedCount++;
+        toast.info(`Bundled: ${finalFilename}${finalStatus === 'proxied' ? ' (via proxy)' : ''}`);
+      } catch (err) {
+        console.error(`Failed to download asset: ${origUrl}`, err);
+        failedCount++;
+      }
+    });
+
+    await Promise.all(downloadPromises);
+
+    if (downloadedCount > 0) {
+      toast.success(`Done! Bundled ${downloadedCount} images into the ZIP.`);
+    }
+    if (failedCount > 0) {
+      toast.error(`Warning: ${failedCount} images could not be downloaded (CORS/Network error).`);
+    }
+
+    // 5. Update paths in HTML and CSS
+    Object.entries(imageMap).forEach(([oldUrl, newPath]) => {
+      const escapedUrl = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedUrl, 'g');
+      formattedHtml = formattedHtml.replace(regex, newPath);
+      formattedCss = formattedCss.replace(regex, newPath);
+    });
+
+    // 6. Build final HTML
+    const finalHtml = buildFullHtml(formattedHtml, formattedCss, pageTitle, metaDesc, cssFileName);
+
+    // 7. Generate ZIP
+    landingPageFolder.file('landing-page.html', finalHtml);
+    landingPageFolder.file(cssFileName, formattedCss);
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const zipUrl = URL.createObjectURL(zipBlob);
     const zipAnchor = document.createElement('a');
     zipAnchor.href = zipUrl;
-    zipAnchor.download = 'landing-page-files.zip';
+    zipAnchor.download = `${page?.slug || 'landing-page'}-package.zip`;
     zipAnchor.click();
     URL.revokeObjectURL(zipUrl);
 
-    toast.success('HTML + CSS folder downloaded!');
+    toast.success('Landing page package downloaded with images!');
   };
 
   // ─── Publish ───
@@ -1441,7 +1632,7 @@ const GrapesEditor = () => {
                         // Apply body style to wrapper accurately
                         const bodyStyle = doc.body.getAttribute('style');
                         if (bodyStyle) {
-                          editorRef.current.getWrapper().setStyle(bodyStyle);
+                          editorRef.current.getWrapper().setStyle(parseInlineStyle(bodyStyle));
                         }
                       } catch (e) {
                          console.error('Failed to parse template HTML:', e);
@@ -2029,6 +2220,20 @@ const HeartIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
 const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
+
+const parseInlineStyle = (styleStr: string): Record<string, string> => {
+  const styleObj: Record<string, string> = {};
+  if (!styleStr) return styleObj;
+  // Split by semicolon not inside parentheses (to handle data URLs/functions)
+  const props = styleStr.split(/;(?![^(]*\))/);
+  props.forEach(prop => {
+    const [key, ...valParts] = prop.split(':');
+    if (key && valParts.length > 0) {
+      styleObj[key.trim()] = valParts.join(':').trim();
+    }
+  });
+  return styleObj;
+};
 
 /* ── Build full HTML ── */
 const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') => `<!DOCTYPE html>
