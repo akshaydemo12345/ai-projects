@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface ThankYouConfigFormProps {
   pageId: string;
@@ -69,9 +70,15 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
     setSaving(true);
     try {
       await thankYouApi.updateConfig(pageId, config);
+      toast.success("Settings Saved!", {
+        description: "Your Thank You page configuration has been updated successfully.",
+      });
       onSave?.();
     } catch (error) {
       console.error('Error saving config:', error);
+      toast.error("Failed to save settings", {
+        description: "An error occurred while saving your configuration.",
+      });
     } finally {
       setSaving(false);
     }
