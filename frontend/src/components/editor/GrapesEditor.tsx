@@ -177,20 +177,35 @@ const GrapesEditor = () => {
 
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head')) {
-      console.log('📄 Full HTML detected. Using standard GrapesJS import...');
+      console.log('📄 Full HTML detected. Extracting body and styles...');
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
-        const styles = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
-        if (styles) dbStyles = (dbStyles || '') + '\n' + styles;
+        
+        // Extract Styles
+        const styleTags = Array.from(doc.querySelectorAll('style'));
+        const extractedStyles = styleTags.map(s => s.textContent).join('\n');
+        if (extractedStyles) {
+          dbStyles = (dbStyles || '') + '\n' + extractedStyles;
+        }
 
-        // Take body content
-        dbContent = doc.body.innerHTML;
+        // Take body content or fallback to full text if body is somehow empty
+        let bodyHtml = doc.body.innerHTML.trim();
+        if (!bodyHtml || bodyHtml.length < 20) {
+           console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
+           bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
+        }
+        dbContent = bodyHtml;
 
         // Apply body style to wrapper
         const bodyStyle = doc.body.getAttribute('style');
-        if (bodyStyle) editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
-      } catch (e) { }
+        if (bodyStyle) {
+          // @ts-ignore
+          editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
+        }
+      } catch (e) { 
+        console.error('❌ Failed to parse full HTML, using raw fallback:', e);
+      }
     }
 
     // 3. Set to Editor
@@ -261,6 +276,20 @@ const GrapesEditor = () => {
         editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
       }
 
+      // ─── Synchronous Branding & Logo Replacement ───
+      if (currentPage.logoUrl) {
+        dbContent = dbContent.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, currentPage.logoUrl);
+        dbContent = dbContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, currentPage.logoUrl);
+        dbContent = dbContent.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, currentPage.logoUrl);
+        
+        // Flexible attribute replacement
+        dbContent = dbContent.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
+          const combined = p1 + p2;
+          const updated = combined.replace(/src="[^"]*"/gi, '');
+          return `<img src="${currentPage.logoUrl}"${updated} id="page-logo">`;
+        });
+      }
+
       if (currentPage.primaryColor) {
         let pColor = currentPage.primaryColor.trim();
         if (pColor && pColor !== '#ffffff' && pColor !== '#000000') {
@@ -301,21 +330,6 @@ const GrapesEditor = () => {
       dbContent = configHTML + dbContent;
 
       editor.setComponents(dbContent);
-
-      setTimeout(() => {
-        if (currentPage.logoUrl) {
-          const wrapper = editor.DomComponents.getWrapper();
-          const logoComp = wrapper.find('#page-logo')[0];
-          if (logoComp) {
-            logoComp.set('attributes', { ...logoComp.get('attributes'), src: currentPage.logoUrl });
-          } else {
-            const logoByClass = wrapper.find('.logo-img')[0];
-            if (logoByClass) {
-              logoByClass.set('attributes', { ...logoByClass.get('attributes'), src: currentPage.logoUrl });
-            }
-          }
-        }
-      }, 100);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
       editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
@@ -1386,10 +1400,7 @@ const GrapesEditor = () => {
 
         <Sep />
 
-        {/* Code */}
-        <TBtn title="Code" onClick={openCode}><CodeIcon /><span style={{ fontSize: 11, marginLeft: 6, fontWeight: 600 }}>Code</span></TBtn>
 
-        <Sep />
 
         {/* Mode Switcher */}
         <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
@@ -1425,6 +1436,27 @@ const GrapesEditor = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button 
+            onClick={downloadHtml} 
+            style={{ ...outlineBtn, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399', padding: '7px 14px' }} 
+            title="Download HTML Package"
+          >
+            <DownloadIcon /> <span style={{ marginLeft: 6 }}>Download HTML</span>
+          </button>
+
+          <button 
+            onClick={() => {
+              if (editorRef.current) {
+                applyContentToEditor(editorRef.current);
+                toast.success('Canvas refreshed from database');
+              }
+            }} 
+            style={{ ...outlineBtn, background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: '#ffc107', padding: '7px 14px' }} 
+            title="Force refresh content from database"
+          >
+            <ZapIcon /> <span style={{ marginLeft: 6 }}>Sync Canvas</span>
+          </button>
+          
           <button onClick={handlePreview} style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} title="Live Preview"><EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span></button>
           <button onClick={handleSave} style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px' }} title="Save Changes"><SaveIcon /> <span style={{ marginLeft: 6 }}>Save</span></button>
         </div>
@@ -2208,6 +2240,9 @@ const TabletIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="n
 const MobileIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
 const UndoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" /></svg>;
 const RedoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 14 20 9 15 4" /><path d="M4 20v-7a4 4 0 0 1 4-4h12" /></svg>;
+const ZapIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+);
 const TrashIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>;
 const EyeIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
 const SaveIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
@@ -2220,6 +2255,7 @@ const HeartIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
 const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
+const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
 
 const parseInlineStyle = (styleStr: string): Record<string, string> => {
   const styleObj: Record<string, string> = {};

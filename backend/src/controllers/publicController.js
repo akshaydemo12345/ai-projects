@@ -37,14 +37,22 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles seo template domain status previewToken projectId views');
+    ).select('title slug content styles landingPageContent landingPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl');
 
     if (!page) return next(new AppError('Page not found', 404));
 
-    // ─── DOMAIN SECURITY: Verify match if proxied ───
+    // ─── BRANDING FALLBACK: Use project values if page values are missing ───
+    let primaryColor = page.primaryColor;
+    let secondaryColor = page.secondaryColor;
+    let logoUrl = page.logoUrl;
+
     if (page.projectId) {
       const project = await Project.findById(page.projectId);
       if (project) {
+        if (!primaryColor) primaryColor = project.primaryColor;
+        if (!secondaryColor) secondaryColor = project.secondaryColor;
+        if (!logoUrl) logoUrl = project.logoUrl;
+        
         // Increment project views as well
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
 
@@ -72,19 +80,28 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       }
     }
 
-    // For public published pages, we don't check status strictly here if we want same logic for preview
-    // But the requirements say "published URL should work", so we can check if it's published or if it's a preview request
-    
     res.status(200).json({
       status: 'success',
       data: page.content,
       styles: page.styles,
-      // We also include meta for the frontend to set title/description
+      landingPageContent: page.landingPageContent,
+      landingPageStyles: page.landingPageStyles,
+      primaryColor: primaryColor,
+      secondaryColor: secondaryColor,
+      accentColor: page.accentColor || secondaryColor,
+      logoUrl: logoUrl,
+      websiteUrl: page.websiteUrl,
+      thankYouUrl: page.thankYouUrl,
       meta: {
         title: page.title,
         seo: page.seo,
         status: page.status,
-        projectId: page.projectId
+        projectId: page.projectId,
+        primaryColor: primaryColor,
+        secondaryColor: secondaryColor,
+        logoUrl: logoUrl,
+        websiteUrl: page.websiteUrl,
+        thankYouUrl: page.thankYouUrl
       }
     });
   } catch (err) {
@@ -145,8 +162,29 @@ const renderFullHTML = (page, canonicalUrl = '') => {
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-  const aiCss  = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || '');
+  const aiCss  = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || page.landingPageStyles || '');
   const aiJs   = typeof content === 'object' ? (content?.fullJs || '') : '';
+
+  let finalHtml = aiHtml;
+
+  // ─── DYNAMIC REPLACEMENTS: Logo & Branding ──────────────────────────────
+  const finalLogo = page.logoUrl || '';
+  if (finalLogo) {
+    // 1. Replace known placeholders
+    finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
+    finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
+    finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, finalLogo);
+    
+    // 2. Attribute-agnostic logo replacement
+    finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
+      const combined = p1 + p2;
+      const updated = combined.replace(/src="[^"]*"/gi, '');
+      return `<img src="${finalLogo}"${updated} id="page-logo">`;
+    });
+  }
+  
+  // Clean placeholders
+  finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
 
   const leadScript = buildLeadCaptureScript(page);
   const mainHeaderScript = normalizeScript(page.mainHeader);
