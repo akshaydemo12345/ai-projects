@@ -146,18 +146,34 @@ exports.generateContent = async (req, res, next) => {
 
     // F. Update Page with AI content and set status back to 'draft'
     if (input.pageId) {
-      const pageUpdate = {
-        content: finalContent,
-        seo: finalContent.seo,
-        status: 'draft',
-        updatedAt: Date.now(),
-        ...(input.figmaUrl && { designUrl: input.figmaUrl })
-      };
-      
-      await Page.findOneAndUpdate(
-        { _id: input.pageId, userId: req.user._id },
-        pageUpdate
-      );
+        const page = await Page.findOne({ _id: input.pageId, userId: req.user._id });
+        if (page) {
+          page.content = finalContent;
+          page.seo = finalContent.seo;
+          
+          const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+          
+          page.aiUsage = {
+            promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
+            completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
+            totalTokens: (currentUsage.totalTokens || 0) + aiContent.aiUsage.totalTokens,
+            cost: (currentUsage.cost || 0) + aiContent.aiUsage.cost,
+            model: aiContent.aiUsage.model,
+            currency: 'USD',
+            lastUsageAt: Date.now()
+          };
+          
+          page.aiUsageHistory.push({
+            action: input.figmaUrl ? 'Figma to Page' : 'Regeneration',
+            ...aiContent.aiUsage,
+            createdAt: Date.now()
+          });
+          page.status = 'draft';
+          page.updatedAt = Date.now();
+          if (input.figmaUrl) page.designUrl = input.figmaUrl;
+          
+          await page.save();
+        }
     }
         
         console.log(`AI Page Generation successful for user ${req.user._id}`);
@@ -234,18 +250,36 @@ exports.analyzeWebsite = async (req, res, next) => {
     user.credits = Math.max(0, user.credits - 1);
     await user.save({ validateBeforeSave: false });
 
-    // Optionally update page
-    let updatedPage = null;
     if (pageId) {
-      updatedPage = await Page.findOneAndUpdate(
-        { _id: pageId, userId: req.user._id },
-        { 
-          content: aiContent,
-          seo: aiContent.seo || {},
-          updatedAt: Date.now() 
-        },
-        { new: true, runValidators: false }
-      );
+      const page = await Page.findOne({ _id: pageId, userId: req.user._id });
+      if (page) {
+        page.content = aiContent;
+        page.seo = aiContent.seo || {};
+    
+        // 8. Update Page with AI Results and History
+        if (aiContent.aiUsage) {
+          const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+          
+          page.aiUsage = {
+            promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
+            completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
+            totalTokens: (currentUsage.totalTokens || 0) + aiContent.aiUsage.totalTokens,
+            cost: (currentUsage.cost || 0) + aiContent.aiUsage.cost,
+            model: aiContent.aiUsage.model,
+            currency: 'USD',
+            lastUsageAt: Date.now()
+          };
+          
+          page.aiUsageHistory.push({
+            action: 'Website Analysis',
+            ...aiContent.aiUsage,
+            createdAt: Date.now()
+          });
+        }
+        page.updatedAt = Date.now();
+        
+        updatedPage = await page.save();
+      }
     }
 
     return res.status(200).json({
@@ -254,6 +288,7 @@ exports.analyzeWebsite = async (req, res, next) => {
         content: aiContent,
         creditsRemaining: user.credits,
         ...(updatedPage && { page: updatedPage }),
+        aiUsage: aiContent.aiUsage
       },
     });
   } catch (err) {
@@ -359,7 +394,11 @@ exports.improveSection = async (req, res, next) => {
 
     return res.status(200).json({
       status: 'success',
-      data: { improvedContent: improved, creditsRemaining: user.credits }
+      data: { 
+        improvedContent: improved.suggestion || improved, 
+        creditsRemaining: user.credits,
+        aiUsage: improved.aiUsage
+      }
     });
   } catch (err) {
     next(err);
@@ -462,7 +501,10 @@ exports.getStrategicPlan = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { plan }
+      data: { 
+        plan: result.plan,
+        aiUsage: result.aiUsage
+      }
     });
   } catch (err) {
     next(err);
@@ -482,7 +524,10 @@ exports.optimizePage = async (req, res, next) => {
 
     return res.status(200).json({
       status: 'success',
-      data: optimizedPlan
+      data: {
+        ...optimizedPlan.plan,
+        aiUsage: optimizedPlan.aiUsage
+      }
     });
   } catch (err) {
     next(err);

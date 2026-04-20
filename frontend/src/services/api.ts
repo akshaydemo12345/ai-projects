@@ -79,6 +79,24 @@ export interface LandingPage {
   templateId?: string;
   figmaImage?: string;
   views: number;
+  aiUsage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    cost: number;
+    model: string;
+    currency: string;
+    lastUsageAt?: string;
+  };
+  aiUsageHistory?: Array<{
+    action: string;
+    model: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    cost: number;
+    createdAt: string;
+  }>;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
