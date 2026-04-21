@@ -2,13 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
-  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap
+  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
-import { saasHeroHtml } from "../templates/saasHero";
+import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
+import { agencyHtml, agencyStyles } from "../templates/agency";
+import { leadGenHtml, leadGenStyles } from "../templates/leadGen";
+import { realEstateHtml, realEstateStyles } from "../templates/realEstate";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -45,31 +48,32 @@ const LANDING_TEMPLATES = [
   },
   {
     id: "lead-gen",
-    name: "Lead Gen",
-    tag: "PPC",
+    name: "Lead Gen (Education)",
+    tag: "Education",
     img: "/templates/Desktop_Thumbnail2.png",
-    gradient: "linear-gradient(135deg, #ea580c 0%, #f43f5e 100%)",
+    gradient: "linear-gradient(135deg, #1b2e1b 0%, #74a12e 100%)",
     prompt:
-      "Create a professional, mobile-first lead generation landing page with a headline, trust badges, a short lead capture form above the fold, social proof, and FAQ section.",
+      "Create a professional education and academic lead generation landing page with a primary lead capture form, feature grids for courses, video section, and student testimonials.",
   },
   {
     id: "agency",
-    name: "Agency",
-    tag: "Agency",
+    name: "Agency (Hotel)",
+    tag: "Luxury Hotel",
     img: "/templates/Desktop_Thumbnail3.png",
-    gradient: "linear-gradient(135deg, #0891b2 0%, #2563eb 100%)",
+    gradient: "linear-gradient(135deg, #004d56 0%, #00bcd4 100%)",
     prompt:
-      "Create a premium, responsive agency landing page with a cinematic hero, portfolio grid, client logos, team section, services offered, and contact form.",
+      "Create a luxurious hotel and travel agency landing page with a booking bar, room showcases, wellness services tabs, special offers, and guest reviews. Use teal and white aesthetics.",
   },
   {
     id: "real-estate",
-    name: "Real Estate",
-    tag: "Property",
+    name: "Real Estate (Business)",
+    tag: "Business",
     img: "/templates/Desktop_Thumbnail4.png",
-    gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+    gradient: "linear-gradient(135deg, #28a745 0%, #1e7e34 100%)",
     prompt:
-      "Create a modern, responsive real estate landing page with a property hero image, key stats, features list, photo gallery placeholder, agent contact form, and location section.",
+      "Create a professional business and financial consulting landing page with a hero slider, service cards, analytics charts, team showcase, and callback request form. Use green and white branding.",
   },
+
 ];
 
 
@@ -110,6 +114,7 @@ const CreatePagePage = () => {
   const [figmaFile, setFigmaFile] = useState<File | null>(null);
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -140,6 +145,8 @@ const CreatePagePage = () => {
   const handleTemplateSelect = (tpl: typeof LANDING_TEMPLATES[0]) => {
     setSelectedTemplate(tpl.id);
     setAiPrompt(tpl.prompt);
+    setActiveMethod("template"); // Auto switch to template tab for feedback
+    toast.info(`Selected Template: ${tpl.name}`);
   };
 
   const createPageMutation = useMutation({
@@ -162,25 +169,25 @@ const CreatePagePage = () => {
     if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
     setIsGeneratingPrompt(true);
     try {
-      const res = await aiApi.generateDescription({ 
-        pageName, 
-        industry: project?.category || "Service", 
+      const res = await aiApi.generateDescription({
+        pageName,
+        industry: project?.category || "Service",
         projectDesc: project?.description,
         currentPrompt: aiPrompt.trim() || undefined
       });
-      
+
       // If expanding/improving, show a slightly different success message
       if (aiPrompt.trim()) {
         toast.success("Prompt expanded and improved!");
       } else {
         toast.success("Magic prompt generated!");
       }
-      
+
       setAiPrompt(res.data.suggestion);
-    } catch (err: any) { 
-      toast.error(err.message || "Failed"); 
-    } finally { 
-      setIsGeneratingPrompt(false); 
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    } finally {
+      setIsGeneratingPrompt(false);
     }
   };
 
@@ -191,38 +198,29 @@ const CreatePagePage = () => {
     if (!project) return;
 
     let basePayload: Partial<LandingPage> = {};
-    if (activeMethod === "template" && selectedTemplate === "saas-hero") {
-      let enrichedContent = saasHeroHtml;
-      if (project) {
+    if (activeMethod === "template") {
+      let html = "";
+      let css = "";
+      let tName = "Custom Page";
+
+      // Match template data
+      if (selectedTemplate === "saas-hero") { html = saasHeroHtml; css = saasHeroStyles; tName = "SaaS Hero"; }
+      else if (selectedTemplate === "agency") { html = agencyHtml; css = agencyStyles; tName = "Agency"; }
+      else if (selectedTemplate === "lead-gen") { html = leadGenHtml; css = leadGenStyles; tName = "Lead Gen"; }
+      else if (selectedTemplate === "real-estate") { html = realEstateHtml; css = realEstateStyles; tName = "Real Estate"; }
+
+      let enrichedContent = html;
+      if (project && html) {
         // Smart replacements to make template dynamic
         enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
-        enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, project.category + " solutions for your business");
-        enrichedContent = enrichedContent.replace(/Your locally owned Renewal by Andersen/g, `Your locally owned ${project.name}`);
-        // Remove specific brand mentions if any
-        enrichedContent = enrichedContent.replace(/Fibrex®/g, "Premium materials");
+        enrichedContent = enrichedContent.replace(/YOUR_BUSINESS_NAME/g, project.name);
+        enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, (project.category || "Service") + " solutions for your business");
 
-        // Inject logo URL directly into template content
+        // Inject logo
         const finalLogo = logoUrl || project.logoUrl;
         if (finalLogo) {
           enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
-        }
-
-        // Inject real images from scrapedData if available
-        if (project.scrapedData?.images?.length > 0) {
-          const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
-          const generalImages = project.scrapedData.images.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
-
-          // Replace hero background (Unsplash link)
-          if (bannerImages.length > 0) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
-          } else if (generalImages.length > 0) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
-          }
-
-          // Replace other content images
-          if (generalImages.length > 1) {
-            enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
-          }
+          enrichedContent = enrichedContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
         }
       }
 
@@ -231,8 +229,11 @@ const CreatePagePage = () => {
         slug: pageSlug.trim() || autoSlug(pageName),
         generationMethod: "template" as const,
         content: enrichedContent,
-        templateId: selectedTemplate,
-        template: "SaaS Hero"
+        styles: css,
+        landingPageContent: enrichedContent,
+        landingPageStyles: css,
+        templateId: selectedTemplate || undefined,
+        template: tName
       };
     } else {
       basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
@@ -249,7 +250,8 @@ const CreatePagePage = () => {
     });
   };
 
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
+  // Note: We don't block the whole page with isLoading anymore
+  // if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
   if (createPageMutation.isPending) return <ModernLoader />;
 
   return (
@@ -264,7 +266,11 @@ const CreatePagePage = () => {
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <span className="text-gray-300">/</span>
-        {project && <span className="text-sm text-gray-400 truncate max-w-[160px]">{project.name}</span>}
+        {isLoading ? (
+          <div className="h-4 w-24 bg-gray-100 animate-pulse rounded" />
+        ) : project && (
+          <span className="text-sm text-gray-400 truncate max-w-[160px]">{project.name}</span>
+        )}
         <span className="text-gray-300">/</span>
         <span className="text-sm font-semibold text-gray-800">Create New Page</span>
       </div>
@@ -283,9 +289,18 @@ const CreatePagePage = () => {
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-black text-gray-900">Create New Page</h1>
-                <p className="text-sm text-gray-500 mt-0.5">Fill in the details, pick a method, generate.</p>
+              <div className="flex-1">
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-6 w-40 bg-gray-100 animate-pulse rounded" />
+                    <div className="h-4 w-64 bg-gray-50 animate-pulse rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-xl font-black text-gray-900">Create New Page</h1>
+                    <p className="text-sm text-gray-500 mt-0.5">Fill in the details, pick a method, generate.</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -520,96 +535,170 @@ const CreatePagePage = () => {
         {activeMethod === 'template' && (
           <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100 animate-in fade-in slide-in-from-right-5 duration-300">
 
-          {/* Right Header */}
-          <div className="px-7 pt-10 pb-5 border-b border-gray-100">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Landing Page Templates</p>
-            <p className="text-sm text-gray-500 mt-0.5">Click a template to use it as your starting point</p>
-          </div>
+            {/* Right Header */}
+            <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Landing Page Templates</p>
+              <p className="text-sm text-gray-500 mt-0.5">Click a template to use it as your starting point</p>
+            </div>
 
-          {/* Template Grid */}
-          <div className="flex-1 px-6 py-6">
-            <div className="grid grid-cols-2 gap-4">
-              {LANDING_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => {
-                    handleTemplateSelect(tpl);
-                    if (activeMethod === "template") return;
-                    setActiveMethod("template");
-                  }}
-                  className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
-                    ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
-                    : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
-                    }`}
-                >
-                  {/* Image / Gradient placeholder */}
-                  <div
-                    className="w-full aspect-[4/3] relative overflow-hidden"
-                    style={{ background: tpl.gradient }}
+            {/* Template Grid */}
+            <div className="flex-1 px-6 py-6">
+              <div className="grid grid-cols-2 gap-4">
+                {LANDING_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => {
+                      handleTemplateSelect(tpl);
+                      if (activeMethod === "template") return;
+                      setActiveMethod("template");
+                    }}
+                    className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
+                      ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
+                      : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
+                      }`}
                   >
-                    {tpl.img ? (
-                      <img
-                        src={tpl.img}
-                        alt={tpl.name}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    ) : (
-                      /* Placeholder mockup shapes */
-                      <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
-                        <div className="w-full h-4 bg-white rounded-md" />
-                        <div className="w-3/4 h-3 bg-white rounded-md" />
-                        <div className="w-1/2 h-3 bg-white rounded-md" />
-                        <div className="flex gap-2 mt-2">
-                          <div className="w-16 h-7 bg-white rounded-lg" />
-                          <div className="w-14 h-7 bg-white/50 rounded-lg" />
+                    {/* Image / Gradient placeholder */}
+                    <div
+                      className="w-full aspect-[4/3] relative overflow-hidden"
+                      style={{ background: tpl.gradient }}
+                    >
+                      {tpl.img ? (
+                        <img
+                          src={tpl.img}
+                          alt={tpl.name}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        /* Placeholder mockup shapes */
+                        <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
+                          <div className="w-full h-4 bg-white rounded-md" />
+                          <div className="w-3/4 h-3 bg-white rounded-md" />
+                          <div className="w-1/2 h-3 bg-white rounded-md" />
+                          <div className="flex gap-2 mt-2">
+                            <div className="w-16 h-7 bg-white rounded-lg" />
+                            <div className="w-14 h-7 bg-white/50 rounded-lg" />
+                          </div>
+                          <div className="flex-1 grid grid-cols-3 gap-2 mt-2">
+                            <div className="bg-white/40 rounded-xl" />
+                            <div className="bg-white/40 rounded-xl" />
+                            <div className="bg-white/40 rounded-xl" />
+                          </div>
+                          <div className="w-full h-8 bg-white/30 rounded-lg mt-1" />
                         </div>
-                        <div className="flex-1 grid grid-cols-3 gap-2 mt-2">
-                          <div className="bg-white/40 rounded-xl" />
-                          <div className="bg-white/40 rounded-xl" />
-                          <div className="bg-white/40 rounded-xl" />
-                        </div>
-                        <div className="w-full h-8 bg-white/30 rounded-lg mt-1" />
-                      </div>
-                    )}
+                      )}
 
-                    {/* Selected overlay */}
-                    {selectedTemplate === tpl.id && (
-                      <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
-                        <div className="bg-white rounded-full p-1.5 shadow-xl">
-                          <CheckCircle2 className="h-5 w-5 text-violet-600" />
+                      {/* Selected overlay */}
+                      {selectedTemplate === tpl.id && (
+                        <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
+                          <div className="bg-white rounded-full p-1.5 shadow-xl">
+                            <CheckCircle2 className="h-5 w-5 text-violet-600" />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Tag badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                      {tpl.tag}
+                      <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        {tpl.tag}
+                      </div>
+
+                      {/* View Button Overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewTemplate(tpl);
+                          }}
+                          className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-white hover:text-black transition-all flex items-center gap-1.5"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View Template
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Name only — minimal */}
-                  <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
-                    {selectedTemplate === tpl.id
-                      ? <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">Selected</span>
-                      : <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />}
-                  </div>
-                </button>
-              ))}
+                    {/* Name only — minimal */}
+                    <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
+                      {selectedTemplate === tpl.id
+                        ? <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">Selected</span>
+                        : <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />}
+                    </div>
+                  </button>
+                ))}
 
-              {/* "More Coming Soon" card */}
-              <div className="rounded-2xl border-2 border-dashed border-gray-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4">
-                <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-gray-400" />
+                {/* "More Coming Soon" card */}
+                <div className="rounded-2xl border-2 border-dashed border-gray-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4">
+                  <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <p className="text-xs font-semibold text-gray-400">More templates</p>
+                  <p className="text-[10px] text-gray-300">Coming soon</p>
                 </div>
-                <p className="text-xs font-semibold text-gray-400">More templates</p>
-                <p className="text-[10px] text-gray-300">Coming soon</p>
               </div>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* ── Template Preview Modal ── */}
+      {previewTemplate && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
+            <div>
+              <h3 className="text-white font-bold text-lg">{previewTemplate.name}</h3>
+              <p className="text-white/50 text-xs uppercase tracking-widest font-black">{previewTemplate.tag} Template</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  handleTemplateSelect(previewTemplate);
+                  setPreviewTemplate(null);
+                }}
+                className="bg-white text-black px-5 py-2 rounded-full text-xs font-bold hover:bg-violet-100 transition-all flex items-center gap-2"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Use Template
+              </button>
+              <button
+                onClick={() => setPreviewTemplate(null)}
+                className="p-2 h-10 w-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Content */}
+          <div className="flex-1 w-full bg-white relative">
+            <iframe
+              srcDoc={`
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <title>Preview</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+                    <style>
+                      ${previewTemplate.id === 'saas-hero' ? saasHeroStyles :
+                  previewTemplate.id === 'agency' ? agencyStyles :
+                    previewTemplate.id === 'lead-gen' ? leadGenStyles :
+                      previewTemplate.id === 'real-estate' ? realEstateStyles : ''}
+                    </style>
+                  </head>
+                  <body>
+                    ${previewTemplate.id === 'saas-hero' ? saasHeroHtml :
+                  previewTemplate.id === 'agency' ? agencyHtml :
+                    previewTemplate.id === 'lead-gen' ? leadGenHtml :
+                      previewTemplate.id === 'real-estate' ? realEstateHtml : ''}
+                  </body>
+                </html>
+              `}
+              className="absolute inset-0 w-full h-full border-none"
+            />
+          </div>
         </div>
       )}
-      </div>
     </div>
   );
 };

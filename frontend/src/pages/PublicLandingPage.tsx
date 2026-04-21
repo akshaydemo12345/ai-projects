@@ -27,17 +27,35 @@ const PublicLandingPage = () => {
 
       // Update browser tab title
       if (meta?.title) {
-        document.title = meta.title;
+        document.title = `${meta.title} | Preview`;
       }
 
+      // Sync meta tags for the main document (to be visible in Inspect)
+      const targetDesc = pageData.metaDescription || pageData.seo?.description || 'High-converting AI landing page.';
+      const metaDescriptions = document.querySelectorAll('meta[name="description"]');
+      if (metaDescriptions.length > 0) {
+        metaDescriptions.forEach(tag => tag.setAttribute('content', targetDesc));
+      } else {
+        const newTag = document.createElement('meta');
+        newTag.setAttribute('name', 'description');
+        newTag.setAttribute('content', targetDesc);
+        document.head.appendChild(newTag);
+      }
+
+      // Update OG/Twitter tags if they exist for better SEO preview feel
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', meta?.title || 'Preview');
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute('content', targetDesc);
+
       const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-      const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.styles || '');
+      const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (pageData.landingPageStyles || pageData.styles || '');
       const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
       const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const PAGE_ID = meta?.projectId || '';
       const PAGE_SLUG = slug || '';
-      const BRAND_COLOR = pageData.primaryColor || '#7c3aed';
+      const BRAND_COLOR = pageData.primaryColor || meta?.primaryColor || '#7c3aed';
       const REDIRECT_URL = pageData.websiteUrl || '#';
       const THANK_YOU_URL = pageData.thankYouUrl || '';
       const previewPrefix = window.location.pathname.startsWith('/preview/') ? '/preview/' : '/';
@@ -134,7 +152,37 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
-      const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-[#0f172a]') || aiHtml.includes('bg-slate-950'));
+      // ─── DYNAMIC REPLACEMENTS: Logo & Context ──────────────────────────────
+      const finalLogo = pageData.logoUrl || meta?.logoUrl || '';
+      console.log("🎨 Applying Branding. Logo:", finalLogo, "Primary:", BRAND_COLOR);
+      
+      if (finalLogo) {
+        // 1. Replace known placeholders
+        finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
+        finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
+        finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, finalLogo);
+        
+        // 2. Smart attribute-agnostic logo replacement
+        finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
+          const combined = p1 + p2;
+          const updated = combined.replace(/src="[^"]*"/gi, '');
+          return `<img src="${finalLogo}"${updated} id="page-logo">`;
+        });
+      }
+
+      // ─── REMOVE PICSUM PLACEHOLDERS (if they leak from AI/defaults) ─────────
+      finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
+
+      // Better Dark Mode detection 
+      const isDark = aiCss.toLowerCase().includes('background-color: #0') || 
+                     aiCss.toLowerCase().includes('background: #0') || 
+                     aiCss.toLowerCase().includes('background-color: black') ||
+                     aiCss.toLowerCase().includes('background: black') ||
+                     aiHtml.toLowerCase().includes('bg-slate-900') ||
+                     aiHtml.toLowerCase().includes('bg-[#0') ||
+                     aiHtml.toLowerCase().includes('saas-hero-container') ||
+                     aiHtml.toLowerCase().includes('agency-container');
+
       const brandingStyles = `
         <style id="branding-vars">
           :root {
@@ -144,10 +192,19 @@ const PublicLandingPage = () => {
             --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${pageData.secondaryColor || '#6366f1'});
           }
           body { 
-            background-color: ${detectDark ? '#0f172a' : '#ffffff'};
-            color: ${detectDark ? '#f8fafc' : '#0f172a'};
+            margin: 0;
+            padding: 0;
             overflow-x: hidden;
+            min-height: 100vh;
+            background-color: ${isDark ? '#0a0a0f' : '#ffffff'};
+            color: ${isDark ? '#f8fafc' : '#0f172a'};
           }
+          
+          /* Forced project-based background matching if user didn't specify */
+          .saas-hero-container, .agency-container, .lead-gen-container, .business-container {
+             background-color: ${isDark ? '#0a0a0f' : '#ffffff'} !important;
+          }
+          
           /* Guarantee form input visibility overrides */
           input, textarea, select {
             color: #0f172a !important;

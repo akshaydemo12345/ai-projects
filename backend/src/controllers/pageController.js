@@ -320,11 +320,13 @@ exports.createPage = async (req, res, next) => {
 
     // 7. AI Content Generation (Allows templates to be filled by AI if a prompt exists)
     let aiResponse = { sections: [], seo: {} };
-    const isTemplateWithPrompt = page.generationMethod === 'template' && (camelAiPrompt || ai_prompt);
+    const promptToUse = camelAiPrompt || ai_prompt || '';
+    const isTemplateWithPrompt = page.generationMethod === 'template' && promptToUse.trim().length > 0;
+    const isAIRequested = page.generationMethod === 'ai' || isTemplateWithPrompt;
     
-    if (page.generationMethod === 'ai' || isTemplateWithPrompt) {
+    if (isAIRequested) {
       try {
-        logger.info(`Starting AI generation for ${isTemplateWithPrompt ? 'template enrichment' : 'full page'} ${page._id}`);
+        logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
       
       // If it's a template, we pass a hint to the AI service
       const aiInput = {
@@ -335,7 +337,7 @@ exports.createPage = async (req, res, next) => {
         businessDescription: project.description,
         ctaText: 'Get Started',
         tone: 'Professional',
-        aiPrompt: '',
+        aiPrompt: promptToUse,
         logoUrl: project.logoUrl || '',
         primaryColor: page.primaryColor || project.primaryColor,
         secondaryColor: page.secondaryColor || project.secondaryColor,
@@ -346,6 +348,7 @@ exports.createPage = async (req, res, next) => {
         pageId: page._id,
         // Pass the template HTML to the AI if it's a template enrichment task
         templateHtml: isTemplateWithPrompt ? page.content : null,
+        isTemplate: page.generationMethod === 'template',
         // Pass figma image if available
         figmaImage: figmaImage || null,
         // Pass scraped data from project (contains images/videos from website)
@@ -384,7 +387,7 @@ exports.createPage = async (req, res, next) => {
     const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
 
     // 8. Update Page with AI Results
-    if (aiResponse.fullHtml) {
+    if (aiResponse.fullHtml && aiResponse.fullHtml.trim().length > 100) {
       let processedHtml = aiResponse.fullHtml;
       
       // Add SEO meta tags if needed
@@ -392,19 +395,14 @@ exports.createPage = async (req, res, next) => {
         const robots = [page.noIndex ? 'noindex' : '', page.noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
         const seoMeta = `<meta name="robots" content="${robots}">`;
         
-        // Insert after <head> or before </head>
         if (processedHtml.includes('<head>')) {
           processedHtml = processedHtml.replace('<head>', `<head>${seoMeta}`);
         } else if (processedHtml.includes('</head>')) {
           processedHtml = processedHtml.replace('</head>', `${seoMeta}</head>`);
-        } else {
-          // Fallback: add at the beginning
-          processedHtml = `<head>${seoMeta}</head>` + processedHtml;
         }
       }
       
       page.content = processedHtml;
-      // Prepend branding variables to styles for editor consistency
       const brandingStyles = `
 :root {
   --primary: ${page.primaryColor};
@@ -413,10 +411,24 @@ exports.createPage = async (req, res, next) => {
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
-      page.styles = brandingStyles + (aiResponse.fullCss || '');
+      // If it's a template, preserve initial styles and append AI styles if any
+      if (page.generationMethod === 'template') {
+        page.styles = (initialStyles || '') + '\n' + brandingStyles + (aiResponse.fullCss || '');
+      } else {
+        page.styles = brandingStyles + (aiResponse.fullCss || '');
+      }
     } else {
+      // AI generation essentially failed or skipped, keep initial content/styles
+      console.log('⚠️ AI response too short or empty, or generation skipped. Preserving initial content');
       page.content = initialContent || page.content;
-      page.styles = initialStyles || page.styles || '';
+      page.styles = (initialStyles || page.styles || '') + `
+:root {
+  --primary: ${page.primaryColor};
+  --secondary: ${page.secondaryColor};
+  --accent: ${page.secondaryColor};
+  --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
+}
+`;
     }
     
     page.seo = aiResponse.seo || {};
