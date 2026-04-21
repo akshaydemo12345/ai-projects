@@ -149,19 +149,28 @@ const CreatePagePage = () => {
     toast.info(`Selected Template: ${tpl.name}`);
   };
 
+  const [showLoader, setShowLoader] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [createdPage, setCreatedPage] = useState<any>(null);
+
   const createPageMutation = useMutation({
-    mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
+    mutationFn: async (page: Partial<LandingPage>) => {
+      // Add a 60 second timeout for safety
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 60000)
+      );
+      return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
+    },
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
-      toast.success("Page generated successfully!", {
-        description: "Your AI-crafted landing page is ready for editing.",
-      });
-      // Small delay for smooth transition
-      setTimeout(() => navigate(`/editor/${id}/${newPage._id}`), 500);
+      setCreatedPage(newPage);
+      setIsComplete(true);
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
       toast.error(err.message || "Failed to create page");
+      setShowLoader(false);
+      setIsComplete(false);
     },
   });
 
@@ -175,19 +184,22 @@ const CreatePagePage = () => {
         projectDesc: project?.description,
         currentPrompt: aiPrompt.trim() || undefined
       });
-
-      // If expanding/improving, show a slightly different success message
+      
       if (aiPrompt.trim()) {
         toast.success("Prompt expanded and improved!");
       } else {
         toast.success("Magic prompt generated!");
       }
+      
+      const suggestionText = typeof res.data.suggestion === 'object' 
+        ? res.data.suggestion.suggestion 
+        : res.data.suggestion;
 
-      setAiPrompt(res.data.suggestion);
-    } catch (err: any) {
-      toast.error(err.message || "Failed");
-    } finally {
-      setIsGeneratingPrompt(false);
+      setAiPrompt(suggestionText);
+    } catch (err: any) { 
+      toast.error(err.message || "Failed"); 
+    } finally { 
+      setIsGeneratingPrompt(false); 
     }
   };
 
@@ -197,41 +209,61 @@ const CreatePagePage = () => {
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
 
+    setShowLoader(true);
+    setIsComplete(false);
+
     let basePayload: Partial<LandingPage> = {};
-    if (activeMethod === "template") {
-      let html = "";
-      let css = "";
-      let tName = "Custom Page";
+    if (activeMethod === "template" && selectedTemplate) {
+      let enrichedContent = "";
+      let enrichedStyles = "";
+      const tName = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Template";
 
-      // Match template data
-      if (selectedTemplate === "saas-hero") { html = saasHeroHtml; css = saasHeroStyles; tName = "SaaS Hero"; }
-      else if (selectedTemplate === "agency") { html = agencyHtml; css = agencyStyles; tName = "Agency"; }
-      else if (selectedTemplate === "lead-gen") { html = leadGenHtml; css = leadGenStyles; tName = "Lead Gen"; }
-      else if (selectedTemplate === "real-estate") { html = realEstateHtml; css = realEstateStyles; tName = "Real Estate"; }
-
-      let enrichedContent = html;
-      if (project && html) {
-        // Smart replacements to make template dynamic
-        enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
-        enrichedContent = enrichedContent.replace(/YOUR_BUSINESS_NAME/g, project.name);
-        enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, (project.category || "Service") + " solutions for your business");
-
-        // Inject logo
-        const finalLogo = logoUrl || project.logoUrl;
-        if (finalLogo) {
-          enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
-          enrichedContent = enrichedContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
-        }
+      switch (selectedTemplate) {
+        case "saas-hero":
+          enrichedContent = saasHeroHtml;
+          enrichedStyles = saasHeroStyles;
+          break;
+        case "agency":
+          enrichedContent = agencyHtml;
+          enrichedStyles = agencyStyles;
+          break;
+        case "lead-gen":
+          enrichedContent = leadGenHtml;
+          enrichedStyles = leadGenStyles;
+          break;
+        case "real-estate":
+          enrichedContent = realEstateHtml;
+          enrichedStyles = realEstateStyles;
+          break;
+        default:
+          enrichedContent = saasHeroHtml;
+          enrichedStyles = saasHeroStyles;
       }
 
+      if (project) {
+        enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
+        enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, project.category + " solutions for your business");
+        enrichedContent = enrichedContent.replace(/Your locally owned Renewal by Andersen/g, `Your locally owned ${project.name}`);
+        enrichedContent = enrichedContent.replace(/Fibrex®/g, "Premium materials");
+        const finalLogo = logoUrl || project.logoUrl;
+        if (finalLogo) enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
+        if (project.scrapedData?.images?.length > 0) {
+          const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
+          const generalImages = project.scrapedData.images.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
+          if (bannerImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
+          else if (generalImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
+          if (generalImages.length > 1) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
+        }
+      }
+      
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         generationMethod: "template" as const,
         content: enrichedContent,
-        styles: css,
+        styles: enrichedStyles,
         landingPageContent: enrichedContent,
-        landingPageStyles: css,
+        landingPageStyles: enrichedStyles,
         templateId: selectedTemplate || undefined,
         template: tName
       };
@@ -253,6 +285,15 @@ const CreatePagePage = () => {
   // Note: We don't block the whole page with isLoading anymore
   // if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
   if (createPageMutation.isPending) return <ModernLoader />;
+  const handleLoaderFinished = () => {
+    if (createdPage) {
+      toast.success("Page generated successfully!");
+      navigate(`/editor/${id}/${createdPage._id}`);
+    }
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
+  if (showLoader) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -427,20 +468,23 @@ const CreatePagePage = () => {
                 />
                 <div className="flex flex-wrap gap-2">
                   {dynamicSuggestions.length > 0 ? (
-                    dynamicSuggestions.slice(0, 6).map((suggestion: string) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => {
-                          setAiPrompt(suggestion);
-                          // Auto-run Magic Write after selecting suggestion
-                          setTimeout(() => handleGenerateMagicPrompt(), 100);
-                        }}
-                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
-                        title={suggestion}
-                      >
-                        {suggestion}
-                      </button>
-                    ))
+                    dynamicSuggestions.slice(0, 6).map((item: any) => {
+                      const suggestion = typeof item === 'string' ? item : item.suggestion;
+                      return (
+                        <button
+                          key={suggestion}
+                          onClick={() => {
+                            setAiPrompt(suggestion);
+                            // Auto-run Magic Write after selecting suggestion
+                            setTimeout(() => handleGenerateMagicPrompt(), 100);
+                          }}
+                          className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
+                          title={suggestion}
+                        >
+                          {suggestion}
+                        </button>
+                      );
+                    })
                   ) : (
                     // Fallback while loading or if no suggestions
                     <div className="flex gap-2">

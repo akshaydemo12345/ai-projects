@@ -255,6 +255,27 @@ Build a pixel-perfect, premium landing page using the user's custom prompt's str
 /**
  * Call Claude only
  */
+/**
+ * Calculate cost based on model and tokens
+ */
+const calculateCost = (model, inputTokens, outputTokens) => {
+  // Approximate pricing for Claude models
+  const pricing = {
+    'claude-3-5-sonnet': { input: 0.000003, output: 0.000015 },
+    'claude-3-haiku': { input: 0.00000025, output: 0.00000125 },
+    'claude-3-opus': { input: 0.000015, output: 0.000075 },
+    'default': { input: 0.000003, output: 0.000015 } // Default to Sonnet pricing
+  };
+
+  const modelKey = Object.keys(pricing).find(key => model.toLowerCase().includes(key)) || 'default';
+  const { input, output } = pricing[modelKey];
+
+  return (inputTokens * input) + (outputTokens * output);
+};
+
+/**
+ * Call Claude only
+ */
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
@@ -292,9 +313,22 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       });
 
       const rawText = response.content[0].text;
-      logger.info(`[AI] Raw response received. Length: ${rawText.length} characters.`);
+      const usage = response.usage;
+      
+      logger.info(`[AI] Raw response received. Length: ${rawText.length} characters. Usage: ${JSON.stringify(usage)}`);
 
-      return processResult(rawText, logoUrl);
+      const result = processResult(rawText, logoUrl);
+      
+      return {
+        ...result,
+        aiUsage: {
+          promptTokens: usage.input_tokens,
+          completionTokens: usage.output_tokens,
+          totalTokens: usage.input_tokens + usage.output_tokens,
+          cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+          model: model
+        }
+      };
     } catch (err) {
       lastError = err;
       logger.error(`[AI] Claude model failed (${model}): ${err.message}`);
@@ -412,25 +446,8 @@ Generate this page FAST. Do not over-elaborate.
   }
 
   // 5. Handle Vision / Image-to-Design
-  if (input.figmaImage) {
-    logger.info(`[AI] Image-to-Design detected. Incorporating vision analysis.`);
-    // (Existing vision logic remains same but within one call)
-    const imageMatch = input.figmaImage.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-    if (imageMatch) {
-      const messages = [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: imageMatch[1], data: imageMatch[2] } },
-            { type: 'text', text: `Design this EXACT layout immediately. ${userPrompt}` }
-          ]
-        }
-      ];
-      return await callAI(messages, input.logoUrl, systemPrompt);
-    }
-  }
-
-  return await callAI(userPrompt, input.logoUrl, systemPrompt);
+  const result = await callAI(userPrompt, input.logoUrl, systemPrompt);
+  return result;
 };
 
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
@@ -465,27 +482,28 @@ const generateProjectSuggestions = async ({ projectName, industry, projectDescri
     No other text, no markdown, no code blocks.
   `;
 
-  const response = await callAI(prompt);
+  const result = await callAI(prompt);
+  const responseText = result.fullHtml || '';
   
   try {
     // Try to parse as JSON array
-    const parsed = JSON.parse(response);
+    const parsed = JSON.parse(responseText);
     if (Array.isArray(parsed)) {
       return parsed;
     }
     // If not an array, try to extract array from response
-    const arrayMatch = response.match(/\[.*\]/s);
+    const arrayMatch = responseText.match(/\[.*\]/s);
     if (arrayMatch) {
       return JSON.parse(arrayMatch[0]);
     }
     // Fallback: split by newlines and clean up
-    return response.split('\n')
+    return responseText.split('\n')
       .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
       .filter(line => line.length > 5)
       .slice(0, 6);
   } catch (e) {
     // Fallback: split by newlines and clean up
-    return response.split('\n')
+    return responseText.split('\n')
       .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
       .filter(line => line.length > 5)
       .slice(0, 6);
@@ -564,13 +582,26 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, 
   }
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const model = CLAUDE_MODEL_CANDIDATES[0];
   const response = await anthropic.messages.create({
-    model: CLAUDE_MODEL_CANDIDATES[0],
+    model,
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  return response.content[0].text.trim().replace(/^"|"$/g, '');
+  const usage = response.usage;
+  const suggestion = response.content[0].text.trim().replace(/^"|"$/g, '');
+
+  return {
+    suggestion,
+    aiUsage: {
+      promptTokens: usage.input_tokens,
+      completionTokens: usage.output_tokens,
+      totalTokens: usage.input_tokens + usage.output_tokens,
+      cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+      model: model
+    }
+  };
 };
 
 /**
@@ -670,11 +701,22 @@ Generate ONLY the JSON object.
     }
   }
 
+  const model = CLAUDE_MODEL_CANDIDATES[0];
+
   const response = await anthropic.messages.create({
-    model: CLAUDE_MODEL_CANDIDATES[0],
+    model,
     max_tokens: 8192,
     messages: messages,
   });
+
+  const usage = response.usage;
+  const aiUsage = {
+    promptTokens: usage.input_tokens,
+    completionTokens: usage.output_tokens,
+    totalTokens: usage.input_tokens + usage.output_tokens,
+    cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+    model: model
+  };
 
   try {
     let text = response.content[0].text;
@@ -683,14 +725,16 @@ Generate ONLY the JSON object.
 
     // Try to parse as JSON
     try {
-      return JSON.parse(text);
+      const plan = JSON.parse(text);
+      return { plan, aiUsage };
     } catch (parseErr) {
       // Fallback: try to extract JSON from the text
       logger.warn('Initial JSON parse failed, attempting extraction:', parseErr.message);
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
-          return JSON.parse(jsonMatch[0]);
+          const plan = JSON.parse(jsonMatch[0]);
+          return { plan, aiUsage };
         } catch (extractErr) {
           logger.error('JSON extraction also failed:', extractErr.message);
           throw new Error('Strategic Plan Generation Failed');
@@ -767,18 +811,30 @@ Transform this existing structure into a high-converting masterpiece. Use the re
 `;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const model = CLAUDE_MODEL_CANDIDATES[0];
+
   const response = await anthropic.messages.create({
-    model: CLAUDE_MODEL_CANDIDATES[0],
+    model,
     max_tokens: 4000,
     temperature: 0.1,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   });
 
+  const usage = response.usage;
+  const aiUsage = {
+    promptTokens: usage.input_tokens,
+    completionTokens: usage.output_tokens,
+    totalTokens: usage.input_tokens + usage.output_tokens,
+    cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+    model: model
+  };
+
   try {
     const text = response.content[0].text;
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    return JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    const plan = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    return { plan, aiUsage };
   } catch (err) {
     logger.error('Optimization Engine JSON Error:', err.message);
     throw new Error('Optimization Engine Failed');

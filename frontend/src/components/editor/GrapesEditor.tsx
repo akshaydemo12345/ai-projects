@@ -1686,8 +1686,17 @@ const GrapesEditor = () => {
 
                         // Apply body style to wrapper accurately
                         const bodyStyle = doc.body.getAttribute('style');
-                        if (bodyStyle) {
+                        if (bodyStyle && editorRef.current) {
                           editorRef.current.getWrapper().setStyle(parseInlineStyle(bodyStyle));
+                          // Parse style string into object for TypeScript compatibility
+                          const styleObj: Record<string, string> = {};
+                          const tempDiv = document.createElement('div');
+                          tempDiv.setAttribute('style', bodyStyle);
+                          for (let i = 0; i < tempDiv.style.length; i++) {
+                            const prop = tempDiv.style[i];
+                            styleObj[prop] = tempDiv.style.getPropertyValue(prop);
+                          }
+                          editorRef.current.getWrapper().setStyle(styleObj);
                         }
                       } catch (e) {
                          console.error('Failed to parse template HTML:', e);
