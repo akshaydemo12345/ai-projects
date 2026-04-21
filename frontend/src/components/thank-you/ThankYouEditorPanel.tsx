@@ -240,8 +240,8 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div
                     style={{
-                      width: 56,
-                      height: 56,
+                      width: 30,
+                      height: 30,
                       borderRadius: 12,
                       display: 'flex',
                       alignItems: 'center',

@@ -151,101 +151,16 @@ const buildLeadCaptureScript = (page) => {
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
 
-  return `<script id="dm-lead-tracker">
-    (function(){
-      var A = "${apiBaseUrl}";
-      var SL = "${pageSlug}";
-      var PI = "${pageId}";
-      var PJ = "${projectId}";
-
-      function send(d, f, b, t, n) {
-        n = n || 1;
-        fetch(A + "/api/leads", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(d),
-          mode: "cors"
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(r) {
-          if (r.status === "success" || r.status === "error") {
-            f.reset();
-            var ev = new CustomEvent('submit-success', { detail: { leadId: r.data?.leadId || 'none' } });
-            document.dispatchEvent(ev);
-
-            var tyUrl = window.pageThankYouUrl || "";
-            if (tyUrl && tyUrl.trim() !== "") {
-              window.location.replace(tyUrl);
-            } else if (window.location.pathname && window.location.pathname !== '/') {
-              // Dynamically append /thank-you to the current active path, making it perfect for WP mapped subdirs!
-              var currentPath = window.location.pathname.replace(/\\/+$/, '');
-              window.location.replace(window.location.origin + currentPath + "/thank-you");
-            } else if (SL) {
-              window.location.replace(window.location.origin + "/" + SL + "/thank-you");
-            } else {
-              window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/, '') + "/thank-you");
-            }
-          }
-        })
-        .catch(function(e) {
-          if (n < 3) {
-            setTimeout(function() { send(d, f, b, t, n + 1) }, 2000);
-          } else {
-            // Fallback redirect even on total network failure
-            var currentPath = window.location.pathname.replace(/\\/+$/, '');
-            window.location.replace(window.location.origin + currentPath + "/thank-you");
-          }
-        });
-      }
-
-      document.addEventListener("submit", function(e) {
-        var f = e.target;
-        if (f.tagName !== "FORM") return;
-        
-        if (f.getAttribute("data-submitting") === "true") {
-          e.preventDefault(); return;
-        }
-        
-        f.setAttribute("data-submitting", "true");
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        var b = f.querySelector('button[type="submit"]') || f.querySelector("button");
-        var t = b ? (b.textContent || "Submit") : "Submit";
-        
-        if (b) { 
-          b.disabled = true; 
-          b.textContent = "Sending...";
-          b.style.opacity = "0.7";
-          b.style.cursor = "not-allowed";
-        }
-
-        var fd = new FormData(f);
-    var nameVal = fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname");
-    if (!nameVal) {
-      var nameInput = f.querySelector('input[name*="name"]') || f.querySelector('input[type="text"]');
-      if (nameInput) nameVal = nameInput.value;
-    }
-
-    var data = {
-      pageSlug: SL, pageId: PI, projectId: PJ,
-      name: String(nameVal || "").trim(),
-      email: (fd.get("email") || (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : "") || "unknown@example.com").trim(),
-          phone: (fd.get("phone") || fd.get("tel") || "").trim(),
-          message: (fd.get("message") || (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim()
-        };
-
-        send(data, f, b, t, 1);
-      }, true);
-    })();
-  </script>`;
+    const rawScript = `!function(){var A="${apiBaseUrl}",SL="${pageSlug}",PI="${pageId}",PJ="${projectId}";function send(d,f,b,t,n){n=n||1;fetch(A+"/api/leads",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d),mode:"cors"}).then(function(r){return r.json()}).then(function(r){if(r.status==="success"||r.status==="error"){f.reset();var ev=new CustomEvent('submit-success',{detail:{leadId:r.data&&r.data.leadId?r.data.leadId:'none'}});document.dispatchEvent(ev);var tyUrl=window.pageThankYouUrl||"";if(tyUrl&&tyUrl.trim()!==""){window.location.replace(tyUrl)}else if(window.location.pathname&&window.location.pathname!=='/'){var currentPath=window.location.pathname.replace(/\\/+$/,'');window.location.replace(window.location.origin+currentPath+"/thank-you")}else if(SL){window.location.replace(window.location.origin+"/"+SL+"/thank-you")}else{window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/,'')+"/thank-you")}}}).catch(function(e){if(n<3){setTimeout(function(){send(d,f,b,t,n+1)},2000)}else{var currentPath=window.location.pathname.replace(/\\/+$/,'');window.location.replace(window.location.origin+currentPath+"/thank-you")}})}document.addEventListener("submit",function(e){var f=e.target;if(f.tagName!=="FORM")return;if(f.getAttribute("data-submitting")==="true"){e.preventDefault();return}f.setAttribute("data-submitting","true");e.preventDefault();e.stopImmediatePropagation();var b=f.querySelector('button[type="submit"]')||f.querySelector("button");var t=b?(b.textContent||"Submit"):"Submit";if(b){b.disabled=true;b.textContent="Sending...";b.style.opacity="0.7";b.style.cursor="not-allowed"}var fd=new FormData(f);var nameVal=fd.get("name")||fd.get("first_name")||fd.get("firstName")||fd.get("fullname");if(!nameVal){var nameInput=f.querySelector('input[name*="name"]')||f.querySelector('input[type="text"]');if(nameInput)nameVal=nameInput.value}var data={pageSlug:SL,pageId:PI,projectId:PJ,name:String(nameVal||"").trim(),email:(fd.get("email")||(f.querySelector('input[type="email"]')?f.querySelector('input[type="email"]').value:"")||"unknown@example.com").trim(),phone:(fd.get("phone")||fd.get("tel")||"").trim(),message:(fd.get("message")||(f.querySelector('textarea')?f.querySelector('textarea').value:"")).trim()};send(data,f,b,t,1)},true)}();`;
+  const encodedScript = Buffer.from(rawScript).toString('base64');
+  return `<script id="dm-lead-tracker">eval(atob("${encodedScript}"));</script>`;
 };
 
 /**
  * Shared helper to render a high-converting landing page from AI-generated content.
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
-const renderFullHTML = (page, canonicalUrl = '') => {
+const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   const { title, content, seo } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
   
@@ -281,49 +196,21 @@ const renderFullHTML = (page, canonicalUrl = '') => {
   const thankYouFooterScript = normalizeScript(page.thankYouFooter);
   const thankYouConversionScript = normalizeScript(page.thankYouConversionScript);
 
+  let finalHeaderScript = mainHeaderScript;
+  let finalFooterScript = mainFooterScript;
+
+  if (isThankYou) {
+    if (thankYouHeaderScript) finalHeaderScript += '\n' + thankYouHeaderScript;
+    if (thankYouFooterScript) finalFooterScript += '\n' + thankYouFooterScript;
+    if (thankYouConversionScript) finalFooterScript += '\n' + thankYouConversionScript;
+  }
+
   // ── Thank You Redirect Script ────────────────────────────────────────────
   // Handles Gravity Forms and generic form submission success events
   const thankYouUrl = page.thankYouUrl?.trim() || '';
-  const thankYouRedirectScript = `<script>
-    (function() {
-      window.pageThankYouUrl = ${JSON.stringify(thankYouUrl)};
-      window.pageSlug = ${JSON.stringify(page.slug)};
-      
-      function doRedirect() {
-        if (window.pageThankYouUrl && window.pageThankYouUrl.trim()) {
-          window.location.replace(window.pageThankYouUrl);
-        } else if (window.pageSlug) {
-          window.location.replace('/' + window.pageSlug + '/thank-you');
-        }
-      }
-
-      // Gravity Forms confirmation handler
-      document.addEventListener('gform_confirmation_loaded', function(event) {
-        doRedirect();
-      });
-      
-      // Generic form submit-success handler
-      document.addEventListener('submit-success', function(event) {
-        doRedirect();
-      });
-
-      // Special handling for Gravity Forms anchor redirects
-      if (window.location.hash && window.location.hash.includes('gf_')) {
-        doRedirect();
-      }
-      
-      // Intercept all form submissions
-      document.addEventListener('DOMContentLoaded', function() {
-        const forms = document.querySelectorAll('form');
-        forms.forEach(function(form) {
-          if (form.hasAttribute('data-no-redirect')) return;
-          form.addEventListener('submit', function(e) {
-            // Placeholder for custom tracking if needed
-          });
-        });
-      });
-    })();
-  </script>`;
+    const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else if(window.pageSlug){window.location.replace('/'+window.pageSlug+'/thank-you')}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
+  const encodedTyScript = Buffer.from(rawTyScript).toString('base64');
+  const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
   // ── Resolved SEO values from DB (always authoritative) ──────────────────
   // The Page Settings modal saves to page.metaTitle / page.metaDescription (flat fields)
@@ -441,8 +328,8 @@ const renderFullHTML = (page, canonicalUrl = '') => {
       if (!html.includes('--primary:')) {
         html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
       }
-      if (mainHeaderScript) {
-        html = html.replace(/<\/head>/i, `${mainHeaderScript}\n</head>`);
+      if (finalHeaderScript) {
+        html = html.replace(/<\/head>/i, `${finalHeaderScript}\n</head>`);
       }
       // Inject Thank You URL config in head so it's available early
       html = html.replace(/<\/head>/i, `${thankYouRedirectScript}\n</head>`);
@@ -452,10 +339,10 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     if (/<\/body>/i.test(html)) {
       html = html.replace(
         /<\/body>/i,
-        `${leadScript}\n${mainFooterScript}\n</body>`
+        `${leadScript}\n${finalFooterScript}\n</body>`
       );
     } else {
-      html = html + leadScript + mainFooterScript;
+      html = html + leadScript + finalFooterScript;
     }
 
     return html;
@@ -483,7 +370,16 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     return html || '<p>No content generated.</p>';
   };
 
-  const bodyContent = aiHtml || renderLegacyContent(pageData);
+  let finalBodyContent = aiHtml || renderLegacyContent(pageData);
+  let bodyAttributes = '';
+  
+  // Extract and remove inner <body> wrapper if GrapesJS generated one
+  const bodyMatch = finalBodyContent.match(/<body([^>]*)>/i);
+  if (bodyMatch) {
+    bodyAttributes = bodyMatch[1];
+    finalBodyContent = finalBodyContent.replace(/<body[^>]*>/i, '');
+    finalBodyContent = finalBodyContent.replace(/<\/body>/i, '');
+  }
 
   const fallbackStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -497,14 +393,15 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${seoMetaBlock}
     ${brandingStyles}
-    ${mainHeaderScript}
+    ${finalHeaderScript}
+    ${thankYouRedirectScript}
     <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
 </head>
-<body>
-    ${bodyContent}
+<body${bodyAttributes}>
+    ${finalBodyContent}
     ${aiJs ? `<script>${aiJs}</script>` : ''}
     ${leadScript}
-    ${mainFooterScript}
+    ${finalFooterScript}
 </body>
 </html>`;
 };
@@ -626,7 +523,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
           styles: page.thankYouPageStyles,
           title: `${page.title || 'Landing Page'} - Thank You`
         };
-        return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl));
+        return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl, true));
       }
 
       // Render the generic success/thank-you template if no custom layout is built
