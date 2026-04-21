@@ -4,7 +4,7 @@ import {
   ArrowLeft, Plus, Globe, FileEdit, Rocket, Users as UsersIcon,
   Settings2, Copy, CheckCircle2, X, Sparkles, ExternalLink,
   FileText, Eye, Trash2, Zap, Search, Brain, Loader2, Link,
-  Puzzle, Code2, Monitor, Download
+  Puzzle, Code2, Monitor, Download, Info, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -721,6 +721,137 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
   );
 };
 
+// ─── Usage Detail Modal ──────────────────────────────────────────────────────
+interface UsageModalProps {
+  page: LandingPage;
+  onClose: () => void;
+}
+
+const UsageModal = ({ page, onClose }: UsageModalProps) => {
+  const usage = page.aiUsage;
+  const history = page.aiUsageHistory || [];
+  
+  if (!usage && history.length === 0) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-muted/30">
+          <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Zap className="h-4 w-4 text-amber-500" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-bold text-foreground">AI Generation Timeline</h2>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Usage History & Tracking</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto">
+          {/* Summary Card */}
+          {usage && (
+            <div className="p-6 border-b border-border bg-muted/10">
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Consumption</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-mono font-black text-foreground">{(usage.totalTokens || 0).toLocaleString()}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase">Tokens</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Estimated Cost</p>
+                  <p className="text-3xl font-mono font-black text-emerald-600">
+                    ${(usage.cost || 0).toFixed(4)}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-background rounded-xl p-3 border border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-bold text-foreground">Last Generation</span>
+                </div>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {usage.lastUsageAt ? new Date(usage.lastUsageAt).toLocaleString() : 'N/A'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* History List */}
+          <div className="p-6 space-y-4">
+            <p className="text-xs font-bold text-foreground flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 text-primary" />
+              Generation History
+            </p>
+            
+            <div className="space-y-3">
+              {history.length > 0 ? (
+                history.slice().reverse().map((item, index) => (
+                  <div key={index} className="relative pl-6 pb-2 last:pb-0">
+                    {/* Timeline Connector */}
+                    {index !== history.length - 1 && (
+                      <div className="absolute left-1.5 top-5 bottom-0 w-px bg-border" />
+                    )}
+                    {/* Timeline Dot */}
+                    <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-background shadow-sm" />
+                    
+                    <div className="bg-muted/40 rounded-xl p-3 border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-[11px] font-bold text-foreground">{item.action || 'AI Call'}</p>
+                          <p className="text-[9px] text-muted-foreground flex items-center gap-1">
+                            <Monitor className="h-2.5 w-2.5" /> {item.model?.replace('claude-3-', '') || 'Claude'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] font-bold text-foreground">${(item.cost || 0).toFixed(4)}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase font-bold">{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-[9px] font-medium text-muted-foreground border-t border-border/30 pt-2">
+                        <div className="flex gap-3">
+                          <span>In: <span className="text-foreground font-bold">{item.promptTokens?.toLocaleString()}</span></span>
+                          <span>Out: <span className="text-foreground font-bold">{item.completionTokens?.toLocaleString()}</span></span>
+                        </div>
+                        <span className="bg-background px-1.5 py-0.5 rounded border border-border/50">
+                          Total: <span className="text-foreground font-bold">{item.totalTokens?.toLocaleString()}</span>
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground mt-2 opacity-60">
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : usage ? (
+                <div className="text-center py-4 bg-muted/20 rounded-xl border border-dashed border-border">
+                  <p className="text-[10px] text-muted-foreground">Legacy record (No detailed history)</p>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs text-muted-foreground">No history available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-muted/20 border-t border-border">
+          <Button variant="outline" className="w-full h-10 border-border bg-background shadow-sm hover:bg-muted" onClick={onClose}>
+            Close Details
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // ─── Publish Modal ────────────────────────────────────────────────────────────
 interface PublishModalProps {
   page: LandingPage;
@@ -1015,6 +1146,7 @@ const ProjectDetailPage = () => {
   const [editingPage, setEditingPage] = useState<LandingPage | null>(null);
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
   const [deletePageId, setDeletePageId] = useState<string | null>(null);
+  const [viewingUsagePage, setViewingUsagePage] = useState<LandingPage | null>(null);
   const [tokenCopied, setTokenCopied] = useState(false);
   // Integration panel state
   const [integTab, setIntegTab] = useState<"wordpress" | "script" | "iframe">("wordpress");
@@ -1241,11 +1373,12 @@ const ProjectDetailPage = () => {
 
             {/* Table Header */}
             {pages.length > 0 && (
-              <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_140px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_100px_140px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 <span>Page Name</span>
                 <span className="text-center">Status</span>
                 <span className="text-center">Views</span>
                 <span className="text-center">Leads</span>
+                <span className="text-center">Usage</span>
                 <span className="text-right">Actions</span>
               </div>
             )}
@@ -1270,7 +1403,7 @@ const ProjectDetailPage = () => {
                 pages.map((page) => (
                   <div
                     key={page._id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_100px_80px_80px_140px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_100px_80px_80px_100px_140px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -1299,16 +1432,18 @@ const ProjectDetailPage = () => {
                       </span>
                     </div>
 
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(page.status === "published" ? `/${page.slug}` : `/preview/${page.slug}`, '_blank');
-                      }}
-                      className="flex items-center gap-1 justify-start md:justify-center text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
-                      title={page.status === "published" ? "View Live Page" : "Preview Draft"}
-                    >
-                      <Eye className="h-3 w-3" />
-                      <span>{page.views || 0}</span>
+                    <div className="flex items-center justify-start md:justify-center">
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(page.status === "published" ? `/${page.slug}` : `/preview/${page.slug}`, '_blank');
+                        }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
+                        title={page.status === "published" ? "View Live Page" : "Preview Draft"}
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>{page.views || 0}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-start md:justify-center">
@@ -1322,6 +1457,31 @@ const ProjectDetailPage = () => {
                       >
                         <UsersIcon className="h-3 w-3" />
                         <span>{(page as any).leads?.length || 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-start md:justify-center">
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (page.aiUsage) setViewingUsagePage(page);
+                        }}
+                        className={`flex flex-col items-center gap-0.5 text-[9px] text-muted-foreground p-1 px-2 rounded-lg transition-all ${page.aiUsage ? 'hover:bg-amber-500/10 cursor-pointer group/usage' : 'opacity-40'}`}
+                        title={page.aiUsage ? "Click to view detailed breakdown" : "No usage data available"}
+                      >
+                        {page.aiUsage ? (
+                          <>
+                            <div className="flex items-center gap-1 font-mono group-hover/usage:text-amber-600">
+                              <Eye className="h-3 w-3 text-amber-500" />
+                              <span className="font-bold">{page.aiUsage.totalTokens?.toLocaleString() || 0}</span>
+                            </div>
+                            <span className="text-emerald-600 font-bold">
+                              ${(page.aiUsage.cost || 0).toFixed(4)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>-</span>
+                        )}
                       </div>
                     </div>
 
@@ -1423,6 +1583,50 @@ const ProjectDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals and Overlays */}
+      {editingPage && (
+        <EditPageModal 
+          page={editingPage}
+          projectUrl={project.url || ""}
+          onClose={() => setEditingPage(null)}
+          onSave={handleEditSave}
+        />
+      )}
+
+      {publishingPage && (
+        <PublishModal 
+          page={publishingPage}
+          project={project}
+          onClose={() => setPublishingPage(null)}
+          onPublished={handlePublished}
+        />
+      )}
+
+      {deletePageId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-background rounded-2xl border border-border shadow-2xl overflow-hidden p-6 text-center animate-in fade-in zoom-in duration-200">
+            <div className="h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="h-7 w-7 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-1.5">Delete Page?</h3>
+            <p className="text-sm text-muted-foreground mb-6">This action cannot be undone. All data for this page will be permanently removed.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => setDeletePageId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={confirmDelete} disabled={deletePageMutation.isPending}>
+                {deletePageMutation.isPending ? "Deleting..." : "Delete Forever"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingUsagePage && (
+        <UsageModal 
+          page={viewingUsagePage} 
+          onClose={() => setViewingUsagePage(null)} 
+        />
+      )}
     </div>
   );
 };

@@ -211,6 +211,26 @@ const pageSchema = new mongoose.Schema({
     customTemplate: String,
     customCss: String
   },
+  aiUsage: {
+    promptTokens: { type: Number, default: 0 },
+    completionTokens: { type: Number, default: 0 },
+    totalTokens: { type: Number, default: 0 },
+    cost: { type: Number, default: 0 },
+    model: String,
+    currency: { type: String, default: 'USD' },
+    lastUsageAt: { type: Date, default: Date.now }
+  },
+  aiUsageHistory: [
+    {
+      action: String,
+      model: String,
+      promptTokens: Number,
+      completionTokens: Number,
+      totalTokens: Number,
+      cost: Number,
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
   isDeleted: {
     type: Boolean,
     default: false,
