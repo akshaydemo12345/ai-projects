@@ -94,6 +94,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       websiteUrl: page.websiteUrl,
       thankYouUrl: page.thankYouUrl,
       meta: {
+        _id: page._id,
         title: page.title,
         seo: page.seo,
         status: page.status,
@@ -150,8 +151,94 @@ const buildLeadCaptureScript = (page) => {
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
 
-  // Serve a secure, clean external script tag instead of a massive inline blob
-  return `<script src="${apiBaseUrl}/api/leads/tracker.js" id="dm-lead-tracker" data-api-url="${apiBaseUrl}" data-page-slug="${pageSlug}" data-page-id="${pageId}" data-project-id="${projectId}" defer></script>`;
+  return `<script id="dm-lead-tracker">
+    (function(){
+      var A = "${apiBaseUrl}";
+      var SL = "${pageSlug}";
+      var PI = "${pageId}";
+      var PJ = "${projectId}";
+
+      function send(d, f, b, t, n) {
+        n = n || 1;
+        fetch(A + "/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(d),
+          mode: "cors"
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(r) {
+          if (r.status === "success" || r.status === "error") {
+            f.reset();
+            var ev = new CustomEvent('submit-success', { detail: { leadId: r.data?.leadId || 'none' } });
+            document.dispatchEvent(ev);
+
+            var tyUrl = window.pageThankYouUrl || "";
+            if (tyUrl && tyUrl.trim() !== "") {
+              window.location.replace(tyUrl);
+            } else if (window.location.pathname && window.location.pathname !== '/') {
+              // Dynamically append /thank-you to the current active path, making it perfect for WP mapped subdirs!
+              var currentPath = window.location.pathname.replace(/\\/+$/, '');
+              window.location.replace(window.location.origin + currentPath + "/thank-you");
+            } else if (SL) {
+              window.location.replace(window.location.origin + "/" + SL + "/thank-you");
+            } else {
+              window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/, '') + "/thank-you");
+            }
+          }
+        })
+        .catch(function(e) {
+          if (n < 3) {
+            setTimeout(function() { send(d, f, b, t, n + 1) }, 2000);
+          } else {
+            // Fallback redirect even on total network failure
+            var currentPath = window.location.pathname.replace(/\\/+$/, '');
+            window.location.replace(window.location.origin + currentPath + "/thank-you");
+          }
+        });
+      }
+
+      document.addEventListener("submit", function(e) {
+        var f = e.target;
+        if (f.tagName !== "FORM") return;
+        
+        if (f.getAttribute("data-submitting") === "true") {
+          e.preventDefault(); return;
+        }
+        
+        f.setAttribute("data-submitting", "true");
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        var b = f.querySelector('button[type="submit"]') || f.querySelector("button");
+        var t = b ? (b.textContent || "Submit") : "Submit";
+        
+        if (b) { 
+          b.disabled = true; 
+          b.textContent = "Sending...";
+          b.style.opacity = "0.7";
+          b.style.cursor = "not-allowed";
+        }
+
+        var fd = new FormData(f);
+    var nameVal = fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname");
+    if (!nameVal) {
+      var nameInput = f.querySelector('input[name*="name"]') || f.querySelector('input[type="text"]');
+      if (nameInput) nameVal = nameInput.value;
+    }
+
+    var data = {
+      pageSlug: SL, pageId: PI, projectId: PJ,
+      name: String(nameVal || "").trim(),
+      email: (fd.get("email") || (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : "") || "unknown@example.com").trim(),
+          phone: (fd.get("phone") || fd.get("tel") || "").trim(),
+          message: (fd.get("message") || (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim()
+        };
+
+        send(data, f, b, t, 1);
+      }, true);
+    })();
+  </script>`;
 };
 
 /**
@@ -290,7 +377,7 @@ const renderFullHTML = (page, canonicalUrl = '') => {
     `<title>${seoTitle}</title>`,
     `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`,
     seoKeywords ? `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">` : '',
-    `<meta name="robots" content="index, follow">`,
+    `<meta name="robots" content="noindex, nofollow">`,
     canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
@@ -531,67 +618,21 @@ exports.getPublicPageHTML = async (req, res, next) => {
     res.setHeader('Content-Type', 'text/html');
     
     if (isThankYou) {
-      // Render the success/thank-you template
-      const brandColor = page.primaryColor || '#7c3aed';
-      const redirectUrl = page.websiteUrl || '#';
-      const thankYouHeader = normalizeScript(page.thankYouHeader);
-      const thankYouFooter = normalizeScript(page.thankYouFooter);
-      const thankYouConversionScript = normalizeScript(page.thankYouConversionScript);
-      
-      // Auto-generate scripts from config
-      const configTrackingScripts = generateTrackingScripts(page.thankYouConfig?.tracking || {}, page._id, page.industry);
-      
-      const thankYouHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thank You | ${page.title}</title>
-    ${thankYouHeader}
-    ${configTrackingScripts}
-    <style>
-      @keyframes pc-sparkle { 0%, 100% { transform: scale(0); opacity: 0; filter: blur(0px); } 50% { transform: scale(1.2); opacity: 1; filter: blur(1px); } }
-      @keyframes pc-float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, -25px); } 100% { transform: translate(-10px, -50px); } }
-      body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #ffffff; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; overflow: hidden; }
-      .pc-sparkle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1; }
-      .pc-content { position: relative; z-index: 10; max-width: 500px; padding: 40px; }
-      .pc-success-icon { width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; color: #10b981; box-shadow: 0 0 40px rgba(16, 185, 129, 0.3); }
-      .pc-title { font-size: 56px; font-weight: 900; color: #0f172a; margin: 0 0 16px; letter-spacing: -0.02em; }
-      .pc-desc { font-size: 18px; line-height: 1.6; color: #64748b; margin-bottom: 40px; }
-      .pc-btn { display: inline-flex; align-items: center; gap: 10px; background: ${brandColor} !important; color: white !important; padding: 18px 40px; border-radius: 100px; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; }
-      .pc-btn:hover { transform: scale(1.05); }
-    </style>
-</head>
-<body>
-    <div class="pc-content">
-        <div class="pc-success-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        </div>
-        <h1 class="pc-title">Thank You!</h1>
-        <p class="pc-desc">Successfully received your request. Our team will reach out shortly.</p>
-        <a href="${redirectUrl}" class="pc-btn">Visit Our Website</a>
-    </div>
-    <script>
-      const colors = ['#ffffff', '#ffd700', '${brandColor}', '#ffffff'];
-      for (let i = 0; i < 80; i++) {
-        const s = document.createElement('div');
-        s.className = 'pc-sparkle';
-        const size = Math.random() * 5 + 1;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        s.style.width = size + 'px'; s.style.height = size + 'px';
-        s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 110 + '%';
-        s.style.background = color; s.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
-        const d = Math.random() * 4 + 3;
-        const dl = Math.random() * 8;
-        s.style.animation = 'pc-sparkle ' + d + 's infinite ' + dl + 's ease-in-out, pc-float ' + (d * 2) + 's infinite ' + dl + 's linear';
-        document.body.appendChild(s);
+      if (page.thankYouPageContent) {
+        // Render the exact custom thank you page the user built in the GrapesJS editor
+        const tyPageMock = {
+          ...page.toObject(),
+          content: page.thankYouPageContent,
+          styles: page.thankYouPageStyles,
+          title: `${page.title || 'Landing Page'} - Thank You`
+        };
+        return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl));
       }
-    </script>
-    ${thankYouFooter}
-    ${thankYouConversionScript}
-</body>
-</html>`;
-      return res.status(200).send(thankYouHtml);
+
+      // Render the generic success/thank-you template if no custom layout is built
+      // Delegate this intelligently to the thankYouController which handles all layouts & configs flawlessly.
+      req.params.pageSlug = normalizedSlug;
+      return require('./thankYouController').renderThankYouPage(req, res, next);
     }
 
     res.status(200).send(renderFullHTML(page, canonicalUrl));
@@ -615,65 +656,45 @@ exports.handleFormSubmission = async (req, res, next) => {
     // Capture fields
     const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
     
-    // ─── STRICT VALIDATION: Stop "Unknown Lead" ───
-    if (!email) {
-      console.warn(`⚠️ Blocking anonymous form submission for slug: ${normalizedSlug}`);
-      return res.status(400).json({ status: 'error', message: 'Email is required' });
-    }
-
+    // ─── STRICT VALIDATION: Safely extract ───
     const leadName = (name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Contact')).trim();
-    const leadEmail = email.trim().toLowerCase();
+    const leadEmail = (email || 'anonymous@example.com').trim().toLowerCase();
     const leadPhone = (phone || tel || '').trim();
     const leadMessage = (message || comments || '').trim();
 
-    // ─── DUPLICATE PROTECTION: Millisecond gap check ───
     const recentLead = await Lead.findOne({
       email: leadEmail,
       pageSlug: normalizedSlug,
-      createdAt: { $gt: new Date(Date.now() - 5000) } // 5 second window
+      createdAt: { $gt: new Date(Date.now() - 5000) }
     });
 
-    if (recentLead) {
-      console.log(`♻️ Skipping duplicate lead for ${leadEmail} on ${normalizedSlug}`);
-      return res.redirect(`/${normalizedSlug}/thank-you?status=already_sent`);
-    }
-
-    // Create the lead
-    const lead = await Lead.create({
-      name: leadName,
-      email: leadEmail,
-      phone: leadPhone,
-      message: leadMessage,
-      pageSlug: normalizedSlug,
-      pageId: page._id,
-      projectId: page.projectId,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    // Update Project lead count
-    if (page.projectId) {
-      await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
-    }
-
-    // Detect if AJAX or Natural Form
-    const isAjax = req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json');
-
-    // Determine thank you URL (custom or default)
-    const thankYouUrl = page.thankYouUrl?.trim()
-      ? page.thankYouUrl
-      : `/${normalizedSlug}/thank-you`;
-
-    if (isAjax) {
-      return res.status(201).json({
-        status: 'success',
-        message: 'Lead saved',
-        redirect: thankYouUrl
+    if (!recentLead) {
+      await Lead.create({
+        name: leadName,
+        email: leadEmail,
+        phone: leadPhone,
+        message: leadMessage,
+        pageSlug: normalizedSlug,
+        pageId: page._id || undefined,
+        projectId: page.projectId || undefined,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        domain: req.headers.host || 'unknown',
+        url: req.headers.referer || req.originalUrl || 'unknown'
       });
+      if (page.projectId) {
+        await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
+      }
     }
 
-    // Traditional Form Redirect
-    res.redirect(thankYouUrl);
+    const thankYouUrl = page.thankYouUrl?.trim() ? page.thankYouUrl : `/${normalizedSlug}/thank-you`;
+    
+    if (req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json')) {
+      return res.status(201).json({ status: 'success', message: 'Lead saved', redirect: thankYouUrl });
+    }
+
+    return res.redirect(thankYouUrl);
+
 
   } catch (err) {
     console.error('❌ Form submission error:', err);

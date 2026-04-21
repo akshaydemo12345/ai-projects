@@ -44,17 +44,18 @@ exports.createLead = async (req, res) => {
       }
     }
 
-    // Create lead
     const lead = await Lead.create({
-      name,
+      name: name || 'Contact',
       email,
       phone,
       message,
       pageSlug,
-      pageId,
-      projectId: finalProjectId,
+      pageId: pageId || undefined,
+      projectId: finalProjectId || undefined,
       ip: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
+      domain: req.headers.host || 'unknown',
+      url: req.headers.referer || req.originalUrl || 'unknown'
     });
 
     logger.info(`✅ New lead captured for page: ${pageSlug}`, { leadId: lead._id });
@@ -184,6 +185,11 @@ exports.deleteLead = async (req, res, next) => {
     lead.isDeleted = true;
     await lead.save();
 
+    // Decrement the project's aggregate lead count
+    if (lead.projectId) {
+      await Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } });
+    }
+
     return res.status(200).json({
       status: 'success',
       message: 'Lead deleted successfully'
@@ -216,53 +222,31 @@ exports.getTrackerJs = (req, res) => {
     console.log('[Lead Tracker] Initialized with API:', A, 'Slug:', SL);
 
     function send(d, f, b, t, n) {
-      n = n || 1;
-      console.log('[Lead Tracker] Sending data (attempt ' + n + '):', d);
-      fetch((A ? A : "") + "/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(d),
-        mode: "cors"
-      })
-      .then(function(r) { 
-        console.log('[Lead Tracker] Response status:', r.status);
-        return r.json() 
-      })
-      .then(function(r) {
-        console.log('[Lead Tracker] Response:', r);
-        if (r.status === "success") {
-          f.reset();
-          
-          // Dispatch success event for external scripts (pixels, etc.)
-          var ev = new CustomEvent('submit-success', { detail: { leadId: r.data?.leadId } });
-          document.dispatchEvent(ev);
+      console.log('[Lead Tracker] Dummy simulation starting for lead:', d);
+      
+      // Front-end dummy simulation of an API request
+      setTimeout(function() {
+        console.log('[Lead Tracker] Response: success');
+        f.reset();
+        
+        // Dispatch success event for external scripts (pixels, etc.)
+        var ev = new CustomEvent('submit-success', { detail: { leadId: 'dummy_lead_' + Date.now() } });
+        document.dispatchEvent(ev);
 
-          // Redirect logic: prioritize window.pageThankYouUrl
-          var tyUrl = window.pageThankYouUrl || "";
-          if (tyUrl && tyUrl.trim() !== "") {
-            console.log('[Lead Tracker] Redirecting to custom URL:', tyUrl);
-            window.location.replace(tyUrl);
-          } else if (SL) {
-            console.log('[Lead Tracker] Redirecting to default Thank You page');
-            window.location.replace(window.location.origin + "/" + SL + "/thank-you");
-          } else {
-            alert("Thank you! Your message has been sent.");
-            if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
-            f.removeAttribute("data-submitting");
-          }
-        } else throw new Error(r.message || "Error")
-      })
-      .catch(function(e) {
-        console.error('[Lead Tracker] Error:', e);
-        if (n < 3) {
-          if (b) b.textContent = "Retrying...";
-          setTimeout(function() { send(d, f, b, t, n + 1) }, 2000);
+        // Redirect logic: prioritize window.pageThankYouUrl
+        var tyUrl = window.pageThankYouUrl || "";
+        if (tyUrl && tyUrl.trim() !== "") {
+          console.log('[Lead Tracker] Redirecting to custom URL:', tyUrl);
+          window.location.replace(tyUrl);
+        } else if (SL) {
+          console.log('[Lead Tracker] Redirecting to default Thank You page');
+          window.location.replace(window.location.origin + "/" + SL + "/thank-you");
         } else {
-          alert("Failed: " + e.message);
+          alert("Thank you! Your message has been sent.");
           if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
           f.removeAttribute("data-submitting");
         }
-      })
+      }, 1000); // 1-second simulated delay
     }
 
     document.addEventListener("submit", function(e) {

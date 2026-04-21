@@ -332,10 +332,25 @@ const GrapesEditor = () => {
       editor.setComponents(dbContent);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
-      editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
-        `<h2 style="margin-bottom: 10px;">${mode === 'thank-you' ? 'Thank You Page' : 'Landing Page'} is Ready</h2>` +
-        `<p>${mode === 'thank-you' ? 'Choose a Thank You layout from the left or build it manually.' : 'Start editing by choosing a block from the left or use the AI generator.'}</p>` +
-        `</div>`);
+      if (mode === 'thank-you') {
+        editor.setComponents(`
+          <section style="display: flex; min-height: 80vh; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; padding: 40px 20px; text-align: center; font-family: sans-serif;">
+            <div style="background: white; padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+              <div style="width: 80px; height: 80px; background-color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <h1 style="font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Thank You!</h1>
+              <p style="font-size: 18px; color: #64748b; margin-bottom: 32px; line-height: 1.6;">Your request has been successfully submitted. We will get back to you shortly.</p>
+              <a href="/" style="display: inline-block; background-color: var(--primary, #6366f1); color: white; padding: 14px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">Return to Home</a>
+            </div>
+          </section>
+        `);
+      } else {
+        editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
+          `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
+          `<p>Start editing by choosing a block from the left or use the AI generator.</p>` +
+          `</div>`);
+      }
     }
   };
 
@@ -963,12 +978,19 @@ const GrapesEditor = () => {
     }
 
     // 1. Get raw content directly from editor to ensure latest state
-    const rawHtml = editorRef.current.getHtml();
-    const rawCss = editorRef.current.getCss() || '';
+    let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
+    let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
     
-    let formattedHtml = formatHtmlPretty(rawHtml);
-    let formattedCss = formatCssPretty(rawCss);
+    let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
+    let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
+
+    let formattedLandingHtml = formatHtmlPretty(landingHtml);
+    let formattedLandingCss = formatCssPretty(landingCss);
+    let formattedThankYouHtml = thankYouHtml ? formatHtmlPretty(thankYouHtml) : '';
+    let formattedThankYouCss = thankYouCss ? formatCssPretty(thankYouCss) : '';
+    
     const cssFileName = 'landing-page.css';
+    const tyCssFileName = 'thankyou-page.css';
     const pageTitle = page?.name || 'Landing Page';
     const metaDesc = page?.metaDescription || '';
 
@@ -1000,24 +1022,28 @@ const GrapesEditor = () => {
     // Extract from HTML (src, data-src, poster attributes)
     const imgRegex = /(?:src|data-src|poster)=["']([^"'>]+)["']/g;
     let match;
-    while ((match = imgRegex.exec(formattedHtml)) !== null) {
-      const url = getFullUrl(match[1]);
-      if (url) imageUrls.add(url);
-    }
+    [formattedLandingHtml, formattedThankYouHtml].forEach(content => {
+      while ((match = imgRegex.exec(content)) !== null) {
+        const url = getFullUrl(match[1]);
+        if (url) imageUrls.add(url);
+      }
+    });
 
     // Handle srcset
     const srcsetRegex = /srcset=["']([^"'>]+)["']/g;
-    while ((match = srcsetRegex.exec(formattedHtml)) !== null) {
-      const srcset = match[1];
-      srcset.split(',').forEach(part => {
-        const urlPart = part.trim().split(/\s+/)[0];
-        const url = getFullUrl(urlPart);
-        if (url) imageUrls.add(url);
-      });
-    }
+    [formattedLandingHtml, formattedThankYouHtml].forEach(content => {
+      while ((match = srcsetRegex.exec(content)) !== null) {
+        const srcset = match[1];
+        srcset.split(',').forEach(part => {
+          const urlPart = part.trim().split(/\s+/)[0];
+          const url = getFullUrl(urlPart);
+          if (url) imageUrls.add(url);
+        });
+      }
+    });
 
     // Extract from style attributes and CSS
-    [formattedHtml, formattedCss].forEach(content => {
+    [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
         const cssUrlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
         while ((match = cssUrlRegex.exec(content)) !== null) {
             const url = getFullUrl(match[1]);
@@ -1026,7 +1052,7 @@ const GrapesEditor = () => {
     });
 
     // Fallback: Catch anything that looks like an image URL extension
-    [formattedHtml, formattedCss].forEach(content => {
+    [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
         const genericImageRegex = /(https?:\/\/[^"'\s)]+\.(?:png|jpg|jpeg|gif|webp|svg|avif)(?:\?[^"'\s)]+)?)[\s"')]?/gi;
         while ((match = genericImageRegex.exec(content)) !== null) {
             const url = getFullUrl(match[1]);
@@ -1037,14 +1063,6 @@ const GrapesEditor = () => {
     // 4. Download and process images
     let downloadedCount = 0;
     let failedCount = 0;
-
-    toast.info(`Total content length: ${formattedHtml.length + formattedCss.length} bytes`);
-
-    if (imageUrls.size > 0) {
-      toast.info(`Found ${imageUrls.size} unique image URLs across HTML/CSS.`);
-    } else {
-      toast.warning('No image URLs detected in your code. Check if images have src attributes.');
-    }
 
     const imageMap: Record<string, string> = {}; // [originalUrl]: newLocalPath
     const downloadPromises = Array.from(imageUrls).map(async (origUrl) => {
@@ -1111,7 +1129,6 @@ const GrapesEditor = () => {
         // Map original URL to relative path
         imageMap[origUrl] = `images/${finalFilename}`;
         downloadedCount++;
-        toast.info(`Bundled: ${finalFilename}${finalStatus === 'proxied' ? ' (via proxy)' : ''}`);
       } catch (err) {
         console.error(`Failed to download asset: ${origUrl}`, err);
         failedCount++;
@@ -1120,9 +1137,6 @@ const GrapesEditor = () => {
 
     await Promise.all(downloadPromises);
 
-    if (downloadedCount > 0) {
-      toast.success(`Done! Bundled ${downloadedCount} images into the ZIP.`);
-    }
     if (failedCount > 0) {
       toast.error(`Warning: ${failedCount} images could not be downloaded (CORS/Network error).`);
     }
@@ -1131,16 +1145,25 @@ const GrapesEditor = () => {
     Object.entries(imageMap).forEach(([oldUrl, newPath]) => {
       const escapedUrl = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escapedUrl, 'g');
-      formattedHtml = formattedHtml.replace(regex, newPath);
-      formattedCss = formattedCss.replace(regex, newPath);
+      formattedLandingHtml = formattedLandingHtml.replace(regex, newPath);
+      formattedLandingCss = formattedLandingCss.replace(regex, newPath);
+      formattedThankYouHtml = formattedThankYouHtml.replace(regex, newPath);
+      formattedThankYouCss = formattedThankYouCss.replace(regex, newPath);
     });
 
-    // 6. Build final HTML
-    const finalHtml = buildFullHtml(formattedHtml, formattedCss, pageTitle, metaDesc, cssFileName);
-
+    // 6. Build final HTML files
+    const finalLandingHtml = buildFullHtml(formattedLandingHtml, formattedLandingCss, pageTitle, metaDesc, cssFileName);
+    
     // 7. Generate ZIP
-    landingPageFolder.file('landing-page.html', finalHtml);
-    landingPageFolder.file(cssFileName, formattedCss);
+    landingPageFolder.file('landing-page.html', finalLandingHtml);
+    landingPageFolder.file(cssFileName, formattedLandingCss);
+
+    if (formattedThankYouHtml) {
+      const tyTitle = `${pageTitle} - Thank You`;
+      const finalTyHtml = buildFullHtml(formattedThankYouHtml, formattedThankYouCss, tyTitle, metaDesc, tyCssFileName);
+      landingPageFolder.file('thankyou-page.html', finalTyHtml);
+      landingPageFolder.file(tyCssFileName, formattedThankYouCss);
+    }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const zipUrl = URL.createObjectURL(zipBlob);
@@ -1150,7 +1173,7 @@ const GrapesEditor = () => {
     zipAnchor.click();
     URL.revokeObjectURL(zipUrl);
 
-    toast.success('Landing page package downloaded with images!');
+    toast.success('Landing page package downloaded!');
   };
 
   // ─── Publish ───
