@@ -244,6 +244,36 @@ exports.renderThankYouPage = async (req, res, next) => {
       html = html.replace('</head>', customStyleTag + '</head>');
     }
 
+    const normalizeScriptLocal = (value = '') => {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      return /<(script|style|meta|link)[\s\S]*?>/i.test(trimmed) ? trimmed : `<script>${trimmed}</script>`;
+    };
+
+    let finalHeaderScript = normalizeScriptLocal(page.mainHeader);
+    if (page.thankYouHeader) {
+      finalHeaderScript += '\\n' + normalizeScriptLocal(page.thankYouHeader);
+    }
+    
+    let finalFooterScript = normalizeScriptLocal(page.mainFooter);
+    if (page.thankYouFooter) {
+      finalFooterScript += '\\n' + normalizeScriptLocal(page.thankYouFooter);
+    }
+    if (page.thankYouConversionScript) {
+      finalFooterScript += '\\n' + normalizeScriptLocal(page.thankYouConversionScript);
+    }
+
+    if (finalHeaderScript.trim()) {
+      html = html.replace('</head>', '\\n' + finalHeaderScript + '\\n</head>');
+    }
+    if (finalFooterScript.trim()) {
+      if (/<\/body>/i.test(html)) {
+        html = html.replace(/<\/body>/i, '\\n' + finalFooterScript + '\\n</body>');
+      } else {
+        html += '\\n' + finalFooterScript;
+      }
+    }
+
     // Clear the context cookie after successful render
     res.clearCookie('lp_context');
 
