@@ -84,22 +84,43 @@ exports.getProject = async (req, res, next) => {
     // Also fetch pages for this project to ensure frontend has them
     const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } });
 
+    let needsSave = false;
+
     // Ensure pageCount is accurate (sync it just in case)
     const pageCount = pages.length;
     if (project.pageCount !== pageCount) {
       project.pageCount = pageCount;
+      needsSave = true;
+    }
+
+    // Ensure leadCount is accurate (auto-heal desyncs from past deletions)
+    const Lead = require('../models/Lead');
+    const trueLeadCount = await Lead.countDocuments({ projectId: id, isDeleted: { $ne: true } });
+    if (project.leadCount !== trueLeadCount) {
+      project.leadCount = trueLeadCount;
+      needsSave = true;
+    }
+
+    if (needsSave) {
       await project.save({ validateBeforeSave: false });
     }
+
+    const cleanPages = await Promise.all(pages.map(async (p) => {
+      const pObj = p.toObject();
+      pObj.name = pObj.title;
+      const count = await Lead.countDocuments({ pageId: p._id, isDeleted: { $ne: true } });
+      pObj.leads = new Array(count).fill({}); // Fallback for frontend UI relying on leads.length
+      pObj.leadCount = count;
+      return pObj;
+    }));
 
     res.status(200).json({
       status: 'success',
       data: {
         project: {
           ...project.toObject(),
-          pages: pages.map(p => ({
-            ...p.toObject(),
-            name: p.title
-          }))
+          leadCount: trueLeadCount, // explicitly guarantee Top Level Metric
+          pages: cleanPages
         }
       },
     });

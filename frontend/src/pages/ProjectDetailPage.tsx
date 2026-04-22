@@ -661,16 +661,6 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
                     className="min-h-[70px] font-mono text-xs bg-muted/30"
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-bold text-foreground mb-1.5 block">Lead Conversion Script</label>
-                  <Textarea
-                    value={thankYouConversionScript}
-                    onChange={(e) => setThankYouConversionScript(e.target.value)}
-                    placeholder="<script>\ngtag('event', 'conversion', {\n  send_to: 'AW-123456/test'\n});\n</script>"
-                    className="min-h-[70px] font-mono text-xs bg-muted/30"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">Rendered only on the thank-you page after conversion.</p>
-                </div>
               </div>
 
               <div className="pt-2 border-t border-border/50">
@@ -1149,6 +1139,7 @@ const ProjectDetailPage = () => {
     queryKey: ["project", id],
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
+    refetchInterval: 5000, // Live-updating dynamic data polling
   });
 
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused

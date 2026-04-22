@@ -179,14 +179,11 @@ class DomainMapper_Form_Interceptor {
     // Lead Capture Logic
     async function submitLead(data, form, btn, originalBtnText) {
         try {
-            var response = await fetch(RELAY_PREFIX + TARGET_HOST + '/api/leads', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-                mode: 'cors'
-            });
+            // Dummy UI Simulation - NO BACKEND
+            console.log("Dummy API Call - Simulating Lead Creation", data);
+            await new Promise(function(resolve) { setTimeout(resolve, 800); }); // Fake network delay
+            var result = { status: 'success', dummy: true };
 
-            var result = await response.json();
             if (result.status === 'success') {
                 form.reset();
                 var currentPath = window.location.pathname;
@@ -211,9 +208,10 @@ class DomainMapper_Form_Interceptor {
             form.method = 'POST'; // Force POST exactly at submission
             form.action = rewriteUrl(form.action);
 
-            // Check if it's a lead form (has email or specific ID)
-            if (form.querySelector('input[type="email"]') || form.id === 'lead-form') {
+            // Intercept ALL forms for dummy UI simulation (prevent Gravity Forms bypass)
+            if (true) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 
                 var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
                 var originalText = btn ? btn.innerHTML : 'Submit';

@@ -53,7 +53,8 @@ const PublicLandingPage = () => {
       const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
       const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-      const PAGE_ID = meta?.projectId || '';
+      const PROJECT_ID = meta?.projectId || pageData?.projectId || '';
+      const ACTUAL_PAGE_ID = meta?._id || pageData?._id || '';
       const PAGE_SLUG = slug || '';
       const BRAND_COLOR = pageData.primaryColor || meta?.primaryColor || '#7c3aed';
       const REDIRECT_URL = pageData.websiteUrl || '#';
@@ -81,13 +82,13 @@ const PublicLandingPage = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
-                mode: 'cors'
               });
-
+              
               const result = await response.json();
               console.log("📥 API Response:", result);
 
-              if (result.status === 'success') {
+              // Allow 'error' if it's gracefully handled by backend (like already sent)
+              if (result.status === 'success' || result.status === 'error') {
                 redirectToSuccessPage();
                 form.reset();
                 if (btn) {
@@ -141,7 +142,8 @@ const PublicLandingPage = () => {
               const formData = new FormData(form);
               const data = {
                 pageSlug: "${PAGE_SLUG}",
-                projectId: "${PAGE_ID}",
+                projectId: "${PROJECT_ID}",
+                pageId: "${ACTUAL_PAGE_ID}",
                 name: formData.get('name') || formData.get('first_name') || (form.querySelector('input[type="text"]') ? form.querySelector('input[type="text"]').value : ''),
                 email: formData.get('email') || (form.querySelector('input[type="email"]') ? form.querySelector('input[type="email"]').value : ''),
                 phone: formData.get('phone') || formData.get('tel') || (form.querySelector('input[type="tel"]') ? form.querySelector('input[type="tel"]').value : ''),
