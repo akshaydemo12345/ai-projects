@@ -860,7 +860,7 @@ interface PublishModalProps {
   onPublished: (page: LandingPage) => void;
 }
 
-type IntegrationTab = "wordpress" | "script" | "iframe";
+type IntegrationTab = "wordpress" | "script";
 
 const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps) => {
   const navigate = useNavigate();
@@ -868,13 +868,11 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [urlCopied, setUrlCopied] = useState(false);
   const [tokenCopiedLocal, setTokenCopiedLocal] = useState(false);
   const [scriptCopied, setScriptCopied] = useState(false);
-  const [iframeCopied, setIframeCopied] = useState(false);
   const [published, setPublished] = useState(false);
 
   const publishUrl = page.publishedUrl || `${window.location.origin}/${page.slug}`;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${page.slug}" async></script>`;
-  const iframeCode = `<iframe src="${publishUrl}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
   const handlePublish = () => {
     onPublished({ ...page, status: "published", publishedUrl: publishUrl });
@@ -893,7 +891,6 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const tabs = [
     { id: "wordpress" as const, label: "WordPress Plugin" },
     { id: "script" as const, label: "Script Embed" },
-    { id: "iframe" as const, label: "iFrame Embed" },
   ];
 
   // ── Success Screen ──────────────────────────────────────────────────────────
@@ -1087,28 +1084,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
               </div>
             )}
 
-            {/* iFrame */}
-            {tab === "iframe" && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs text-muted-foreground">Embed anywhere that accepts HTML:</p>
-                  <button
-                    onClick={async () => {
-                      const success = await copyToClipboard(iframeCode);
-                      if (success) {
-                        setIframeCopied(true);
-                        toast.success("Code copied!");
-                        setTimeout(() => setIframeCopied(false), 2000);
-                      }
-                    }}
-                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80 transition-all active:scale-95"
-                  >
-                    {iframeCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
-                  </button>
-                </div>
-                <pre className="text-[11px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-foreground">{iframeCode}</pre>
-              </div>
-            )}
+
           </div>
         </div>
 
@@ -1149,10 +1125,9 @@ const ProjectDetailPage = () => {
   const [viewingUsagePage, setViewingUsagePage] = useState<LandingPage | null>(null);
   const [tokenCopied, setTokenCopied] = useState(false);
   // Integration panel state
-  const [integTab, setIntegTab] = useState<"wordpress" | "script" | "iframe">("wordpress");
+  const [integTab, setIntegTab] = useState<"wordpress" | "script">("wordpress");
   const [integTokenCopied, setIntegTokenCopied] = useState(false);
   const [integScriptCopied, setIntegScriptCopied] = useState(false);
-  const [integIframeCopied, setIntegIframeCopied] = useState(false);
   const [integrationOpen, setIntegrationOpen] = useState(false);
 
   // Mutations
@@ -1252,7 +1227,6 @@ const ProjectDetailPage = () => {
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
   const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${project?.apiToken}" async></script>`;
-  const iframeCode = `<iframe src="https://your-subdomain.ppcbuilder.io/lp/your-page-slug" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
 
 
@@ -1275,6 +1249,12 @@ const ProjectDetailPage = () => {
           project={project}
           onClose={() => setPublishingPage(null)}
           onPublished={handlePublished}
+        />
+      )}
+      {viewingUsagePage && (
+        <UsageModal 
+          page={viewingUsagePage} 
+          onClose={() => setViewingUsagePage(null)} 
         />
       )}
       {deletePageId && (
@@ -1506,7 +1486,7 @@ const ProjectDetailPage = () => {
                 </div>
                 <h2 className="text-base font-bold text-foreground">Integration & Embedding</h2>
               </div>
-              <p className="text-[11px] text-muted-foreground ml-11">WordPress, Script, or iFrame</p>
+              <p className="text-[11px] text-muted-foreground ml-11">WordPress or Script</p>
             </div>
 
             <div className="p-6 space-y-6">
@@ -1514,7 +1494,6 @@ const ProjectDetailPage = () => {
                 {([
                   { id: "wordpress" as const, icon: <Puzzle className="h-3.5 w-3.5" />, label: "WP" },
                   { id: "script" as const, icon: <Code2 className="h-3.5 w-3.5" />, label: "Script" },
-                  { id: "iframe" as const, icon: <Monitor className="h-3.5 w-3.5" />, label: "iFrame" },
                 ]).map((m) => (
                   <button
                     key={m.id}
@@ -1569,64 +1548,14 @@ const ProjectDetailPage = () => {
                   </div>
                 )}
 
-                {integTab === "iframe" && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-medium">Embed Code</p>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1.5" onClick={() => copyToClipboard(iframeCode)}><Copy className="h-3 w-3" /> Copy</Button>
-                    </div>
-                    <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{iframeCode}</pre>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modals and Overlays */}
-      {editingPage && (
-        <EditPageModal 
-          page={editingPage}
-          projectUrl={project.url || ""}
-          onClose={() => setEditingPage(null)}
-          onSave={handleEditSave}
-        />
-      )}
 
-      {publishingPage && (
-        <PublishModal 
-          page={publishingPage}
-          project={project}
-          onClose={() => setPublishingPage(null)}
-          onPublished={handlePublished}
-        />
-      )}
-
-      {deletePageId && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-background rounded-2xl border border-border shadow-2xl overflow-hidden p-6 text-center animate-in fade-in zoom-in duration-200">
-            <div className="h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="h-7 w-7 text-red-500" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-1.5">Delete Page?</h3>
-            <p className="text-sm text-muted-foreground mb-6">This action cannot be undone. All data for this page will be permanently removed.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => setDeletePageId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={confirmDelete} disabled={deletePageMutation.isPending}>
-                {deletePageMutation.isPending ? "Deleting..." : "Delete Forever"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {viewingUsagePage && (
-        <UsageModal 
-          page={viewingUsagePage} 
-          onClose={() => setViewingUsagePage(null)} 
-        />
-      )}
     </div>
   );
 };

@@ -10,14 +10,17 @@ const logger = require('../utils/logger');
  */
 exports.createLead = async (req, res) => {
   try {
-    const { name, email, phone, message, pageSlug, pageId, projectId, domain, url } = req.body;
+    const { name, email, phone, message, pageSlug, pageId, projectId, domain, url, path: reqPath } = req.body;
 
     // Determine domain and url if not provided in body (e.g. from headers)
     const finalDomain = domain || req.get('origin') || req.get('host') || 'unknown';
     const finalUrl = url || req.get('referer') || 'unknown';
+    
+    // Robust slug detection
+    const targetSlug = pageSlug || (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
 
     // Basic validation
-    if (!email || !pageSlug) {
+    if (!email || !targetSlug) {
       return res.status(400).json({
         status: 'error',
         message: 'Missing required fields: email and pageSlug are mandatory.'
@@ -27,7 +30,7 @@ exports.createLead = async (req, res) => {
     // ─── DUPLICATE PROTECTION: Prevent multiple leads within seconds ───
     const recentLead = await Lead.findOne({
       email: email.toLowerCase(),
-      pageSlug: pageSlug,
+      pageSlug: targetSlug,
       createdAt: { $gt: new Date(Date.now() - 5000) } // 5 second window
     });
 
@@ -41,27 +44,25 @@ exports.createLead = async (req, res) => {
 
     // Try to find the page to verify it exists and get projectId if missing
     let finalProjectId = projectId;
-    if (!finalProjectId) {
-      const page = await Page.findOne({ slug: pageSlug });
-      if (page) {
-        finalProjectId = page.projectId;
-      }
+    let page = null;
+    
+    page = await Page.findOne({ slug: targetSlug });
+    if (page) {
+      if (!finalProjectId) finalProjectId = page.projectId;
     }
 
     const lead = await Lead.create({
       name: name || 'Contact',
-      email,
-      phone,
-      message,
-      pageSlug,
-      pageId,
+      email: email.trim().toLowerCase(),
+      phone: phone || '',
+      message: message || '',
+      pageSlug: targetSlug,
+      pageId: pageId || (page ? page._id : null),
       projectId: finalProjectId,
       domain: finalDomain,
       url: finalUrl,
       ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      domain: req.headers.host || 'unknown',
-      url: req.headers.referer || req.originalUrl || 'unknown'
+      userAgent: req.get('User-Agent')
     });
 
     logger.info(`✅ New lead captured for page: ${pageSlug}`, { leadId: lead._id });
@@ -98,9 +99,12 @@ exports.createLead = async (req, res) => {
       maxAge: 300000 // 5 minutes
     });
 
+    const thankYouUrl = page && page.thankYouUrl ? page.thankYouUrl : `/${targetSlug}/thank-you`;
+
     return res.status(201).json({
       status: 'success',
       message: 'Lead saved successfully',
+      thankYouUrl,
       data: { leadId: lead._id }
     });
 

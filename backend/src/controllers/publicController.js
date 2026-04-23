@@ -38,7 +38,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles landingPageContent landingPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl');
+    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -93,6 +93,8 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       logoUrl: logoUrl,
       websiteUrl: page.websiteUrl,
       thankYouUrl: page.thankYouUrl,
+      thankYouPageContent: page.thankYouPageContent,
+      thankYouPageStyles: page.thankYouPageStyles,
       meta: {
         _id: page._id,
         title: page.title,
@@ -103,7 +105,8 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         secondaryColor: secondaryColor,
         logoUrl: logoUrl,
         websiteUrl: page.websiteUrl,
-        thankYouUrl: page.thankYouUrl
+        thankYouUrl: page.thankYouUrl,
+        hasCustomThankYou: !!page.thankYouPageContent
       }
     });
   } catch (err) {
@@ -465,7 +468,15 @@ exports.getPublicPageHTML = async (req, res, next) => {
         const forwardedHost = req.headers['x-forwarded-host'];
         const hostHeader   = req.headers['host'];
         const referer      = req.headers['referer'];
-        const host         = forwardedHost || hostHeader || (referer ? new URL(referer).hostname : '');
+        
+        let host = forwardedHost || hostHeader || '';
+        if (!host && referer) {
+          try {
+            host = new URL(referer).hostname;
+          } catch (e) {
+            host = referer.split('/')[2] || referer;
+          }
+        }
         
         let incomingRequestDomain = normalizeDomain(host);
         const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
@@ -534,6 +545,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
 
     res.status(200).send(renderFullHTML(page, canonicalUrl));
   } catch (err) {
+    console.error('❌ Public Page Error:', err);
     next(err);
   }
 };
@@ -914,18 +926,25 @@ exports.getDynamicPage = async (req, res, next) => {
 exports.submitDynamicLead = async (req, res, next) => {
   try {
     const data = req.body;
-    const { domain, pageUrl, path: reqPath, email } = data;
+    const { domain, pageUrl, url, pageSlug, path: reqPath, email } = data;
 
     if (!email) {
       return res.status(400).json({ status: 'error', message: 'Email is required' });
     }
 
-    // Find the page associated with this submission
-    const cleanSlug = (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
-    const page = await Page.findOne({ 
-      slug: cleanSlug, 
+    // 1. Find the page associated with this submission
+    // Support multiple field patterns for maximum compatibility with tracker/embed/SDKs
+    const targetSlug = pageSlug || data.slug || (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
+    
+    let page = await Page.findOne({ 
+      slug: targetSlug, 
       isDeleted: { $ne: true } 
     });
+
+    // Fallback search if still not found
+    if (!page && pageSlug) {
+        page = await Page.findOne({ slug: pageSlug });
+    }
 
     // Create the lead
     const lead = await Lead.create({
@@ -934,8 +953,8 @@ exports.submitDynamicLead = async (req, res, next) => {
       phone: data.phone || data.tel || '',
       message: data.message || data.comments || '',
       domain: domain || 'unknown',
-      url: pageUrl || 'unknown',
-      pageSlug: cleanSlug,
+      url: pageUrl || url || page.url || 'unknown',
+      pageSlug: targetSlug || 'unknown',
       pageId: page ? page._id : null,
       projectId: page ? page.projectId : null,
       ip: req.ip,
