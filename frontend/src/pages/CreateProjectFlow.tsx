@@ -10,7 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { copyToClipboard } from "@/lib/utils";
 
 type Step = "form" | "integration";
-type IntegrationMethod = "wordpress" | "script" | "iframe";
+type IntegrationMethod = "wordpress" | "script";
 
 const categories = [
   "General",
@@ -49,7 +49,6 @@ const CreateProjectFlow = () => {
   const [selectedMethod, setSelectedMethod] = useState<IntegrationMethod>("wordpress");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scriptCopied, setScriptCopied] = useState(false);
-  const [iframeCopied, setIframeCopied] = useState(false);
 
   // Form fields
   const [name, setName] = useState("");
@@ -245,12 +244,6 @@ const CreateProjectFlow = () => {
       label: "Script (Any Website)",
       desc: "Add one line of JavaScript to embed your page on any website or CMS.",
     },
-    {
-      id: "iframe" as const,
-      icon: <Monitor className="h-5 w-5" />,
-      label: "Embed iFrame",
-      desc: "Use an iFrame to embed your page anywhere that accepts HTML.",
-    },
   ];
 
   const wordpressSteps = [
@@ -298,7 +291,6 @@ const CreateProjectFlow = () => {
   const scriptCode = createdProject
     ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
     : "";
-  const iframeCode = `<iframe src="https://your-subdomain.ppcbuilder.io/lp/your-page-slug" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -659,36 +651,6 @@ const CreateProjectFlow = () => {
             </div>
           )}
 
-          {/* iFrame Code */}
-          {selectedMethod === "iframe" && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden mb-5">
-              <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
-                <p className="text-sm font-semibold text-foreground">Embed iFrame Code</p>
-                <button
-                  onClick={async () => {
-                    const success = await copyToClipboard(iframeCode);
-                    if (success) {
-                      setIframeCopied(true);
-                      toast.success("Code copied!");
-                      setTimeout(() => setIframeCopied(false), 2000);
-                    } else {
-                      toast.error("Failed to copy code");
-                    }
-                  }}
-                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
-                >
-                  {iframeCopied ? (
-                    <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
-                  ) : (
-                    <><Copy className="h-3.5 w-3.5" /> Copy</>
-                  )}
-                </button>
-              </div>
-              <div className="p-5">
-                <pre className="text-xs text-foreground font-mono bg-muted rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all">{iframeCode}</pre>
-              </div>
-            </div>
-          )}
 
           {/* CTA */}
           <div className="grid grid-cols-2 gap-4">

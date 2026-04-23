@@ -64,6 +64,9 @@ const errorMiddleware = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
+  console.error(`❌ [${req.method}] ${req.originalUrl} → ${err.statusCode} - ${err.message}`);
+  if (err.stack) console.error(err.stack);
+
   logger.error(`${req.method} ${req.originalUrl} → ${err.message}`, {
     statusCode: err.statusCode,
     stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
