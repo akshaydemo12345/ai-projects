@@ -13,6 +13,10 @@ export const leadGenStyles = `
     align-items: center;
     padding: 15px 5%;
     background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   }
   
   .logo img { height: 45px; }
@@ -35,7 +39,15 @@ export const leadGenStyles = `
   }
   
   @media (max-width: 900px) {
-    .hero { flex-direction: column; text-align: center; }
+    .header { padding: 10px 5%; }
+    .contact-info { font-size: 14px; }
+    .contact-info span { font-size: 18px !important; }
+    .contact-info div div:first-child { display: none; }
+    .hero { flex-direction: column; text-align: center; padding: 40px 5%; }
+    .hero h1 { font-size: 36px; }
+    .features, .testimonials-row, .teaching-section, .video-section { flex-direction: column; padding: 40px 5%; gap: 30px; }
+    .feature-image { height: 180px; }
+    .tm-img { width: 100px; height: 100px; }
   }
   
   .hero-form {
@@ -203,6 +215,49 @@ export const leadGenStyles = `
     padding: 40px;
     font-size: 12px;
   }
+
+  /* Premium Page Loader */
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    font-family: 'Inter', sans-serif;
+  }
+  .loader-visual {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    margin-bottom: 24px;
+  }
+  .loader-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-top-color: #74a12e;
+    border-radius: 50%;
+    animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  .loader-ring:nth-child(2) {
+    inset: 8px;
+    border-top-color: #98c64a;
+    animation-direction: reverse;
+    animation-duration: 1s;
+  }
+  .loader-text {
+    color: #333;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 export const leadGenHtml = `
@@ -340,5 +395,23 @@ export const leadGenHtml = `
     <footer class="footer">
       Copyright © 2026. All rights reserved. Design by yourbusiness.com
     </footer>
+
+    <div id="loader" class="page-loader">
+      <div class="loader-visual">
+        <div class="loader-ring"></div>
+        <div class="loader-ring"></div>
+      </div>
+      <div class="loader-text">Registering your account...</div>
+    </div>
+
+    <script>
+      document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('loader').style.display = 'flex';
+        setTimeout(function() {
+          console.log('Form submitted, loader would stay until thank you page');
+        }, 2000);
+      });
+    </script>
   </div>
 `;

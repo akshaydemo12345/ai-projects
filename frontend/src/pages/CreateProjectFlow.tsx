@@ -252,7 +252,7 @@ const CreateProjectFlow = () => {
       title: "Download & Activate WordPress Plugin",
       desc: `Download and install the "PPC Landing Builder" plugin from WordPress plugin directory.`,
       action: (
-        <a href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/plugin/download`} download className="block mt-2">
+        <a href={`${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/plugin/download`} download className="block mt-2">
           <Button variant="outline" size="sm" className="h-8 text-xs gap-2">
             <Download className="h-3 w-3" /> Download Plugin
           </Button>
@@ -289,7 +289,7 @@ const CreateProjectFlow = () => {
   ];
 
   const scriptCode = createdProject
-    ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
+    ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
     : "";
 
   return (

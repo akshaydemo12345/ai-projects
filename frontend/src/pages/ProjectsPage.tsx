@@ -240,18 +240,14 @@ const ProjectsPage = () => {
 
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium mb-4 bg-muted/30 rounded-md p-2">
                   <span>Pages: {project.pageCount || 0}</span>
-
                   <span className="text-muted-foreground/30">|</span>
                   <span>Leads: {project.leadCount || 0}</span>
-                  <span className="text-muted-foreground/30">|</span>
-                  <span>Views: {project.views || 0}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
                     {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
                     {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
-                    {(!project.pages || project.pages.length === 0) && <span>No Pages</span>}
                   </div>
                   <Button
                     size="sm"

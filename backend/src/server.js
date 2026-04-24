@@ -46,7 +46,7 @@ app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token', 'bypass-tunnel-reminder']
 }));
 
 // Adjusted Helmet to allow iframes and cross-site content
