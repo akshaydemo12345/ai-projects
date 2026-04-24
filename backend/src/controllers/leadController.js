@@ -1,332 +1,224 @@
 const Lead = require('../models/Lead');
 const Page = require('../models/Page');
 const Project = require('../models/Project');
+const FormSchema = require('../models/FormSchema');
+const { validateForm } = require('../utils/dynamicValidator');
 const logger = require('../utils/logger');
 
 /**
- * @desc    Create a new lead from a landing page form
+ * @desc    Create a new dynamic lead from a landing page form
  * @route   POST /api/leads
  * @access  Public
  */
 exports.createLead = async (req, res) => {
   try {
-    const { name, email, phone, message, pageSlug, pageId, projectId, domain, url, path: reqPath } = req.body;
-
-    // Determine domain and url if not provided in body (e.g. from headers)
-    const finalDomain = domain || req.get('origin') || req.get('host') || 'unknown';
-    const finalUrl = url || req.get('referer') || 'unknown';
+    const rawBody = { ...req.body };
+    console.log(`📥 [LEAD] Incoming submission for page '${rawBody.pageSlug || 'unknown'}':`, JSON.stringify(rawBody));
     
-    // Robust slug detection
-    const targetSlug = pageSlug || (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
+    // Extract metadata & identifying info (Everything else goes into .data)
+    const { 
+      pageSlug: reqSlug, 
+      path: reqPath, 
+      token, 
+      projectId: reqProjectId, 
+      pageId: reqPageId 
+    } = rawBody;
 
-    // Basic validation
-    if (!email || !targetSlug) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Missing required fields: email and pageSlug are mandatory.'
-      });
+    // 1. Identify the Page & Project
+    let pageSlug = reqSlug || (reqPath ? reqPath.replace(/^\/+|\/+$/g, '').split('/')[0] : null);
+    
+    // Fallback: Extract slug from referer if completely missing
+    if (!pageSlug && req.get('referer')) {
+      try {
+        const urlObj = new URL(req.get('referer'));
+        pageSlug = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
+      } catch (e) {}
     }
 
-    // ─── DUPLICATE PROTECTION: Prevent multiple leads within seconds ───
-    const recentLead = await Lead.findOne({
-      email: email.toLowerCase(),
-      pageSlug: targetSlug,
-      createdAt: { $gt: new Date(Date.now() - 5000) } // 5 second window
+    if (!pageSlug) {
+      return res.status(400).json({ error: "Could not identify landing page source (missing slug/path)" });
+    }
+
+    const page = await Page.findOne({ slug: pageSlug });
+    if (!page) {
+      return res.status(404).json({ error: `Landing page with slug '${pageSlug}' not found` });
+    }
+
+    const projectId = page.projectId;
+    const pageId = page._id;
+
+    // 2. Fetch Schema & Prepare Data
+    // We remove internal meta fields and UTMs from the actual form data object
+    const { normalizeData } = require('../utils/dynamicValidator');
+    const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    const internalFields = ['pageSlug', 'path', 'token', 'projectId', 'pageId', 'domain', 'url', 'timestamp', ...utmFields];
+    
+    // DEBUG LOG
+    console.log('📥 [LEAD] Incoming Request Body Keys:', Object.keys(rawBody));
+    
+    const rawData = {};
+    const utmDetails = {};
+    
+    // DEBUG LOG: See EXACTLY what is arriving
+    console.log('📥 [LEAD] Full Incoming Body:', JSON.stringify(rawBody, null, 2));
+    
+    Object.keys(rawBody).forEach(key => {
+      if (utmFields.includes(key)) {
+        utmDetails[key] = rawBody[key];
+        rawData[key] = rawBody[key]; // ALSO keep in rawData for UI visibility
+      } else if (!internalFields.includes(key)) {
+        rawData[key] = rawBody[key];
+      }
     });
 
-    if (recentLead) {
+    if (Object.keys(utmDetails).length > 0) {
+      console.log('✅ [LEAD] UTM Details Found:', utmDetails);
+    } else {
+      console.log('⚠️ [LEAD] No UTM Details found in request body.');
+    }
+
+    let schema = await FormSchema.findOne({ page_id: pageId });
+    if (!schema) {
+      schema = await FormSchema.findOne({ project_id: projectId });
+    }
+    
+    // 3. Normalize & Validate
+    let leadData = rawData;
+    if (schema && schema.fields) {
+      leadData = normalizeData(schema.fields, rawData);
+      const errors = validateForm(schema.fields, rawData);
+      if (errors.length > 0) {
+        console.warn(`⚠️ Validation failed for lead:`, errors);
+        return res.status(400).json({ 
+          status: 'error', 
+          message: 'Validation failed', 
+          errors 
+        });
+      }
+    }
+
+    // 4. DUPLICATE PROTECTION (within 5 seconds)
+    // We check the raw data string for a quick identity match
+    const recentLead = await Lead.findOne({
+      projectId,
+      pageSlug,
+      createdAt: { $gt: new Date(Date.now() - 5000) }
+    }).sort({ createdAt: -1 });
+
+    if (recentLead && JSON.stringify(recentLead.data) === JSON.stringify(leadData)) {
       return res.status(200).json({
         status: 'success',
-        message: 'Lead already captured',
-        data: { leadId: recentLead._id, duplicate: true }
+        message: 'Duplicate lead detected, ignoring.',
+        duplicate: true
       });
     }
 
-    // Try to find the page to verify it exists and get projectId if missing
-    let finalProjectId = projectId;
-    let page = null;
-    
-    page = await Page.findOne({ slug: targetSlug });
-    if (page) {
-      if (!finalProjectId) finalProjectId = page.projectId;
-    }
-
+    // 5. Create Dynamic Lead
     const lead = await Lead.create({
-      name: name && name.trim() !== '' ? name : (email ? email.split('@')[0] : 'Inquirer'),
-      email: email.trim().toLowerCase(),
-      phone: phone || '',
-      message: message || '',
-      pageSlug: targetSlug,
-      pageId: pageId || (page ? page._id : null),
-      projectId: finalProjectId,
-      domain: finalDomain,
-      url: finalUrl,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
+      projectId,
+      pageId,
+      pageSlug,
+      data: leadData,
+      utm: utmDetails, // Top-level database field
+      meta: {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        referer: req.get('referer'),
+        domain: rawBody.domain || req.get('origin'),
+        url: rawBody.url || req.get('referer')
+      }
     });
 
-    logger.info(`✅ New lead captured for page: ${pageSlug}`, { leadId: lead._id });
-
-    // Also push lead to the Page model if it exists (backup/legacy support)
-    if (pageSlug) {
-      await Page.findOneAndUpdate(
-        { slug: pageSlug },
-        {
-          $push: {
-            leads: { name, email, message, createdAt: new Date() }
-          }
-        }
-      );
-    }
-
-    // Increment total leadCount in Project
-    if (finalProjectId) {
-      await Project.findByIdAndUpdate(finalProjectId, { $inc: { leadCount: 1 } });
-    }
-
-    // Set cookie with landing page context for Thank You page
-    const lpContext = JSON.stringify({
-      pageSlug: pageSlug,
-      pageId: pageId || null,
-      projectId: finalProjectId || null,
-      timestamp: Date.now()
+    // 6. Update Project leadCount (background increment for speed)
+    Project.findByIdAndUpdate(projectId, { $inc: { leadCount: 1 } }).catch(err => {
+      logger.error(`Failed to increment leadCount for project ${projectId}:`, err);
     });
 
-    res.cookie('lp_context', lpContext, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 300000 // 5 minutes
-    });
-
-    const thankYouUrl = page && page.thankYouUrl ? page.thankYouUrl : `/${targetSlug}/thank-you`;
-
-    return res.status(201).json({
+    res.status(201).json({
       status: 'success',
-      message: 'Lead saved successfully',
-      thankYouUrl,
-      data: { leadId: lead._id }
+      message: 'Lead captured successfully',
+      data: { 
+        leadId: lead._id,
+        debug_utm: utmDetails
+      }
     });
 
   } catch (error) {
-    logger.error('❌ Error creating lead:', error);
-    return res.status(500).json({
-      status: 'error',
-      message: 'Internal server error while saving lead.'
-    });
+    logger.error('❌ Lead Capture Failed:', error);
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
 /**
- * @desc    Get leads for a specific project or page
+ * @desc    Get all leads for a project
  * @route   GET /api/leads
- * @access  Private (Admin/User)
+ * @access  Private
  */
-exports.getLeads = async (req, res, next) => {
+exports.getLeads = async (req, res) => {
   try {
-    const { projectId, pageSlug, pageId } = req.query;
+    const filter = {};
+    if (req.query.projectId) filter.projectId = req.query.projectId;
+    if (req.query.pageSlug) filter.pageSlug = req.query.pageSlug;
 
-    // Security check: Find all projects belonging to this user
-    const userProjects = await Project.find({ userId: req.user._id }).select('_id');
-    const userProjectIds = userProjects.map(p => p._id);
-    console.log(`🔒 User ${req.user.email} owns projects: ${userProjectIds.join(', ')}`);
+    const leads = await Lead.find(filter)
+      .sort({ createdAt: -1 })
+      .populate('pageId', 'title slug');
 
-    // Build the query starting with user's project restriction and soft delete check
-    const query = {
-      projectId: { $in: userProjectIds },
-      isDeleted: { $ne: true }
-    };
-
-    // Apply optional sub-filters
-    if (projectId) {
-      // Ensure the requested projectId is actually owned by the user
-      if (!userProjectIds.map(id => id.toString()).includes(projectId)) {
-        return res.status(200).json({ status: 'success', results: 0, data: { leads: [] } });
+    // Include FormSchema if projectId available to help frontend show labels
+    let formSchema = null;
+    if (req.query.projectId || req.query.pageId) {
+      const targetProjectId = req.query.projectId;
+      
+      if (req.query.pageId) {
+         formSchema = await FormSchema.findOne({ page_id: req.query.pageId });
+      } else if (targetProjectId) {
+         formSchema = await FormSchema.findOne({ project_id: targetProjectId });
       }
-      query.projectId = projectId;
     }
 
-    if (pageId && require('mongoose').Types.ObjectId.isValid(pageId)) {
-      const page = await Page.findById(pageId);
-      if (page) {
-        console.log(`🔍 Filtering by page slug: ${page.slug} or ID: ${pageId}`);
-        query.$or = [
-          { pageId: pageId },
-          { pageSlug: page.slug }
-        ];
-      } else {
-        query.pageId = pageId;
-      }
-    } else if (pageSlug) {
-      query.pageSlug = pageSlug;
-    }
-
-    console.log('📋 Lead Query:', JSON.stringify(query));
-    const leads = await Lead.find(query).sort('-createdAt');
-    console.log(`✅ Leads found: ${leads.length}`);
-
-    return res.status(200).json({
-      status: 'success',
-      results: leads.length,
-      data: { leads }
+    res.status(200).json({ 
+      status: 'success', 
+      results: leads.length, 
+      data: { 
+        leads,
+        formSchema // Attach the schema to help with table headings/labels
+      } 
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
 /**
- * @desc    Delete a lead (Soft Delete)
+ * @desc    Delete a lead
  * @route   DELETE /api/leads/:id
  * @access  Private
  */
-exports.deleteLead = async (req, res, next) => {
+exports.deleteLead = async (req, res) => {
   try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) return res.status(404).json({ status: 'error', message: 'Lead not found' });
+    const lead = await Lead.findByIdAndDelete(req.params.id);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
 
-    // Security check: Verify project ownership
-    const project = await Project.findOne({ _id: lead.projectId, userId: req.user._id });
-    if (!project) {
-      return res.status(403).json({ status: 'error', message: 'Not authorized to delete this lead' });
-    }
-
-    // Soft delete
-    lead.isDeleted = true;
-    await lead.save();
-
-    // Decrement the project's aggregate lead count
-    if (lead.projectId) {
-      await Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } });
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Lead deleted successfully'
+    // Update Project leadCount (decrement)
+    Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } }).catch(err => {
+      logger.error(`Failed to decrement leadCount for project ${lead.projectId}:`, err);
     });
+
+    res.status(200).json({ status: 'success', message: 'Lead deleted' });
   } catch (error) {
-    next(error);
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
-
-/**
- * @desc    Serve the lead capture tracker script (obfuscated)
- * @route   GET /api/leads/tracker.js
- * @access  Public
- */
+// ... keep helper functions like getTrackerJs if they exist below ...
 exports.getTrackerJs = (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-
-  // ── Full readable source (kept here for maintainability) ──────────────────
-  const source = `(function(){
-    var s = document.getElementById("dm-lead-tracker") || document.currentScript;
-    if (!s) return;
-    var A = s.getAttribute("data-api-url") || "",
-        SL = s.getAttribute("data-page-slug") || "",
-        PI = s.getAttribute("data-page-id") || "",
-        PJ = s.getAttribute("data-project-id") || "";
-
-    console.log('[Lead Tracker] Initialized with API:', A, 'Slug:', SL);
-
-    function send(d, f, b, t, n) {
-      console.log('[Lead Tracker] Dummy simulation starting for lead:', d);
-      
-      // Front-end dummy simulation of an API request
-      setTimeout(function() {
-        console.log('[Lead Tracker] Response: success');
-        f.reset();
-        
-        // Dispatch success event for external scripts (pixels, etc.)
-        var ev = new CustomEvent('submit-success', { detail: { leadId: 'dummy_lead_' + Date.now() } });
-        document.dispatchEvent(ev);
-
-        // Redirect logic: prioritize window.pageThankYouUrl
-        var tyUrl = window.pageThankYouUrl || "";
-        if (tyUrl && tyUrl.trim() !== "") {
-          console.log('[Lead Tracker] Redirecting to custom URL:', tyUrl);
-          window.location.replace(tyUrl);
-        } else if (SL) {
-          console.log('[Lead Tracker] Redirecting to default Thank You page');
-          window.location.replace(window.location.origin + "/" + SL + "/thank-you");
-        } else {
-          alert("Thank you! Your message has been sent.");
-          if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
-          f.removeAttribute("data-submitting");
-        }
-      }, 1000); // 1-second simulated delay
-    }
-
-    document.addEventListener("submit", function(e) {
-      var f = e.target;
-      if (f.tagName !== "FORM") return;
-      
-      // 1. Check if already submitting to prevent double-clicks
-      if (f.getAttribute("data-submitting") === "true") {
-        e.preventDefault();
-        return;
-      }
-
-      console.log('[Lead Tracker] Form submit intercepted');
-      
-      // 2. Mark as submitting and prevent default
-      f.setAttribute("data-submitting", "true");
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      var b = f.querySelector('button[type="submit"]') || f.querySelector("button"),
-          t = b ? (b.textContent || "Submit") : "Submit";
-      
-      if (b) { 
-        b.disabled = true; 
-        b.textContent = "Sending...";
-        b.style.opacity = "0.7";
-        b.style.cursor = "not-allowed";
-      }
-
-      var fd = new FormData(f);
-      
-      // Try multiple field name variations
-      var data = {
-        pageSlug: SL,
-        pageId: PI,
-        projectId: PJ,
-        name: (fd.get("name") || fd.get("first_name") || fd.get("firstName") || fd.get("fullname") || 
-               (f.querySelector('input[name*="name"]') ? f.querySelector('input[name*="name"]').value : "") ||
-               (f.querySelector('input[type="text"]') ? f.querySelector('input[type="text"]').value : "")).trim(),
-        email: (fd.get("email") || fd.get("email_address") || 
-               (f.querySelector('input[type="email"]') ? f.querySelector('input[type="email"]').value : "")).trim(),
-        phone: (fd.get("phone") || fd.get("tel") || fd.get("telephone") || fd.get("mobile") ||
-               (f.querySelector('input[type="tel"]') ? f.querySelector('input[type="tel"]').value : "")).trim(),
-        message: (fd.get("message") || fd.get("comments") || fd.get("comment") || fd.get("inquiry") ||
-                 (f.querySelector('textarea') ? f.querySelector('textarea').value : "")).trim(),
-        domain: window.location.hostname,
-        url: window.location.href
-      };
-      
-      console.log('[Lead Tracker] Collected data:', data);
-
-      // Validate email before sending
-      if (!data.email) {
-        console.warn('[Lead Tracker] No email found, allowing natural submission if any');
-        f.removeAttribute("data-submitting");
-        if (b) { b.disabled = false; b.textContent = t; b.style.opacity = "1"; b.style.cursor = "pointer"; }
-        return; 
-      }
-
-      send(data, f, b, t, 1);
-    }, true);
-  })();`;
-
-  // ── Encode as base64 and wrap in a self-decoding eval stub ────────────────
-  const encoded = Buffer.from(source).toString('base64');
-  // The served script: a single-line eval that decodes and runs — nothing readable
-  const obfuscated = `(function(d,e,c){var s=d.createElement('script');s.text=c(e);d.head.appendChild(s)})(document,'${encoded}',function(e){return atob(e)});`;
-
-  res.send(obfuscated);
+  const fs = require('fs');
+  const path = require('path');
+  const trackerPath = path.join(__dirname, '../../public/tracker.js');
+  
+  if (fs.existsSync(trackerPath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    return res.sendFile(trackerPath);
+  }
+  res.status(404).send('Tracker script not found');
 };
-
-
-

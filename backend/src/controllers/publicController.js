@@ -8,6 +8,7 @@ const { normalizeDomain } = require('../utils/validation');
 const { generateTrackingScripts } = require('../utils/tracking');
 const path = require('path');
 const fs = require('fs');
+const { validateForm } = require('../utils/dynamicValidator');
 
 /**
  * Normalizes script content - wraps in script tags if not already present
@@ -154,8 +155,132 @@ const buildLeadCaptureScript = (page) => {
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
 
-    const rawScript = `!function(){var A="${apiBaseUrl}",SL="${pageSlug}",PI="${pageId}",PJ="${projectId}";function send(d,f,b,t,n){n=n||1;fetch(A+"/api/leads",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d),mode:"cors"}).then(function(r){return r.json()}).then(function(r){if(r.status==="success"||r.status==="error"){f.reset();var ev=new CustomEvent('submit-success',{detail:{leadId:r.data&&r.data.leadId?r.data.leadId:'none'}});document.dispatchEvent(ev);var tyUrl=window.pageThankYouUrl||"";if(tyUrl&&tyUrl.trim()!==""){window.location.replace(tyUrl)}else if(window.location.pathname&&window.location.pathname!=='/'){var currentPath=window.location.pathname.replace(/\\/+$/,'');window.location.replace(window.location.origin+currentPath+"/thank-you")}else if(SL){window.location.replace(window.location.origin+"/"+SL+"/thank-you")}else{window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/,'')+"/thank-you")}}}).catch(function(e){if(n<3){setTimeout(function(){send(d,f,b,t,n+1)},2000)}else{var currentPath=window.location.pathname.replace(/\\/+$/,'');window.location.replace(window.location.origin+currentPath+"/thank-you")}})}document.addEventListener("submit",function(e){var f=e.target;if(f.tagName!=="FORM")return;if(f.getAttribute("data-submitting")==="true"){e.preventDefault();return}f.setAttribute("data-submitting","true");e.preventDefault();e.stopImmediatePropagation();var b=f.querySelector('button[type="submit"]')||f.querySelector("button");var t=b?(b.textContent||"Submit"):"Submit";if(b){b.disabled=true;b.textContent="Sending...";b.style.opacity="0.7";b.style.cursor="not-allowed"}var fd=new FormData(f);var nameVal=fd.get("name")||fd.get("first_name")||fd.get("firstName")||fd.get("fullname");if(!nameVal){var nameInput=f.querySelector('input[name*="name"]')||f.querySelector('input[type="text"]');if(nameInput)nameVal=nameInput.value}var data={pageSlug:SL,pageId:PI,projectId:PJ,name:String(nameVal||"").trim(),email:(fd.get("email")||(f.querySelector('input[type="email"]')?f.querySelector('input[type="email"]').value:"")||"unknown@example.com").trim(),phone:(fd.get("phone")||fd.get("tel")||"").trim(),message:(fd.get("message")||(f.querySelector('textarea')?f.querySelector('textarea').value:"")).trim()};send(data,f,b,t,1)},true)}();`;
-  const encodedScript = Buffer.from(rawScript).toString('base64');
+  const rawScript = `!function(){
+  var A="${apiBaseUrl}", SL="${pageSlug}", PI="${pageId}", PJ="${projectId}";
+  
+  // Persistence Utility
+  function sUTM(){
+    var q=new URLSearchParams(window.location.search);
+    if(window.location.hash&&window.location.hash.indexOf("?")!==-1){
+      var hq=new URLSearchParams(window.location.hash.split("?")[1]);
+      hq.forEach(function(v,k){if(!q.has(k))q.append(k,v)});
+    }
+    var keys=["utm_source","utm_medium","utm_campaign","utm_term","utm_content","gclid","fbclid","msclkid"];
+    keys.forEach(function(k){
+      var v=q.get(k);
+      if(v){
+        try{sessionStorage.setItem("dm_"+k,v)}catch(e){}
+      }
+    });
+  }
+  sUTM();
+
+  function getUTM(){
+    var u={};
+    var keys=["utm_source","utm_medium","utm_campaign","utm_term","utm_content","gclid","fbclid","msclkid"];
+    keys.forEach(function(k){
+      var v=null;
+      try{v=sessionStorage.getItem("dm_"+k)}catch(e){}
+      if(!v){
+        var q=new URLSearchParams(window.location.search);
+        v=q.get(k);
+      }
+      if(v)u[k]=v;
+    });
+    return u;
+  }
+
+  function send(d,f,b,t,n){
+    n=n||1;
+    fetch(A+"/api/leads",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(d),
+      mode:"cors"
+    })
+    .then(function(r){return r.json()})
+    .then(function(r){
+      if(r.status==="success"||r.status==="error"){
+        f.reset();
+        var ev=new CustomEvent('submit-success',{detail:{leadId:r.data&&r.data.leadId?r.data.leadId:'none'}});
+        document.dispatchEvent(ev);
+        var tyUrl=window.pageThankYouUrl||"";
+        if(tyUrl&&tyUrl.trim()!==""){
+          window.location.replace(tyUrl)
+        }else if(window.location.pathname&&window.location.pathname!=='/'){
+          var currentPath=window.location.pathname.replace(/\\/+$/,'');
+          window.location.replace(window.location.origin+currentPath+"/thank-you")
+        }else if(SL){
+          window.location.replace(window.location.origin+"/"+SL+"/thank-you")
+        }else{
+          window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/,'')+"/thank-you")
+        }
+      }
+    })
+    .catch(function(e){
+      if(n<3){setTimeout(function(){send(d,f,b,t,n+1)},2000)}
+      else{
+        var currentPath=window.location.pathname.replace(/\\/+$/,'');
+        window.location.replace(window.location.origin+currentPath+"/thank-you")
+      }
+    })
+  }
+
+  document.addEventListener("submit",function(e){
+    var f=e.target;
+    if(f.tagName!=="FORM")return;
+    if(f.getAttribute("data-submitting")==="true"){e.preventDefault();return}
+    f.setAttribute("data-submitting","true");
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    var b=f.querySelector('button[type="submit"]')||f.querySelector("button");
+    var t=b?(b.textContent||"Submit"):"Submit";
+    if(b){
+      b.disabled=true;
+      b.textContent="Sending...";
+      b.style.opacity="0.7";
+      b.style.cursor="not-allowed"
+    }
+
+    var fd=new FormData(f);
+    var data={
+      pageSlug:SL,
+      pageId:PI,
+      projectId:PJ,
+      timestamp:new Date().getTime()
+    };
+
+    fd.forEach(function(v,k){
+      if(!k)return;
+      data[k]=v;
+    });
+
+    var utms=getUTM();
+    Object.keys(utms).forEach(function(k){data[k]=utms[k]});
+
+    if(!data.name && !data.full_name && !data.firstName){
+      var nVal=fd.get("name")||fd.get("first_name")||fd.get("firstName")||fd.get("fullname")||fd.get("contact_name");
+      if(!nVal){
+        var nIn=f.querySelector('input[name*="name"]')||f.querySelector('input[type="text"]');
+        if(nIn)nVal=nIn.value;
+      }
+      if(nVal)data.name=String(nVal).trim();
+    }
+
+    if(!data.email){
+      data.email=(fd.get("email")||(f.querySelector('input[type="email"]')?f.querySelector('input[type="email"]').value:"")||"unknown@example.com").trim();
+    }
+
+    if(!data.phone && !data.tel){
+      data.phone=(fd.get("phone")||fd.get("tel")||fd.get("mobile")||(f.querySelector('input[type="tel"]')?f.querySelector('input[type="tel"]').value:"")||"").trim();
+    }
+
+    send(data,f,b,t,1)
+  },true);
+}();`;
+  const minifiedScript = rawScript.replace(/\s+/g, ' ').trim();
+  const encodedScript = Buffer.from(minifiedScript).toString('base64');
   return `<script id="dm-lead-tracker">eval(atob("${encodedScript}"));</script>`;
 };
 
@@ -553,63 +678,99 @@ exports.getPublicPageHTML = async (req, res, next) => {
 /**
  * POST /:slug
  * Smart form handler that captures data and redirects to success page.
+ * Uses the new DYNAMIC lead architecture.
  */
 exports.handleFormSubmission = async (req, res, next) => {
   try {
-    const slug = String(req.params.slug || req.params[0] || '').trim();
-    const normalizedSlug = slug.replace(/^\/+|\/+$/g, '');
+    console.log('🚀 [RAW_REQUEST_BODY]:', JSON.stringify(req.body, null, 2));
+    const rawBody = { ...req.body };
+    const slugSource = req.params.slug || req.params[0] || req.body.pageSlug || req.body.path || '';
+    const slugStr = String(slugSource).trim();
+    const cleanSlug = slugStr.replace(/^\/+|\/+$/g, '').split('?')[0].split('/')[0];
     
-    const page = await Page.findOne({ slug: normalizedSlug, isDeleted: { $ne: true } });
+    console.log(`🔎 [DEBUG] Searching for page with slug: "${cleanSlug}" (original was: "${slugSource}")`);
+    
+    const page = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
     if (!page) return next(new AppError('Page not found', 404));
 
-    // Capture fields
-    const { name, first_name, last_name, email, phone, tel, message, comments } = req.body;
+    // ─── DYNAMIC DATA PREPARATION ───
+    const { validateForm, normalizeData } = require('../utils/dynamicValidator');
+    const internalFields = ['pageSlug', 'path', 'token', 'projectId', 'pageId', 'domain', 'url', 'timestamp', 'referer'];
+    const rawData = {};
     
-    // ─── STRICT VALIDATION: Safely extract ───
-    const leadName = (name || (first_name ? `${first_name} ${last_name || ''}`.trim() : 'Contact')).trim();
-    const leadEmail = (email || 'anonymous@example.com').trim().toLowerCase();
-    const leadPhone = (phone || tel || '').trim();
-    const leadMessage = (message || comments || '').trim();
-
-    const recentLead = await Lead.findOne({
-      email: leadEmail,
-      pageSlug: normalizedSlug,
-      createdAt: { $gt: new Date(Date.now() - 5000) }
+    Object.keys(rawBody).forEach(key => {
+      if (!internalFields.includes(key)) {
+        rawData[key] = rawBody[key];
+      }
     });
 
-    if (!recentLead) {
+    // 1. Fetch Schema
+    const schema = await FormSchema.findOne({ project_id: page.projectId });
+    
+    // 2. Normalize & Validate
+    let leadData = rawData;
+    if (schema && schema.fields) {
+      // Remap keys like 'name' -> 'full_name' based on schema
+      leadData = normalizeData(schema.fields, rawData);
+      
+      console.log('🔍 [DEBUG] LEAD SUBMISSION DEBUG:');
+      console.log('   - Incoming rawData:', rawData);
+      console.log('   - Normalized leadData:', leadData);
+      
+      const errors = validateForm(schema.fields, rawData);
+      if (errors.length > 0) {
+        console.warn(`⚠️ Validation failed for direct form (${cleanSlug}):`, errors);
+        return res.status(400).json({ status: 'error', message: 'Validation failed', errors });
+      }
+    }
+
+    // ─── DUPLICATE PROTECTION (5 sec) ───
+    const recentLead = await Lead.findOne({
+      projectId: page.projectId,
+      pageSlug: cleanSlug,
+      createdAt: { $gt: new Date(Date.now() - 5000) }
+    }).sort({ createdAt: -1 });
+
+    if (!recentLead || JSON.stringify(recentLead.data) !== JSON.stringify(leadData)) {
       await Lead.create({
-        name: leadName,
-        email: leadEmail,
-        phone: leadPhone,
-        message: leadMessage,
-        pageSlug: normalizedSlug,
-        pageId: page._id || undefined,
-        projectId: page.projectId || undefined,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        domain: req.headers.host || 'unknown',
-        url: req.headers.referer || req.originalUrl || 'unknown'
+        projectId: page.projectId,
+        pageId: page._id,
+        pageSlug: cleanSlug,
+        data: leadData,
+        meta: {
+          ip: req.ip,
+          userAgent: req.get('User-Agent'),
+          domain: req.headers.host || 'unknown',
+          url: req.headers.referer || req.originalUrl || 'unknown',
+          referer: req.get('referer')
+        }
       });
       if (page.projectId) {
         await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
       }
     }
 
-    const thankYouUrl = page.thankYouUrl?.trim() ? page.thankYouUrl : `/${normalizedSlug}/thank-you`;
+    const thankYouUrl = page.thankYouUrl?.trim() ? page.thankYouUrl : `/${cleanSlug}/thank-you`;
     
+    // Ajax response
     if (req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json')) {
       return res.status(201).json({ status: 'success', message: 'Lead saved', redirect: thankYouUrl });
     }
 
+    // Traditional redirect
     return res.redirect(thankYouUrl);
 
-
   } catch (err) {
-    console.error('❌ Form submission error:', err);
+    logger.error('❌ Dynamic Form Submission Error:', err);
     next(err);
   }
 };
+
+/**
+ * Modern JSON handler for AJAX trackers
+ */
+exports.submitDynamicLead = exports.handleFormSubmission;
+
 
 /**
  * GET /p/domain/:domain
@@ -941,6 +1102,13 @@ exports.submitDynamicLead = async (req, res, next) => {
       isDeleted: { $ne: true } 
     });
 
+    // Extract UTMs
+    const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    const utmDetails = {};
+    utmFields.forEach(field => {
+      if (data[field]) utmDetails[field] = data[field];
+    });
+
     // Fallback search if still not found
     if (!page && pageSlug) {
         page = await Page.findOne({ slug: pageSlug });
@@ -952,6 +1120,8 @@ exports.submitDynamicLead = async (req, res, next) => {
       email: email.trim().toLowerCase(),
       phone: data.phone || data.tel || '',
       message: data.message || data.comments || '',
+      data: data, // Store full body in Mixed for safety
+      utm: utmDetails,
       domain: domain || 'unknown',
       url: pageUrl || url || page.url || 'unknown',
       pageSlug: targetSlug || 'unknown',
@@ -976,7 +1146,8 @@ exports.submitDynamicLead = async (req, res, next) => {
       success: true,
       message: 'Lead captured successfully',
       thankYouUrl,
-      gaEventLabel: page ? page.slug : 'direct'
+      gaEventLabel: page ? page.slug : 'direct',
+      debug_utm: utmDetails
     });
 
   } catch (err) {

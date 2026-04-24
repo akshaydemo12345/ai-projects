@@ -4,62 +4,53 @@ const leadSchema = new mongoose.Schema({
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: false, // Optional if we only have slug
-  },
-  pageSlug: {
-    type: String,
     required: true,
-    index: true,
+    index: true
   },
   pageId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Page',
+    required: true,
+    index: true
   },
-  name: {
-    type: String,
-    required: [true, 'Please provide a name'],
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: [true, 'Please provide an email'],
-    lowercase: true,
-    trim: true,
-  },
-  phone: {
-    type: String,
-    trim: true,
-  },
-  message: {
-    type: String,
-    trim: true,
-  },
-  ip: {
-    type: String,
-  },
-  userAgent: {
-    type: String,
-  },
-  domain: {
+  pageSlug: {
     type: String,
     required: true,
+    index: true
   },
-  url: {
-    type: String,
-    required: true,
+  // 🔥 DYNAMIC DATA: Captures exactly what the FormSchema defines
+  data: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    index: true,
+  // 🔥 TRACKING META: For analytics and security
+  meta: {
+    ip: String,
+    userAgent: String,
+    referer: String,
+    domain: String,
+    url: String
+  },
+  utm: {
+    utm_source: String,
+    utm_medium: String,
+    utm_campaign: String,
+    utm_term: String,
+    utm_content: String,
+    gclid: String,
+    fbclid: String,
+    msclkid: String
   },
   isDeleted: {
     type: Boolean,
-    default: false,
-  },
+    default: false
+  }
+}, { 
+  timestamps: true,
+  strict: false // Allows for future expansion without migrations
 });
 
-// Compound index for fast duplicate checking
-leadSchema.index({ email: 1, pageSlug: 1, createdAt: -1 });
+// Compound index for fast lookups
+leadSchema.index({ projectId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Lead', leadSchema);

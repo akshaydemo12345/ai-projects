@@ -53,7 +53,7 @@ CRITICAL RULES:
 const buildUserPrompt = (input) => {
   const { businessName, industry, businessDescription, ctaText, logoUrl, primaryColor, secondaryColor, scrapedData } = input;
   const scrapedImages = scrapedData?.images?.slice(0, 5) || [];
-  
+
   return `
 # CONTEXT:
 - Name: ${businessName} | Industry: ${industry}
@@ -63,7 +63,7 @@ const buildUserPrompt = (input) => {
 - Logo: {{LOGO_URL}} (${logoUrl})
 
 # IMAGES (SCRAPED):
-${scrapedImages.map((img, i) => `${i+1}. ${img.url} (${img.type})`).join('\n')}
+${scrapedImages.map((img, i) => `${i + 1}. ${img.url} (${img.type})`).join('\n')}
 
 # RULES:
 - Lead form mandatory. 
@@ -134,11 +134,11 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const rawText = response.content[0].text;
       const usage = response.usage;
-      
+
       logger.info(`[AI] Raw response received. Length: ${rawText.length} characters. Usage: ${JSON.stringify(usage)}`);
 
       const result = processResult(rawText, logoUrl);
-      
+
       return {
         ...result,
         aiUsage: {
@@ -304,7 +304,7 @@ const generateProjectSuggestions = async ({ projectName, industry, projectDescri
 
   const result = await callAI(prompt);
   const responseText = result.fullHtml || '';
-  
+
   try {
     // Try to parse as JSON array
     const parsed = JSON.parse(responseText);

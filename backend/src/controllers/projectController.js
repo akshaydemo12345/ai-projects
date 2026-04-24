@@ -40,9 +40,8 @@ exports.createProject = async (req, res, next) => {
 // LIST PROJECTS
 exports.listProjects = async (req, res, next) => {
   try {
-    // Basic pagination
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 1000) || 1;
+    const limit = parseInt(req.query.limit, 1000) || 1000;
     const skip = (page - 1) * limit;
 
     const projects = await Project.find({ userId: req.user._id })
@@ -88,8 +87,15 @@ exports.getProject = async (req, res, next) => {
 
     // Ensure pageCount is accurate (sync it just in case)
     const pageCount = pages.length;
+    const publishedPageCount = pages.filter(p => p.status === 'published').length;
+
     if (project.pageCount !== pageCount) {
       project.pageCount = pageCount;
+      needsSave = true;
+    }
+
+    if (project.publishedPageCount !== publishedPageCount) {
+      project.publishedPageCount = publishedPageCount;
       needsSave = true;
     }
 
@@ -105,14 +111,22 @@ exports.getProject = async (req, res, next) => {
       await project.save({ validateBeforeSave: false });
     }
 
+    const FormSchema = require('../models/FormSchema');
     const cleanPages = await Promise.all(pages.map(async (p) => {
       const pObj = p.toObject();
       pObj.name = pObj.title;
       const count = await Lead.countDocuments({ pageId: p._id, isDeleted: { $ne: true } });
       pObj.leads = new Array(count).fill({}); // Fallback for frontend UI relying on leads.length
       pObj.leadCount = count;
+      
+      // Attach page-specific schema
+      pObj.formSchema = await FormSchema.findOne({ page_id: p._id });
+      
       return pObj;
     }));
+
+    // Fetch the FormSchema associated with this project (using existing FormSchema model)
+    const formSchema = await FormSchema.findOne({ project_id: id });
 
     res.status(200).json({
       status: 'success',
@@ -120,7 +134,8 @@ exports.getProject = async (req, res, next) => {
         project: {
           ...project.toObject(),
           leadCount: trueLeadCount, // explicitly guarantee Top Level Metric
-          pages: cleanPages
+          pages: cleanPages,
+          formSchema: formSchema // Attach the schema here
         }
       },
     });
