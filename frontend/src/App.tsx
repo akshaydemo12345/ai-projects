@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,21 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
+const RootHandler = () => {
+  const navigate = useNavigate();
+  const pg = new URLSearchParams(window.location.search).get('pg');
+  
+  useEffect(() => {
+    if (pg) {
+      // Instantly redirect to clean slug URL
+      navigate(`/${pg}`, { replace: true });
+    }
+  }, [pg, navigate]);
+
+  if (pg) return null;
+  return <Index />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -32,7 +48,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<RootHandler />} />
             <Route path="/login" element={<LoginPage />} />
             
             {/* Protected Dashboard Routes */}

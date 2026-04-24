@@ -5,11 +5,14 @@ import { pagesApi } from '@/services/api';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 const PublicLandingPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: paramSlug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const pgSlug = searchParams.get('pg');
+  const slug = paramSlug || pgSlug;
+  
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const isThankYouPage = window.location.pathname.endsWith('/thank-you');
+  const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
 
   // We might need the token from the URL if the backend requires it
   const token = searchParams.get('token');

@@ -13,6 +13,10 @@ export const agencyStyles = `
     padding: 0 5%;
     height: 80px;
     background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   }
   
   .logo-box {
@@ -57,128 +61,64 @@ export const agencyStyles = `
   }
   
   @media (max-width: 900px) {
-    .booking-bar { grid-template-columns: 1fr; margin-top: 20px; }
+    .header { height: auto; padding: 15px 5%; }
+    .logo-box { border: none; padding: 0; }
+    .call-us { font-size: 13px; }
+    .booking-bar { grid-template-columns: 1fr; margin: 20px auto; width: 90%; }
+    .hero h1 { font-size: 32px; }
+    .hero { padding: 60px 5%; }
+    .activities-grid, .tab-content, .accommodations-row { grid-template-columns: 1fr; padding: 40px 5%; }
+    .tab-image { height: 200px; }
+    .offer-banner { grid-row: auto; }
   }
 
-  .booking-bar input, .booking-bar select {
-    width: 100%;
-    border: 1px solid #eee;
-    padding: 12px 15px;
-    font-size: 13px;
-    border-radius: 4px;
-    outline: none;
+  @media (max-width: 480px) {
+    .room-grid { grid-template-columns: 1fr; }
+    .tabs { flex-direction: column; }
+    .tab { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
   }
-  
-  .booking-bar input::placeholder { color: #999; }
-  
-  .btn-cyan {
-    background: var(--primary, #00bcd4);
-    color: #fff;
-    border: none;
-    padding: 0 30px;
-    font-weight: 700;
-    font-size: 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 0.3s;
-    height: 100%;
-    min-height: 45px;
-  }
-  .btn-cyan:hover { background: #0097a7; }
 
-  .welcome-section {
-    padding: 100px 5% 60px;
-    text-align: center;
-  }
-  
-  .welcome-section h2 { font-size: 32px; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
-  .divider { width: 40px; height: 3px; background: #00bcd4; margin: 0 auto 25px; border-radius: 2px; }
-  .welcome-section p { max-width: 800px; margin: 0 auto; color: #777; line-height: 1.8; }
-
-  .activities-grid {
-    padding: 0 5% 100px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-  }
-  
-  .offer-banner {
-    background: #5c59a7;
-    color: #fff;
-    padding: 40px;
-    text-align: center;
-    border-radius: 4px;
-    display: flex;
+  /* Premium Page Loader */
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    display: none;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
-    grid-row: span 2;
+    z-index: 10001;
+    font-family: 'Poppins', sans-serif;
   }
-  
-  .offer-banner h3 { font-size: 28px; font-weight: 900; margin-bottom: 20px; border-top: 2px solid #fff; border-bottom: 2px solid #fff; padding: 15px 0; }
-  .offer-banner .price { font-size: 48px; font-weight: 900; margin: 20px 0; }
-  .offer-banner .price span { font-size: 20px; }
-  
-  .grid-item { position: relative; border-radius: 4px; overflow: hidden; height: 270px; background: #eee; }
-  .grid-item img { width: 100%; height: 100%; object-fit: cover; }
-  .grid-label { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 15px; font-size: 13px; font-weight: 600; border-radius: 2px; }
-
-  .wellness-section {
-    background: url('https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1600&auto=format&fit=crop&q=60') center center;
-    background-size: cover;
-    padding: 100px 5%;
-    text-align: center;
+  .loader-visual {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 24px;
   }
-  
-  .wellness-box {
-    background: #fff;
-    max-width: 1000px;
-    margin: 0 auto;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  .loader-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-top-color: #00bcd4;
+    border-radius: 50%;
+    animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
-  
-  .tabs { display: flex; background: #00bcd4; color: #fff; }
-  .tab { flex: 1; padding: 20px; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.1); font-size: 13px; font-weight: 700; text-transform: uppercase; }
-  .tab.active { background: #fff; color: #333; }
-  
-  .tab-content { display: flex; padding: 40px; text-align: left; gap: 40px; }
-  .tab-image { flex: 1; height: 300px; background: #eee; border-radius: 4px; }
-  .tab-info { flex: 1; }
-  .tab-info h3 { font-size: 24px; margin-bottom: 10px; }
-  .tab-info .meta { color: #f57c00; font-weight: 700; font-size: 13px; margin-bottom: 20px; }
-  .tab-info p { color: #777; font-size: 14px; line-height: 1.7; margin-bottom: 30px; }
-
-  .accommodations-row {
-     padding: 100px 5%;
-     display: grid;
-     grid-template-columns: 2fr 1fr;
-     gap: 50px;
+  .loader-ring:nth-child(2) {
+    inset: 8px;
+    border-top-color: #4dd0e1;
+    animation-direction: reverse;
+    animation-duration: 1s;
   }
-  
-  @media (max-width: 1000px) {
-    .accommodations-row { grid-template-columns: 1fr; }
+  .loader-text {
+    color: #333;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
   }
-
-  .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-  .room-card { position: relative; border-radius: 4px; overflow: hidden; background: #fff; }
-  .room-img { height: 250px; background: #eee; position: relative; }
-  .price-ribbon { position: absolute; bottom: 0; right: 0; background: #00bcd4; color: #fff; padding: 10px 20px; text-align: right; clip-path: polygon(20% 0%, 100% 0, 100% 100%, 0% 100%); }
-  .room-card h4 { margin: 15px 0; font-weight: 700; color: #444; }
-
-  .reviews h3 { font-size: 24px; font-weight: 800; margin-bottom: 30px; text-transform: uppercase; }
-  .review-item { margin-bottom: 30px; border-bottom: 1px solid #f1f1f1; padding-bottom: 20px; }
-  .stars { color: #ffca28; margin-bottom: 10px; font-size: 14px; }
-  .review-name { font-weight: 700; font-size: 14px; margin-bottom: 5px; }
-  .review-text { font-size: 13px; color: #777; line-height: 1.6; }
-
-  .footer { 
-    background: #eee; 
-    padding: 30px; 
-    text-align: center; 
-    color: #888; 
-    font-size: 12px; 
-    border-top: 1px solid #ddd;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 `;
 
@@ -343,5 +283,40 @@ export const agencyHtml = `
     <footer class="footer">
       Copyright © 2026. All Rights Reserved. Designed by LeadForest.com
     </footer>
+
+    <div id="loader" class="page-loader">
+      <div class="loader-visual">
+        <div class="loader-ring"></div>
+        <div class="loader-ring"></div>
+      </div>
+      <div class="loader-text">Securing your booking...</div>
+    </div>
+
+    <script>
+      // Wrap booking bar button in a form if it's not already
+      const bookingBar = document.querySelector('.booking-bar');
+      const btn = bookingBar.querySelector('.btn-cyan');
+      
+      // If the booking bar fields aren't already in a form, we'll handle the click
+      btn.addEventListener('click', function(e) {
+        // Prevent default if it's not a real form submission
+        const form = btn.closest('form');
+        if (!form) {
+           e.preventDefault();
+           document.getElementById('loader').style.display = 'flex';
+           setTimeout(function() {
+             console.log('Booking submitted, loader would stay until thank you page');
+           }, 2000);
+        }
+      });
+
+      // Handle any standard forms
+      document.querySelectorAll('form').forEach(f => {
+        f.addEventListener('submit', function(e) {
+          e.preventDefault();
+          document.getElementById('loader').style.display = 'flex';
+        });
+      });
+    </script>
   </div>
 `;

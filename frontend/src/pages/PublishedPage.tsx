@@ -13,7 +13,7 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
   const [copiedToken, setCopiedToken] = useState(false);
 
   const script = token
-    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${pageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/sdk/loader.js" async defer></script>`
+    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${pageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
     : '';
 
   const copyToken = async () => { 
@@ -110,7 +110,7 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
 const ScriptIntegration = ({ project, pageSlug }: { project: Project, pageSlug: string }) => {
   const [copied, setCopied] = useState(false);
   const token = project.apiToken || 'PC-TOKEN-PENDING';
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/sdk/embed.js?token=${token}&page=${pageSlug}" async></script>`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/embed.js?token=${token}&page=${pageSlug}" async></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
@@ -205,7 +205,7 @@ const PublishedPage = () => {
             <Globe size={16} color="#6b7280" />
             <span style={{ fontWeight: 700, fontSize: 14, color: '#374151' }}>Page Stats</span>
           </div>
-          {[{ label: 'Status', value: '● Published', color: '#22c55e' }, { label: 'Total Views', value: page.stats?.views?.toString() || '0' }, { label: 'Leads', value: page.stats?.leads?.toString() || '0' }, { label: 'Published', value: 'Just now' }].map((s) => (
+          {[{ label: 'Status', value: '● Published', color: '#22c55e' }, { label: 'Leads', value: page.stats?.leads?.toString() || '0' }, { label: 'Published', value: 'Just now' }].map((s) => (
             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: 13, color: '#6b7280' }}>{s.label}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: s.color || '#374151' }}>{s.value}</span>

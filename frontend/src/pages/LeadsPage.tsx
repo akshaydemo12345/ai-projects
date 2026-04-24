@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { leadsApi, type Lead } from "@/services/api";
+import { leadsApi, projectsApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -27,15 +27,23 @@ const LeadsPage = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Context detection from URL
-  const projectId = searchParams.get("project");
+  const projectIdParam = searchParams.get("project");
   const pageId = searchParams.get("page");
+
+  const [filterProjectId, setFilterProjectId] = useState<string>(projectIdParam || "");
+  const [filterPageId, setFilterPageId] = useState<string>(searchParams.get("page") || "");
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: projectsApi.getAll,
+  });
 
   // Query Data
   const { data, isLoading } = useQuery({
-    queryKey: ['leads', projectId, pageId],
+    queryKey: ['leads', filterPageId, filterProjectId],
     queryFn: () => leadsApi.getAll({ 
-      projectId: projectId || undefined, 
-      pageId: pageId || undefined 
+      projectId: filterProjectId || undefined, 
+      pageId: filterPageId || undefined 
     }),
   });
 
@@ -107,8 +115,10 @@ const LeadsPage = () => {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Leads Manager</h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {projectId || pageId ? (
-                    <>Filtering activity for <span className="text-primary font-semibold">Project Content</span></>
+                  {filterProjectId || filterPageId ? (
+                    <>Filtering activity for <span className="text-primary font-semibold">{
+                      projects.find((p: any) => p._id === filterProjectId)?.name || "Selected Content"
+                    }</span></>
                   ) : "Centralized hub for all your landing page conversions."}
                 </p>
               </div>
@@ -148,6 +158,23 @@ const LeadsPage = () => {
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <Filter className="h-4 w-4 text-slate-400" />
+              <select 
+                className="bg-transparent text-sm font-semibold outline-none text-slate-600 dark:text-slate-300 cursor-pointer min-w-[140px]"
+                value={filterProjectId}
+                onChange={(e) => {
+                  setFilterProjectId(e.target.value);
+                  setFilterPageId(""); // Clear page specific filter when project changes
+                }}
+              >
+                <option value="">All Projects</option>
+                {projects.map((p: any) => (
+                  <option key={p._id} value={p._id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
               <ArrowUpDown className="h-4 w-4 text-slate-400" />
               <select 
@@ -206,7 +233,9 @@ const LeadsPage = () => {
                             {(lead.name || 'L')[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">{lead.name}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                              {lead.name === 'Contact' ? (lead.email.split('@')[0]) : lead.name}
+                            </p>
                             <p className="text-xs text-slate-400 truncate max-w-[200px]" title={lead.message}>{lead.message || "No message left"}</p>
                           </div>
                         </div>

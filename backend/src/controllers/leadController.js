@@ -52,7 +52,7 @@ exports.createLead = async (req, res) => {
     }
 
     const lead = await Lead.create({
-      name: name || 'Contact',
+      name: name && name.trim() !== '' ? name : (email ? email.split('@')[0] : 'Inquirer'),
       email: email.trim().toLowerCase(),
       phone: phone || '',
       message: message || '',

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
-  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye
+  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
@@ -12,6 +12,11 @@ import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
 import { agencyHtml, agencyStyles } from "../templates/agency";
 import { leadGenHtml, leadGenStyles } from "../templates/leadGen";
 import { realEstateHtml, realEstateStyles } from "../templates/realEstate";
+import { healthcareHtml, healthcareStyles } from "../templates/healthcare";
+import { educationHtml, educationStyles } from "../templates/education";
+import { ecommerceHtml, ecommerceStyles } from "../templates/ecommerce";
+import { legalHtml, legalStyles } from "../templates/legal";
+import { technologyHtml, technologyStyles } from "../templates/technology";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -38,22 +43,53 @@ const generateAiPage = (
 // Replace these image URLs with your own once ready
 const LANDING_TEMPLATES = [
   {
-    id: "saas-hero",
-    name: "SaaS Hero",
+    id: "tech-saas",
+    name: "Modern SaaS",
     tag: "SaaS",
+    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #020617 0%, #1e293b 100%)",
+    prompt: "Create a futuristic, dark-themed SaaS landing page for an AI technology product. Include a hero with glassmorphism effects, interactive feature cards, and a sleek code preview section.",
+  },
+  {
+    id: "healthcare-tpl",
+    name: "Premium Health",
+    tag: "Healthcare",
+    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%)",
+    prompt: "Create a clean, trustworthy medical landing page. Include a specialist doctor section, appointment booking form, trust badges for certifications, and a service highlight grid.",
+  },
+  {
+    id: "edu-tpl",
+    name: "LMS Academy",
+    tag: "Education",
+    img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+    prompt: "Create a modern e-learning academy landing page. Include a featured courses section with price tags, student success stories, and a floating newsletter signup card.",
+  },
+  {
+    id: "ecom-tpl",
+    name: "Lumina Fashion",
+    tag: "E-commerce",
+    img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
+    prompt: "Create a high-end minimalist fashion store landing page. Include a full-screen hero image, trending products grid with hover effects, and a simple elegant navigation bar.",
+  },
+  {
+    id: "legal-tpl",
+    name: "Everett Legal",
+    tag: "Legal",
+    img: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    prompt: "Create a sophisticated, professional legal landing page. Use serif typography, a dark noble color palette, consultation form, and expertise area cards with subtle transitions.",
+  },
+  {
+    id: "saas-hero",
+    name: "SaaS Business",
+    tag: "Business",
     img: "/templates/Desktop_Thumbnail.png",
     gradient: "linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)",
     prompt:
       "Create a high-converting, fully mobile-responsive SaaS landing page with a bold hero section, animated feature highlights, testimonials, pricing table, and a strong CTA for free trial sign-up.",
-  },
-  {
-    id: "lead-gen",
-    name: "Lead Gen (Education)",
-    tag: "Education",
-    img: "/templates/Desktop_Thumbnail2.png",
-    gradient: "linear-gradient(135deg, #1b2e1b 0%, #74a12e 100%)",
-    prompt:
-      "Create a professional education and academic lead generation landing page with a primary lead capture form, feature grids for courses, video section, and student testimonials.",
   },
   {
     id: "agency",
@@ -66,15 +102,16 @@ const LANDING_TEMPLATES = [
   },
   {
     id: "real-estate",
-    name: "Real Estate (Business)",
-    tag: "Business",
+    name: "Real Estate",
+    tag: "Real Estate",
     img: "/templates/Desktop_Thumbnail4.png",
     gradient: "linear-gradient(135deg, #28a745 0%, #1e7e34 100%)",
     prompt:
-      "Create a professional business and financial consulting landing page with a hero slider, service cards, analytics charts, team showcase, and callback request form. Use green and white branding.",
+      "Create a professional real estate landing page with property galleries, agent profiles, interactive maps, and lead capture forms for inquiries.",
   },
-
 ];
+
+const TEMPLATE_CATEGORIES = ["All", "SaaS", "Education", "Healthcare", "E-commerce", "Legal", "Business", "Real Estate"];
 
 
 type CreationMethod = "ai" | "figma" | "template";
@@ -102,6 +139,7 @@ const CreatePagePage = () => {
 
   const [activeMethod, setActiveMethod] = useState<CreationMethod>("ai");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templateCategory, setTemplateCategory] = useState("All");
 
   const [pageName, setPageName] = useState("");
   const [pageSlug, setPageSlug] = useState("");
@@ -115,6 +153,7 @@ const CreatePagePage = () => {
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   useEffect(() => {
     if (project) {
@@ -147,6 +186,41 @@ const CreatePagePage = () => {
     setAiPrompt(tpl.prompt);
     setActiveMethod("template"); // Auto switch to template tab for feedback
     toast.info(`Selected Template: ${tpl.name}`);
+  };
+
+  const handleViewTemplate = (tpl: any) => {
+    let tpHtml = "";
+    let tpStyles = "";
+    switch (tpl.id) {
+      case "tech-saas": tpHtml = technologyHtml; tpStyles = technologyStyles; break;
+      case "healthcare-tpl": tpHtml = healthcareHtml; tpStyles = healthcareStyles; break;
+      case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
+      case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
+      case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
+      case "saas-hero": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+      case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
+      case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
+      case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
+    }
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${tpl.name} Preview</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+          <style>
+            ${tpStyles}
+            body { margin: 0; padding: 0; overflow-x: hidden; }
+          </style>
+        </head>
+        <body>${tpHtml}</body>
+      </html>
+    `;
+    localStorage.setItem('grapes-preview-html', fullHtml);
+    window.open('/preview', '_blank');
   };
 
   const [showLoader, setShowLoader] = useState(false);
@@ -219,6 +293,26 @@ const CreatePagePage = () => {
       const tName = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Template";
 
       switch (selectedTemplate) {
+        case "tech-saas":
+          enrichedContent = technologyHtml;
+          enrichedStyles = technologyStyles;
+          break;
+        case "healthcare-tpl":
+          enrichedContent = healthcareHtml;
+          enrichedStyles = healthcareStyles;
+          break;
+        case "edu-tpl":
+          enrichedContent = educationHtml;
+          enrichedStyles = educationStyles;
+          break;
+        case "ecom-tpl":
+          enrichedContent = ecommerceHtml;
+          enrichedStyles = ecommerceStyles;
+          break;
+        case "legal-tpl":
+          enrichedContent = legalHtml;
+          enrichedStyles = legalStyles;
+          break;
         case "saas-hero":
           enrichedContent = saasHeroHtml;
           enrichedStyles = saasHeroStyles;
@@ -320,8 +414,7 @@ const CreatePagePage = () => {
       <div className="flex-1 flex min-h-0">
 
         {/* ─────────────────────── LEFT PANEL ─────────────────────────────── */}
-        <div className={`flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 ${activeMethod === 'template' ? 'w-full md:w-[52%] lg:w-[55%]' : 'w-full'
-          }`}>
+        <div className="flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 w-full md:w-[52%] lg:w-[55%]">
 
           {/* Left Header */}
           <div className="px-8 pt-10 pb-6 border-b border-gray-50">
@@ -576,111 +669,213 @@ const CreatePagePage = () => {
         </div>
 
         {/* ─────────────────────── RIGHT PANEL ─────────────────────────────── */}
-        {activeMethod === 'template' && (
-          <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100 animate-in fade-in slide-in-from-right-5 duration-300">
-
-            {/* Right Header */}
-            <div className="px-7 pt-10 pb-5 border-b border-gray-100">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Landing Page Templates</p>
-              <p className="text-sm text-gray-500 mt-0.5">Click a template to use it as your starting point</p>
-            </div>
-
-            {/* Template Grid */}
-            <div className="flex-1 px-6 py-6">
-              <div className="grid grid-cols-2 gap-4">
-                {LANDING_TEMPLATES.map((tpl) => (
+        <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100">
+          {activeMethod === 'ai' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">AI Prompt Inspiration</p>
+                <p className="text-sm text-gray-500 mt-0.5">Click a preset to instantly build your landing page</p>
+              </div>
+              <div className="flex-1 px-7 py-8 grid grid-cols-1 gap-4">
+                {[
+                  { title: "High-Converting SaaS", desc: "Perfect for software products with pricing and features.", color: "bg-blue-50 text-blue-600", icon: <Zap className="h-4 w-4" />, prompt: "A modern SaaS landing page for a cloud storage product. Include a hero section with a signup form, tiered pricing table, trust badges, and a features grid with icons." },
+                  { title: "Local Business Lead Gen", desc: "Optimized for roofing, plumbing, or dental services.", color: "bg-emerald-50 text-emerald-600", icon: <MapPin className="h-4 w-4" />, prompt: "PPC landing page for a local roofing company. High-visibility phone number, service area map, 'Get a Quote' form above the fold, and client testimonials." },
+                  { title: "Digital Agency Portfolio", desc: "Showcase creative work and service packages.", color: "bg-violet-50 text-violet-600", icon: <Eye className="h-4 w-4" />, prompt: "Luxury digital agency landing page. Dark theme with neon accents, project gallery slider, service list with hover effects, and a team introduction section." },
+                  { title: "Real Estate Showcase", desc: "Display properties with high-quality imagery.", color: "bg-amber-50 text-amber-600", icon: <LayoutTemplate className="h-4 w-4" />, prompt: "Premium real estate landing page. Hero image of a luxury apartment, property feature list (sqft, beds, baths), interactive map, and an inquiry form for agents." }
+                ].map((preset, i) => (
                   <button
-                    key={tpl.id}
+                    key={i}
                     onClick={() => {
-                      handleTemplateSelect(tpl);
-                      if (activeMethod === "template") return;
-                      setActiveMethod("template");
+                      setAiPrompt(preset.prompt);
+                      toast.success(`Loaded ${preset.title} preset`);
                     }}
-                    className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
-                      ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
-                      : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
-                      }`}
+                    className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all text-left flex gap-4 group"
                   >
-                    {/* Image / Gradient placeholder */}
-                    <div
-                      className="w-full aspect-[4/3] relative overflow-hidden"
-                      style={{ background: tpl.gradient }}
-                    >
-                      {tpl.img ? (
-                        <img
-                          src={tpl.img}
-                          alt={tpl.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        /* Placeholder mockup shapes */
-                        <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
-                          <div className="w-full h-4 bg-white rounded-md" />
-                          <div className="w-3/4 h-3 bg-white rounded-md" />
-                          <div className="w-1/2 h-3 bg-white rounded-md" />
-                          <div className="flex gap-2 mt-2">
-                            <div className="w-16 h-7 bg-white rounded-lg" />
-                            <div className="w-14 h-7 bg-white/50 rounded-lg" />
-                          </div>
-                          <div className="flex-1 grid grid-cols-3 gap-2 mt-2">
-                            <div className="bg-white/40 rounded-xl" />
-                            <div className="bg-white/40 rounded-xl" />
-                            <div className="bg-white/40 rounded-xl" />
-                          </div>
-                          <div className="w-full h-8 bg-white/30 rounded-lg mt-1" />
-                        </div>
-                      )}
-
-                      {/* Selected overlay */}
-                      {selectedTemplate === tpl.id && (
-                        <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
-                          <div className="bg-white rounded-full p-1.5 shadow-xl">
-                            <CheckCircle2 className="h-5 w-5 text-violet-600" />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                        {tpl.tag}
-                      </div>
-
-                      {/* View Button Overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewTemplate(tpl);
-                          }}
-                          className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-white hover:text-black transition-all flex items-center gap-1.5"
-                        >
-                          <Eye className="h-3 w-3" />
-                          View Template
-                        </button>
-                      </div>
+                    <div className={`h-12 w-12 rounded-xl flex-shrink-0 flex items-center justify-center ${preset.color}`}>
+                      {preset.icon || <Sparkles className="h-5 w-5" />}
                     </div>
-
-                    {/* Name only — minimal */}
-                    <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
-                      {selectedTemplate === tpl.id
-                        ? <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">Selected</span>
-                        : <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />}
+                    <div>
+                      <h3 className="text-sm font-extrabold text-gray-900 group-hover:text-violet-600 transition-colors">{preset.title}</h3>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{preset.desc}</p>
                     </div>
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
 
-                {/* "More Coming Soon" card */}
-                <div className="rounded-2xl border-2 border-dashed border-gray-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4">
-                  <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-gray-400" />
+          {activeMethod === 'figma' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Design to Code Tips</p>
+                <p className="text-sm text-gray-500 mt-0.5">Best practices for Figma and Image uploads</p>
+              </div>
+              <div className="flex-1 px-10 py-12 flex flex-col items-center justify-center text-center space-y-8">
+                <div className="relative">
+                  <div className="h-24 w-24 rounded-[32px] bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-200">
+                    <Figma className="h-10 w-10 text-white" />
                   </div>
-                  <p className="text-xs font-semibold text-gray-400">More templates</p>
-                  <p className="text-[10px] text-gray-300">Coming soon</p>
+                  <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-white shadow-lg flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                  </div>
+                </div>
+                
+                <div className="max-w-xs space-y-4">
+                  <h3 className="text-lg font-black text-gray-900">How it works</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Our AI analyzes your design image or Figma export and converts it into a clean, responsive Tailwind CSS landing page.
+                  </p>
+                </div>
+
+                <div className="w-full space-y-3">
+                  {[
+                    "Use high-resolution screenshots",
+                    "Ensure text is clearly legible",
+                    "Avoid overlapping complex elements",
+                    "Keep layout hierarchy standard"
+                  ].map((tip, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 text-left">
+                      <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="pt-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-4 py-2 rounded-full">
+                    Average processing time: 45s
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeMethod === 'template' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              {/* Category Filter */}
+              <div className="px-6 pt-6 flex flex-wrap gap-2">
+                {TEMPLATE_CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setTemplateCategory(cat)}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                      templateCategory === cat
+                        ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Template Grid */}
+              <div className="flex-1 px-6 py-6 scrollbar-hide">
+                  <div className="grid grid-cols-2 gap-4">
+                    {LANDING_TEMPLATES
+                      .filter(t => templateCategory === "All" || t.tag === templateCategory)
+                      .slice(0, visibleCount)
+                      .map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => {
+                          handleTemplateSelect(tpl);
+                          if (activeMethod === "template") return;
+                          setActiveMethod("template");
+                        }}
+                        className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
+                          ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
+                          : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
+                          }`}
+                      >
+                        {/* Image / Gradient placeholder */}
+                        <div
+                          className="w-full aspect-[4/3] relative overflow-hidden"
+                          style={{ background: tpl.gradient }}
+                        >
+                          {tpl.img ? (
+                            <img
+                              src={tpl.img}
+                              alt={tpl.name}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          ) : (
+                            /* Placeholder mockup shapes */
+                            <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
+                              <div className="w-full h-4 bg-white rounded-md" />
+                              <div className="w-3/4 h-3 bg-white rounded-md" />
+                              <div className="w-1/2 h-3 bg-white rounded-md" />
+                              <div className="flex gap-2 mt-2">
+                                <div className="w-16 h-7 bg-white rounded-lg" />
+                                <div className="w-14 h-7 bg-white/50 rounded-lg" />
+                              </div>
+                              <div className="flex-1 grid grid-cols-3 gap-2 mt-2">
+                                <div className="bg-white/40 rounded-xl" />
+                                <div className="bg-white/40 rounded-xl" />
+                                <div className="bg-white/40 rounded-xl" />
+                              </div>
+                              <div className="w-full h-8 bg-white/30 rounded-lg mt-1" />
+                            </div>
+                          )}
+
+                          {/* Selected overlay */}
+                          {selectedTemplate === tpl.id && (
+                            <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
+                              <div className="bg-white rounded-full p-1.5 shadow-xl">
+                                <CheckCircle2 className="h-5 w-5 text-violet-600" />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                            {tpl.tag}
+                          </div>
+
+                          {/* View Button Overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewTemplate(tpl);
+                              }}
+                              className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-white hover:text-black transition-all flex items-center gap-1.5"
+                            >
+                              <Eye className="h-3 w-3" />
+                              View Template
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Name only — minimal */}
+                        <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
+                          <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
+                          {selectedTemplate === tpl.id
+                            ? <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">Selected</span>
+                            : <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />}
+                        </div>
+                      </button>
+                    ))}
+
+                    {/* View More Logic */}
+                    {visibleCount < LANDING_TEMPLATES.filter(t => templateCategory === "All" || t.tag === templateCategory).length && (
+                      <button
+                        onClick={() => setVisibleCount(prev => prev + 4)}
+                        className="rounded-2xl border-2 border-dashed border-violet-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4 hover:bg-violet-50 hover:border-violet-400 transition-all group"
+                      >
+                        <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Zap className="h-5 w-5 text-violet-500" />
+                        </div>
+                        <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">View More</p>
+                        <p className="text-[10px] text-violet-400">Load 4 more templates</p>
+                      </button>
+                    )}
+                  </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Template Preview Modal ── */}
@@ -714,32 +909,46 @@ const CreatePagePage = () => {
 
           {/* Preview Content */}
           <div className="flex-1 w-full bg-white relative">
-            <iframe
-              srcDoc={`
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <meta charset="utf-8">
-                    <title>Preview</title>
-                    <script src="https://cdn.tailwindcss.com"></script>
-                    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-                    <style>
-                      ${previewTemplate.id === 'saas-hero' ? saasHeroStyles :
-                  previewTemplate.id === 'agency' ? agencyStyles :
-                    previewTemplate.id === 'lead-gen' ? leadGenStyles :
-                      previewTemplate.id === 'real-estate' ? realEstateStyles : ''}
-                    </style>
-                  </head>
-                  <body>
-                    ${previewTemplate.id === 'saas-hero' ? saasHeroHtml :
-                  previewTemplate.id === 'agency' ? agencyHtml :
-                    previewTemplate.id === 'lead-gen' ? leadGenHtml :
-                      previewTemplate.id === 'real-estate' ? realEstateHtml : ''}
-                  </body>
-                </html>
-              `}
-              className="absolute inset-0 w-full h-full border-none"
-            />
+            {(() => {
+              let tpHtml = "";
+              let tpStyles = "";
+              switch (previewTemplate.id) {
+                case "tech-saas": tpHtml = technologyHtml; tpStyles = technologyStyles; break;
+                case "healthcare-tpl": tpHtml = healthcareHtml; tpStyles = healthcareStyles; break;
+                case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
+                case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
+                case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
+                case "saas-hero": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+                case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
+                case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
+                case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
+              }
+
+              return (
+                <iframe
+                  srcDoc={`
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta charset="utf-8">
+                        <title>Preview</title>
+                        <script src="https://cdn.tailwindcss.com"></script>
+                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+                        <style>
+                          ${tpStyles}
+                          /* Helper styles for preview */
+                          body { margin: 0; padding: 0; overflow-x: hidden; }
+                        </style>
+                      </head>
+                      <body>
+                        ${tpHtml}
+                      </body>
+                    </html>
+                  `}
+                  className="absolute inset-0 w-full h-full border-none"
+                />
+              );
+            })()}
           </div>
         </div>
       )}

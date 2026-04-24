@@ -169,7 +169,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
 
   const handleInspect = async () => {
     if (!analyzeUrl.trim()) { toast.error("Please enter a URL first."); return; }
-    
+
     let targetUrl = analyzeUrl.trim();
     if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
     setAnalyzeUrl(targetUrl);
@@ -178,23 +178,23 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
     try {
       const res = await aiApi.inspect(targetUrl);
       const meta = res.data.metadata;
-      
+
       if (meta.logo) setLogoPreview(meta.logo);
       if (meta.logo) setLogoUrl(meta.logo);
-      
+
       if (meta.suggestedColors && meta.suggestedColors.length > 0) {
         setPrimaryColor(meta.suggestedColors[0]);
         if (meta.suggestedColors.length > 1) {
           setSecondaryColor(meta.suggestedColors[1]);
         }
       }
-      
+
       if (meta.title && !pageName) {
         const cleanName = meta.title.split('|')[0].trim();
         setPageName(cleanName);
         setPageSlug(autoSlug(cleanName));
       }
-      
+
       toast.success("Website analysis complete!");
     } catch (err: any) {
       toast.error(err.message || "Failed to analyze website");
@@ -409,7 +409,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
           {method === "analyze" && (
             <div className="p-6 space-y-4">
 
-               {/* Page Identity Fields (Appears/Updated after scan) */}
+              {/* Page Identity Fields (Appears/Updated after scan) */}
               <div className="rounded-xl border border-border bg-card p-4 space-y-4">
                 <div>
                   <label className="text-sm font-semibold text-foreground mb-1.5 block">
@@ -439,7 +439,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   </div>
                 </div>
               </div>
-              
+
               <div className="rounded-xl border border-border bg-card p-4 space-y-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Page Branding</p>
 
@@ -665,11 +665,11 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
 
               <div className="pt-2 border-t border-border/50">
                 <label className="text-sm font-bold text-foreground mb-1.5 block">Thank You URL (Redirect)</label>
-                <Input 
-                  value={thankYouUrl} 
-                  onChange={(e) => setThankYouUrl(e.target.value)} 
-                  placeholder="https://example.com/thank-you" 
-                  className="h-10 text-sm" 
+                <Input
+                  value={thankYouUrl}
+                  onChange={(e) => setThankYouUrl(e.target.value)}
+                  placeholder="https://example.com/thank-you"
+                  className="h-10 text-sm"
                 />
                 <p className="text-[10px] text-muted-foreground mt-1">The external URL where visitors land after form submission.</p>
               </div>
@@ -730,7 +730,7 @@ interface UsageModalProps {
 const UsageModal = ({ page, onClose }: UsageModalProps) => {
   const usage = page.aiUsage;
   const history = page.aiUsageHistory || [];
-  
+
   if (!usage && history.length === 0) return null;
 
   return (
@@ -768,7 +768,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="bg-background rounded-xl p-3 border border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -787,7 +787,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
               <Activity className="h-3.5 w-3.5 text-primary" />
               Generation History
             </p>
-            
+
             <div className="space-y-3">
               {history.length > 0 ? (
                 history.slice().reverse().map((item, index) => (
@@ -798,7 +798,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                     )}
                     {/* Timeline Dot */}
                     <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-background shadow-sm" />
-                    
+
                     <div className="bg-muted/40 rounded-xl p-3 border border-border/50 hover:border-primary/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -812,7 +812,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                           <p className="text-[9px] text-muted-foreground uppercase font-bold">{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center justify-between text-[9px] font-medium text-muted-foreground border-t border-border/30 pt-2">
                         <div className="flex gap-3">
                           <span>In: <span className="text-foreground font-bold">{item.promptTokens?.toLocaleString()}</span></span>
@@ -871,7 +871,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [published, setPublished] = useState(false);
 
   const publishUrl = page.publishedUrl || `${window.location.origin}/${page.slug}`;
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
   const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${page.slug}" async></script>`;
 
   const handlePublish = () => {
@@ -1028,12 +1028,12 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground">{s.text}</p>
                       {s.num === 1 && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="h-7 text-[10px] mt-2 gap-1.5"
                           onClick={() => {
-                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
                             window.open(`${apiBaseUrl}/plugin/download`, '_blank');
                             toast.success("Downloading plugin...");
                           }}
@@ -1226,7 +1226,7 @@ const ProjectDetailPage = () => {
   const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
-  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/embed.js" data-token="${project?.apiToken}" async></script>`;
+  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
 
 
@@ -1252,9 +1252,9 @@ const ProjectDetailPage = () => {
         />
       )}
       {viewingUsagePage && (
-        <UsageModal 
-          page={viewingUsagePage} 
-          onClose={() => setViewingUsagePage(null)} 
+        <UsageModal
+          page={viewingUsagePage}
+          onClose={() => setViewingUsagePage(null)}
         />
       )}
       {deletePageId && (
@@ -1313,7 +1313,7 @@ const ProjectDetailPage = () => {
             { label: "Total Pages", value: pages.length, icon: <FileText className="h-4 w-4" />, color: "from-violet-500 to-indigo-500", bg: "bg-violet-50 dark:bg-violet-950/30", textColor: "text-violet-700 dark:text-violet-400" },
             { label: "Published", value: publishedCount, icon: <Globe className="h-4 w-4" />, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", textColor: "text-emerald-700 dark:text-emerald-400" },
             { label: "Total Leads", value: totalLeads, icon: <UsersIcon className="h-4 w-4" />, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 dark:bg-amber-950/30", textColor: "text-amber-700 dark:text-amber-400" },
-            { label: "Total Views", value: totalViews, icon: <Eye className="h-4 w-4" />, color: "from-blue-500 to-cyan-500", bg: "bg-blue-50 dark:bg-blue-950/30", textColor: "text-blue-700 dark:text-blue-400" },
+
           ].map((stat) => (
             <div key={stat.label} className={`rounded-xl border border-border ${stat.bg} p-4 flex items-center gap-3 transition-all hover:shadow-md`}>
               <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
@@ -1329,7 +1329,7 @@ const ProjectDetailPage = () => {
 
         {/* ─── Main Grid Layout: Landing Pages (Left) & Integration (Right) ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
-          
+
           {/* ─── Left Side: Landing Pages List ─── */}
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden min-h-[500px]">
             {/* Section Header */}
@@ -1353,10 +1353,9 @@ const ProjectDetailPage = () => {
 
             {/* Table Header */}
             {pages.length > 0 && (
-              <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_100px_140px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="hidden md:grid grid-cols-[1fr_60px_80px_100px_140px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 <span>Page Name</span>
-                <span className="text-center">Status</span>
-                <span className="text-center">Views</span>
+                <span className="text-center">View</span>
                 <span className="text-center">Leads</span>
                 <span className="text-center">Usage</span>
                 <span className="text-right">Actions</span>
@@ -1383,7 +1382,7 @@ const ProjectDetailPage = () => {
                 pages.map((page) => (
                   <div
                     key={page._id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_100px_80px_80px_100px_140px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_80px_100px_140px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -1405,15 +1404,8 @@ const ProjectDetailPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-start md:justify-center">
-                      <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${page.status === "published" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40"}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${page.status === "published" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                        {page.status === "published" ? "Live" : "Draft"}
-                      </span>
-                    </div>
-
                     <div className="flex items-center justify-start md:justify-center">
-                      <div 
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(page.status === "published" ? `/${page.slug}` : `/preview/${page.slug}`, '_blank');
@@ -1421,16 +1413,15 @@ const ProjectDetailPage = () => {
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
                         title={page.status === "published" ? "View Live Page" : "Preview Draft"}
                       >
-                        <Eye className="h-3 w-3" />
-                        <span>{page.views || 0}</span>
+                        <ExternalLink className="h-4 w-4" />
                       </div>
                     </div>
 
                     <div className="flex items-center justify-start md:justify-center">
-                      <div 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          navigate(`/dashboard/leads?page=${page._id}`); 
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dashboard/leads?page=${page._id}`);
                         }}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
                         title="View Leads"
@@ -1441,7 +1432,7 @@ const ProjectDetailPage = () => {
                     </div>
 
                     <div className="flex flex-col items-center justify-start md:justify-center">
-                      <div 
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           if (page.aiUsage) setViewingUsagePage(page);
@@ -1509,20 +1500,22 @@ const ProjectDetailPage = () => {
                 {integTab === "wordpress" && (
                   <div className="space-y-4">
                     {[
-                      { num: 1, title: "Download Plugin", desc: "Install our WP plugin from the dashboard.", extra: (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-7 text-[10px] mt-1.5 gap-1.5"
-                          onClick={() => {
-                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-                            window.open(`${apiBaseUrl}/plugin/download`, '_blank');
-                            toast.success("Downloading plugin...");
-                          }}
-                        >
-                          <Download className="h-3 w-3" /> Download
-                        </Button>
-                      ) },
+                      {
+                        num: 1, title: "Download Plugin", desc: "Install our WP plugin from the dashboard.", extra: (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[10px] mt-1.5 gap-1.5"
+                            onClick={() => {
+                              const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
+                              window.open(`${apiBaseUrl}/plugin/download`, '_blank');
+                              toast.success("Downloading plugin...");
+                            }}
+                          >
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        )
+                      },
                       { num: 2, title: "Enter Token", desc: "Paste your API token in settings.", extra: <div onClick={copyToken} className="flex items-center gap-2 bg-muted border border-border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between"><span className="text-[10px] font-mono truncate max-w-[150px]">{project.apiToken}</span><Copy className="h-3 w-3 text-muted-foreground" /></div> },
                       { num: 3, title: "Sync Pages", desc: "Pages will auto-sync to your WP site." },
                     ].map((s) => (
