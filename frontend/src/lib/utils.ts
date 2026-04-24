@@ -41,3 +41,20 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Ensures a URL starts with a protocol (http/https).
+ */
+export const cleanUrl = (url?: string) => {
+  if (!url) return "#";
+  // If URL already has protocol, return as-is
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  // If it's a localhost URL without protocol
+  if (url.includes("localhost") || url.includes("127.0.0.1")) {
+    return `http://${url}`;
+  }
+  // Otherwise, add https://
+  return `https://${url}`;
+};

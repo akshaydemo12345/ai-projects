@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard } from "@/lib/utils";
+import { copyToClipboard, cleanUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1298,7 +1298,7 @@ const ProjectDetailPage = () => {
           <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{project.category}</span>
         </div>
-        <a href={project.websiteUrl} target="_blank" rel="noopener noreferrer"
+        <a href={cleanUrl(project.websiteUrl)} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors flex-shrink-0">
           <ExternalLink className="h-3.5 w-3.5" /> {project.websiteUrl}
         </a>

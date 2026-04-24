@@ -409,6 +409,15 @@ export interface Lead {
   projectId?: string;
   ip?: string;
   userAgent?: string;
+  data?: Record<string, any>;
+  meta?: {
+    ip?: string;
+    userAgent?: string;
+    domain?: string;
+    url?: string;
+    referer?: string;
+  };
+  formData?: Array<{ name: string; label: string; value: any; type?: string }>;
   createdAt: string;
 }
 

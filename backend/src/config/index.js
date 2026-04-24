@@ -18,7 +18,7 @@ const config = {
 
   // Database
   database: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-landing-page',
+    uri: process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/ai-landing-page',
   },
 
   // Frontend URLs
