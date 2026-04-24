@@ -9,22 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard } from "@/lib/utils";
-
-// ─── Helper Functions ────────────────────────────────────────────
-const cleanUrl = (url: string) => {
-  if (!url) return "#";
-  // If URL already has protocol, return as-is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  // If it's a localhost URL without protocol
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    return `http://${url}`;
-  }
-  // Otherwise, add https://
-  return `https://${url}`;
-};
+import { copyToClipboard, cleanUrl } from "@/lib/utils";
 
 // ─── Component ────────────────────────────────────────────
 const ProjectsPage = () => {
@@ -69,7 +54,7 @@ const ProjectsPage = () => {
   );
   const totalPages = projects.reduce((sum: number, p: any) => sum + (p.pageCount || 0), 0);
   const publishedPages = projects.reduce(
-    (sum: number, p: any) => sum + (p.pages?.filter((pg: any) => pg.status === "published").length || 0), 0
+    (sum: number, p: any) => sum + (p.publishedPageCount || 0), 0
   );
 
 
@@ -106,7 +91,7 @@ const ProjectsPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Projects</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage your PPC &amp; SEO landing page projects
+            Manage your SEO landing page projects
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -239,7 +224,7 @@ const ProjectsPage = () => {
                 </p>
 
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium mb-4 bg-muted/30 rounded-md p-2">
-                  <span>Pages: {project.pageCount || 0}</span>
+                  <span>Pages: {project.pageCount || 0} ({project.publishedPageCount || 0} Published)</span>
 
                   <span className="text-muted-foreground/30">|</span>
                   <span>Leads: {project.leadCount || 0}</span>
@@ -297,13 +282,13 @@ const ProjectsPage = () => {
                   <td className="px-5 py-3.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{project.name}</p>
-                      <a className="text-xs text-muted-foreground" href={project.websiteUrl}>{project.websiteUrl || "No URL"}</a>
+                      <a className="text-xs text-muted-foreground" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded truncate max-w-[120px]">{project.apiToken || "No Token"}</span>
-                      <button 
+                      <button
                         onClick={async () => {
                           if (project.apiToken) {
                             const success = await copyToClipboard(project.apiToken);

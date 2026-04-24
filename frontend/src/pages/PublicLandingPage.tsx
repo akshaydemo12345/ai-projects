@@ -65,8 +65,30 @@ const PublicLandingPage = () => {
         <script>
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
+          function persistUTMs() {
+            var q = new URLSearchParams(window.location.search);
+            var keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "msclkid"];
+            keys.forEach(function(k) {
+              var v = q.get(k);
+              if (v) { try { sessionStorage.setItem('dm_' + k, v); } catch (e) {} }
+            });
+          }
+          persistUTMs();
+
+          function getUTMs() {
+            var utms = {};
+            var keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "msclkid"];
+            keys.forEach(function(k) {
+              var v = null;
+              try { v = sessionStorage.getItem('dm_' + k); } catch (e) {}
+              if (!v) v = new URLSearchParams(window.location.search).get(k);
+              if (v) utms[k] = v;
+            });
+            return utms;
+          }
+
           function redirectToSuccessPage() {
-            const thankYouUrl = "${THANK_YOU_URL}";
+            var thankYouUrl = "${THANK_YOU_URL}";
             if (thankYouUrl && thankYouUrl.trim()) {
               window.top.location.href = thankYouUrl;
             } else {
@@ -74,20 +96,20 @@ const PublicLandingPage = () => {
             }
           }
 
-          async function submitLead(data, form, btn, originalBtnText, attempt = 1) {
+          async function submitLead(data, form, btn, originalBtnText, attempt) {
+            attempt = attempt || 1;
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
             
             try {
-              const response = await fetch("${API_URL}/api/leads", {
+              var response = await fetch("${API_URL}/api/leads", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
               });
               
-              const result = await response.json();
+              var result = await response.json();
               console.log("📥 API Response:", result);
 
-              // Allow 'error' if it's gracefully handled by backend (like already sent)
               if (result.status === 'success' || result.status === 'error') {
                 redirectToSuccessPage();
                 form.reset();
@@ -104,16 +126,16 @@ const PublicLandingPage = () => {
               if (attempt < 3) {
                 console.log("🔄 Retrying in 2 seconds...");
                 if (btn) btn.innerHTML = 'Retrying...';
-                setTimeout(() => submitLead(data, form, btn, originalBtnText, attempt + 1), 2000);
+                setTimeout(function() { submitLead(data, form, btn, originalBtnText, attempt + 1); }, 2000);
               } else {
-                const errorDiv = document.createElement('div');
+                var errorDiv = document.createElement('div');
                 errorDiv.style.cssText = "position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; borderRadius: 8px; boxShadow: 0 4px 12px rgba(0,0,0,0.15); zIndex: 9999; font-family: sans-serif; fontSize: 14px; fontWeight: 500; border-left: 4px solid #b91c1c; animation: slideIn 0.3s ease-out;";
                 errorDiv.innerHTML = "<b>Submission failed:</b> " + err.message;
                 document.body.appendChild(errorDiv);
-                setTimeout(() => {
+                setTimeout(function() {
                   errorDiv.style.opacity = '0';
                   errorDiv.style.transition = 'opacity 0.5s ease-out';
-                  setTimeout(() => errorDiv.remove(), 500);
+                  setTimeout(function() { errorDiv.remove(); }, 500);
                 }, 4000);
 
                 if (btn) {
@@ -126,29 +148,52 @@ const PublicLandingPage = () => {
 
 
           document.addEventListener('submit', function(e) {
-            const form = e.target;
+            var form = e.target;
             
             if (form && form.tagName === 'FORM') {
-              form.setAttribute('method', 'POST'); // Ensure POST method is used
+              form.setAttribute('method', 'POST');
               e.preventDefault();
               
-              const btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
-              const originalBtnText = btn ? btn.innerHTML : 'Submit';
+              var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
+              var originalBtnText = btn ? btn.innerHTML : 'Submit';
               if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = 'Sending...';
               }
 
-              const formData = new FormData(form);
-              const data = {
+              var formData = new FormData(form);
+              var data = {
                 pageSlug: "${PAGE_SLUG}",
                 projectId: "${PROJECT_ID}",
-                pageId: "${ACTUAL_PAGE_ID}",
-                name: formData.get('name') || formData.get('first_name') || (form.querySelector('input[type="text"]') ? form.querySelector('input[type="text"]').value : ''),
-                email: formData.get('email') || (form.querySelector('input[type="email"]') ? form.querySelector('input[type="email"]').value : ''),
-                phone: formData.get('phone') || formData.get('tel') || (form.querySelector('input[type="tel"]') ? form.querySelector('input[type="tel"]').value : ''),
-                message: formData.get('message') || formData.get('comments') || (form.querySelector('textarea') ? form.querySelector('textarea').value : '')
+                pageId: "${ACTUAL_PAGE_ID}"
               };
+
+              // Merge UTMs
+              var utms = getUTMs();
+              for (var k in utms) { data[k] = utms[k]; }
+
+              // Capture all fields dynamically
+              formData.forEach(function(value, key) {
+                if (!data[key]) data[key] = value;
+              });
+
+              // Fallbacks for standard fields
+              if (!data.name) {
+                var nInput = form.querySelector('input[type="text"]');
+                data.name = formData.get('name') || formData.get('first_name') || (nInput ? nInput.value : "") || '';
+              }
+              if (!data.email) {
+                var eInput = form.querySelector('input[type="email"]');
+                data.email = formData.get('email') || (eInput ? eInput.value : "") || 'unknown@example.com';
+              }
+              if (!data.phone) {
+                var pInput = form.querySelector('input[type="tel"]');
+                data.phone = formData.get('phone') || formData.get('tel') || (pInput ? pInput.value : "") || '';
+              }
+              if (!data.message) {
+                var mInput = form.querySelector('textarea');
+                data.message = formData.get('message') || formData.get('comments') || (mInput ? mInput.value : "") || '';
+              }
 
               submitLead(data, form, btn, originalBtnText);
             }
