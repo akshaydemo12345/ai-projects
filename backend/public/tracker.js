@@ -13,10 +13,40 @@
   };
 
   /**
-   * Initialize Tracking
+   * Extract UTM parameters from URL
    */
+  function persistUTMs() {
+    const params = new URLSearchParams(window.location.search);
+    if (window.location.hash && window.location.hash.includes('?')) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      hashParams.forEach((v, k) => { if (!params.has(k)) params.append(k, v); });
+    }
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    utmKeys.forEach(key => {
+      const val = params.get(key);
+      if (val) {
+        try { sessionStorage.setItem('dm_' + key, val); } catch (e) {}
+      }
+    });
+  }
+
+  function getUTMParameters() {
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    const utms = {};
+    utmKeys.forEach(key => {
+      let val = null;
+      try { val = sessionStorage.getItem('dm_' + key); } catch (e) {}
+      if (!val) {
+        const params = new URLSearchParams(window.location.search);
+        val = params.get(key);
+      }
+      if (val) utms[key.toLowerCase()] = val;
+    });
+    return utms;
+  }
+
   function initTracking() {
-    // Page View Event
+    persistUTMs();
     if (window.gtag) {
       window.gtag('event', 'page_view', {
         page_location: CONFIG.fullUrl,
@@ -36,19 +66,45 @@
 
       e.preventDefault();
 
-      const formData = new FormData(form);
       const data = {};
-      formData.forEach((value, key) => {
-        data[key] = value;
+      
+      // 1. Get all form elements
+      const elements = form.querySelectorAll('input, select, textarea');
+      elements.forEach((el, index) => {
+        if (el.type === 'submit' || el.type === 'button') return;
+        
+        // Priority: name attribute -> id attribute -> custom field_i
+        const key = el.getAttribute('name') || el.getAttribute('id') || `field_${index}`;
+        
+        // Handle different input types
+        if (el.type === 'checkbox') {
+          data[key] = el.checked;
+        } else if (el.type === 'radio') {
+          if (el.checked) data[key] = el.value;
+        } else {
+          data[key] = el.value;
+        }
       });
 
-      // Add metadata
+      // 2. Fallback to FormData for anything we missed (e.g. plugins, complex widgets)
+      const formData = new FormData(form);
+      formData.forEach((value, key) => {
+        if (data[key] === undefined || data[key] === '') {
+          data[key] = value;
+        }
+      });
+
+      // Add metadata and UTMs
       data.domain = CONFIG.domain;
       data.pageUrl = CONFIG.fullUrl;
       data.path = CONFIG.path;
       data.timestamp = new Date().toISOString();
+      
+      const utms = getUTMParameters();
+      Object.assign(data, utms); // Include UTMs in the main object for easy identification
 
       // Submit via API
+      console.log('📤 [TRACKER] Submitting Lead Data:', data);
       fetch(`${CONFIG.apiBase}/api/leads`, {
         method: 'POST',
         headers: {
