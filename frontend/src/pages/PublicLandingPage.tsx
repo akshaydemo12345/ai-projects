@@ -40,7 +40,7 @@ const PublicLandingPage = () => {
       }
 
       // Sync meta tags for the main document (to be visible in Inspect)
-      const targetDesc = pageData.metaDescription || pageData.seo?.description || 'High-converting AI landing page.';
+      const targetDesc = meta?.metaDescription || meta?.seo?.description || pageData.metaDescription || 'High-converting AI landing page.';
       const metaDescriptions = document.querySelectorAll('meta[name="description"]');
       if (metaDescriptions.length > 0) {
         metaDescriptions.forEach(tag => tag.setAttribute('content', targetDesc));
@@ -109,6 +109,10 @@ const PublicLandingPage = () => {
             attempt = attempt || 1;
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
             
+            // Show template loader if available
+            var loader = document.getElementById('loader') || document.querySelector('.page-loader');
+            if (loader) loader.style.display = 'flex';
+
             try {
               var response = await fetch("${API_URL}/api/leads", {
                 method: "POST",
@@ -119,13 +123,10 @@ const PublicLandingPage = () => {
               var result = await response.json();
               console.log("📥 API Response:", result);
 
-              if (result.status === 'success' || result.status === 'error') {
-                redirectToSuccessPage();
+              if (result.status === 'success' || result.status === 'error' || response.ok) {
+                // Wait small bit for loader effect
+                setTimeout(redirectToSuccessPage, 1500);
                 form.reset();
-                if (btn) {
-                  btn.disabled = false;
-                  btn.innerHTML = originalBtnText;
-                }
               } else {
                 throw new Error(result.message || 'Server returned error');
               }
@@ -137,6 +138,8 @@ const PublicLandingPage = () => {
                 if (btn) btn.innerHTML = 'Retrying...';
                 setTimeout(function() { submitLead(data, form, btn, originalBtnText, attempt + 1); }, 2000);
               } else {
+                if (loader) loader.style.display = 'none';
+                
                 var errorDiv = document.createElement('div');
                 errorDiv.style.cssText = "position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; borderRadius: 8px; boxShadow: 0 4px 12px rgba(0,0,0,0.15); zIndex: 9999; font-family: sans-serif; fontSize: 14px; fontWeight: 500; border-left: 4px solid #b91c1c; animation: slideIn 0.3s ease-out;";
                 errorDiv.innerHTML = "<b>Submission failed:</b> " + err.message;
@@ -155,12 +158,14 @@ const PublicLandingPage = () => {
             }
           }
 
-
           document.addEventListener('submit', function(e) {
             var form = e.target;
             
             if (form && form.tagName === 'FORM') {
-              form.setAttribute('method', 'POST');
+              // Check if already being submitted to prevent double submission
+              if (form.getAttribute('data-submitting') === 'true') return;
+              form.setAttribute('data-submitting', 'true');
+              
               e.preventDefault();
               
               var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
@@ -188,23 +193,34 @@ const PublicLandingPage = () => {
 
               // Fallbacks for standard fields
               if (!data.name) {
-                var nInput = form.querySelector('input[type="text"]');
+                var nInput = form.querySelector('input[type="text"][name*="name"], input[name="name"]');
                 data.name = formData.get('name') || formData.get('first_name') || (nInput ? nInput.value : "") || '';
               }
               if (!data.email) {
-                var eInput = form.querySelector('input[type="email"]');
+                var eInput = form.querySelector('input[type="email"], input[name*="email"]');
                 data.email = formData.get('email') || (eInput ? eInput.value : "") || 'unknown@example.com';
               }
-              if (!data.phone) {
-                var pInput = form.querySelector('input[type="tel"]');
-                data.phone = formData.get('phone') || formData.get('tel') || (pInput ? pInput.value : "") || '';
-              }
-              if (!data.message) {
-                var mInput = form.querySelector('textarea');
-                data.message = formData.get('message') || formData.get('comments') || (mInput ? mInput.value : "") || '';
-              }
-
+              
               submitLead(data, form, btn, originalBtnText);
+            }
+          });
+
+          // Handle modal triggers and smooth scroll
+          document.addEventListener('click', function(e) {
+            var target = e.target.closest('[onclick*="modal"]');
+            if (target) {
+               console.log("Modal trigger detected");
+            }
+            
+            // Helpful smooth scroll for # links in the iframe
+            var anchor = e.target.closest('a[href^="#"]');
+            if (anchor && anchor.getAttribute('href') !== '#') {
+               var targetId = anchor.getAttribute('href').substring(1);
+               var targetEl = document.getElementById(targetId);
+               if (targetEl) {
+                  e.preventDefault();
+                  targetEl.scrollIntoView({ behavior: 'smooth' });
+               }
             }
           });
         </script>
@@ -325,7 +341,12 @@ const PublicLandingPage = () => {
               <meta charset="utf-8">
               <title>${meta?.title || 'Landing Page'}</title>
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              ${meta?.seo?.description ? `<meta name="description" content="${meta.seo.description}">` : ''}
+              <meta name="description" content="${targetDesc}">
+              <meta name="robots" content="noindex, nofollow">
+              <link rel="canonical" href="${window.location.href}">
+              <link rel="preconnect" href="https://fonts.googleapis.com">
+              <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+              <link rel="dns-prefetch" href="//fonts.googleapis.com">
               <base href="${window.location.origin}">
               ${coreDependencies}
               <style>

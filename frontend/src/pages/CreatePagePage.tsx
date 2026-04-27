@@ -8,7 +8,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
-import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
 import { agencyHtml, agencyStyles } from "../templates/agency";
 import { leadGenHtml, leadGenStyles } from "../templates/leadGen";
 import { realEstateHtml, realEstateStyles } from "../templates/realEstate";
@@ -67,11 +66,11 @@ const LANDING_TEMPLATES = [
   },
   {
     id: "ecom-tpl",
-    name: "Lumina Fashion",
+    name: "Louvre Maison",
     tag: "E-commerce",
-    img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    gradient: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
-    prompt: "Create a high-end minimalist fashion store landing page. Include a full-screen hero image, trending products grid with hover effects, and a simple elegant navigation bar.",
+    img: "/assets/premium/watch.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
+    prompt: "Create an ultra-premium luxury fashion landing page with a background video hero, glassmorphism navigation, and elegant product cards. Theme: Minimalist Black & White.",
   },
   {
     id: "legal-tpl",
@@ -81,38 +80,30 @@ const LANDING_TEMPLATES = [
     gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
     prompt: "Create a sophisticated, professional legal landing page. Use serif typography, a dark noble color palette, consultation form, and expertise area cards with subtle transitions.",
   },
-  {
-    id: "saas-hero",
-    name: "SaaS Business",
-    tag: "Business",
-    img: "/templates/Desktop_Thumbnail.png",
-    gradient: "linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)",
-    prompt:
-      "Create a high-converting, fully mobile-responsive SaaS landing page with a bold hero section, animated feature highlights, testimonials, pricing table, and a strong CTA for free trial sign-up.",
-  },
+
   {
     id: "agency",
-    name: "Agency (Hotel)",
-    tag: "Luxury Hotel",
-    img: "/templates/Desktop_Thumbnail3.png",
-    gradient: "linear-gradient(135deg, #004d56 0%, #00bcd4 100%)",
+    name: "Luxury Hotel (Agency)",
+    tag: "Hospitality",
+    img: "/assets/premium/hotel-resort.png",
+    gradient: "linear-gradient(135deg, #fdfcf9 0%, #ffffff 100%)",
     prompt:
-      "Create a luxurious hotel and travel agency landing page with a booking bar, room showcases, wellness services tabs, special offers, and guest reviews. Use teal and white aesthetics.",
+      "Create an ultra-luxurious hotel and resort landing page with high-end photography, a concierge booking form, and a minimalist elegant design.",
   },
   {
     id: "real-estate",
-    name: "Real Estate",
+    name: "Skyline Residences",
     tag: "Real Estate",
-    img: "/templates/Desktop_Thumbnail4.png",
-    gradient: "linear-gradient(135deg, #28a745 0%, #1e7e34 100%)",
+    img: "/assets/premium/mansion.png",
+    gradient: "linear-gradient(135deg, #fbfbfc 0%, #ffffff 100%)",
     prompt:
-      "Create a professional real estate landing page with property galleries, agent profiles, interactive maps, and lead capture forms for inquiries.",
+      "Create a premium luxury real estate landing page featuring international mansions, a private inquiry form, and sophisticated architectural aesthetics.",
   },
   {
     id: "lead-gen",
     name: "Lead Generation",
     tag: "Business",
-    img: "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    img: "/templates/Desktop_Thumbnail2.png",
     gradient: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
     prompt: "Create a high-performing lead generation landing page with a primary focus on conversion. Features a bold hero header, a clean multi-step lead form, trust badges, and benefit-driven copywriting.",
   },
@@ -207,16 +198,40 @@ const CreatePagePage = () => {
   const handleViewTemplate = (tpl: any) => {
     let tpHtml = "";
     let tpStyles = "";
+    const tName = LANDING_TEMPLATES.find(t => t.id === tpl.id)?.name || "Template";
+
     switch (tpl.id) {
       case "tech-saas": tpHtml = technologyHtml; tpStyles = technologyStyles; break;
       case "healthcare-tpl": tpHtml = healthcareHtml; tpStyles = healthcareStyles; break;
       case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
       case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
       case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
-      case "saas-hero": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+
       case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
       case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
       case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
+      default: tpHtml = technologyHtml; tpStyles = technologyStyles;
+    }
+
+    // Perform replacements for preview
+    let enrichedContent = tpHtml;
+    let enrichedStyles = tpStyles;
+
+    if (project) {
+      const finalLogo = logoUrl || project.logoUrl;
+      const logoHtml = finalLogo
+        ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
+        : `<span style="color: ${primaryColor}">${project.name}</span>`;
+
+      enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
+      enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name || "My Project");
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
+
+      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
     }
 
     const fullHtml = `
@@ -224,15 +239,20 @@ const CreatePagePage = () => {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>${tpl.name} Preview</title>
+          <title>${pageName || tpl.name} | Preview</title>
+          <meta name="robots" content="noindex, nofollow">
+          <link rel="canonical" href="${window.location.href}">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link rel="dns-prefetch" href="//fonts.googleapis.com">
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
           <style>
-            ${tpStyles}
+            ${enrichedStyles}
             body { margin: 0; padding: 0; overflow-x: hidden; }
           </style>
         </head>
-        <body>${tpHtml}</body>
+        <body>${enrichedContent}</body>
       </html>
     `;
     localStorage.setItem('grapes-preview-html', fullHtml);
@@ -318,10 +338,7 @@ const CreatePagePage = () => {
           enrichedContent = legalHtml;
           enrichedStyles = legalStyles;
           break;
-        case "saas-hero":
-          enrichedContent = saasHeroHtml;
-          enrichedStyles = saasHeroStyles;
-          break;
+
         case "agency":
           enrichedContent = agencyHtml;
           enrichedStyles = agencyStyles;
@@ -335,22 +352,25 @@ const CreatePagePage = () => {
           enrichedStyles = realEstateStyles;
           break;
         default:
-          enrichedContent = saasHeroHtml;
-          enrichedStyles = saasHeroStyles;
+          enrichedContent = technologyHtml;
+          enrichedStyles = technologyStyles;
       }
-
-      // Smart replacements
-      enrichedContent = enrichedContent.replace(/Renewal by Andersen/g, project.name);
-      enrichedContent = enrichedContent.replace(/YOUR_BUSINESS_NAME/g, project.name);
-      enrichedContent = enrichedContent.replace(/WINDOW REPLACEMENT an Andersen Company/g, (project.category || "Service") + " solutions for your business");
-      enrichedContent = enrichedContent.replace(/Your locally owned Renewal by Andersen/g, `Your locally owned ${project.name}`);
-      enrichedContent = enrichedContent.replace(/Fibrex®/g, "Premium materials");
 
       const finalLogo = logoUrl || project.logoUrl;
-      if (finalLogo) {
-        enrichedContent = enrichedContent.replace(/https:\/\/via\.placeholder\.com\/150x50\?text=LOGO/g, finalLogo);
-        enrichedContent = enrichedContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
-      }
+      const logoHtml = finalLogo
+        ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
+        : `<span style="color: ${primaryColor}">${project.name}</span>`;
+
+      // Smart replacements
+      enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
+      enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
+
+      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       if (project.scrapedData?.images?.length > 0) {
         const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
@@ -363,6 +383,8 @@ const CreatePagePage = () => {
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
+        metaTitle: `${project.name} - ${pageName.trim()}`,
+        metaDescription: `Premium ${pageName.trim()} services by ${project.name}. High-quality results guaranteed.`,
         generationMethod: "template" as const,
         content: enrichedContent,
         styles: enrichedStyles,
@@ -653,7 +675,7 @@ const CreatePagePage = () => {
                     <Zap className="h-5 w-5 text-amber-500" />
                   </div>
                 </div>
-                
+
                 <div className="max-w-xs space-y-4">
                   <h3 className="text-lg font-black text-gray-900">How it works</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">
@@ -676,7 +698,7 @@ const CreatePagePage = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="pt-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-4 py-2 rounded-full">
                     Average processing time: 45s
@@ -694,11 +716,10 @@ const CreatePagePage = () => {
                   <button
                     key={cat}
                     onClick={() => setTemplateCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      templateCategory === cat
-                        ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
-                        : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${templateCategory === cat
+                      ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
+                      : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
+                      }`}
                   >
                     {cat}
                   </button>
@@ -707,11 +728,11 @@ const CreatePagePage = () => {
 
               {/* Template Grid */}
               <div className="flex-1 px-6 py-6 scrollbar-hide">
-                  <div className="grid grid-cols-2 gap-4">
-                    {LANDING_TEMPLATES
-                      .filter(t => templateCategory === "All" || t.tag === templateCategory)
-                      .slice(0, visibleCount)
-                      .map((tpl) => (
+                <div className="grid grid-cols-2 gap-4">
+                  {LANDING_TEMPLATES
+                    .filter(t => templateCategory === "All" || t.tag === templateCategory)
+                    .slice(0, visibleCount)
+                    .map((tpl) => (
                       <button
                         key={tpl.id}
                         onClick={() => {
@@ -790,20 +811,20 @@ const CreatePagePage = () => {
                       </button>
                     ))}
 
-                    {/* View More Logic */}
-                    {visibleCount < LANDING_TEMPLATES.filter(t => templateCategory === "All" || t.tag === templateCategory).length && (
-                      <button
-                        onClick={() => setVisibleCount(prev => prev + 4)}
-                        className="rounded-2xl border-2 border-dashed border-violet-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4 hover:bg-violet-50 hover:border-violet-400 transition-all group"
-                      >
-                        <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Zap className="h-5 w-5 text-violet-500" />
-                        </div>
-                        <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">View More</p>
-                        <p className="text-[10px] text-violet-400">Load 4 more templates</p>
-                      </button>
-                    )}
-                  </div>
+                  {/* View More Logic */}
+                  {visibleCount < LANDING_TEMPLATES.filter(t => templateCategory === "All" || t.tag === templateCategory).length && (
+                    <button
+                      onClick={() => setVisibleCount(prev => prev + 4)}
+                      className="rounded-2xl border-2 border-dashed border-violet-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4 hover:bg-violet-50 hover:border-violet-400 transition-all group"
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Zap className="h-5 w-5 text-violet-500" />
+                      </div>
+                      <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">View More</p>
+                      <p className="text-[10px] text-violet-400">Load 4 more templates</p>
+                    </button>
+                  )}
+                </div>
 
               </div>
             </div>
@@ -841,11 +862,26 @@ const CreatePagePage = () => {
                 case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
                 case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
                 case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
-                case "saas-hero": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+
                 case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
                 case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
                 case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
               }
+
+              // Apply branding to preview
+              const finalLogo = logoUrl || project?.logoUrl;
+              const logoHtml = finalLogo
+                ? `<img src="${finalLogo}" alt="${project?.name}" style="height: 40px; width: auto; object-fit: contain;">`
+                : (project?.name || "Your Brand");
+
+              tpHtml = tpHtml
+                .replace(/PROJECT_NAME_PLACEHOLDER/g, project?.name || "Your Business")
+                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+
+              tpStyles = tpStyles
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
 
               return (
                 <iframe
@@ -858,13 +894,13 @@ const CreatePagePage = () => {
                         <script src="https://cdn.tailwindcss.com"></script>
                         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
                         <style>
-                          \${tpStyles}
+                          ${tpStyles}
                           /* Helper styles for preview */
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                         </style>
                       </head>
                       <body>
-                        \${tpHtml}
+                        ${tpHtml}
                       </body>
                     </html>
                   `}
