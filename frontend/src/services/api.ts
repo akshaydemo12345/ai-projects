@@ -428,6 +428,8 @@ export const leadsApi = {
     pageId?: string;
     pageSlug?: string;
     search?: string;
+    startDate?: string;
+    endDate?: string;
     page?: number;
     limit?: number;
   } = {}) => {
@@ -440,10 +442,11 @@ export const leadsApi = {
     const endpoint = `/api/leads${queryString ? `?${queryString}` : ''}`;
 
     const res = await apiFetch(endpoint);
-    // Backend returns { status, results, data: { leads: [] } }
+    // Backend returns { status, results, data: { leads: [], formSchema: {} } }
     return {
       leads: res.data.leads as Lead[],
-      total: res.results || 0
+      total: res.results || 0,
+      formSchema: res.data.formSchema
     };
   },
 
@@ -459,6 +462,25 @@ export const leadsApi = {
       method: 'DELETE',
     });
   },
+
+  export: async (params: { projectId?: string; pageId?: string; search?: string; startDate?: string; endDate?: string } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) queryParams.append(key, String(value));
+    });
+    
+    const token = localStorage.getItem('pagecraft_token');
+    const url = `${API_BASE_URL}/api/leads/export?${queryParams.toString()}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      }
+    });
+
+    if (!response.ok) throw new Error('Export failed');
+    return response.blob();
+  }
 };
 
 // --- Thank You API ---
