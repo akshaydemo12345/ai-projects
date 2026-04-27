@@ -127,11 +127,11 @@ const GrapesEditor = () => {
     if (page) {
       const currentTitle = page.metaTitle || page.name || 'Landing Page';
       document.title = `${currentTitle} | AI Project Hub`;
-      
+
       // Update ALL meta description tags to be sure
       const metaDescriptions = document.querySelectorAll('meta[name="description"]');
       const targetContent = page.metaDescription || 'High-converting AI landing page.';
-      
+
       if (metaDescriptions.length > 0) {
         metaDescriptions.forEach(tag => tag.setAttribute('content', targetContent));
       } else {
@@ -169,7 +169,7 @@ const GrapesEditor = () => {
       } else if (typeof currentPage.content === 'string') {
         dbContent = currentPage.content;
       }
-      
+
       if (currentPage.styles && !dbStyles) {
         dbStyles = currentPage.styles;
       }
@@ -181,7 +181,7 @@ const GrapesEditor = () => {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
-        
+
         // Extract Styles
         const styleTags = Array.from(doc.querySelectorAll('style'));
         const extractedStyles = styleTags.map(s => s.textContent).join('\n');
@@ -192,8 +192,8 @@ const GrapesEditor = () => {
         // Take body content or fallback to full text if body is somehow empty
         let bodyHtml = doc.body.innerHTML.trim();
         if (!bodyHtml || bodyHtml.length < 20) {
-           console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
-           bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
+          console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
+          bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
         }
         dbContent = bodyHtml;
 
@@ -203,7 +203,7 @@ const GrapesEditor = () => {
           // @ts-ignore
           editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
         }
-      } catch (e) { 
+      } catch (e) {
         console.error('❌ Failed to parse full HTML, using raw fallback:', e);
       }
     }
@@ -281,7 +281,7 @@ const GrapesEditor = () => {
         dbContent = dbContent.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, currentPage.logoUrl);
         dbContent = dbContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, currentPage.logoUrl);
         dbContent = dbContent.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, currentPage.logoUrl);
-        
+
         // Flexible attribute replacement
         dbContent = dbContent.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
           const combined = p1 + p2;
@@ -438,13 +438,15 @@ const GrapesEditor = () => {
               { type: 'text', name: 'name', label: 'Field Name' },
               { type: 'text', name: 'placeholder', label: 'Placeholder' },
               { type: 'checkbox', name: 'required', label: 'Required' },
-              { type: 'select', name: 'type', label: 'Type', options: [
-                { id: 'text', name: 'Text' },
-                { id: 'email', name: 'Email' },
-                { id: 'number', name: 'Number' },
-                { id: 'tel', name: 'Phone' },
-                { id: 'password', name: 'Password' },
-              ]},
+              {
+                type: 'select', name: 'type', label: 'Type', options: [
+                  { id: 'text', name: 'Text' },
+                  { id: 'email', name: 'Email' },
+                  { id: 'number', name: 'Number' },
+                  { id: 'tel', name: 'Phone' },
+                  { id: 'password', name: 'Password' },
+                ]
+              },
             ],
           },
         },
@@ -506,10 +508,10 @@ const GrapesEditor = () => {
       bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
 
       // 2. FORMS CATEGORY
-      bm.add('custom-form', { 
-        label: 'Form', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-wpforms' }, 
+      bm.add('custom-form', {
+        label: 'Form',
+        category: 'Forms',
+        attributes: { class: 'fa fa-wpforms' },
         content: {
           type: 'form',
           droppable: true,
@@ -536,10 +538,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-input', { 
-        label: 'Input', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-keyboard-o' }, 
+      bm.add('custom-input', {
+        label: 'Input',
+        category: 'Forms',
+        attributes: { class: 'fa fa-keyboard-o' },
         content: {
           type: 'input',
           attributes: { placeholder: 'Type here...' },
@@ -547,10 +549,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-textarea', { 
-        label: 'Textarea', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-file-text-o' }, 
+      bm.add('custom-textarea', {
+        label: 'Textarea',
+        category: 'Forms',
+        attributes: { class: 'fa fa-file-text-o' },
         content: {
           type: 'textarea',
           attributes: { placeholder: 'Type message...' },
@@ -558,10 +560,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-select', { 
-        label: 'Select', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-caret-square-o-down' }, 
+      bm.add('custom-select', {
+        label: 'Select',
+        category: 'Forms',
+        attributes: { class: 'fa fa-caret-square-o-down' },
         content: {
           type: 'select',
           style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
@@ -572,10 +574,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-check', { 
-        label: 'Checkbox', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-check-square-o' }, 
+      bm.add('custom-check', {
+        label: 'Checkbox',
+        category: 'Forms',
+        attributes: { class: 'fa fa-check-square-o' },
         content: {
           style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
           components: [
@@ -585,10 +587,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-radio', { 
-        label: 'Radio', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-dot-circle-o' }, 
+      bm.add('custom-radio', {
+        label: 'Radio',
+        category: 'Forms',
+        attributes: { class: 'fa fa-dot-circle-o' },
         content: {
           style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
           components: [
@@ -598,10 +600,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-button', { 
-        label: 'Button', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-hand-pointer-o' }, 
+      bm.add('custom-button', {
+        label: 'Button',
+        category: 'Forms',
+        attributes: { class: 'fa fa-hand-pointer-o' },
         content: {
           type: 'button',
           content: 'Button Text',
@@ -609,10 +611,10 @@ const GrapesEditor = () => {
         }
       });
 
-      bm.add('custom-label', { 
-        label: 'Label', 
-        category: 'Forms', 
-        attributes: { class: 'fa fa-tag' }, 
+      bm.add('custom-label', {
+        label: 'Label',
+        category: 'Forms',
+        attributes: { class: 'fa fa-tag' },
         content: {
           type: 'label',
           content: 'Field Label',
@@ -904,7 +906,7 @@ const GrapesEditor = () => {
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
       const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
-      
+
       if (page) {
         if (mode === 'landing') {
           page.landingPageContent = html;
@@ -918,13 +920,13 @@ const GrapesEditor = () => {
 
     // 2. Switch Mode
     setMode(newMode);
-    
+
     // Sync URL
     const newParams = new URLSearchParams(searchParams);
     if (newMode === 'thank-you') newParams.set('mode', 'thankyou');
     else newParams.delete('mode');
     navigate(`?${newParams.toString()}`, { replace: true });
-    
+
     // 3. Update Sidebar Tab if needed
     if (newMode === 'thank-you') {
       setLeftTab('thank-you');
@@ -973,14 +975,14 @@ const GrapesEditor = () => {
 
   const downloadHtml = async () => {
     if (!editorRef.current) {
-        toast.error('Editor not ready');
-        return;
+      toast.error('Editor not ready');
+      return;
     }
 
     // 1. Get raw content directly from editor to ensure latest state
     let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
     let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
-    
+
     let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
     let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
 
@@ -988,7 +990,7 @@ const GrapesEditor = () => {
     let formattedLandingCss = formatCssPretty(landingCss);
     let formattedThankYouHtml = thankYouHtml ? formatHtmlPretty(thankYouHtml) : '';
     let formattedThankYouCss = thankYouCss ? formatCssPretty(thankYouCss) : '';
-    
+
     const cssFileName = 'landing-page.css';
     const tyCssFileName = 'thankyou-page.css';
     const pageTitle = page?.name || 'Landing Page';
@@ -1005,7 +1007,7 @@ const GrapesEditor = () => {
 
     // 3. Extract Images
     const imageUrls = new Set<string>();
-    
+
     const getFullUrl = (url: string) => {
       if (!url || url.startsWith('data:')) return null;
       if (url.startsWith('http') || url.startsWith('//')) {
@@ -1044,20 +1046,20 @@ const GrapesEditor = () => {
 
     // Extract from style attributes and CSS
     [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
-        const cssUrlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
-        while ((match = cssUrlRegex.exec(content)) !== null) {
-            const url = getFullUrl(match[1]);
-            if (url) imageUrls.add(url);
-        }
+      const cssUrlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
+      while ((match = cssUrlRegex.exec(content)) !== null) {
+        const url = getFullUrl(match[1]);
+        if (url) imageUrls.add(url);
+      }
     });
 
     // Fallback: Catch anything that looks like an image URL extension
     [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
-        const genericImageRegex = /(https?:\/\/[^"'\s)]+\.(?:png|jpg|jpeg|gif|webp|svg|avif)(?:\?[^"'\s)]+)?)[\s"')]?/gi;
-        while ((match = genericImageRegex.exec(content)) !== null) {
-            const url = getFullUrl(match[1]);
-            if (url) imageUrls.add(url);
-        }
+      const genericImageRegex = /(https?:\/\/[^"'\s)]+\.(?:png|jpg|jpeg|gif|webp|svg|avif)(?:\?[^"'\s)]+)?)[\s"')]?/gi;
+      while ((match = genericImageRegex.exec(content)) !== null) {
+        const url = getFullUrl(match[1]);
+        if (url) imageUrls.add(url);
+      }
     });
 
     // 4. Download and process images
@@ -1067,9 +1069,9 @@ const GrapesEditor = () => {
     const imageMap: Record<string, string> = {}; // [originalUrl]: newLocalPath
     const downloadPromises = Array.from(imageUrls).map(async (origUrl) => {
       try {
-        const fullUrl = origUrl.startsWith('//') ? `https:${origUrl}` : 
-                        (origUrl.startsWith('http') ? origUrl : new URL(origUrl, window.location.origin).href);
-        
+        const fullUrl = origUrl.startsWith('//') ? `https:${origUrl}` :
+          (origUrl.startsWith('http') ? origUrl : new URL(origUrl, window.location.origin).href);
+
         let blob: Blob | null = null;
         let finalStatus = 'ok';
 
@@ -1112,20 +1114,20 @@ const GrapesEditor = () => {
           const type = blob.type.split('/')[1] || 'png';
           cleanFilename += `.${type}`;
         }
-        
+
         // Ensure unique filename
         let finalFilename = cleanFilename;
         let counter = 1;
         while (landingPageFolder.file(`images/${finalFilename}`)) {
-            const parts = cleanFilename.split('.');
-            const ext = parts.pop();
-            finalFilename = `${parts.join('.')}_${counter}.${ext}`;
-            counter++;
+          const parts = cleanFilename.split('.');
+          const ext = parts.pop();
+          finalFilename = `${parts.join('.')}_${counter}.${ext}`;
+          counter++;
         }
-        
+
         // Add to zip
         imagesFolder?.file(finalFilename, blob);
-        
+
         // Map original URL to relative path
         imageMap[origUrl] = `images/${finalFilename}`;
         downloadedCount++;
@@ -1153,7 +1155,7 @@ const GrapesEditor = () => {
 
     // 6. Build final HTML files
     const finalLandingHtml = buildFullHtml(formattedLandingHtml, formattedLandingCss, pageTitle, metaDesc, cssFileName);
-    
+
     // 7. Generate ZIP
     landingPageFolder.file('landing-page.html', finalLandingHtml);
     landingPageFolder.file(cssFileName, formattedLandingCss);
@@ -1459,27 +1461,27 @@ const GrapesEditor = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button 
-            onClick={downloadHtml} 
-            style={{ ...outlineBtn, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399', padding: '7px 14px' }} 
+          <button
+            onClick={downloadHtml}
+            style={{ ...outlineBtn, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399', padding: '7px 14px' }}
             title="Download HTML Package"
           >
             <DownloadIcon /> <span style={{ marginLeft: 6 }}>Download HTML</span>
           </button>
 
-          <button 
+          <button
             onClick={() => {
               if (editorRef.current) {
                 applyContentToEditor(editorRef.current);
                 toast.success('Canvas refreshed from database');
               }
-            }} 
-            style={{ ...outlineBtn, background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: '#ffc107', padding: '7px 14px' }} 
+            }}
+            style={{ ...outlineBtn, background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: '#ffc107', padding: '7px 14px' }}
             title="Force refresh content from database"
           >
             <ZapIcon /> <span style={{ marginLeft: 6 }}>Sync Canvas</span>
           </button>
-          
+
           <button onClick={handlePreview} style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} title="Live Preview"><EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span></button>
           <button onClick={handleSave} style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px' }} title="Save Changes"><SaveIcon /> <span style={{ marginLeft: 6 }}>Save</span></button>
         </div>
@@ -1573,8 +1575,8 @@ const GrapesEditor = () => {
 
             {/* Theme / Styles */}
             <div style={{ flex: 1, display: leftTab === 'theme' ? 'flex' : 'none', overflow: 'hidden' }}>
-              <GlobalStylesPanel 
-                editor={editorInstance} 
+              <GlobalStylesPanel
+                editor={editorInstance}
                 initialPrimary={page?.primaryColor}
                 initialSecondary={page?.secondaryColor}
                 onBrandingColorsChange={({ primary, secondary }) => {
@@ -1667,7 +1669,7 @@ const GrapesEditor = () => {
                 onSelect={(html, css) => {
                   if (editorRef.current) {
                     console.log('🎬 Applying Thank You template to canvas...');
-                    
+
                     let finalHtml = html;
                     let finalCss = css || '';
 
@@ -1676,7 +1678,7 @@ const GrapesEditor = () => {
                       try {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
-                        
+
                         // Extract styles from <style> tags
                         const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
                         if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
@@ -1699,12 +1701,12 @@ const GrapesEditor = () => {
                           editorRef.current.getWrapper().setStyle(styleObj);
                         }
                       } catch (e) {
-                         console.error('Failed to parse template HTML:', e);
+                        console.error('Failed to parse template HTML:', e);
                       }
                     }
 
                     // 🛠️ CRITICAL: Clear both HTML and CSS to prevent merging
-                    editorRef.current.setComponents(''); 
+                    editorRef.current.setComponents('');
                     try {
                       if (editorRef.current.DomComponents && editorRef.current.DomComponents.clear) {
                         editorRef.current.DomComponents.clear();
@@ -1716,7 +1718,7 @@ const GrapesEditor = () => {
                     } catch (e) {
                       console.warn('GrapesJS clear warning:', e);
                     }
-                    
+
                     // Apply new content
                     editorRef.current.setComponents(finalHtml);
                     if (finalCss) {
@@ -1724,7 +1726,7 @@ const GrapesEditor = () => {
                       editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
                       editorRef.current.setStyle(finalCss);
                     }
-                    
+
                     toast.info('Thank You Template Applied');
                   }
                 }}
@@ -2286,7 +2288,7 @@ const LayersIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="n
 const SuccessIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
 const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
-const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
+const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" /></svg>;
 const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
 
 const parseInlineStyle = (styleStr: string): Record<string, string> => {

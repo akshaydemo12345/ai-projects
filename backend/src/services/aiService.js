@@ -4,64 +4,28 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 
 const CLAUDE_MODEL_CANDIDATES = [
+  'claude-3-haiku-20240307', // Extremely cheap and fast
+  'claude-3-5-haiku-20241022',
+  'claude-3-5-sonnet-20241022',
   process.env.ANTHROPIC_MODEL,
-  'claude-sonnet-4-6',
-  'claude-sonnet-4-5-20250929',
-  'claude-sonnet-4-20250514',
-  'claude-haiku-4-5-20251001',
 ].filter(Boolean);
 
 /**
  * Build SYSTEM prompt (Claude-Level Master UI Designer)
  */
 const buildSystemPrompt = () => {
-  return `
-Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
-Your goal is to generate a UNIQUE, premium, high-converting landing page.
-
-VARIATION PRIORITY:
-- Never repeat a rigid template.
-- Pick a fresh visual direction based on user prompt + business context.
-- Vary section order, visual hierarchy, spacing rhythm, and composition.
-- Avoid producing "same skeleton with replaced text".
-- Use at least one distinctive design motif (timeline, bento cards, split hero, editorial layout, diagonal section transitions, or storytelling flow).
-
-CRITICAL DESIGN RULES:
-- DO NOT generate a navigation menu or navbar links.
-- Place only the brand logo near the top inside the hero/banner area: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
-- The top area should look like a clean branded banner, not a traditional website navbar.
-- IMAGE USAGE: If scraped images are provided in the user prompt, use those images instead of placeholder images. Use them strategically based on their type (banner for hero, product for services, etc.).
-- FALLBACK: Only use 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800' if no scraped images are provided or if you need additional images beyond what was scraped.
-- BACKGROUND IMAGES: Use inline styles only: style="background-image: url('...'); background-size: cover; background-position: center;"
-- SECTION RHYTHM: Alternate backgrounds (e.g., bg-white, then bg-gray-50, then a dark section).
-- TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
-- GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
-
-REQUIRED COVERAGE (MANDATORY SPEED OPTIMIZED):
-1. You MUST generate a minimum of 5 visual sections by default. (Reduced for speed).
-2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar...") you MUST include EVERY SINGLE ONE of them. 
-3. DO NOT MERGE sections. Every section must be distinct.
-4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
-
-OUTPUT FORMATTING:
-- YOU MUST OUTPUT EVERYTHING IN ONE SINGLE \`\`\`html BLOCK.
-- BE EXTREMELY CONCISE TO MINIMIZE COST. Every section should be roughly 600-800 characters of high-impact code. 
-- Avoid any redundant Tailwind classes or overly wordy descriptions.
-- DO NOT split the page into multiple code blocks.
-
-LENGTH + COMPLETENESS:
-- Generate a full, high-impact landing page. 
-- Aim for a total output around 3,000 to 4,500 characters for ultra-fast and ultra-cheap testing.
-- You MUST finish within a 2000 token limit. DO NOT EXCEED.
-- NEVER use placeholders. Keep HTML semantic and clean.
-
-PLANNING:
-- Budget strictly 350-400 tokens per section. 
-- You MUST reach the Footer before hitting the 2000 token limit. 
-- If tokens are running low, sacrifice detail to ensure the Footer is generated.
-
-OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
-`;
+  return `Act as a world-class UI/UX Designer. Goal: Generate a unique, premium, high-converting landing page.
+DESIGN: 
+- No navbar/nav links. Logo only: <img src="{{LOGO_URL}}" class="h-8 w-auto">.
+- Use scraped images if provided, else 'https://picsum.photos/seed/design/1200/800'.
+- BG Images: inline style="background-image: url('...').
+- High-impact typography (H1: text-6xl). Use backdrop-blur-md for floating UI.
+- CRITICAL: Use [var(--primary)] and [var(--secondary)] for ALL brand colors. No HEX.
+OUTPUT:
+- SINGLE \`\`\`html block only.
+- 5+ distinct sections (Hero, Form, Features, Social Proof, FAQ, Footer).
+- MANDATORY: Visible lead form in Hero or Section 2.
+- Max 2000 tokens. Be concise. Minimal Tailwind classes. No placeholders.`;
 };
 
 /**
@@ -86,170 +50,26 @@ CRITICAL RULES:
 /**
  * Build USER prompt (Business Context + Branding)
  */
-const buildUserPrompt = ({
-  businessName,
-  industry,
-  pageType,
-  targetAudience,
-  businessDescription,
-  ctaText,
-  tone,
-  aiPrompt,
-  logoUrl,
-  primaryColor,
-  secondaryColor,
-  services = [],
-  keywords = [],
-  noIndex = false,
-  noFollow = false,
-  scrapedData = {},
-}) => {
-  const robots = [noIndex ? 'noindex' : '', noFollow ? 'nofollow' : ''].filter(Boolean).join(',');
-
-  // Extract potential trust signals (numbers, awards, etc.) from description
-  const trustSignals = businessDescription ? (businessDescription.match(/(\d+,?\d*\+?|\d+%\+?)/g) || []) : [];
-  const topServices = services.slice(0, 6); // Focus on top 6 services
-
-  // Industry-specific form fields
-  const industryFormFields = {
-    'real estate': ['Full Name', 'Phone Number', 'Email', 'Property Type', 'Budget', 'Preferred Location'],
-    'property': ['Full Name', 'Phone Number', 'Email', 'Property Type', 'Budget', 'Preferred Location'],
-    'education': ['Student Name', 'Parent Name', 'Phone Number', 'Email', 'Course Interest', 'City'],
-    'healthcare': ['Patient Name', 'Phone Number', 'Email', 'Appointment Date', 'Service Required'],
-    'medical': ['Patient Name', 'Phone Number', 'Email', 'Appointment Date', 'Service Required'],
-    'travel': ['Full Name', 'Phone Number', 'Email', 'Destination', 'Travel Date', 'Number of People'],
-    'home services': ['Full Name', 'Phone Number', 'Email', 'Service Needed', 'Address', 'Preferred Time'],
-    'saas': ['Full Name', 'Company Name', 'Email', 'Phone Number', 'Team Size', 'Business Type'],
-    'software': ['Full Name', 'Company Name', 'Email', 'Phone Number', 'Team Size', 'Business Type'],
-    'default': ['Full Name', 'Email', 'Phone Number', 'Message']
-  };
-
-  const normalizedIndustry = industry.toLowerCase();
-  const formFields = industryFormFields[normalizedIndustry] || industryFormFields['default'];
-
-  // Extract scrapedImages from scrapedData
-  const scrapedImages = scrapedData?.images || [];
-
-  // Prepare scraped images for the prompt
-  let imageInstructions = '';
-  if (scrapedImages && scrapedImages.length > 0) {
-    // Filter for relevant images by type (banners, products, screenshots, environment)
-    const relevantImages = scrapedImages.filter(img =>
-      img.type === 'banner' || img.type === 'product' || img.type === 'screenshot' || img.type === 'environment' || img.type === 'general'
-    ).slice(0, 8); // Use up to 8 relevant images
-
-    if (relevantImages.length > 0) {
-      imageInstructions = `
-# SCRAPED IMAGES FROM WEBSITE (USE THESE INSTEAD OF PLACEHOLDERS):
-You have access to ${relevantImages?.length || 0} relevant images scraped from the website. Use them strategically:
-
-${relevantImages && Array.isArray(relevantImages) ? relevantImages.map((img, idx) => `-${idx + 1}. URL: ${img.url}
-   - Type: ${img.type}
-   - Section: ${img.section || 'unknown'}
-   - Relevance: ${img.relevance || 'medium'}`).join('\n') : 'No relevant images available'}
-
-**IMAGE USAGE RULES:**
-- Use banner-type images for Hero sections or major visual areas
-- Use product-type images for service/product showcase sections
-- Use screenshot-type images for software/tech demonstrations
-- Use environment-type images for team/office/about sections
-- ONLY use these scraped images - do NOT use picsum.photos when scraped images are available
-- If you need more images than provided, you may use picsum.photos as fallback
-- Always use the exact URLs provided above
-`;
-    }
-  }
+const buildUserPrompt = (input) => {
+  const { businessName, industry, businessDescription, ctaText, logoUrl, primaryColor, secondaryColor, scrapedData } = input;
+  const scrapedImages = scrapedData?.images?.slice(0, 5) || [];
 
   return `
-# BRAND IDENTITY (TRUTH):
-- PRIMARY COLOR PREVIEW: ${primaryColor || '#d23f1b'}
-- SECONDARY COLOR PREVIEW: ${secondaryColor || '#c7d186'}
-- LOGO: ${logoUrl ? 'Provided ({{LOGO_URL}})' : 'Create a text-based agency logo'}
-- REAL IMAGES FROM WEBSITE: ${scrapedData?.images?.length > 0 ? JSON.stringify(scrapedData.images.slice(0, 15).map(img => ({ ...img, url: img.url.length > 300 ? img.url.substring(0, 100) + '...' : img.url }))) : 'None provided'}
-- REAL VIDEOS FROM WEBSITE: ${scrapedData?.videos?.length > 0 ? JSON.stringify(scrapedData.videos.slice(0, 5)) : 'None provided'}
-- REAL CTA TEXTS FROM WEBSITE: ${scrapedData?.ctas?.length > 0 ? JSON.stringify(scrapedData.ctas) : 'None provided'}
-- REAL FORM STRUCTURES FROM WEBSITE: ${scrapedData?.forms?.length > 0 ? JSON.stringify(scrapedData.forms) : 'None provided'}
+# CONTEXT:
+- Name: ${businessName} | Industry: ${industry}
+- Desc: ${businessDescription}
+- Goal: ${input.aiPrompt} | CTA: ${ctaText || 'Get Started'}
+- Colors: Primary [var(--primary)] (${primaryColor}), Secondary [var(--secondary)] (${secondaryColor})
+- Logo: {{LOGO_URL}} (${logoUrl})
 
-**CRITICAL RULE FOR COLORS**: 
-You MUST NEVER use exact HEX codes (like bg-[#d23f1b]) or Tailwind base colors (like bg-blue-500) for brand elements.
-You MUST ALWAYS use the dynamic CSS variables: \`[var(--primary)]\` and \`[var(--secondary)]\`.
-Examples of ONLY ALLOWED syntax for brand colors:
-- \`bg-[var(--primary)]\`
-- \`text-[var(--primary)]\`
-- \`border-[var(--secondary)]\`
-- \`hover:bg-[var(--primary)]\`
+# IMAGES (SCRAPED):
+${scrapedImages.map((img, i) => `${i + 1}. ${img.url} (${img.type})`).join('\n')}
 
-${imageInstructions}
-
-# STRATEGIC GOAL:
-"${aiPrompt || 'Create a world-class landing page focusing on lead generation and brand authority.'}"
-
-# CONTENT GUIDELINES:
-1. Headlines: Use power-words and conversion-focused copywriting.
-2. Structure: 
-   - Hero: Catchy headline incorporating "${businessName}". Subtitle should expand on the value prop.
-   - Services: Detail blocks for ${topServices.slice(0, 4).join(', ')}.
-   - Lead Form: ${(scrapedData && Array.isArray(scrapedData.forms) && scrapedData.forms.length > 0) ? `Form includes these fields: ${scrapedData.forms.filter(f => f.fields && Array.isArray(f.fields)).map(f => f.fields.map(field => `${field.label || field.name} (${field.type})`).join(', ')).join('; ')}. Use these exact field names: ${scrapedData.forms.filter(f => f.fields && Array.isArray(f.fields)).map(f => f.fields.map(field => field.name).join(', ')).join(', ')}` : 'Standard lead capture form (name, email, phone, message)'}
-   - Features: Explain HOW you help "${targetAudience}".
-   - Social Proof: Use the industry context to create realistic testimonial names and high-authority trust badges.
-3. Call to Action: Use "${ctaText || 'Get Started'}" as the primary command.
-
-# DIVERSITY + STRUCTURE INSTRUCTIONS:
-- Treat this request as a fresh creative direction focused on FAST, high-converting delivery.
-- You MUST provide a minimum of 5 visual sections if no specific list is provided.
-- **ABSOLUTE MANDATE**: A lead capture form MUST be included in every generated page. This is not optional.
-- **ABSOLUTE MANDATE**: If the USER'S VISION (CUSTOM PROMPT) contains a numbered list, bullet points, or a sequence of sections, you MUST treat this as a strict requirement. 
-- DO NOT OMIT anything requested.
-- **ELABORATION REQUIREMENT**: Each section must have substantial, meaningful content. Do not use placeholder text or generic filler. Write detailed descriptions, benefits, and explanations for each service, feature, and value proposition.
-
-# LEAD FORM INSTRUCTION (MANDATORY):
-- You MUST ALWAYS include a lead capture form on EVERY landing page. NO EXCEPTIONS.
-- You MUST prioritize using the 'REAL FORM STRUCTURES' detected from the website for your lead capture section.
-- If REAL FORM STRUCTURES are provided, use the EXACT field names (name attributes) from those structures in your generated form.
-- If no REAL FORM STRUCTURES are provided, use these industry-specific form fields: ${formFields.join(', ')}.
-- The form design and placement should vary depending on the page style: hero side form, sticky sidebar form, popup CTA form, bottom section form, or multi-step form.
-- Form should feel natural and relevant to the business.
-- Display the form either as a prominent Hero-section form OR a dedicated Contact section with a sticky/floating CTA that opens a modal form.
-- Apply semantic HTML and premium styling with [var(--primary)] buttons.
-- IMPORTANT: Use the same field names as detected (e.g., if the website uses 'first_name', use 'first_name' instead of 'name'). This ensures form submission works correctly with the lead tracking script.
-- The form MUST be visible and accessible to users. Do not hide it or make it difficult to find.
-
-${imageInstructions ? '# IMAGE INSTRUCTION: Use the scraped images provided above. Only fallback to picsum.photos if you need additional images beyond what was scraped.' : '# IMMUTABLE OVERRIDE (CRITICAL): You MUST STILL ONLY USE \'https://picsum.photos/seed/[UNIQUE_TEXT]/1200/800\' directly to prevent 404 errors. No exceptions. Do not use Unsplash, Pexels, or any other external API.'}
-
-# IMAGE RULES (INDUSTRY-RELEVANT VISUALS):
-- Use industry-relevant visuals in your image choices.
-- Real Estate → homes, apartments, happy families, property interiors
-- Healthcare → doctors, patients, clinic interiors, medical equipment
-- Education → students, classrooms, online learning, graduation
-- Travel → destinations, hotels, beaches, landscapes
-- Home Services → technicians, tools, before/after results, service scenes
-- SaaS/Software → dashboards, charts, software UI, team collaboration
-- Always choose images that match the business context and create emotional connection.
-
-# VIDEO RULES:
-- Include relevant videos where useful to enhance the landing page.
-- Examples: customer testimonial video, product demo video, service explainer video, founder message, before/after transformation video, case study video.
-- Use video sections strategically to build trust and demonstrate value.
-
-# CONTENT REQUIREMENTS:
-- Always generate meaningful headlines with supporting subheadings
-- Include benefit-driven content that speaks to user pain points
-- Add service descriptions with clear value propositions
-- Include CTA sections with strong, action-oriented copy
-- Add testimonials section with realistic customer quotes
-- Include FAQs section addressing common objections
-- Add trust badges, stats, or achievements to build credibility
-- Include before/after content where relevant for the industry
-- Use SEO-friendly headings (H1, H2, H3) with proper hierarchy
-- Make layout depend on industry for better user experience
-- Form position should depend on business type (hero side, sticky, bottom, popup).
-- Content should be persuasive and conversion-focused.
-- Use modern landing page structure with alternating backgrounds.
-- Vary section designs (bento, grid, list, split, etc.) for visual interest.
-
-# FINAL TASK: 
-Build a pixel-perfect, premium landing page using the user's custom prompt's structure as a STRICT BLUEPRINT. Ensure EVERY requested section is built with unique, premium design and deep content. LONG-FORM ONLY.
-`;
+# RULES:
+- Lead form mandatory. 
+- Headlines must be conversion-focused. 
+- Use [var(--primary)] for background-colors.
+- Output detailed content, not placeholders.`;
 };
 
 /**
@@ -306,7 +126,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 4096, // Increased to support full long-form landing pages
+        max_tokens: 1200, // Strictly capped to 1200 tokens to minimize costs
         temperature: 0.7,
         system: finalSystemPrompt,
         messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
@@ -314,11 +134,11 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const rawText = response.content[0].text;
       const usage = response.usage;
-      
+
       logger.info(`[AI] Raw response received. Length: ${rawText.length} characters. Usage: ${JSON.stringify(usage)}`);
 
       const result = processResult(rawText, logoUrl);
-      
+
       return {
         ...result,
         aiUsage: {
@@ -484,7 +304,7 @@ const generateProjectSuggestions = async ({ projectName, industry, projectDescri
 
   const result = await callAI(prompt);
   const responseText = result.fullHtml || '';
-  
+
   try {
     // Try to parse as JSON array
     const parsed = JSON.parse(responseText);
@@ -705,7 +525,7 @@ Generate ONLY the JSON object.
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 8192,
+    max_tokens: 1200,
     messages: messages,
   });
 
@@ -815,7 +635,7 @@ Transform this existing structure into a high-converting masterpiece. Use the re
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 4000,
+    max_tokens: 1200,
     temperature: 0.1,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],

@@ -42,7 +42,7 @@ const SettingsPage = () => {
               <h2 className="text-sm font-semibold text-foreground">WordPress Integration</h2>
               <p className="text-xs text-muted-foreground mt-1">Connect your landing pages directly to your WordPress site.</p>
             </div>
-            <a href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/plugin/download`} download className="block">
+            <a href={`${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/plugin/download`} download className="block">
               <Button size="sm" variant="outline" className="gap-2">
                 <Download className="h-3.5 w-3.5" /> Download Plugin
               </Button>
@@ -55,7 +55,7 @@ const SettingsPage = () => {
               <div className="flex items-center gap-2">
                 <Input 
                   readOnly 
-                  value={import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'} 
+                  value={import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'} 
                   className="bg-muted/50 border-dashed text-xs h-9 font-mono" 
                 />
                 <Button 
@@ -63,7 +63,7 @@ const SettingsPage = () => {
                   variant="ghost" 
                   className="h-9 px-3 border border-border"
                   onClick={async () => {
-                    const url = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+                    const url = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
                     const success = await copyToClipboard(url);
                     if (success) {
                       setUrlCopied(true);
