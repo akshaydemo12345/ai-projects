@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { leadsApi, type Lead } from "@/services/api";
+import { leadsApi, projectsApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -20,22 +20,30 @@ import { format } from "date-fns";
 const LeadsPage = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  
+
   // States
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Context detection from URL
-  const projectId = searchParams.get("project");
+  const projectIdParam = searchParams.get("project");
   const pageId = searchParams.get("page");
+
+  const [filterProjectId, setFilterProjectId] = useState<string>(projectIdParam || "");
+  const [filterPageId, setFilterPageId] = useState<string>(searchParams.get("page") || "");
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: projectsApi.getAll,
+  });
 
   // Query Data
   const { data, isLoading } = useQuery({
-    queryKey: ['leads', projectId, pageId],
+    queryKey: ['leads', filterPageId, filterProjectId],
     queryFn: () => leadsApi.getAll({ 
-      projectId: projectId || undefined, 
-      pageId: pageId || undefined 
+      projectId: filterProjectId || undefined, 
+      pageId: filterPageId || undefined 
     }),
   });
 
@@ -51,6 +59,30 @@ const LeadsPage = () => {
     }
   });
 
+  // Helper to extract common fields regardless of where they are stored
+  const getLField = (l: any, field: string) => {
+    // 1. Check if the field is in the dynamic data object
+    if (l.data) {
+      if (field === 'name') {
+        const val = l.data.full_name || l.data.name || l.data.fullname || l.data.first_name;
+        if (val) return val;
+      }
+      if (field === 'email') {
+        const val = l.data.email || l.data.user_email || l.data.e_mail || l.data.contact_email;
+        if (val) return val;
+      }
+      if (field === 'phone') {
+        const val = l.data.phone || l.data.tel || l.data.mobile;
+        if (val) return val;
+      }
+      if (l.data[field]) return l.data[field];
+    }
+
+    // 2. Fallback to root level fields (backward compatibility)
+    if (field === 'name') return l.name || l.full_name || "";
+    return l[field] || "";
+  };
+
   // Filter & Sort Logic
   const filteredAndSortedLeads = useMemo(() => {
     let result = [...leads];
@@ -58,17 +90,27 @@ const LeadsPage = () => {
     // Search
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(l => 
-        l.name.toLowerCase().includes(q) || 
-        l.email.toLowerCase().includes(q) ||
-        (l.phone && l.phone.includes(q)) ||
-        (l.message && l.message.toLowerCase().includes(q))
-      );
+      result = result.filter(l => {
+        const name = getLField(l, 'name').toString().toLowerCase();
+        const email = getLField(l, 'email').toString().toLowerCase();
+        const phone = getLField(l, 'phone').toString().toLowerCase();
+        const message = getLField(l, 'message').toString().toLowerCase();
+
+        // Also search inside custom data keys
+        const customDataMatch = l.data ? Object.values(l.data).some(v =>
+          String(v).toLowerCase().includes(q)
+        ) : false;
+
+        return name.includes(q) || email.includes(q) || phone.includes(q) || message.includes(q) || customDataMatch;
+      });
     }
 
     // Sort
     result.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
+      const nameA = getLField(a, 'name').toString();
+      const nameB = getLField(b, 'name').toString();
+
+      if (sortBy === "name") return nameA.localeCompare(nameB);
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return sortBy === "newest" ? dateB - dateA : dateA - dateB;
@@ -85,8 +127,71 @@ const LeadsPage = () => {
   };
 
   const handleExport = () => {
-    toast.info("Preparing CSV export...");
-    setTimeout(() => toast.success("Leads exported successfully!"), 1500);
+    if (filteredAndSortedLeads.length === 0) {
+      toast.error("No leads to export");
+      return;
+    }
+
+    const dynamicKeysSet = new Set<string>();
+    filteredAndSortedLeads.forEach(l => {
+      if (l.data) {
+        Object.keys(l.data).forEach(k => dynamicKeysSet.add(k));
+      }
+    });
+
+    const standardFields = ['name', 'email', 'phone', 'message'];
+    const aliasMapping: Record<string, string[]> = {
+      name: ['full_name', 'fullname', 'first_name'],
+      phone: ['tel', 'mobile'],
+      email: ['user_email']
+    };
+
+    const ignoredDynamicKeys = new Set([...standardFields]);
+    Object.values(aliasMapping).forEach(aliases => aliases.forEach(a => ignoredDynamicKeys.add(a)));
+
+    const dynamicFields = Array.from(dynamicKeysSet).filter(k => !ignoredDynamicKeys.has(k));
+    const allHeaders = [...standardFields, 'pageSlug', 'ip', 'createdAt', ...dynamicFields];
+
+    // 2. Build rows
+    const rows = filteredAndSortedLeads.map(l => {
+      const values = [
+        getLField(l, 'name'),
+        getLField(l, 'email'),
+        getLField(l, 'phone'),
+        getLField(l, 'message'),
+        l.pageSlug || '',
+        l.meta?.ip || l.ip || '',
+        new Date(l.createdAt).toLocaleString()
+      ];
+
+      // Add dynamic fields
+      dynamicFields.forEach(k => {
+        values.push(l.data ? l.data[k] : '');
+      });
+
+      return values.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
+    });
+
+    // 3. Header
+    const headerRow = allHeaders.map(h => `"${h.replace(/_/g, ' ').toUpperCase()}"`).join(',');
+    const csvContent = [headerRow, ...rows].join('\n');
+
+    // 4. Download trigger
+    try {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `leads_export_${format(new Date(), "yyyy-MM-dd")}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Lead database exported successfully");
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Failed to generate CSV export");
+    }
   };
 
   const todayLeadsCount = useMemo(() => {
@@ -107,8 +212,10 @@ const LeadsPage = () => {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Leads Manager</h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {projectId || pageId ? (
-                    <>Filtering activity for <span className="text-primary font-semibold">Project Content</span></>
+                  {filterProjectId || filterPageId ? (
+                    <>Filtering activity for <span className="text-primary font-semibold">{
+                      projects.find((p: any) => p._id === filterProjectId)?.name || "Selected Content"
+                    }</span></>
                   ) : "Centralized hub for all your landing page conversions."}
                 </p>
               </div>
@@ -149,8 +256,25 @@ const LeadsPage = () => {
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-              <ArrowUpDown className="h-4 w-4 text-slate-400" />
+              <Filter className="h-4 w-4 text-slate-400" />
               <select 
+                className="bg-transparent text-sm font-semibold outline-none text-slate-600 dark:text-slate-300 cursor-pointer min-w-[140px]"
+                value={filterProjectId}
+                onChange={(e) => {
+                  setFilterProjectId(e.target.value);
+                  setFilterPageId(""); // Clear page specific filter when project changes
+                }}
+              >
+                <option value="">All Projects</option>
+                {projects.map((p: any) => (
+                  <option key={p._id} value={p._id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <ArrowUpDown className="h-4 w-4 text-slate-400" />
+              <select
                 className="bg-transparent text-sm font-semibold outline-none text-slate-600 dark:text-slate-300 cursor-pointer"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
@@ -182,10 +306,10 @@ const LeadsPage = () => {
               {search && <Button variant="link" onClick={() => setSearch("")} className="mt-2 text-primary">Clear search</Button>}
             </div>
           ) : (
-            <div className="overflow-x-auto flex-1">
+            <div className="overflow-x-auto flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead>
-                  <tr className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
+                  <tr className="border-b border-slate-200 dark:border-slate-800">
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[25%]">Inquirer</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[25%]">Contact Details</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">Source Page</th>
@@ -195,19 +319,23 @@ const LeadsPage = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredAndSortedLeads.map((lead) => (
-                    <tr 
-                      key={lead._id} 
+                    <tr
+                      key={lead._id}
                       className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
                       onClick={() => setSelectedLead(lead)}
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-4">
                           <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                            {(lead.name || 'L')[0].toUpperCase()}
+                            {(getLField(lead, 'name').toString() || 'L')[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">{lead.name}</p>
-                            <p className="text-xs text-slate-400 truncate max-w-[200px]" title={lead.message}>{lead.message || "No message left"}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                              {getLField(lead, 'name') || "Lead User"}
+                            </p>
+                            <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, 'message'))}>
+                              {getLField(lead, 'message') || "No message left"}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -215,12 +343,12 @@ const LeadsPage = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 group/email">
                             <Mail className="h-3.5 w-3.5 text-slate-400" />
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">{lead.email}</span>
+                             <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">{getLField(lead, 'email') || "No Email"}</span>
                           </div>
-                          {lead.phone && (
+                          {getLField(lead, 'phone') && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-3.5 w-3.5 text-slate-400" />
-                              <span className="text-xs font-medium text-slate-500">{lead.phone}</span>
+                              <span className="text-xs font-medium text-slate-500">{getLField(lead, 'phone')}</span>
                             </div>
                           )}
                         </div>
@@ -241,16 +369,16 @@ const LeadsPage = () => {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-10 w-10 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
                           >
                             <Eye className="h-5 w-5" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500"
                             onClick={(e) => handleDelete(lead._id, e)}
                           >
@@ -284,11 +412,11 @@ const LeadsPage = () => {
 
       {/* ─── High-Fidelity Lead Detail Slide-over ─── */}
       {selectedLead && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
           onClick={() => setSelectedLead(null)}
         >
-          <div 
+          <div
             className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
             onClick={(e) => e.stopPropagation()}
           >
@@ -296,19 +424,19 @@ const LeadsPage = () => {
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
-                  {(selectedLead.name || 'L')[0].toUpperCase()}
+                  {(getLField(selectedLead, 'name').toString() || 'L')[0].toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{selectedLead.name}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{getLField(selectedLead, 'name') || "Lead Detail"}</h2>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="icon" 
+              <Button
+                variant="outline"
+                size="icon"
                 className="rounded-full h-11 w-11 hover:bg-slate-100 transition-colors border-slate-100"
                 onClick={() => setSelectedLead(null)}
               >
@@ -317,20 +445,20 @@ const LeadsPage = () => {
             </div>
 
             {/* Modal Scroll Area */}
-            <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12">
+            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
               {/* Main Content: Message */}
               <section>
-                <div className="flex items-center justify-between mb-6">
+                {/* <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="p-8 rounded-[32px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative">
+                </div> */}
+                {/* <div className="p-8 rounded-[32px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative">
                   <p className="text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-medium italic">
-                    "{selectedLead.message || "No message was included in this submission."}"
+                    {selectedLead.message ? `"${selectedLead.message}"` : ""}
                   </p>
-                </div>
+                </div> */}
               </section>
 
               {/* Data Grid */}
@@ -342,8 +470,11 @@ const LeadsPage = () => {
                     <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm transition-all hover:border-primary/20">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Direct Email</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        {selectedLead.email}
-                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 cursor-pointer" onClick={() => window.location.href=`mailto:${selectedLead.email}`} />
+                        {getLField(selectedLead, 'email') || "Not Disclosed"}
+                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 cursor-pointer" onClick={() => {
+                          const email = getLField(selectedLead, 'email');
+                          if (email) window.location.href=`mailto:${email}`;
+                        }} />
                       </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
@@ -373,8 +504,39 @@ const LeadsPage = () => {
                 </section>
               </div>
 
+              {/* Dynamic Form Data (Flat Structure) */}
+              {selectedLead && (
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Render all custom fields from the dynamic data object */}
+                    {selectedLead.data && Object.keys(selectedLead.data).length > 0 ? (
+                      Object.entries(selectedLead.data)
+                        // Hide fields that are already in the top header section
+                        .filter(([key]) => !['name', 'email', 'phone', 'message'].includes(key))
+                        .map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                            <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{key.replace(/_/g, ' ')}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                              {String(value || "N/A")}
+                            </p>
+                          </div>
+                        ))
+                    ) : (
+                      /* Fallback for old static leads if any exist during migration */
+                      <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
+                    )}
+                  </div>
+                </section>
+              )}
+
               {/* Browser Context */}
-              <section>
+              {/* <section>
                 <div className="p-5 rounded-2xl bg-slate-900 text-slate-400 border border-slate-800 flex items-start gap-4 shadow-xl">
                   <Monitor className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
@@ -384,19 +546,22 @@ const LeadsPage = () => {
                     </p>
                   </div>
                 </div>
-              </section>
+              </section> */}
             </div>
 
             {/* Modal Footer Controls */}
             <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex gap-4 mt-auto">
-              <Button 
+              <Button
                 className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-2xl shadow-xl shadow-primary/30 text-base"
-                onClick={() => window.location.href = `mailto:${selectedLead.email}`}
+                onClick={() => {
+                  const email = getLField(selectedLead, 'email');
+                  if (email) window.location.href = `mailto:${email}`;
+                }}
               >
                 Initiate Response
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-14 w-14 rounded-2xl border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center p-0"
                 onClick={(e) => {
                   handleDelete(selectedLead._id, e);

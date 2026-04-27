@@ -2,10 +2,13 @@ export const realEstateStyles = `
   .business-container { margin: 0; font-family: 'Poppins', sans-serif; background: #fff; color: #333; line-height: 1.6; }
   
   .top-strip { background: #28a745; color: #fff; padding: 10px 5%; display: flex; justify-content: space-between; font-size: 13px; }
-  .header { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; background: #fff; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .header { padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; background: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
   .logo { font-size: 24px; font-weight: 800; color: #333; }
-  .nav { display: flex; gap: 25px; }
-  .nav a { text-decoration: none; color: #555; font-weight: 600; font-size: 14px; }
+  .logo span { color: #28a745; }
+  .nav { display: flex; gap: 25px; align-items: center; }
+  .nav a { text-decoration: none; color: #555; font-weight: 600; font-size: 14px; transition: 0.3s; }
+  .nav a:hover { color: #28a745; }
+  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #28a745; }
 
   .hero { background: url('https://images.unsplash.com/photo-1517245327045-9774d136a705?w=1600&auto=format&fit=crop&q=60') center center; background-size: cover; padding: 150px 5%; text-align: center; color: #fff; position: relative; }
   .hero::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
@@ -39,36 +42,69 @@ export const realEstateStyles = `
   .fi-text p { font-size: 14px; color: #666; }
   .finance-right { flex: 1; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
 
-  .callback-bar { background: #333; padding: 60px 5%; color: #fff; display: flex; justify-content: space-between; align-items: center; gap: 40px; }
-  .callback-form { flex: 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-  .callback-form input { padding: 12px; border: none; border-radius: 4px; background: #444; color: #fff; }
-  .callback-btn { background: var(--primary, #28a745); color: #fff; border: none; padding: 12px 30px; border-radius: 4px; font-weight: 700; cursor: pointer; }
+  @media (max-width: 992px) {
+    .header { padding: 10px 5%; }
+    .nav { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #fff; flex-direction: column; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; }
+    .nav.active { display: flex; }
+    .mobile-toggle { display: block; }
+    .nav .btn-green { display: block; width: 100%; }
 
-  .gallery { padding: 100px 5%; text-align: center; }
-  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
-  .gallery-item { height: 250px; background: #eee; border-radius: 8px; overflow: hidden; }
-  .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .hero h1 { font-size: 40px; }
+    .solutions { grid-template-columns: 1fr; margin-top: 0; padding-top: 40px; }
+    .about-agency, .finance-grid, .callback-bar { flex-direction: column; text-align: center; gap: 40px; }
+    .callback-form { grid-template-columns: 1fr; width: 100%; }
+    .counters, .gallery-grid, .team-grid { grid-template-columns: 1fr 1fr; }
+    .blog-grid { grid-template-columns: 1fr 1fr; }
+    .footer { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 576px) {
+    .counters, .gallery-grid, .team-grid, .blog-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 32px; }
+    .top-strip { display: none; }
+  }
 
-  .team { padding: 100px 5%; background: #f8f9fa; text-align: center; }
-  .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 50px; }
-  .team-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-  .team-img { height: 350px; background: #ddd; }
-  .team-info { padding: 25px; }
-  .team-info h4 { font-size: 18px; margin-bottom: 5px; }
-  .team-info p { color: var(--primary, #28a745); font-size: 14px; font-weight: 600; }
-
-  .blogs { padding: 100px 5%; text-align: center; }
-  .blog-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 40px; }
-  .blog-card { text-align: left; background: #fff; }
-  .blog-img { height: 200px; background: #eee; border-radius: 8px; margin-bottom: 15px; }
-  .blog-card h5 { font-size: 16px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; color: #222; }
-  .blog-card p { font-size: 13px; color: #777; }
-
-  .footer { background: #1a1a1a; color: #999; padding: 80px 5%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
-  .footer h4 { color: #fff; margin-bottom: 25px; }
-  .footer ul { list-style: none; padding: 0; }
-  .footer li { margin-bottom: 12px; font-size: 14px; }
-  .copyright { background: #111; color: #555; padding: 20px; text-align: center; font-size: 12px; }
+  /* Premium Page Loader */
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    font-family: 'Poppins', sans-serif;
+  }
+  .loader-visual {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 24px;
+  }
+  .loader-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-top-color: #28a745;
+    border-radius: 50%;
+    animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  .loader-ring:nth-child(2) {
+    inset: 8px;
+    border-top-color: #90d39e;
+    animation-direction: reverse;
+    animation-duration: 1s;
+  }
+  .loader-text {
+    color: #333;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 export const realEstateHtml = `
@@ -78,16 +114,17 @@ export const realEstateHtml = `
        <div>Follow us: FB TW LN IG</div>
     </div>
     
-    <header class="header" data-gjs-type="header">
+    <header class="header">
       <div class="logo">BUSINESS<span>PRO</span></div>
+      <div class="mobile-toggle" onclick="document.querySelector('.nav').classList.toggle('active')">☰</div>
       <nav class="nav">
         <a href="#">Home</a>
         <a href="#">About</a>
         <a href="#">Services</a>
         <a href="#">Case Studies</a>
         <a href="#">Contact</a>
+        <button class="btn-green" style="padding: 12px 25px;">ENQUIRY</button>
       </nav>
-      <button class="btn-green" style="padding: 8px 20px;">ENQUIRY</button>
     </header>
 
     <div class="hero" data-gjs-type="section">
@@ -252,5 +289,26 @@ export const realEstateHtml = `
       </div>
     </footer>
     <div class="copyright">Copyright © 2026 LeadForest. All rights reserved.</div>
+
+    <div id="loader" class="page-loader">
+      <div class="loader-visual">
+        <div class="loader-ring"></div>
+        <div class="loader-ring"></div>
+      </div>
+      <div class="loader-text">Sending your inquiry...</div>
+    </div>
+
+    <script>
+      // Support multiple forms (like the one in hero and footer)
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          document.getElementById('loader').style.display = 'flex';
+          setTimeout(function() {
+            console.log('Form submitted, loader would stay until thank you page');
+          }, 2000);
+        });
+      });
+    </script>
   </div>
 `;

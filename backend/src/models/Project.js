@@ -37,6 +37,10 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  publishedPageCount: {
+    type: Number,
+    default: 0,
+  },
   leadCount: {
     type: Number,
     default: 0,

@@ -12,12 +12,12 @@ const config = {
   // App Configuration
   app: {
     name: import.meta.env.VITE_APP_NAME || 'AI Landing Page Builder',
-    url: import.meta.env.VITE_APP_URL || 'http://localhost:8080',
+    url: import.meta.env.VITE_APP_URL || 'https://contributors-markets-semiconductor-diamond.trycloudflare.com',
   },
 
   // API Configuration
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || '',
     version: 'v1',
     
     // API Endpoints (centralized route definitions)

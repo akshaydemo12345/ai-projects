@@ -17,6 +17,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const leadRoutes = require('./routes/leadRoutes');
+const formRoutes = require('./routes/formRoutes');
 const thankYouRoutes = require('./routes/thankYouRoutes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { sanitizeInput } = require('./middleware/sanitizeInput');
@@ -46,7 +47,7 @@ app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token', 'bypass-tunnel-reminder']
 }));
 
 // Adjusted Helmet to allow iframes and cross-site content
@@ -82,6 +83,7 @@ app.use('/ai', aiRoutes);
 app.post('/api/pages/project-suggestions', require('./middleware/authMiddleware').protect, require('./controllers/aiController').getProjectSuggestions);
 app.use('/admin', adminRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/forms', formRoutes);
 app.use('/api/thank-you', thankYouRoutes);
 app.use('/', publicRoutes);
 
