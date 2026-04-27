@@ -2,6 +2,7 @@ require('dotenv').config(); // API Key Fixed (Leading dash removed)
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const compression = require('compression');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const passport = require('passport');
@@ -19,9 +20,11 @@ const publicRoutes = require('./routes/publicRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const formRoutes = require('./routes/formRoutes');
 const thankYouRoutes = require('./routes/thankYouRoutes');
+const proxyRoutes = require('./routes/proxyRoutes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { sanitizeInput } = require('./middleware/sanitizeInput');
 const { cookieParser } = require('./middleware/cookieParser');
+const { rateLimiter } = require('./middleware/rateLimiter');
 const logger = require('./utils/logger');
 
 const path = require('path');
@@ -32,6 +35,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // MIDDLEWARES
 app.use(logger.httpLogger);
+// app.use(compression()); // Moved to specific routes to avoid proxy corruption
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser);
@@ -82,10 +86,16 @@ app.use('/pages', pageRoutes);
 app.use('/ai', aiRoutes);
 app.post('/api/pages/project-suggestions', require('./middleware/authMiddleware').protect, require('./controllers/aiController').getProjectSuggestions);
 app.use('/admin', adminRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/forms', formRoutes);
-app.use('/api/thank-you', thankYouRoutes);
-app.use('/', publicRoutes);
+
+// Apply compression only to API and Public routes, avoiding the Proxy Engine
+app.use('/api/leads', compression(), leadRoutes);
+app.use('/api/forms', compression(), formRoutes);
+app.use('/api/thank-you', compression(), thankYouRoutes);
+
+// Proxy Engine (Must NOT be compressed to avoid corruption in WordPress relay)
+app.use('/', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
+
+app.use('/', compression(), publicRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorMiddleware);

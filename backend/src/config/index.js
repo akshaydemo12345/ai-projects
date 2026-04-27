@@ -46,10 +46,11 @@ const config = {
     model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
   },
 
-  // CORS Configuration
-  cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
-    credentials: true,
+  // Proxy Configuration
+  proxy: {
+    whitelist: (process.env.PROXY_WHITELIST || '').split(',').map(d => d.trim()).filter(Boolean),
+    timeout: parseInt(process.env.PROXY_TIMEOUT, 10) || 10000,
+    apiKey: process.env.PROXY_API_KEY || 'default-proxy-key',
   },
 };
 

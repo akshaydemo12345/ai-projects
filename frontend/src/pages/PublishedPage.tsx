@@ -12,8 +12,11 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
 
+  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+  const fullPageSlug = `${preSlug ? preSlug + '/' : ''}${pageSlug}`;
+  
   const script = token
-    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${pageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
+    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${fullPageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
     : '';
 
   const copyToken = async () => { 
@@ -110,7 +113,9 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
 const ScriptIntegration = ({ project, pageSlug }: { project: Project, pageSlug: string }) => {
   const [copied, setCopied] = useState(false);
   const token = project.apiToken || 'PC-TOKEN-PENDING';
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/embed.js?token=${token}&page=${pageSlug}" async></script>`;
+  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+  const fullPageSlug = `${preSlug ? preSlug + '/' : ''}${pageSlug}`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/embed.js?token=${token}&page=${fullPageSlug}" async></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
@@ -163,7 +168,8 @@ const PublishedPage = () => {
     );
   }
 
-  const liveUrl = `${window.location.origin}/${page.slug}`;
+  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+  const liveUrl = `${window.location.origin}/${preSlug ? preSlug + '/' : ''}${page.slug}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
     if (success) {

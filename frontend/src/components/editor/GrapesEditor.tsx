@@ -948,7 +948,8 @@ const GrapesEditor = () => {
       toast.error('Please save your page first to generate a slug');
       return;
     }
-    const previewUrl = `${window.location.origin}/preview/${page.slug}`;
+    const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}`;
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };
@@ -1213,7 +1214,8 @@ const GrapesEditor = () => {
       setIsPublishing(false);
       // Build the public URL for display
       const slug = pageDataRef.current?.slug || pageId;
-      const url = `${window.location.origin}/${slug}`;
+      const preSlugPrefix = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+      const url = `${window.location.origin}/${preSlugPrefix ? preSlugPrefix + '/' : ''}${slug}`;
       setPublishedUrl(url);
       setPublishModalOpen(true);
     } catch (err) {

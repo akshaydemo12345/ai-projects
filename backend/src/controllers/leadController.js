@@ -15,6 +15,10 @@ exports.createLead = async (req, res) => {
     const rawBody = { ...req.body };
     console.log(`📥 [LEAD] Incoming submission for page '${rawBody.pageSlug || 'unknown'}':`, JSON.stringify(rawBody));
     
+    console.log('📥 [LEAD_CAPTURE] New Submission Arrived!');
+    console.log('📦 [LEAD_CAPTURE] Body Type:', typeof req.body);
+    console.log('📝 [LEAD_CAPTURE] Raw Body Content:', JSON.stringify(rawBody, null, 2));
+    
     // Extract metadata & identifying info (Everything else goes into .data)
     const { 
       pageSlug: reqSlug, 
@@ -24,25 +28,52 @@ exports.createLead = async (req, res) => {
       pageId: reqPageId 
     } = rawBody;
 
-    // 1. Identify the Page & Project
-    let pageSlug = reqSlug || (reqPath ? reqPath.replace(/^\/+|\/+$/g, '').split('/')[0] : null);
-    
-    // Fallback: Extract slug from referer if completely missing
-    if (!pageSlug && req.get('referer')) {
-      try {
-        const urlObj = new URL(req.get('referer'));
-        pageSlug = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
-      } catch (e) {}
+    // 1. Identify the Page
+    let targetPage = null;
+
+    // A. By Page ID (Most Reliable)
+    if (reqPageId && reqPageId.match(/^[0-9a-fA-F]{24}$/)) {
+      targetPage = await Page.findById(reqPageId);
     }
 
-    if (!pageSlug) {
-      return res.status(400).json({ error: "Could not identify landing page source (missing slug/path)" });
+    // B. By Slug (if ID fails or missing)
+    if (!targetPage) {
+      // Handle slugs with prefixes (e.g., "lp/my-page")
+      let slugToSearch = reqSlug || (reqPath ? reqPath.replace(/^\/+|\/+$/g, '') : null);
+      
+      // Fallback: referer
+      if (!slugToSearch && req.get('referer')) {
+        try {
+          const urlObj = new URL(req.get('referer'));
+          slugToSearch = urlObj.pathname.replace(/^\/+|\/+$/g, '').replace(/\/thank-you$/i, '');
+        } catch (e) {}
+      }
+
+      if (slugToSearch) {
+        const slugParts = slugToSearch.split('/');
+        const actualSlug = slugParts[slugParts.length - 1]; // Take the last part
+
+        const query = { slug: actualSlug, isDeleted: { $ne: true } };
+        if (reqProjectId && reqProjectId.match(/^[0-9a-fA-F]{24}$/)) {
+          query.projectId = reqProjectId;
+        }
+        
+        targetPage = await Page.findOne(query);
+        
+        // Final fallback: just the slug if project ID check failed
+        if (!targetPage) {
+          targetPage = await Page.findOne({ slug: actualSlug, isDeleted: { $ne: true } });
+        }
+      }
     }
 
-    const page = await Page.findOne({ slug: pageSlug });
-    if (!page) {
-      return res.status(404).json({ error: `Landing page with slug '${pageSlug}' not found` });
+    if (!targetPage) {
+      const failedSlug = reqSlug || "unknown";
+      return res.status(404).json({ error: `Landing page with slug '${failedSlug}' not found` });
     }
+
+    const page = targetPage;
+    const pageSlug = page.slug;
 
     const projectId = page.projectId;
     const pageId = page._id;
@@ -59,17 +90,24 @@ exports.createLead = async (req, res) => {
     const rawData = {};
     const utmDetails = {};
     
-    // DEBUG LOG: See EXACTLY what is arriving
-    console.log('📥 [LEAD] Full Incoming Body:', JSON.stringify(rawBody, null, 2));
+    console.log('📥 [LEAD] Filtering internal fields. Internal list:', internalFields);
     
     Object.keys(rawBody).forEach(key => {
       if (utmFields.includes(key)) {
         utmDetails[key] = rawBody[key];
-        rawData[key] = rawBody[key]; // ALSO keep in rawData for UI visibility
+        rawData[key] = rawBody[key];
       } else if (!internalFields.includes(key)) {
         rawData[key] = rawBody[key];
+      } else {
+        console.log(`🧹 [LEAD] Skipping internal field: ${key}`);
       }
     });
+
+    console.log('✅ [LEAD] Extracted rawData:', JSON.stringify(rawData));
+    
+    if (Object.keys(rawData).length === 0) {
+      console.warn('⚠️ [LEAD] rawData is EMPTY! Check if form field names are in the internal fields list.');
+    }
 
     if (Object.keys(utmDetails).length > 0) {
       console.log('✅ [LEAD] UTM Details Found:', utmDetails);
@@ -157,8 +195,13 @@ exports.createLead = async (req, res) => {
 exports.getLeads = async (req, res) => {
   try {
     const filter = {};
+    console.log('🔍 [LEADS] GetLeads Query Params:', req.query);
+    
     if (req.query.projectId) filter.projectId = req.query.projectId;
+    if (req.query.pageId) filter.pageId = req.query.pageId; // Allow filtering by pageId too
     if (req.query.pageSlug) filter.pageSlug = req.query.pageSlug;
+    
+    console.log('🔍 [LEADS] DB Filter:', JSON.stringify(filter));
 
     const leads = await Lead.find(filter)
       .sort({ createdAt: -1 })

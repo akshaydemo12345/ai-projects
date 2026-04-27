@@ -447,18 +447,18 @@ const LeadsPage = () => {
             {/* Modal Scroll Area */}
             <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
               {/* Main Content: Message */}
-              <section>
-                {/* <div className="flex items-center justify-between mb-6">
+              <section className={getLField(selectedLead, 'message') ? 'block' : 'hidden'}>
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div> */}
-                {/* <div className="p-8 rounded-[32px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative">
-                  <p className="text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-medium italic">
-                    {selectedLead.message ? `"${selectedLead.message}"` : ""}
+                </div>
+                <div className="p-8 rounded-[32px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative shadow-inner">
+                  <p className="text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-semibold italic">
+                    "{getLField(selectedLead, 'message')}"
                   </p>
-                </div> */}
+                </div>
               </section>
 
               {/* Data Grid */}
@@ -479,7 +479,7 @@ const LeadsPage = () => {
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Mobile Access</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedLead.phone || "Not Disclosed"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{getLField(selectedLead, 'phone') || "Not Disclosed"}</p>
                     </div>
                   </div>
                 </section>
@@ -491,7 +491,7 @@ const LeadsPage = () => {
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
                       <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-blue-400" /> {selectedLead.ip || "127.0.0.1"}
+                        <Shield className="h-3.5 w-3.5 text-blue-400" /> {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
                       </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">

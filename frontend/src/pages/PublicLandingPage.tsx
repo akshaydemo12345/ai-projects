@@ -5,10 +5,16 @@ import { pagesApi } from '@/services/api';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 const PublicLandingPage = () => {
-  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const pgSlug = searchParams.get('pg');
-  const slug = paramSlug || pgSlug;
+  
+  // Resolve slug from splat or pathname to support nested preSlugs
+  const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  // Strip /thank-you from path to get the page slug
+  const path = rawPath.replace(/\/thank-you$/i, '');
+  
+  const slug = (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

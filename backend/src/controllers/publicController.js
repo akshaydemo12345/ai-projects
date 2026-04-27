@@ -33,15 +33,60 @@ const normalizeScript = (value = '') => {
  */
 exports.getPublicPageBySlug = async (req, res, next) => {
   try {
-    const { slug } = req.params;
+    const rawSlug = String(req.params.slug || req.params[0] || '').trim();
+    const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    const slugParts = cleanSlug.split('/');
+    
+    let isThankYou = false;
+    let pageSlug = "";
+    let urlPreSlug = "";
 
-    const page = await Page.findOneAndUpdate(
-      { slug, isDeleted: { $ne: true } }, // We allow draft for preview if needed, but normally "published"
+    if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+      isThankYou = true;
+      pageSlug = slugParts[slugParts.length - 2];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+    } else {
+      pageSlug = slugParts[slugParts.length - 1];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+    }
+
+    if (!pageSlug) return next(new AppError('Page not found', 404));
+
+    // Find all potential pages with this slug
+    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+    let pageDoc = null;
+
+    if (potentialPages.length > 0) {
+      for (const p of potentialPages) {
+        const project = await Project.findById(p.projectId);
+        const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
+        if (projectPreSlug === urlPreSlug) {
+          pageDoc = p;
+          break;
+        }
+      }
+    }
+
+    // Fallback: Legacy support (only if no page found via dynamic detection)
+    if (!pageDoc && slugParts.length === 1) {
+      pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+      // Only use legacy if the project has NO preSlug
+      if (pageDoc) {
+        const project = await Project.findById(pageDoc.projectId);
+        if (project && project.preSlug) {
+          pageDoc = null; // Enforce preSlug
+        }
+      }
+    }
+
+    if (!pageDoc) return next(new AppError('Page not found', 404));
+
+    // Increment views
+    const page = await Page.findByIdAndUpdate(
+      pageDoc._id,
       { $inc: { views: 1 } },
       { new: true }
     ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl');
-
-    if (!page) return next(new AppError('Page not found', 404));
 
     // ─── BRANDING FALLBACK: Use project values if page values are missing ───
     let primaryColor = page.primaryColor;
@@ -251,31 +296,45 @@ const buildLeadCaptureScript = (page) => {
       timestamp:new Date().getTime()
     };
 
+    // Capture every single named field in the form, prioritizing non-empty values
+    f.querySelectorAll('input, select, textarea').forEach(function(el) {
+      if (el.name) {
+        var val = el.value ? String(el.value).trim() : "";
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          if (el.checked) data[el.name] = val;
+        } else if (val !== "") {
+          data[el.name] = val;
+        }
+      }
+    });
+
     fd.forEach(function(v,k){
-      if(!k)return;
-      data[k]=v;
+      if(k && v && String(v).trim() !== "") data[k]=v;
     });
 
     var utms=getUTM();
     Object.keys(utms).forEach(function(k){data[k]=utms[k]});
 
-    if(!data.name && !data.full_name && !data.firstName){
-      var nVal=fd.get("name")||fd.get("first_name")||fd.get("firstName")||fd.get("fullname")||fd.get("contact_name");
-      if(!nVal){
-        var nIn=f.querySelector('input[name*="name"]')||f.querySelector('input[type="text"]');
-        if(nIn)nVal=nIn.value;
-      }
-      if(nVal)data.name=String(nVal).trim();
+    // Smart identify primary fields if they aren't explicitly named correctly
+    if(!data.name || data.name === ""){
+       var nV = fd.get("name") || fd.get("full_name") || fd.get("fullname") || "";
+       if(!nV) {
+         var nIn = f.querySelector('input[name*="name"]') || f.querySelector('input[placeholder*="Name"]');
+         if(nIn) nV = nIn.value;
+       }
+       if(nV) data.name = String(nV).trim();
     }
 
-    if(!data.email){
-      data.email=(fd.get("email")||(f.querySelector('input[type="email"]')?f.querySelector('input[type="email"]').value:"")||"unknown@example.com").trim();
+    if(!data.email || data.email === ""){
+       var eV = fd.get("email") || fd.get("user_email") || "";
+       if(!eV) {
+         var eIn = f.querySelector('input[type="email"]') || f.querySelector('input[name*="email"]');
+         if(eIn) eV = eIn.value;
+       }
+       if(eV) data.email = String(eV).trim();
     }
 
-    if(!data.phone && !data.tel){
-      data.phone=(fd.get("phone")||fd.get("tel")||fd.get("mobile")||(f.querySelector('input[type="tel"]')?f.querySelector('input[type="tel"]').value:"")||"").trim();
-    }
-
+    console.log('📡 [TRACKER] Final Data for submission:', data);
     send(data,f,b,t,1)
   },true);
 }();`;
@@ -568,20 +627,60 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const rawSlug = String(req.params.slug || req.params[0] || '').trim();
     const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
     
-    // Split slug to handle /slug/thank-you sub-paths
+    // ─── DYNAMIC SLUG DETECTION (Pre-Slug Support) ───
     const slugParts = cleanSlug.split('/');
-    const normalizedSlug = slugParts[0]; // The actual page slug is always the first part
-    const isThankYou = slugParts.length > 1 && slugParts[1] === 'thank-you';
+    let isThankYou = false;
+    let pageSlug = "";
+    let urlPreSlug = "";
 
-    if (!normalizedSlug) return next(new AppError('Page not found', 404));
+    if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+      isThankYou = true;
+      pageSlug = slugParts[slugParts.length - 2];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+    } else {
+      pageSlug = slugParts[slugParts.length - 1];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+    }
 
-    const page = await Page.findOneAndUpdate(
-      { slug: normalizedSlug, isDeleted: { $ne: true } },
-      { $inc: { views: 1 } },
-      { new: true }
-    );
+    if (!pageSlug) return next(new AppError('Page not found', 404));
+
+    // Find all potential pages with this slug
+    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+    let page = null;
+
+    if (potentialPages.length > 0) {
+      // Filter by project preSlug
+      for (const p of potentialPages) {
+        const project = await Project.findById(p.projectId);
+        const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
+        if (projectPreSlug === urlPreSlug) {
+          page = p;
+          break;
+        }
+      }
+    }
+
+    // Fallback: Legacy support (only if no page found via dynamic detection)
+    if (!page && slugParts.length === 1) {
+      const legacySlug = slugParts[0];
+      page = await Page.findOne({ slug: legacySlug, isDeleted: { $ne: true } });
+      // Only use legacy if the project has NO preSlug
+      if (page) {
+        const project = await Project.findById(page.projectId);
+        if (project && project.preSlug) {
+          page = null; // Enforce preSlug
+        }
+      }
+    }
 
     if (!page) return next(new AppError('Page not found or not published', 404));
+
+    // Increment views
+    page.views += 1;
+    await page.save({ validateBeforeSave: false });
+
+    // Use the actual detected slug for canonical and redirection
+    const normalizedSlug = pageSlug;
 
     // ─── SMART DOMAIN AUTHORIZATION ───
     if (page.projectId) {
@@ -645,7 +744,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const hostHeader   = req.headers['host'];
     const requestHost  = forwardedHost || hostHeader || '';
     const canonicalUrl = requestHost
-      ? `http${req.secure ? 's' : ''}://${requestHost}/${normalizedSlug}`
+      ? `http${req.secure ? 's' : ''}://${requestHost}/${cleanSlug}`
       : '';
 
     res.setHeader('Content-Type', 'text/html');
@@ -686,12 +785,53 @@ exports.handleFormSubmission = async (req, res, next) => {
     const rawBody = { ...req.body };
     const slugSource = req.params.slug || req.params[0] || req.body.pageSlug || req.body.path || '';
     const slugStr = String(slugSource).trim();
-    const cleanSlug = slugStr.replace(/^\/+|\/+$/g, '').split('?')[0].split('/')[0];
-    
-    console.log(`🔎 [DEBUG] Searching for page with slug: "${cleanSlug}" (original was: "${slugSource}")`);
-    
-    const page = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
-    if (!page) return next(new AppError('Page not found', 404));
+    const cleanSlug = slugStr.replace(/^\/+|\/+$/g, '').split('?')[0];
+
+    // Priority 1: Find by pageId if provided
+    let page = null;
+    if (req.body.pageId && require('mongoose').Types.ObjectId.isValid(req.body.pageId)) {
+      page = await Page.findOne({ _id: req.body.pageId, isDeleted: { $ne: true } });
+    }
+
+    // Priority 2: Dynamic slug and preSlug detection
+    if (!page) {
+      const slugParts = cleanSlug.split('/');
+      let pageSlug = slugParts[slugParts.length - 1];
+      let urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+
+      // Ignore /thank-you suffix if accidentally posted there
+      if (pageSlug === 'thank-you' && slugParts.length > 1) {
+        pageSlug = slugParts[slugParts.length - 2];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+      }
+
+      if (pageSlug) {
+        const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+        if (potentialPages.length === 1 && !urlPreSlug) {
+          page = potentialPages[0];
+        } else {
+          for (const p of potentialPages) {
+            const project = await Project.findById(p.projectId);
+            const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
+            if (projectPreSlug === urlPreSlug) {
+              page = p;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Fallback: Legacy simple slug logic
+    if (!page) {
+      const simpleSlug = cleanSlug.split('/')[0];
+      page = await Page.findOne({ slug: simpleSlug, isDeleted: { $ne: true } });
+    }
+
+    if (!page) {
+      console.error(`❌ Page not found for slug: ${cleanSlug}`);
+      return next(new AppError('Page not found', 404));
+    }
 
     // ─── DYNAMIC DATA PREPARATION ───
     const { validateForm, normalizeData } = require('../utils/dynamicValidator');
@@ -846,6 +986,16 @@ exports.verifyPlugin = async (req, res, next) => {
     const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
     const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
     
+    const preSlug = (project.preSlug || "").replace(/^\/+|\/+$/g, '');
+    const allowedPaths = [];
+    pages.forEach(p => {
+      const pageSlug = p.slug.replace(/^\/+|\/+$/g, '');
+      const fullSlug = preSlug ? `/${preSlug}/${pageSlug}` : `/${pageSlug}`;
+      allowedPaths.push(fullSlug);
+      allowedPaths.push(`${fullSlug}/thank-you`);
+      allowedPaths.push(`${fullSlug}/proxy-form`);
+    });
+
     res.status(200).json({
       status: 'active',
       plan: 'pro',
@@ -855,7 +1005,7 @@ exports.verifyPlugin = async (req, res, next) => {
       source_url: project.websiteUrl,
       target_url: normalizedBackendBase,
       relay_url: normalizedBackendBase,
-      allowed_paths: [...pages.map(p => `/${p.slug}`), '/api/leads'],
+      allowed_paths: [...allowedPaths, '/api/leads'],
       message: `License verified. Project "${project.name}" is active.`
     });
   } catch (err) {

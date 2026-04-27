@@ -504,11 +504,12 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
 interface EditPageModalProps {
   page: LandingPage;
   projectUrl: string;
+  preSlug?: string;
   onClose: () => void;
   onSave: (page: LandingPage) => void;
 }
 
-const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps) => {
+const EditPageModal = ({ page, projectUrl, preSlug, onClose, onSave }: EditPageModalProps) => {
   const [name, setName] = useState(page.name);
   const [slug, setSlug] = useState(page.slug);
   const [metaTitle, setMetaTitle] = useState(page.metaTitle ?? "");
@@ -536,7 +537,7 @@ const EditPageModal = ({ page, projectUrl, onClose, onSave }: EditPageModalProps
     reader.readAsDataURL(file);
   };
 
-  const liveUrl = `${window.location.origin}/${slug || "page-slug"}`;
+  const liveUrl = `${window.location.origin}/${preSlug ? preSlug + '/' : ''}${slug || "page-slug"}`;
 
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) { toast.error("Name and slug are required."); return; }
@@ -870,9 +871,9 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [scriptCopied, setScriptCopied] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const publishUrl = page.publishedUrl || `${window.location.origin}/${page.slug}`;
+  const publishUrl = page.publishedUrl || `${window.location.origin}/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
-  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${page.slug}" async></script>`;
+  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${project.preSlug ? project.preSlug + '/' : ''}${page.slug}" async></script>`;
 
   const handlePublish = () => {
     onPublished({ ...page, status: "published", publishedUrl: publishUrl });
@@ -1103,6 +1104,73 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   );
 };
 
+// ─── Edit Project Modal ──────────────────────────────────────────────────────
+interface EditProjectModalProps {
+  project: Project;
+  onClose: () => void;
+  onSave: (data: Partial<Project>) => void;
+}
+
+const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
+  const [name, setName] = useState(project.name);
+  const [websiteUrl, setWebsiteUrl] = useState(project.url || "");
+  const [preSlug, setPreSlug] = useState(project.preSlug || "");
+  const [category, setCategory] = useState(project.category || "SaaS");
+
+  const handleSave = () => {
+    if (!name.trim()) { toast.error("Project name is required."); return; }
+    onSave({ name, url: websiteUrl, preSlug, category });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl overflow-hidden">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
+          <Settings2 className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold text-foreground flex-1">Project Settings</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Project Name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Awesome Project" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website URL (Client's Site)</label>
+            <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Pre Slug (Optional URL Prefix)</label>
+            <Input value={preSlug} onChange={(e) => setPreSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))} placeholder="e.g. landing-pages" />
+            <p className="text-[10px] text-muted-foreground mt-1.5 italic">
+              Example URL: {window.location.origin}/{preSlug ? preSlug + '/' : ''}page-slug
+            </p>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+            >
+              <option value="SaaS">SaaS</option>
+              <option value="Agency">Agency</option>
+              <option value="E-commerce">E-commerce</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Real Estate">Real Estate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 px-6 py-4 border-t border-border bg-muted/20">
+          <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+          <Button className="flex-1 bg-primary text-white" onClick={handleSave}>Save Changes</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Project Detail Page ────────────────────────────────────────────────────────
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -1129,6 +1197,7 @@ const ProjectDetailPage = () => {
   const [integTokenCopied, setIntegTokenCopied] = useState(false);
   const [integScriptCopied, setIntegScriptCopied] = useState(false);
   const [integrationOpen, setIntegrationOpen] = useState(false);
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
 
   // Mutations
   const createPageMutation = useMutation({
@@ -1162,6 +1231,16 @@ const ProjectDetailPage = () => {
       toast.success("Page updated");
     },
     onError: () => toast.error("Failed to update page"),
+  });
+
+  const updateProjectMutation = useMutation({
+    mutationFn: (data: Partial<Project>) => projectsApi.update(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setEditProjectOpen(false);
+      toast.success("Project updated");
+    },
+    onError: () => toast.error("Failed to update project"),
   });
 
   useEffect(() => {
@@ -1234,11 +1313,19 @@ const ProjectDetailPage = () => {
     <div className="flex-1 overflow-y-auto" style={{ background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)" }}>
 
       {/* Modals */}
+      {editProjectOpen && (
+        <EditProjectModal
+          project={project}
+          onClose={() => setEditProjectOpen(false)}
+          onSave={(data) => updateProjectMutation.mutate(data)}
+        />
+      )}
       {/* CreatePageModal removed – now a full page at /dashboard/projects/:id/create-page */}
       {editingPage && (
         <EditPageModal
           page={editingPage}
           projectUrl={project.url || "https://yoursite.com"}
+          preSlug={project.preSlug}
           onClose={() => setEditingPage(null)}
           onSave={handleEditSave}
         />
@@ -1296,6 +1383,13 @@ const ProjectDetailPage = () => {
             </div>
           )}
           <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
+          <button
+            onClick={() => setEditProjectOpen(true)}
+            className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Project Settings"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+          </button>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{project.category}</span>
         </div>
         <a href={cleanUrl(project.websiteUrl)} target="_blank" rel="noopener noreferrer"
@@ -1400,7 +1494,9 @@ const ProjectDetailPage = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 opacity-70">/{page.slug}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 opacity-70">
+                          /{project.preSlug ? project.preSlug + '/' : ''}{page.slug}
+                        </p>
                       </div>
                     </div>
 
@@ -1408,7 +1504,11 @@ const ProjectDetailPage = () => {
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(page.status === "published" ? `/${page.slug}` : `/preview/${page.slug}`, '_blank');
+                          const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
+                          const url = page.status === "published" 
+                            ? `/${preSlugPrefix}${page.slug}` 
+                            : `/preview/${preSlugPrefix}${page.slug}`;
+                          window.open(url, '_blank');
                         }}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
                         title={page.status === "published" ? "View Live Page" : "Preview Draft"}
