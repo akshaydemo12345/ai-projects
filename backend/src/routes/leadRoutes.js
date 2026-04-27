@@ -19,6 +19,7 @@ router.get('/tracker.js', leadController.getTrackerJs);
 router.post('/', leadController.createLead);
 
 // ─── Private: view/delete leads in dashboard ────────────────────────────────────────
+router.get('/export', protect, leadController.exportLeads);
 router.get('/', protect, leadController.getLeads);
 router.delete('/:id', protect, leadController.deleteLead);
 

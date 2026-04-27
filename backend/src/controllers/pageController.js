@@ -15,6 +15,7 @@ const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
 const FormSchema = require('../models/FormSchema');
 const { extractFormFields } = require('../utils/formExtractor');
+const { syncFormSchema } = require('../utils/schemaSync');
 
 // ─── Validation Schemas ────────────────────────────────────────────────────────
 const createPageSchema = z.object({
@@ -134,6 +135,11 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
 const checkProjectOwnership = async (projectId, userId) => {
   return await Project.exists({ _id: projectId, userId });
 };
+
+/**
+ * Helper: Extract form fields from content and update FormSchema
+ */
+// syncFormSchema removed (now imported from utils/schemaSync)
 
 // ─── GET /projects/:projectId/pages ───────────────────────────────────────────
 exports.getPagesInProject = async (req, res, next) => {
@@ -466,7 +472,8 @@ exports.createPage = async (req, res, next) => {
     page.status = 'draft';
     await page.save();
 
-    // Extraction handled in publishPage to ensure sync with live site
+    // 8.5 Sync Form Schema Immediately
+    await syncFormSchema(page);
 
     // 9. Success Response
     return res.status(201).json({
@@ -541,7 +548,10 @@ exports.updatePage = async (req, res, next) => {
       { new: true, runValidators: true }
     );
 
-    // Extraction handled in publishPage to ensure sync with live site
+    // Sync Form Schema if content/template changed
+    if (req.body.content || req.body.landingPageContent || req.body.template) {
+      await syncFormSchema(updatedPage);
+    }
 
     if (updatedPage.domain && updatedPage.apiToken) {
       SyncService.flushWordPressCache(updatedPage.domain, updatedPage.apiToken);
@@ -647,53 +657,7 @@ exports.publishPage = async (req, res, next) => {
     }
 
     // ─── DYNAMIC FORM SCHEMA EXTRACTION AT PUBLISH TIME ───
-    try {
-      // 1. Determine the best source of HTML from the page
-      let content = null;
-      
-      // Check if page.content is a non-empty object or string
-      if (page.content) {
-        if (typeof page.content === 'string' && page.content.trim().length > 0) {
-          content = page.content;
-        } else if (typeof page.content === 'object' && Object.keys(page.content).length > 0) {
-          // It might be a complex object (like GrapesJS or sections)
-          if (page.content.fullHtml || page.content.html) {
-            content = page.content;
-          } else if (page.content.sections && page.content.sections.length > 0) {
-            content = page.content;
-          }
-        }
-      }
-      
-      // Fallback to landingPageContent if content is still empty
-      if (!content) {
-        content = page.landingPageContent;
-      }
-
-      if (content) {
-        const fields = extractFormFields(content);
-        if (fields && fields.length > 0) {
-          logger.info(`📝 [SCHEMA] Extracted ${fields.length} form fields for project ${page.projectId}`);
-          await FormSchema.findOneAndUpdate(
-            { 
-              project_id: page.projectId,
-              page_id: page._id 
-            },
-            { 
-              fields,
-              updatedAt: Date.now() 
-            },
-            { upsert: true, new: true }
-          );
-        } else {
-          logger.warn(`⚠️ [SCHEMA] No form fields found in content for page ${page._id}`);
-        }
-      } else {
-        logger.warn(`⚠️ [SCHEMA] No valid content found to extract fields from for page ${page._id}`);
-      }
-    } catch (schemaErr) {
-      logger.error('❌ [SCHEMA] Failed to extract form schema during publish:', schemaErr);
-    }
+    await syncFormSchema(page);
 
     return res.status(200).json({
       status: 'success',

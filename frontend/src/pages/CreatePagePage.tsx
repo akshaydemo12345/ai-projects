@@ -108,7 +108,16 @@ const LANDING_TEMPLATES = [
     prompt:
       "Create a professional real estate landing page with property galleries, agent profiles, interactive maps, and lead capture forms for inquiries.",
   },
+  {
+    id: "lead-gen",
+    name: "Lead Generation",
+    tag: "Business",
+    img: "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    prompt: "Create a high-performing lead generation landing page with a primary focus on conversion. Features a bold hero header, a clean multi-step lead form, trust badges, and benefit-driven copywriting.",
+  },
 ];
+
 
 const TEMPLATE_CATEGORIES = ["All", "SaaS", "Education", "Healthcare", "E-commerce", "Legal", "Business", "Real Estate"];
 type CreationMethod = "ai" | "figma" | "template";
@@ -230,9 +239,6 @@ const CreatePagePage = () => {
     window.open('/preview', '_blank');
   };
 
-  const [showLoader, setShowLoader] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [createdPage, setCreatedPage] = useState<any>(null);
   const createPageMutation = useMutation({
     mutationFn: async (page: Partial<LandingPage>) => {
       const timeoutPromise = new Promise((_, reject) =>
@@ -412,7 +418,7 @@ const CreatePagePage = () => {
 
       <div className="flex-1 flex min-h-0">
         {/* LEFT PANEL */}
-        <div className={`flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 ${activeMethod === 'template' ? 'w-full md:w-[52%] lg:w-[55%]' : 'w-full'}`}>
+        <div className={`flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 w-full md:w-1/2`}>
           <div className="px-8 pt-10 pb-6 border-b border-gray-50">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-md"
@@ -596,9 +602,8 @@ const CreatePagePage = () => {
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* ─────────────────────── RIGHT PANEL ─────────────────────────────── */}
-        <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100">
+        <div className="hidden md:flex flex-col w-1/2 bg-gray-50 overflow-y-auto border-l border-gray-100">
           {activeMethod === 'ai' && (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="px-7 pt-10 pb-5 border-b border-gray-100">
@@ -711,8 +716,6 @@ const CreatePagePage = () => {
                         key={tpl.id}
                         onClick={() => {
                           handleTemplateSelect(tpl);
-                          if (activeMethod === "template") return;
-                          setActiveMethod("template");
                         }}
                         className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
                           ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
@@ -801,44 +804,7 @@ const CreatePagePage = () => {
                       </button>
                     )}
                   </div>
-=======
-        {/* RIGHT PANEL */}
-        {activeMethod === 'template' && (
-          <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100 animate-in fade-in duration-300">
-            <div className="px-7 pt-10 pb-5 border-b border-gray-100">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Landing Page Templates</p>
-              <p className="text-sm text-gray-500 mt-0.5">Click a template to use it as your starting point</p>
-            </div>
-            <div className="flex-1 px-6 py-6 scrollbar-hide">
-              <div className="grid grid-cols-2 gap-4">
-                {LANDING_TEMPLATES.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    onClick={() => handleTemplateSelect(tpl)}
-                    className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id ? "border-violet-500 shadow-lg scale-[1.02]" : "border-transparent hover:border-gray-300 hover:scale-[1.01]"}`}
-                  >
-                    <div className="w-full aspect-[4/3] relative overflow-hidden" style={{ background: tpl.gradient }}>
-                      {tpl.img && <img src={tpl.img} alt={tpl.name} className="absolute inset-0 w-full h-full object-cover" />}
-                      <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{tpl.tag}</div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div onClick={(e) => { e.stopPropagation(); setPreviewTemplate(tpl); }} className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-white hover:text-black transition-all flex items-center gap-1.5">
-                          <Eye className="h-3 w-3" /> View Template
-                        </div>
-                      </div>
-                      {selectedTemplate === tpl.id && (
-                        <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
-                          <div className="bg-white rounded-full p-1.5 shadow-xl"><CheckCircle2 className="h-5 w-5 text-violet-600" /></div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-                    </div>
-                  </button>
-                ))}
->>>>>>> 9ce8b4dedd181d23f62b91c9c399aa1619b8dab2
-              </div>
+                </div>
             </div>
           )}
         </div>
@@ -891,13 +857,13 @@ const CreatePagePage = () => {
                         <script src="https://cdn.tailwindcss.com"></script>
                         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
                         <style>
-                          ${tpStyles}
+                          \${tpStyles}
                           /* Helper styles for preview */
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                         </style>
                       </head>
                       <body>
-                        ${tpHtml}
+                        \${tpHtml}
                       </body>
                     </html>
                   `}

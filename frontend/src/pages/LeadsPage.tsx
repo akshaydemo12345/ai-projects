@@ -23,6 +23,8 @@ const LeadsPage = () => {
 
   // States
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
@@ -40,15 +42,64 @@ const LeadsPage = () => {
 
   // Query Data
   const { data, isLoading } = useQuery({
-    queryKey: ['leads', filterPageId, filterProjectId],
+    queryKey: ['leads', filterPageId, filterProjectId, search, startDate, endDate],
     queryFn: () => leadsApi.getAll({ 
       projectId: filterProjectId || undefined, 
-      pageId: filterPageId || undefined 
+      pageId: filterPageId || undefined,
+      search: search || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
     }),
   });
 
   const leads = data?.leads || [];
   const totalCount = data?.total || 0;
+  const formSchema = data?.formSchema;
+
+  // Identify dynamic fields to show in table (Smart Metadata Discovery)
+  const dynamicTableFields = useMemo(() => {
+    const keysSet = new Set<string>();
+    const keyToLabel: Record<string, string> = {};
+    
+    // 1. Collect fields from schema (priority)
+    if (formSchema && formSchema.fields) {
+      formSchema.fields.forEach((f: any) => {
+        if (f.field_name) {
+          keysSet.add(f.field_name);
+          keyToLabel[f.field_name] = f.label;
+        }
+      });
+    }
+
+    // 2. DISCOVERY: Look at actual leads to find data that might have missed the schema
+    // Now even more powerful: it picks up labels mapped by the backend too
+    leads.forEach((l: any) => {
+      if (l.data) {
+        Object.keys(l.data).forEach(k => {
+          if (!keysSet.has(k)) {
+            keysSet.add(k);
+          }
+        });
+      }
+    });
+
+    const standardKeys = [
+      'name', 'email', 'phone', 'message', 'full_name', 'first_name', 'last_name', 
+      'tel', 'mobile', 'domain', 'pageurl', 'path', 'timestamp', 'utm_source', 
+      'utm_medium', 'utm_campaign', 'gclid', '_id', 'projectId', 'pageId', 
+      'pageSlug', 'createdAt', 'ip', 'userAgent', 'Full Name', 'Email Address', 'Phone Number'
+    ];
+    
+    // 3. Map to objects for the table
+    return Array.from(keysSet)
+      .filter(k => !standardKeys.includes(k) && !standardKeys.includes(k.toLowerCase()))
+      .map(k => {
+        return {
+          field_name: k,
+          label: keyToLabel[k] || k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        };
+      });
+  }, [formSchema, leads]);
 
   // Mutation for deleting
   const deleteMutation = useMutation({
@@ -61,7 +112,23 @@ const LeadsPage = () => {
 
   // Helper to extract common fields regardless of where they are stored
   const getLField = (l: any, field: string) => {
-    // 1. Check if the field is in the dynamic data object
+    // 1. Check if the field is in the top level (transformed by backend)
+    if (field === 'name') {
+      const val = l['Full Name'] || l.full_name || l.name || l.fullname || l.first_name;
+      if (val) return val;
+    }
+    if (field === 'email') {
+      const val = l['Email Address'] || l.email || l.email_address || l.user_email;
+      if (val) return val;
+    }
+    if (field === 'phone') {
+      const val = l['Phone Number'] || l.phone || l.phone_number || l.tel;
+      if (val) return val;
+    }
+
+    if (l[field] !== undefined) return l[field];
+
+    // 2. Check if the field is in the dynamic data object
     if (l.data) {
       if (field === 'name') {
         const val = l.data.full_name || l.data.name || l.data.fullname || l.data.first_name;
@@ -78,34 +145,14 @@ const LeadsPage = () => {
       if (l.data[field]) return l.data[field];
     }
 
-    // 2. Fallback to root level fields (backward compatibility)
-    if (field === 'name') return l.name || l.full_name || "";
-    return l[field] || "";
+    return "";
   };
 
-  // Filter & Sort Logic
+  // Filter & Sort Logic (Optional client-side fallback, though backend now filters too)
   const filteredAndSortedLeads = useMemo(() => {
     let result = [...leads];
 
-    // Search
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(l => {
-        const name = getLField(l, 'name').toString().toLowerCase();
-        const email = getLField(l, 'email').toString().toLowerCase();
-        const phone = getLField(l, 'phone').toString().toLowerCase();
-        const message = getLField(l, 'message').toString().toLowerCase();
-
-        // Also search inside custom data keys
-        const customDataMatch = l.data ? Object.values(l.data).some(v =>
-          String(v).toLowerCase().includes(q)
-        ) : false;
-
-        return name.includes(q) || email.includes(q) || phone.includes(q) || message.includes(q) || customDataMatch;
-      });
-    }
-
-    // Sort
+    // Client-side sort (backend does newest first by default)
     result.sort((a, b) => {
       const nameA = getLField(a, 'name').toString();
       const nameB = getLField(b, 'name').toString();
@@ -117,7 +164,7 @@ const LeadsPage = () => {
     });
 
     return result;
-  }, [leads, search, sortBy]);
+  }, [leads, sortBy]);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -126,71 +173,34 @@ const LeadsPage = () => {
     }
   };
 
-  const handleExport = () => {
-    if (filteredAndSortedLeads.length === 0) {
-      toast.error("No leads to export");
-      return;
-    }
+  const [isExporting, setIsExporting] = useState(false);
 
-    const dynamicKeysSet = new Set<string>();
-    filteredAndSortedLeads.forEach(l => {
-      if (l.data) {
-        Object.keys(l.data).forEach(k => dynamicKeysSet.add(k));
-      }
-    });
-
-    const standardFields = ['name', 'email', 'phone', 'message'];
-    const aliasMapping: Record<string, string[]> = {
-      name: ['full_name', 'fullname', 'first_name'],
-      phone: ['tel', 'mobile'],
-      email: ['user_email']
-    };
-
-    const ignoredDynamicKeys = new Set([...standardFields]);
-    Object.values(aliasMapping).forEach(aliases => aliases.forEach(a => ignoredDynamicKeys.add(a)));
-
-    const dynamicFields = Array.from(dynamicKeysSet).filter(k => !ignoredDynamicKeys.has(k));
-    const allHeaders = [...standardFields, 'pageSlug', 'ip', 'createdAt', ...dynamicFields];
-
-    // 2. Build rows
-    const rows = filteredAndSortedLeads.map(l => {
-      const values = [
-        getLField(l, 'name'),
-        getLField(l, 'email'),
-        getLField(l, 'phone'),
-        getLField(l, 'message'),
-        l.pageSlug || '',
-        l.meta?.ip || l.ip || '',
-        new Date(l.createdAt).toLocaleString()
-      ];
-
-      // Add dynamic fields
-      dynamicFields.forEach(k => {
-        values.push(l.data ? l.data[k] : '');
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await leadsApi.export({
+        projectId: filterProjectId || undefined,
+        pageId: filterPageId || undefined,
+        search: search || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
       });
 
-      return values.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
-    });
-
-    // 3. Header
-    const headerRow = allHeaders.map(h => `"${h.replace(/_/g, ' ').toUpperCase()}"`).join(',');
-    const csvContent = [headerRow, ...rows].join('\n');
-
-    // 4. Download trigger
-    try {
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `leads_export_${format(new Date(), "yyyy-MM-dd")}.csv`);
-      link.style.visibility = 'hidden';
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `leads_export_${format(new Date(), "yyyy-MM-dd")}.csv`);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
       toast.success("Lead database exported successfully");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to generate CSV export");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -233,8 +243,14 @@ const LeadsPage = () => {
                 <p className="text-xl font-bold text-slate-900 dark:text-white">{totalCount}</p>
               </div>
             </div>
-            <Button variant="outline" className="gap-2 h-10 text-xs font-semibold px-5 rounded-xl border-slate-200 dark:border-slate-800" onClick={handleExport}>
-              <Download className="h-4 w-4" /> Export All
+            <Button 
+              variant="outline" 
+              className="gap-2 h-10 text-xs font-semibold px-5 rounded-xl border-slate-200 dark:border-slate-800" 
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {isExporting ? "Exporting..." : "Export All"}
             </Button>
           </div>
         </div>
@@ -270,6 +286,31 @@ const LeadsPage = () => {
                   <option key={p._id} value={p._id}>{p.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <input 
+                type="date"
+                className="bg-transparent text-xs font-semibold outline-none text-slate-600 dark:text-slate-300 cursor-pointer"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                placeholder="From Date"
+              />
+              <span className="text-slate-300 text-xs">to</span>
+              <input 
+                type="date"
+                className="bg-transparent text-xs font-semibold outline-none text-slate-600 dark:text-slate-300 cursor-pointer"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="To Date"
+              />
+              {(startDate || endDate) && (
+                <X 
+                  className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-red-500" 
+                  onClick={() => { setStartDate(""); setEndDate(""); }}
+                />
+              )}
             </div>
 
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -310,11 +351,19 @@ const LeadsPage = () => {
               <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
                   <tr className="border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[25%]">Inquirer</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[25%]">Contact Details</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">Source Page</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Timestamp</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%] text-right">Actions</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Inquirer</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Contact Details</th>
+                    
+                    {/* Dynamic Columns */}
+                    {dynamicTableFields.map((field: any) => (
+                      <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[150px]">
+                        {field.label || field.field_name.replace(/_/g, ' ')}
+                      </th>
+                    ))}
+
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[12%]">Source Page</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">Timestamp</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[10%] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -353,6 +402,16 @@ const LeadsPage = () => {
                           )}
                         </div>
                       </td>
+
+                      {/* Dynamic Column Data */}
+                      {dynamicTableFields.map((field: any) => (
+                        <td key={field.field_name} className="px-6 py-5">
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                            {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "-"}
+                          </span>
+                        </td>
+                      ))}
+
                       <td className="px-6 py-5">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
                           <Globe className="h-3.5 w-3.5" />
