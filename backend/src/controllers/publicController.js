@@ -86,7 +86,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       pageDoc._id,
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl');
+    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl metaTitle metaDescription');
 
     // ─── BRANDING FALLBACK: Use project values if page values are missing ───
     let primaryColor = page.primaryColor;
@@ -143,8 +143,13 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       thankYouPageStyles: page.thankYouPageStyles,
       meta: {
         _id: page._id,
-        title: page.title,
-        seo: page.seo,
+        title: page.metaTitle || page.title,
+        metaTitle: page.metaTitle,
+        metaDescription: page.metaDescription,
+        seo: {
+          title: page.metaTitle || page.seo?.title || page.title,
+          description: page.metaDescription || page.seo?.description || ''
+        },
         status: page.status,
         projectId: page.projectId,
         primaryColor: primaryColor,
@@ -348,7 +353,7 @@ const buildLeadCaptureScript = (page) => {
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
 const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
-  const { title, content, seo } = page || {};
+  const { title, content, seo, metaTitle, metaDescription } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
 
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
@@ -400,10 +405,10 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
   // ── Resolved SEO values from DB (always authoritative) ──────────────────
-  // The Page Settings modal saves to page.metaTitle / page.metaDescription (flat fields)
-  // page.seo.title / page.seo.description are legacy fallbacks
-  const seoTitle = (page.metaTitle || seo?.title || title || 'Landing Page').trim();
-  const seoDescription = (page.metaDescription || seo?.description || '').trim();
+  // The Page Settings modal saves to metaTitle / metaDescription (flat fields)
+  // seo.title / seo.description are legacy fallbacks
+  const seoTitle = (metaTitle || seo?.title || title || 'Landing Page').trim();
+  const seoDescription = (metaDescription || seo?.description || '').trim();
   const seoKeywords = Array.isArray(seo?.keywords) ? seo.keywords.join(', ') : (seo?.keywords || '');
 
   // ── Inject Branding Variables ─────────────────────────────────────────────
@@ -505,6 +510,18 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
 
     if (/<\/head>/i.test(html)) {
+      // Force inject SEO and Performance tags
+      const extraMeta = `
+    <meta name="robots" content="noindex, nofollow">
+    ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : ''}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">`;
+
+      if (!html.includes('name="robots"')) {
+        html = html.replace(/<\/head>/i, `${extraMeta}\n</head>`);
+      }
+
       // Force inject Tailwind, Fonts, and Branding if missing
       if (!html.includes('cdn.tailwindcss.com')) {
         html = html.replace(/<\/head>/i, `  <script src="https://cdn.tailwindcss.com"></script>\n</head>`);
