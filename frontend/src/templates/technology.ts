@@ -144,9 +144,10 @@ export const technologyHtml = `
           <input type="text" placeholder="Company Name" required />
           <div style="margin-bottom: 20px;">
             <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Select Project Scale</p>
+            <input type="hidden" name="project_scale" id="project_scale_input" value="SaaS" />
             <div style="display: flex; gap: 10px;">
-              <div style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center; border: 1px solid #38bdf8; font-size: 12px;">SaaS</div>
-              <div style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.1); font-size: 12px;">Enterprise</div>
+              <div class="scale-toggle active" onclick="selectScale(this, 'SaaS')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center; border: 1px solid #38bdf8; font-size: 12px; cursor: pointer;">SaaS</div>
+              <div class="scale-toggle" onclick="selectScale(this, 'Enterprise')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.1); font-size: 12px; cursor: pointer;">Enterprise</div>
             </div>
           </div>
           <button type="submit" class="btn-tech-primary">Get Access Code</button>
@@ -268,6 +269,16 @@ export const technologyHtml = `
     </div>
 
     <script>
+      function selectScale(el, val) {
+        document.querySelectorAll('.scale-toggle').forEach(opt => {
+          opt.style.borderColor = 'rgba(255,255,255,0.1)';
+          opt.classList.remove('active');
+        });
+        el.style.borderColor = '#38bdf8';
+        el.classList.add('active');
+        document.getElementById('project_scale_input').value = val;
+      }
+
       document.querySelector('form').addEventListener('submit', function(e) {
         e.preventDefault();
         document.getElementById('loader').style.display = 'flex';

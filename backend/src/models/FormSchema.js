@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const FormFieldSchema = new mongoose.Schema({
   field_name: { type: String, required: true },
+  name: String, // Semantic name (e.g., 'full_name' instead of 'field_0')
   label: String,
   type: String,
   required: { type: Boolean, default: false },

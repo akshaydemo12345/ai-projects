@@ -652,7 +652,6 @@ exports.getPublicPageHTML = async (req, res, next) => {
     
     if (isThankYou) {
       if (page.thankYouPageContent) {
-        // Render the exact custom thank you page the user built in the GrapesJS editor
         const tyPageMock = {
           ...page.toObject(),
           content: page.thankYouPageContent,
@@ -661,9 +660,6 @@ exports.getPublicPageHTML = async (req, res, next) => {
         };
         return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl, true));
       }
-
-      // Render the generic success/thank-you template if no custom layout is built
-      // Delegate this intelligently to the thankYouController which handles all layouts & configs flawlessly.
       req.params.pageSlug = normalizedSlug;
       return require('./thankYouController').renderThankYouPage(req, res, next);
     }
@@ -682,86 +678,137 @@ exports.getPublicPageHTML = async (req, res, next) => {
  */
 exports.handleFormSubmission = async (req, res, next) => {
   try {
-    console.log('🚀 [RAW_REQUEST_BODY]:', JSON.stringify(req.body, null, 2));
-    const rawBody = { ...req.body };
-    const slugSource = req.params.slug || req.params[0] || req.body.pageSlug || req.body.path || '';
-    const slugStr = String(slugSource).trim();
-    const cleanSlug = slugStr.replace(/^\/+|\/+$/g, '').split('?')[0].split('/')[0];
+    const rawData = { ...req.body };
+    const { pageId, pageSlug, projectId } = rawData;
     
-    console.log(`🔎 [DEBUG] Searching for page with slug: "${cleanSlug}" (original was: "${slugSource}")`);
-    
-    const page = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
-    if (!page) return next(new AppError('Page not found', 404));
+    // 1. Fetch Dynamic Schema
+    const FormSchema = require('../models/FormSchema');
+    const schema = await FormSchema.findOne({
+      $or: [
+        { page_id: pageId },
+        { project_id: projectId, page_slug: pageSlug },
+        { page_slug: pageSlug }
+      ].filter(obj => Object.values(obj)[0])
+    }).lean();
 
-    // ─── DYNAMIC DATA PREPARATION ───
-    const { validateForm, normalizeData } = require('../utils/dynamicValidator');
-    const internalFields = ['pageSlug', 'path', 'token', 'projectId', 'pageId', 'domain', 'url', 'timestamp', 'referer'];
-    const rawData = {};
-    
-    Object.keys(rawBody).forEach(key => {
-      if (!internalFields.includes(key)) {
-        rawData[key] = rawBody[key];
+    if (!schema || !schema.fields?.length) {
+      console.warn(`[PUBLIC_FORM] No schema found: ${pageSlug || pageId}`);
+      return res.status(400).json({ status: 'fail', message: 'Form schema not found' });
+    }
+
+    // 2. Helpers for Dynamic Matching
+    const normalizeKey = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+    const slugify = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+
+    function getSmartFieldValue(field, body = {}) {
+      const normalizedBody = {};
+      Object.keys(body).forEach(key => { normalizedBody[normalizeKey(key)] = body[key]; });
+
+      const label = (field.label || "").toLowerCase();
+      const labelSlug = slugify(field.label);
+      const labelWords = label.split(/\s+/).filter(w => w.length > 2);
+
+      const candidates = [
+        field.field_name,
+        field.name,
+        field.id,
+        labelSlug,
+        normalizeKey(field.label)
+      ];
+      
+      labelWords.forEach(w => candidates.push(w));
+
+      // Intelligent fallback by Broad Types
+      candidates.push(field.type); 
+
+      if (field.type === "email") candidates.push("email", "email_address", "mail");
+      if (["tel", "phone", "mobile"].includes(field.type)) candidates.push("phone", "tel", "contact", "mobile", "whatsapp");
+      if (["text", "textarea"].includes(field.type)) {
+        if (label.includes("name")) candidates.push("name", "fullname", "firstname", "lname");
+        if (label.includes("msg") || label.includes("message") || label.includes("comment") || label.includes("note")) {
+          candidates.push("message", "msg", "comments", "notes", "description", "details");
+        }
+        if (label.includes("subject") || label.includes("title")) candidates.push("subject", "title", "topic");
+      }
+      if (field.type === "number") candidates.push("amount", "quantity", "count", "age", "price");
+      if (field.type === "date" || field.type === "time") candidates.push("date", "time", "appointment", "schedule", "on_date");
+      if (field.type === "select" || field.type === "radio") candidates.push("service", "category", "type", "option", "selection", "plan");
+      if (field.type === "checkbox") candidates.push("agree", "accept", "consent", "newsletter", "terms");
+
+      const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+
+      for (const key of uniqueCandidates) {
+        const n = normalizeKey(key);
+        if (normalizedBody[n] !== undefined && normalizedBody[n] !== null) {
+          const val = normalizedBody[n];
+          return (typeof val === 'string') ? val.trim() : val;
+        }
+      }
+      return "";
+    }
+
+    // 3. Validate & Map
+    const missingFields = [];
+    const leadData = {};
+
+    for (const field of schema.fields) {
+      const value = getSmartFieldValue(field, rawData);
+
+      if (field.required && !value) {
+        missingFields.push(field.label || field.field_name);
+      }
+
+      // Store using ONE persistent key (prioritize semantic name)
+      const storageKey = field.name || field.field_name;
+      if (value !== undefined) {
+        leadData[storageKey] = value;
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({ status: 'fail', message: 'Required fields missing', fields: missingFields });
+    }
+
+    // 4. UTMs
+    const utm = {};
+    const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
+
+    // 5. Create Lead
+    const lead = await Lead.create({
+      projectId: schema.project_id,
+      pageId: schema.page_id,
+      pageSlug: pageSlug || schema.page_slug,
+      data: leadData,
+      utm,
+      meta: {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        domain: rawData.domain || req.get('origin'),
+        url: rawData.url || req.get('referer')
       }
     });
 
-    // 1. Fetch Schema
-    const schema = await FormSchema.findOne({ project_id: page.projectId });
-    
-    // 2. Normalize & Validate
-    let leadData = rawData;
-    if (schema && schema.fields) {
-      // Remap keys like 'name' -> 'full_name' based on schema
-      leadData = normalizeData(schema.fields, rawData);
-      
-      console.log('🔍 [DEBUG] LEAD SUBMISSION DEBUG:');
-      console.log('   - Incoming rawData:', rawData);
-      console.log('   - Normalized leadData:', leadData);
-      
-      const errors = validateForm(schema.fields, rawData);
-      if (errors.length > 0) {
-        console.warn(`⚠️ Validation failed for direct form (${cleanSlug}):`, errors);
-        return res.status(400).json({ status: 'error', message: 'Validation failed', errors });
-      }
+    if (schema.project_id) {
+      await Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => {});
     }
 
-    // ─── DUPLICATE PROTECTION (5 sec) ───
-    const recentLead = await Lead.findOne({
-      projectId: page.projectId,
-      pageSlug: cleanSlug,
-      createdAt: { $gt: new Date(Date.now() - 5000) }
-    }).sort({ createdAt: -1 });
-
-    if (!recentLead || JSON.stringify(recentLead.data) !== JSON.stringify(leadData)) {
-      await Lead.create({
-        projectId: page.projectId,
-        pageId: page._id,
-        pageSlug: cleanSlug,
-        data: leadData,
-        meta: {
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
-          domain: req.headers.host || 'unknown',
-          url: req.headers.referer || req.originalUrl || 'unknown',
-          referer: req.get('referer')
-        }
+    const thankYouUrl = rawData.redirect || `/${pageSlug || schema.page_slug}/thank-you`;
+    
+    // Final response
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.status(201).json({ 
+        status: 'success', 
+        message: 'Intelligence Captured', 
+        data: { leadId: lead._id }, 
+        redirect: thankYouUrl 
       });
-      if (page.projectId) {
-        await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
-      }
     }
 
-    const thankYouUrl = page.thankYouUrl?.trim() ? page.thankYouUrl : `/${cleanSlug}/thank-you`;
-    
-    // Ajax response
-    if (req.xhr || req.headers.accept?.includes('json') || req.get('Content-Type')?.includes('json')) {
-      return res.status(201).json({ status: 'success', message: 'Lead saved', redirect: thankYouUrl });
-    }
-
-    // Traditional redirect
     return res.redirect(thankYouUrl);
 
   } catch (err) {
-    logger.error('❌ Dynamic Form Submission Error:', err);
+    console.error('❌ Dynamic Form Submission Error:', err);
     next(err);
   }
 };
@@ -1080,78 +1127,5 @@ exports.getDynamicPage = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/leads
- * Unified lead submission handler for dynamic landing pages.
- */
-exports.submitDynamicLead = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const { domain, pageUrl, url, pageSlug, path: reqPath, email } = data;
-
-    if (!email) {
-      return res.status(400).json({ status: 'error', message: 'Email is required' });
-    }
-
-    // 1. Find the page associated with this submission
-    // Support multiple field patterns for maximum compatibility with tracker/embed/SDKs
-    const targetSlug = pageSlug || data.slug || (reqPath || '').replace(/^\/+|\/+$/g, '').split('/')[0];
-    
-    let page = await Page.findOne({ 
-      slug: targetSlug, 
-      isDeleted: { $ne: true } 
-    });
-
-    // Extract UTMs
-    const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-    const utmDetails = {};
-    utmFields.forEach(field => {
-      if (data[field]) utmDetails[field] = data[field];
-    });
-
-    // Fallback search if still not found
-    if (!page && pageSlug) {
-        page = await Page.findOne({ slug: pageSlug });
-    }
-
-    // Create the lead
-    const lead = await Lead.create({
-      name: data.name || data.first_name || 'Contact',
-      email: email.trim().toLowerCase(),
-      phone: data.phone || data.tel || '',
-      message: data.message || data.comments || '',
-      data: data, // Store full body in Mixed for safety
-      utm: utmDetails,
-      domain: domain || 'unknown',
-      url: pageUrl || url || page.url || 'unknown',
-      pageSlug: targetSlug || 'unknown',
-      pageId: page ? page._id : null,
-      projectId: page ? page.projectId : null,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    // Update Project lead count
-    if (page && page.projectId) {
-      await Project.findByIdAndUpdate(page.projectId, { $inc: { leadCount: 1 } });
-    }
-
-    // Return success with thank you info
-    const thankYouUrl = page && page.thankYouUrl 
-      ? page.thankYouUrl 
-      : (page ? `/${page.slug}/thank-you` : null);
-
-    res.status(201).json({
-      status: 'success',
-      success: true,
-      message: 'Lead captured successfully',
-      thankYouUrl,
-      gaEventLabel: page ? page.slug : 'direct',
-      debug_utm: utmDetails
-    });
-
-  } catch (err) {
-    next(err);
-  }
-};
+// End of file
 
