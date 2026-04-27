@@ -6,10 +6,10 @@ const thankYouController = require('../controllers/thankYouController');
 // ─── Public Routes ────────────────────────────────────────────────────────
 
 /**
- * @route   GET /api/thank-you/render/:pageSlug
- * @desc    Render dynamic Thank You page (public, uses cookie context)
+ * @route   GET /api/thank-you/render/:pageSlug(*)
+ * @desc    Render dynamic Thank You page (public, supports pre-slugs)
  */
-router.get('/render/:pageSlug', thankYouController.renderThankYouPage);
+router.get('/render/:pageSlug(*)', thankYouController.renderThankYouPage);
 
 // ─── Protected Routes (Auth Required) ────────────────────────────────────────
 

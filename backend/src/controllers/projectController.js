@@ -25,6 +25,7 @@ exports.createProject = async (req, res, next) => {
       colors: req.body.colors || [],
       themeSystem: req.body.themeSystem || {},
       websiteUrl: req.body.websiteUrl || req.body.url,
+      preSlug: req.body.preSlug,
       scrapedData: req.body.scrapedData || {},
     });
 
@@ -152,8 +153,8 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl } = req.body;
-    const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, updatedAt: Date.now() };
+    const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl, preSlug } = req.body;
+    const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, preSlug, updatedAt: Date.now() };
 
     if (websiteUrl !== undefined) {
       updateData.websiteUrl = websiteUrl ? normalizeDomain(websiteUrl) : "";

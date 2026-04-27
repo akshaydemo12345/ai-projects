@@ -68,13 +68,11 @@ const App = () => (
               <Route path="/preview" element={<PreviewPage />} />
             </Route>
 
-            {/* Public Landing Pages & Previews */}
-            <Route path="/preview/:slug" element={<PublicLandingPage />} />
-            <Route path="/preview/:slug/thank-you" element={<PublicLandingPage />} />
-            <Route path="/:slug" element={<PublicLandingPage />} />
-            <Route path="/:slug/thank-you" element={<PublicLandingPage />} />
+            {/* Public Landing Pages — Wildcard to support nested preSlugs */}
+            <Route path="/preview/*" element={<PublicLandingPage />} />
+            <Route path="/*" element={<PublicLandingPage />} />
 
-            <Route path="*" element={<NotFound />} />
+
           </Routes>
         </BrowserRouter>
       </AuthProvider>

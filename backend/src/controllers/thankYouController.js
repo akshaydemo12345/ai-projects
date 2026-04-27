@@ -1,4 +1,5 @@
 const Page = require('../models/Page');
+const Project = require('../models/Project');
 const logger = require('../utils/logger');
 const fs = require('fs');
 const path = require('path');
@@ -155,8 +156,37 @@ exports.renderThankYouPage = async (req, res, next) => {
       }
     }
 
+    // ─── DYNAMIC SLUG RESOLUTION (Support Pre-Slugs) ───
+    const slugParts = (pageSlug || "").split('/');
+    const actualPageSlug = slugParts[slugParts.length - 1]; // Last part is always the page slug
+    const urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/'); // Everything before
+ 
     // Fetch page config (works even without cookie)
-    const page = await Page.findOne({ slug: pageSlug });
+    let page = null;
+    const potentialPages = await Page.find({ slug: actualPageSlug, isDeleted: { $ne: true } });
+
+    if (potentialPages.length > 0) {
+      if (urlPreSlug) {
+        // Find page where project preSlug matches the URL part
+        for (const p of potentialPages) {
+          const project = await Project.findById(p.projectId);
+          const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
+          if (projectPreSlug === urlPreSlug) {
+            page = p;
+            break;
+          }
+        }
+      } else {
+        // No prefix in URL, take the first page that has NO project preSlug
+        for (const p of potentialPages) {
+          const project = await Project.findById(p.projectId);
+          if (!project?.preSlug) {
+            page = p;
+            break;
+          }
+        }
+      }
+    }
 
     if (!page) {
       return res.status(404).json({
@@ -252,25 +282,25 @@ exports.renderThankYouPage = async (req, res, next) => {
 
     let finalHeaderScript = normalizeScriptLocal(page.mainHeader);
     if (page.thankYouHeader) {
-      finalHeaderScript += '\\n' + normalizeScriptLocal(page.thankYouHeader);
+      finalHeaderScript += '\n' + normalizeScriptLocal(page.thankYouHeader);
     }
     
     let finalFooterScript = normalizeScriptLocal(page.mainFooter);
     if (page.thankYouFooter) {
-      finalFooterScript += '\\n' + normalizeScriptLocal(page.thankYouFooter);
+      finalFooterScript += '\n' + normalizeScriptLocal(page.thankYouFooter);
     }
     if (page.thankYouConversionScript) {
-      finalFooterScript += '\\n' + normalizeScriptLocal(page.thankYouConversionScript);
+      finalFooterScript += '\n' + normalizeScriptLocal(page.thankYouConversionScript);
     }
 
     if (finalHeaderScript.trim()) {
-      html = html.replace('</head>', '\\n' + finalHeaderScript + '\\n</head>');
+      html = html.replace('</head>', '\n' + finalHeaderScript + '\n</head>');
     }
     if (finalFooterScript.trim()) {
       if (/<\/body>/i.test(html)) {
-        html = html.replace(/<\/body>/i, '\\n' + finalFooterScript + '\\n</body>');
+        html = html.replace(/<\/body>/i, '\n' + finalFooterScript + '\n</body>');
       } else {
-        html += '\\n' + finalFooterScript;
+        html += '\n' + finalFooterScript;
       }
     }
 

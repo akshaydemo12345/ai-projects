@@ -17,7 +17,7 @@ const {
 const router = express.Router();
 
 // ─── JSON API: used by the React frontend ────────────────────────────────────
-router.get('/api/public/page/:slug', getPublicPageBySlug);
+router.get('/api/public/page/:slug(*)', getPublicPageBySlug);
 
 // ─── Public Preview Rendering ────────────────────────────────────────────────
 router.get('/preview/:token', getPreview);

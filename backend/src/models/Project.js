@@ -101,6 +101,11 @@ const projectSchema = new mongoose.Schema({
   //   ],
   //   default: [],
   // },
+  preSlug: {
+    type: String,
+    trim: true,
+    lowercase: true,
+  },
   scrapedData: {
     type: Object,
     default: {},

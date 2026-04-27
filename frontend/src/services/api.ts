@@ -42,6 +42,7 @@ export interface Project {
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
+  preSlug?: string;
   pages?: LandingPage[];
   stats?: {
     views: number;

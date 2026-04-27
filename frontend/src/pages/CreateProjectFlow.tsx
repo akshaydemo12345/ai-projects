@@ -52,6 +52,7 @@ const CreateProjectFlow = () => {
 
   // Form fields
   const [name, setName] = useState("");
+  const [preSlug, setPreSlug] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("https://");
   const [category, setCategory] = useState("Agency");
   const [availableCategories, setAvailableCategories] = useState(categories);
@@ -137,6 +138,7 @@ const CreateProjectFlow = () => {
     setIsSubmitting(true);
     createMutation.mutate({
       name: name.trim(),
+      preSlug: preSlug.trim(),
       websiteUrl: websiteUrl.trim(),
       category,
       description: description.trim(),
@@ -354,6 +356,21 @@ const CreateProjectFlow = () => {
                   placeholder="e.g. Roofing Company"
                   className="h-11"
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                  Pre Slug <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Input
+                  value={preSlug}
+                  onChange={(e) => setPreSlug(e.target.value)}
+                  placeholder="e.g. landing-pages, ppc, lp"
+                  className="h-11"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  This will be added to the URL: domain.com/<strong>{preSlug || 'pre-slug'}</strong>/page-slug
+                </p>
               </div>
 
               <div>

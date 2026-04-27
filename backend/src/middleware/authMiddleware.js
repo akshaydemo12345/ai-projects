@@ -9,6 +9,7 @@ const protect = async (req, res, next) => {
     }
 
     if (!token) {
+      console.warn(`🛡️ [AUTH] Unauthorized Access Blocked: ${req.method} ${req.originalUrl}`);
       return res.status(401).json({ status: 'fail', message: 'Not authorized, no token' });
     }
 

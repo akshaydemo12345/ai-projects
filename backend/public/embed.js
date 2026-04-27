@@ -16,7 +16,7 @@
   const attrPage = currentScript.getAttribute('data-page');
   const hashPage = window.location.hash.includes('page=') ? window.location.hash.split('page=')[1] : null;
   const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  const pathPage = pathParts[0] !== "" ? pathParts[0] : null;
+  const pathPage = pathParts.length > 0 ? pathParts.join('/') : null;
 
   const page = qPage || attrPage || hashPage || pathPage;
   
