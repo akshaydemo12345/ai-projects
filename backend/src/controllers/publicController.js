@@ -3,12 +3,14 @@
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const Lead = require('../models/Lead');
+const FormSchema = require('../models/FormSchema');
 const AppError = require('../utils/AppError');
 const { normalizeDomain } = require('../utils/validation');
 const { generateTrackingScripts } = require('../utils/tracking');
 const path = require('path');
 const fs = require('fs');
 const { validateForm } = require('../utils/dynamicValidator');
+const logger = require('../utils/logger');
 
 /**
  * Normalizes script content - wraps in script tags if not already present
