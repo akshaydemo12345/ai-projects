@@ -1,105 +1,125 @@
 /**
- * Finds a value in the data object using fuzzy matching for the given field name.
+ * Normalizes a string key to be alphanumeric and lowercase for robust comparison.
+ * Example: "Full Name" -> "fullname", "full_name" -> "fullname"
  */
-function findValue(targetName, data, label = "") {
-  // 1. Absolute direct match (on field_name)
-  if (data[targetName] !== undefined && data[targetName] !== null) {
-    return data[targetName];
-  }
-
-  const cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const cleanLabel = (label || "").toLowerCase().replace(/[^a-z0-9]/g, '');
-  const keys = Object.keys(data);
-
-  // 2. Case-insensitive / Cleaned direct match
-  for (const key of keys) {
-    const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (cleanKey === cleanTarget || (cleanLabel && cleanKey === cleanLabel)) return data[key];
-  }
-
-  // 3. Concept matching (Fuzzy)
-  for (const key of keys) {
-    const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    // Concept: Name
-    if ((cleanTarget.includes('name') || cleanLabel.includes('name')) && 
-        (cleanKey === 'name' || cleanKey.includes('name') || cleanKey === 'firstname' || cleanKey === 'contact')) {
-      return data[key];
-    }
-
-    // Concept: Phone
-    if ((cleanTarget.includes('phone') || cleanTarget.includes('tel') || cleanLabel.includes('phone') || cleanLabel.includes('tel') || cleanLabel.includes('mobile')) && 
-        (cleanKey.includes('phone') || cleanKey.includes('tel') || cleanKey.includes('mobile') || cleanKey === 'contactnumber')) {
-      return data[key];
-    }
-
-    // Concept: Email
-    if ((cleanTarget.includes('email') || cleanTarget.includes('mail') || cleanLabel.includes('email') || cleanLabel.includes('mail')) && 
-        (cleanKey.includes('email') || cleanKey.includes('mail'))) {
-      return data[key];
-    }
-
-    // Concept: Message
-    if ((cleanTarget.includes('message') || cleanTarget.includes('msg') || cleanLabel.includes('message') || cleanLabel.includes('msg') || cleanLabel.includes('comment')) && 
-        (cleanKey.includes('message') || cleanKey.includes('msg') || cleanKey.includes('comment') || cleanKey.includes('query'))) {
-      return data[key];
-    }
-  }
-
-  return undefined;
+function normalizeKey(str = "") {
+  return String(str || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 /**
- * Validates form data against a schema.
+ * Intelligent value extraction from raw body using multiple potential matching fields.
+ * This removes the need for hardcoded aliases.
  */
-function validateForm(fields, data) {
-  const errors = [];
-  if (!fields || !Array.isArray(fields)) return errors;
+function getFieldValue(field, body = {}) {
+  const possibleKeys = [
+    field.field_name,
+    field.name,
+    field.label,
+    field.placeholder
+  ].filter(Boolean);
 
-  fields.forEach(field => {
-    const value = findValue(field.field_name, data, field.label);
+  // Normalize all keys in the body once for efficiency
+  const normalizedBody = {};
+  Object.keys(body).forEach(key => {
+    normalizedBody[normalizeKey(key)] = body[key];
+  });
 
-    if (field.required && (value === undefined || value === null || value === '')) {
-      errors.push(`${field.label || field.field_name} is required`);
-      return;
+  for (const key of possibleKeys) {
+    const normalized = normalizeKey(key);
+    if (normalizedBody[normalized] !== undefined && normalizedBody[normalized] !== null) {
+      return String(normalizedBody[normalized]).trim();
     }
+  }
 
-    if (!value) return;
+  // Fallback to fuzzy search if still nothing found
+  return findValueFuzzy(field.field_name, body, field.label);
+}
 
-    if (field.validation?.pattern) {
-      try {
-        const regex = new RegExp(field.validation.pattern);
-        if (!regex.test(String(value))) {
-          errors.push(field.validation.message || `${field.label || field.field_name} format is invalid`);
-        }
-      } catch (e) {}
+/**
+ * Normalizes incoming raw data based on the schema fields.
+ */
+function normalizeData(schemaFields, rawData) {
+  if (!schemaFields || !rawData) return rawData || {};
+  
+  const normalized = {};
+  const processedKeys = new Set();
+
+  schemaFields.forEach(field => {
+    const value = getFieldValue(field, rawData);
+
+    if (value !== undefined && value !== null) {
+      // Logic: Use field.name (semantic) if available, else field_name
+      const storageKey = field.name || field.field_name;
+      normalized[storageKey] = value;
+      
+      // Track which raw keys we've used to avoid duplicating data in 'extra' pass
+      processedKeys.add(normalizeKey(field.field_name));
+      if (field.name) processedKeys.add(normalizeKey(field.name));
+      if (field.label) processedKeys.add(normalizeKey(field.label));
     }
   });
 
-  return errors;
-}
-
-/**
- * Normalizes incoming raw data into the schema's field_name keys.
- */
-function normalizeData(schemaFields, rawData) {
-  // Start with all raw data to ensure nothing is lost
-  const normalized = { ...rawData };
-  
-  if (!schemaFields || !Array.isArray(schemaFields)) return normalized;
-
-  schemaFields.forEach(field => {
-    const val = findValue(field.field_name, rawData, field.label);
-    // If we found a value (even if fuzzy), we normalize it to the schema's field_name
-    if (val !== undefined && val !== null) {
-      normalized[field.field_name] = val;
-    } else if (normalized[field.field_name] === undefined) {
-      // If not present at all, initialize with empty string
-      normalized[field.field_name] = "";
+  // Discovery pass: Keep extra fields that weren't captured by the schema
+  Object.keys(rawData).forEach(key => {
+    const nKey = normalizeKey(key);
+    const systemFields = ['pageid', 'pageslug', 'projectid', 'domain', 'url', 'token', 'timestamp', 'path', 'data'];
+    
+    if (!processedKeys.has(nKey) && !systemFields.includes(nKey) && !nKey.startsWith('utm')) {
+      normalized[key] = rawData[key];
     }
   });
 
   return normalized;
 }
 
-module.exports = { validateForm, normalizeData, findValue };
+function findValueFuzzy(targetName, data, label) {
+  const t = normalizeKey(targetName);
+  const l = normalizeKey(label);
+  
+  const isGeneric = t.startsWith('field');
+
+  for (const [key, value] of Object.entries(data)) {
+    const k = normalizeKey(key);
+    
+    if (k === t || (l && k === l)) return value;
+    
+    if (!isGeneric) {
+      if (k.includes(t) || t.includes(k)) return value;
+      if (l && (k.includes(l) || l.includes(k))) return value;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Smart validation logic.
+ * Returns array of missing field labels.
+ */
+function validateForm(fields, data) {
+  const missingFields = [];
+  
+  if (!fields || !Array.isArray(fields)) return [];
+
+  fields.forEach(field => {
+    if (!field.required) return;
+
+    const value = getFieldValue(field, data);
+
+    // If truly required but empty
+    if (value === undefined || value === null || String(value).trim() === '') {
+      // Optional: Leniency for common fields can be added here if needed, 
+      // but following strict 'required' from schema is safer.
+      missingFields.push(field.label || field.name || field.field_name);
+    }
+  });
+
+  return missingFields;
+}
+
+module.exports = {
+  normalizeData,
+  validateForm
+};

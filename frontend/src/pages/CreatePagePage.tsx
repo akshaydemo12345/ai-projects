@@ -108,7 +108,16 @@ const LANDING_TEMPLATES = [
     prompt:
       "Create a professional real estate landing page with property galleries, agent profiles, interactive maps, and lead capture forms for inquiries.",
   },
+  {
+    id: "lead-gen",
+    name: "Lead Generation",
+    tag: "Business",
+    img: "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    gradient: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    prompt: "Create a high-performing lead generation landing page with a primary focus on conversion. Features a bold hero header, a clean multi-step lead form, trust badges, and benefit-driven copywriting.",
+  },
 ];
+
 
 const TEMPLATE_CATEGORIES = ["All", "SaaS", "Education", "Healthcare", "E-commerce", "Legal", "Business", "Real Estate"];
 type CreationMethod = "ai" | "figma" | "template";
@@ -229,7 +238,6 @@ const CreatePagePage = () => {
     localStorage.setItem('grapes-preview-html', fullHtml);
     window.open('/preview', '_blank');
   };
-
 
   const createPageMutation = useMutation({
     mutationFn: async (page: Partial<LandingPage>) => {
@@ -595,7 +603,7 @@ const CreatePagePage = () => {
         </div>
 
         {/* ─────────────────────── RIGHT PANEL ─────────────────────────────── */}
-        <div className="hidden md:flex flex-col w-[48%] lg:w-[45%] bg-gray-50 overflow-y-auto border-l border-gray-100">
+        <div className="hidden md:flex flex-col w-1/2 bg-gray-50 overflow-y-auto border-l border-gray-100">
           {activeMethod === 'ai' && (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="px-7 pt-10 pb-5 border-b border-gray-100">
@@ -708,8 +716,6 @@ const CreatePagePage = () => {
                         key={tpl.id}
                         onClick={() => {
                           handleTemplateSelect(tpl);
-                          if (activeMethod === "template") return;
-                          setActiveMethod("template");
                         }}
                         className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
                           ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
@@ -852,13 +858,13 @@ const CreatePagePage = () => {
                         <script src="https://cdn.tailwindcss.com"></script>
                         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
                         <style>
-                          ${tpStyles}
+                          \${tpStyles}
                           /* Helper styles for preview */
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                         </style>
                       </head>
                       <body>
-                        ${tpHtml}
+                        \${tpHtml}
                       </body>
                     </html>
                   `}

@@ -1,7 +1,6 @@
 (function() {
   'use strict';
 
-  // Config
   const scriptTag = document.currentScript;
   const API_BASE = (scriptTag ? scriptTag.src : '').replace('/tracker.js', '');
   const CONFIG = {
@@ -12,73 +11,62 @@
     fullUrl: window.location.href
   };
 
-  /**
-   * Extract UTM parameters from URL
-   */
-  function persistUTMs() {
-    const params = new URLSearchParams(window.location.search);
-    if (window.location.hash && window.location.hash.includes('?')) {
-      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-      hashParams.forEach((v, k) => { if (!params.has(k)) params.append(k, v); });
-    }
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-    utmKeys.forEach(key => {
-      const val = params.get(key);
-      if (val) {
-        try { sessionStorage.setItem('dm_' + key, val); } catch (e) {}
-      }
-    });
-  }
-
   function getUTMParameters() {
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
     const utms = {};
-    utmKeys.forEach(key => {
-      let val = null;
-      try { val = sessionStorage.getItem('dm_' + key); } catch (e) {}
-      if (!val) {
-        const params = new URLSearchParams(window.location.search);
-        val = params.get(key);
-      }
-      if (val) utms[key.toLowerCase()] = val;
-    });
+    try {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      utmKeys.forEach(key => {
+        const val = sessionStorage.getItem('dm_' + key) || (new URLSearchParams(window.location.search)).get(key);
+        if (val) utms[key.toLowerCase()] = val;
+      });
+    } catch (e) {}
     return utms;
   }
 
-  function initTracking() {
-    persistUTMs();
-    if (window.gtag) {
-      window.gtag('event', 'page_view', {
-        page_location: CONFIG.fullUrl,
-        page_path: CONFIG.path,
-        page_title: document.title
-      });
-    }
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; background: ${type === 'success' ? '#10b981' : '#ef4444'}; color: white; z-index: 10002; font-family: sans-serif; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1);`;
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
 
-  /**
-   * Handle Form Submissions
-   */
   function handleForms() {
     document.addEventListener('submit', function(e) {
       const form = e.target;
       if (form.tagName !== 'FORM') return;
-
       e.preventDefault();
 
       const data = {};
       
-      // 1. Get all form elements
-      const elements = form.querySelectorAll('input, select, textarea');
-      elements.forEach((el, index) => {
-        if (el.type === 'submit' || el.type === 'button') return;
+      // DEEP CRAWLER: Combine form elements AND global inputs (for decoupled templates)
+      const collectors = [
+        ...Array.from(form.querySelectorAll('input, select, textarea')),
+        ...Array.from(document.querySelectorAll('[data-form-field="true"]')),
+        ...Array.from(document.querySelectorAll('input[type="hidden"]'))
+      ];
+
+      collectors.forEach((el, index) => {
+        // Aligned Naming Strategy
+        let key = el.getAttribute('name') || el.getAttribute('id') || el.getAttribute('data-name');
         
-        // Priority: name attribute -> id attribute -> custom field_i
-        const key = el.getAttribute('name') || el.getAttribute('id') || `field_${index}`;
-        
-        // Handle different input types
+        if (!key) {
+          const label = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
+          const source = (label ? label.innerText : '') || el.getAttribute('placeholder') || '';
+          if (source) {
+            key = source.toLowerCase().trim()
+                  .replace(/[^a-z0-9]/g, '_')
+                  .replace(/_+/g, '_')
+                  .replace(/^_|_$/g, '');
+          }
+        }
+
+        // Generic fallback to match backend 'field_index' if absolutely no identifier
+        if (!key) key = `field_${index}`;
+
+        // Value Extractors
         if (el.type === 'checkbox') {
-          data[key] = el.checked;
+          data[key] = el.checked ? (el.value || 'Yes') : '';
         } else if (el.type === 'radio') {
           if (el.checked) data[key] = el.value;
         } else {
@@ -86,116 +74,59 @@
         }
       });
 
-      // 2. Fallback to FormData for anything we missed (e.g. plugins, complex widgets)
-      const formData = new FormData(form);
-      formData.forEach((value, key) => {
-        if (data[key] === undefined || data[key] === '') {
-          data[key] = value;
-        }
+      // Metadata injection
+      Object.assign(data, {
+        domain: CONFIG.domain,
+        pageUrl: CONFIG.fullUrl,
+        path: CONFIG.path,
+        timestamp: new Date().toISOString(),
+        ...getUTMParameters()
       });
 
-      // Add metadata and UTMs
-      data.domain = CONFIG.domain;
-      data.pageUrl = CONFIG.fullUrl;
-      data.path = CONFIG.path;
-      data.timestamp = new Date().toISOString();
+      console.log('💎 [TRACKER] Deep Crawl Result:', data);
       
-      const utms = getUTMParameters();
-      Object.assign(data, utms); // Include UTMs in the main object for easy identification
-
-      // Submit via API
-      console.log('📤 [TRACKER] Submitting Lead Data:', data);
       fetch(`${CONFIG.apiBase}/api/leads`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(result => {
         if (result.success || result.status === 'success') {
-          // Fire Conversion Event
-          if (window.gtag) {
-            window.gtag('event', 'conversion', {
-              'send_to': result.gaEventLabel || 'default',
-              'event_category': 'form',
-              'event_label': CONFIG.path
-            });
-          }
-
-          // Redirect to Thank You URL
-          if (result.thankYouUrl) {
-            window.location.href = result.thankYouUrl;
-          } else {
-            alert('Thank you for your submission!');
-            form.reset();
-          }
+          showToast('Inquiry Received!');
+          setTimeout(() => {
+            if (result.thankYouUrl) window.location.href = result.thankYouUrl;
+            else form.reset();
+          }, 800);
         } else {
-          console.error('Lead submission failed:', result.message);
-          alert(result.message || 'Submission failed. Please try again.');
+          showToast(result.message || 'Validation error', 'error');
         }
       })
-      .catch(error => {
-        console.error('Error submitting form:', error);
-        // Fallback: continue traditional submission if API is totally down? 
-        // Requirement says "Fail-Safe Behavior: Do not break page"
-      });
+      .catch(() => showToast('Connection failed', 'error'));
     }, true);
   }
 
-  /**
-   * Main Loader
-   */
-  async function loadLandingPage() {
+  async function initialize() {
     try {
-      const queryParams = new URLSearchParams({
-        domain: CONFIG.domain,
-        path: CONFIG.path
-      });
-      if (CONFIG.apiKey) queryParams.append('apiKey', CONFIG.apiKey);
-
-      const response = await fetch(`${CONFIG.apiBase}/api/page?${queryParams.toString()}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log('No dynamic landing page found for this path. Showing original content.');
-          return;
-        }
-        throw new Error(`API failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data && data.html) {
-        // Stop current execution/rendering
-        window.stop ? window.stop() : document.execCommand('Stop');
-
-        // Replace entire document
+      const res = await fetch(`${CONFIG.apiBase}/api/page?domain=${CONFIG.domain}&path=${CONFIG.path}`);
+      if (!res.ok) throw new Error('Dynamic load failed');
+      const d = await res.json();
+      if (d && d.html) {
         document.open();
-        document.write(data.html);
+        document.write(d.html);
         document.close();
-
-        // Re-initialize scripts in the new content (document.write handles some, but let's ensure forms and tracking)
-        // Note: document.write executed scripts if they are in the HTML.
-        // We need to re-bind form handlers because they were on the old document.
-        setTimeout(() => {
-          handleForms();
-          initTracking();
-        }, 100);
+        // Wait for DOM to stabilize
+        setTimeout(handleForms, 500);
       }
-    } catch (error) {
-      console.error('Landing Page Loader Error:', error);
-      // Fail-safe: do nothing, let original index.html show its content
+    } catch (e) {
+      console.log('Fallback to static form tracking');
+      handleForms();
     }
   }
 
-  // Start the process
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadLandingPage);
+    document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    loadLandingPage();
+    initialize();
   }
-
 })();
