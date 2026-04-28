@@ -45,11 +45,14 @@ router.post('/api/leads', require('../controllers/publicController').submitDynam
  */
 router.get('/:slug(*)', (req, res, next) => {
   const acceptsJson = req.headers['accept']?.includes('application/json');
-  const isApiClient = req.headers['x-api-token'] || req.headers['x-requested-with'] === 'XMLHttpRequest';
+  const hasApiToken = !!req.headers['x-api-token'];
+  const isXHR = req.headers['x-requested-with'] === 'XMLHttpRequest';
 
   // Only return JSON for explicit API/AJAX requests from the React dashboard
-  if (acceptsJson && isApiClient) {
-    return next(); // Fall through to error handler as a 404
+  // We distinguish dashboard requests by checking if they are XHR AND want JSON.
+  // The WP Relay has the API token but expects HTML for the slug route.
+  if (acceptsJson && isXHR) {
+    return next(); // Fall through to JSON API handler or 404
   }
 
   // Default: render full HTML (for browsers, WordPress plugin, iframes)
