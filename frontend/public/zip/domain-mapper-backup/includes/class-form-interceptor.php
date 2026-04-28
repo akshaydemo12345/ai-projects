@@ -179,21 +179,35 @@ class DomainMapper_Form_Interceptor {
     // Lead Capture Logic
     async function submitLead(data, form, btn, originalBtnText) {
         try {
-            // Dummy UI Simulation - NO BACKEND
-            console.log("Dummy API Call - Simulating Lead Creation", data);
-            await new Promise(function(resolve) { setTimeout(resolve, 800); }); // Fake network delay
-            var result = { status: 'success', dummy: true };
+            console.log("📡 Sending Lead Data:", data);
+            
+            // Route through dm-relay to avoid CORS and ensure proxy relaying
+            var response = await fetch(RELAY_PREFIX + TARGET_HOST + '/api/leads', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+                mode: 'cors'
+            });
 
-            if (result.status === 'success') {
+            var result = await response.json();
+            console.log("📥 API Response:", result);
+
+            if (result.status === 'success' || result.status === 'error') {
                 form.reset();
                 var currentPath = window.location.pathname;
-                var thankYouPath = currentPath.endsWith('/') ? currentPath + 'thank-you' : currentPath + '/thank-you';
-                window.location.href = thankYouPath;
+                
+                // Smart Redirection: Use backend's suggested redirect if available
+                if (result.redirect) {
+                    window.location.href = result.redirect;
+                } else {
+                    var thankYouPath = currentPath.endsWith('/') ? currentPath + 'thank-you' : currentPath + '/thank-you';
+                    window.location.href = thankYouPath;
+                }
             } else {
                 throw new Error(result.message || 'Server error');
             }
         } catch (err) {
-            console.error("Lead Error:", err);
+            console.error("❌ Lead Submission Error:", err);
             // Fallback to traditional submission if AJAX fails
             form.method = 'POST';
             form.action = rewriteUrl(form.action);
@@ -205,11 +219,11 @@ class DomainMapper_Form_Interceptor {
     document.addEventListener('submit', function(e) {
         var form = e.target;
         if (form && form.tagName === 'FORM') {
-            form.method = 'POST'; // Force POST exactly at submission
+            form.method = 'POST';
             form.action = rewriteUrl(form.action);
 
-            // Intercept ALL forms for dummy UI simulation (prevent Gravity Forms bypass)
-            if (true) {
+            // Intercept if it looks like a lead form (has email or name)
+            if (form.querySelector('input[type="email"]') || form.querySelector('input[name*="name"]')) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 
@@ -221,13 +235,26 @@ class DomainMapper_Form_Interceptor {
                 }
 
                 var fd = new FormData(form);
+                
+                // Discover metadata from page if available (injected by backend)
+                var pageId = document.querySelector('meta[name="dm-page-id"]')?.content || '';
+                var projectId = document.querySelector('meta[name="dm-project-id"]')?.content || '';
+                
+                // Robust Slug Detection: Handle nested paths
+                var pathParts = window.location.pathname.split('/').filter(Boolean);
+                var resolvedSlug = pathParts.join('/'); 
+                
                 var data = {
-                    pageSlug: window.location.pathname.split('/').filter(Boolean).pop() || '',
-                    name: fd.get('name') || fd.get('first_name') || '',
-                    email: fd.get('email') || '',
-                    phone: fd.get('phone') || fd.get('tel') || '',
-                    message: fd.get('message') || fd.get('comments') || ''
+                    pageId: pageId,
+                    projectId: projectId,
+                    pageSlug: resolvedSlug,
+                    timestamp: new Date().getTime()
                 };
+
+                // Capture ALL fields dynamically
+                fd.forEach(function(v, k) {
+                    if (k && v && String(v).trim() !== "") data[k] = v;
+                });
 
                 submitLead(data, form, btn, originalText);
             }

@@ -517,21 +517,30 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
       if (!html.includes('--primary:')) {
         html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
       }
+      // Inject AI-generated CSS if not already present
+      if (aiCss && !html.includes(aiCss.substring(0, 20))) {
+        html = html.replace(/<\/head>/i, `  <style>${aiCss}</style>\n</head>`);
+      }
       if (finalHeaderScript) {
         html = html.replace(/<\/head>/i, `${finalHeaderScript}\n</head>`);
       }
-      // Inject Thank You URL config in head so it's available early
-      html = html.replace(/<\/head>/i, `${thankYouRedirectScript}\n</head>`);
+      // Metadata for relay tracking
+      const trackingMeta = `
+    <meta name="dm-page-id" content="${page._id}">
+    <meta name="dm-project-id" content="${page.projectId}">
+    <meta name="dm-page-slug" content="${page.slug}">`;
+      html = html.replace(/<\/head>/i, `${trackingMeta}\n${thankYouRedirectScript}\n</head>`);
     }
 
-    // 5. Inject lead script before </body>
+    // 5. Inject lead script and AI JS before </body>
+    const jsInjection = aiJs ? `<script>${aiJs}</script>` : '';
     if (/<\/body>/i.test(html)) {
       html = html.replace(
         /<\/body>/i,
-        `${leadScript}\n${finalFooterScript}\n</body>`
+        `${jsInjection}\n${leadScript}\n${finalFooterScript}\n</body>`
       );
     } else {
-      html = html + leadScript + finalFooterScript;
+      html = html + jsInjection + leadScript + finalFooterScript;
     }
 
     return html;
@@ -580,6 +589,9 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dm-page-id" content="${page._id}">
+    <meta name="dm-project-id" content="${page.projectId}">
+    <meta name="dm-page-slug" content="${page.slug}">
     ${seoMetaBlock}
     ${brandingStyles}
     ${finalHeaderScript}
@@ -780,21 +792,61 @@ exports.getPublicPageHTML = async (req, res, next) => {
 exports.handleFormSubmission = async (req, res, next) => {
   try {
     const rawData = { ...req.body };
-    const { pageId, pageSlug, projectId } = rawData;
+    let { pageId, pageSlug, projectId } = rawData;
 
-    // 1. Fetch Dynamic Schema
+    // --- SMART CONTEXT RESOLUTION ---
+    // If slug is missing (relay) or ends with 'proxy-form', resolve it
+    if (!pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form') {
+      const referer = req.get('referer') || '';
+      const urlSlug = req.params.slug || '';
+      
+      // Try to get slug from URL param (stripping proxy-form)
+      let detectedSlug = urlSlug.replace(/\/proxy-form$/i, '');
+      
+      // If still no slug, try parsing referer
+      if (!detectedSlug && referer) {
+        try {
+          const refPath = new URL(referer).pathname.replace(/^\/+|\/+$/g, '');
+          detectedSlug = refPath;
+        } catch (e) {}
+      }
+      
+      if (detectedSlug) pageSlug = detectedSlug.replace(/\/thank-you$/i, '');
+    }
+
+    // Normalize slug parts for lookup
+    const cleanPageSlug = pageSlug ? pageSlug.split('/').filter(Boolean).pop() : null;
+
+    // 1. Resolve Page ID first if missing (critical for FormSchema lookup)
+    if (!pageId && pageSlug) {
+      const pageDoc = await Page.findOne({ 
+        $or: [{ slug: pageSlug }, { slug: cleanPageSlug }] 
+      }).select('_id projectId').lean();
+
+      if (pageDoc) {
+        pageId = pageDoc._id;
+        projectId = projectId || pageDoc.projectId;
+      }
+    }
+
+    // 2. Fetch Dynamic Schema using resolved IDs
     const FormSchema = require('../models/FormSchema');
     const schema = await FormSchema.findOne({
       $or: [
         { page_id: pageId },
-        { project_id: projectId, page_slug: pageSlug },
-        { page_slug: pageSlug }
+        { project_id: projectId, page_slug: pageSlug } // Note: page_slug doesn't exist in model but kept for legacy
       ].filter(obj => Object.values(obj)[0])
     }).lean();
 
     if (!schema || !schema.fields?.length) {
-      console.warn(`[PUBLIC_FORM] No schema found: ${pageSlug || pageId}`);
-      return res.status(400).json({ status: 'fail', message: 'Form schema not found' });
+      console.warn(`[PUBLIC_FORM] No schema found for PageId: "${pageId}", Slug: "${pageSlug}"`);
+      
+      // If it's a traditional form, don't just return JSON
+      if (!req.xhr && !req.headers.accept?.includes('json')) {
+         return res.status(404).send('<h1>Form Configuration Missing</h1><p>Please ensure you have configured a form in the landing page editor and published it.</p>');
+      }
+      
+      return res.status(400).json({ status: 'fail', message: 'Form schema not found. Please ensure page is published and form is configured.' });
     }
 
     // 2. Helpers for Dynamic Matching
@@ -894,7 +946,18 @@ exports.handleFormSubmission = async (req, res, next) => {
       await Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => { });
     }
 
-    const thankYouUrl = rawData.redirect || `/${pageSlug || schema.page_slug}/thank-you`;
+    // 6. Resolve Thank You URL (Check Page settings for custom URL)
+    let thankYouUrl = rawData.redirect;
+    
+    if (!thankYouUrl) {
+      const pageDoc = await Page.findById(schema.page_id).select('thankYouUrl slug projectId');
+      if (pageDoc && pageDoc.thankYouUrl) {
+        thankYouUrl = pageDoc.thankYouUrl;
+      } else {
+        // Build default redirect path (retaining path context)
+        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}/thank-you`;
+      }
+    }
 
     // Final response
     if (req.xhr || req.headers.accept?.includes('json')) {
