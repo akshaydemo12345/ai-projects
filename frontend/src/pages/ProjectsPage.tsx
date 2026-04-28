@@ -87,48 +87,23 @@ const ProjectsPage = () => {
   return (
     <div className="p-8 min-h-full" onClick={() => setMenuOpen(null)}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Projects</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage your SEO landing page projects
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search projects..."
-              className="pl-9 w-56 h-9"
-            />
-          </div>
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 ${viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-          <Button
-            className="gap-2 bg-primary hover:bg-primary/90"
-            onClick={() => navigate("/dashboard/projects/new")}
-          >
-            <Plus className="h-4 w-4" /> New Project
-          </Button>
-        </div>
+        <Button
+          className="gap-2 bg-primary hover:bg-primary/90"
+          onClick={() => navigate("/dashboard/projects/new")}
+        >
+          <Plus className="h-4 w-4" /> New Project
+        </Button>
       </div>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {statCards.map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
             <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
@@ -140,6 +115,33 @@ const ProjectsPage = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Search & View Toggle ── */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="pl-9 h-9"
+          />
+        </div>
+        <div className="flex border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 ${viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* ── Content ── */}

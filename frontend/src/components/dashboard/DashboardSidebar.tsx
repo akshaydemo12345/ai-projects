@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun
+  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, MailOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { icon: FolderOpen, label: "Projects", href: "/dashboard" },
   { icon: Users, label: "Leads", href: "/dashboard/leads" },
+  { icon: MailOpen, label: "Mail Management", href: "/dashboard/mail-management" },
 ];
 
 const settingsItems = [
