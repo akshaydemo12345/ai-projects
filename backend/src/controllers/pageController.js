@@ -468,6 +468,14 @@ exports.createPage = async (req, res, next) => {
       page.title = page.seo.title.split('|')[0].trim();
     }
 
+    // Sync metaTitle and metaDescription if they are empty but AI generated SEO data
+    if (!page.metaTitle && page.seo.title) {
+      page.metaTitle = page.seo.title;
+    }
+    if (!page.metaDescription && page.seo.description) {
+      page.metaDescription = page.seo.description;
+    }
+
     page.previewUrl = previewUrl;
     page.status = 'draft';
     await page.save();

@@ -1,322 +1,298 @@
 export const agencyStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@300;400;600;700&display=swap');
+
   .hotel-container {
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background-color: #fff;
-    color: #333;
+    color: #1a1a1a;
   }
   
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 5%;
-    height: 80px;
-    background: #fff;
+    padding: 0 8%;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-bottom: 1px solid #f2f2f2;
   }
   
-  .logo-box {
-    background: #fff;
-    padding: 10px 20px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    border: 1px solid #eee;
-    border-top: none;
+  .logo { 
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; 
+    font-weight: 700; 
+    color: #1a1a1a; 
+    letter-spacing: 2px;
   }
   
-  .logo-box h2 { font-size: 20px; font-weight: 800; color: #005f6b; }
-  
-  .call-us { font-weight: 700; color: #666; font-size: 14px; }
-  .call-us span { color: var(--primary, #00bcd4); font-size: 18px; }
+  .nav-links { display: flex; gap: 40px; list-style: none; }
+  .nav-links a { text-decoration: none; color: #666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+  .nav-links a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
 
   .hero {
-    background: #004d56;
-    padding: 80px 5% 120px;
-    text-align: center;
-    color: #fff;
     position: relative;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    padding: 0 8%;
+    overflow: hidden;
   }
   
-  .hero h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.8; }
-  .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 30px; }
-  .hero p { max-width: 700px; margin: 0 auto 50px; font-size: 14px; opacity: 0.7; line-height: 1.8; }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.2) 100%);
+    z-index: 0;
+  }
 
-  .booking-bar {
-    background: #fff;
-    padding: 25px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
-    gap: 15px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    max-width: 1100px;
-    margin: -60px auto 0;
+  .hero-content {
     position: relative;
     z-index: 10;
-  }
-  
-  @media (max-width: 900px) {
-    .header { height: auto; padding: 15px 5%; }
-    .logo-box { border: none; padding: 0; }
-    .call-us { font-size: 13px; }
-    .booking-bar { grid-template-columns: 1fr; margin: 20px auto; width: 90%; }
-    .hero h1 { font-size: 32px; }
-    .hero { padding: 60px 5%; }
-    .activities-grid, .tab-content, .accommodations-row { grid-template-columns: 1fr; padding: 40px 5%; }
-    .tab-image { height: 200px; }
-    .offer-banner { grid-row: auto; }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 60px;
   }
 
-  @media (max-width: 480px) {
-    .room-grid { grid-template-columns: 1fr; }
-    .tabs { flex-direction: column; }
-    .tab { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .hero-text { flex: 1.2; }
+  .hero-text h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: PRIMARY_COLOR_PLACEHOLDER; margin-bottom: 20px; font-weight: 700; }
+  .hero-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 72px; line-height: 1.1; margin-bottom: 30px; }
+  .hero-text p { font-size: 18px; color: #666; line-height: 1.8; max-width: 550px; }
+
+  .hero-form-box {
+    flex: 1;
+    background: #fff;
+    padding: 50px;
+    border-radius: 4px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.1);
+    max-width: 480px;
+  }
+
+  .form-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 30px; text-align: center; }
+  
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 8px; }
+  .form-group input, .form-group select {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #e2e2e2;
+    padding: 12px 0;
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+    transition: 0.3s;
+    background: transparent;
+  }
+  .form-group input:focus { border-color: PRIMARY_COLOR_PLACEHOLDER; }
+
+  .btn-gold {
+    width: 100%;
+    padding: 20px;
+    background: PRIMARY_COLOR_PLACEHOLDER;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: 0.4s;
+    margin-top: 20px;
+  }
+  .btn-gold:hover { background: #1a1a1a; }
+
+  .amenities { padding: 120px 8%; background: #fdfcf9; text-align: center; }
+  .amenities-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 80px; }
+  .amenity-card { padding: 40px; background: #fff; border: 1px solid #f2f2f2; transition: 0.4s; }
+  .amenity-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+  .amenity-icon { font-size: 40px; margin-bottom: 25px; display: block; }
+  .amenity-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 15px; }
+  
+  .footer { background: #1a1a1a; color: #fff; padding: 100px 8% 50px; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 80px; }
+  .footer-col h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; color: PRIMARY_COLOR_PLACEHOLDER; }
+  .footer-col a { color: #999; text-decoration: none; display: block; margin-bottom: 15px; font-size: 14px; transition: 0.3s; }
+  .footer-col a:hover { color: #fff; }
+
+  @media (max-width: 1100px) {
+    .hero { height: auto; padding: 100px 5%; background: #fff; }
+    .hero-bg, .hero-overlay { display: none; }
+    .hero-content { flex-direction: column; text-align: center; }
+    .hero-text p { margin: 0 auto; }
+    .hero-form-box { margin: 50px auto 0; width: 100%; max-width: 100%; }
+    .amenities-grid, .footer-grid { grid-template-columns: 1fr; }
   }
 
   /* Premium Page Loader */
   .page-loader {
     position: fixed;
     inset: 0;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
+    background: #fff;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 10001;
-    font-family: 'Poppins', sans-serif;
   }
-  .loader-visual {
+  .loader-line {
+    width: 150px;
+    height: 1px;
+    background: #e2e2e2;
     position: relative;
-    width: 80px;
-    height: 80px;
-    margin-bottom: 24px;
+    overflow: hidden;
+    margin-bottom: 20px;
   }
-  .loader-ring {
+  .loader-line::after {
+    content: '';
     position: absolute;
-    inset: 0;
-    border: 3px solid transparent;
-    border-top-color: #00bcd4;
-    border-radius: 50%;
-    animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    height: 100%;
+    width: 50%;
+    background: PRIMARY_COLOR_PLACEHOLDER;
+    animation: luxurious-load 2s ease-in-out infinite;
   }
-  .loader-ring:nth-child(2) {
-    inset: 8px;
-    border-top-color: #4dd0e1;
-    animation-direction: reverse;
-    animation-duration: 1s;
-  }
-  .loader-text {
-    color: #333;
-    font-weight: 800;
-    font-size: 20px;
-    letter-spacing: -0.5px;
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  @keyframes luxurious-load {
+    0% { left: -50%; }
+    100% { left: 100%; }
   }
 `;
 
 export const agencyHtml = `
   <div class="hotel-container">
-    <header class="header" data-gjs-type="header">
-      <div class="logo-box">
-        <h2>LUXURY HOTEL</h2>
-      </div>
-      <div class="call-us">
-        CALL US: <span>123 456-7890</span>
-      </div>
+    <header class="header">
+      <div class="logo">LOGO_PLACEHOLDER</div>
+      <ul class="nav-links">
+        <li><a href="#rooms">Rooms</a></li>
+        <li><a href="#amenities">Wellness</a></li>
+        <li><a href="#dining">Dining</a></li>
+      </ul>
+      <div style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">BOOK@PLAZA.COM</div>
     </header>
 
-    <div class="hero" data-gjs-type="section">
-      <h4>Welcome To Our Luxury Hotel</h4>
-      <h1>Book Your Holidays at Dream Location</h1>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-
-    <div class="booking-bar">
-      <div class="field">
-        <label style="display:block; font-size:10px; font-weight:700; margin-bottom:5px; color:#999;">FULL NAME</label>
-        <input type="text" placeholder="Full name" />
-      </div>
-      <div class="field">
-        <label style="display:block; font-size:10px; font-weight:700; margin-bottom:5px; color:#999;">EMAIL ADDRESS</label>
-        <input type="email" placeholder="Email address" />
-      </div>
-      <div class="field">
-        <label style="display:block; font-size:10px; font-weight:700; margin-bottom:5px; color:#999;">PHONE NUMBER</label>
-        <input type="text" placeholder="Phone number" />
-      </div>
-      <div class="field" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-         <div>
-            <label style="display:block; font-size:10px; font-weight:700; margin-bottom:5px; color:#999;">CHECK IN</label>
-            <input type="text" placeholder="10/05/2026" />
-         </div>
-         <div>
-            <label style="display:block; font-size:10px; font-weight:700; margin-bottom:5px; color:#999;">CHECK OUT</label>
-            <input type="text" placeholder="15/05/2026" />
-         </div>
-      </div>
-      <button class="btn-cyan">REGISTER NOW →</button>
-    </div>
-
-    <section class="welcome-section" data-gjs-type="section">
-      <h2>Welcome to our hotel</h2>
-      <div class="divider"></div>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis. </p>
-    </section>
-
-    <div class="activities-grid" data-gjs-type="section">
-      <div class="offer-banner">
-        <h3>FREE KIDS <br> SPECIAL OFFER</h3>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi a ante id lorem.</p>
-        <div class="price"><span>FROM</span> 99$</div>
-        <button style="background:#ffeb3b; color:#333; border:none; padding:10px 20px; font-weight:700; cursor:pointer;">Register Now</button>
-        <div style="margin-top:20px; font-size:24px; opacity:0.5;">370 X 272</div>
-      </div>
-      
-      <div class="grid-item">
-        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:24px;">370 X 272</div>
-        <div class="grid-label">Groups & Entertainment</div>
-      </div>
-      
-      <div class="grid-item">
-        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:24px;">370 X 272</div>
-        <div class="grid-label">Outdoor Swimming Pool</div>
-      </div>
-      
-      <div class="grid-item">
-        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:24px;">370 X 272</div>
-        <div class="grid-label">Gym & Sports</div>
-      </div>
-      
-      <div class="grid-item">
-        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:24px;">370 X 272</div>
-        <div class="grid-label">Buffet & Restaurant</div>
-      </div>
-    </div>
-
-    <section class="wellness-section" data-gjs-type="section">
-      <h2 style="color:#333; margin-bottom:40px; text-transform:uppercase; font-weight:800;">Wellness Services of our hotel</h2>
-      <div class="wellness-box">
-        <div class="tabs">
-          <div class="tab active">🍽️ Restaurant</div>
-          <div class="tab">💪 Gym</div>
-          <div class="tab">🚐 Pick Up</div>
-          <div class="tab">🍹 Bar</div>
+    <div class="hero">
+      <img src="/assets/premium/hotel-resort.png" class="hero-bg" alt="Luxury Hotel" />
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-text">
+          <h4>Established 1924</h4>
+          <h1>A Sanctuary of Timeless Elegance.</h1>
+          <p>Discover a world where refined luxury meets coastal serenity. Experience impeccable service and sophisticated comfort in the heart of paradise.</p>
         </div>
-        <div class="tab-content">
-          <div class="tab-image">
-            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:24px;">600 X 400</div>
-          </div>
-          <div class="tab-info">
-            <h3>Restaurant & Cafe</h3>
-            <div class="meta">Service Hours: 19:00 - 22:00 | Service Charges: $0.0</div>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusc eu dictum erat, euismod porta nisl. Quisque sit amet lectus in nisl euismod pellentesque. Suspendisse nisi ante, rhoncus ut elementum sit amet, accumsan.</p>
-            <button class="btn-cyan">SEE MORE SERVICES</button>
-          </div>
+
+        <div class="hero-form-box">
+          <h3 class="form-title">Reserve Your Stay</h3>
+          <form id="booking-form">
+            <div class="form-group">
+              <label>Guest Name</label>
+              <input type="text" placeholder="Your full name" required />
+            </div>
+            <div class="form-group">
+              <label>Email Contact</label>
+              <input type="email" placeholder="Your email address" required />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="form-group">
+                <label>Check In</label>
+                <input type="date" required />
+              </div>
+              <div class="form-group">
+                <label>Check Out</label>
+                <input type="date" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Room Category</label>
+              <select required>
+                <option value="">Select a wing</option>
+                <option>Ocean Villa</option>
+                <option>Emerald Suite</option>
+                <option>Penthouse</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-gold">Confirm Booking</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <section class="amenities" id="amenities">
+      <div style="max-width: 700px; margin: 0 auto;">
+          <h4 style="color: PRIMARY_COLOR_PLACEHOLDER; letter-spacing: 3px; font-weight: 700; margin-bottom: 15px;">EXCEPTIONAL SERVICES</h4>
+          <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 48px; margin-bottom: 25px;">Curated for Your Comfort</h2>
+          <p style="color: #666; font-size: 16px;">From private infinity pools to Michelin-starred dining, every detail of your stay is managed with absolute precision.</p>
+      </div>
+      <div class="amenities-grid">
+        <div class="amenity-card">
+          <span class="amenity-icon">🏊‍♂️</span>
+          <h3>Infinity Retreat</h3>
+          <p>An exquisite rooftop pool offering panoramic views of the horizon.</p>
+        </div>
+        <div class="amenity-card">
+          <span class="amenity-icon">💆‍♀️</span>
+          <h3>Azure Spa</h3>
+          <p>Renew your senses with world-class therapeutic treatments.</p>
+        </div>
+        <div class="amenity-card">
+          <span class="amenity-icon">🍷</span>
+          <h3>Vintage Cellar</h3>
+          <p>An exclusive collection of the world's finest vintages and spirits.</p>
         </div>
       </div>
     </section>
-
-    <div class="accommodations-row" data-gjs-type="section">
-      <div>
-        <h3 style="font-size:24px; font-weight:800; margin-bottom:30px; text-transform:uppercase;">Accommodations</h3>
-        <div class="room-grid">
-          <div class="room-card" data-gjs-type="card">
-            <div class="room-img">
-              <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:20px;">370 X 320</div>
-              <div class="price-ribbon">$77 <br> <span style="font-size:10px;">Night</span></div>
-            </div>
-            <h4>Deluxe Room</h4>
-          </div>
-          <div class="room-card" data-gjs-type="card">
-            <div class="room-img">
-              <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:20px;">370 X 320</div>
-              <div class="price-ribbon">$77 <br> <span style="font-size:10px;">Night</span></div>
-            </div>
-            <h4>Luxury Room</h4>
-          </div>
-          <div class="room-card" data-gjs-type="card">
-            <div class="room-img">
-              <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:20px;">370 X 320</div>
-              <div class="price-ribbon">$77 <br> <span style="font-size:10px;">Night</span></div>
-            </div>
-            <h4>Double Room</h4>
-          </div>
-          <div class="room-card" data-gjs-type="card">
-            <div class="room-img">
-              <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888; font-size:20px;">370 X 320</div>
-              <div class="price-ribbon">$77 <br> <span style="font-size:10px;">Night</span></div>
-            </div>
-            <h4>Family Room</h4>
-          </div>
-        </div>
-      </div>
-      
-      <div class="reviews">
-        <h3>Reviews</h3>
-        <div class="review-item">
-          <div class="stars">★★★★★</div>
-          <div class="review-name">Anthony Martin</div>
-          <div class="review-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-        </div>
-        <div class="review-item">
-          <div class="stars">★★★★☆</div>
-          <div class="review-name">Anthony Martin</div>
-          <div class="review-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</div>
-        </div>
-        <div class="review-item">
-          <div class="stars">★★★★★</div>
-          <div class="review-name">Anthony Martin</div>
-          <div class="review-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-        </div>
-        <button class="btn-cyan" style="width:100%;">ALL REVIEWS</button>
-      </div>
-    </div>
 
     <footer class="footer">
-      Copyright © 2026. All Rights Reserved. Designed by LeadForest.com
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="logo" style="color: #fff; margin-bottom: 20px;">LOGO_PLACEHOLDER</div>
+          <p style="color: #999; line-height: 1.8;">Defining luxury hospitality for over a century. A legacy of excellence in every detail.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="#">The Estate</a>
+          <a href="#">The Suites</a>
+          <a href="#">Reservations</a>
+        </div>
+        <div class="footer-col">
+          <h4>Destinations</h4>
+          <a href="#">Monaco</a>
+          <a href="#">Maldives</a>
+          <a href="#">Santorini</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy</a>
+          <a href="#">Careers</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+      <div style="margin-top: 80px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; text-align: center; font-size: 12px; color: #666; letter-spacing: 1px;">
+        © 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.
+      </div>
     </footer>
 
     <div id="loader" class="page-loader">
-      <div class="loader-visual">
-        <div class="loader-ring"></div>
-        <div class="loader-ring"></div>
-      </div>
-      <div class="loader-text">Securing your booking...</div>
+      <div class="loader-line"></div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px;">Securing your suite...</div>
     </div>
 
     <script>
-      // Wrap booking bar button in a form if it's not already
-      const bookingBar = document.querySelector('.booking-bar');
-      const btn = bookingBar.querySelector('.btn-cyan');
-      
-      // If the booking bar fields aren't already in a form, we'll handle the click
-      btn.addEventListener('click', function(e) {
-        // Prevent default if it's not a real form submission
-        const form = btn.closest('form');
-        if (!form) {
-           e.preventDefault();
-           document.getElementById('loader').style.display = 'flex';
-           setTimeout(function() {
-             console.log('Booking submitted, loader would stay until thank you page');
-           }, 2000);
-        }
-      });
-
-      // Handle any standard forms
-      document.querySelectorAll('form').forEach(f => {
-        f.addEventListener('submit', function(e) {
-          e.preventDefault();
-          document.getElementById('loader').style.display = 'flex';
-        });
-      });
+      console.log('Agency Template Loaded');
     </script>
   </div>
 `;
