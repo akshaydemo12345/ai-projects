@@ -115,7 +115,7 @@ const ScriptIntegration = ({ project, pageSlug }: { project: Project, pageSlug: 
   const token = project.apiToken || 'PC-TOKEN-PENDING';
   const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
   const fullPageSlug = `${preSlug ? preSlug + '/' : ''}${pageSlug}`;
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/embed.js?token=${token}&page=${fullPageSlug}" async></script>`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${token}" data-page="${fullPageSlug}" async></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
