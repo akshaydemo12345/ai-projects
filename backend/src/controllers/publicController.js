@@ -453,7 +453,15 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     `<title>${seoTitle}</title>`,
     `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`,
     seoKeywords ? `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">` : '',
-    `<meta name="robots" content="noindex, nofollow">`,
+    (() => {
+      const noIndex = page.noIndex !== false ? true : false; // default true for safety unless explicitly set false
+      const noFollow = page.noFollow !== false ? true : false;
+      if (!noIndex && !noFollow) return `<meta name="robots" content="index, follow">`;
+      const directives = [];
+      if (noIndex) directives.push('noindex'); else directives.push('index');
+      if (noFollow) directives.push('nofollow'); else directives.push('follow');
+      return `<meta name="robots" content="${directives.join(', ')}">`;  
+    })(),
     canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
@@ -505,6 +513,17 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     // 4. Strip any AI-generated OG/Twitter tags (not needed)
     html = html.replace(/<meta[^>]+property=["']og:[^"']*["'][^>]*>/gi, '');
     html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
+
+    // 5. Inject/replace robots meta tag based on page settings
+    const _noIndex = page.noIndex !== false;
+    const _noFollow = page.noFollow !== false;
+    const _robotsContent = [_noIndex ? 'noindex' : 'index', _noFollow ? 'nofollow' : 'follow'].join(', ');
+    const _robotsMeta = `<meta name="robots" content="${_robotsContent}">`;
+    if (/<meta[^>]+name=["']robots["'][^>]*>/i.test(html)) {
+      html = html.replace(/<meta[^>]+name=["']robots["'][^>]*>/i, _robotsMeta);
+    } else {
+      html = html.replace(/(<meta[^>]+name=["']description["'][^>]*>)/i, `$1\n    ${_robotsMeta}`);
+    }
 
     if (/<\/head>/i.test(html)) {
       // Force inject Tailwind, Fonts, and Branding if missing
@@ -621,7 +640,7 @@ exports.getPreviewHTML = async (req, res, next) => {
         { slug: token },
         { _id: token && token.length === 24 ? token : null }
       ],
-    }).select('title content styles seo status');
+    }).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId');
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
 
