@@ -49,6 +49,7 @@ class DomainMapper_Proxy
         'x-forwarded-for',
         'x-real-ip',
         'cf-connecting-ip',
+        'accept-encoding',
     ];
 
     const WP_PASSTHROUGH_PREFIXES = [
@@ -542,7 +543,22 @@ class DomainMapper_Proxy
             }
         }
         $headers['x-forwarded-host'] = $_SERVER['HTTP_HOST'] ?? '';
-        // Removed X-Proxy-By header to prevent exposure
+        
+        // Forward API Key for backend authentication
+        if (!empty($this->settings['api_key'])) {
+            $apiKey = $this->settings['api_key'];
+            // If it's a dynamic key (encoded), extract the actual key
+            if (strpos($apiKey, '@@') !== false) {
+                list(, $apiKey) = explode('@@', $apiKey, 2);
+            } else {
+                $decoded = base64_decode($apiKey, true);
+                if ($decoded && strpos($decoded, '@@') !== false) {
+                    list(, $apiKey) = explode('@@', $decoded, 2);
+                }
+            }
+            $headers['x-api-token'] = $apiKey;
+        }
+
         return apply_filters('dm_proxy_forward_headers', $headers);
     }
 
