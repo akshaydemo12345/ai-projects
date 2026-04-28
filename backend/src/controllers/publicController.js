@@ -9,6 +9,8 @@ const { generateTrackingScripts } = require('../utils/tracking');
 const path = require('path');
 const fs = require('fs');
 const { validateForm } = require('../utils/dynamicValidator');
+const config = require('../config');
+const logger = require('../utils/logger');
 
 /**
  * Normalizes script content - wraps in script tags if not already present
@@ -289,14 +291,16 @@ const buildLeadCaptureScript = (page) => {
     }
 
     var fd=new FormData(f);
-    var data={
-      pageSlug:SL,
-      pageId:PI,
-      projectId:PJ,
-      timestamp:new Date().getTime()
+    var data = {
+      pageSlug: SL,
+      pageId: PI,
+      projectId: PJ,
+      timestamp: new Date().getTime(),
+      url: window.location.href,
+      domain: window.location.hostname
     };
 
-    // Capture every single named field in the form, prioritizing non-empty values
+    // Capture every single named field in the form
     f.querySelectorAll('input, select, textarea').forEach(function(el) {
       if (el.name) {
         var val = el.value ? String(el.value).trim() : "";
@@ -308,31 +312,13 @@ const buildLeadCaptureScript = (page) => {
       }
     });
 
-    fd.forEach(function(v,k){
-      if(k && v && String(v).trim() !== "") data[k]=v;
+    // Also include FormData for complex cases
+    fd.forEach(function(v, k) {
+      if (k && v && String(v).trim() !== "" && !data[k]) data[k] = v;
     });
 
     var utms=getUTM();
     Object.keys(utms).forEach(function(k){data[k]=utms[k]});
-
-    // Smart identify primary fields if they aren't explicitly named correctly
-    if(!data.name || data.name === ""){
-       var nV = fd.get("name") || fd.get("full_name") || fd.get("fullname") || "";
-       if(!nV) {
-         var nIn = f.querySelector('input[name*="name"]') || f.querySelector('input[placeholder*="Name"]');
-         if(nIn) nV = nIn.value;
-       }
-       if(nV) data.name = String(nV).trim();
-    }
-
-    if(!data.email || data.email === ""){
-       var eV = fd.get("email") || fd.get("user_email") || "";
-       if(!eV) {
-         var eIn = f.querySelector('input[type="email"]') || f.querySelector('input[name*="email"]');
-         if(eIn) eV = eIn.value;
-       }
-       if(eV) data.email = String(eV).trim();
-    }
 
     console.log('📡 [TRACKER] Final Data for submission:', data);
     send(data,f,b,t,1)
@@ -715,8 +701,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
         // 2. Check Authorization
         const isOwnerDomain = (incomingRequestDomain === saasDomain);
         const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
+        const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
-        if (!isOwnerDomain && !isAuthorizedDomain && project.websiteUrl) {
+        if (!isOwnerDomain && !isAuthorizedDomain && !isDevDomain && project.websiteUrl) {
           // Instead of a hard 403, we show a helpful "Setup Needed" page
           console.warn(`🛑 Domain Blocked: ${incomingRequestDomain} is not ${project.websiteUrl}`);
           return res.status(200).send(`
@@ -962,6 +949,7 @@ exports.verifyPlugin = async (req, res, next) => {
     const project = await Project.findOne({ apiToken });
 
     if (!project) {
+      console.warn(`🔑 [VERIFY] Invalid API Token Attempt: [${apiToken}]`);
       return res.status(401).json({ status: 'error', message: 'Invalid API token. No project found.' });
     }
 
@@ -989,8 +977,7 @@ exports.verifyPlugin = async (req, res, next) => {
       'title slug content seo template domain publishedAt'
     );
 
-    const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
-    const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
+    const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
 
     const preSlug = (project.preSlug || "").replace(/^\/+|\/+$/g, '');
     const allowedPaths = [];
@@ -1002,17 +989,16 @@ exports.verifyPlugin = async (req, res, next) => {
       allowedPaths.push(`${fullSlug}/proxy-form`);
     });
 
+    logger.info(`✅ [PLUGIN-VERIFY] Success for domain: ${domain} (Project: ${project.name})`);
+
     res.status(200).json({
-      status: 'active',
-      plan: 'pro',
-      cache_time: 300,
-      projectId: project._id,
-      projectName: project.name,
-      source_url: project.websiteUrl,
+      status: 'success',
       target_url: normalizedBackendBase,
-      relay_url: normalizedBackendBase,
       allowed_paths: [...allowedPaths, '/api/leads'],
-      message: `License verified. Project "${project.name}" is active.`
+      settings: {
+        site_name: project.name,
+        primary_color: project.primaryColor || '#007bff',
+      }
     });
   } catch (err) {
     next(err);
