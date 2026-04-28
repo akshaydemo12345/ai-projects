@@ -95,7 +95,8 @@ app.use('/api/thank-you', compression(), thankYouRoutes);
 // Proxy Engine (Must NOT be compressed to avoid corruption in WordPress relay)
 app.use('/', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
 
-app.use('/', compression(), publicRoutes);
+// Public Pages (Must NOT be compressed to avoid corruption in WordPress relay)
+app.use('/', publicRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorMiddleware);
