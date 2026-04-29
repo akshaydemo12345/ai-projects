@@ -21375,3 +21375,6 @@ Require stack:
 [2026-04-28T11:46:38.384Z] [INFO] ✅ MongoDB Connected Successfully
 [2026-04-28T11:46:38.396Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
 [2026-04-28T11:46:38.400Z] [INFO] 🚀 Server running on port 5000
+[2026-04-29T03:50:59.459Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-04-29T03:50:59.472Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-04-29T03:50:59.473Z] [INFO] 🚀 Server running on port 5000
