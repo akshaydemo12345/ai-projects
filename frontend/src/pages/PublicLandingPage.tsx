@@ -188,10 +188,10 @@ const PublicLandingPage = () => {
               var result = await response.json();
               console.log("📥 API Response:", result);
 
-              if (result.status === 'success' || result.status === 'error' || response.ok) {
+              if (result.status === 'success' || result.status === 'error'  || response.ok) {
                 // Fire email notifications after successful lead capture
                 fireEmailNotifications(data);
-                redirectToSuccessPage();
+                setTimeout(redirectToSuccessPage, 1500);
                 form.reset();
               } else {
                 throw new Error(result.message || 'Server returned error');

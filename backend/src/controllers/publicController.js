@@ -89,7 +89,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       pageDoc._id,
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl metaTitle metaDescription');
+    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
     // ─── BRANDING FALLBACK: Use project values if page values are missing ───
     let primaryColor = page.primaryColor;
@@ -180,7 +180,7 @@ exports.getPublicPage = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // Allow drafts to be viewed at this URL
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views projectId status');
+    ).select('title slug content seo template domain publishedAt views projectId status mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -444,13 +444,13 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`,
     seoKeywords ? `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">` : '',
     (() => {
-      const noIndex = page.noIndex !== false ? true : false; // default true for safety unless explicitly set false
-      const noFollow = page.noFollow !== false ? true : false;
+      const noIndex = page.noIndex === true ? true : false; // default false (index)
+      const noFollow = page.noFollow === true ? true : false; // default false (follow)
       if (!noIndex && !noFollow) return `<meta name="robots" content="index, follow">`;
       const directives = [];
       if (noIndex) directives.push('noindex'); else directives.push('index');
       if (noFollow) directives.push('nofollow'); else directives.push('follow');
-      return `<meta name="robots" content="${directives.join(', ')}">`;  
+      return `<meta name="robots" content="${directives.join(', ')}">`;
     })(),
     canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
@@ -505,8 +505,8 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
 
     // 5. Inject/replace robots meta tag based on page settings
-    const _noIndex = page.noIndex !== false;
-    const _noFollow = page.noFollow !== false;
+    const _noIndex = page.noIndex === true;
+    const _noFollow = page.noFollow === true;
     const _robotsContent = [_noIndex ? 'noindex' : 'index', _noFollow ? 'nofollow' : 'follow'].join(', ');
     const _robotsMeta = `<meta name="robots" content="${_robotsContent}">`;
     if (/<meta[^>]+name=["']robots["'][^>]*>/i.test(html)) {
