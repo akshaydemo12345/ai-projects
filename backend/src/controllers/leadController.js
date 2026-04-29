@@ -18,100 +18,58 @@ exports.createLead = async (req, res) => {
 
     logger.info(`[LEAD] New Submission: ${pageSlug} (${pageId})`);
 
-    // 1. Fetch Dynamic Schema
+    // 1. Fetch Page and Dynamic Schema
+    const page = await Page.findById(pageId) || await Page.findOne({ slug: pageSlug });
     const schema = await FormSchema.findOne({
       $or: [
         { page_id: pageId },
         { project_id: projectId, page_slug: pageSlug },
         { page_slug: pageSlug }
       ].filter(obj => Object.values(obj)[0])
-    }).lean();
+    });
 
     if (!schema || !schema.fields?.length) {
       logger.warn(`❌ [LEAD] No schema found for page: ${pageSlug || pageId}`);
-      return res.status(400).json({ status: "fail", message: "Form schema not found" });
+      
+      // Auto-Sync Attempt if schema is missing but page exists
+      if (page) {
+        syncFormSchema(page).catch(e => logger.error('Background Sync Failed:', e));
+      }
+
+      return res.status(400).json({ status: "fail", message: "Form schema not found. Please refresh the page and try again." });
     }
 
-    // 2. Helpers for Dynamic Matching
-    const normalizeKey = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-    const slugify = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    // 2. Validate & Normalize using Centralized Utility (with Auto-Healing)
+    const missingFields = validateForm(schema.fields, rawData);
+    
+    // Check for Likely Template Mismatch inside the controller to trigger sync
+    const submittedKeys = Object.keys(rawData).filter(k => 
+      !['pageslug', 'pageid', 'projectid', 'domain', 'url', 'token', 'timestamp', 'path'].includes(k.toLowerCase())
+    );
+    let matchCount = 0;
+    schema.fields.forEach(f => {
+      // Use a basic check or utility
+      const nKey = String(f.field_name || "").toLowerCase();
+      if (rawData[nKey] || rawData[f.name] || rawData[f.label]) matchCount++;
+    });
+    const isMismatch = (submittedKeys.length > 2 && (matchCount / schema.fields.length) < 0.2);
 
-    function getSmartFieldValue(field, body = {}) {
-      const normalizedBody = {};
-      Object.keys(body).forEach(key => { normalizedBody[normalizeKey(key)] = body[key]; });
-
-      const label = (field.label || "").toLowerCase();
-      const labelSlug = slugify(field.label);
-      const labelWords = label.split(/\s+/).filter(w => w.length > 2);
-
-      const candidates = [
-        field.field_name,
-        field.name,
-        field.id,
-        labelSlug,
-        normalizeKey(field.label)
-      ];
-
-      // Add individual words from label as potential keys (e.g. "Full Name" -> "name")
-      labelWords.forEach(w => candidates.push(w));
-
-      // Intelligent fallback by Broad Types
-      candidates.push(field.type); // Catch-all for anonymous fields named by type (e.g. "select": "Value")
-
-      if (field.type === "email") candidates.push("email", "email_address", "mail");
-      if (["tel", "phone", "mobile"].includes(field.type)) candidates.push("phone", "tel", "contact", "mobile", "whatsapp");
-      if (["text", "textarea"].includes(field.type)) {
-        if (label.includes("name")) candidates.push("name", "fullname", "firstname", "lname");
-        if (label.includes("msg") || label.includes("message") || label.includes("comment") || label.includes("note")) {
-          candidates.push("message", "msg", "comments", "notes", "description", "details");
-        }
-        if (label.includes("subject") || label.includes("title")) candidates.push("subject", "title", "topic");
-      }
-      if (field.type === "number") candidates.push("amount", "quantity", "count", "age", "price");
-      if (field.type === "date" || field.type === "time") candidates.push("date", "time", "appointment", "schedule", "on_date");
-      if (field.type === "select" || field.type === "radio") candidates.push("service", "category", "type", "option", "selection", "plan");
-      if (field.type === "checkbox") candidates.push("agree", "accept", "consent", "newsletter", "terms");
-
-      // Final unique candidates list
-      const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
-
-      for (const key of uniqueCandidates) {
-        const n = normalizeKey(key);
-        if (normalizedBody[n] !== undefined && normalizedBody[n] !== null) {
-          const val = normalizedBody[n];
-          return (typeof val === 'string') ? val.trim() : val;
-        }
-      }
-      return "";
-    }
-
-    // 3. Extract & Validate STRICTLY follow FormSchema
-    const missingFields = [];
-    const leadData = {};
-
-    for (const field of schema.fields) {
-      const value = getSmartFieldValue(field, rawData);
-
-      if (field.required && !value) {
-        missingFields.push(field.label || field.field_name);
-      }
-
-      /**
-       * 🔥 STORAGE STRATEGY:
-       * Use the most semantic key from schema to avoid generic 'field_N' in DB if possible.
-       * 1. field.name (semantic slug like 'full_name')
-       * 2. field.field_name (identifier like 'field_0')
-       */
-      const storageKey = field.name || field.field_name;
-      if (value !== undefined) {
-        leadData[storageKey] = value;
-      }
+    if (isMismatch && page) {
+      logger.info(`🔄 [LEAD] Template mismatch detected for ${pageSlug}. Triggering background schema sync.`);
+      syncFormSchema(page).catch(e => logger.error('Background Sync Failed:', e));
     }
 
     if (missingFields.length > 0) {
       logger.warn(`⚠️ [LEAD] Required fields missing: ${missingFields.join(', ')}`);
-      return res.status(400).json({ status: "fail", message: "Required fields missing", fields: missingFields });
+      return res.status(400).json({ 
+        status: "fail", 
+        message: "Required fields missing", 
+        fields: missingFields 
+      });
     }
+
+    // 3. Normalize Data for Storage
+    const leadData = normalizeData(schema.fields, rawData);
 
     // 4. UTMs & Meta
     const utm = {};

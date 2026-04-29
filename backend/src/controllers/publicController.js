@@ -10,6 +10,7 @@ const { generateTrackingScripts } = require('../utils/tracking');
 const path = require('path');
 const fs = require('fs');
 const { validateForm } = require('../utils/dynamicValidator');
+const config = require('../config');
 const logger = require('../utils/logger');
 
 /**
@@ -145,8 +146,13 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       thankYouPageStyles: page.thankYouPageStyles,
       meta: {
         _id: page._id,
-        title: page.title,
-        seo: page.seo,
+        title: page.metaTitle || page.title,
+        metaTitle: page.metaTitle,
+        metaDescription: page.metaDescription,
+        seo: {
+          title: page.metaTitle || page.seo?.title || page.title,
+          description: page.metaDescription || page.seo?.description || ''
+        },
         status: page.status,
         projectId: page.projectId,
         primaryColor: primaryColor,
@@ -291,14 +297,16 @@ const buildLeadCaptureScript = (page) => {
     }
 
     var fd=new FormData(f);
-    var data={
-      pageSlug:SL,
-      pageId:PI,
-      projectId:PJ,
-      timestamp:new Date().getTime()
+    var data = {
+      pageSlug: SL,
+      pageId: PI,
+      projectId: PJ,
+      timestamp: new Date().getTime(),
+      url: window.location.href,
+      domain: window.location.hostname
     };
 
-    // Capture every single named field in the form, prioritizing non-empty values
+    // Capture every single named field in the form
     f.querySelectorAll('input, select, textarea').forEach(function(el) {
       if (el.name) {
         var val = el.value ? String(el.value).trim() : "";
@@ -310,31 +318,13 @@ const buildLeadCaptureScript = (page) => {
       }
     });
 
-    fd.forEach(function(v,k){
-      if(k && v && String(v).trim() !== "") data[k]=v;
+    // Also include FormData for complex cases
+    fd.forEach(function(v, k) {
+      if (k && v && String(v).trim() !== "" && !data[k]) data[k] = v;
     });
 
     var utms=getUTM();
     Object.keys(utms).forEach(function(k){data[k]=utms[k]});
-
-    // Smart identify primary fields if they aren't explicitly named correctly
-    if(!data.name || data.name === ""){
-       var nV = fd.get("name") || fd.get("full_name") || fd.get("fullname") || "";
-       if(!nV) {
-         var nIn = f.querySelector('input[name*="name"]') || f.querySelector('input[placeholder*="Name"]');
-         if(nIn) nV = nIn.value;
-       }
-       if(nV) data.name = String(nV).trim();
-    }
-
-    if(!data.email || data.email === ""){
-       var eV = fd.get("email") || fd.get("user_email") || "";
-       if(!eV) {
-         var eIn = f.querySelector('input[type="email"]') || f.querySelector('input[name*="email"]');
-         if(eIn) eV = eIn.value;
-       }
-       if(eV) data.email = String(eV).trim();
-    }
 
     console.log('📡 [TRACKER] Final Data for submission:', data);
     send(data,f,b,t,1)
@@ -350,7 +340,7 @@ const buildLeadCaptureScript = (page) => {
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
 const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
-  const { title, content, seo } = page || {};
+  const { title, content, seo, metaTitle, metaDescription } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
 
   const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
@@ -402,10 +392,10 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
   // ── Resolved SEO values from DB (always authoritative) ──────────────────
-  // The Page Settings modal saves to page.metaTitle / page.metaDescription (flat fields)
-  // page.seo.title / page.seo.description are legacy fallbacks
-  const seoTitle = (page.metaTitle || seo?.title || title || 'Landing Page').trim();
-  const seoDescription = (page.metaDescription || seo?.description || '').trim();
+  // The Page Settings modal saves to metaTitle / metaDescription (flat fields)
+  // seo.title / seo.description are legacy fallbacks
+  const seoTitle = (metaTitle || seo?.title || title || 'Landing Page').trim();
+  const seoDescription = (metaDescription || seo?.description || '').trim();
   const seoKeywords = Array.isArray(seo?.keywords) ? seo.keywords.join(', ') : (seo?.keywords || '');
 
   // ── Inject Branding Variables ─────────────────────────────────────────────
@@ -460,7 +450,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
       const directives = [];
       if (noIndex) directives.push('noindex'); else directives.push('index');
       if (noFollow) directives.push('nofollow'); else directives.push('follow');
-      return `<meta name="robots" content="${directives.join(', ')}">`;  
+      return `<meta name="robots" content="${directives.join(', ')}">`;
     })(),
     canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
@@ -526,6 +516,18 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     }
 
     if (/<\/head>/i.test(html)) {
+      // Force inject SEO and Performance tags
+      const extraMeta = `
+    <meta name="robots" content="noindex, nofollow">
+    ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : ''}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">`;
+
+      if (!html.includes('name="robots"')) {
+        html = html.replace(/<\/head>/i, `${extraMeta}\n</head>`);
+      }
+
       // Force inject Tailwind, Fonts, and Branding if missing
       if (!html.includes('cdn.tailwindcss.com')) {
         html = html.replace(/<\/head>/i, `  <script src="https://cdn.tailwindcss.com"></script>\n</head>`);
@@ -748,8 +750,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
         // 2. Check Authorization
         const isOwnerDomain = (incomingRequestDomain === saasDomain);
         const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
+        const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
-        if (!isOwnerDomain && !isAuthorizedDomain && project.websiteUrl) {
+        if (!isOwnerDomain && !isAuthorizedDomain && !isDevDomain && project.websiteUrl) {
           // Instead of a hard 403, we show a helpful "Setup Needed" page
           console.warn(`🛑 Domain Blocked: ${incomingRequestDomain} is not ${project.websiteUrl}`);
           return res.status(200).send(`
@@ -818,18 +821,18 @@ exports.handleFormSubmission = async (req, res, next) => {
     if (!pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form') {
       const referer = req.get('referer') || '';
       const urlSlug = req.params.slug || '';
-      
+
       // Try to get slug from URL param (stripping proxy-form)
       let detectedSlug = urlSlug.replace(/\/proxy-form$/i, '');
-      
+
       // If still no slug, try parsing referer
       if (!detectedSlug && referer) {
         try {
           const refPath = new URL(referer).pathname.replace(/^\/+|\/+$/g, '');
           detectedSlug = refPath;
-        } catch (e) {}
+        } catch (e) { }
       }
-      
+
       if (detectedSlug) pageSlug = detectedSlug.replace(/\/thank-you$/i, '');
     }
 
@@ -838,8 +841,8 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     // 1. Resolve Page ID first if missing (critical for FormSchema lookup)
     if (!pageId && pageSlug) {
-      const pageDoc = await Page.findOne({ 
-        $or: [{ slug: pageSlug }, { slug: cleanPageSlug }] 
+      const pageDoc = await Page.findOne({
+        $or: [{ slug: pageSlug }, { slug: cleanPageSlug }]
       }).select('_id projectId').lean();
 
       if (pageDoc) {
@@ -859,12 +862,12 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     if (!schema || !schema.fields?.length) {
       console.warn(`[PUBLIC_FORM] No schema found for PageId: "${pageId}", Slug: "${pageSlug}"`);
-      
+
       // If it's a traditional form, don't just return JSON
       if (!req.xhr && !req.headers.accept?.includes('json')) {
-         return res.status(404).send('<h1>Form Configuration Missing</h1><p>Please ensure you have configured a form in the landing page editor and published it.</p>');
+        return res.status(404).send('<h1>Form Configuration Missing</h1><p>Please ensure you have configured a form in the landing page editor and published it.</p>');
       }
-      
+
       return res.status(400).json({ status: 'fail', message: 'Form schema not found. Please ensure page is published and form is configured.' });
     }
 
@@ -967,7 +970,7 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     // 6. Resolve Thank You URL (Check Page settings for custom URL)
     let thankYouUrl = rawData.redirect;
-    
+
     if (!thankYouUrl) {
       const pageDoc = await Page.findById(schema.page_id).select('thankYouUrl slug projectId');
       if (pageDoc && pageDoc.thankYouUrl) {
@@ -1046,6 +1049,7 @@ exports.verifyPlugin = async (req, res, next) => {
     const project = await Project.findOne({ apiToken });
 
     if (!project) {
+      console.warn(`🔑 [VERIFY] Invalid API Token Attempt: [${apiToken}]`);
       return res.status(401).json({ status: 'error', message: 'Invalid API token. No project found.' });
     }
 
@@ -1073,8 +1077,7 @@ exports.verifyPlugin = async (req, res, next) => {
       'title slug content seo template domain publishedAt'
     );
 
-    const backendBaseUrl = process.env.APP_BASE_URL || 'http://127.0.0.1:5000';
-    const normalizedBackendBase = backendBaseUrl.replace(/\/+$/, '');
+    const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
 
     const preSlug = (project.preSlug || "").replace(/^\/+|\/+$/g, '');
     const allowedPaths = [];
@@ -1086,17 +1089,16 @@ exports.verifyPlugin = async (req, res, next) => {
       allowedPaths.push(`${fullSlug}/proxy-form`);
     });
 
+    logger.info(`✅ [PLUGIN-VERIFY] Success for domain: ${domain} (Project: ${project.name})`);
+
     res.status(200).json({
-      status: 'active',
-      plan: 'pro',
-      cache_time: 300,
-      projectId: project._id,
-      projectName: project.name,
-      source_url: project.websiteUrl,
+      status: 'success',
       target_url: normalizedBackendBase,
-      relay_url: normalizedBackendBase,
       allowed_paths: [...allowedPaths, '/api/leads'],
-      message: `License verified. Project "${project.name}" is active.`
+      settings: {
+        site_name: project.name,
+        primary_color: project.primaryColor || '#007bff',
+      }
     });
   } catch (err) {
     next(err);

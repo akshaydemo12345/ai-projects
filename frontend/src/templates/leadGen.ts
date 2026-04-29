@@ -25,7 +25,7 @@ export const leadGenStyles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--primary, #1a73e8);
+    color: PRIMARY_COLOR_PLACEHOLDER;
     font-weight: 700;
   }
   
@@ -60,7 +60,7 @@ export const leadGenStyles = `
   }
   
   .form-title {
-    color: var(--secondary, #74a12e);
+    color: PRIMARY_COLOR_PLACEHOLDER;
     font-size: 28px;
     font-weight: 800;
     margin-bottom: 15px;
@@ -82,7 +82,7 @@ export const leadGenStyles = `
   .submit-btn {
     width: 100%;
     padding: 15px;
-    background: var(--primary, #74a12e);
+    background: PRIMARY_COLOR_PLACEHOLDER;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -103,7 +103,7 @@ export const leadGenStyles = `
     margin-bottom: 20px;
   }
   
-  .hero-content h1 span { color: var(--secondary, #74a12e); font-weight: 800; }
+  .hero-content h1 span { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; }
   
   .hero-content p { font-size: 18px; color: #ddd; margin-bottom: 30px; max-width: 500px; }
   
@@ -151,7 +151,7 @@ export const leadGenStyles = `
   .feature-icon {
     width: 60px;
     height: 60px;
-    background: #74a12e;
+    background: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -176,7 +176,7 @@ export const leadGenStyles = `
     color: #fff;
   }
   
-  .teaching-image { flex: 1; height: 350px; background: #4dabf7; border: 4px solid #74a12e; }
+  .teaching-image { flex: 1; height: 350px; background: #4dabf7; border: 4px solid PRIMARY_COLOR_PLACEHOLDER; }
   .teaching-content { flex: 1; }
   .teaching-content h2 { font-size: 32px; font-weight: 800; margin-bottom: 25px; }
   .teaching-content p { margin-bottom: 20px; font-size: 14px; opacity: 0.9; }
@@ -239,13 +239,13 @@ export const leadGenStyles = `
     position: absolute;
     inset: 0;
     border: 3px solid transparent;
-    border-top-color: #74a12e;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
   .loader-ring:nth-child(2) {
     inset: 8px;
-    border-top-color: #98c64a;
+    border-top-color: SECONDARY_COLOR_PLACEHOLDER;
     animation-direction: reverse;
     animation-duration: 1s;
   }
@@ -263,9 +263,7 @@ export const leadGenStyles = `
 export const leadGenHtml = `
   <div class="lead-gen-container">
     <header class="header" data-gjs-type="header">
-      <div class="logo">
-         <img src="https://via.placeholder.com/150x50?text=LOGO" alt="Logo" />
-      </div>
+      <div class="logo">LOGO_PLACEHOLDER</div>
       <div class="contact-info">
         <span style="font-size: 24px;">📞</span>
         <div>
@@ -393,7 +391,7 @@ export const leadGenHtml = `
     </div>
 
     <footer class="footer">
-      Copyright © 2026. All rights reserved. Design by yourbusiness.com
+      Copyright © 2026. All rights reserved. Design by PROJECT_NAME_PLACEHOLDER
     </footer>
 
     <div id="loader" class="page-loader">
@@ -405,13 +403,7 @@ export const leadGenHtml = `
     </div>
 
     <script>
-      document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.getElementById('loader').style.display = 'flex';
-        setTimeout(function() {
-          console.log('Form submitted, loader would stay until thank you page');
-        }, 2000);
-      });
+      console.log('Lead Generation Template Loaded');
     </script>
   </div>
 `;

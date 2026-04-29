@@ -901,7 +901,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [published, setPublished] = useState(false);
 
   const publishUrl = page.publishedUrl || `${window.location.origin}/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://would-insulation-professional-understood.trycloudflare.com';
   const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${project.preSlug ? project.preSlug + '/' : ''}${page.slug}" async></script>`;
 
   const handlePublish = () => {
@@ -1063,7 +1063,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                           size="sm"
                           className="h-7 text-[10px] mt-2 gap-1.5"
                           onClick={() => {
-                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
+                            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://would-insulation-professional-understood.trycloudflare.com';
                             window.open(`${apiBaseUrl}/plugin/download`, '_blank');
                             toast.success("Downloading plugin...");
                           }}
@@ -1334,7 +1334,7 @@ const ProjectDetailPage = () => {
   const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
-  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${project?.apiToken}" async></script>`;
+  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://would-insulation-professional-understood.trycloudflare.com'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
 
 
@@ -1534,8 +1534,8 @@ const ProjectDetailPage = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
-                          const url = page.status === "published" 
-                            ? `/${preSlugPrefix}${page.slug}` 
+                          const url = page.status === "published"
+                            ? `/${preSlugPrefix}${page.slug}`
                             : `/preview/${preSlugPrefix}${page.slug}`;
                           window.open(url, '_blank');
                         }}
@@ -1550,7 +1550,7 @@ const ProjectDetailPage = () => {
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/dashboard/leads?page=${page._id}`);
+                          navigate(`/dashboard/leads?project=${project._id}&page=${page._id}`);
                         }}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
                         title="View Leads"
@@ -1636,7 +1636,7 @@ const ProjectDetailPage = () => {
                             size="sm"
                             className="h-7 text-[10px] mt-1.5 gap-1.5"
                             onClick={() => {
-                              const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com';
+                              const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://would-insulation-professional-understood.trycloudflare.com';
                               window.open(`${apiBaseUrl}/plugin/download`, '_blank');
                               toast.success("Downloading plugin...");
                             }}
