@@ -332,24 +332,25 @@ class DomainMapper_Settings_Page {
             wp_send_json_error( [ 'message' => 'API Key is too short.' ] );
         }
 
-        $endpoint = DM_API_BASE . '/verify-api-key';
+        $endpoint = DM_API_BASE . '/plugin/verify';
         $actual_key = $api_key;
         if ( strpos( $api_key, '@@' ) !== false ) {
             list( $override_url, $actual_key ) = explode( '@@', $api_key, 2 );
-            $endpoint = rtrim( $override_url, '/' ) . '/verify-api-key';
+            $endpoint = rtrim( $override_url, '/' ) . '/plugin/verify';
         }
 
         $response = wp_remote_post( $endpoint, [
-            'timeout' => 15,
-            'headers' => [ 'Content-Type' => 'application/json' ],
-            'body'    => json_encode( [ 
+            'timeout'   => 15,
+            'sslverify' => false,
+            'headers'   => [ 'Content-Type' => 'application/json' ],
+            'body'      => json_encode( [ 
                 'api_key' => $actual_key,
                 'domain'  => $domain
             ] )
         ]);
 
         if ( is_wp_error( $response ) ) {
-            wp_send_json_error( [ 'message' => 'Connection to server failed. Please check your backend URL.' ] );
+            wp_send_json_error( [ 'message' => 'Connection to ' . $endpoint . ' failed: ' . $response->get_error_message() ] );
         }
 
         $body_raw = wp_remote_retrieve_body( $response );

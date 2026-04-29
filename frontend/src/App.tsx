@@ -13,6 +13,7 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import CreateProjectFlow from "./pages/CreateProjectFlow";
 import CreatePagePage from "./pages/CreatePagePage";
 import LeadsPage from "./pages/LeadsPage";
+import MailManagementPage from "./pages/MailManagementPage";
 import SettingsPage from "./pages/SettingsPage";
 import PlansPage from "./pages/PlansPage";
 import BillingPage from "./pages/BillingPage";
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="projects/:id/create-page" element={<CreatePagePage />} />
                 <Route path="published" element={<PublishedPage />} />
                 <Route path="leads" element={<LeadsPage />} />
+                <Route path="mail-management" element={<MailManagementPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="plans" element={<PlansPage />} />
                 <Route path="billing" element={<BillingPage />} />
