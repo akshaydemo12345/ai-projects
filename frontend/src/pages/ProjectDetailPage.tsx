@@ -16,6 +16,7 @@ import { copyToClipboard, cleanUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -514,6 +515,8 @@ const EditPageModal = ({ page, projectUrl, preSlug, onClose, onSave }: EditPageM
   const [slug, setSlug] = useState(page.slug);
   const [metaTitle, setMetaTitle] = useState(page.metaTitle ?? "");
   const [metaDescription, setMetaDescription] = useState(page.metaDescription ?? "");
+  const [noIndex, setNoIndex] = useState(page.noIndex ?? false);
+  const [noFollow, setNoFollow] = useState(page.noFollow ?? false);
 
   const [primaryColor, setPrimaryColor] = useState(page.primaryColor ?? "#7c3aed");
   const [secondaryColor, setSecondaryColor] = useState(page.secondaryColor ?? "#6366f1");
@@ -547,6 +550,8 @@ const EditPageModal = ({ page, projectUrl, preSlug, onClose, onSave }: EditPageM
       slug: slug.trim(),
       metaTitle,
       metaDescription,
+      noIndex,
+      noFollow,
       primaryColor,
       secondaryColor,
       logoUrl,
@@ -639,6 +644,30 @@ const EditPageModal = ({ page, projectUrl, preSlug, onClose, onSave }: EditPageM
                   className="min-h-[85px] resize-none text-sm"
                 />
                 <p className="text-[10px] text-muted-foreground mt-1 mb-2">Ideal: 150–160 characters</p>
+              </div>
+
+              <div className="pt-2 border-t border-border/50 space-y-3">
+                <p className="text-sm font-bold text-foreground">Search Engine Visibility</p>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="noIndex"
+                    checked={noIndex}
+                    onCheckedChange={(checked) => setNoIndex(!!checked)}
+                  />
+                  <label htmlFor="noIndex" className="text-sm text-foreground cursor-pointer select-none">
+                    Hide from search engines (noindex)
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="noFollow"
+                    checked={noFollow}
+                    onCheckedChange={(checked) => setNoFollow(!!checked)}
+                  />
+                  <label htmlFor="noFollow" className="text-sm text-foreground cursor-pointer select-none">
+                    Do not follow links (nofollow)
+                  </label>
+                </div>
               </div>
             </TabsContent>
 
