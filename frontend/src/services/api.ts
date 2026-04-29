@@ -415,6 +415,14 @@ export interface Lead {
   projectId?: string;
   ip?: string;
   userAgent?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
   data?: Record<string, any>;
   meta?: {
     ip?: string;
@@ -435,8 +443,12 @@ export const leadsApi = {
     search?: string;
     startDate?: string;
     endDate?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
     page?: number;
     limit?: number;
+    sortBy?: string;
   } = {}) => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -450,7 +462,8 @@ export const leadsApi = {
     // Backend returns { status, results, data: { leads: [], formSchema: {} } }
     return {
       leads: res.data.leads as Lead[],
-      total: res.results || 0,
+      total: res.total ?? res.data?.total ?? res.results ?? 0,
+      todayCount: res.data?.todayCount ?? 0,
       formSchema: res.data.formSchema
     };
   },
@@ -468,7 +481,16 @@ export const leadsApi = {
     });
   },
 
-  export: async (params: { projectId?: string; pageId?: string; search?: string; startDate?: string; endDate?: string } = {}) => {
+  export: async (params: { 
+    projectId?: string; 
+    pageId?: string; 
+    search?: string; 
+    startDate?: string; 
+    endDate?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+  } = {}) => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) queryParams.append(key, String(value));
@@ -485,6 +507,12 @@ export const leadsApi = {
 
     if (!response.ok) throw new Error('Export failed');
     return response.blob();
+  },
+
+  getFilters: async (projectId?: string) => {
+    const endpoint = `/api/leads/get-filters${projectId ? `?projectId=${projectId}` : ''}`;
+    const res = await apiFetch(endpoint);
+    return res.data as { utmSources: string[]; utmMediums: string[]; utmCampaigns: string[] };
   }
 };
 
