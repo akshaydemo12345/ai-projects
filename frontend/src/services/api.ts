@@ -79,6 +79,9 @@ export interface LandingPage {
   thankYouFooter?: string;
   thankYouConversionScript?: string;
   thankYouUrl?: string;
+  noIndex?: boolean;
+  noFollow?: boolean;
+  noIndexNoFollow?: boolean;
   generationMethod?: "ai" | "analyze" | "manual" | "template";
   aiPrompt?: string;
   apiToken?: string;
@@ -249,6 +252,7 @@ export const pagesApi = {
       thankYouHeader: normalizeScript(data.thankYouHeader),
       thankYouFooter: normalizeScript(data.thankYouFooter),
       thankYouConversionScript: normalizeScript(data.thankYouConversionScript),
+      ...(data.noIndexNoFollow !== undefined ? { noIndex: data.noIndexNoFollow, noFollow: data.noIndexNoFollow } : {}),
     };
     const res = await apiFetch(`/projects/${projectId}/pages`, {
       method: 'POST',
@@ -279,6 +283,7 @@ export const pagesApi = {
       ...(data.thankYouHeader !== undefined ? { thankYouHeader: normalizeScript(data.thankYouHeader) } : {}),
       ...(data.thankYouFooter !== undefined ? { thankYouFooter: normalizeScript(data.thankYouFooter) } : {}),
       ...(data.thankYouConversionScript !== undefined ? { thankYouConversionScript: normalizeScript(data.thankYouConversionScript) } : {}),
+      ...(data.noIndexNoFollow !== undefined ? { noIndex: data.noIndexNoFollow, noFollow: data.noIndexNoFollow } : {}),
     };
     const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`, {
       method: 'PUT',

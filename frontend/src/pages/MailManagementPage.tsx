@@ -59,14 +59,18 @@ const NotificationPanel = ({
   title,
   enabled,
   onToggle,
+  onSave,
+  saved,
   children,
 }: {
   title: string;
   enabled: boolean;
   onToggle: (v: boolean) => void;
+  onSave: () => void;
+  saved: boolean;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-xl border border-border bg-card overflow-hidden">
+  <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col h-full">
     {/* Panel Header */}
     <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
       <p className="text-base font-semibold text-foreground">{title}</p>
@@ -75,8 +79,16 @@ const NotificationPanel = ({
         <Toggle checked={enabled} onChange={onToggle} />
       </div>
     </div>
-    <div className={`px-5 py-5 space-y-4 ${!enabled ? "opacity-50 pointer-events-none" : ""}`}>
+    <div className={`px-5 py-5 space-y-4 flex-1 ${!enabled ? "opacity-50 pointer-events-none" : ""}`}>
       {children}
+    </div>
+    <div className="p-5 border-t border-border bg-muted/10 mt-auto">
+      <Button
+        className={`w-full font-semibold ${saved ? "bg-emerald-600 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"}`}
+        onClick={onSave}
+      >
+        {saved ? "✓ Settings Saved" : "Update Notification"}
+      </Button>
     </div>
   </div>
 );
@@ -221,16 +233,6 @@ const MailManagementPage = () => {
               <option key={p._id} value={p._id}>{p.name}</option>
             ))}
           </select>
-
-          <Button
-            size="sm"
-            className={`gap-2 h-9 ${saved ? "bg-emerald-600 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"}`}
-            onClick={handleSave}
-          >
-            {saved
-              ? <><CheckCircle2 className="h-3.5 w-3.5" /> Saved!</>
-              : <><Settings2 className="h-3.5 w-3.5" /> Save Settings</>}
-          </Button>
         </div>
       </div>
 
@@ -282,6 +284,8 @@ const MailManagementPage = () => {
           title="Admin Notification"
           enabled={adminCfg.enabled}
           onToggle={(v) => patchAdmin("enabled", v)}
+          onSave={handleSave}
+          saved={saved}
         >
           <Field label="Send To Email" required hint="Admin email address to receive lead alerts">
             <Input
@@ -355,6 +359,8 @@ const MailManagementPage = () => {
           title="User Notification"
           enabled={userCfg.enabled}
           onToggle={(v) => patchUser("enabled", v)}
+          onSave={handleSave}
+          saved={saved}
         >
 
           <Field label="From Name" hint="Sender name shown to the user">
@@ -415,14 +421,6 @@ const MailManagementPage = () => {
         </NotificationPanel>
 
       </div>
-
-      {/* Save Button — spans full width below both panels */}
-      <Button
-        className={`w-full h-10 font-semibold mt-6 ${saved ? "bg-emerald-600 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"}`}
-        onClick={handleSave}
-      >
-        {saved ? "✓ Settings Saved" : "Update Notification"}
-      </Button>
     </div>
   );
 };
