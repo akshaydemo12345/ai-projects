@@ -70,7 +70,7 @@ const ProjectsPage = () => {
     { icon: FolderOpen, label: "Total Projects", value: projects.length, color: "from-violet-500 to-indigo-500", bg: "bg-violet-50", tc: "text-violet-600" },
     { icon: FileText, label: "Landing Pages", value: totalPages, color: "from-blue-500 to-cyan-500", bg: "bg-blue-50", tc: "text-blue-600" },
     { icon: Users, label: "Total Leads", value: totalLeads.toLocaleString(), color: "from-amber-500 to-orange-500", bg: "bg-amber-50", tc: "text-amber-600" },
-    { icon: TrendingUp, label: "Published Pages", value: publishedPages, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", tc: "text-emerald-600" },
+    { icon: TrendingUp, label: "Published Landing Pages", value: publishedPages, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", tc: "text-emerald-600" },
   ];
 
   const categoryColors: Record<string, string> = {
@@ -89,9 +89,9 @@ const ProjectsPage = () => {
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+          <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage your SEO landing page projects
+            Manage your landing page projects
           </p>
         </div>
         <Button
@@ -179,6 +179,9 @@ const ProjectsPage = () => {
                       <Globe className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">
+                      <a className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || categoryColors.Other}`}>
+                        {project.category || "General"}
+                      </a>
                       <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
                       <div className="flex items-center gap-1 mt-0.5">
                         <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
@@ -223,16 +226,8 @@ const ProjectsPage = () => {
                   </div>
                 </div>
 
-                <a className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-3 ${categoryColors[project.category] || categoryColors.Other}`}>
-                  {project.category || "General"}
-                </a>
-
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8">
-                  {project.description || "No description added yet."}
-                </p>
-
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium mb-4 bg-muted/30 rounded-md p-2">
-                  <span>Pages: {project.pageCount || 0} ({project.publishedPageCount || 0} Published)</span>
+                  <span>Pages: {project.pageCount || 0}</span>
                   <span className="text-muted-foreground/30">|</span>
                   <span>Leads: {project.leadCount || 0}</span>
                 </div>
@@ -240,6 +235,14 @@ const ProjectsPage = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div className="flex items-center gap-2">
                     <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-primary hover:text-primary font-bold group-hover:bg-primary/5 transition-colors"
+                    onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                  >
+                    Go to Dashboard →
+                    </Button>
+                    {/* <Button
                       size="sm"
                       variant="secondary"
                       className="h-7 px-2 text-[10px] gap-1.5 font-bold bg-muted hover:bg-primary/10 hover:text-primary transition-all"
@@ -248,20 +251,12 @@ const ProjectsPage = () => {
                     >
                       <Mail className="h-3 w-3" />
                       Email
-                    </Button>
+                    </Button> */}
                     <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
                       {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
                       {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs text-primary hover:text-primary font-bold group-hover:bg-primary/5 transition-colors"
-                    onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                  >
-                    View Details →
-                  </Button>
                 </div>
               </div>
             </div>

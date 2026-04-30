@@ -117,45 +117,6 @@ const LeadsPage = () => {
   const totalCount = data?.total || 0;
   const formSchema = data?.formSchema;
 
-  // ── Dynamic column discovery ──────────────────────────────────────────────
-  const dynamicTableFields = useMemo(() => {
-    const keysSet = new Set<string>();
-    const keyToLabel: Record<string, string> = {};
-
-    if (formSchema?.fields) {
-      formSchema.fields.forEach((f: any) => {
-        if (f.field_name) {
-          keysSet.add(f.field_name);
-          keyToLabel[f.field_name] = f.label;
-        }
-      });
-    }
-
-    leads.forEach((l: any) => {
-      if (l.data) {
-        Object.keys(l.data).forEach(k => {
-          if (!keysSet.has(k)) keysSet.add(k);
-        });
-      }
-    });
-
-    // Filter out standard keys that already have dedicated columns
-    const standardKeys = ["name", "full_name", "email", "email_address", "phone", "tel", "message", "contact", "mobile_number", "mobile", "company", "company_name", "project_scale"];
-    const fields = Array.from(keysSet)
-      .filter(k => {
-        const lowerK = k.toLowerCase().replace(/_/g, "");
-        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return false;
-        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return false;
-        return true;
-      })
-      .map(k => ({
-        field_name: k,
-        label: keyToLabel[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
-      }));
-
-    // Return only top 3 dynamic fields to keep table clean
-    return fields.slice(0, 3);
-  }, [leads]);
 
   // ── Delete mutation ───────────────────────────────────────────────────────
   const deleteMutation = useMutation({
@@ -550,19 +511,14 @@ const LeadsPage = () => {
             <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1200px]">
+                <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
                     <tr className="border-b border-slate-200 dark:border-slate-800">
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[240px]">Inquirer</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px]">Contact Details</th>
-                      {dynamicTableFields.map((field: any) => (
-                        <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">
-                          {field.label || field.field_name.replace(/_/g, " ")}
-                        </th>
-                      ))}
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">Source Page</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[160px]">Date Received</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Actions</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Full Name</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phone</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -581,14 +537,11 @@ const LeadsPage = () => {
                               <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
                                 {getLField(lead, "name") || "Lead User"}
                               </p>
-                              <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, "message"))}>
-                                {getLField(lead, "message") || "No message left"}
-                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-5">
-                          <div className="space-y-2">
+                          <div className="space-y-1">
                             {getStackedContacts(lead).emails.map((email, idx) => (
                               <div key={idx} className="flex items-center gap-2">
                                 <Mail className="h-3 w-3 text-slate-400 shrink-0" />
@@ -597,35 +550,21 @@ const LeadsPage = () => {
                                 </span>
                               </div>
                             ))}
+                            {getStackedContacts(lead).emails.length === 0 && (
+                              <span className="text-xs text-slate-400 italic">No email</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="space-y-1">
                             {getStackedContacts(lead).phones.map((phone, idx) => (
                               <div key={idx} className="flex items-center gap-2">
                                 <Phone className="h-3 w-3 text-slate-400 shrink-0" />
                                 <span className="text-xs font-medium text-slate-500">{phone}</span>
                               </div>
                             ))}
-                            {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
-                              <span className="text-xs text-slate-400 italic">No contact info</span>
-                            )}
-                          </div>
-                        </td>
-                        {dynamicTableFields.map((field: any) => (
-                          <td key={field.field_name} className="px-6 py-5">
-                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                              {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "—"}
-                            </span>
-                          </td>
-                        ))}
-                        <td className="px-6 py-5">
-                          <div className="inline-flex flex-col gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                            <div className="flex items-center gap-1.5">
-                              <Globe className="h-3 w-3" />
-                              <span>{lead.pageSlug || "Direct"}</span>
-                            </div>
-                            {(lead as any).utm_source && (
-                              <div className="flex items-center gap-1.5 text-[9px] opacity-70">
-                                <ExternalLink className="h-2.5 w-2.5" />
-                                <span className="uppercase">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
-                              </div>
+                            {getStackedContacts(lead).phones.length === 0 && (
+                              <span className="text-xs text-slate-400 italic">No phone</span>
                             )}
                           </div>
                         </td>
@@ -728,34 +667,7 @@ const LeadsPage = () => {
                           )}
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Analytics Trace</p>
-                        <div className="space-y-1.5">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate flex items-center gap-1.5 font-medium">
-                            <Globe className="h-3 w-3 text-emerald-500" /> {lead.pageSlug || "Direct Visit"}
-                          </p>
-                          {(lead as any).utm_source && (
-                            <p className="text-[10px] text-slate-500 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded w-fit">
-                              <ExternalLink className="h-2.5 w-2.5" />
-                              <span className="uppercase font-bold">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
                     </div>
-
-                    {dynamicTableFields.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {dynamicTableFields.map((field: any) => (
-                          <div key={field.field_name} className="px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                            <span className="text-[10px] text-slate-400 mr-1">{field.label}:</span>
-                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                              {lead.data?.[field.field_name] || "—"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -833,7 +745,7 @@ const LeadsPage = () => {
               <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
+                    <Mail className="h-4 w-4 text-primary" /> Full Message
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
@@ -888,7 +800,7 @@ const LeadsPage = () => {
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
                   <div className="space-y-4">
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
                       <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
                         <Shield className="h-3.5 w-3.5 text-blue-400" />
                         {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}

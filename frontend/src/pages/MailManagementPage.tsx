@@ -238,6 +238,24 @@ const MailManagementPage = () => {
     }
   };
 
+  const handleSaveProvider = async () => {
+    try {
+      const { projectsApi } = await import("@/services/api");
+      await projectsApi.update(selectedProject, {
+        emailProvider: provider,
+        brevoKey: brevoKey,
+        fromName: admin.fromName,
+        fromEmail: admin.fromEmail,
+      });
+
+      localStorage.setItem(`pb_provider_${selectedProject}`, provider);
+      localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
+      toast.success("Email provider settings saved to database!");
+    } catch (err) {
+      toast.error("Failed to save provider settings to database.");
+    }
+  };
+
   const handleProjectSelect = (pid: string, currentProjects?: any[]) => {
     setSelectedProject(pid);
     
@@ -264,6 +282,8 @@ const MailManagementPage = () => {
         });
         setUserCfg(prev => ({ ...prev, enabled: proj.userNotification.enabled }));
       }
+      if (proj.emailProvider) setProvider(proj.emailProvider as any);
+      if (proj.brevoKey) setBrevoKey(proj.brevoKey);
     }
 
     setAdminCfg(getAdminNotifConfig(pid));
@@ -365,11 +385,7 @@ const MailManagementPage = () => {
           <Button 
             variant="outline" 
             className="h-9 px-6 font-semibold border-primary/20 text-primary hover:bg-primary/5"
-            onClick={() => {
-              localStorage.setItem(`pb_provider_${selectedProject}`, provider);
-              localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
-              toast.success("Email provider settings saved!");
-            }}
+            onClick={handleSaveProvider}
           >
             Save Provider
           </Button>
@@ -443,13 +459,7 @@ const MailManagementPage = () => {
             />
           </Field>
 
-          <Field label="Message" required>
-            <MessageBox
-              value={admin.message}
-              onChange={(v) => setAdmin((a) => ({ ...a, message: v }))}
-              placeholder="{{lead_name}} submitted the form..."
-            />
-          </Field>
+
 
         </NotificationPanel>
 
@@ -509,13 +519,7 @@ const MailManagementPage = () => {
             />
           </Field>
 
-          <Field label="Message" required>
-            <MessageBox
-              value={user.message}
-              onChange={(v) => setUser((u) => ({ ...u, message: v }))}
-              placeholder="Hi {{name}}, thank you for reaching out..."
-            />
-          </Field>
+
 
         </NotificationPanel>
 

@@ -6,6 +6,7 @@ const FormSchema = require('../models/FormSchema');
 const { validateForm, normalizeData } = require('../utils/dynamicValidator');
 const logger = require('../utils/logger');
 const { syncFormSchema } = require('../utils/schemaSync');
+const emailService = require('../services/emailService');
 
 /**
  * @desc    Create a new dynamic lead from a landing page form
@@ -93,6 +94,61 @@ exports.createLead = async (req, res) => {
     });
 
     Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => { });
+
+    // ─── EMAIL NOTIFICATIONS ──────────────────────────────────────────────
+    try {
+      const project = await Project.findById(schema.project_id);
+      if (project) {
+        const now = new Date().toLocaleString();
+        
+        // 1. Admin Notification
+        if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
+          const adminEmail = project.adminNotification.email || project.adminEmail;
+          const adminMsg = `
+            <h2>New Lead Captured!</h2>
+            <p>A new form was submitted on your landing page.</p>
+            <hr />
+            <p><strong>Name:</strong> ${leadData.name || leadData.full_name || 'Unknown'}</p>
+            <p><strong>Email:</strong> ${leadData.email || leadData.email_address || 'Not provided'}</p>
+            <p><strong>Phone:</strong> ${leadData.phone || leadData.tel || 'Not provided'}</p>
+            <p><strong>Message:</strong> ${leadData.message || leadData.comment || 'No message'}</p>
+            <hr />
+            <p><strong>Page:</strong> ${pageSlug || schema.page_slug || ''}</p>
+            <p><strong>Time:</strong> ${now}</p>
+          `;
+
+          emailService.sendEmail({
+            to: adminEmail,
+            subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
+            htmlContent: adminMsg,
+            fromName: project.fromName,
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey // Pass project-specific key if it exists
+          }).catch(err => logger.error('Admin Email Error:', err));
+        }
+
+        // 2. User Auto-Reply
+        const userEmail = leadData.email || leadData.email_address;
+        if (project.userNotification?.enabled && userEmail) {
+          const userMsg = `
+            <h3>Hello ${leadData.name || leadData.full_name || 'there'},</h3>
+            <p>Thank you for reaching out to us! We have received your inquiry and our team will get back to you as soon as possible.</p>
+            <p>Best regards,<br/>The Team</p>
+          `;
+
+          emailService.sendEmail({
+            to: userEmail,
+            subject: project.userNotification.subject || "Thank you for contacting us!",
+            htmlContent: userMsg,
+            fromName: project.fromName,
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey
+          }).catch(err => logger.error('User Email Error:', err));
+        }
+      }
+    } catch (emailErr) {
+      logger.error('Email Trigger Logic Failed:', emailErr);
+    }
 
     return res.status(201).json({
       status: "success",
