@@ -148,7 +148,7 @@ const LeadsPage = () => {
   // ── Field helper ──────────────────────────────────────────────────────────
   const getLField = (l: any, field: string) => {
     const lowerField = field.toLowerCase();
-    
+
     // Check root first (flattened)
     if (field === "name") {
       const val = l["Full Name"] || l.full_name || l.name || l.fullname || l.first_name || (l.data?.full_name || l.data?.name || l.data?.fullname || l.data?.first_name || "");
@@ -288,9 +288,7 @@ const LeadsPage = () => {
                 <Inbox className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Leads Manager
-                </h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Leads Management</h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {selectedProjectName ? (
                     <>
@@ -650,19 +648,19 @@ const LeadsPage = () => {
               )}
             </p>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
                 disabled={page === 1 || isLoading}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" /> Previous
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
                 disabled={page * pageSize >= totalCount || isLoading}
                 onClick={() => setPage(p => p + 1)}
               >
