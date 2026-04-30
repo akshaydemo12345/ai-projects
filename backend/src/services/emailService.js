@@ -1,60 +1,63 @@
-const SibApiV3Sdk = require('@getbrevo/brevo');
+const axios = require('axios');
 
 /**
  * Brevo Email Service
- * Handles sending transactional emails using Brevo SDK
+ * Handles sending transactional emails using direct API calls
  */
 class EmailService {
   constructor() {
-    this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    
-    // Initialize with API Key from .env
-    const apiKey = process.env.BREVO_API_KEY;
-    if (apiKey) {
-      this.apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
-    }
+    this.baseUrl = 'https://api.brevo.com/v3/smtp/email';
   }
 
   /**
    * Send a transactional email
    * @param {Object} options
-   * @param {string} options.to - Recipient email
-   * @param {string} options.subject - Email subject
-   * @param {string} options.htmlContent - Email body (HTML)
-   * @param {string} [options.fromName] - Sender name
-   * @param {string} [options.fromEmail] - Sender email
    */
-  async sendEmail({ to, subject, htmlContent, fromName, fromEmail }) {
-    if (!process.env.BREVO_API_KEY) {
-      console.warn('⚠️ Brevo API Key missing in .env. Skipping email.');
+  async sendEmail({ to, subject, htmlContent, fromName, fromEmail, brevoKey }) {
+    const finalApiKey = brevoKey || process.env.BREVO_API_KEY;
+    
+    if (!finalApiKey) {
+      console.warn('⚠️ Brevo API Key missing. Skipping email.');
       return;
     }
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = htmlContent;
     const finalFromName = fromName && fromName.trim() ? fromName : (process.env.FROM_NAME || 'AI Landing Page Builder');
     const finalFromEmail = fromEmail && fromEmail.trim() ? fromEmail : (process.env.FROM_EMAIL || 'noreply@yourdomain.com');
 
-    sendSmtpEmail.sender = {
-      name: finalFromName,
-      email: finalFromEmail
+    const data = {
+      sender: {
+        name: finalFromName,
+        email: finalFromEmail
+      },
+      to: [{ email: to }],
+      subject: subject,
+      htmlContent: htmlContent
     };
-    sendSmtpEmail.to = [{ email: to }];
 
-    console.log(`✉️ Sending email via Brevo...`);
+    console.log(`✉️ Sending email via Brevo API...`);
     console.log(`   From: "${finalFromName}" <${finalFromEmail}>`);
     console.log(`   To: ${to}`);
     console.log(`   Subject: ${subject}`);
+    
+    if (brevoKey) {
+      console.log(`   Using project-specific API Key: ${brevoKey.substring(0, 10)}...`);
+    } else {
+      console.log(`   Using global API Key from .env: ${process.env.BREVO_API_KEY?.substring(0, 10)}...`);
+    }
 
     try {
-      const data = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
-      console.log('📧 Email sent successfully via Brevo:', data.body.messageId);
-      return data;
+      const response = await axios.post(this.baseUrl, data, {
+        headers: {
+          'api-key': finalApiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('📧 Email sent successfully via Brevo API');
+      return response.data;
     } catch (error) {
-      console.error('❌ Brevo Email Error:', error.response ? error.response.body : error.message);
-      throw error;
+      const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
+      console.error('❌ Brevo API Error:', errorMsg);
+      throw new Error(`Brevo Email Error: ${errorMsg}`);
     }
   }
 }

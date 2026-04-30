@@ -129,6 +129,15 @@ const projectSchema = new mongoose.Schema({
     subject: String,
     message: String,
   },
+  emailProvider: {
+    type: String,
+    enum: ['brevo', 'smtp'],
+    default: 'brevo',
+  },
+  brevoKey: {
+    type: String,
+    trim: true,
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken

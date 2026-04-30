@@ -51,7 +51,7 @@ app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token', 'x-api-key', 'api-key', 'bypass-tunnel-reminder']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token', 'bypass-tunnel-reminder']
 }));
 
 // Adjusted Helmet to allow iframes and cross-site content
@@ -79,28 +79,24 @@ app.get('/', (req, res) => {
 });
 
 // ROUTES
-
-// 1. Auth & User
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
-
-// 2. Dashboard Logic
 app.use('/projects', projectRoutes);
 app.use('/pages', pageRoutes);
 app.use('/ai', aiRoutes);
 app.post('/api/pages/project-suggestions', require('./middleware/authMiddleware').protect, require('./controllers/aiController').getProjectSuggestions);
 app.use('/admin', adminRoutes);
 
-// 3. Functional APIs (Compression applied)
+// Apply compression only to API and Public routes, avoiding the Proxy Engine
 app.use('/api/leads', compression(), leadRoutes);
 app.use('/api/forms', compression(), formRoutes);
 app.use('/api/thank-you', compression(), thankYouRoutes);
 
-// 4. Proxy Engine (Isolated Prefix) - Must be BEFORE public catch-all
-app.use('/api/v1/proxy', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
+// Proxy Engine (Must NOT be compressed to avoid corruption in WordPress relay)
+app.use('/', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
 
-// 5. Public Landing Pages (Catch-all)
-app.use('/', compression(), publicRoutes);
+// Public Pages (Must NOT be compressed to avoid corruption in WordPress relay)
+app.use('/', publicRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorMiddleware);
