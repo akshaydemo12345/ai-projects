@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Search, Globe, TrendingUp, Users, Zap, LayoutGrid, List,
-  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2
+  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,6 +207,12 @@ const ProjectsPage = () => {
                           <Edit3 className="h-3.5 w-3.5" /> Open Project
                         </button>
                         <button
+                          onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                        >
+                          <Mail className="h-3.5 w-3.5" /> Email Settings
+                        </button>
+                        <button
                           onClick={() => handleDelete(project._id)}
                           className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
                         >
@@ -232,9 +238,21 @@ const ProjectsPage = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
-                    {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
-                    {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-7 px-2 text-[10px] gap-1.5 font-bold bg-muted hover:bg-primary/10 hover:text-primary transition-all"
+                      title="Email Settings"
+                      onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                    >
+                      <Mail className="h-3 w-3" />
+                      Email
+                    </Button>
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
+                      {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
+                      {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
+                    </div>
                   </div>
                   <Button
                     size="sm"
@@ -320,6 +338,16 @@ const ProjectsPage = () => {
                   <td className="px-5 py-3.5 text-sm text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2 justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="h-7 px-2 text-[10px] gap-1 font-bold" 
+                        title="Email Settings" 
+                        onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                      >
+                        <Mail className="h-3 w-3" />
+                        Email
+                      </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/dashboard/projects/${project._id}`)}>
                         Open
                       </Button>
