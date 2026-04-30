@@ -962,7 +962,53 @@ exports.handleFormSubmission = async (req, res, next) => {
     });
 
     if (schema.project_id) {
+      const Project = require('../models/Project');
+      const emailService = require('../services/emailService');
+
       await Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => { });
+      
+      const project = await Project.findById(schema.project_id).lean();
+      if (project) {
+        console.log(`📬 Processing email notifications for project: ${project.name}`);
+        const now = new Date().toLocaleString();
+        
+        // 1. Admin Notification
+        if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
+          const adminEmail = project.adminNotification.email || project.adminEmail;
+          let adminMsg = project.adminNotification.message || "New lead captured.";
+          
+          // Simple template replacement
+          adminMsg = adminMsg
+            .replace(/{{lead_name}}/g, leadData.name || 'Unknown')
+            .replace(/{{lead_email}}/g, leadData.email || 'Not provided')
+            .replace(/{{lead_phone}}/g, leadData.phone || 'Not provided')
+            .replace(/{{lead_message}}/g, leadData.message || 'No message')
+            .replace(/{{page_slug}}/g, pageSlug || schema.page_slug || '')
+            .replace(/{{timestamp}}/g, now);
+
+          emailService.sendEmail({
+            to: adminEmail,
+            subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
+            htmlContent: adminMsg.replace(/\n/g, '<br>'),
+            fromName: project.fromName,
+            fromEmail: project.fromEmail
+          }).catch(err => console.error('Admin Email Error:', err));
+        }
+
+        // 2. User Auto-Reply
+        if (project.userNotification?.enabled && leadData.email) {
+          let userMsg = project.userNotification.message || "Thank you for reaching out!";
+          userMsg = userMsg.replace(/{{name}}/g, leadData.name || 'there');
+
+          emailService.sendEmail({
+            to: leadData.email,
+            subject: project.userNotification.subject || "Thank you for contacting us!",
+            htmlContent: userMsg.replace(/\n/g, '<br>'),
+            fromName: project.fromName,
+            fromEmail: project.fromEmail
+          }).catch(err => console.error('User Email Error:', err));
+        }
+      }
     }
 
     // 6. Resolve Thank You URL (Check Page settings for custom URL)

@@ -6,8 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { icon: FolderOpen, label: "Projects", href: "/dashboard" },
-  { icon: Users, label: "Leads", href: "/dashboard/leads" },
-  { icon: MailOpen, label: "Mail Management", href: "/dashboard/mail-management" },
+  { icon: Users, label: "Leads Management", href: "/dashboard/leads" },
+  { icon: MailOpen, label: "Email Settings", href: "/dashboard/mail-management" },
 ];
 
 const settingsItems = [
