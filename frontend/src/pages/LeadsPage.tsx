@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Search, Download, Trash2, Mail, Phone,
@@ -8,8 +8,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { leadsApi, projectsApi, pagesApi, type Lead } from "@/services/api";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -31,11 +38,30 @@ const LeadsPage = () => {
     searchParams.get("page") || ""
   );
 
+  // ── Sync URL params to state ──────────────────────────────────────────────
+  useEffect(() => {
+    const project = searchParams.get("project") || "";
+    const pageParam = searchParams.get("page") || "";
+
+    // Only update if they differ from current state to avoid infinite loops
+    if (project !== filterProjectId) {
+      setFilterProjectId(project);
+    }
+    if (pageParam !== filterPageId) {
+      setFilterPageId(pageParam);
+    }
+  }, [searchParams]);
+
   // ── Other filters ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [filterUtmSource, setFilterUtmSource] = useState("");
+  const [filterUtmMedium, setFilterUtmMedium] = useState("");
+  const [filterUtmCampaign, setFilterUtmCampaign] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -56,9 +82,15 @@ const LeadsPage = () => {
     enabled: !!filterProjectId,
   });
 
+  // ── Unique UTM filters list ──────────────────────────────────────────────
+  const { data: leadFilters } = useQuery({
+    queryKey: ["lead-filters", filterProjectId],
+    queryFn: () => leadsApi.getFilters(filterProjectId || undefined),
+  });
+
   // ── Leads data ────────────────────────────────────────────────────────────
   const { data, isLoading } = useQuery({
-    queryKey: ["leads", filterPageId, filterProjectId, search, startDate, endDate],
+    queryKey: ["leads", filterPageId, filterProjectId, search, startDate, endDate, filterUtmSource, filterUtmMedium, filterUtmCampaign, page, sortBy],
     queryFn: () =>
       leadsApi.getAll({
         projectId: filterProjectId || undefined,
@@ -66,8 +98,20 @@ const LeadsPage = () => {
         search: search || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        utmSource: filterUtmSource || undefined,
+        utmMedium: filterUtmMedium || undefined,
+        utmCampaign: filterUtmCampaign || undefined,
+        page,
+        limit: pageSize,
+        sortBy
       }),
+    placeholderData: keepPreviousData,
   });
+
+  // Reset to first page when any filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filterProjectId, filterPageId, search, startDate, endDate, filterUtmSource, filterUtmMedium, filterUtmCampaign, sortBy]);
 
   const leads = data?.leads || [];
   const totalCount = data?.total || 0;
@@ -88,23 +132,30 @@ const LeadsPage = () => {
     }
 
     leads.forEach((l: any) => {
-      if (l.data) Object.keys(l.data).forEach(k => { if (!keysSet.has(k)) keysSet.add(k); });
+      if (l.data) {
+        Object.keys(l.data).forEach(k => {
+          if (!keysSet.has(k)) keysSet.add(k);
+        });
+      }
     });
 
-    const standardKeys = [
-      "name", "email", "phone", "message", "full_name", "first_name", "last_name",
-      "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
-      "utm_medium", "utm_campaign", "gclid", "_id", "projectId", "pageId",
-      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number",
-    ];
-
-    return Array.from(keysSet)
-      .filter(k => !standardKeys.includes(k) && !standardKeys.includes(k.toLowerCase()))
+    // Filter out standard keys that already have dedicated columns
+    const standardKeys = ["name", "full_name", "email", "email_address", "phone", "tel", "message", "contact", "mobile_number", "mobile", "company", "company_name", "project_scale"];
+    const fields = Array.from(keysSet)
+      .filter(k => {
+        const lowerK = k.toLowerCase().replace(/_/g, "");
+        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return false;
+        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return false;
+        return true;
+      })
       .map(k => ({
         field_name: k,
-        label: keyToLabel[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+        label: keyToLabel[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
       }));
-  }, [formSchema, leads]);
+
+    // Return only top 3 dynamic fields to keep table clean
+    return fields.slice(0, 3);
+  }, [leads]);
 
   // ── Delete mutation ───────────────────────────────────────────────────────
   const deleteMutation = useMutation({
@@ -116,41 +167,62 @@ const LeadsPage = () => {
   });
 
   // ── Field helper ──────────────────────────────────────────────────────────
-  const getLField = (l: any, field: string): string => {
+  const getLField = (l: any, field: string) => {
+    const lowerField = field.toLowerCase();
+
+    // Check root first (flattened)
     if (field === "name") {
-      const val = l["Full Name"] || l.full_name || l.name || l.fullname || l.first_name;
+      const val = l["Full Name"] || l.full_name || l.name || l.fullname || l.first_name || (l.data?.full_name || l.data?.name || l.data?.fullname || l.data?.first_name || "");
       if (val) return val;
     }
     if (field === "email") {
-      const val = l["Email Address"] || l.email || l.email_address || l.user_email;
+      const val = l["Email Address"] || l.email || l.email_address || l.user_email || (l.data?.email || l.data?.user_email || l.data?.e_mail || l.data?.contact_email || "");
       if (val) return val;
     }
     if (field === "phone") {
-      const val = l["Phone Number"] || l.phone || l.phone_number || l.tel;
+      const val = l["Phone Number"] || l.phone || l.phone_number || l.tel || l.mobile || l.mobile_number || (l.data?.phone || l.data?.tel || l.data?.mobile || "");
       if (val) return val;
     }
-    if (l[field] !== undefined) return l[field];
-    if (l.data) {
-      if (field === "name") return l.data.full_name || l.data.name || l.data.fullname || l.data.first_name || "";
-      if (field === "email") return l.data.email || l.data.user_email || l.data.e_mail || l.data.contact_email || "";
-      if (field === "phone") return l.data.phone || l.data.tel || l.data.mobile || "";
-      if (l.data[field]) return l.data[field];
+    if (field === "message") {
+      const val = l.message || l.Message || l.comments || l.comment || (l.data?.message || l.data?.comments || "");
+      if (val) return val;
     }
     return "";
   };
 
+  /**
+   * Discovers all contact related fields to stack them in the table
+   */
+  const getStackedContacts = (l: any) => {
+    const emails = new Set<string>();
+    const phones = new Set<string>();
+
+    const extract = (obj: any) => {
+      if (!obj) return;
+      Object.entries(obj).forEach(([key, value]) => {
+        if (!value || typeof value !== 'string') return;
+        const k = key.toLowerCase().replace(/_/g, "");
+        if (k.includes("email")) emails.add(value);
+        else if (k.includes("phone") || k.includes("mobile") || k.includes("tel") || k.includes("contact")) {
+          // Avoid adding names that might have "contact" in them
+          if (value.match(/[0-9]/)) phones.add(value);
+        }
+      });
+    };
+
+    // Extract from top level and data level
+    extract(l);
+    extract(l.data);
+
+    return {
+      emails: Array.from(emails),
+      phones: Array.from(phones)
+    };
+  };
+
   // ── Sort ──────────────────────────────────────────────────────────────────
-  const filteredAndSortedLeads = useMemo(() => {
-    const result = [...leads];
-    result.sort((a, b) => {
-      if (sortBy === "name")
-        return getLField(a, "name").toString().localeCompare(getLField(b, "name").toString());
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
-    });
-    return result;
-  }, [leads, sortBy]);
+  // Now handled by backend pagination. We just use the leads directly.
+  const filteredAndSortedLeads = leads;
 
   // ── Export helpers ────────────────────────────────────────────────────────
   const triggerDownload = (blob: Blob, filename: string) => {
@@ -174,6 +246,9 @@ const LeadsPage = () => {
         search: search || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        utmSource: filterUtmSource || undefined,
+        utmMedium: filterUtmMedium || undefined,
+        utmCampaign: filterUtmCampaign || undefined,
       });
       triggerDownload(blob, `leads_filtered_${format(new Date(), "yyyy-MM-dd")}.csv`);
       toast.success("Filtered leads exported successfully");
@@ -207,13 +282,10 @@ const LeadsPage = () => {
     }
   };
 
-  const todayLeadsCount = useMemo(() => {
-    const today = new Date().toDateString();
-    return leads.filter(l => new Date(l.createdAt).toDateString() === today).length;
-  }, [leads]);
+  const todayLeadsCount = data?.todayCount || 0;
 
   const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
-  const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
+  const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate || filterUtmSource || filterUtmMedium || filterUtmCampaign);
 
   const clearFilters = () => {
     setFilterProjectId("");
@@ -221,7 +293,21 @@ const LeadsPage = () => {
     setSearch("");
     setStartDate("");
     setEndDate("");
+    setFilterUtmSource("");
+    setFilterUtmMedium("");
+    setFilterUtmCampaign("");
   };
+
+  // const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
+  // const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
+
+  // const clearFilters = () => {
+  //   setFilterProjectId("");
+  //   setFilterPageId("");
+  //   setSearch("");
+  //   setStartDate("");
+  //   setEndDate("");
+  // };
 
   return (
     <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
@@ -234,9 +320,7 @@ const LeadsPage = () => {
                 <Inbox className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Leads Manager
-                </h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Leads Management</h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {selectedProjectName ? (
                     <>
@@ -253,7 +337,7 @@ const LeadsPage = () => {
 
           <div className="flex items-center gap-3">
             {/* Stats */}
-            <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden lg:flex">
+            <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden sm:flex">
               <div className="text-right">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Today's Leads</p>
                 <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{todayLeadsCount}</p>
@@ -268,7 +352,7 @@ const LeadsPage = () => {
             <div className="relative">
               <Button
                 variant="outline"
-                className="gap-2 h-10 text-xs font-semibold px-5 rounded-xl border-slate-200 dark:border-slate-800"
+                className="gap-2 h-10 text-xs font-semibold px-4 sm:px-5 rounded-xl border-slate-200 dark:border-slate-800 w-full sm:w-auto"
                 onClick={() => setExportMenuOpen(v => !v)}
                 disabled={isExporting}
               >
@@ -277,9 +361,10 @@ const LeadsPage = () => {
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                {isExporting ? "Exporting…" : "Export CSV"}
+                <span className="hidden xs:inline">{isExporting ? "Exporting…" : "Export CSV"}</span>
+                <span className="xs:hidden">{isExporting ? "…" : "Export"}</span>
                 <ChevronDown className="h-3.5 w-3.5 ml-0.5 opacity-60" />
-              </Button>
+              </Button >
 
               {exportMenuOpen && (
                 <>
@@ -318,19 +403,19 @@ const LeadsPage = () => {
                   </div>
                 </>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </div >
+          </div >
+        </div >
+      </div >
 
       {/* ─── Controls & Table ─── */}
-      <div className="flex-1 p-8 overflow-hidden flex flex-col w-full">
+      <div className="flex-1 p-4 md:p-8 overflow-hidden flex flex-col w-full">
 
         {/* Toolbar */}
-        <div className="mb-6 flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-fit max-w-full">
-          
+        <div className="mb-6 flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full lg:w-fit max-w-full">
+
           {/* Search */}
-          <div className="relative w-full sm:w-[260px] shrink-0">
+          <div className="relative w-full sm:w-[220px] shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search leads..."
@@ -338,374 +423,602 @@ const LeadsPage = () => {
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-10 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 text-sm shadow-inner"
             />
-          </div>
+          </div >
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Project dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[150px]">
-            <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterProjectId}
-              onChange={e => {
-                setFilterProjectId(e.target.value);
-                setFilterPageId(""); // reset page filter when project changes
-              }}
-            >
-              <option value="">All Projects</option>
+          <Select value={filterProjectId || "all"} onValueChange={(val) => {
+            setFilterProjectId(val === "all" ? "" : val);
+            setFilterPageId("");
+          }}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="All Projects" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
               {(projects as any[]).map((p: any) => (
-                <option key={p._id} value={p._id}>{p.name}</option>
+                <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
           {/* Page dropdown */}
-          <div
-            className={`flex flex-1 sm:flex-none items-center gap-2 px-3 py-2 rounded-xl border transition-all min-w-[150px] ${filterProjectId
-              ? "bg-slate-50 dark:bg-slate-800 border-slate-100 hover:border-slate-300 dark:border-slate-800"
-              : "bg-transparent border-transparent opacity-50 pointer-events-none"
-              }`}
+          <Select
+            value={filterPageId || "all"}
+            onValueChange={(val) => setFilterPageId(val === "all" ? "" : val)}
+            disabled={!filterProjectId}
           >
-            <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterPageId}
-              onChange={e => setFilterPageId(e.target.value)}
-              disabled={!filterProjectId}
+            <SelectTrigger
+              className={`flex-1 sm:flex-none h-10 px-3 rounded-xl border transition-all min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0 ${filterProjectId
+                ? "bg-slate-50 dark:bg-slate-800 border-slate-100 hover:border-slate-300 dark:border-slate-800"
+                : "bg-slate-50/50 dark:bg-slate-800/50 border-dashed border-slate-200 dark:border-slate-700 opacity-60 pointer-events-none text-slate-400"
+                }`}
             >
-              <option value="">
-                {filterProjectId ? "All Pages" : "Select project first"}
-              </option>
+              <div className="flex items-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder={filterProjectId ? "All Pages" : "Select project"} />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Pages</SelectItem>
               {(projectPages as any[]).map((pg: any) => (
-                <option key={pg._id} value={pg._id}>
+                <SelectItem key={pg._id} value={pg._id}>
                   {pg.name || pg.slug}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden lg:block" />
+          {/* UTM Source dropdown */}
+          <Select value={filterUtmSource || "all"} onValueChange={(val) => setFilterUtmSource(val === "all" ? "" : val)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="Any Source" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Source</SelectItem>
+              {leadFilters?.utmSources.map((s: string) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* UTM Medium dropdown */}
+          <Select value={filterUtmMedium || "all"} onValueChange={(val) => setFilterUtmMedium(val === "all" ? "" : val)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="Any Medium" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Medium</SelectItem>
+              {leadFilters?.utmMediums.map((s: string) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Sort dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px]">
-            <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="name">A-Z Name</option>
-            </select>
-          </div>
+          <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name">A-Z Name</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Clear */}
-          {hasActiveFilters && (
-            <button
-              className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 shrink-0 sm:ml-1"
-              onClick={clearFilters}
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </button>
-          )}
-        </div>
+          {
+            hasActiveFilters && (
+              <button
+                className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors px-4 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 shrink-0"
+                onClick={clearFilters}
+              >
+                <X className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Clear Filters</span>
+                <span className="xs:hidden">Clear</span>
+              </button>
+            )
+          }
+        </div >
 
         {/* Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex-1 flex flex-col">
-          {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-20">
-              <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-slate-500 font-medium">Fetching lead intelligence…</p>
-            </div>
-          ) : filteredAndSortedLeads.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
-              <div className="h-20 w-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                <Inbox className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+        < div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex-1 flex flex-col" >
+          {
+            isLoading ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-20" >
+                <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-slate-500 font-medium">Fetching lead intelligence…</p>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Leads Found</h3>
-              <p className="text-slate-500 max-w-xs mx-auto">
-                {hasActiveFilters
-                  ? "No matches for the applied filters. Try adjusting your selection."
-                  : "Conversion activity will appear here once visitors start submitting forms on your landing pages."}
-              </p>
-              {hasActiveFilters && (
-                <Button variant="link" onClick={clearFilters} className="mt-2 text-primary">
-                  Clear all filters
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="overflow-x-auto flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
-              <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
-                  <tr className="border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Inquirer</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Contact Details</th>
-                    {dynamicTableFields.map((field: any) => (
-                      <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[150px]">
-                        {field.label || field.field_name.replace(/_/g, " ")}
-                      </th>
-                    ))}
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[12%]">Source Page</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">Timestamp</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[10%] text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            ) : filteredAndSortedLeads.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
+                <div className="h-20 w-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                  <Inbox className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Leads Found</h3>
+                <p className="text-slate-500 max-w-xs mx-auto">
+                  {hasActiveFilters
+                    ? "No matches for the applied filters. Try adjusting your selection."
+                    : "Conversion activity will appear here once visitors start submitting forms on your landing pages."}
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="link" onClick={clearFilters} className="mt-2 text-primary">
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[1200px]">
+                    <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
+                      <tr className="border-b border-slate-200 dark:border-slate-800">
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[240px]">Inquirer</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px]">Contact Details</th>
+                        {dynamicTableFields.map((field: any) => (
+                          <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">
+                            {field.label || field.field_name.replace(/_/g, " ")}
+                          </th>
+                        ))}
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">Source Page</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[160px]">Date Received</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredAndSortedLeads.map(lead => (
+                        <tr
+                          key={lead._id}
+                          className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                          onClick={() => setSelectedLead(lead)}
+                        >
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                                  {getLField(lead, "name") || "Lead User"}
+                                </p>
+                                <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, "message"))}>
+                                  {getLField(lead, "message") || "No message left"}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="space-y-2">
+                              {getStackedContacts(lead).emails.map((email, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">
+                                    {email}
+                                  </span>
+                                </div>
+                              ))}
+                              {getStackedContacts(lead).phones.map((phone, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                                  <span className="text-xs font-medium text-slate-500">{phone}</span>
+                                </div>
+                              ))}
+                              {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
+                                <span className="text-xs text-slate-400 italic">No contact info</span>
+                              )}
+                            </div>
+                          </td>
+                          {dynamicTableFields.map((field: any) => (
+                            <td key={field.field_name} className="px-6 py-5">
+                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "—"}
+                              </span>
+                            </td>
+                          ))}
+                          <td className="px-6 py-5">
+                            <div className="inline-flex flex-col gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                              <div className="flex items-center gap-1.5">
+                                <Globe className="h-3 w-3" />
+                                <span>{lead.pageSlug || "Direct"}</span>
+                              </div>
+                              {(lead as any).utm_source && (
+                                <div className="flex items-center gap-1.5 text-[9px] opacity-70">
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                  <span className="uppercase">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div>
+                              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {format(new Date(lead.createdAt), "MMM d, yyyy")}
+                              </p>
+                              <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <Clock className="h-3 w-3" /> {format(new Date(lead.createdAt), "h:mm a")}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
+                                onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                              >
+                                <Eye className="h-5 w-5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500"
+                                onClick={e => handleDelete(lead._id, e)}
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredAndSortedLeads.map(lead => (
-                    <tr
+                    <div
                       key={lead._id}
-                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                      className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
                       onClick={() => setSelectedLead(lead)}
                     >
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                             {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">
                               {getLField(lead, "name") || "Lead User"}
                             </p>
-                            <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, "message"))}>
-                              {getLField(lead, "message") || "No message left"}
+                            <p className="text-[11px] text-slate-400">
+                              {format(new Date(lead.createdAt), "MMM d, h:mm a")}
                             </p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 text-slate-400" />
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">
-                              {getLField(lead, "email") || "No Email"}
-                            </span>
-                          </div>
-                          {getLField(lead, "phone") && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-3.5 w-3.5 text-slate-400" />
-                              <span className="text-xs font-medium text-slate-500">{getLField(lead, "phone")}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      {dynamicTableFields.map((field: any) => (
-                        <td key={field.field_name} className="px-6 py-5">
-                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                            {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "—"}
-                          </span>
-                        </td>
-                      ))}
-                      <td className="px-6 py-5">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                          <Globe className="h-3.5 w-3.5" />
-                          <span>{lead.pageSlug || "Direct"}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {format(new Date(lead.createdAt), "MMM d, yyyy")}
-                          </p>
-                          <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                            <Clock className="h-3 w-3" /> {format(new Date(lead.createdAt), "h:mm a")}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
+                            className="h-8 w-8 p-0 rounded-lg"
                             onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
                           >
-                            <Eye className="h-5 w-5" />
+                            <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500"
+                            className="h-8 w-8 p-0 rounded-lg hover:text-red-500"
                             onClick={e => handleDelete(lead._id, e)}
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </div >
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
+                          <div className="space-y-1.5">
+                            {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5">
+                                <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                                <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5">
+                                <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                                <p className="text-xs text-slate-500 font-medium">{phone}</p>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
+                              <p className="text-[11px] text-slate-400 italic">No contact details</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Analytics Trace</p>
+                          <div className="space-y-1.5">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate flex items-center gap-1.5 font-medium">
+                              <Globe className="h-3 w-3 text-emerald-500" /> {lead.pageSlug || "Direct Visit"}
+                            </p>
+                            {(lead as any).utm_source && (
+                              <p className="text-[10px] text-slate-500 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded w-fit">
+                                <ExternalLink className="h-2.5 w-2.5" />
+                                <span className="uppercase font-bold">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {
+                        dynamicTableFields.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {dynamicTableFields.map((field: any) => (
+                              <div key={field.field_name} className="px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                <span className="text-[10px] text-slate-400 mr-1">{field.label}:</span>
+                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                  {lead.data?.[field.field_name] || "—"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      }
+                    </div >
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div >
+              </div >
+            )}
 
           {/* Footer */}
-          <div className="px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex items-center justify-between">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Showing {filteredAndSortedLeads.length} of {totalCount} records
+          <div className="px-4 sm:px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center sm:text-left">
+              Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount} records
               {hasActiveFilters && (
                 <span className="ml-2 text-primary normal-case font-normal">(filtered)</span>
               )}
             </p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white" disabled>
-                <ChevronLeft className="h-4 w-4 mr-2" /> Previous
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-xl flex-1 sm:flex-none sm:min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
+                disabled={page === 1 || isLoading}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" /> Previous
               </Button>
-              <Button variant="outline" size="sm" className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white" disabled={filteredAndSortedLeads.length >= totalCount}>
-                Next <ChevronRight className="h-4 w-4 ml-2" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-xl flex-1 sm:flex-none sm:min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
+                disabled={page * pageSize >= totalCount || isLoading}
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next <ChevronRight className="h-4 w-4 ml-1 sm:ml-2" />
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* ─── Lead Detail Slide-over ─── */}
-      {selectedLead && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
-          onClick={() => setSelectedLead(null)}
-        >
+      {
+        selectedLead && (
           <div
-            className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
-            onClick={e => e.stopPropagation()}
+            className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
+            onClick={() => setSelectedLead(null)}
           >
-            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
-                  {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
-                    {getLField(selectedLead, "name") || "Lead Detail"}
-                  </h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
+            <div
+              className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
+                    {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                      {getLField(selectedLead, "name") || "Lead Detail"}
+                    </h2>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-full h-11 w-11 hover:bg-slate-100 transition-colors border-slate-100"
-                onClick={() => setSelectedLead(null)}
-              >
-                <X className="h-5 w-5 text-slate-500" />
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
-              <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="p-8 rounded-[32px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 shadow-inner">
-                  <p className="text-lg text-slate-800 dark:text-slate-200 leading-relaxed font-semibold italic">
-                    "{getLField(selectedLead, "message")}"
-                  </p>
-                </div>
-              </section>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
-                  <div className="space-y-4">
-                    <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Email</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        {getLField(selectedLead, "email") || "Not Disclosed"}
-                        <ExternalLink
-                          className="h-3 w-3 opacity-0 group-hover:opacity-100 cursor-pointer"
-                          onClick={() => {
-                            const email = getLField(selectedLead, "email");
-                            if (email) window.location.href = `mailto:${email}`;
-                          }}
-                        />
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Phone</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        {getLField(selectedLead, "phone") || "Not Disclosed"}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-                <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
-                      <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-blue-400" />
-                        {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                      <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                      </p>
-                    </div>
-                  </div>
-                </section>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full h-11 w-11 hover:bg-slate-100 transition-colors border-slate-100"
+                  onClick={() => setSelectedLead(null)}
+                >
+                  <X className="h-5 w-5 text-slate-500" />
+                </Button>
               </div>
 
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {selectedLead.data && Object.keys(selectedLead.data).length > 0 ? (
-                    Object.entries(selectedLead.data)
-                      .filter(([key]) => !["name", "email", "phone", "message"].includes(key))
-                      .map(([key, value]) => (
-                        <div key={key} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                          <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{key.replace(/_/g, " ")}</p>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(value || "N/A")}</p>
+              <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
+                <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                  </div>
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-primary/30 shadow-sm">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {getLField(selectedLead, "message")}
+                    </p>
+                  </div>
+                </section>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <section>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
+                    <div className="space-y-4">
+                      <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Contact Emails</p>
+                        <div className="space-y-2">
+                          {getStackedContacts(selectedLead).emails.length > 0 ? (
+                            getStackedContacts(selectedLead).emails.map((email, idx) => (
+                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 group/item">
+                                <Mail className="h-3.5 w-3.5 text-primary/60" />
+                                {email}
+                                <ExternalLink
+                                  className="h-3 w-3 opacity-0 group-hover/item:opacity-100 cursor-pointer ml-auto"
+                                  onClick={() => window.location.href = `mailto:${email}`}
+                                />
+                              </p>
+                            ))
+                          ) : (
+                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                          )}
                         </div>
-                      ))
-                  ) : (
-                    <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
-                  )}
-                </div>
-              </section>
-            </div>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
+                        <div className="space-y-2">
+                          {getStackedContacts(selectedLead).phones.length > 0 ? (
+                            getStackedContacts(selectedLead).phones.map((phone, idx) => (
+                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <Phone className="h-3.5 w-3.5 text-primary/60" />
+                                {phone}
+                              </p>
+                            ))
+                          ) : (
+                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                          )}
+                        </div>
+                      </div>
+                    </div >
+                  </section >
+                  <section>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
+                        <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                          <Shield className="h-3.5 w-3.5 text-blue-400" />
+                          {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
+                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div >
 
-            <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex gap-4 mt-auto">
-              <Button
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-2xl shadow-xl shadow-primary/30 text-base"
-                onClick={() => {
-                  const email = getLField(selectedLead, "email");
-                  if (email) window.location.href = `mailto:${email}`;
-                }}
-              >
-                Initiate Response
-              </Button>
-              <Button
-                variant="outline"
-                className="h-14 w-14 rounded-2xl border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center p-0"
-                onClick={e => {
-                  handleDelete(selectedLead._id, e);
-                  setSelectedLead(null);
-                }}
-              >
-                <Trash2 className="h-6 w-6" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                {/* UTM / Marketing section */}
+                <section className={selectedLead.utm_source ? "block" : "hidden"}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-emerald-500" /> Marketing Attribution
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_source || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Medium</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_medium || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
+                    </div>
+                    {(selectedLead as any).utm_term && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_term}</p>
+                      </div>
+                    )}
+                    {(selectedLead as any).utm_content && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_content}</p>
+                      </div>
+                    )}
+                    {((selectedLead as any).gclid || (selectedLead as any).fbclid) && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Click Identifier</p>
+                        <p className="text-xs font-mono text-slate-500 truncate">
+                          {(selectedLead as any).gclid ? `GCLID: ${(selectedLead as any).gclid}` : `FBCLID: ${(selectedLead as any).fbclid}`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(() => {
+                      const standardKeys = [
+                        "name", "email", "phone", "message", "full_name", "first_name", "last_name",
+                        "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
+                        "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
+                        "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
+                      ];
+
+                      const shownLabels = new Set<string>();
+                      const insights: Array<{ label: string, value: any }> = [];
+
+                      Object.entries(selectedLead).forEach(([key, value]) => {
+                        if (!value || key === "data" || key === "utm") return;
+                        const lowerK = key.toLowerCase().replace(/_/g, "");
+
+                        // Skip standard keys and contact info (already shown in Identity Details)
+                        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
+                        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+
+                        const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                        if (!shownLabels.has(label)) {
+                          shownLabels.add(label);
+                          insights.push({ label, value });
+                        }
+                      });
+
+                      return insights.length > 0 ? (
+                        insights.map((item, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                            <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
+                      );
+                    })()}
+                  </div>
+                </section>
+              </div>
+
+            </div >
+          </div >
+        )
+      }
+    </div >
   );
 };
 

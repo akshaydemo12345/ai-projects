@@ -110,6 +110,25 @@ const projectSchema = new mongoose.Schema({
     type: Object,
     default: {},
   },
+  fromName: {
+    type: String,
+    trim: true,
+  },
+  fromEmail: {
+    type: String,
+    trim: true,
+  },
+  adminNotification: {
+    enabled: { type: Boolean, default: false },
+    email: String,
+    subject: String,
+    message: String,
+  },
+  userNotification: {
+    enabled: { type: Boolean, default: false },
+    subject: String,
+    message: String,
+  },
 });
 
 // Middleware to update updatedAt and generate apiToken

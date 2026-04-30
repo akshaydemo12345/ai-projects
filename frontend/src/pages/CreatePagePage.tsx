@@ -83,6 +83,7 @@ const CreatePagePage = () => {
 
   const [pageName, setPageName] = useState("");
   const [pageSlug, setPageSlug] = useState("");
+  const [noIndexNoFollow, setNoIndexNoFollow] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#7c3aed");
   const [secondaryColor, setSecondaryColor] = useState("#6366f1");
@@ -335,6 +336,7 @@ const CreatePagePage = () => {
       ...basePayload,
       name: pageName.trim(),
       slug: pageSlug.trim() || basePayload.slug,
+      noIndexNoFollow,
       primaryColor,
       secondaryColor,
       logoUrl,
@@ -412,6 +414,18 @@ const CreatePagePage = () => {
                       className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
                     />
                   </div>
+                </div>
+              </div>
+              <div
+                onClick={() => setNoIndexNoFollow(!noIndexNoFollow)}
+                className={`mt-4 flex items-center justify-between border ${noIndexNoFollow ? 'border-violet-400 bg-violet-50' : 'border-gray-200 bg-gray-50'} rounded-xl px-4 py-3 cursor-pointer transition-all hover:border-violet-300`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Hide from Search Engines</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Set page as "No index, No follow"</p>
+                </div>
+                <div className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 ease-in-out ${noIndexNoFollow ? 'bg-violet-600' : 'bg-gray-300'}`}>
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-300 ease-in-out ${noIndexNoFollow ? 'translate-x-4' : 'translate-x-1'}`} />
                 </div>
               </div>
             </section>

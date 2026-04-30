@@ -89,7 +89,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       pageDoc._id,
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl metaTitle metaDescription');
+    ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
     // ─── BRANDING FALLBACK: Use project values if page values are missing ───
     let primaryColor = page.primaryColor;
@@ -180,7 +180,7 @@ exports.getPublicPage = async (req, res, next) => {
       { slug, isDeleted: { $ne: true } }, // Allow drafts to be viewed at this URL
       { $inc: { views: 1 } },
       { new: true }
-    ).select('title slug content seo template domain publishedAt views projectId status');
+    ).select('title slug content seo template domain publishedAt views projectId status mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
     if (!page) return next(new AppError('Page not found', 404));
 
@@ -444,13 +444,13 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     `<meta name="description" content="${seoDescription.replace(/"/g, '&quot;')}">`,
     seoKeywords ? `<meta name="keywords" content="${seoKeywords.replace(/"/g, '&quot;')}">` : '',
     (() => {
-      const noIndex = page.noIndex !== false ? true : false; // default true for safety unless explicitly set false
-      const noFollow = page.noFollow !== false ? true : false;
+      const noIndex = page.noIndex === true ? true : false; // default false (index)
+      const noFollow = page.noFollow === true ? true : false; // default false (follow)
       if (!noIndex && !noFollow) return `<meta name="robots" content="index, follow">`;
       const directives = [];
       if (noIndex) directives.push('noindex'); else directives.push('index');
       if (noFollow) directives.push('nofollow'); else directives.push('follow');
-      return `<meta name="robots" content="${directives.join(', ')}">`;  
+      return `<meta name="robots" content="${directives.join(', ')}">`;
     })(),
     canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : '',
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
@@ -505,8 +505,8 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     html = html.replace(/<meta[^>]+name=["']twitter:[^"']*["'][^>]*>/gi, '');
 
     // 5. Inject/replace robots meta tag based on page settings
-    const _noIndex = page.noIndex !== false;
-    const _noFollow = page.noFollow !== false;
+    const _noIndex = page.noIndex === true;
+    const _noFollow = page.noFollow === true;
     const _robotsContent = [_noIndex ? 'noindex' : 'index', _noFollow ? 'nofollow' : 'follow'].join(', ');
     const _robotsMeta = `<meta name="robots" content="${_robotsContent}">`;
     if (/<meta[^>]+name=["']robots["'][^>]*>/i.test(html)) {
@@ -965,7 +965,53 @@ exports.handleFormSubmission = async (req, res, next) => {
     });
 
     if (schema.project_id) {
+      const Project = require('../models/Project');
+      const emailService = require('../services/emailService');
+
       await Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => { });
+
+      const project = await Project.findById(schema.project_id).lean();
+      if (project) {
+        console.log(`📬 Processing email notifications for project: ${project.name}`);
+        const now = new Date().toLocaleString();
+
+        // 1. Admin Notification
+        if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
+          const adminEmail = project.adminNotification.email || project.adminEmail;
+          let adminMsg = project.adminNotification.message || "New lead captured.";
+
+          // Simple template replacement
+          adminMsg = adminMsg
+            .replace(/{{lead_name}}/g, leadData.name || 'Unknown')
+            .replace(/{{lead_email}}/g, leadData.email || 'Not provided')
+            .replace(/{{lead_phone}}/g, leadData.phone || 'Not provided')
+            .replace(/{{lead_message}}/g, leadData.message || 'No message')
+            .replace(/{{page_slug}}/g, pageSlug || schema.page_slug || '')
+            .replace(/{{timestamp}}/g, now);
+
+          emailService.sendEmail({
+            to: adminEmail,
+            subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
+            htmlContent: adminMsg.replace(/\n/g, '<br>'),
+            fromName: project.fromName,
+            fromEmail: project.fromEmail
+          }).catch(err => console.error('Admin Email Error:', err));
+        }
+
+        // 2. User Auto-Reply
+        if (project.userNotification?.enabled && leadData.email) {
+          let userMsg = project.userNotification.message || "Thank you for reaching out!";
+          userMsg = userMsg.replace(/{{name}}/g, leadData.name || 'there');
+
+          emailService.sendEmail({
+            to: leadData.email,
+            subject: project.userNotification.subject || "Thank you for contacting us!",
+            htmlContent: userMsg.replace(/\n/g, '<br>'),
+            fromName: project.fromName,
+            fromEmail: project.fromEmail
+          }).catch(err => console.error('User Email Error:', err));
+        }
+      }
     }
 
     // 6. Resolve Thank You URL (Check Page settings for custom URL)

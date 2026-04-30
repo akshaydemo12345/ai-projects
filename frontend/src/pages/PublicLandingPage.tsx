@@ -8,14 +8,14 @@ const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const pgSlug = searchParams.get('pg');
-  
+
   // Resolve slug from splat or pathname to support nested preSlugs
   const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
   // Strip /thank-you from path to get the page slug
   const path = rawPath.replace(/\/thank-you$/i, '');
-  
+
   const slug = (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
-  
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
@@ -105,6 +105,71 @@ const PublicLandingPage = () => {
             }
           }
 
+          // ── EmailJS helpers (reads config from parent localStorage) ──────────
+          function getParentLS(key) {
+            try { return window.top.localStorage.getItem(key); } catch(e) { return null; }
+          }
+
+          async function sendEmailJS(serviceId, templateId, publicKey, params) {
+            try {
+              await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  service_id: serviceId,
+                  template_id: templateId,
+                  user_id: publicKey,
+                  template_params: params
+                })
+              });
+            } catch(e) { console.warn('EmailJS send failed:', e); }
+          }
+
+          async function fireEmailNotifications(data) {
+            var now = new Date().toLocaleString();
+
+            // ── Admin Notification ──────────────────────────────────────────
+            try {
+              var adminRaw = getParentLS('pb_admin_notif_config_' + data.projectId) || getParentLS('pb_admin_notif_config_global') || getParentLS('pb_admin_notif_config');
+              if (adminRaw) {
+                var adminCfg = JSON.parse(adminRaw);
+                if (adminCfg.enabled && adminCfg.serviceId && adminCfg.templateId && adminCfg.publicKey && adminCfg.adminEmail) {
+                  await sendEmailJS(adminCfg.serviceId, adminCfg.templateId, adminCfg.publicKey, {
+                    to_email: adminCfg.adminEmail,
+                    admin_email: adminCfg.adminEmail,
+                    lead_name: data.name || 'Unknown',
+                    lead_email: data.email || 'Not provided',
+                    lead_phone: data.phone || 'Not provided',
+                    lead_message: data.message || 'No message',
+                    page_slug: data.pageSlug || '${PAGE_SLUG}',
+                    timestamp: now
+                  });
+                  console.log('📧 Admin notification sent');
+                }
+              }
+            } catch(e) { console.warn('Admin notif error:', e); }
+
+            // ── User Auto-Reply ─────────────────────────────────────────────
+            try {
+              var userRaw = getParentLS('pb_user_autoreply_config_' + data.projectId) || getParentLS('pb_user_autoreply_config_global') || getParentLS('pb_user_autoreply_config');
+              if (userRaw && data.email) {
+                var userCfg = JSON.parse(userRaw);
+                if (userCfg.enabled && userCfg.serviceId && userCfg.templateId && userCfg.publicKey) {
+                  var bodyHtml = (userCfg.bodyHtml || '').replace(/\\{\\{name\\}\\}/g, data.name || 'there');
+                  await sendEmailJS(userCfg.serviceId, userCfg.templateId, userCfg.publicKey, {
+                    to_email: data.email,
+                    user_name: data.name || 'there',
+                    from_name: userCfg.fromName || 'Our Team',
+                    subject: userCfg.subject || 'Thank you for reaching out!',
+                    body_html: bodyHtml,
+                    timestamp: now
+                  });
+                  console.log('📧 User auto-reply sent to', data.email);
+                }
+              }
+            } catch(e) { console.warn('User auto-reply error:', e); }
+          }
+
           async function submitLead(data, form, btn, originalBtnText, attempt) {
             attempt = attempt || 1;
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
@@ -123,9 +188,10 @@ const PublicLandingPage = () => {
               var result = await response.json();
               console.log("📥 API Response:", result);
 
-              if (result.status === 'success' || result.status === 'error' || response.ok) {
-                // Wait small bit for loader effect
-                setTimeout(redirectToSuccessPage, 1500);
+              if (result.status === 'success' || result.status === 'error') {
+                // Fire email notifications after successful lead capture
+                fireEmailNotifications(data);
+                redirectToSuccessPage();
                 form.reset();
               } else {
                 throw new Error(result.message || 'Server returned error');
@@ -226,22 +292,23 @@ const PublicLandingPage = () => {
         </script>
       `;
 
+
       let finalHtml = aiHtml;
 
       // Better Dark Mode detection 
-      const isDark = aiCss.toLowerCase().includes('background-color: #0') || 
-                     aiCss.toLowerCase().includes('background: #0') || 
-                     aiCss.toLowerCase().includes('background-color: black') ||
-                     aiCss.toLowerCase().includes('background: black') ||
-                     aiHtml.toLowerCase().includes('bg-slate-900') ||
-                     aiHtml.toLowerCase().includes('bg-[#0') ||
-                     aiHtml.toLowerCase().includes('saas-hero-container') ||
-                     aiHtml.toLowerCase().includes('agency-container');
+      const isDark = aiCss.toLowerCase().includes('background-color: #0') ||
+        aiCss.toLowerCase().includes('background: #0') ||
+        aiCss.toLowerCase().includes('background-color: black') ||
+        aiCss.toLowerCase().includes('background: black') ||
+        aiHtml.toLowerCase().includes('bg-slate-900') ||
+        aiHtml.toLowerCase().includes('bg-[#0') ||
+        aiHtml.toLowerCase().includes('saas-hero-container') ||
+        aiHtml.toLowerCase().includes('agency-container');
 
       // ─── SHORTCODE PARSER ────────────────────────────────────────────────
       const currentYear = new Date().getFullYear().toString();
       const projectName = pageData.projectName || meta?.projectName || "Your Brand";
-      
+
       const leadFormHtml = `
         <div style="padding: 40px; background: ${isDark ? '#1e1e2d' : '#ffffff'}; border: 1px solid ${isDark ? '#2a2a3e' : '#e2e8f0'}; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto;">
           <h3 style="margin: 0 0 10px 0; font-size: 24px; color: ${isDark ? '#f8fafc' : '#1e293b'}; text-align: center; font-weight: bold;">Get Started Now</h3>
@@ -274,13 +341,13 @@ const PublicLandingPage = () => {
       // ─── DYNAMIC REPLACEMENTS: Logo & Context ──────────────────────────────
       const finalLogo = pageData.logoUrl || meta?.logoUrl || '';
       console.log("🎨 Applying Branding. Logo:", finalLogo, "Primary:", BRAND_COLOR);
-      
+
       if (finalLogo) {
         // 1. Replace known placeholders
         finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
         finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
         finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, finalLogo);
-        
+
         // 2. Smart attribute-agnostic logo replacement
         finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
           const combined = p1 + p2;
@@ -348,8 +415,8 @@ const PublicLandingPage = () => {
 
       if (isFullDoc) {
         // Inject styles into head of full document if provided separately
-        if (aiCss && aiCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
-          const styleTag = `<style id="ai-generated-styles">${aiCss}</style>`;
+        if (finalCss && finalCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
+          const styleTag = `<style id="ai-generated-styles">${finalCss}</style>`;
           if (finalHtml.toLowerCase().includes('</head>')) {
             finalHtml = finalHtml.replace(/<\/head>/i, styleTag + coreDependencies + '</head>');
           } else if (finalHtml.toLowerCase().includes('<head>')) {
@@ -397,7 +464,7 @@ const PublicLandingPage = () => {
                 body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
                 img { max-width: 100%; height: auto; display: block; }
                 
-                ${aiCss}
+                ${finalCss}
               </style>
             </head>
             <body>
@@ -411,7 +478,6 @@ const PublicLandingPage = () => {
 
       if (isThankYouPage) {
         // Fetch dynamic Thank You page from backend
-        const API_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
         fetch(`${API_URL}/api/thank-you/render/${slug}`)
           .then(response => {
             if (!response.ok) {
@@ -420,7 +486,7 @@ const PublicLandingPage = () => {
             return response.text();
           })
           .then(html => {
-            const doc = iframeRef.current.contentDocument;
+            const doc = iframeRef.current?.contentDocument;
             if (doc) {
               doc.open();
               doc.write(html);
@@ -451,7 +517,7 @@ const PublicLandingPage = () => {
                 </body>
               </html>
             `;
-            const doc = iframeRef.current.contentDocument;
+            const doc = iframeRef.current?.contentDocument;
             if (doc) {
               doc.open();
               doc.write(fallbackHtml);
@@ -461,14 +527,14 @@ const PublicLandingPage = () => {
         return;
       }
 
-      const doc = iframeRef.current.contentDocument;
+      const doc = iframeRef.current?.contentDocument;
       if (doc) {
         doc.open();
         doc.write(finalHtml);
         doc.close();
       }
     }
-  }, [pageData, window.location.pathname]);
+  }, [pageData, window.location.pathname, slug, isThankYouPage]);
 
   if (isLoading) {
     return (
@@ -479,7 +545,8 @@ const PublicLandingPage = () => {
     );
   }
 
-  if (error || !pageData) {
+  // Check if page exists AND is not unpublished
+  if (error || !pageData || (pageData as any).status === 'unpublished') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
         <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -503,7 +570,7 @@ const PublicLandingPage = () => {
     <div className="w-full h-screen overflow-hidden">
       <iframe
         ref={iframeRef}
-        title={pageData?.meta?.title || "Landing Page"}
+        title={(pageData as any)?.meta?.title || "Landing Page"}
         className="w-full h-full border-none"
         sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-top-navigation-by-user-activation"
       />

@@ -20,6 +20,7 @@ router.post('/', leadController.createLead);
 
 // ─── Private: view/delete leads in dashboard ────────────────────────────────────────
 router.get('/export', protect, leadController.exportLeads);
+router.get('/get-filters', protect, leadController.getLeadFilters);
 router.get('/', protect, leadController.getLeads);
 router.delete('/:id', protect, leadController.deleteLead);
 
