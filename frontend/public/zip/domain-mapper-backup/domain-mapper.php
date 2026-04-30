@@ -21,7 +21,7 @@ define( 'DM_DIR',          plugin_dir_path( __FILE__ ) );
 define( 'DM_URL',          plugin_dir_url( __FILE__ ) );
 define( 'DM_OPTION',       'dm_settings' );
 define( 'DM_LOG_FILE',     WP_CONTENT_DIR . '/dm-debug.log' );
-define( 'DM_API_BASE',     'http://localhost:5000' );
+define( 'DM_API_BASE',     'https://apiserver.ai-landingpages.sharehq.org/pages' );
 
 require_once DM_DIR . 'includes/class-cache.php';
 require_once DM_DIR . 'includes/class-api.php';

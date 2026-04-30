@@ -110,6 +110,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         if (project.websiteUrl) {
           const forwardedHost = req.headers['x-forwarded-host'];
           const referer = req.headers['referer'];
+          const saasDomain = normalizeDomain(config.api.baseUrl);
 
           let incomingRequestDomain = "";
           if (forwardedHost) {
@@ -118,13 +119,16 @@ exports.getPublicPageBySlug = async (req, res, next) => {
             incomingRequestDomain = normalizeDomain(referer);
           }
 
-          const isProxied = req.headers['x-proxy-by'] || forwardedHost;
+          // Skip lock if accessing directly from SaaS domain or if no domain detected
+          if (incomingRequestDomain && incomingRequestDomain !== saasDomain) {
+            const isProxied = req.headers['x-proxy-by'] || forwardedHost;
 
-          if (isProxied && incomingRequestDomain && incomingRequestDomain !== project.websiteUrl) {
-            return res.status(403).json({
-              status: 'error',
-              message: 'This landing page is not authorized for this domain.'
-            });
+            if (isProxied && incomingRequestDomain !== project.websiteUrl) {
+              return res.status(403).json({
+                status: 'error',
+                message: 'This landing page is not authorized for this domain.'
+              });
+            }
           }
         }
       }
@@ -203,7 +207,7 @@ exports.getPublicPage = async (req, res, next) => {
  * Uses absolute APP_BASE_URL so it works from any domain (WordPress, custom domain, etc.)
  */
 const buildLeadCaptureScript = (page) => {
-  const apiBaseUrl = (process.env.APP_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+  const apiBaseUrl = (config.api.baseUrl).replace(/\/+$/, '');
   const pageSlug = page.slug || '';
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
@@ -1100,7 +1104,7 @@ exports.verifyPlugin = async (req, res, next) => {
       return next(new AppError('API token is required for verification', 400));
     }
 
-    const project = await Project.findOne({ apiToken });
+    const project = await Project.findOne({ apiToken: apiToken.trim() });
 
     if (!project) {
       console.warn(`🔑 [VERIFY] Invalid API Token Attempt: [${apiToken}]`);
@@ -1118,12 +1122,21 @@ exports.verifyPlugin = async (req, res, next) => {
         await project.save();
         console.log(`🔒 Project "${project.name}" locked to domain: ${incomingDomain}`);
       } else if (project.websiteUrl !== incomingDomain) {
-        // Domain mismatch!
-        console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
-        return res.status(403).json({
-          status: 'error',
-          message: 'Website URL not match. This API key is already linked to another website. Please create a new project for this domain.'
-        });
+        // Check if existing lock is a test domain (allow override)
+        const isTestDomain = /localhost|127\.0\.0\.1|\.test$|\.local$|\.ngrok/.test(project.websiteUrl);
+        
+        if (isTestDomain) {
+          project.websiteUrl = incomingDomain;
+          await project.save();
+          console.log(`🔄 Project "${project.name}" RE-locked to production domain: ${incomingDomain}`);
+        } else {
+          // Hard mismatch
+          console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
+          return res.status(403).json({
+            status: 'error',
+            message: `Website URL mismatch. This API key is already linked to "${project.websiteUrl}". Please create a new project for this domain.`
+          });
+        }
       }
     }
 
