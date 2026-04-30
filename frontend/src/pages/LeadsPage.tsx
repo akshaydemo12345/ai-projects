@@ -298,16 +298,16 @@ const LeadsPage = () => {
     setFilterUtmCampaign("");
   };
 
-  const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
-  const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
+  // const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
+  // const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
 
-  const clearFilters = () => {
-    setFilterProjectId("");
-    setFilterPageId("");
-    setSearch("");
-    setStartDate("");
-    setEndDate("");
-  };
+  // const clearFilters = () => {
+  //   setFilterProjectId("");
+  //   setFilterPageId("");
+  //   setSearch("");
+  //   setStartDate("");
+  //   setEndDate("");
+  // };
 
   return (
     <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
