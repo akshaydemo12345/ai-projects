@@ -116,17 +116,17 @@ const MessageBox = ({
 const MailManagementPage = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("global");
-  const [provider, setProvider] = useState<"brevo" | "smtp" | "emailjs">("brevo");
+  const [provider, setProvider] = useState<"brevo" | "smtp">("brevo");
   const [brevoKey, setBrevoKey] = useState("");
 
   const [adminCfg, setAdminCfg] = useState<AdminNotifConfig>({
-    enabled: false, serviceId: "", templateId: "", publicKey: "", adminEmail: "",
-  });
+    enabled: false, adminEmail: "",
+  } as any);
   const [userCfg, setUserCfg] = useState<UserAutoReplyConfig>({
-    enabled: false, serviceId: "", templateId: "", publicKey: "",
+    enabled: false,
     fromName: "", subject: "Thank you for reaching out!",
     bodyHtml: "Hi {{name}},\n\nThank you for contacting us! We received your inquiry and will get back to you shortly.\n\nBest regards,\nThe Team",
-  });
+  } as any);
 
   // Extended fields (stored separately, UI only)
   const [admin, setAdmin] = useState({
@@ -139,6 +139,8 @@ const MailManagementPage = () => {
     bcc: "",
     subject: "You have a new lead - {{page_slug}}",
     message: "{{lead_name}} just submitted a form.\n\nEmail: {{lead_email}}\nPhone: {{lead_phone}}\nMessage: {{lead_message}}\n\nPage: {{page_slug}}\nTime: {{timestamp}}",
+    fromName: "",
+    fromEmail: "",
   });
   const [user, setUser] = useState({
     name: "User Notification",
@@ -151,7 +153,8 @@ const MailManagementPage = () => {
     message: "Hi {{name}},\n\nThank you for reaching out to us. We have received your inquiry and will get back to you shortly.\n\nBest regards,\nThe Team",
   });
 
-  const [saved, setSaved] = useState(false);
+  const [savedAdmin, setSavedAdmin] = useState(false);
+  const [savedUser, setSavedUser] = useState(false);
 
   useEffect(() => {
     setAdminCfg(getAdminNotifConfig());
@@ -167,28 +170,92 @@ const MailManagementPage = () => {
     });
   }, []);
 
-  const handleSave = () => {
-    saveAdminNotifConfig({ ...adminCfg, adminEmail: admin.sendToEmail }, selectedProject);
-    saveUserAutoReplyConfig({
-      ...userCfg,
-      fromName: user.fromName,
-      subject: user.subject,
-      bodyHtml: user.message,
-    }, selectedProject);
-    
-    // Save UI state uniquely per project so fields don't bleed across tests
-    localStorage.setItem(`pb_admin_ui_${selectedProject}`, JSON.stringify(admin));
-    localStorage.setItem(`pb_user_ui_${selectedProject}`, JSON.stringify(user));
-    localStorage.setItem(`pb_provider_${selectedProject}`, provider);
-    localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
+  const handleSaveAdmin = async () => {
+    try {
+      const { projectsApi } = await import("@/services/api");
+      await projectsApi.update(selectedProject, {
+        adminNotification: {
+          enabled: adminCfg.enabled,
+          email: admin.sendToEmail,
+          subject: admin.subject,
+          message: admin.message,
+        },
+        fromName: admin.fromName,
+        fromEmail: admin.fromEmail,
+      });
 
-    setSaved(true);
-    toast.success(`Settings saved for ${selectedProject === "global" ? "Global Setup" : "the selected project"}!`);
-    setTimeout(() => setSaved(false), 3000);
+      saveAdminNotifConfig({ ...adminCfg, adminEmail: admin.sendToEmail }, selectedProject);
+      localStorage.setItem(`pb_admin_ui_${selectedProject}`, JSON.stringify(admin));
+      localStorage.setItem(`pb_provider_${selectedProject}`, provider);
+      localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
+
+      setSavedAdmin(true);
+      toast.success(`Admin settings saved for ${selectedProject === "global" ? "Global Setup" : "the selected project"}!`);
+      setTimeout(() => setSavedAdmin(false), 3000);
+    } catch (err) {
+      toast.error("Failed to save admin settings to database.");
+    }
+  };
+
+  const handleSaveUser = async () => {
+    try {
+      const { projectsApi } = await import("@/services/api");
+      await projectsApi.update(selectedProject, {
+        userNotification: {
+          enabled: userCfg.enabled,
+          subject: user.subject,
+          message: user.message,
+        },
+        fromName: admin.fromName,
+        fromEmail: admin.fromEmail,
+      });
+
+      saveUserAutoReplyConfig({
+        ...userCfg,
+        fromName: user.fromName,
+        subject: user.subject,
+        bodyHtml: user.message,
+      }, selectedProject);
+      
+      localStorage.setItem(`pb_user_ui_${selectedProject}`, JSON.stringify(user));
+      localStorage.setItem(`pb_provider_${selectedProject}`, provider);
+      localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
+
+      setSavedUser(true);
+      toast.success(`User notification settings saved for ${selectedProject === "global" ? "Global Setup" : "the selected project"}!`);
+      setTimeout(() => setSavedUser(false), 3000);
+    } catch (err) {
+      toast.error("Failed to save user settings to database.");
+    }
   };
 
   const handleProjectSelect = (pid: string) => {
     setSelectedProject(pid);
+    
+    // Try to load from project object if it exists in the projects list
+    const proj = projects.find(p => p._id === pid);
+    if (proj) {
+      if (proj.adminNotification) {
+        setAdmin({
+          ...admin,
+          sendToEmail: proj.adminNotification.email || "",
+          subject: proj.adminNotification.subject || admin.subject,
+          message: proj.adminNotification.message || admin.message,
+          fromName: proj.fromName || "",
+          fromEmail: proj.fromEmail || "",
+        });
+        setAdminCfg(prev => ({ ...prev, enabled: proj.adminNotification.enabled }));
+      }
+      if (proj.userNotification) {
+        setUser({
+          ...user,
+          subject: proj.userNotification.subject || user.subject,
+          message: proj.userNotification.message || user.message,
+        });
+        setUserCfg(prev => ({ ...prev, enabled: proj.userNotification.enabled }));
+      }
+    }
+
     setAdminCfg(getAdminNotifConfig(pid));
     setUserCfg(getUserAutoReplyConfig(pid));
     
@@ -198,6 +265,7 @@ const MailManagementPage = () => {
 
     const u = localStorage.getItem(`pb_user_ui_${pid}`);
     if (u) setUser(JSON.parse(u));
+    else setUser({ ...user, fromName: "", fromEmail: "", replyTo: "", bcc: "", subject: "Thank you for contacting us!", message: "Hi {{name}},\n\nThank you for reaching out..." });
     
     const p = localStorage.getItem(`pb_provider_${pid}`);
     if (p) setProvider(p as any); else setProvider("brevo");
@@ -215,7 +283,7 @@ const MailManagementPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+          <h1 className="text-2xl font-bold text-foreground">Email Settings</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Configure who gets notified when a lead submits a form
           </p>
@@ -241,7 +309,7 @@ const MailManagementPage = () => {
         <div className="flex items-center gap-6 px-5 py-4 border-b border-border bg-muted/20">
           <p className="text-sm font-semibold text-foreground">Email Service Provider</p>
           <div className="flex items-center gap-4">
-            {["brevo", "smtp", "emailjs"].map((p) => (
+            {["brevo", "smtp"].map((p) => (
               <label key={p} className="flex items-center gap-1.5 cursor-pointer text-sm text-foreground capitalize">
                 <input
                   type="radio"
@@ -250,30 +318,52 @@ const MailManagementPage = () => {
                   onChange={() => setProvider(p as any)}
                   className="accent-primary"
                 />
-                {p === "brevo" ? "Brevo" : p === "emailjs" ? "EmailJS" : "Custom SMTP"}
+                {p === "brevo" ? "Brevo" : "Custom SMTP"}
               </label>
             ))}
           </div>
         </div>
-        <div className="p-5 bg-background">
-          {provider === "brevo" && (
-             <div className="max-w-md space-y-1.5">
-               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Brevo API Key</label>
-               <Input type="password" placeholder="xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={brevoKey} onChange={(e) => setBrevoKey(e.target.value)} className="h-9 text-sm font-mono" />
-               <p className="text-[11px] text-muted-foreground mt-1">Found in your Brevo account under SMTP & API {'->'} API Keys.</p>
-             </div>
-          )}
-          {provider === "smtp" && (
-             <div className="max-w-xl grid grid-cols-2 gap-4">
-               <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Host</label><Input placeholder="smtp.example.com" className="h-9 text-sm font-mono"/></div>
-               <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Port</label><Input placeholder="587" className="h-9 text-sm font-mono"/></div>
-               <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Username</label><Input placeholder="user@example.com" className="h-9 text-sm font-mono"/></div>
-               <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Password</label><Input type="password" placeholder="••••••••" className="h-9 text-sm font-mono"/></div>
-             </div>
-          )}
-          {provider === "emailjs" && (
-             <div className="text-sm text-muted-foreground">EmailJS credentials can be managed in their dashboard. Legacy system fallback enabled.</div>
-          )}
+        <div className="p-5 bg-background flex flex-col md:flex-row items-end justify-between gap-4">
+          <div className="flex-1 w-full">
+            {provider === "brevo" && (
+               <div className="max-w-md space-y-4">
+                 <div className="space-y-1.5">
+                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Brevo API Key</label>
+                   <Input type="password" placeholder="xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={brevoKey} onChange={(e) => setBrevoKey(e.target.value)} className="h-9 text-sm font-mono" />
+                   <p className="text-[11px] text-muted-foreground mt-1">Found in your Brevo account under SMTP & API {'->'} API Keys.</p>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-1.5">
+                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default From Name</label>
+                     <Input placeholder="AI Landing Page Builder" value={admin.fromName} onChange={(e) => setAdmin(prev => ({ ...prev, fromName: e.target.value }))} className="h-9 text-sm" />
+                   </div>
+                   <div className="space-y-1.5">
+                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default From Email</label>
+                     <Input placeholder="noreply@yourdomain.com" value={admin.fromEmail} onChange={(e) => setAdmin(prev => ({ ...prev, fromEmail: e.target.value }))} className="h-9 text-sm" />
+                   </div>
+                 </div>
+               </div>
+            )}
+            {provider === "smtp" && (
+               <div className="max-w-xl grid grid-cols-2 gap-4">
+                 <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Host</label><Input placeholder="smtp.example.com" className="h-9 text-sm font-mono"/></div>
+                 <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Port</label><Input placeholder="587" className="h-9 text-sm font-mono"/></div>
+                 <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Username</label><Input placeholder="user@example.com" className="h-9 text-sm font-mono"/></div>
+                 <div className="space-y-1.5"><label className="text-xs font-semibold text-muted-foreground uppercase">Password</label><Input type="password" placeholder="••••••••" className="h-9 text-sm font-mono"/></div>
+               </div>
+            )}
+          </div>
+          <Button 
+            variant="outline" 
+            className="h-9 px-6 font-semibold border-primary/20 text-primary hover:bg-primary/5"
+            onClick={() => {
+              localStorage.setItem(`pb_provider_${selectedProject}`, provider);
+              localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
+              toast.success("Email provider settings saved!");
+            }}
+          >
+            Save Provider
+          </Button>
         </div>
       </div>
 
@@ -284,8 +374,8 @@ const MailManagementPage = () => {
           title="Admin Notification"
           enabled={adminCfg.enabled}
           onToggle={(v) => patchAdmin("enabled", v)}
-          onSave={handleSave}
-          saved={saved}
+          onSave={handleSaveAdmin}
+          saved={savedAdmin}
         >
           <Field label="Send To Email" required hint="Admin email address to receive lead alerts">
             <Input
@@ -359,8 +449,8 @@ const MailManagementPage = () => {
           title="User Notification"
           enabled={userCfg.enabled}
           onToggle={(v) => patchUser("enabled", v)}
-          onSave={handleSave}
-          saved={saved}
+          onSave={handleSaveUser}
+          saved={savedUser}
         >
 
           <Field label="From Name" hint="Sender name shown to the user">
