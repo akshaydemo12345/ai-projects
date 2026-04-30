@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, Settings2, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,8 +115,9 @@ const MessageBox = ({
 
 // ─── Page ─────────────────────────────────────────────────
 const MailManagementPage = () => {
+  const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<any[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>("global");
+  const [selectedProject, setSelectedProject] = useState<string>("");
   const [provider, setProvider] = useState<"brevo" | "smtp">("brevo");
   const [brevoKey, setBrevoKey] = useState("");
 
@@ -139,8 +141,6 @@ const MailManagementPage = () => {
     bcc: "",
     subject: "You have a new lead - {{page_slug}}",
     message: "{{lead_name}} just submitted a form.\n\nEmail: {{lead_email}}\nPhone: {{lead_phone}}\nMessage: {{lead_message}}\n\nPage: {{page_slug}}\nTime: {{timestamp}}",
-    fromName: "",
-    fromEmail: "",
   });
   const [user, setUser] = useState({
     name: "User Notification",
@@ -166,7 +166,16 @@ const MailManagementPage = () => {
 
     // Fetch dummy projects to simulate project-wise settings
     import("@/services/api").then(({ projectsApi }) => {
-      projectsApi.getAll().then((data) => setProjects(data || [])).catch(() => {});
+      projectsApi.getAll().then((data) => {
+        const projs = data || [];
+        setProjects(projs);
+        
+        // Auto-select project from URL if present, otherwise first project
+        const pid = searchParams.get("projectId") || (projs.length > 0 ? projs[0]._id : "");
+        if (pid) {
+          handleProjectSelect(pid, projs);
+        }
+      }).catch(() => {});
     });
   }, []);
 
@@ -190,7 +199,7 @@ const MailManagementPage = () => {
       localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
 
       setSavedAdmin(true);
-      toast.success(`Admin settings saved for ${selectedProject === "global" ? "Global Setup" : "the selected project"}!`);
+      toast.success(`Admin settings saved for the selected project!`);
       setTimeout(() => setSavedAdmin(false), 3000);
     } catch (err) {
       toast.error("Failed to save admin settings to database.");
@@ -222,18 +231,19 @@ const MailManagementPage = () => {
       localStorage.setItem(`pb_brevo_${selectedProject}`, brevoKey);
 
       setSavedUser(true);
-      toast.success(`User notification settings saved for ${selectedProject === "global" ? "Global Setup" : "the selected project"}!`);
+      toast.success(`User notification settings saved for the selected project!`);
       setTimeout(() => setSavedUser(false), 3000);
     } catch (err) {
       toast.error("Failed to save user settings to database.");
     }
   };
 
-  const handleProjectSelect = (pid: string) => {
+  const handleProjectSelect = (pid: string, currentProjects?: any[]) => {
     setSelectedProject(pid);
     
-    // Try to load from project object if it exists in the projects list
-    const proj = projects.find(p => p._id === pid);
+    // Use passed projects or state
+    const projs = currentProjects || projects;
+    const proj = projs.find(p => p._id === pid);
     if (proj) {
       if (proj.adminNotification) {
         setAdmin({
@@ -296,7 +306,6 @@ const MailManagementPage = () => {
             onChange={(e) => handleProjectSelect(e.target.value)}
             className="h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[200px]"
           >
-            <option value="global">Global (All Projects)</option>
             {projects.map(p => (
               <option key={p._id} value={p._id}>{p.name}</option>
             ))}
