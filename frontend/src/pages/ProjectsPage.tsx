@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Search, Globe, TrendingUp, Users, Zap, LayoutGrid, List,
-  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2
+  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,48 +81,23 @@ const ProjectsPage = () => {
   return (
     <div className="p-8 min-h-full" onClick={() => setMenuOpen(null)}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Projects</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage your SEO landing page projects
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search projects..."
-              className="pl-9 w-56 h-9"
-            />
-          </div>
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 ${viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-          <Button
-            className="gap-2 bg-primary hover:bg-primary/90"
-            onClick={() => navigate("/dashboard/projects/new")}
-          >
-            <Plus className="h-4 w-4" /> New Project
-          </Button>
-        </div>
+        <Button
+          className="gap-2 bg-primary hover:bg-primary/90"
+          onClick={() => navigate("/dashboard/projects/new")}
+        >
+          <Plus className="h-4 w-4" /> New Project
+        </Button>
       </div>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {statCards.map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
             <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
@@ -134,6 +109,33 @@ const ProjectsPage = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Search & View Toggle ── */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="pl-9 h-9"
+          />
+        </div>
+        <div className="flex border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 ${viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* ── Content ── */}
@@ -199,6 +201,12 @@ const ProjectsPage = () => {
                           <Edit3 className="h-3.5 w-3.5" /> Open Project
                         </button>
                         <button
+                          onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                        >
+                          <Mail className="h-3.5 w-3.5" /> Email Settings
+                        </button>
+                        <button
                           onClick={() => handleDelete(project._id)}
                           className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
                         >
@@ -224,9 +232,21 @@ const ProjectsPage = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
-                    {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
-                    {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-7 px-2 text-[10px] gap-1.5 font-bold bg-muted hover:bg-primary/10 hover:text-primary transition-all"
+                      title="Email Settings"
+                      onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                    >
+                      <Mail className="h-3 w-3" />
+                      Email
+                    </Button>
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
+                      {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
+                      {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
+                    </div>
                   </div>
                   <Button
                     size="sm"
@@ -312,6 +332,16 @@ const ProjectsPage = () => {
                   <td className="px-5 py-3.5 text-sm text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2 justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="h-7 px-2 text-[10px] gap-1 font-bold" 
+                        title="Email Settings" 
+                        onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                      >
+                        <Mail className="h-3 w-3" />
+                        Email
+                      </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/dashboard/projects/${project._id}`)}>
                         Open
                       </Button>
