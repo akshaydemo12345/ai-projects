@@ -4,7 +4,7 @@ export const legalStyles = `
   .legal-logo { font-size: 24px; font-weight: 700; color: #1a1a1a; letter-spacing: 2px; text-transform: uppercase; }
   .legal-menu { display: flex; align-items: center; }
   .legal-menu a { font-family: 'Inter', sans-serif; text-decoration: none; color: #1a1a1a; margin-left: 40px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
-  .legal-menu a:hover { color: #947b5c; }
+  .legal-menu a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
   .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #1a1a1a; }
   
   .legal-hero { padding: 150px 10%; text-align: center; background: #0f172a; color: #fff; position: relative; overflow: hidden; }
@@ -13,14 +13,14 @@ export const legalStyles = `
   .legal-hero h1 { font-size: 64px; font-weight: 700; margin-bottom: 30px; line-height: 1.2; }
   .legal-hero p { font-family: 'Inter', sans-serif; font-size: 18px; color: #cbd5e1; margin-bottom: 40px; font-style: italic; }
   
-  .btn-legal { display: inline-block; padding: 20px 45px; background: #947b5c; color: #fff; text-decoration: none; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; border: none; cursor: pointer; }
-  .btn-legal:hover { background: #b19470; transform: translateY(-3px); }
+  .btn-legal { display: inline-block; padding: 20px 45px; background: PRIMARY_COLOR_PLACEHOLDER; color: #fff; text-decoration: none; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; border: none; cursor: pointer; }
+  .btn-legal:hover { opacity: 0.9; transform: translateY(-3px); }
   
   .about-band { padding: 100px 10%; background: #fdfdfd; display: flex; align-items: center; gap: 80px; }
   .about-text { flex: 1; }
   .about-text h2 { font-size: 42px; margin-bottom: 25px; }
   .about-text p { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.8; color: #4b5563; }
-  .about-img { flex: 1; border-radius: 4px; box-shadow: 20px 20px 0 #947b5c; }
+  .about-img { flex: 1; border-radius: 4px; box-shadow: 20px 20px 0 PRIMARY_COLOR_PLACEHOLDER; }
 
   .legal-services { padding: 120px 10%; }
   .legal-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid #e2e8f0; }
@@ -39,12 +39,12 @@ export const legalStyles = `
 
   .legal-footer { padding: 100px 10% 50px; background: #0f172a; color: #fff; }
   .footer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 50px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 80px; margin-bottom: 40px; }
-  .footer-col h4 { font-family: 'Inter', sans-serif; font-size: 16px; margin-bottom: 25px; text-transform: uppercase; color: #947b5c; }
+  .footer-col h4 { font-family: 'Inter', sans-serif; font-size: 16px; margin-bottom: 25px; text-transform: uppercase; color: PRIMARY_COLOR_PLACEHOLDER; }
   .footer-col p, .footer-col a { font-family: 'Inter', sans-serif; font-size: 14px; color: #94a3b8; text-decoration: none; margin-bottom: 10px; display: block; }
 
   /* Popup Styles */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42,0.8); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; }
-  .modal-content { background: #fff; padding: 60px; border-radius: 0; width: 100%; max-width: 600px; position: relative; border-top: 10px solid #947b5c; }
+  .modal-content { background: #fff; padding: 60px; border-radius: 0; width: 100%; max-width: 600px; position: relative; border-top: 10px solid PRIMARY_COLOR_PLACEHOLDER; }
   .close-modal { position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; color: #1a1a1a; font-family: 'Inter', sans-serif; }
 
   @media (max-width: 968px) {
@@ -86,13 +86,14 @@ export const legalStyles = `
     position: absolute;
     inset: 0;
     border: 3px solid transparent;
-    border-top-color: #947b5c;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
   .loader-ring:nth-child(2) {
     inset: 10px;
-    border-top-color: #b19470;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
+    opacity: 0.7;
     animation-direction: reverse;
     animation-duration: 1s;
   }
@@ -111,7 +112,7 @@ export const legalStyles = `
 export const legalHtml = `
   <div class="legal-container">
     <nav class="legal-nav">
-      <div class="legal-logo">Everett &amp; Co.</div>
+      <div class="legal-logo">LOGO_PLACEHOLDER</div>
       <div class="mobile-toggle" onclick="document.querySelector('.legal-menu').classList.toggle('active')">☰</div>
       <div class="legal-menu">
         <a href="#about">The Firm</a>
@@ -190,7 +191,7 @@ export const legalHtml = `
     <footer class="legal-footer">
       <div class="footer-grid">
         <div class="footer-col">
-          <div class="legal-logo" style="margin-bottom: 20px; color: #fff;">Everett &amp; Co.</div>
+          <div class="legal-logo" style="margin-bottom: 20px; color: #fff;">LOGO_PLACEHOLDER</div>
           <p>London | New York | Tokyo</p>
           <p>Leading global law firm since 1984.</p>
         </div>
@@ -208,7 +209,7 @@ export const legalHtml = `
           <p>Wall Street District, NYC</p>
         </div>
       </div>
-      <p style="text-align: center; color: #4b5563; font-size: 13px; font-family: 'Inter', sans-serif;">© 2026 Everett & Co. Attorney Advertising. Prior results do not guarantee similar outcomes.</p>
+      <p style="text-align: center; color: #4b5563; font-size: 13px; font-family: 'Inter', sans-serif;">© 2026 PROJECT_NAME_PLACEHOLDER. Attorney Advertising. Prior results do not guarantee similar outcomes.</p>
     </footer>
 
     <!-- Popup Modal -->
@@ -234,15 +235,7 @@ export const legalHtml = `
     </div>
 
     <script>
-      document.querySelectorAll('form').forEach(f => {
-        f.addEventListener('submit', function(e) {
-          e.preventDefault();
-          document.getElementById('loader').style.display = 'flex';
-          setTimeout(function() {
-             console.log('Case submitted, loader would stay until thank you page');
-          }, 2000);
-        });
-      });
+      console.log('Legal Template Loaded');
     </script>
   </div>
 `;
