@@ -8,6 +8,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { leadsApi, projectsApi, pagesApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -30,6 +37,20 @@ const LeadsPage = () => {
   const [filterPageId, setFilterPageId] = useState<string>(
     searchParams.get("page") || ""
   );
+
+  // ── Sync URL params to state ──────────────────────────────────────────────
+  useEffect(() => {
+    const project = searchParams.get("project") || "";
+    const pageParam = searchParams.get("page") || "";
+    
+    // Only update if they differ from current state to avoid infinite loops
+    if (project !== filterProjectId) {
+      setFilterProjectId(project);
+    }
+    if (pageParam !== filterPageId) {
+      setFilterPageId(pageParam);
+    }
+  }, [searchParams]);
 
   // ── Other filters ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -305,7 +326,7 @@ const LeadsPage = () => {
 
           <div className="flex items-center gap-3">
             {/* Stats */}
-            <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden lg:flex">
+            <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden sm:flex">
               <div className="text-right">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Today's Leads</p>
                 <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{todayLeadsCount}</p>
@@ -320,7 +341,7 @@ const LeadsPage = () => {
             <div className="relative">
               <Button
                 variant="outline"
-                className="gap-2 h-10 text-xs font-semibold px-5 rounded-xl border-slate-200 dark:border-slate-800"
+                className="gap-2 h-10 text-xs font-semibold px-4 sm:px-5 rounded-xl border-slate-200 dark:border-slate-800 w-full sm:w-auto"
                 onClick={() => setExportMenuOpen(v => !v)}
                 disabled={isExporting}
               >
@@ -329,7 +350,8 @@ const LeadsPage = () => {
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                {isExporting ? "Exporting…" : "Export CSV"}
+                <span className="hidden xs:inline">{isExporting ? "Exporting…" : "Export CSV"}</span>
+                <span className="xs:hidden">{isExporting ? "…" : "Export"}</span>
                 <ChevronDown className="h-3.5 w-3.5 ml-0.5 opacity-60" />
               </Button>
 
@@ -376,13 +398,13 @@ const LeadsPage = () => {
       </div>
 
       {/* ─── Controls & Table ─── */}
-      <div className="flex-1 p-8 overflow-hidden flex flex-col w-full">
+      <div className="flex-1 p-4 md:p-8 overflow-hidden flex flex-col w-full">
 
         {/* Toolbar */}
-        <div className="mb-6 flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-fit max-w-full">
+        <div className="mb-6 flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full lg:w-fit max-w-full">
 
           {/* Search */}
-          <div className="relative w-full sm:w-[260px] shrink-0">
+          <div className="relative w-full sm:w-[220px] shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search leads..."
@@ -392,107 +414,110 @@ const LeadsPage = () => {
             />
           </div>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Project dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[150px]">
-            <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterProjectId}
-              onChange={e => {
-                setFilterProjectId(e.target.value);
-                setFilterPageId(""); // reset page filter when project changes
-              }}
-            >
-              <option value="">All Projects</option>
+          <Select value={filterProjectId || "all"} onValueChange={(val) => {
+            setFilterProjectId(val === "all" ? "" : val);
+            setFilterPageId("");
+          }}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="All Projects" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
               {(projects as any[]).map((p: any) => (
-                <option key={p._id} value={p._id}>{p.name}</option>
+                <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
           {/* Page dropdown */}
-          <div
-            className={`flex flex-1 sm:flex-none items-center gap-2 px-3 py-2 rounded-xl border transition-all min-w-[150px] ${filterProjectId
-              ? "bg-slate-50 dark:bg-slate-800 border-slate-100 hover:border-slate-300 dark:border-slate-800"
-              : "bg-transparent border-transparent opacity-50 pointer-events-none"
-              }`}
+          <Select
+            value={filterPageId || "all"}
+            onValueChange={(val) => setFilterPageId(val === "all" ? "" : val)}
+            disabled={!filterProjectId}
           >
-            <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterPageId}
-              onChange={e => setFilterPageId(e.target.value)}
-              disabled={!filterProjectId}
+            <SelectTrigger
+              className={`flex-1 sm:flex-none h-10 px-3 rounded-xl border transition-all min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0 ${filterProjectId
+                ? "bg-slate-50 dark:bg-slate-800 border-slate-100 hover:border-slate-300 dark:border-slate-800"
+                : "bg-slate-50/50 dark:bg-slate-800/50 border-dashed border-slate-200 dark:border-slate-700 opacity-60 pointer-events-none text-slate-400"
+                }`}
             >
-              <option value="">
-                {filterProjectId ? "All Pages" : "Select project first"}
-              </option>
+              <div className="flex items-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder={filterProjectId ? "All Pages" : "Select project"} />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Pages</SelectItem>
               {(projectPages as any[]).map((pg: any) => (
-                <option key={pg._id} value={pg._id}>
+                <SelectItem key={pg._id} value={pg._id}>
                   {pg.name || pg.slug}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </div>
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden lg:block" />
+            </SelectContent>
+          </Select>
 
           {/* UTM Source dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px]">
-            <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterUtmSource}
-              onChange={e => setFilterUtmSource(e.target.value)}
-            >
-              <option value="">Any Source</option>
+          <Select value={filterUtmSource || "all"} onValueChange={(val) => setFilterUtmSource(val === "all" ? "" : val)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="Any Source" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Source</SelectItem>
               {leadFilters?.utmSources.map((s: string) => (
-                <option key={s} value={s}>{s}</option>
+                <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
           {/* UTM Medium dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px]">
-            <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={filterUtmMedium}
-              onChange={e => setFilterUtmMedium(e.target.value)}
-            >
-              <option value="">Any Medium</option>
+          <Select value={filterUtmMedium || "all"} onValueChange={(val) => setFilterUtmMedium(val === "all" ? "" : val)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue placeholder="Any Medium" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Medium</SelectItem>
               {leadFilters?.utmMediums.map((s: string) => (
-                <option key={s} value={s}>{s}</option>
+                <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
-            </select>
-          </div>
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden lg:block" />
+            </SelectContent>
+          </Select>
 
           {/* Sort dropdown */}
-          <div className="flex flex-1 sm:flex-none items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px]">
-            <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <select
-              className="bg-transparent text-sm font-medium outline-none text-slate-700 dark:text-slate-300 cursor-pointer w-full"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="name">A-Z Name</option>
-            </select>
-          </div>
+          <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name">A-Z Name</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Clear */}
           {hasActiveFilters && (
             <button
-              className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 shrink-0 sm:ml-1"
+              className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors px-4 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 shrink-0"
               onClick={clearFilters}
             >
               <X className="h-3.5 w-3.5" />
-              Clear
+              <span className="hidden xs:inline">Clear Filters</span>
+              <span className="xs:hidden">Clear</span>
             </button>
           )}
         </div>
@@ -522,149 +547,247 @@ const LeadsPage = () => {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
-              <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
-                  <tr className="border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Inquirer</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[20%]">Contact Details</th>
-                    {dynamicTableFields.map((field: any) => (
-                      <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[150px]">
-                        {field.label || field.field_name.replace(/_/g, " ")}
-                      </th>
+            <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1200px]">
+                  <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[240px]">Inquirer</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px]">Contact Details</th>
+                      {dynamicTableFields.map((field: any) => (
+                        <th key={field.field_name} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">
+                          {field.label || field.field_name.replace(/_/g, " ")}
+                        </th>
+                      ))}
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[140px]">Source Page</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[160px]">Date Received</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredAndSortedLeads.map(lead => (
+                      <tr
+                        key={lead._id}
+                        className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                        onClick={() => setSelectedLead(lead)}
+                      >
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                              {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                                {getLField(lead, "name") || "Lead User"}
+                              </p>
+                              <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, "message"))}>
+                                {getLField(lead, "message") || "No message left"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="space-y-2">
+                            {getStackedContacts(lead).emails.map((email, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">
+                                  {email}
+                                </span>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).phones.map((phone, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                                <span className="text-xs font-medium text-slate-500">{phone}</span>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
+                              <span className="text-xs text-slate-400 italic">No contact info</span>
+                            )}
+                          </div>
+                        </td>
+                        {dynamicTableFields.map((field: any) => (
+                          <td key={field.field_name} className="px-6 py-5">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                              {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "—"}
+                            </span>
+                          </td>
+                        ))}
+                        <td className="px-6 py-5">
+                          <div className="inline-flex flex-col gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                            <div className="flex items-center gap-1.5">
+                              <Globe className="h-3 w-3" />
+                              <span>{lead.pageSlug || "Direct"}</span>
+                            </div>
+                            {(lead as any).utm_source && (
+                              <div className="flex items-center gap-1.5 text-[9px] opacity-70">
+                                <ExternalLink className="h-2.5 w-2.5" />
+                                <span className="uppercase">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div>
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              {format(new Date(lead.createdAt), "MMM d, yyyy")}
+                            </p>
+                            <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                              <Clock className="h-3 w-3" /> {format(new Date(lead.createdAt), "h:mm a")}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-10 w-10 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
+                              onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                            >
+                              <Eye className="h-5 w-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500"
+                              onClick={e => handleDelete(lead._id, e)}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[12%]">Source Page</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">Date Received</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[10%] text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {filteredAndSortedLeads.map(lead => (
-                    <tr
-                      key={lead._id}
-                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
-                      onClick={() => setSelectedLead(lead)}
-                    >
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                            {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
-                              {getLField(lead, "name") || "Lead User"}
-                            </p>
-                            <p className="text-xs text-slate-400 truncate max-w-[200px]" title={String(getLField(lead, "message"))}>
-                              {getLField(lead, "message") || "No message left"}
-                            </p>
-                          </div>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredAndSortedLeads.map(lead => (
+                  <div
+                    key={lead._id}
+                    className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
+                    onClick={() => setSelectedLead(lead)}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                          {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="space-y-2">
-                          {getStackedContacts(lead).emails.map((email, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">
+                            {getLField(lead, "name") || "Lead User"}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {format(new Date(lead.createdAt), "MMM d, h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg"
+                          onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg hover:text-red-500"
+                          onClick={e => handleDelete(lead._id, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
+                        <div className="space-y-1.5">
+                          {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5">
                               <Mail className="h-3 w-3 text-slate-400 shrink-0" />
-                              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 break-all">
-                                {email}
-                              </span>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
                             </div>
                           ))}
-                          {getStackedContacts(lead).phones.map((phone, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
+                          {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5">
                               <Phone className="h-3 w-3 text-slate-400 shrink-0" />
-                              <span className="text-xs font-medium text-slate-500">{phone}</span>
+                              <p className="text-xs text-slate-500 font-medium">{phone}</p>
                             </div>
                           ))}
                           {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
-                            <span className="text-xs text-slate-400 italic">No contact info</span>
+                            <p className="text-[11px] text-slate-400 italic">No contact details</p>
                           )}
                         </div>
-                      </td>
-                      {dynamicTableFields.map((field: any) => (
-                        <td key={field.field_name} className="px-6 py-5">
-                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                            {lead.data?.[field.field_name] || lead.data?.[field.field_name.toLowerCase()] || "—"}
-                          </span>
-                        </td>
-                      ))}
-                      <td className="px-6 py-5">
-                        <div className="inline-flex flex-col gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                          <div className="flex items-center gap-1.5">
-                            <Globe className="h-3 w-3" />
-                            <span>{lead.pageSlug || "Direct"}</span>
-                          </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Analytics Trace</p>
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate flex items-center gap-1.5 font-medium">
+                            <Globe className="h-3 w-3 text-emerald-500" /> {lead.pageSlug || "Direct Visit"}
+                          </p>
                           {(lead as any).utm_source && (
-                            <div className="flex items-center gap-1.5 text-[9px] opacity-70">
+                            <p className="text-[10px] text-slate-500 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded w-fit">
                               <ExternalLink className="h-2.5 w-2.5" />
-                              <span className="uppercase">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
-                            </div>
+                              <span className="uppercase font-bold">{(lead as any).utm_source} / {(lead as any).utm_medium || 'direct'}</span>
+                            </p>
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {format(new Date(lead.createdAt), "MMM d, yyyy")}
-                          </p>
-                          <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                            <Clock className="h-3 w-3" /> {format(new Date(lead.createdAt), "h:mm a")}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
-                            onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
-                          >
-                            <Eye className="h-5 w-5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500"
-                            onClick={e => handleDelete(lead._id, e)}
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+
+                    {dynamicTableFields.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {dynamicTableFields.map((field: any) => (
+                          <div key={field.field_name} className="px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <span className="text-[10px] text-slate-400 mr-1">{field.label}:</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                              {lead.data?.[field.field_name] || "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Footer */}
-          <div className="px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex items-center justify-between">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          <div className="px-4 sm:px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center sm:text-left">
               Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount} records
               {hasActiveFilters && (
                 <span className="ml-2 text-primary normal-case font-normal">(filtered)</span>
               )}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
+                className="h-10 rounded-xl flex-1 sm:flex-none sm:min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
                 disabled={page === 1 || isLoading}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
               >
-                <ChevronLeft className="h-4 w-4 mr-2" /> Previous
+                <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" /> Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 rounded-xl min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
+                className="h-10 rounded-xl flex-1 sm:flex-none sm:min-w-[100px] border-slate-200 dark:border-slate-800 bg-white"
                 disabled={page * pageSize >= totalCount || isLoading}
                 onClick={() => setPage(p => p + 1)}
               >
-                Next <ChevronRight className="h-4 w-4 ml-2" />
+                Next <ChevronRight className="h-4 w-4 ml-1 sm:ml-2" />
               </Button>
             </div>
           </div>

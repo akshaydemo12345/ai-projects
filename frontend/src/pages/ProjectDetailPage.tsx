@@ -1550,7 +1550,7 @@ const ProjectDetailPage = () => {
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/dashboard/leads?page=${page._id}`);
+                          navigate(`/dashboard/leads?project=${project._id}&page=${page._id}`);
                         }}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
                         title="View Leads"
