@@ -73,6 +73,8 @@ const GrapesEditor = () => {
   const [seoOpen, setSeoOpen] = useState(false);
   const [pageTitle, setPageTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
+  const [noIndex, setNoIndex] = useState(false);
+  const [noFollow, setNoFollow] = useState(false);
   const [themePrimary, setThemePrimary] = useState('#7c3aed');
   const [themeSecondary, setThemeSecondary] = useState('#6366f1');
   // Custom Color Picker
@@ -103,6 +105,8 @@ const GrapesEditor = () => {
     if (page) {
       setPageTitle(page.metaTitle || page.name || 'Landing Page');
       setMetaDesc(page.metaDescription || '');
+      setNoIndex(page.noIndex || false);
+      setNoFollow(page.noFollow || false);
       setThemePrimary(page.primaryColor || '#7c3aed');
       setThemeSecondary(page.secondaryColor || '#6366f1');
     }
@@ -1907,11 +1911,23 @@ const GrapesEditor = () => {
                   style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
                 />
               </div>
+              <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={noIndex} onChange={e => setNoIndex(e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Hide from search engines (noindex)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={noFollow} onChange={e => setNoFollow(e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Do not follow links (nofollow)
+                </label>
+              </div>
               <button
                 onClick={() => {
                   updatePageMutation.mutate({
                     metaTitle: pageTitle,
                     metaDescription: metaDesc,
+                    noIndex,
+                    noFollow
                   });
                   setSeoOpen(false);
                   toast.success('SEO Settings updated!');

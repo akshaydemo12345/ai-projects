@@ -153,8 +153,8 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl, preSlug } = req.body;
-    const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, preSlug, updatedAt: Date.now() };
+    const { name, description, logoUrl, industry, primaryColor, secondaryColor, websiteUrl, preSlug, fromName, fromEmail, adminNotification, userNotification } = req.body;
+    const updateData = { name, description, logoUrl, industry, primaryColor, secondaryColor, preSlug, fromName, fromEmail, adminNotification, userNotification, updatedAt: Date.now() };
 
     if (websiteUrl !== undefined) {
       updateData.websiteUrl = websiteUrl ? normalizeDomain(websiteUrl) : "";

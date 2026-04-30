@@ -8,14 +8,14 @@ const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const pgSlug = searchParams.get('pg');
-  
+
   // Resolve slug from splat or pathname to support nested preSlugs
   const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
   // Strip /thank-you from path to get the page slug
   const path = rawPath.replace(/\/thank-you$/i, '');
-  
+
   const slug = (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
-  
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
@@ -105,6 +105,71 @@ const PublicLandingPage = () => {
             }
           }
 
+          // ── EmailJS helpers (reads config from parent localStorage) ──────────
+          function getParentLS(key) {
+            try { return window.top.localStorage.getItem(key); } catch(e) { return null; }
+          }
+
+          async function sendEmailJS(serviceId, templateId, publicKey, params) {
+            try {
+              await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  service_id: serviceId,
+                  template_id: templateId,
+                  user_id: publicKey,
+                  template_params: params
+                })
+              });
+            } catch(e) { console.warn('EmailJS send failed:', e); }
+          }
+
+          async function fireEmailNotifications(data) {
+            var now = new Date().toLocaleString();
+
+            // ── Admin Notification ──────────────────────────────────────────
+            try {
+              var adminRaw = getParentLS('pb_admin_notif_config_' + data.projectId) || getParentLS('pb_admin_notif_config_global') || getParentLS('pb_admin_notif_config');
+              if (adminRaw) {
+                var adminCfg = JSON.parse(adminRaw);
+                if (adminCfg.enabled && adminCfg.serviceId && adminCfg.templateId && adminCfg.publicKey && adminCfg.adminEmail) {
+                  await sendEmailJS(adminCfg.serviceId, adminCfg.templateId, adminCfg.publicKey, {
+                    to_email: adminCfg.adminEmail,
+                    admin_email: adminCfg.adminEmail,
+                    lead_name: data.name || 'Unknown',
+                    lead_email: data.email || 'Not provided',
+                    lead_phone: data.phone || 'Not provided',
+                    lead_message: data.message || 'No message',
+                    page_slug: data.pageSlug || '${PAGE_SLUG}',
+                    timestamp: now
+                  });
+                  console.log('📧 Admin notification sent');
+                }
+              }
+            } catch(e) { console.warn('Admin notif error:', e); }
+
+            // ── User Auto-Reply ─────────────────────────────────────────────
+            try {
+              var userRaw = getParentLS('pb_user_autoreply_config_' + data.projectId) || getParentLS('pb_user_autoreply_config_global') || getParentLS('pb_user_autoreply_config');
+              if (userRaw && data.email) {
+                var userCfg = JSON.parse(userRaw);
+                if (userCfg.enabled && userCfg.serviceId && userCfg.templateId && userCfg.publicKey) {
+                  var bodyHtml = (userCfg.bodyHtml || '').replace(/\\{\\{name\\}\\}/g, data.name || 'there');
+                  await sendEmailJS(userCfg.serviceId, userCfg.templateId, userCfg.publicKey, {
+                    to_email: data.email,
+                    user_name: data.name || 'there',
+                    from_name: userCfg.fromName || 'Our Team',
+                    subject: userCfg.subject || 'Thank you for reaching out!',
+                    body_html: bodyHtml,
+                    timestamp: now
+                  });
+                  console.log('📧 User auto-reply sent to', data.email);
+                }
+              }
+            } catch(e) { console.warn('User auto-reply error:', e); }
+          }
+
           async function submitLead(data, form, btn, originalBtnText, attempt) {
             attempt = attempt || 1;
             console.log("📤 Submitting lead (Attempt " + attempt + "):", data);
@@ -123,9 +188,10 @@ const PublicLandingPage = () => {
               var result = await response.json();
               console.log("📥 API Response:", result);
 
-              if (result.status === 'success' || result.status === 'error' || response.ok) {
-                // Wait small bit for loader effect
-                setTimeout(redirectToSuccessPage, 1500);
+              if (result.status === 'success' || result.status === 'error') {
+                // Fire email notifications after successful lead capture
+                fireEmailNotifications(data);
+                redirectToSuccessPage();
                 form.reset();
               } else {
                 throw new Error(result.message || 'Server returned error');
@@ -226,18 +292,19 @@ const PublicLandingPage = () => {
         </script>
       `;
 
+
       let finalHtml = aiHtml;
 
       // ─── DYNAMIC REPLACEMENTS: Logo & Context ──────────────────────────────
       const finalLogo = pageData.logoUrl || meta?.logoUrl || '';
       console.log("🎨 Applying Branding. Logo:", finalLogo, "Primary:", BRAND_COLOR);
-      
+
       if (finalLogo) {
         // 1. Replace known placeholders
         finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
         finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
         finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, finalLogo);
-        
+
         // 2. Smart attribute-agnostic logo replacement
         finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
           const combined = p1 + p2;
@@ -250,14 +317,14 @@ const PublicLandingPage = () => {
       finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
 
       // Better Dark Mode detection 
-      const isDark = aiCss.toLowerCase().includes('background-color: #0') || 
-                     aiCss.toLowerCase().includes('background: #0') || 
-                     aiCss.toLowerCase().includes('background-color: black') ||
-                     aiCss.toLowerCase().includes('background: black') ||
-                     aiHtml.toLowerCase().includes('bg-slate-900') ||
-                     aiHtml.toLowerCase().includes('bg-[#0') ||
-                     aiHtml.toLowerCase().includes('saas-hero-container') ||
-                     aiHtml.toLowerCase().includes('agency-container');
+      const isDark = aiCss.toLowerCase().includes('background-color: #0') ||
+        aiCss.toLowerCase().includes('background: #0') ||
+        aiCss.toLowerCase().includes('background-color: black') ||
+        aiCss.toLowerCase().includes('background: black') ||
+        aiHtml.toLowerCase().includes('bg-slate-900') ||
+        aiHtml.toLowerCase().includes('bg-[#0') ||
+        aiHtml.toLowerCase().includes('saas-hero-container') ||
+        aiHtml.toLowerCase().includes('agency-container');
 
       const brandingStyles = `
         <style id="branding-vars">
