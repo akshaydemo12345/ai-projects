@@ -1291,9 +1291,20 @@ const ProjectDetailPage = () => {
     if (project.apiToken) {
       const success = await copyToClipboard(project.apiToken);
       if (success) {
-        setTokenCopied(true);
+        setIntegTokenCopied(true);
         toast.success("Token copied!");
-        setTimeout(() => setTokenCopied(false), 2000);
+        setTimeout(() => setIntegTokenCopied(false), 2000);
+      }
+    }
+  };
+
+  const handleCopyScript = async () => {
+    if (scriptCode) {
+      const success = await copyToClipboard(scriptCode);
+      if (success) {
+        setIntegScriptCopied(true);
+        toast.success("Script copied!");
+        setTimeout(() => setIntegScriptCopied(false), 2000);
       }
     }
   };
@@ -1616,7 +1627,15 @@ const ProjectDetailPage = () => {
                           </Button>
                         )
                       },
-                      { num: 2, title: "Enter Token", desc: "Paste your API token in settings.", extra: <div onClick={copyToken} className="flex items-center gap-2 bg-muted border border-border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between"><span className="text-[10px] font-mono truncate max-w-[150px]">{project.apiToken}</span><Copy className="h-3 w-3 text-muted-foreground" /></div> },
+                      { num: 2, title: "Enter Token", desc: "Paste your API token in settings.", extra: (
+                        <div 
+                          onClick={copyToken} 
+                          className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
+                        >
+                          <span className={`text-[10px] font-mono truncate max-w-[150px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
+                          {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                        </div>
+                      ) },
                       { num: 3, title: "Sync Pages", desc: "Pages will auto-sync to your WP site." },
                     ].map((s) => (
                       <div key={s.num} className="flex gap-3">
@@ -1635,7 +1654,14 @@ const ProjectDetailPage = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <p className="text-xs font-medium">Add to &lt;head&gt;</p>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1.5" onClick={() => copyToClipboard(scriptCode)}><Copy className="h-3 w-3" /> Copy</Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className={`h-7 text-[10px] gap-1.5 transition-all ${integScriptCopied ? "text-emerald-600 bg-emerald-50" : ""}`} 
+                        onClick={handleCopyScript}
+                      >
+                        {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+                      </Button>
                     </div>
                     <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                   </div>

@@ -218,7 +218,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     });
     css += '}\n\n';
 
-    css += 'body { background-color: var(--body-bg); color: var(--body-text); font-family: var(--body-font); font-size: var(--body-size); line-height: var(--body-line-height); transition: all 0.3s ease; }\n';
+    css += 'body, .grapesjs-safeguard-wrapper, #wrapper { background-color: var(--body-bg) !important; color: var(--body-text); font-family: var(--body-font); font-size: var(--body-size); line-height: var(--body-line-height); transition: all 0.3s ease; }\n';
     css += 'h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); color: var(--heading-color); line-height: var(--heading-line-height); }\n';
     css += 'h1 { font-size: var(--heading-size); }\n';
     css += 'h2, h3 { font-size: var(--subheading-size); color: var(--subheading-color); line-height: var(--subheading-line-height); font-family: var(--subheading-font); }\n';
@@ -279,12 +279,12 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   }, [styles.Colors.primary.value, styles.Colors.secondary.value, onBrandingColorsChange]);
 
   return (
-    <div className="w-full flex-shrink-0 flex flex-col bg-[#12121e] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="w-full flex-shrink-0 flex flex-col bg-[#0a0a14] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {Object.entries(styles).map(([category, properties]) => (
-        <div key={category} className="border-b border-[#2a2a3e]">
+        <div key={category} className="border-b border-[#1e1e2d]">
           <button
             onClick={() => toggleSection(category)}
-            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#161622] hover:bg-[#1a1a2e] transition-colors group"
+            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#0f0f1a] hover:bg-[#161622] transition-colors group"
           >
             <span className="font-semibold text-[#cbd5e1] text-[12px] uppercase tracking-wide">
               {category}
@@ -296,7 +296,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
           </button>
 
           {expanded[category] && (
-            <div className="p-4 bg-[#12121e] flex flex-col gap-3">
+            <div className="p-4 bg-[#0a0a14] flex flex-col gap-3">
               {Object.entries(properties).map(([key, prop]) => (
                 <div key={key} className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">

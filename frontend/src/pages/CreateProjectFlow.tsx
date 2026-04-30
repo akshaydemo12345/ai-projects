@@ -14,28 +14,6 @@ type IntegrationMethod = "wordpress" | "script";
 
 const categories = [
   "General",
-  "Digital Agency",
-  "Digital Marketing",
-  "SEO & Digital Marketing",
-  "Web Design",
-  "Design",
-  "Software Development",
-  "Technology",
-  "Consulting",
-  "Advertising",
-  "Branding",
-  "Analytics",
-  "Health & Fitness",
-  "Education",
-  "Real Estate",
-  "Insurance",
-  "Finance",
-  "Legal",
-  "Healthcare",
-  "Food & Restaurant",
-  "E-commerce",
-  "SaaS",
-  "Agency",
   "Other",
 ];
 

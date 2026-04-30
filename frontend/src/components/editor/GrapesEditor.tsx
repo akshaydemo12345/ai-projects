@@ -10,12 +10,12 @@ import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
 import './grapes-custom.css';
+import { ArrowLeft, X } from 'lucide-react';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
-
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
   const queryClient = useQueryClient();
@@ -47,7 +47,7 @@ const GrapesEditor = () => {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you'>('blocks');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
   const [mode, setMode] = useState<'landing' | 'thank-you'>(searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing');
   // AI Prompt
@@ -69,6 +69,8 @@ const GrapesEditor = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
   // SEO Settings
   const [seoOpen, setSeoOpen] = useState(false);
   const [pageTitle, setPageTitle] = useState('');
@@ -94,6 +96,8 @@ const GrapesEditor = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+
+  const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const cpObserverRef = useRef<MutationObserver | null>(null);
@@ -267,14 +271,15 @@ const GrapesEditor = () => {
       }
 
       // Safe-guard body styles from being purged by GrapesJS
-      dbStyles = (dbStyles || '').replace(/body\s*\{/g, 'body, .grapesjs-safeguard-wrapper {');
-      editor.getWrapper().addClass('grapesjs-safeguard-wrapper');
+      // ─── Placeholder Replacement ───
+      const finalStyles = (dbStyles || '')
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, currentPage.primaryColor || '#7c3aed')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, currentPage.secondaryColor || '#6366f1')
+        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '');
 
-      editor.setStyle(dbStyles);
+      editor.setStyle(finalStyles);
 
-      if (dbStyles.includes('#0f172a') || dbStyles.includes('rgba(15, 23, 42') || dbStyles.includes('var(--slate-950)')) {
-        editor.getWrapper().addStyle({ 'background-color': '#0f172a' });
-      }
+
 
       // ─── Synchronous Branding & Logo Replacement ───
       if (currentPage.logoUrl) {
@@ -359,6 +364,45 @@ const GrapesEditor = () => {
     if (projectLoading || pageLoading || !page || !project || editorRef.current) return;
 
     console.log('🚀 Initializing GrapesJS Editor...');
+    let isEditorFullyLoaded = false;
+
+    // ─── Style GrapesJS Modal Header Only ───
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .gjs-mdl-header { background-color: #1e1e2d !important; border-bottom: 1px solid #2a2a3e !important; padding: 15px 20px !important; }
+      .gjs-mdl-title { color: #f8fafc !important; font-weight: bold !important; font-size: 16px !important; }
+      .gjs-mdl-btn-close { color: #94a3b8 !important; }
+      .gjs-mdl-content { background-color: #111827 !important; padding: 0 !important; }
+      
+      /* Asset Manager Upload Styling */
+      .gjs-am-uploadFile {
+        background-color: #1f2937 !important;
+        border: 2px dashed #374151 !important;
+        color: #9ca3af !important;
+        padding: 40px 20px !important;
+        border-radius: 12px !important;
+        margin: 20px !important;
+        text-align: center !important;
+      }
+      .gjs-am-assets-cont {
+        background-color: #111827 !important;
+        padding: 15px !important;
+      }
+      .gjs-am-add-asset {
+        background-color: #1f2937 !important;
+        color: #f3f4f6 !important;
+        border: 1px solid #374151 !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+      }
+      .gjs-am-asset {
+        background-color: #1f2937 !important;
+        border-radius: 8px !important;
+        margin: 5px !important;
+      }
+    `;
+    document.head.appendChild(style);
+
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
@@ -377,6 +421,9 @@ const GrapesEditor = () => {
       canvas: {
         styles: [
           'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+          'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+          'https://fonts.googleapis.com/icon?family=Material+Icons',
         ],
         scripts: [
           'https://cdn.tailwindcss.com',
@@ -409,8 +456,475 @@ const GrapesEditor = () => {
       blockManager: { appendTo: '#blocks-container' },
     });
 
+    // ─── Pre-Load Registration (Ensures existing HTML icons are typed correctly) ───
+    editor.DomComponents.addType('icon', {
+      isComponent: el => (el.tagName === 'I' || el.tagName === 'SPAN') &&
+        (el.classList && (el.classList.contains('fa') || el.classList.contains('fas') || el.classList.contains('fab') || el.classList.contains('far'))),
+      model: {
+        defaults: {
+          tagName: 'i',
+          droppable: false,
+          editable: false,
+          resizable: true,
+          stylable: true,
+          traits: [
+            {
+              type: 'button',
+              text: 'Select Icon',
+              full: true,
+              command: 'open-icon-picker',
+            },
+            {
+              type: 'color',
+              label: 'Icon Color',
+              name: 'color',
+              changeProp: true,
+            },
+            {
+              type: 'number',
+              label: 'Icon Size (px)',
+              name: 'fontSize',
+              changeProp: true,
+            }
+          ]
+        },
+        init() {
+          this.on('change:color', this.handleColorChange);
+          this.on('change:fontSize', this.handleSizeChange);
+        },
+        handleColorChange() {
+          const color = this.get('color');
+          if (color) {
+            this.addStyle({ color: color });
+          }
+        },
+        handleSizeChange() {
+          const size = this.get('fontSize');
+          if (size) {
+            this.addStyle({ 'font-size': size + 'px' });
+          }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('input', {
+      isComponent: el => el.tagName === 'INPUT',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'placeholder', 'type', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('textarea', {
+      isComponent: el => el.tagName === 'TEXTAREA',
+      model: {
+        defaults: {
+          tagName: 'textarea',
+          traits: [
+            'id', 'name', 'placeholder', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; min-height: 100px; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('select', {
+      isComponent: el => el.tagName === 'SELECT',
+      model: {
+        defaults: {
+          tagName: 'select',
+          traits: [
+            'id', 'name', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' },
+            {
+              type: 'options',
+              label: 'Options',
+              name: 'options',
+            }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
+        }
+      }
+    });
+
+    // ─── SELECT OPTIONS SYNC LOGIC ───
+    editor.on('component:update:attributes:options-list', (component) => {
+      if (component.get('tagName') !== 'select') return;
+      const optionsStr = component.getAttributes()['options-list'];
+      if (!optionsStr) return;
+
+      try {
+        const options = optionsStr.split(',').filter(Boolean).map((opt: string) => {
+          const parts = opt.split(':');
+          const val = parts[0]?.trim();
+          const name = parts[1]?.trim() || val;
+          return { tagName: 'option', attributes: { value: val }, content: name };
+        });
+
+        if (options.length > 0) {
+          component.components().reset(options);
+        }
+      } catch (err) {
+        console.error('Error parsing options-list:', err);
+      }
+    });
+
+    editor.DomComponents.addType('checkbox', {
+      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'checkbox',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'value', 'checked', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('radio', {
+      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'radio',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'value', 'checked', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('button', {
+      model: {
+        defaults: {
+          traits: [
+            'name', 'type',
+            { type: 'text', label: 'Label Text', name: 'text' }
+          ],
+          attributes: { style: 'background: #7c3aed; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('custom-code', {
+      isComponent: el => (el.classList && el.classList.contains('gjs-custom-code')) || el.getAttribute?.('data-gjs-type') === 'custom-code',
+      model: {
+        defaults: {
+          tagName: 'div',
+          name: 'Custom Code',
+          classes: ['gjs-custom-code'],
+          droppable: false,
+          editable: false,
+          attributes: { 'data-gjs-type': 'custom-code' },
+          traits: [
+            {
+              type: 'button',
+              text: 'Edit Code',
+              full: true,
+              command: 'open-custom-code-editor',
+            }
+          ],
+        }
+      }
+    });
+
+    // ─── Custom Code Editor Command ───
+    editor.Commands.add('open-custom-code-editor', {
+      run(editor, sender) {
+        const selected = editor.getSelected();
+        if (!selected) return;
+
+        const modal = editor.Modal;
+        const container = document.createElement('div');
+        // Retrieve code: prioritize data-code, then inner content
+        let currentCode = selected.getAttributes()['data-code'] || '';
+
+        if (!currentCode) {
+          // Fallback: try to get the inner HTML from components
+          const components = selected.get('components');
+          if (components && components.length > 0) {
+            currentCode = selected.toHTML().replace(/^<div[^>]*>|<\/div>$/gi, '');
+          } else {
+            currentCode = selected.get('content') || '';
+          }
+        }
+
+        // If it's the default placeholder, show empty string
+        if (currentCode.includes('Click to Edit Custom Code') || currentCode.includes('Paste your HTML code here')) {
+          currentCode = '';
+        }
+
+        container.style.backgroundColor = '#161622';
+        container.style.padding = '20px';
+        container.style.borderRadius = '12px';
+        container.style.color = '#e2e8f0';
+
+        container.innerHTML = `
+          <div style="padding: 0 0 16px;">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px;">Paste your HTML/Shortcode below and click "Save Changes"</p>
+            <textarea id="custom-html-edit-input" rows="12" placeholder="&lt;div&gt;Your HTML here...&lt;/div&gt;"
+              style="width:100%; background:#0a0a14; color:#e2e8f0; border:1px solid #2a2a3e; border-radius:8px; padding:12px; font-family:'Fira Code',monospace; font-size:13px; outline:none; resize:vertical; box-sizing:border-box;"
+            >${currentCode}</textarea>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button id="custom-code-edit-cancel" style="background:#1e1e2d; color:#94a3b8; border:1px solid #2a2a3e; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px;">Cancel</button>
+            <button id="custom-code-edit-save" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px; font-weight:700;">Save Changes</button>
+          </div>
+        `;
+
+        const btnSave = container.querySelector('#custom-code-edit-save') as HTMLButtonElement;
+        const btnCancel = container.querySelector('#custom-code-edit-cancel') as HTMLButtonElement;
+        const input = container.querySelector('#custom-html-edit-input') as HTMLTextAreaElement;
+
+        btnSave.addEventListener('click', () => {
+          const newHtml = input.value;
+          // Store the raw code in a custom attribute for later editing
+          selected.addAttributes({ 'data-code': newHtml });
+          selected.set('content', newHtml);
+          // Force re-render of components
+          selected.components(newHtml);
+          modal.close();
+        });
+
+        btnCancel.addEventListener('click', () => modal.close());
+
+        modal.setTitle('Edit Custom Code');
+        modal.setContent(container);
+        modal.open();
+
+        // Auto-focus and SELECT the text for easy replacement
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        }, 50);
+      }
+    });
+
+    // ─── Native GrapesJS Icon Picker Command ───
+    editor.Commands.add('open-icon-picker', {
+      run(editor, sender) {
+        const selected = editor.getSelected();
+        if (!selected) return;
+
+        const modal = editor.Modal;
+        const container = document.createElement('div');
+        container.className = 'icon-picker-container';
+        container.innerHTML = `
+          <div style="padding: 10px; margin-bottom: 15px; background: #1a1a2e; border-radius: 8px;">
+            <input type="text" id="icon-search" placeholder="Search icons..." 
+              style="width: 100%; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; color: #fff; border-radius: 6px; outline: none;">
+          </div>
+          <div id="icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 5px;">
+          </div>
+        `;
+
+        const icons = [
+          // General
+          'fa-star', 'fa-heart', 'fa-user', 'fa-home', 'fa-search', 'fa-envelope',
+          'fa-bell', 'fa-camera', 'fa-check', 'fa-times', 'fa-cog', 'fa-settings',
+          'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down',
+          'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down',
+          'fa-play', 'fa-pause', 'fa-stop', 'fa-forward', 'fa-backward',
+          // Files & Media
+          'fa-music', 'fa-video', 'fa-image', 'fa-file', 'fa-folder', 'fa-file-pdf',
+          'fa-file-word', 'fa-file-excel', 'fa-file-image', 'fa-file-video', 'fa-file-audio',
+          'fa-file-code', 'fa-file-alt', 'fa-file-archive', 'fa-folder-open',
+          // Actions
+          'fa-edit', 'fa-save', 'fa-trash', 'fa-trash-alt', 'fa-copy', 'fa-cut', 'fa-paste',
+          'fa-lock', 'fa-unlock', 'fa-key', 'fa-eye', 'fa-eye-slash', 'fa-download', 'fa-upload',
+          'fa-share', 'fa-share-alt', 'fa-reply', 'fa-forward', 'fa-redo', 'fa-undo',
+          'fa-print', 'fa-compress', 'fa-expand', 'fa-plus', 'fa-minus', 'fa-times-circle',
+          'fa-check-circle', 'fa-info-circle', 'fa-exclamation-circle', 'fa-question-circle',
+          // Security & Account
+          'fa-shield-alt', 'fa-user-shield', 'fa-user-lock', 'fa-fingerprint',
+          'fa-id-card', 'fa-id-badge', 'fa-address-card', 'fa-passport',
+          // People & Social
+          'fa-users', 'fa-user-friends', 'fa-user-plus', 'fa-user-minus', 'fa-user-check',
+          'fa-comment', 'fa-comments', 'fa-thumbs-up', 'fa-thumbs-down',
+          'fa-heart-broken', 'fa-hand-peace', 'fa-hands-helping',
+          // Medical & Health
+          'fa-user-md', 'fa-stethoscope', 'fa-tooth', 'fa-heartbeat', 'fa-heart',
+          'fa-hospital', 'fa-ambulance', 'fa-pills', 'fa-syringe', 'fa-prescription-bottle',
+          'fa-thermometer', 'fa-bandage', 'fa-brain', 'fa-capsules', 'fa-dna',
+          'fa-first-aid', 'fa-flask', 'fa-microscope', 'fa-notes-medical',
+          'fa-wheelchair', 'fa-user-nurse', 'fa-vials', 'fa-x-ray', 'fa-lungs',
+          'fa-virus', 'fa-virus-slash', 'fa-hand-holding-medical', 'fa-laptop-medical',
+          // Communication
+          'fa-phone', 'fa-phone-alt', 'fa-phone-volume', 'fa-fax', 'fa-map-marker-alt',
+          'fa-map', 'fa-globe', 'fa-globe-americas', 'fa-wifi', 'fa-satellite-dish',
+          // Technology
+          'fa-laptop', 'fa-mobile-alt', 'fa-tablet-alt', 'fa-desktop', 'fa-cloud',
+          'fa-server', 'fa-database', 'fa-code', 'fa-terminal', 'fa-microchip',
+          'fa-robot', 'fa-cogs', 'fa-code-branch', 'fa-bug', 'fa-plug',
+          'fa-broadcast-tower', 'fa-satellite', 'fa-hard-drive', 'fa-memory',
+          // Business & Finance
+          'fa-calendar', 'fa-clock', 'fa-chart-bar', 'fa-chart-pie', 'fa-chart-line',
+          'fa-shopping-cart', 'fa-credit-card', 'fa-wallet', 'fa-money-bill',
+          'fa-money-check', 'fa-receipt', 'fa-percentage', 'fa-tag', 'fa-tags',
+          'fa-barcode', 'fa-qrcode', 'fa-store', 'fa-cash-register',
+          // Delivery & Transport
+          'fa-gift', 'fa-truck', 'fa-plane', 'fa-car', 'fa-bicycle', 'fa-ship',
+          'fa-train', 'fa-bus', 'fa-motorcycle', 'fa-rocket', 'fa-parachute-box',
+          // Nature & Weather
+          'fa-bolt', 'fa-fire', 'fa-leaf', 'fa-water', 'fa-sun', 'fa-moon',
+          'fa-cloud-sun', 'fa-cloud-rain', 'fa-snowflake', 'fa-wind', 'fa-mountain',
+          'fa-tree', 'fa-seedling', 'fa-paw', 'fa-dove', 'fa-fish',
+          // Emoji
+          'fa-smile', 'fa-grin', 'fa-laugh', 'fa-meh', 'fa-frown', 'fa-sad-cry',
+          'fa-angry', 'fa-surprise', 'fa-kiss', 'fa-grimace', 'fa-tired',
+          // Misc
+          'fa-trophy', 'fa-medal', 'fa-award', 'fa-certificate', 'fa-graduation-cap',
+          'fa-book', 'fa-bookmark', 'fa-newspaper', 'fa-pen', 'fa-pencil-alt',
+          'fa-paint-brush', 'fa-palette', 'fa-magic', 'fa-wand-magic-sparkles',
+          'fa-gem', 'fa-crown', 'fa-hat-wizard', 'fa-dice', 'fa-gamepad',
+          'fa-headphones', 'fa-microphone', 'fa-camera-retro', 'fa-film',
+          'fa-utensils', 'fa-coffee', 'fa-pizza-slice', 'fa-hamburger',
+          'fa-glass-cheers', 'fa-cocktail', 'fa-wine-glass', 'fa-beer',
+        ];
+
+
+        const renderGrid = (filter = '') => {
+          const grid = container.querySelector('#icon-grid')!;
+          grid.innerHTML = '';
+          icons.filter(i => i.includes(filter)).forEach(icon => {
+            const btn = document.createElement('button');
+            btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; color: #e2e8f0; cursor: pointer; transition: all 0.2s;';
+            btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
+            btn.onclick = () => {
+              const currentClasses = selected.getClasses();
+              const newClasses = currentClasses.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
+              newClasses.push('fas');
+              newClasses.push(icon);
+              selected.setClass(newClasses);
+              modal.close();
+            };
+            btn.onmouseenter = () => { btn.style.background = '#2a2a3e'; btn.style.borderColor = '#7c3aed'; };
+            btn.onmouseleave = () => { btn.style.background = '#1a1a2e'; btn.style.borderColor = '#2a2a3e'; };
+            grid.appendChild(btn);
+          });
+        };
+
+        renderGrid();
+        container.querySelector('#icon-search')!.addEventListener('input', (e: any) => renderGrid(e.target.value));
+
+        modal.setTitle('Select Icon');
+        modal.setContent(container);
+        modal.open();
+      }
+    });
+
     editor.on('load', () => {
+      isEditorFullyLoaded = true;
       console.log('📤 GrapesJS Loaded - applying content');
+
+      // Configure RTE after load to avoid TS errors in init
+      const rte = editor.RichTextEditor;
+      rte.add('foreColor', {
+        icon: '<i class="fa fa-font" style="color: #6366f1"></i>',
+        attributes: { title: 'Text Color' },
+        result: (rte: any, action: any) => {
+          const color = prompt('Enter color (hex or name):', '#6366f1');
+          if (color) rte.exec('foreColor', color);
+        }
+      });
+      rte.add('hiliteColor', {
+        icon: '<i class="fa fa-paint-brush"></i>',
+        attributes: { title: 'Background Color' },
+        result: (rte: any, action: any) => {
+          const color = prompt('Enter background color:', '#ffff00');
+          if (color) rte.exec('hiliteColor', color);
+        }
+      });
+
+      // ── Canvas click: icon picker on EVERY click on an icon ──
+      setTimeout(() => {
+        try {
+          const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
+          const frameDoc = frameEl?.contentDocument;
+          if (frameDoc) {
+            frameDoc.addEventListener('click', () => {
+              // Wait a bit for GrapesJS selection to settle
+              setTimeout(() => {
+                const selected = editor.getSelected();
+                if (!selected) return;
+                const tagName = selected.get('tagName') || '';
+                const classes = selected.getClasses();
+                const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+                const isCustomCode = selected.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (selected.getAttributes?.()['data-gjs-type'] === 'custom-code');
+
+                if (isIcon) {
+                  editor.runCommand('open-icon-picker');
+                } else if (isCustomCode) {
+                  editor.runCommand('open-custom-code-editor');
+                }
+              }, 50);
+            }, true);
+          }
+        } catch (e) { /* frame not ready */ }
+      }, 1500);
+
+      /* 
+      editor.on('component:add', (model) => {
+        ... removed auto-open on drop as per user request ...
+      });
+      */
+
+
+      // ─── Auto-open editor on drop ───
+      editor.on('block:drag:stop', (model) => {
+        if (!model) return;
+        const classes = model.getClasses ? model.getClasses() : [];
+        const isCustomCode = model.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
+        if (isCustomCode) {
+          setTimeout(() => {
+            editor.select(model);
+            editor.runCommand('open-custom-code-editor');
+          }, 100);
+        }
+      });
+
+      editor.on('component:dblclick', (model) => {
+        const tagName = model.get('tagName');
+        const classes = model.getClasses();
+        const isIcon = model.is('icon') || tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+
+        if (isIcon) {
+          editor.runCommand('open-icon-picker');
+        } else if (model.get('type') === 'custom-code') {
+          editor.runCommand('open-custom-code-editor');
+        }
+      });
+
+
+      editor.BlockManager.add('icon', {
+        label: '<i class="fas fa-star" style="font-size: 24px; margin-bottom: 8px;"></i><div>Icon</div>',
+        category: 'Basic',
+        content: {
+          type: 'icon',
+          classes: ['fas', 'fa-star'],
+          style: { 'font-size': '32px', 'color': 'var(--primary)', 'display': 'inline-block' }
+        }
+      });
+
+      editor.BlockManager.add('custom-code', {
+        label: '<i class="fas fa-code" style="font-size: 24px; margin-bottom: 8px;"></i><div>Custom Code</div>',
+        category: 'Basic',
+        content: {
+          type: 'custom-code',
+          classes: ['gjs-custom-code'],
+          content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+        }
+      });
 
       // ─── Register Form Traits (Automatic mapping to HTML tags) ───
       editor.DomComponents.addType('form', {
@@ -684,6 +1198,42 @@ const GrapesEditor = () => {
           ]
         }
       });
+
+      // 5. REGISTER ALL BLOCKS FROM BLOCK_DEFS
+      const { BLOCK_DEFS } = require('./blockDefs');
+      BLOCK_DEFS.forEach((b: any) => {
+        if (!bm.get(b.type)) {
+          bm.add(b.type, {
+            label: b.label,
+            category: b.category,
+            content: b.defaultContent,
+          });
+        }
+      });
+
+      // 6. DYNAMIC LABEL SYNC LOGIC
+      editor.on('component:update:attributes:data-label', (component) => {
+        const newLabel = component.getAttributes()['data-label'];
+        if (!newLabel) return;
+
+        // Find associated label: 
+        // 1. Check parent for a label
+        // 2. Check siblings for a label
+        const parent = component.parent();
+        if (parent) {
+          const labelComp = parent.components().find((c: any) => c.get('tagName') === 'label');
+          if (labelComp) {
+            // If it's a wrapper label like <label>Text <input/></label>
+            if (labelComp === component.parent() && labelComp.get('tagName') === 'label') {
+              const content = labelComp.get('content') || '';
+              // Simple replacement for radio/checkbox labels
+              labelComp.set('content', `${newLabel} `);
+            } else {
+              labelComp.set('content', newLabel);
+            }
+          }
+        }
+      });
     });
 
     // Fallback if load already happened
@@ -768,13 +1318,26 @@ const GrapesEditor = () => {
     editor.on('component:selected', (model) => {
       setTimeout(processFields, 200);
 
-      // Auto-switch to AI tab on selection
-      setLeftTab('ai');
-      setIsSidebarOpen(true);
+      const tagName = model.get('tagName') || 'div';
+      const classes = model.getClasses();
+      const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+
+      const isCustomCode = model.get('type') === 'custom-code' ||
+        classes.includes('gjs-custom-code') ||
+        (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
+
+      // 1. Handle UI Tab Switching
+      if (isCustomCode) {
+        setRightTab('traits');
+      } else if (isIcon) {
+        // Do NOT switch tabs automatically
+      } else {
+        // Elements selected - stay in current tab for better UX
+      }
+
       setActiveComponent(model);
 
       // Update Selection Label for AI
-      const tagName = model.get('tagName') || 'div';
       const type = model.get('type') || '';
       const name = model.get('name') || type || tagName;
 
@@ -783,6 +1346,9 @@ const GrapesEditor = () => {
       if (readableName === 'Wrapper') readableName = 'Body';
       setSelectedLabel(readableName);
     });
+
+
+
 
     editor.on('component:deselected', () => {
       setSelectedLabel('Body');
@@ -828,16 +1394,16 @@ const GrapesEditor = () => {
       const styleId = 'branding-vars';
       let styleEl = head.querySelector(`#${styleId}`);
       if (!styleEl) {
-        styleEl = document.createElement('style');
+        styleEl = doc.createElement('style');
         styleEl.id = styleId;
         head.appendChild(styleEl);
       }
       styleEl.innerHTML = `
         :root {
-          --primary: ${page.primaryColor || '#7c3aed'};
-          --secondary: ${page.secondaryColor || '#6366f1'};
-          --accent: ${page.accentColor || page.secondaryColor || '#6366f1'};
-          --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
+          --primary: ${themePrimary};
+          --secondary: ${themeSecondary};
+          --accent: ${themeSecondary};
+          --button-gradient: linear-gradient(135deg, ${themePrimary}, ${themeSecondary});
         }
         input, textarea, select {
           color: #0f172a !important;
@@ -848,7 +1414,14 @@ const GrapesEditor = () => {
         }
       `;
     }
-  }, [page, page?.primaryColor, page?.secondaryColor]);
+  }, [page, themePrimary, themeSecondary]);
+
+  // Initialize hasSaved if page already has content
+  useEffect(() => {
+    if (page && (page.landingPageContent || page.content)) {
+      setHasSaved(true);
+    }
+  }, [page]);
 
 
   // ─── Device ───
@@ -860,6 +1433,8 @@ const GrapesEditor = () => {
   // ─── Save ───
   const handleSave = async () => {
     if (!editorRef.current) return;
+    setIsSaving(true);
+    console.log('💾 Saving page content...');
     const html = editorRef.current.getHtml();
     const css = editorRef.current.getCss() || '';
 
@@ -891,8 +1466,15 @@ const GrapesEditor = () => {
       updateData.styles = page?.landingPageStyles;
     }
 
-    updatePageMutation.mutate(updateData);
-    toast.success(`${mode === 'thank-you' ? 'Thank You' : 'Landing'} page saved!`);
+    try {
+      await updatePageMutation.mutateAsync(updateData);
+      setHasSaved(true);
+      toast.success(`${mode === 'thank-you' ? 'Thank You' : 'Landing'} page saved!`);
+    } catch (err) {
+      toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const switchMode = (newMode: 'landing' | 'thank-you') => {
@@ -930,6 +1512,13 @@ const GrapesEditor = () => {
     // 3. Update Sidebar Tab if needed
     if (newMode === 'thank-you') {
       setLeftTab('thank-you');
+      // Force an immediate sync from the thank you panel if it's already mounted
+      setTimeout(() => {
+        const thankYouHtml = page?.thankYouPageContent;
+        if (thankYouHtml && editorRef.current) {
+          applyContentToEditor(editorRef.current, 'thank-you');
+        }
+      }, 100);
     } else if (leftTab === 'thank-you') {
       setLeftTab('blocks');
     }
@@ -1004,163 +1593,82 @@ const GrapesEditor = () => {
       toast.error('Failed to create download package');
       return;
     }
-    const imagesFolder = landingPageFolder.folder('images');
 
-    // 3. Extract Images
+    // 3. Extract and Download Images
     const imageUrls = new Set<string>();
-
     const getFullUrl = (url: string) => {
       if (!url || url.startsWith('data:')) return null;
-      if (url.startsWith('http') || url.startsWith('//')) {
-        return url.startsWith('//') ? `https:${url}` : url;
-      }
-      // Handle relative URLs
-      try {
-        return new URL(url, window.location.origin).href;
-      } catch (e) {
-        return null;
-      }
+      if (url.startsWith('http') || url.startsWith('//')) return url.startsWith('//') ? `https:${url}` : url;
+      try { return new URL(url, window.location.origin).href; } catch (e) { return null; }
     };
 
-    // Extract from HTML (src, data-src, poster attributes)
-    const imgRegex = /(?:src|data-src|poster)=["']([^"'>]+)["']/g;
-    let match;
-    [formattedLandingHtml, formattedThankYouHtml].forEach(content => {
-      while ((match = imgRegex.exec(content)) !== null) {
-        const url = getFullUrl(match[1]);
-        if (url) imageUrls.add(url);
-      }
-    });
-
-    // Handle srcset
-    const srcsetRegex = /srcset=["']([^"'>]+)["']/g;
-    [formattedLandingHtml, formattedThankYouHtml].forEach(content => {
-      while ((match = srcsetRegex.exec(content)) !== null) {
-        const srcset = match[1];
-        srcset.split(',').forEach(part => {
-          const urlPart = part.trim().split(/\s+/)[0];
-          const url = getFullUrl(urlPart);
-          if (url) imageUrls.add(url);
-        });
-      }
-    });
-
-    // Extract from style attributes and CSS
+    const imgRegex = /(?:src|data-src|poster|url\(['"]?)=["']?([^"'>)]+)["']?/g;
     [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
-      const cssUrlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
-      while ((match = cssUrlRegex.exec(content)) !== null) {
-        const url = getFullUrl(match[1]);
+      let m;
+      while ((m = imgRegex.exec(content)) !== null) {
+        const url = getFullUrl(m[1]);
         if (url) imageUrls.add(url);
       }
     });
 
-    // Fallback: Catch anything that looks like an image URL extension
-    [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
-      const genericImageRegex = /(https?:\/\/[^"'\s)]+\.(?:png|jpg|jpeg|gif|webp|svg|avif)(?:\?[^"'\s)]+)?)[\s"')]?/gi;
-      while ((match = genericImageRegex.exec(content)) !== null) {
-        const url = getFullUrl(match[1]);
-        if (url) imageUrls.add(url);
-      }
-    });
-
-    // 4. Download and process images
-    let downloadedCount = 0;
-    let failedCount = 0;
-
-    const imageMap: Record<string, string> = {}; // [originalUrl]: newLocalPath
+    const imageMap: Record<string, string> = {};
     const downloadPromises = Array.from(imageUrls).map(async (origUrl) => {
+      const fullUrl = getFullUrl(origUrl);
+      if (!fullUrl) return;
       try {
-        const fullUrl = origUrl.startsWith('//') ? `https:${origUrl}` :
-          (origUrl.startsWith('http') ? origUrl : new URL(origUrl, window.location.origin).href);
-
         let blob: Blob | null = null;
-        let finalStatus = 'ok';
-
-        // Try direct fetch first
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          const response = await fetch(fullUrl, { mode: 'cors', signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (response.ok) {
-            blob = await response.blob();
-          } else {
-            throw new Error(`HTTP ${response.status}`);
-          }
-        } catch (directErr) {
-          console.warn(`Direct fetch failed for ${origUrl}, attempting proxy...`, directErr);
-          // Try via weserv.nl proxy as a fallback for CORS
+          const res = await fetch(fullUrl, { mode: 'cors' });
+          if (res.ok) blob = await res.blob();
+        } catch (e) {
           try {
-            const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(fullUrl)}&default=${encodeURIComponent(fullUrl)}`;
-            const proxyResponse = await fetch(proxyUrl);
-            if (proxyResponse.ok) {
-              blob = await proxyResponse.blob();
-              finalStatus = 'proxied';
-            } else {
-              throw new Error(`Proxy failed: ${proxyResponse.status}`);
-            }
-          } catch (proxyErr) {
-            console.error(`Proxy also failed for ${origUrl}`, proxyErr);
-            throw proxyErr;
-          }
+            const res = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(fullUrl)}`);
+            if (res.ok) blob = await res.blob();
+          } catch (e2) { }
         }
 
-        if (!blob) throw new Error('Blob is null');
+        if (blob) {
+          const urlHash = Math.random().toString(36).substr(2, 6);
+          const rawFilename = fullUrl.split('/').pop()?.split('?')[0] || 'image';
+          let extension = blob.type.split('/')[1] || 'png';
+          if (extension === 'jpeg') extension = 'jpg';
 
-        // Generate a clean filename
-        const urlParts = fullUrl.split('/');
-        const rawFilename = urlParts[urlParts.length - 1].split('?')[0] || `img_${Math.random().toString(36).substr(2, 9)}`;
-        let cleanFilename = rawFilename.replace(/[^a-zA-Z0-9.-]/g, '_');
-        if (!cleanFilename.includes('.')) {
-          const type = blob.type.split('/')[1] || 'png';
-          cleanFilename += `.${type}`;
+          // Truncate original name and add hash to keep it short but unique
+          let cleanBase = rawFilename.replace(/[^a-zA-Z0-9]/g, '_').substr(0, 20);
+          if (!cleanBase) cleanBase = 'asset';
+          const filename = `${cleanBase}_${urlHash}.${extension}`;
+
+          landingPageFolder.file(filename, blob);
+          imageMap[origUrl] = filename;
         }
-
-        // Ensure unique filename
-        let finalFilename = cleanFilename;
-        let counter = 1;
-        while (landingPageFolder.file(`images/${finalFilename}`)) {
-          const parts = cleanFilename.split('.');
-          const ext = parts.pop();
-          finalFilename = `${parts.join('.')}_${counter}.${ext}`;
-          counter++;
-        }
-
-        // Add to zip
-        imagesFolder?.file(finalFilename, blob);
-
-        // Map original URL to relative path
-        imageMap[origUrl] = `images/${finalFilename}`;
-        downloadedCount++;
-      } catch (err) {
-        console.error(`Failed to download asset: ${origUrl}`, err);
-        failedCount++;
-      }
+      } catch (err) { }
     });
 
     await Promise.all(downloadPromises);
 
-    if (failedCount > 0) {
-      toast.error(`Warning: ${failedCount} images could not be downloaded (CORS/Network error).`);
-    }
-
-    // 5. Update paths in HTML and CSS
-    Object.entries(imageMap).forEach(([oldUrl, newPath]) => {
-      const escapedUrl = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escapedUrl, 'g');
+    // 4. Replace paths in HTML and CSS
+    const sortedUrls = Object.keys(imageMap).sort((a, b) => b.length - a.length);
+    sortedUrls.forEach((oldUrl) => {
+      const newPath = imageMap[oldUrl];
+      const regex = new RegExp(oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
       formattedLandingHtml = formattedLandingHtml.replace(regex, newPath);
       formattedLandingCss = formattedLandingCss.replace(regex, newPath);
       formattedThankYouHtml = formattedThankYouHtml.replace(regex, newPath);
       formattedThankYouCss = formattedThankYouCss.replace(regex, newPath);
     });
 
-    // 6. Build final HTML files
+    // Final sweep: Convert remaining / paths to absolute for safety
+    const origin = window.location.origin;
+    const relativeRegex = /src=["']\/([^"'][^"'>]*)["']/g;
+    formattedLandingHtml = formattedLandingHtml.replace(relativeRegex, `src="${origin}/$1"`);
+    formattedThankYouHtml = formattedThankYouHtml.replace(relativeRegex, `src="${origin}/$1"`);
+
+    // 5. Build final HTML files
     const finalLandingHtml = buildFullHtml(formattedLandingHtml, formattedLandingCss, pageTitle, metaDesc, cssFileName);
 
-    // 7. Generate ZIP
+    // 6. Generate ZIP
     landingPageFolder.file('landing-page.html', finalLandingHtml);
     landingPageFolder.file(cssFileName, formattedLandingCss);
-
     if (formattedThankYouHtml) {
       const tyTitle = `${pageTitle} - Thank You`;
       const finalTyHtml = buildFullHtml(formattedThankYouHtml, formattedThankYouCss, tyTitle, metaDesc, tyCssFileName);
@@ -1175,7 +1683,6 @@ const GrapesEditor = () => {
     zipAnchor.download = `${page?.slug || 'landing-page'}-package.zip`;
     zipAnchor.click();
     URL.revokeObjectURL(zipUrl);
-
     toast.success('Landing page package downloaded!');
   };
 
@@ -1418,24 +1925,45 @@ const GrapesEditor = () => {
       }}>
         {/* Logo & Page Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>G</div>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+            {project?.name?.charAt(0).toUpperCase() || 'G'}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>Grapes Studio</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
             <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
 
         <Sep />
 
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(`/dashboard/projects/${projId}`)}
+          style={{
+            ...outlineBtn,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#60a5fa',
+            padding: '6px 12px',
+            fontSize: 11,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={14} /> Back to Pages
+        </button>
 
 
         {/* Mode Switcher */}
         <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
           <TBtn title="Edit Landing Page" active={mode === 'landing'} onClick={() => switchMode('landing')}>
-            <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, display: window.innerWidth > 1000 ? 'inline' : 'none' }}>Landing</span>
+            <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Landing Page</span>
           </TBtn>
           <TBtn title="Edit Thank You Page" active={mode === 'thank-you'} onClick={() => switchMode('thank-you')}>
-            <SuccessIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, display: window.innerWidth > 1000 ? 'inline' : 'none' }}>Thank You</span>
+            <SuccessIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Thank You Page</span>
           </TBtn>
         </div>
 
@@ -1450,42 +1978,77 @@ const GrapesEditor = () => {
 
         <Sep />
 
-        <div style={{ display: 'flex', gap: 2 }}>
-          <TBtn title="Undo" onClick={() => editorRef.current?.UndoManager.undo()}><UndoIcon /></TBtn>
-          <TBtn title="Redo" onClick={() => editorRef.current?.UndoManager.redo()}><RedoIcon /></TBtn>
-        </div>
-
-        <Sep />
-
-        <TBtn title="Clear Canvas" onClick={() => { if (confirm('Clear entire canvas?')) { editorRef.current?.runCommand('core:canvas-clear'); toast.success('Canvas cleared'); } }}><TrashIcon /></TBtn>
-
         <div style={{ flex: 1 }} />
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={downloadHtml}
-            style={{ ...outlineBtn, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399', padding: '7px 14px' }}
-            title="Download HTML Package"
+            disabled={!hasSaved}
+            style={{
+              ...outlineBtn,
+              background: !hasSaved ? 'rgba(52,211,153,0.05)' : 'rgba(52,211,153,0.1)',
+              border: !hasSaved ? '1px solid rgba(52,211,153,0.1)' : '1px solid rgba(52,211,153,0.3)',
+              color: !hasSaved ? '#34d399' : '#34d399',
+              padding: '7px 14px',
+              opacity: !hasSaved ? 0.5 : 1,
+              cursor: !hasSaved ? 'not-allowed' : 'pointer'
+            }}
+            title={!hasSaved ? "Please save your page first before downloading" : "Download HTML Package"}
           >
             <DownloadIcon /> <span style={{ marginLeft: 6 }}>Download HTML</span>
           </button>
 
-          <button
-            onClick={() => {
-              if (editorRef.current) {
-                applyContentToEditor(editorRef.current);
-                toast.success('Canvas refreshed from database');
-              }
-            }}
-            style={{ ...outlineBtn, background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: '#ffc107', padding: '7px 14px' }}
-            title="Force refresh content from database"
-          >
-            <ZapIcon /> <span style={{ marginLeft: 6 }}>Sync Canvas</span>
-          </button>
+          {/* Status Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
+            <select 
+              value={siteStatus}
+              onChange={(e) => {
+                const val = e.target.value as any;
+                setSiteStatus(val);
+                if (val === 'unpublished') {
+                  toast.error('Site is now Unpublished and hidden from public view.');
+                } else {
+                  toast.success(`Status changed to ${val}`);
+                }
+              }}
+              style={{ 
+                background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e8f0', 
+                borderRadius: 6, padding: '4px 24px 4px 10px', fontSize: 11, fontWeight: 700, outline: 'none', cursor: 'pointer',
+                appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center'
+              }}
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="republished">Republished</option>
+              <option value="unpublished">Unpublished</option>
+            </select>
+          </div>
 
-          <button onClick={handlePreview} style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} title="Live Preview"><EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span></button>
-          <button onClick={handleSave} style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px' }} title="Save Changes"><SaveIcon /> <span style={{ marginLeft: 6 }}>Save</span></button>
+          <button 
+            onClick={() => {
+              if (siteStatus === 'unpublished') {
+                toast.error('Cannot preview an Unpublished site. Please change status to Published first.');
+                return;
+              }
+              handlePreview();
+            }} 
+            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} 
+            title="Live Preview"
+          >
+            <EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span>
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
+            title="Save Changes"
+          >
+            {isSaving ? <SpinnerIcon /> : <SaveIcon />}
+            <span style={{ marginLeft: 6 }}>{isSaving ? 'Saving...' : 'Save'}</span>
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
@@ -1508,35 +2071,14 @@ const GrapesEditor = () => {
         <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #1e1e2d' }}>
           {/* Vertical Toolbar (Narrow) */}
           <div style={{
-            width: 56, flexShrink: 0, background: '#0a0a14',
+            width: 58, flexShrink: 0, background: '#0b0b18',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '16px 0', gap: 20, borderRight: '1px solid #1e1e2d'
+            padding: '16px 0', gap: 18, borderRight: '1px solid #1e1e30'
           }}>
             <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'seo'} onClick={() => { if (leftTab === 'seo') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('seo'); setIsSidebarOpen(true); } }}><SettingsIcon /><span>SEO</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); switchMode('thank-you'); } }}><SuccessIcon /><span>Thank You</span></NavIcon>
-            <div style={{ flex: 1 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 12 }}>
-              <button
-                onClick={() => navigate('/dashboard')}
-                title="Go to Projects"
-                style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-              >
-                <div style={{ padding: 8, borderRadius: 10, border: '1px solid #1e1e2d' }}><HomeIcon /></div>
-                <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Projects</span>
-              </button>
-              <button
-                onClick={() => { toast.info('Logged out'); navigate('/login'); }}
-                title="Logout"
-                style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-              >
-                <div style={{ padding: 8, borderRadius: 10, border: '1px solid #1e1e2d' }}><LogoutIcon /></div>
-                <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Logout</span>
-              </button>
-            </div>
           </div>
 
           {/* Panel Content (Dynamic) */}
@@ -1549,17 +2091,48 @@ const GrapesEditor = () => {
             borderRight: isSidebarOpen ? '1px solid #1e1e2d' : 'none'
           }}>
             <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{leftTab}</span>
-              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#4a4a6a', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
+              </span>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
             </div>
 
             <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
               <BlocksPanel
                 onAdd={(type) => {
                   if (!editorRef.current) return;
-                  const block = editorRef.current.BlockManager.get(type);
+                  const editor = editorRef.current;
+
+                  if (type === 'icon') {
+                    // Add a default icon then open the picker
+                    const added = editor.addComponents({
+                      type: 'icon',
+                      classes: ['fas', 'fa-star'],
+                      style: { 'font-size': '32px', 'color': '#7c3aed', 'display': 'inline-block', 'cursor': 'pointer' }
+                    });
+                    if (added && added[0]) {
+                      editor.select(added[0]);
+                      setTimeout(() => editor.runCommand('open-icon-picker'), 100);
+                    }
+                    return;
+                  }
+
+                  if (type === 'custom-code') {
+                    const added = editor.addComponents({
+                      type: 'custom-code',
+                      classes: ['gjs-custom-code'],
+                      content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+                    });
+                    if (added && added[0]) {
+                      editor.select(added[0]);
+                      setTimeout(() => editor.runCommand('open-custom-code-editor'), 100);
+                    }
+                    return;
+                  }
+
+                  const block = editor.BlockManager.get(type);
                   if (block) {
-                    editorRef.current.addComponents(block.get('content'));
+                    editor.addComponents(block.get('content'));
                   }
                 }}
                 onDragStart={(type, ev) => {
@@ -1590,6 +2163,7 @@ const GrapesEditor = () => {
 
             {/* Layers */}
             <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
+
 
             {/* AI Panel */}
             <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
@@ -1940,68 +2514,64 @@ const GrapesEditor = () => {
               {['#f87171', '#34d399', '#fbbf24'].map((c, i) => (
                 <div key={i} style={{ position: 'absolute', width: 6, height: 6, borderRadius: '50%', background: c, top: `${20 + i * 20}%`, right: `${6 + i * 14}%`, opacity: 0.7 }} />
               ))}
+              <button
+                onClick={() => setPublishModalOpen(false)}
+                style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s', zIndex: 10 }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.2)' }}>
                 <span style={{ fontSize: 36 }}>🚀</span>
               </div>
-              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>Your Site is Published!</h2>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0, fontWeight: 400 }}>Your landing page is now live on the web</p>
+              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>Are you sure you want to publish your site?</h2>
             </div>
 
             {/* Body */}
             <div style={{ padding: '24px 28px' }}>
-              {/* Token verified badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 16 }}>✅</span>
-                </div>
-                <div>
-                  <div style={{ color: '#10b981', fontSize: 13, fontWeight: 700 }}>Token Verified Successfully</div>
-                  <div style={{ color: '#6b7280', fontSize: 11, marginTop: 2 }}>Authentication validated · SSL enabled · CDN active</div>
-                </div>
-              </div>
-
               {/* Live URL */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Live URL</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px' }}>
                   <span style={{ color: '#10b981', fontSize: 12, flex: 1, fontFamily: 'monospace', wordBreak: 'break-all' }}>{publishedUrl}</span>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(publishedUrl); toast.success('URL copied!'); }}
-                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                    onClick={(e) => {
+                      const btn = e.currentTarget;
+                      const originalText = btn.innerText;
+                      navigator.clipboard.writeText(publishedUrl).then(() => {
+                        toast.success('URL copied!');
+                        btn.innerText = 'Copied!';
+                        btn.style.background = 'rgba(16,185,129,0.2)';
+                        btn.style.color = '#34d399';
+                        setTimeout(() => {
+                          btn.innerText = originalText;
+                          btn.style.background = 'rgba(124,58,237,0.2)';
+                          btn.style.color = '#a78bfa';
+                        }, 2000);
+                      });
+                    }}
+                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s' }}
                   >Copy</button>
                 </div>
               </div>
 
-              {/* Stats row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
-                {[{ icon: '⚡', label: 'Performance', val: 'Fast' }, { icon: '🔒', label: 'Security', val: 'SSL' }, { icon: '🌐', label: 'CDN', val: 'Active' }].map(s => (
-                  <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-                    <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 700 }}>{s.val}</div>
-                    <div style={{ color: '#4b5563', fontSize: 10 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
+
+
+
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: 10 }}>
+
                 <button
-                  onClick={() => window.open(publishedUrl, '_blank')}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <EyeIcon /> View Live
-                </button>
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  🚀 Dashboard
-                </button>
-                <button
-                  onClick={() => setPublishModalOpen(false)}
+                  onClick={() => {
+                    setPublishModalOpen(false);
+                    setSiteStatus('published');
+                    toast.success('Site successfully published and status updated!');
+                  }}
                   style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
                 >
-                  ✓ Done
+                  Publish
                 </button>
               </div>
             </div>
@@ -2009,6 +2579,8 @@ const GrapesEditor = () => {
           <style dangerouslySetInnerHTML={{ __html: `@keyframes publishPop { 0%{opacity:0;transform:scale(0.85) translateY(20px)} 100%{opacity:1;transform:scale(1) translateY(0)} }` }} />
         </div>
       )}
+
+
 
       {/* ═══════════════ CODE VIEW MODAL ═══════════════ */}
       {codeView && (
@@ -2288,12 +2860,19 @@ const RocketIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="n
 const GridIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>;
 const LayersIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>;
 const SuccessIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+const GemIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z" /><path d="M11 3 8 9l3 12" /><path d="m13 3 3 6-3 12" /><path d="M2 9h20" /></svg>;
+
 const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
 const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" /></svg>;
 const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
+const SpinnerIcon = () => (
+  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
 
-const parseInlineStyle = (styleStr: string): Record<string, string> => {
+function parseInlineStyle(styleStr: string): Record<string, string> {
   const styleObj: Record<string, string> = {};
   if (!styleStr) return styleObj;
   // Split by semicolon not inside parentheses (to handle data URLs/functions)
@@ -2305,10 +2884,10 @@ const parseInlineStyle = (styleStr: string): Record<string, string> => {
     }
   });
   return styleObj;
-};
+}
 
-/* ── Build full HTML ── */
-const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') => `<!DOCTYPE html>
+function buildFullHtml(html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -2316,16 +2895,18 @@ const buildFullHtml = (html: string, css: string, title = 'Landing Page', desc =
   <title>${title}</title>
   ${desc ? `<meta name="description" content="${desc}"/>` : ''}
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Icons&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="./${externalCssFile}"/>
   <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}</style>
 </head>
 <body>${html}</body>
 </html>`;
+}
 
-const formatCssPretty = (css: string): string => {
+function formatCssPretty(css: string): string {
   return css
     .replace(/\s+/g, ' ')
     .replace(/\s*{\s*/g, ' {\n  ')
@@ -2333,9 +2914,9 @@ const formatCssPretty = (css: string): string => {
     .replace(/\s*}\s*/g, '\n}\n\n')
     .replace(/\n\s*\n\s*\n/g, '\n\n')
     .trim();
-};
+}
 
-const formatHtmlPretty = (html: string): string => {
+function formatHtmlPretty(html: string): string {
   if (!html.trim()) return '';
   const container = document.createElement('div');
   container.innerHTML = html;
@@ -2381,6 +2962,6 @@ const formatHtmlPretty = (html: string): string => {
     .map((node) => formatNode(node, 0))
     .join('')
     .trim();
-};
+}
 
 export default GrapesEditor;

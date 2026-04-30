@@ -228,6 +228,49 @@ const PublicLandingPage = () => {
 
       let finalHtml = aiHtml;
 
+      // Better Dark Mode detection 
+      const isDark = aiCss.toLowerCase().includes('background-color: #0') || 
+                     aiCss.toLowerCase().includes('background: #0') || 
+                     aiCss.toLowerCase().includes('background-color: black') ||
+                     aiCss.toLowerCase().includes('background: black') ||
+                     aiHtml.toLowerCase().includes('bg-slate-900') ||
+                     aiHtml.toLowerCase().includes('bg-[#0') ||
+                     aiHtml.toLowerCase().includes('saas-hero-container') ||
+                     aiHtml.toLowerCase().includes('agency-container');
+
+      // ─── SHORTCODE PARSER ────────────────────────────────────────────────
+      const currentYear = new Date().getFullYear().toString();
+      const projectName = pageData.projectName || meta?.projectName || "Your Brand";
+      
+      const leadFormHtml = `
+        <div style="padding: 40px; background: ${isDark ? '#1e1e2d' : '#ffffff'}; border: 1px solid ${isDark ? '#2a2a3e' : '#e2e8f0'}; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto;">
+          <h3 style="margin: 0 0 10px 0; font-size: 24px; color: ${isDark ? '#f8fafc' : '#1e293b'}; text-align: center; font-weight: bold;">Get Started Now</h3>
+          <p style="margin: 0 0 20px 0; font-size: 14px; color: ${isDark ? '#94a3b8' : '#64748b'}; text-align: center;">Fill out your details and we will get back to you.</p>
+          <form action="#" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: ${isDark ? '#94a3b8' : '#475569'}; text-transform: uppercase; display: block; margin-bottom: 6px;">Name</label>
+              <input type="text" name="name" required placeholder="Your Name" style="width: 100%; padding: 12px; border: 1px solid ${isDark ? '#2a2a3e' : '#cbd5e1'}; border-radius: 8px; outline: none; color: ${isDark ? '#f8fafc' : '#0f172a'}; background: ${isDark ? '#0a0a14' : '#f8fafc'};">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: ${isDark ? '#94a3b8' : '#475569'}; text-transform: uppercase; display: block; margin-bottom: 6px;">Email</label>
+              <input type="email" name="email" required placeholder="email@example.com" style="width: 100%; padding: 12px; border: 1px solid ${isDark ? '#2a2a3e' : '#cbd5e1'}; border-radius: 8px; outline: none; color: ${isDark ? '#f8fafc' : '#0f172a'}; background: ${isDark ? '#0a0a14' : '#f8fafc'};">
+            </div>
+            <button type="submit" style="width: 100%; padding: 14px; background: ${BRAND_COLOR}; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: opacity 0.2s;">Submit Now</button>
+          </form>
+        </div>
+      `;
+
+      finalHtml = finalHtml
+        .replace(/\[year\]/gi, currentYear)
+        .replace(/\[project_name\]/gi, projectName)
+        .replace(/\[lead_form\]/gi, leadFormHtml)
+        .replace(/\{\{\s*faker\s+['"]number\.int['"]\s+['"](\d+)['"]\s*\}\}/gi, (match, max) => {
+          return Math.floor(Math.random() * parseInt(max)).toLocaleString();
+        })
+        .replace(/\{\{\s*faker\s+['"]number\.int['"]\s*\}\}/gi, () => {
+          return Math.floor(Math.random() * 10000).toLocaleString();
+        });
+
       // ─── DYNAMIC REPLACEMENTS: Logo & Context ──────────────────────────────
       const finalLogo = pageData.logoUrl || meta?.logoUrl || '';
       console.log("🎨 Applying Branding. Logo:", finalLogo, "Primary:", BRAND_COLOR);
@@ -249,15 +292,11 @@ const PublicLandingPage = () => {
       // ─── REMOVE PICSUM PLACEHOLDERS (if they leak from AI/defaults) ─────────
       finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
 
-      // Better Dark Mode detection 
-      const isDark = aiCss.toLowerCase().includes('background-color: #0') || 
-                     aiCss.toLowerCase().includes('background: #0') || 
-                     aiCss.toLowerCase().includes('background-color: black') ||
-                     aiCss.toLowerCase().includes('background: black') ||
-                     aiHtml.toLowerCase().includes('bg-slate-900') ||
-                     aiHtml.toLowerCase().includes('bg-[#0') ||
-                     aiHtml.toLowerCase().includes('saas-hero-container') ||
-                     aiHtml.toLowerCase().includes('agency-container');
+      // ─── DYNAMIC COLOR REPLACEMENT ─────────────────────────────────────────
+      const finalCss = aiCss
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_COLOR)
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, pageData.secondaryColor || BRAND_COLOR)
+        .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
 
       const brandingStyles = `
         <style id="branding-vars">
@@ -295,9 +334,12 @@ const PublicLandingPage = () => {
 
       const coreDependencies = `
         <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
         ${brandingStyles}
       `;
 

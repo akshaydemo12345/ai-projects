@@ -74,13 +74,7 @@ const ProjectsPage = () => {
   ];
 
   const categoryColors: Record<string, string> = {
-    SaaS: "bg-violet-100 text-violet-700",
-    "E-commerce": "bg-blue-100 text-blue-700",
-    Agency: "bg-amber-100 text-amber-700",
-    Healthcare: "bg-red-100 text-red-700",
-    Education: "bg-cyan-100 text-cyan-700",
-    Finance: "bg-emerald-100 text-emerald-700",
-    "Real Estate": "bg-orange-100 text-orange-700",
+    General: "bg-slate-100 text-slate-600",
     Other: "bg-slate-100 text-slate-600",
   };
 

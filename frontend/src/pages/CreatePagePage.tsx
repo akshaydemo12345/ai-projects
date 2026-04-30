@@ -2,20 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
-  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin
+  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
-import { agencyHtml, agencyStyles } from "../templates/agency";
-import { leadGenHtml, leadGenStyles } from "../templates/leadGen";
-import { realEstateHtml, realEstateStyles } from "../templates/realEstate";
-import { healthcareHtml, healthcareStyles } from "../templates/healthcare";
-import { educationHtml, educationStyles } from "../templates/education";
-import { ecommerceHtml, ecommerceStyles } from "../templates/ecommerce";
-import { legalHtml, legalStyles } from "../templates/legal";
-import { technologyHtml, technologyStyles } from "../templates/technology";
+import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
+import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+// Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -39,78 +34,27 @@ const generateAiPage = (
 });
 
 // ─── Template definitions ─────────────────────────────────────────────────────
-const LANDING_TEMPLATES = [
+const LANDING_TEMPLATES: any[] = [
   {
-    id: "tech-saas",
-    name: "Modern SaaS",
-    tag: "SaaS",
-    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    gradient: "linear-gradient(135deg, #020617 0%, #1e293b 100%)",
-    prompt: "Create a futuristic, dark-themed SaaS landing page for an AI technology product. Include a hero with glassmorphism effects, interactive feature cards, and a sleek code preview section.",
-  },
-  {
-    id: "healthcare-tpl",
-    name: "Premium Health",
+    id: "healthcare-01",
+    name: "Lumina Dental",
     tag: "Healthcare",
-    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    gradient: "linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%)",
-    prompt: "Create a clean, trustworthy medical landing page. Include a specialist doctor section, appointment booking form, trust badges for certifications, and a service highlight grid.",
+    img: "/assets/templates/healthcare/templates01/dental-screenshot-01.png",
+    gradient: "linear-gradient(135deg, #bb0014 0%, #141d23 100%)",
+    prompt: "Create a premium dental care landing page for Lumina Dental Excellence. Include a hero section with a booking form, services grid, and patient testimonials.",
   },
   {
-    id: "edu-tpl",
-    name: "LMS Academy",
-    tag: "Education",
-    img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-    prompt: "Create a modern e-learning academy landing page. Include a featured courses section with price tags, student success stories, and a floating newsletter signup card.",
-  },
-  {
-    id: "ecom-tpl",
-    name: "Louvre Maison",
-    tag: "E-commerce",
-    img: "/assets/premium/watch.png",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
-    prompt: "Create an ultra-premium luxury fashion landing page with a background video hero, glassmorphism navigation, and elegant product cards. Theme: Minimalist Black & White.",
-  },
-  {
-    id: "legal-tpl",
-    name: "Everett Legal",
-    tag: "Legal",
-    img: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-    prompt: "Create a sophisticated, professional legal landing page. Use serif typography, a dark noble color palette, consultation form, and expertise area cards with subtle transitions.",
-  },
-
-  {
-    id: "agency",
-    name: "Luxury Hotel (Agency)",
-    tag: "Hospitality",
-    img: "/assets/premium/hotel-resort.png",
-    gradient: "linear-gradient(135deg, #fdfcf9 0%, #ffffff 100%)",
-    prompt:
-      "Create an ultra-luxurious hotel and resort landing page with high-end photography, a concierge booking form, and a minimalist elegant design.",
-  },
-  {
-    id: "real-estate",
-    name: "Skyline Residences",
-    tag: "Real Estate",
-    img: "/assets/premium/mansion.png",
-    gradient: "linear-gradient(135deg, #fbfbfc 0%, #ffffff 100%)",
-    prompt:
-      "Create a premium luxury real estate landing page featuring international mansions, a private inquiry form, and sophisticated architectural aesthetics.",
-  },
-  {
-    id: "lead-gen",
-    name: "Lead Generation",
-    tag: "Business",
-    img: "/templates/Desktop_Thumbnail2.png",
-    gradient: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    prompt: "Create a high-performing lead generation landing page with a primary focus on conversion. Features a bold hero header, a clean multi-step lead form, trust badges, and benefit-driven copywriting.",
-  },
+    id: "travel-01",
+    name: "Azure Luxury Escapes",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates01/heronew.png",
+    gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
+    prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
+  }
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "SaaS", "Education", "Healthcare", "E-commerce", "Legal", "Business", "Real Estate"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -145,11 +89,28 @@ const CreatePagePage = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+  const scrollbarStyles = `
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  `;
   const [figmaFile, setFigmaFile] = useState<File | null>(null);
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
-  const [visibleCount, setVisibleCount] = useState(4);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(8);
 
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -189,10 +150,16 @@ const CreatePagePage = () => {
   };
 
   const handleTemplateSelect = (tpl: typeof LANDING_TEMPLATES[0]) => {
-    setSelectedTemplate(tpl.id);
-    setAiPrompt(tpl.prompt);
-    setActiveMethod("template");
-    toast.info(`Selected Template: ${tpl.name}`);
+    if (selectedTemplate === tpl.id) {
+      setSelectedTemplate(null);
+      setAiPrompt("");
+      toast.info(`Deselected: ${tpl.name}`);
+    } else {
+      setSelectedTemplate(tpl.id);
+      setAiPrompt(tpl.prompt);
+      setActiveMethod("template");
+      toast.info(`Selected Template: ${tpl.name}`);
+    }
   };
 
   const handleViewTemplate = (tpl: any) => {
@@ -201,16 +168,9 @@ const CreatePagePage = () => {
     const tName = LANDING_TEMPLATES.find(t => t.id === tpl.id)?.name || "Template";
 
     switch (tpl.id) {
-      case "tech-saas": tpHtml = technologyHtml; tpStyles = technologyStyles; break;
-      case "healthcare-tpl": tpHtml = healthcareHtml; tpStyles = healthcareStyles; break;
-      case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
-      case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
-      case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
-
-      case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
-      case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
-      case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
-      default: tpHtml = technologyHtml; tpStyles = technologyStyles;
+      case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+      case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+      default: tpHtml = ""; tpStyles = "";
     }
 
     // Perform replacements for preview
@@ -303,7 +263,6 @@ const CreatePagePage = () => {
 
   const handleCreate = () => {
     if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
-    if (activeMethod === "figma" && !figmaFile) { toast.error("Please upload a Figma file."); return; }
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
 
@@ -318,42 +277,17 @@ const CreatePagePage = () => {
       const tName = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Template";
 
       switch (selectedTemplate) {
-        case "tech-saas":
-          enrichedContent = technologyHtml;
-          enrichedStyles = technologyStyles;
+        case "healthcare-01":
+          enrichedContent = healthcare01Html;
+          enrichedStyles = healthcare01Styles;
           break;
-        case "healthcare-tpl":
-          enrichedContent = healthcareHtml;
-          enrichedStyles = healthcareStyles;
-          break;
-        case "edu-tpl":
-          enrichedContent = educationHtml;
-          enrichedStyles = educationStyles;
-          break;
-        case "ecom-tpl":
-          enrichedContent = ecommerceHtml;
-          enrichedStyles = ecommerceStyles;
-          break;
-        case "legal-tpl":
-          enrichedContent = legalHtml;
-          enrichedStyles = legalStyles;
-          break;
-
-        case "agency":
-          enrichedContent = agencyHtml;
-          enrichedStyles = agencyStyles;
-          break;
-        case "lead-gen":
-          enrichedContent = leadGenHtml;
-          enrichedStyles = leadGenStyles;
-          break;
-        case "real-estate":
-          enrichedContent = realEstateHtml;
-          enrichedStyles = realEstateStyles;
+        case "travel-01":
+          enrichedContent = travel01Html;
+          enrichedStyles = travel01Styles;
           break;
         default:
-          enrichedContent = technologyHtml;
-          enrichedStyles = technologyStyles;
+          enrichedContent = "";
+          enrichedStyles = "";
       }
 
       const finalLogo = logoUrl || project.logoUrl;
@@ -404,8 +338,7 @@ const CreatePagePage = () => {
       primaryColor,
       secondaryColor,
       logoUrl,
-      aiPrompt: activeMethod === "figma" ? (aiPrompt || "Create a landing page based on this design.") : aiPrompt,
-      figmaImage: activeMethod === "figma" ? figmaBase64 : undefined,
+      aiPrompt: aiPrompt,
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -424,6 +357,7 @@ const CreatePagePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
       {/* ══ TOP NAV ══ */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3 shadow-sm">
         <button
@@ -517,7 +451,6 @@ const CreatePagePage = () => {
               <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
                 {[
                   { key: "ai" as const, label: "✨ Describe with AI", icon: <Brain className="h-3.5 w-3.5" /> },
-                  { key: "figma" as const, label: "🎨 Figma Upload", icon: <Figma className="h-3.5 w-3.5" /> },
                   { key: "template" as const, label: "🗂️ Template", icon: <LayoutTemplate className="h-3.5 w-3.5" /> },
                 ].map((m) => (
                   <button
@@ -564,24 +497,6 @@ const CreatePagePage = () => {
               </section>
             )}
 
-            {activeMethod === "figma" && (
-              <section className="space-y-3">
-                <input type="file" accept=".fig,.png,.jpg,.jpeg,.pdf,image/*" onChange={handleFigmaUpload} className="hidden" id="figma-upload" />
-                <label htmlFor="figma-upload" className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all ${figmaFile ? "border-violet-400 bg-violet-50" : "border-gray-200 hover:border-violet-300"}`}>
-                  {figmaPreview ? (
-                    <img src={figmaPreview} alt="Preview" className="max-h-40 object-contain rounded-xl shadow-sm" />
-                  ) : (
-                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${figmaFile ? "bg-violet-100" : "bg-gray-100"}`}>
-                      {figmaFile ? <Figma className="h-7 w-7 text-violet-600" /> : <Upload className="h-7 w-7 text-gray-400" />}
-                    </div>
-                  )}
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-600">{figmaFile ? figmaFile.name : "Drop your Figma file here"}</p>
-                    <p className="text-xs text-gray-400 mt-1">Supports .fig, PNG, JPG, PDF exports</p>
-                  </div>
-                </label>
-              </section>
-            )}
 
             {activeMethod === "template" && (
               <section className="space-y-3">
@@ -710,29 +625,42 @@ const CreatePagePage = () => {
 
           {activeMethod === 'template' && (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
-              {/* Category Filter */}
-              <div className="px-6 pt-6 flex flex-wrap gap-2">
-                {TEMPLATE_CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setTemplateCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${templateCategory === cat
-                      ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
-                      : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
-                      }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              {/* Search and Category Filter */}
+              <div className="px-6 pt-6 space-y-4">
+                <div className="relative group">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Search templates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {TEMPLATE_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setTemplateCategory(cat)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${templateCategory === cat
+                        ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Template Grid */}
-              <div className="flex-1 px-6 py-6 scrollbar-hide">
+              <div className="flex-1 px-6 py-6 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   {LANDING_TEMPLATES
-                    .filter(t => templateCategory === "All" || t.tag === templateCategory)
+                    .filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase())))
                     .slice(0, visibleCount)
-                    .map((tpl) => (
+                    .map((tpl, idx) => (
                       <button
                         key={tpl.id}
                         onClick={() => {
@@ -749,11 +677,13 @@ const CreatePagePage = () => {
                           style={{ background: tpl.gradient }}
                         >
                           {tpl.img ? (
-                            <img
-                              src={tpl.img}
-                              alt={tpl.name}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
+                            <div className="absolute inset-0 w-full h-full overflow-y-hidden group-hover:overflow-y-auto custom-scrollbar">
+                              <img
+                                src={tpl.img}
+                                alt={tpl.name}
+                                className="w-full h-auto"
+                              />
+                            </div>
                           ) : (
                             /* Placeholder mockup shapes */
                             <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
@@ -782,31 +712,23 @@ const CreatePagePage = () => {
                             </div>
                           )}
 
-                          <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                            {tpl.tag}
-                          </div>
-
-                          {/* View Button Overlay */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewTemplate(tpl);
-                              }}
-                              className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-white hover:text-black transition-all flex items-center gap-1.5"
-                            >
-                              <Eye className="h-3 w-3" />
-                              View Template
-                            </button>
+                          <div className="absolute top-2.5 left-2.5 bg-gray-900 backdrop-blur-sm text-white text-[10px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+                            <span className="text-violet-400">{String(idx + 1).padStart(2, '0')}</span>
+                            <span className="w-px h-2 bg-gray-700" />
+                            <span className="uppercase tracking-wider">{tpl.tag}</span>
                           </div>
                         </div>
 
-                        {/* Name only — minimal */}
-                        <div className="bg-white border-t border-gray-100 px-3 py-2.5 flex items-center justify-between">
-                          <span className="text-xs font-semibold text-gray-700">{tpl.name}</span>
-                          {selectedTemplate === tpl.id
-                            ? <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">Selected</span>
-                            : <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />}
+                        {/* Footer Actions */}
+                        <div className="bg-white border-t border-gray-100 px-3 py-3 flex items-center justify-between">
+                          <span className="text-[11px] font-black text-gray-900 truncate pr-2">{tpl.name}</span>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleViewTemplate(tpl); }}
+                            className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                            title="View Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
                         </div>
                       </button>
                     ))}
@@ -857,15 +779,8 @@ const CreatePagePage = () => {
               let tpHtml = "";
               let tpStyles = "";
               switch (previewTemplate.id) {
-                case "tech-saas": tpHtml = technologyHtml; tpStyles = technologyStyles; break;
-                case "healthcare-tpl": tpHtml = healthcareHtml; tpStyles = healthcareStyles; break;
-                case "edu-tpl": tpHtml = educationHtml; tpStyles = educationStyles; break;
-                case "ecom-tpl": tpHtml = ecommerceHtml; tpStyles = ecommerceStyles; break;
-                case "legal-tpl": tpHtml = legalHtml; tpStyles = legalStyles; break;
-
-                case "agency": tpHtml = agencyHtml; tpStyles = agencyStyles; break;
-                case "lead-gen": tpHtml = leadGenHtml; tpStyles = leadGenStyles; break;
-                case "real-estate": tpHtml = realEstateHtml; tpStyles = realEstateStyles; break;
+                case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                default: tpHtml = ""; tpStyles = "";
               }
 
               // Apply branding to preview

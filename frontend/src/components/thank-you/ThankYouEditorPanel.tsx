@@ -34,12 +34,12 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
   // Sync canvas with config changes (debounced)
   useEffect(() => {
     if (loading) return;
-    
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    
+
     const timer = setTimeout(async () => {
       try {
         console.log('🔄 Debounced update: Syncing Thank You config to canvas...');
@@ -69,11 +69,15 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
       setCustomCss(configData.config?.customCss || '');
       setLayouts(layoutsData);
 
-      if (!configData.config?.layout && industry) {
+      if (industry && (!configData.config?.layout || configData.config.layout === 'default')) {
         const industryLayout = layoutsData.find(l => l.industry === industry);
         if (industryLayout) {
-          setConfig(prev => ({ ...prev, layout: industryLayout.id }));
+          handleLayoutChange(industryLayout.id);
+        } else {
+          handleLayoutChange('default');
         }
+      } else if (configData.config?.layout) {
+        handleLayoutChange(configData.config.layout);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -128,7 +132,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
           logoUrl: config.branding.logoUrl,
         },
       };
-      
+
       setConfig(newConfig);
     }
   };
@@ -169,368 +173,104 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#12121e' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e1e2d' }}>
-        <h3 style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: 0 }}>Thank You Page</h3>
-        <p style={{ color: '#64748b', fontSize: 11, margin: '4px 0 0 0' }}>
-          Configure your Thank You page layout and content
-        </p>
-      </div>
+    <>
+      <style>{`
+        .thank-you-panel::-webkit-scrollbar {
+          width: 4px;
+        }
+        .thank-you-panel::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .thank-you-panel::-webkit-scrollbar-thumb {
+          background: #2a2a3e;
+          border-radius: 10px;
+        }
+        .thank-you-panel::-webkit-scrollbar-thumb:hover {
+          background: #7c3aed;
+        }
+      `}</style>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#12121e' }}>
+        <div style={{ padding: '24px 20px', borderBottom: '1px solid #1e1e2d', background: '#0a0a14' }}>
+          <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
+            Select template
+          </h3>
 
-      <div style={{ display: 'flex', borderBottom: '1px solid #1e1e2d', background: '#0a0a14' }}>
-        {['layout', 'content', 'branding'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '12px 8px',
-              background: activeTab === tab ? '#1a1a2e' : 'transparent',
-              border: 'none',
-              color: activeTab === tab ? '#fff' : '#64748b',
-              fontSize: 11,
-              fontWeight: activeTab === tab ? 600 : 500,
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              borderBottom: activeTab === tab ? '2px solid #7c3aed' : 'none',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+        </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-        {activeTab === 'layout' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+        <div className="thank-you-panel" style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
             {layouts.map((layout) => (
               <div
                 key={layout.id}
                 onClick={() => handleLayoutChange(layout.id)}
                 style={{
-                  border: `2px solid ${config.layout === layout.id ? layout.theme.primaryColor : '#2a2a3e'}`,
-                  borderRadius: 12,
-                  padding: 16,
+                  border: `2.5px solid ${config.layout === layout.id ? '#7c3aed' : '#1e1e2d'}`,
+                  borderRadius: 16,
+                  padding: '18px',
                   cursor: 'pointer',
-                  background: config.layout === layout.id ? `${layout.theme.primaryColor}15` : '#1a1a2e',
-                  transition: 'all 0.2s',
+                  background: config.layout === layout.id ? '#1a1a2e' : '#0f0f1a',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   position: 'relative',
-                  overflow: 'hidden',
+                  boxShadow: config.layout === layout.id ? '0 10px 25px -5px rgba(124, 58, 237, 0.25)' : 'none',
+                  transform: config.layout === layout.id ? 'translateY(-2px)' : 'none',
                 }}
               >
-                {config.layout === layout.id && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: layout.theme.primaryColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}>
-                    ✓
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div
                     style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 12,
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: `linear-gradient(135deg, ${layout.theme.primaryColor}, ${layout.theme.secondaryColor})`,
+                      background: config.layout === layout.id
+                        ? 'linear-gradient(135deg, #7c3aed, #6366f1)'
+                        : '#1e1e2d',
                       color: '#fff',
+                      transition: 'all 0.3s ease',
                     }}
                   >
-                    {getLayoutIcon(layout.id)}
+                    <div style={{ width: 22, height: 22 }}>
+                      {getLayoutIcon(layout.id)}
+                    </div>
                   </div>
-                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{layout.name}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      color: config.layout === layout.id ? '#fff' : '#94a3b8',
+                      fontSize: 15,
+                      fontWeight: 700,
+                      marginBottom: 2
+                    }}>
+                      {layout.name}
+                    </div>
+                    <div style={{ color: '#475569', fontSize: 12, fontWeight: 500 }}>
+                      Professional Layout
+                    </div>
+                  </div>
+                  {config.layout === layout.id && (
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: '#7c3aed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      boxShadow: '0 0 15px rgba(124, 58, 237, 0.4)'
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
-        )}
-
-        {activeTab === 'content' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Heading
-              </label>
-              <input
-                type="text"
-                value={config.content.heading || ''}
-                onChange={(e) => setConfig({ ...config, content: { ...config.content, heading: e.target.value } })}
-                placeholder="Thank You!"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Subheading
-              </label>
-              <textarea
-                value={config.content.subheading || ''}
-                onChange={(e) => setConfig({ ...config, content: { ...config.content, subheading: e.target.value } })}
-                placeholder="We have received your request..."
-                rows={3}
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                  resize: 'vertical',
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                CTA Button Text
-              </label>
-              <input
-                type="text"
-                value={config.content.ctaText || ''}
-                onChange={(e) => setConfig({ ...config, content: { ...config.content, ctaText: e.target.value } })}
-                placeholder="Return to Website"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                CTA Button URL
-              </label>
-              <input
-                type="text"
-                value={config.content.ctaUrl || ''}
-                onChange={(e) => setConfig({ ...config, content: { ...config.content, ctaUrl: e.target.value } })}
-                placeholder="https://yourwebsite.com"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Phone Number
-              </label>
-              <input
-                type="text"
-                value={config.content.phoneNumber || ''}
-                onChange={(e) => setConfig({ ...config, content: { ...config.content, phoneNumber: e.target.value } })}
-                placeholder="+1 (555) 123-4567"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-
-
-        {activeTab === 'branding' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Logo URL
-              </label>
-              <input
-                type="text"
-                value={config.branding.logoUrl || ''}
-                onChange={(e) => setConfig({ ...config, branding: { ...config.branding, logoUrl: e.target.value } })}
-                placeholder="https://yourwebsite.com/logo.png"
-                style={{
-                  width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #2a2a3e',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Primary Color
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="color"
-                  value={config.branding.primaryColor || '#7c3aed'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, primaryColor: e.target.value } })}
-                  style={{ width: 50, height: 40, border: '1px solid #2a2a3e', borderRadius: 8, cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  value={config.branding.primaryColor || '#7c3aed'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, primaryColor: e.target.value } })}
-                  placeholder="#7c3aed"
-                  style={{
-                    flex: 1,
-                    background: '#0a0a14',
-                    border: '1px solid #2a2a3e',
-                    color: '#fff',
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
-                Secondary Color
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="color"
-                  value={config.branding.secondaryColor || '#6366f1'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, secondaryColor: e.target.value } })}
-                  style={{ width: 50, height: 40, border: '1px solid #2a2a3e', borderRadius: 8, cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  value={config.branding.secondaryColor || '#6366f1'}
-                  onChange={(e) => setConfig({ ...config, branding: { ...config.branding, secondaryColor: e.target.value } })}
-                  placeholder="#6366f1"
-                  style={{
-                    flex: 1,
-                    background: '#0a0a14',
-                    border: '1px solid #2a2a3e',
-                    color: '#fff',
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-
-      </div>
-
-      <div style={{ padding: 16, borderTop: '1px solid #1e1e2d', display: 'flex', gap: 8, background: '#0a0a14' }}>
-        <button
-          onClick={handlePreview}
-          style={{
-            flex: 1,
-            padding: '10px',
-            background: '#252540',
-            border: '1px solid #2a2a3e',
-            color: '#94a3b8',
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          Preview
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            flex: 2,
-            padding: '10px',
-            background: saving ? '#4c1d95' : 'linear-gradient(135deg, #7c3aed, #6366f1)',
-            border: 'none',
-            color: '#fff',
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: saving ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
-      </div>
-
-      {showPreview && (
-        <div
-          onClick={() => setShowPreview(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 800,
-              maxHeight: '90vh',
-              background: '#1a1a2e',
-              borderRadius: 16,
-              border: '1px solid #2a2a3e',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div style={{ padding: 16, borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#fff', fontWeight: 700 }}>Thank You Page Preview</span>
-              <button onClick={() => setShowPreview(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: 18 }}>
-                ✕
-              </button>
-            </div>
-            <iframe srcDoc={previewHtml} style={{ flex: 1, border: 'none', width: '100%' }} title="Preview" />
-          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
