@@ -975,21 +975,25 @@ exports.handleFormSubmission = async (req, res, next) => {
         // 1. Admin Notification
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
-          let adminMsg = project.adminNotification.message || "New lead captured.";
           
-          // Simple template replacement
-          adminMsg = adminMsg
-            .replace(/{{lead_name}}/g, leadData.name || 'Unknown')
-            .replace(/{{lead_email}}/g, leadData.email || 'Not provided')
-            .replace(/{{lead_phone}}/g, leadData.phone || 'Not provided')
-            .replace(/{{lead_message}}/g, leadData.message || 'No message')
-            .replace(/{{page_slug}}/g, pageSlug || schema.page_slug || '')
-            .replace(/{{timestamp}}/g, now);
+          // Use a clean default template for admin notifications
+          const adminMsg = `
+            <h2>New Lead Captured!</h2>
+            <p>A new form was submitted on your landing page.</p>
+            <hr />
+            <p><strong>Name:</strong> ${leadData.name || 'Unknown'}</p>
+            <p><strong>Email:</strong> ${leadData.email || 'Not provided'}</p>
+            <p><strong>Phone:</strong> ${leadData.phone || 'Not provided'}</p>
+            <p><strong>Message:</strong> ${leadData.message || 'No message'}</p>
+            <hr />
+            <p><strong>Page:</strong> ${pageSlug || schema.page_slug || ''}</p>
+            <p><strong>Time:</strong> ${now}</p>
+          `;
 
           emailService.sendEmail({
             to: adminEmail,
             subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
-            htmlContent: adminMsg.replace(/\n/g, '<br>'),
+            htmlContent: adminMsg,
             fromName: project.fromName,
             fromEmail: project.fromEmail
           }).catch(err => console.error('Admin Email Error:', err));
@@ -997,13 +1001,17 @@ exports.handleFormSubmission = async (req, res, next) => {
 
         // 2. User Auto-Reply
         if (project.userNotification?.enabled && leadData.email) {
-          let userMsg = project.userNotification.message || "Thank you for reaching out!";
-          userMsg = userMsg.replace(/{{name}}/g, leadData.name || 'there');
+          // Use a clean default template for user auto-replies
+          const userMsg = `
+            <h3>Hello ${leadData.name || 'there'},</h3>
+            <p>Thank you for reaching out to us! We have received your inquiry and our team will get back to you as soon as possible.</p>
+            <p>Best regards,<br/>The Team</p>
+          `;
 
           emailService.sendEmail({
             to: leadData.email,
             subject: project.userNotification.subject || "Thank you for contacting us!",
-            htmlContent: userMsg.replace(/\n/g, '<br>'),
+            htmlContent: userMsg,
             fromName: project.fromName,
             fromEmail: project.fromEmail
           }).catch(err => console.error('User Email Error:', err));
