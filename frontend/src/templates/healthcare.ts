@@ -1,11 +1,11 @@
 export const healthcareStyles = `
   .healthcare-container { margin: 0; font-family: 'Inter', sans-serif; color: #2d3748; background: #fff; }
   .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 8%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
-  .logo { font-size: 24px; font-weight: 800; color: #3182ce; }
+  .logo { font-size: 24px; font-weight: 800; color: PRIMARY_COLOR_PLACEHOLDER; }
   .nav-links { display: flex; gap: 30px; list-style: none; align-items: center; }
   .nav-links a { text-decoration: none; color: #4a5568; font-weight: 600; font-size: 15px; transition: 0.3s; }
-  .nav-links a:hover { color: #3182ce; }
-  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #3182ce; }
+  .nav-links a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
+  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: PRIMARY_COLOR_PLACEHOLDER; }
   
   .hero { display: flex; align-items: center; padding: 80px 8%; background: linear-gradient(135deg, #ebf8ff 0%, #fff 100%); min-height: 600px; gap: 50px; }
   .hero-content { flex: 1.2; }
@@ -16,13 +16,13 @@ export const healthcareStyles = `
   .form-box { flex: 1; background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid #edf2f7; }
   .form-box h3 { font-size: 24px; font-weight: 800; color: #2c5282; margin-bottom: 20px; text-align: center; }
   .form-box input, .form-box select { width: 100%; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; margin-bottom: 15px; outline: none; transition: 0.3s; }
-  .form-box input:focus { border-color: #3182ce; box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.1); }
-  .btn-primary { width: 100%; padding: 16px 32px; background: #3182ce; color: #fff; border-radius: 12px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; font-size: 16px; }
-  .btn-primary:hover { background: #2b6cb0; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(49, 130, 206, 0.2); }
+  .form-box input:focus { border-color: PRIMARY_COLOR_PLACEHOLDER; box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.1); }
+  .btn-primary { width: 100%; padding: 16px 32px; background: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border-radius: 12px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; font-size: 16px; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(49, 130, 206, 0.2); }
   
   .stats { display: flex; justify-content: space-between; padding: 60px 8%; background: #fff; margin-top: -60px; position: relative; z-index: 10; width: 84%; margin-left: auto; margin-right: auto; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
   .stat-item { text-align: center; }
-  .stat-item h3 { font-size: 36px; font-weight: 800; color: #2c5282; margin-bottom: 5px; }
+  .stat-item h3 { font-size: 36px; font-weight: 800; color: PRIMARY_COLOR_PLACEHOLDER; margin-bottom: 5px; }
   .stat-item p { color: #718096; font-size: 14px; font-weight: 500; }
   
   .services { padding: 100px 8%; text-align: center; background: #f8fafc; }
@@ -30,8 +30,9 @@ export const healthcareStyles = `
   .section-desc { font-size: 16px; color: #718096; max-width: 600px; margin: 0 auto 60px; }
   .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
   .service-card { padding: 40px; background: #fff; border-radius: 24px; border: 1px solid #edf2f7; transition: 0.3s; text-align: left; }
-  .service-card:hover { border-color: #3182ce; transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
-  .service-icon { width: 60px; height: 60px; background: #ebf8ff; border-radius: 16px; display: flex; items-center; justify-content: center; margin-bottom: 24px; font-size: 24px; color: #3182ce; }
+  .service-card:hover { border-color: PRIMARY_COLOR_PLACEHOLDER; transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+  .service-icon { width: 60px; height: 60px; background: PRIMARY_COLOR_PLACEHOLDER; opacity: 0.1; border-radius: 16px; display: flex; items-center; justify-content: center; margin-bottom: 24px; font-size: 24px; color: PRIMARY_COLOR_PLACEHOLDER; }
+  .service-icon { background: rgba(99, 102, 241, 0.1); color: PRIMARY_COLOR_PLACEHOLDER; }
   
   .team-section { padding: 100px 8%; text-align: center; }
   .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-top: 50px; }
@@ -40,8 +41,8 @@ export const healthcareStyles = `
   .team-img { width: 100%; height: 250px; object-fit: cover; }
   .team-info { padding: 20px; }
   .team-info h5 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
-  .team-info p { font-size: 14px; color: #3182ce; font-weight: 600; }
-
+  .team-info p { font-size: 14px; color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 600; }
+  
   .footer { background: #1a202c; color: #e2e8f0; padding: 80px 8% 40px; }
   .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 50px; margin-bottom: 60px; }
   .footer-logo { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 20px; }
@@ -96,13 +97,14 @@ export const healthcareStyles = `
     position: absolute;
     inset: 0;
     border: 3px solid transparent;
-    border-top-color: #3182ce;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
   .loader-ring:nth-child(2) {
     inset: 8px;
-    border-top-color: #63b3ed;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
+    opacity: 0.5;
     animation-direction: reverse;
     animation-duration: 1s;
   }
@@ -120,7 +122,7 @@ export const healthcareStyles = `
 export const healthcareHtml = `
   <div class="healthcare-container">
     <nav class="navbar">
-      <div class="logo">HealthCare+</div>
+      <div class="logo">LOGO_PLACEHOLDER</div>
       <div class="mobile-toggle" onclick="document.querySelector('.nav-links').classList.toggle('active')">☰</div>
       <ul class="nav-links">
         <li><a href="#services">Our Services</a></li>
@@ -238,7 +240,7 @@ export const healthcareHtml = `
           </div>
         </div>
         <div class="team-card">
-          <img src="https://images.unsplash.com/photo-1559839734-2b71f153671f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" class="team-img" />
+          <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" class="team-img" />
           <div class="team-info">
             <h5>Dr. Emily White</h5>
             <p>Orthopedic Surgeon</p>
@@ -257,7 +259,7 @@ export const healthcareHtml = `
     <footer class="footer">
       <div class="footer-grid">
         <div class="footer-col">
-          <div class="footer-logo">HealthCare+</div>
+          <div class="footer-logo">LOGO_PLACEHOLDER</div>
           <p style="color: #718096; line-height: 1.6; max-width: 300px;">Providing quality medical care since 2012. Our mission is to make healthcare accessible and affordable for everyone.</p>
         </div>
         <div class="footer-col">
@@ -288,7 +290,7 @@ export const healthcareHtml = `
         </div>
       </div>
       <div class="footer-bottom">
-        <div>© 2026 HealthCare+. All rights reserved.</div>
+        <div>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</div>
         <div style="display: flex; gap: 20px;">
           <a href="#" style="color: inherit;">Privacy Policy</a>
           <a href="#" style="color: inherit;">Terms of Service</a>
@@ -305,17 +307,12 @@ export const healthcareHtml = `
     </div>
 
     <script>
-      document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.getElementById('loader').style.display = 'flex';
-        
-        // Simulate navigation to thank you page/state
-        setTimeout(function() {
-          // In a real scenario, this would be a redirect or a state change
-          // For template preview, we just show it's working
-          console.log('Form submitted, loader would stay until thank you page');
-        }, 2000);
-      });
+      // Navigation toggle
+      const toggle = document.querySelector('.mobile-toggle');
+      const menu = document.querySelector('.nav-links');
+      if (toggle && menu) {
+        toggle.addEventListener('click', () => menu.classList.toggle('active'));
+      }
     </script>
   </div>
 `;

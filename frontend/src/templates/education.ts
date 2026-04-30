@@ -2,11 +2,11 @@ export const educationStyles = `
   .edu-container { margin: 0; font-family: 'Outfit', sans-serif; color: #1a202c; background: #fff; scroll-behavior: smooth; }
   .edu-nav { padding: 15px 8%; display: flex; justify-content: space-between; align-items: center; background: #fff; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #f1f5f9; }
   .edu-logo { font-size: 26px; font-weight: 800; color: #020617; }
-  .edu-logo span { color: #6366f1; }
+  .edu-logo span { color: PRIMARY_COLOR_PLACEHOLDER; }
   .edu-menu { display: flex; gap: 30px; align-items: center; }
   .edu-menu a { text-decoration: none; color: #64748b; font-weight: 600; font-size: 15px; transition: 0.3s; }
-  .edu-menu a:hover { color: #6366f1; }
-  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #6366f1; }
+  .edu-menu a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
+  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: PRIMARY_COLOR_PLACEHOLDER; }
   
   .edu-hero { display: flex; align-items: center; padding: 100px 8% 120px; gap: 80px; background: linear-gradient(to bottom, #f8fafc, #fff); }
   .edu-hero-text { flex: 1; }
@@ -14,9 +14,9 @@ export const educationStyles = `
   .edu-hero-text p { font-size: 20px; color: #64748b; margin-bottom: 40px; line-height: 1.6; }
   
   .cta-group { display: flex; gap: 20px; }
-  .btn-edu-primary { background: #6366f1; color: white; padding: 20px 40px; border-radius: 16px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; transition: 0.3s; font-size: 16px; }
-  .btn-edu-primary:hover { background: #4f46e5; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
-  .btn-edu-secondary { background: #fff; color: #6366f1; padding: 20px 40px; border-radius: 16px; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.3s; font-size: 16px; }
+  .btn-edu-primary { background: PRIMARY_COLOR_PLACEHOLDER; color: white; padding: 20px 40px; border-radius: 16px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; transition: 0.3s; font-size: 16px; }
+  .btn-edu-primary:hover { opacity: 0.9; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+  .btn-edu-secondary { background: #fff; color: PRIMARY_COLOR_PLACEHOLDER; padding: 20px 40px; border-radius: 16px; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.3s; font-size: 16px; }
   .btn-edu-secondary:hover { background: #f8fafc; }
 
   .edu-hero-img { flex: 1.2; position: relative; }
@@ -43,7 +43,7 @@ export const educationStyles = `
   .stars { color: #f59e0b; margin-bottom: 20px; font-size: 18px; }
 
   .edu-newsletter { padding: 120px 8%; }
-  .news-box { background: #6366f1; border-radius: 40px; padding: 80px; text-align: center; color: #fff; }
+  .news-box { background: PRIMARY_COLOR_PLACEHOLDER; border-radius: 40px; padding: 80px; text-align: center; color: #fff; }
   .news-box h2 { font-size: 42px; font-weight: 800; margin-bottom: 20px; }
   .news-box p { font-size: 18px; margin-bottom: 40px; opacity: 0.9; }
   .news-form { display: flex; gap: 15px; max-width: 600px; margin: 0 auto; }
@@ -107,13 +107,13 @@ export const educationStyles = `
     position: absolute;
     inset: 0;
     border: 3px solid transparent;
-    border-top-color: #6366f1;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
   .loader-ring:nth-child(2) {
     inset: 8px;
-    border-top-color: #a5b4fc;
+    border-top-color: SECONDARY_COLOR_PLACEHOLDER;
     animation-direction: reverse;
     animation-duration: 1s;
   }
@@ -131,7 +131,7 @@ export const educationStyles = `
 export const educationHtml = `
   <div class="edu-container">
     <nav class="edu-nav">
-      <div class="edu-logo">Edu<span>Flow.</span></div>
+      <div class="edu-logo">LOGO_PLACEHOLDER</div>
       <div class="mobile-toggle" onclick="document.querySelector('.edu-menu').classList.toggle('active')">☰</div>
       <div class="edu-menu">
         <a href="#courses">Courses</a>
@@ -264,7 +264,7 @@ export const educationHtml = `
     <footer class="edu-footer">
       <div class="footer-grid">
         <div class="footer-col">
-          <div class="edu-logo">Edu<span>Flow.</span></div>
+          <div class="edu-logo">LOGO_PLACEHOLDER</div>
           <p style="color: #64748b; line-height: 1.7; margin-top: 20px;">Empowering learners globally with high-quality education from the best in the industry.</p>
         </div>
         <div class="footer-col">
@@ -288,13 +288,13 @@ export const educationHtml = `
         <div class="footer-col">
           <h4>Follow Us</h4>
           <div style="display: flex; gap: 20px; font-size: 20px;">
-            <a href="#" style="color: #6366f1;">𝕏</a>
-            <a href="#" style="color: #6366f1;">📸</a>
-            <a href="#" style="color: #6366f1;">📺</a>
+            <a href="#" style="color: PRIMARY_COLOR_PLACEHOLDER;">𝕏</a>
+            <a href="#" style="color: PRIMARY_COLOR_PLACEHOLDER;">📸</a>
+            <a href="#" style="color: PRIMARY_COLOR_PLACEHOLDER;">📺</a>
           </div>
         </div>
       </div>
-      <p style="text-align: center; color: #94a3b8; font-size: 14px;">© 2026 EduFlow Inc. All rights reserved.</p>
+      <p style="text-align: center; color: #94a3b8; font-size: 14px;">© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
     </footer>
 
     <!-- Popup Modal -->
@@ -325,15 +325,7 @@ export const educationHtml = `
     </div>
 
     <script>
-      document.querySelectorAll('form').forEach(f => {
-        f.addEventListener('submit', function(e) {
-          e.preventDefault();
-          document.getElementById('loader').style.display = 'flex';
-          setTimeout(function() {
-             console.log('Enrollment submitted, loader would stay until thank you page');
-          }, 2000);
-        });
-      });
+      console.log('Education Template Loaded');
     </script>
   </div>
 `;

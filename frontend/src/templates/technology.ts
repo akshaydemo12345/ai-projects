@@ -1,27 +1,27 @@
 export const technologyStyles = `
   .tech-container { margin: 0; font-family: 'Outfit', sans-serif; background: #020617; color: #fff; scroll-behavior: smooth; }
   .tech-nav { padding: 15px 8%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(15px); z-index: 1000; }
-  .tech-logo { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .tech-logo { font-size: 24px; font-weight: 800; color: PRIMARY_COLOR_PLACEHOLDER; }
   .tech-menu { display: flex; gap: 30px; align-items: center; }
   .tech-menu a { color: #94a3b8; text-decoration: none; font-weight: 600; font-size: 15px; transition: 0.3s; }
-  .tech-menu a:hover { color: #38bdf8; }
-  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #38bdf8; }
+  .tech-menu a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
+  .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: PRIMARY_COLOR_PLACEHOLDER; }
   
   .tech-hero { padding: 100px 8% 80px; display: flex; align-items: center; gap: 50px; position: relative; }
   .tech-hero-glow { position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%); z-index: 1; }
   .tech-content { flex: 1.2; position: relative; z-index: 10; }
-  .tech-badge { padding: 8px 16px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 50px; color: #38bdf8; font-size: 13px; font-weight: 600; margin-bottom: 30px; display: inline-block; }
+  .tech-badge { padding: 8px 16px; background: rgba(56, 189, 248, 0.1); border: 1px solid PRIMARY_COLOR_PLACEHOLDER; border-radius: 50px; color: PRIMARY_COLOR_PLACEHOLDER; font-size: 13px; font-weight: 600; margin-bottom: 30px; display: inline-block; }
   .tech-hero h1 { font-size: 72px; font-weight: 800; line-height: 1; margin-bottom: 30px; letter-spacing: -2px; }
-  .tech-hero h1 span { color: #38bdf8; }
+  .tech-hero h1 span { color: PRIMARY_COLOR_PLACEHOLDER; }
   .tech-hero p { font-size: 20px; color: #94a3b8; margin-bottom: 40px; line-height: 1.6; }
   
   .form-card { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); padding: 40px; border-radius: 24px; position: relative; z-index: 20; }
   .form-card h3 { font-size: 24px; margin-bottom: 25px; text-align: center; }
   .form-card input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 12px; margin-bottom: 15px; color: #fff; outline: none; }
-  .form-card input:focus { border-color: #38bdf8; }
+  .form-card input:focus { border-color: PRIMARY_COLOR_PLACEHOLDER; }
   
   .btn-tech-primary { width: 100%; padding: 18px; background: #fff; color: #020617; border-radius: 12px; font-weight: 700; text-decoration: none; transition: 0.3s; border: none; cursor: pointer; font-size: 16px; display: inline-block; text-align: center; }
-  .btn-tech-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,255,255,0.2); }
+  .btn-tech-primary:hover { transform: translateY(-2px); opacity: 0.9; }
   
   .tech-trust { padding: 60px 8%; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
   .tech-trust p { color: #64748b; text-transform: uppercase; font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 30px; }
@@ -34,7 +34,7 @@ export const technologyStyles = `
   .feat-header p { color: #94a3b8; font-size: 18px; }
   .tech-feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
   .tech-feat-card { padding: 40px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; transition: 0.3s; }
-  .tech-feat-card:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); transform: translateY(-5px); }
+  .tech-feat-card:hover { border-color: PRIMARY_COLOR_PLACEHOLDER; background: rgba(56, 189, 248, 0.05); transform: translateY(-5px); }
   .tech-feat-card i { font-size: 32px; margin-bottom: 25px; display: block; }
   .tech-feat-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
   .tech-feat-card p { color: #94a3b8; line-height: 1.6; }
@@ -51,7 +51,7 @@ export const technologyStyles = `
   .footer-col ul { list-style: none; padding: 0; }
   .footer-col ul li { margin-bottom: 15px; }
   .footer-col ul li a { color: #94a3b8; text-decoration: none; transition: 0.3s; }
-  .footer-col ul li a:hover { color: #38bdf8; }
+  .footer-col ul li a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
 
   @media (max-width: 968px) {
     .tech-nav { padding: 10px 5%; }
@@ -91,13 +91,13 @@ export const technologyStyles = `
     position: absolute;
     inset: 0;
     border: 3px solid transparent;
-    border-top-color: #38bdf8;
+    border-top-color: PRIMARY_COLOR_PLACEHOLDER;
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   }
   .loader-ring:nth-child(2) {
     inset: 8px;
-    border-top-color: #818cf8;
+    border-top-color: SECONDARY_COLOR_PLACEHOLDER;
     animation-direction: reverse;
     animation-duration: 1s;
   }
@@ -115,7 +115,7 @@ export const technologyStyles = `
 export const technologyHtml = `
   <div class="tech-container">
     <nav class="tech-nav">
-      <div class="tech-logo">AETHER.AI</div>
+      <div class="tech-logo">LOGO_PLACEHOLDER</div>
       <div class="mobile-toggle" onclick="document.querySelector('.tech-menu').classList.toggle('active')">☰</div>
       <div class="tech-menu">
         <a href="#features">Features</a>
@@ -219,7 +219,7 @@ export const technologyHtml = `
     <footer class="tech-footer">
       <div class="footer-grid">
         <div class="footer-col" style="max-width: 300px;">
-          <div class="tech-logo" style="margin-bottom: 25px;">AETHER.AI</div>
+          <div class="tech-logo" style="margin-bottom: 25px;">LOGO_PLACEHOLDER</div>
           <p style="color: #64748b; line-height: 1.6;">Leading the way in autonomous AI infrastructure for the next generation of digital products.</p>
         </div>
         <div class="footer-col">
@@ -251,7 +251,7 @@ export const technologyHtml = `
         </div>
       </div>
       <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px;">
-        <p>© 2026 Aether Technologies Inc.</p>
+        <p>© 2026 PROJECT_NAME_PLACEHOLDER</p>
         <div style="display: flex; gap: 30px;">
           <a href="#" style="color: inherit; text-decoration: none;">Twitter</a>
           <a href="#" style="color: inherit; text-decoration: none;">GitHub</a>
@@ -274,18 +274,10 @@ export const technologyHtml = `
           opt.style.borderColor = 'rgba(255,255,255,0.1)';
           opt.classList.remove('active');
         });
-        el.style.borderColor = '#38bdf8';
+        el.style.borderColor = 'PRIMARY_COLOR_PLACEHOLDER';
         el.classList.add('active');
         document.getElementById('project_scale_input').value = val;
       }
-
-      document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.getElementById('loader').style.display = 'flex';
-        setTimeout(function() {
-          console.log('Form submitted, loader would stay until thank you page');
-        }, 2000);
-      });
     </script>
   </div>
 `;
