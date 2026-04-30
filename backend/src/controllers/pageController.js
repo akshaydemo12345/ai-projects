@@ -72,6 +72,8 @@ const updatePageSchema = z.object({
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
   logoUrl: z.string().optional(),
+  noIndex: z.boolean().optional(),
+  noFollow: z.boolean().optional(),
   mainHeader: z.string().optional(),
   mainFooter: z.string().optional(),
   thankYouHeader: z.string().optional(),

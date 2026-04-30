@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun
+  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, MailOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { icon: FolderOpen, label: "Projects", href: "/dashboard" },
-  { icon: Users, label: "Leads", href: "/dashboard/leads" },
+  { icon: Users, label: "Leads Management", href: "/dashboard/leads" },
+  { icon: MailOpen, label: "Email Settings", href: "/dashboard/mail-management" },
 ];
 
 const settingsItems = [
@@ -40,7 +41,7 @@ const DashboardSidebar = () => {
       <div className="p-4">
         <div className="flex items-center gap-2 cursor-pointer">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{user?.name || "Workspace"}</p>
@@ -56,11 +57,10 @@ const DashboardSidebar = () => {
           <Link
             key={item.label}
             to={item.href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-              isActive(item.href)
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive(item.href)
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+              }`}
           >
             <item.icon className="h-4 w-4" />
             {item.label}
@@ -69,18 +69,17 @@ const DashboardSidebar = () => {
       </nav>
 
       {/* Settings */}
-      <div className="mt-6 px-3">
+      <div className="mt-6 px-3" style={{ display: "none" }}>
         <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Settings</p>
         <nav className="space-y-0.5">
           {settingsItems.map((item) => (
             <Link
               key={item.label}
               to={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                isActive(item.href)
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive(item.href)
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+                }`}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
@@ -106,7 +105,7 @@ const DashboardSidebar = () => {
             <p className="text-xs font-medium text-foreground truncate">{user?.name || "User"}</p>
             <p className="text-[10px] text-muted-foreground truncate">{user?.email || "user@email.com"}</p>
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             title="Log out"
             className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
