@@ -497,12 +497,16 @@ const LeadsPage = () => {
         </div >
 
         {/* Table */}
-        < div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex-1 flex flex-col" >
-          {
-            isLoading ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-20" >
-                <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-slate-500 font-medium">Fetching lead intelligence…</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex-1 flex flex-col">
+          {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-20">
+              <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-slate-500 font-medium">Fetching lead intelligence…</p>
+            </div>
+          ) : filteredAndSortedLeads.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
+              <div className="h-20 w-20 rounded-3xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
+                <Inbox className="h-10 w-10 text-slate-300" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Leads Found</h3>
               <p className="text-slate-500 max-w-xs mx-auto">
@@ -574,8 +578,37 @@ const LeadsPage = () => {
                               <span className="text-xs text-slate-400 italic">No phone</span>
                             )}
                           </div>
-                        </div>
-                      </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-xs text-slate-500 font-medium">
+                            {format(new Date(lead.createdAt), "MMM d, h:mm a")}
+                          </p>
+                        </td>
+                        <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                              onClick={(e) => handleDelete(lead._id, e)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+</tbody>
+</table>
+</div>
 
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
@@ -686,23 +719,22 @@ const LeadsPage = () => {
             className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
             onClick={() => setSelectedLead(null)}
           >
-            <div
-              className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
-                    {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
-                      {getLField(selectedLead, "name") || "Lead Detail"}
-                    </h2>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
-                    </div>
+          <div
+            className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
+                  {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                    {getLField(selectedLead, "name") || "Lead Detail"}
+                  </h2>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
@@ -716,86 +748,11 @@ const LeadsPage = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
-              <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary" /> Full Message
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-primary/30 shadow-sm">
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                    {getLField(selectedLead, "message")}
-                  </p>
-                </div>
-              </section>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
-                  <div className="space-y-4">
-                    <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Contact Emails</p>
-                      <div className="space-y-2">
-                        {getStackedContacts(selectedLead).emails.length > 0 ? (
-                          getStackedContacts(selectedLead).emails.map((email, idx) => (
-                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 group/item">
-                              <Mail className="h-3.5 w-3.5 text-primary/60" />
-                              {email}
-                              <ExternalLink
-                                className="h-3 w-3 opacity-0 group-hover/item:opacity-100 cursor-pointer ml-auto"
-                                onClick={() => window.location.href = `mailto:${email}`}
-                              />
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
-                      <div className="space-y-2">
-                        {getStackedContacts(selectedLead).phones.length > 0 ? (
-                          getStackedContacts(selectedLead).phones.map((phone, idx) => (
-                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                              <Phone className="h-3.5 w-3.5 text-primary/60" />
-                              {phone}
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
-                      <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-blue-400" />
-                        {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                      <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
+            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12 custom-scrollbar">
                 <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
+                      <Mail className="h-4 w-4 text-primary" /> Full Message
                     </h3>
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
@@ -844,13 +801,13 @@ const LeadsPage = () => {
                           )}
                         </div>
                       </div>
-                    </div >
-                  </section >
+                    </div>
+                  </section>
                   <section>
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
                     <div className="space-y-4">
                       <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
                         <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
                           <Shield className="h-3.5 w-3.5 text-blue-400" />
                           {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
@@ -864,7 +821,7 @@ const LeadsPage = () => {
                       </div>
                     </div>
                   </section>
-                </div >
+                </div>
 
                 {/* UTM / Marketing section */}
                 <section className={selectedLead.utm_source ? "block" : "hidden"}>
@@ -958,12 +915,11 @@ const LeadsPage = () => {
                   </div>
                 </section>
               </div>
-
-            </div >
-          </div >
+            </div>
+          </div>
         )
       }
-    </div >
+    </div>
   );
 };
 
