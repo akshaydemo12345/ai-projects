@@ -74,6 +74,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // TEST ROUTE
+app.get('/index.php', (req, res) => {
+  res.json({ message: 'AI Landing Page API is running' });
+});
+
 app.get('/', (req, res) => {
   res.json({ message: 'AI Landing Page API is running' });
 });

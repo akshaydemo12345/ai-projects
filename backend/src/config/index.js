@@ -28,7 +28,7 @@ const config = {
 
   // API Configuration
   api: {
-    baseUrl: process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`,
+    baseUrl: process.env.API_BASE_URL || process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 5000}`,
     version: process.env.API_VERSION || 'v1',
   },
 

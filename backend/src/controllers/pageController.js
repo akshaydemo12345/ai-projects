@@ -10,6 +10,7 @@ const Project = require('../models/Project');
 const AIService = require('../services/aiService');
 const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
+const config = require('../config');
 const logger = require('../utils/logger');
 
 const AppError = require('../utils/AppError');
@@ -196,7 +197,7 @@ exports.getPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:5000';
+    const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
     const previewUrl = page.previewUrl || `${baseAppUrl}/preview/${page.slug}`;
 
     return res.status(200).json({
@@ -394,7 +395,7 @@ exports.createPage = async (req, res, next) => {
       }
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'http://localhost:5000';
+    const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
     const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
 
     // 8. Update Page with AI Results
@@ -548,7 +549,7 @@ exports.updatePage = async (req, res, next) => {
       const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
       updateData.slug = uniqueSlug;
 
-      const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
+      const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
       updateData.previewUrl = `${baseAppUrl}/preview/${uniqueSlug}`;
     }
 
@@ -630,7 +631,7 @@ exports.publishPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'https://app.yourdomain.com';
+    const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
     let liveUrl;
 
     if (parsed.data.domain) {
