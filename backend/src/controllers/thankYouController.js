@@ -132,7 +132,8 @@ exports.updateThankYouConfig = async (req, res, next) => {
  */
 exports.renderThankYouPage = async (req, res, next) => {
   try {
-    const { pageSlug } = req.params;
+    const { pageSlug: rawPageSlug } = req.params;
+    const pageSlug = (rawPageSlug || "").replace(/^api\/v1\/proxy\//i, '');
     
     // Read context from cookie (optional - for validation only)
     const lpContext = req.cookies.lp_context;
