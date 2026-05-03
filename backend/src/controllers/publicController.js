@@ -37,7 +37,10 @@ const normalizeScript = (value = '') => {
 exports.getPublicPageBySlug = async (req, res, next) => {
   try {
     const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-    const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    
+    // Strip proxy prefix if present (WP Relay compatibility)
+    cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
     const slugParts = cleanSlug.split('/');
 
     let isThankYou = false;
@@ -174,7 +177,8 @@ exports.getPublicPageBySlug = async (req, res, next) => {
  */
 exports.getPublicPage = async (req, res, next) => {
   try {
-    const { slug } = req.params;
+    const { slug: rawSlug } = req.params;
+    const slug = (rawSlug || "").replace(/^api\/v1\/proxy\//i, '');
 
     const page = await Page.findOneAndUpdate(
       { slug, isDeleted: { $ne: true } }, // Allow drafts to be viewed at this URL
@@ -247,7 +251,10 @@ const buildLeadCaptureScript = (page) => {
     n=n||1;
     fetch(A+"/api/leads",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{
+        "Content-Type":"application/json",
+        "Accept":"application/json"
+      },
       body:JSON.stringify(d),
       mode:"cors"
     })
@@ -257,6 +264,13 @@ const buildLeadCaptureScript = (page) => {
         f.reset();
         var ev=new CustomEvent('submit-success',{detail:{leadId:r.data&&r.data.leadId?r.data.leadId:'none'}});
         document.dispatchEvent(ev);
+        
+        // Prioritize redirect returned by API
+        if (r.redirect) {
+          window.location.replace(r.redirect);
+          return;
+        }
+
         var tyUrl=window.pageThankYouUrl||"";
         if(tyUrl&&tyUrl.trim()!==""){
           window.location.replace(tyUrl)
@@ -387,7 +401,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   // ── Thank You Redirect Script ────────────────────────────────────────────
   // Handles Gravity Forms and generic form submission success events
   const thankYouUrl = page.thankYouUrl?.trim() || '';
-  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else if(window.pageSlug){window.location.replace('/'+window.pageSlug+'/thank-you')}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
+  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var currentPath=window.location.pathname.replace(/\\/+$/,'');if(currentPath.indexOf('/thank-you')===-1){window.location.replace(currentPath+'/thank-you')}}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
   const encodedTyScript = Buffer.from(rawTyScript).toString('base64');
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
@@ -660,7 +674,10 @@ exports.getPreviewHTML = async (req, res, next) => {
 exports.getPublicPageHTML = async (req, res, next) => {
   try {
     const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-    const cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+    let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+
+    // Strip proxy prefix if present (WP Relay compatibility)
+    cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
 
     // ─── DYNAMIC SLUG DETECTION (Pre-Slug Support) ───
     const slugParts = cleanSlug.split('/');
@@ -820,7 +837,7 @@ exports.handleFormSubmission = async (req, res, next) => {
     // If slug is missing (relay) or ends with 'proxy-form', resolve it
     if (!pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form') {
       const referer = req.get('referer') || '';
-      const urlSlug = req.params.slug || '';
+      const urlSlug = (req.params.slug || '').replace(/^api\/v1\/proxy\//i, '');
 
       // Try to get slug from URL param (stripping proxy-form)
       let detectedSlug = urlSlug.replace(/\/proxy-form$/i, '');
@@ -1034,18 +1051,29 @@ exports.handleFormSubmission = async (req, res, next) => {
         thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}/thank-you`;
       }
     }
+    
+    // Ensure absolute URL for JSON response
+    const host = req.get('x-forwarded-host') || req.get('host');
+    let absoluteThankYouUrl = thankYouUrl;
+    if (host && absoluteThankYouUrl.startsWith('/')) {
+      const protocol = req.protocol || 'http';
+      absoluteThankYouUrl = `${protocol}://${host}${absoluteThankYouUrl}`;
+    }
+
+    logger.info(`🎯 [FORM-SUBMIT] Redirection: ${thankYouUrl} (Absolute: ${absoluteThankYouUrl})`);
 
     // Final response
-    if (req.xhr || req.headers.accept?.includes('json')) {
+    if (req.xhr || req.headers.accept?.includes('json') || req.headers['content-type']?.includes('json')) {
       return res.status(201).json({
         status: 'success',
         message: 'Intelligence Captured',
         data: { leadId: lead._id },
-        redirect: thankYouUrl
+        redirect: absoluteThankYouUrl
       });
     }
 
-    return res.redirect(thankYouUrl);
+    // Traditional redirect uses relative path for maximum proxy compatibility
+    return res.redirect(thankYouUrl.startsWith('http') ? thankYouUrl : thankYouUrl);
 
   } catch (err) {
     console.error('❌ Dynamic Form Submission Error:', err);
@@ -1146,9 +1174,11 @@ exports.verifyPlugin = async (req, res, next) => {
     logger.info(`✅ [PLUGIN-VERIFY] Success for domain: ${domain} (Project: ${project.name})`);
 
     res.status(200).json({
-      status: 'success',
+      status: 'active',
       target_url: normalizedBackendBase,
       allowed_paths: [...allowedPaths, '/api/leads'],
+      plan: 'pro',
+      cache_time: 300,
       settings: {
         site_name: project.name,
         primary_color: project.primaryColor || '#007bff',

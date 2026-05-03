@@ -21,7 +21,7 @@ class DomainMapper_Proxy
     private DomainMapper_Rewriter $rewriter;
     private DomainMapper_API $api;
 
-    const MAX_REDIRECTS = 5;
+    const MAX_REDIRECTS = 0;
     const TIMEOUT = 30;
     const RELAY_PREFIX = '/dm-relay/';
 
