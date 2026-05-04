@@ -369,6 +369,12 @@ const GrapesEditor = () => {
       width: 'auto',
       fromElement: false,
       storageManager: false,
+      allowScripts: 1,
+      parser: {
+        optionsHtml: {
+          allowScripts: true
+        }
+      },
       undoManager: { trackSelection: false },
       plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
       pluginsOpts: {
@@ -488,6 +494,86 @@ const GrapesEditor = () => {
                 }
               }
             ],
+          },
+        },
+      });
+
+      // ─── Register Form Embed Component ───
+      editor.DomComponents.addType('form-embed', {
+        model: {
+          defaults: {
+            tagName: 'div',
+            draggable: true,
+            droppable: false,
+            attributes: { class: 'form-embed-container' },
+            embedCode: '',
+            embedType: 'html',
+            traits: [
+              {
+                type: 'textarea',
+                name: 'embedCode',
+                label: 'Embed Code',
+                changeProp: 1,
+              },
+              {
+                type: 'select',
+                name: 'embedType',
+                label: 'Embed Type',
+                options: [
+                  { id: 'html', name: 'HTML' },
+                  { id: 'script', name: 'Script' },
+                  { id: 'iframe', name: 'IFrame' },
+                  { id: 'shortcode', name: 'Shortcode' },
+                ],
+                changeProp: 1,
+              },
+            ],
+          },
+          init() {
+            this.on('change:embedCode', this.handleUpdate);
+          },
+          handleUpdate() {
+            const code = this.get('embedCode');
+            // We set the components so GrapesJS exports it, 
+            // but we'll override the view to show a placeholder
+            this.components(code);
+          },
+        },
+        view: {
+          onRender() {
+            const model = this.model;
+            const code = model.get('embedCode');
+            const type = model.get('embedType');
+            
+            // In the editor, we don't want to execute the raw code (especially scripts)
+            // as it can break the editor UI or cause multiple loads.
+            if (!code) {
+              this.el.innerHTML = `
+                <div style="padding: 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif;">
+                  <div style="font-size: 32px; margin-bottom: 12px;">🔌</div>
+                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">Form Embed Module</div>
+                  <div style="font-size: 13px;">Paste your embed code (HubSpot, Typeform, etc.) in the Traits panel.</div>
+                </div>
+              `;
+              return;
+            }
+
+            this.el.innerHTML = `
+              <div style="padding: 20px; border: 1px solid var(--primary); background: rgba(124,58,237,0.03); border-radius: 12px; position: relative; min-height: 100px; overflow: hidden; font-family: 'Inter', sans-serif;">
+                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); z-index: 10;">
+                   <div style="background: var(--primary); color: white; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                     ${type} Embed Active
+                   </div>
+                   <div style="margin-top: 8px; font-size: 12px; color: #64748b; font-weight: 500;">Preview hidden in editor to prevent conflicts</div>
+                </div>
+                <div style="opacity: 0.4; pointer-events: none;">
+                  <div style="height: 12px; width: 60%; background: #e2e8f0; border-radius: 4px; margin-bottom: 12px;"></div>
+                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
+                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
+                  <div style="height: 40px; width: 40%; background: #e2e8f0; border-radius: 6px;"></div>
+                </div>
+              </div>
+            `;
           },
         },
       });
@@ -623,6 +709,15 @@ const GrapesEditor = () => {
           type: 'label',
           content: 'Field Label',
           style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+        }
+      });
+
+      bm.add('form-embed', {
+        label: 'Form Embed',
+        category: 'Embeds',
+        attributes: { class: 'fa fa-code' },
+        content: {
+          type: 'form-embed',
         }
       });
 

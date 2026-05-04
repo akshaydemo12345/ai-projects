@@ -19,7 +19,7 @@
 $DM_SETTINGS_DEV = [
     'api_key'       => 'http://127.0.0.1:5000@@your-unique-plugin-token-here',
     // OR format: 'your-unique-plugin-token-here'
-    // (defaults to http://localhost:5000/plugin/verify)
+    // (defaults to https://apiserver.ai-landingpages.sharehq.org/plugin/verify)
     
     'source_domain' => 'my-wordpress-site.test',
     // The domain where WordPress is hosted (where users visit)

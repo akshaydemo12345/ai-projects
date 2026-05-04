@@ -42,6 +42,25 @@
       // Inject HTML
       container.innerHTML = html;
 
+      // Execute scripts (crucial for form embeds like HubSpot, JotForm)
+      (function(container) {
+        const scripts = container.querySelectorAll('script');
+        const registry = window.__PC_SCRIPT_REGISTRY__ || new Set();
+        window.__PC_SCRIPT_REGISTRY__ = registry;
+        scripts.forEach(oldScript => {
+          const newScript = document.createElement('script');
+          Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+          const src = oldScript.getAttribute('src');
+          if (src) {
+            if (registry.has(src)) { oldScript.remove(); return; }
+            registry.add(src);
+          }
+          if (oldScript.innerHTML) newScript.innerHTML = oldScript.innerHTML;
+          else if (oldScript.textContent) newScript.textContent = oldScript.textContent;
+          if (oldScript.parentNode) oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      })(container);
+
       // Inject JS
       if (js) {
         const scriptTag = document.createElement('script');
