@@ -259,17 +259,6 @@ const LeadsPage = () => {
     setFilterUtmCampaign("");
   };
 
-  // const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
-  // const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
-
-  // const clearFilters = () => {
-  //   setFilterProjectId("");
-  //   setFilterPageId("");
-  //   setSearch("");
-  //   setStartDate("");
-  //   setEndDate("");
-  // };
-
   return (
     <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
       {/* ─── Header ─── */}
@@ -606,9 +595,9 @@ const LeadsPage = () => {
                         </td>
                       </tr>
                     ))}
-</tbody>
-</table>
-</div>
+                  </tbody>
+                </table>
+              </div>
 
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
@@ -713,12 +702,11 @@ const LeadsPage = () => {
       </div >
 
       {/* ─── Lead Detail Slide-over ─── */}
-      {
-        selectedLead && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
-            onClick={() => setSelectedLead(null)}
-          >
+      {selectedLead && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
+          onClick={() => setSelectedLead(null)}
+        >
           <div
             className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
             onClick={e => e.stopPropagation()}
@@ -749,82 +737,66 @@ const LeadsPage = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12 custom-scrollbar">
-                <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
+              {/* Message Section */}
+              {getLField(selectedLead, "message") && (
+                <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary" /> Full Message
+                      <FileText className="h-4 w-4 text-primary" /> Full Message
                     </h3>
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
-                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-primary/30 shadow-sm">
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {getLField(selectedLead, "message")}
-                    </p>
+                  <div className="p-6 rounded-[24px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 italic text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
+                    "{getLField(selectedLead, "message")}"
                   </div>
                 </section>
+              )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  <section>
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
-                    <div className="space-y-4">
-                      <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Contact Emails</p>
-                        <div className="space-y-2">
-                          {getStackedContacts(selectedLead).emails.length > 0 ? (
-                            getStackedContacts(selectedLead).emails.map((email, idx) => (
-                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 group/item">
-                                <Mail className="h-3.5 w-3.5 text-primary/60" />
-                                {email}
-                                <ExternalLink
-                                  className="h-3 w-3 opacity-0 group-hover/item:opacity-100 cursor-pointer ml-auto"
-                                  onClick={() => window.location.href = `mailto:${email}`}
-                                />
-                              </p>
-                            ))
-                          ) : (
-                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
-                        <div className="space-y-2">
-                          {getStackedContacts(selectedLead).phones.length > 0 ? (
-                            getStackedContacts(selectedLead).phones.map((phone, idx) => (
-                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Phone className="h-3.5 w-3.5 text-primary/60" />
-                                {phone}
-                              </p>
-                            ))
-                          ) : (
-                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                  <section>
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
-                        <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                          <Shield className="h-3.5 w-3.5 text-blue-400" />
-                          {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                        </p>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                        </p>
-                      </div>
-                    </div>
-                  </section>
+              {/* Identity Section */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-indigo-500" /> Identity Details
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Email Addresses</p>
+                    <div className="space-y-2">
+                      {getStackedContacts(selectedLead).emails.length > 0 ? (
+                        getStackedContacts(selectedLead).emails.map((email, idx) => (
+                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 text-primary/60" />
+                            {email}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
+                    <div className="space-y-2">
+                      {getStackedContacts(selectedLead).phones.length > 0 ? (
+                        getStackedContacts(selectedLead).phones.map((phone, idx) => (
+                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-primary/60" />
+                            {phone}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-                {/* UTM / Marketing section */}
-                <section className={selectedLead.utm_source ? "block" : "hidden"}>
+              {/* Marketing Attribution */}
+              {(selectedLead as any).utm_source && (
+                <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <Globe className="h-4 w-4 text-emerald-500" /> Marketing Attribution
@@ -844,81 +816,85 @@ const LeadsPage = () => {
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
                     </div>
-                    {(selectedLead as any).utm_term && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_term}</p>
-                      </div>
-                    )}
-                    {(selectedLead as any).utm_content && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_content}</p>
-                      </div>
-                    )}
-                    {((selectedLead as any).gclid || (selectedLead as any).fbclid) && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Click Identifier</p>
-                        <p className="text-xs font-mono text-slate-500 truncate">
-                          {(selectedLead as any).gclid ? `GCLID: ${(selectedLead as any).gclid}` : `FBCLID: ${(selectedLead as any).fbclid}`}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </section>
+              )}
 
-                <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
-                    </h3>
-                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+              {/* Captured Insights */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(() => {
+                    const standardKeys = [
+                      "name", "email", "phone", "message", "full_name", "first_name", "last_name",
+                      "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
+                      "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
+                      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
+                    ];
+
+                    const shownLabels = new Set<string>();
+                    const insights: Array<{ label: string, value: any }> = [];
+
+                    Object.entries(selectedLead).forEach(([key, value]) => {
+                      if (!value || key === "data" || key === "utm") return;
+                      const lowerK = key.toLowerCase().replace(/_/g, "");
+                      if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
+                      if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+
+                      const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                      if (!shownLabels.has(label)) {
+                        shownLabels.add(label);
+                        insights.push({ label, value });
+                      }
+                    });
+
+                    return insights.length > 0 ? (
+                      insights.map((item, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                          <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
+                    );
+                  })()}
+                </div>
+              </section>
+
+              {/* Technical Trace */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-400" /> Technical Trace
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
+                    <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5 text-blue-400" />
+                      {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(() => {
-                      const standardKeys = [
-                        "name", "email", "phone", "message", "full_name", "first_name", "last_name",
-                        "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
-                        "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
-                        "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
-                      ];
-
-                      const shownLabels = new Set<string>();
-                      const insights: Array<{ label: string, value: any }> = [];
-
-                      Object.entries(selectedLead).forEach(([key, value]) => {
-                        if (!value || key === "data" || key === "utm") return;
-                        const lowerK = key.toLowerCase().replace(/_/g, "");
-
-                        // Skip standard keys and contact info (already shown in Identity Details)
-                        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
-                        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
-
-                        const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-                        if (!shownLabels.has(label)) {
-                          shownLabels.add(label);
-                          insights.push({ label, value });
-                        }
-                      });
-
-                      return insights.length > 0 ? (
-                        insights.map((item, idx) => (
-                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                            <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
-                      );
-                    })()}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
+                    </p>
                   </div>
-                </section>
-              </div>
+                </div>
+              </section>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
     </div>
   );
 };
