@@ -12,7 +12,7 @@ const config = {
   // App Configuration
   app: {
     name: import.meta.env.VITE_APP_NAME || 'AI Landing Page Builder',
-    url: import.meta.env.VITE_APP_URL || 'https://contributors-markets-semiconductor-diamond.trycloudflare.com',
+    url: import.meta.env.VITE_APP_URL || window.location.origin,
   },
 
   // API Configuration
