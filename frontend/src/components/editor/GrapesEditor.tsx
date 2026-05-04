@@ -10,9 +10,10 @@ import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
 import './grapes-custom.css';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { copyToClipboard } from '@/lib/utils';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
@@ -113,6 +114,7 @@ const GrapesEditor = () => {
       setNoFollow(page.noFollow || false);
       setThemePrimary(page.primaryColor || '#7c3aed');
       setThemeSecondary(page.secondaryColor || '#6366f1');
+      setSiteStatus(page.status || 'draft');
     }
   }, [page]);
 
@@ -2011,6 +2013,9 @@ const GrapesEditor = () => {
               onChange={(e) => {
                 const val = e.target.value as any;
                 setSiteStatus(val);
+                // 🚀 Actually update the database!
+                updatePageMutation.mutate({ status: val });
+                
                 if (val === 'unpublished') {
                   toast.error('Site is now Unpublished and hidden from public view.');
                 } else {
@@ -2246,46 +2251,11 @@ const GrapesEditor = () => {
                   handleSave(); // 🚀 Also save the canvas HTML/CSS so they don't get out of sync!
                   queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
                 }}
-                onSelect={(html, css) => {
+                onSelect={async (html, css) => {
                   if (editorRef.current) {
-                    console.log('🎬 Applying Thank You template to canvas...');
-
-                    let finalHtml = html;
-                    let finalCss = css || '';
-
-                    // Robust parsing for full HTML templates
-                    if (html.toLowerCase().includes('<body')) {
-                      try {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-
-                        // Extract styles from <style> tags
-                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
-                        if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
-
-                        // Take body content
-                        finalHtml = doc.body.innerHTML;
-
-                        // Apply body style to wrapper accurately
-                        const bodyStyle = doc.body.getAttribute('style');
-                        if (bodyStyle && editorRef.current) {
-                          editorRef.current.getWrapper().setStyle(parseInlineStyle(bodyStyle));
-                          // Parse style string into object for TypeScript compatibility
-                          const styleObj: Record<string, string> = {};
-                          const tempDiv = document.createElement('div');
-                          tempDiv.setAttribute('style', bodyStyle);
-                          for (let i = 0; i < tempDiv.style.length; i++) {
-                            const prop = tempDiv.style[i];
-                            styleObj[prop] = tempDiv.style.getPropertyValue(prop);
-                          }
-                          editorRef.current.getWrapper().setStyle(styleObj);
-                        }
-                      } catch (e) {
-                        console.error('Failed to parse template HTML:', e);
-                      }
-                    }
-
-                    // 🛠️ CRITICAL: Clear both HTML and CSS to prevent merging
+                    console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
+                    
+                    // Clear both HTML and CSS to prevent merging
                     editorRef.current.setComponents('');
                     try {
                       if (editorRef.current.DomComponents && editorRef.current.DomComponents.clear) {
@@ -2295,8 +2265,27 @@ const GrapesEditor = () => {
                       if (editorRef.current.Css && editorRef.current.Css.clear) {
                         editorRef.current.Css.clear();
                       }
-                    } catch (e) {
-                      console.warn('GrapesJS clear warning:', e);
+                      // @ts-ignore
+                      if (editorRef.current.UndoManager && editorRef.current.UndoManager.clear) {
+                        editorRef.current.UndoManager.clear();
+                      }
+                    } catch (e) {}
+
+                    let finalHtml = html;
+                    let finalCss = css || '';
+
+                    // Robust parsing for full HTML templates
+                    if (html.toLowerCase().includes('<body')) {
+                      try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                        if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+                        finalHtml = doc.body.innerHTML;
+                        console.log('✅ Parsed full HTML body content.');
+                      } catch (e) {
+                        console.error('Error parsing Thank You HTML:', e);
+                      }
                     }
 
                     // Apply new content
@@ -2306,8 +2295,10 @@ const GrapesEditor = () => {
                       editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
                       editorRef.current.setStyle(finalCss);
                     }
-
-                    toast.info('Thank You Template Applied');
+                    
+                    // Force refresh
+                    editorRef.current.refresh();
+                    console.log('✨ Canvas updated with new Thank You template.');
                   }
                 }}
               />
@@ -2550,25 +2541,31 @@ const GrapesEditor = () => {
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Live URL</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px' }}>
-                  <span style={{ color: '#10b981', fontSize: 12, flex: 1, fontFamily: 'monospace', wordBreak: 'break-all' }}>{publishedUrl}</span>
+                  <span style={{ color: '#10b981', fontSize: 12, flex: 1, fontFamily: 'monospace', wordBreak: 'break-all', fontWeight: 600 }}>{publishedUrl}</span>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       const btn = e.currentTarget;
-                      const originalText = btn.innerText;
-                      navigator.clipboard.writeText(publishedUrl).then(() => {
-                        toast.success('URL copied!');
-                        btn.innerText = 'Copied!';
+                      const originalContent = btn.innerHTML;
+                      const success = await copyToClipboard(publishedUrl);
+                      if (success) {
+                        toast.success('URL copied to clipboard!');
+                        btn.innerHTML = '<span style="display:flex;align-items:center;gap:4px">Copied!</span>';
                         btn.style.background = 'rgba(16,185,129,0.2)';
                         btn.style.color = '#34d399';
                         setTimeout(() => {
-                          btn.innerText = originalText;
+                          btn.innerHTML = originalContent;
                           btn.style.background = 'rgba(124,58,237,0.2)';
                           btn.style.color = '#a78bfa';
                         }, 2000);
-                      });
+                      } else {
+                        toast.error('Failed to copy. Please copy manually.');
+                      }
                     }}
-                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s' }}
-                  >Copy</button>
+                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <Copy size={12} />
+                    Copy
+                  </button>
                 </div>
               </div>
 
