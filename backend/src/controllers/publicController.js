@@ -207,7 +207,7 @@ exports.getPublicPage = async (req, res, next) => {
  * Uses absolute APP_BASE_URL so it works from any domain (WordPress, custom domain, etc.)
  */
 const buildLeadCaptureScript = (page) => {
-  const apiBaseUrl = (process.env.APP_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+  const apiBaseUrl = (process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org').replace(/\/+$/, '');
   const pageSlug = page.slug || '';
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
@@ -1072,8 +1072,22 @@ exports.handleFormSubmission = async (req, res, next) => {
       });
     }
 
-    // Traditional redirect uses relative path for maximum proxy compatibility
-    return res.redirect(thankYouUrl.startsWith('http') ? thankYouUrl : thankYouUrl);
+    // Traditional redirect: Use JS-based redirect to force URL update in proxied environments
+    return res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Redirecting...</title>
+        <meta http-equiv="refresh" content="0;url=${absoluteThankYouUrl}">
+      </head>
+      <body>
+        <p>Redirecting to <a href="${absoluteThankYouUrl}">${absoluteThankYouUrl}</a>...</p>
+        <script>
+          window.location.replace("${absoluteThankYouUrl}");
+        </script>
+      </body>
+      </html>
+    `);
 
   } catch (err) {
     console.error('❌ Dynamic Form Submission Error:', err);

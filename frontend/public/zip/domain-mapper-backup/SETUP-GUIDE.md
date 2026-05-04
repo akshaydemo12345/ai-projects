@@ -249,7 +249,7 @@ The plugin accepts two API token formats:
 ```
 your-unique-plugin-token-here
 ```
-Uses default endpoint: `http://localhost:5000/plugin/verify`
+Uses default endpoint: `https://apiserver.ai-landingpages.sharehq.org/plugin/verify`
 
 **Format 2: Custom Endpoint**
 ```
