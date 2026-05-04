@@ -3,9 +3,9 @@ import type { BlockType } from '@/types/editor';
 export interface BlockDef {
   type: BlockType;
   label: string;
-  category: 'Navigation' | 'Layout' | 'Content' | 'Text' | 'Media' | 'Conversion';
+  category: 'Navigation' | 'Layout' | 'Content' | 'Text' | 'Media' | 'Conversion' | 'Forms';
   emoji: string;
-  defaultContent: Record<string, any>;
+  defaultContent: string | Record<string, any>;
 }
 
 export const BLOCK_DEFS: BlockDef[] = [
@@ -127,8 +127,51 @@ export const BLOCK_DEFS: BlockDef[] = [
     defaultContent: { left: 'Left column content. Add your text here.', right: 'Right column content. Add your text here.' },
   },
   {
-    type: 'button-block', label: 'Button', category: 'Conversion', emoji: '🔘',
-    defaultContent: { text: 'Click Here', href: '#', style: 'primary', align: 'center' },
+    type: 'text-block', label: 'Field Label', category: 'Forms', emoji: '🏷️',
+    defaultContent: `<label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">New Label</label>`
+  },
+  {
+    type: 'text-block', label: 'Input Group', category: 'Forms', emoji: '📝',
+    defaultContent: `
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Field Label</label>
+        <input type="text" placeholder="Enter text..." style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; outline: none; font-size: 14px;">
+      </div>`
+  },
+  {
+    type: 'text-block', label: 'Textarea Group', category: 'Forms', emoji: '🗒️',
+    defaultContent: `
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Message Label</label>
+        <textarea placeholder="Your message..." style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; outline: none; min-height: 100px; font-size: 14px;"></textarea>
+      </div>`
+  },
+  {
+    type: 'select', label: 'Select Box', category: 'Forms', emoji: '🔽',
+    defaultContent: `<select data-label="Select Option" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; outline: none; background: #fff; font-size: 14px; min-height: 45px; display: block;">
+          <option value="1">Option 1</option>
+          <option value="2">Option 2</option>
+        </select>`
+  },
+  {
+    type: 'text-block', label: 'Radio Button', category: 'Forms', emoji: '🔘',
+    defaultContent: `
+      <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 14px; color: #374151;">
+        <input type="radio" name="gender" value="option" style="width: 16px; height: 16px;">
+        Option Label
+      </label>`
+  },
+  {
+    type: 'text-block', label: 'Checkbox', category: 'Forms', emoji: '☑️',
+    defaultContent: `
+      <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 14px; color: #374151;">
+        <input type="checkbox" name="agree" value="yes" style="width: 16px; height: 16px;">
+        Accept Terms
+      </label>`
+  },
+  {
+    type: 'button-block', label: 'Submit Button', category: 'Forms', emoji: '🚀',
+    defaultContent: { text: 'Submit Form', href: '#', style: 'primary', align: 'center' },
   },
   {
     type: 'divider', label: 'Divider', category: 'Layout', emoji: '—',

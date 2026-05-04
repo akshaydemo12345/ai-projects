@@ -48,7 +48,7 @@ const CreatePageFlow = () => {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const industries = ["SaaS", "E-commerce", "Agency", "Healthcare", "Education", "Finance", "Real Estate", "Other"];
+  const industries = ["Other"];
   const pageTypes = [
     { id: "landing", label: "Landing Page", icon: <Rocket className="h-6 w-6" /> },
   ];
