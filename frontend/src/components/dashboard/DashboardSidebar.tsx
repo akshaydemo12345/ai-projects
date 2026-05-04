@@ -90,13 +90,6 @@ const DashboardSidebar = () => {
 
       {/* Bottom - Theme & User */}
       <div className="mt-auto p-4 space-y-3 border-t border-border">
-        <div className="flex items-center justify-between px-2">
-          <span className="text-xs text-muted-foreground">Theme</span>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Sun className="h-3.5 w-3.5 text-yellow-500" />
-            <span>Light</span>
-          </div>
-        </div>
         <div className="flex items-center gap-2 px-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
             {userInitials}

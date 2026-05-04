@@ -12,6 +12,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import CreateProjectFlow from "./pages/CreateProjectFlow";
 import CreatePagePage from "./pages/CreatePagePage";
+import PageSettingsPage from "./pages/PageSettingsPage";
 import LeadsPage from "./pages/LeadsPage";
 import MailManagementPage from "./pages/MailManagementPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -20,6 +21,7 @@ import BillingPage from "./pages/BillingPage";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import PreviewPage from "./pages/PreviewPage";
+import TemplatesPage from "./pages/TemplatesPage";
 import PublicLandingPage from "./pages/PublicLandingPage";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -51,6 +53,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<RootHandler />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/templates" element={<TemplatesPage />} />
             
             {/* Protected Dashboard Routes */}
             <Route element={<ProtectedRoute />}>
@@ -60,6 +63,7 @@ const App = () => (
                 <Route path="projects/new" element={<CreateProjectFlow />} />
                 <Route path="projects/:id" element={<ProjectDetailPage />} />
                 <Route path="projects/:id/create-page" element={<CreatePagePage />} />
+                <Route path="projects/:id/pages/:pageId/settings" element={<PageSettingsPage />} />
                 <Route path="published" element={<PublishedPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="mail-management" element={<MailManagementPage />} />

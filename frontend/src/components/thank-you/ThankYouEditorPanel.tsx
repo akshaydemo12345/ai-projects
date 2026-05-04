@@ -111,9 +111,11 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
     }
   };
 
-  const handleLayoutChange = (layoutId: string) => {
+  const handleLayoutChange = async (layoutId: string) => {
     const selectedLayout = layouts.find(l => l.id === layoutId);
     if (selectedLayout) {
+      console.log('🎯 Layout changed to:', layoutId);
+      
       const newConfig = {
         ...config,
         layout: layoutId,
@@ -134,6 +136,26 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
       };
 
       setConfig(newConfig);
+
+      // 🚀 Auto-save config AND Sync preview
+      const previewPromise = (async () => {
+        // 1. Persist the layout selection to the database immediately
+        await thankYouApi.updateConfig(pageId, newConfig);
+        
+        // 2. Get the HTML preview
+        const html = await thankYouApi.preview(newConfig);
+        if (!html || html.length < 50) throw new Error('Empty preview received');
+        
+        // 3. Update the editor canvas
+        onSelect?.(html);
+        return html;
+      })();
+
+      toast.promise(previewPromise, {
+        loading: `Loading ${selectedLayout.name} template...`,
+        success: `${selectedLayout.name} applied!`,
+        error: 'Failed to load template preview',
+      });
     }
   };
 
