@@ -98,6 +98,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     let primaryColor = page.primaryColor;
     let secondaryColor = page.secondaryColor;
     let logoUrl = page.logoUrl;
+    let websiteUrl = page.websiteUrl;
 
     if (page.projectId) {
       const project = await Project.findById(page.projectId);
@@ -105,6 +106,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         if (!primaryColor) primaryColor = project.primaryColor;
         if (!secondaryColor) secondaryColor = project.secondaryColor;
         if (!logoUrl) logoUrl = project.logoUrl;
+        if (!websiteUrl) websiteUrl = project.websiteUrl;
 
         // Increment project views as well
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
@@ -123,7 +125,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
 
           const isProxied = req.headers['x-proxy-by'] || forwardedHost;
 
-          if (isProxied && incomingRequestDomain && incomingRequestDomain !== project.websiteUrl) {
+          if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl)) {
             return res.status(403).json({
               status: 'error',
               message: 'This landing page is not authorized for this domain.'
@@ -143,7 +145,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       secondaryColor: secondaryColor,
       accentColor: page.accentColor || secondaryColor,
       logoUrl: logoUrl,
-      websiteUrl: page.websiteUrl,
+      websiteUrl: websiteUrl,
       thankYouUrl: page.thankYouUrl,
       thankYouPageContent: page.thankYouPageContent,
       thankYouPageStyles: page.thankYouPageStyles,
@@ -161,11 +163,12 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         primaryColor: primaryColor,
         secondaryColor: secondaryColor,
         logoUrl: logoUrl,
-        websiteUrl: page.websiteUrl,
+        websiteUrl: websiteUrl,
         thankYouUrl: page.thankYouUrl,
         hasCustomThankYou: !!page.thankYouPageContent
       }
     });
+
   } catch (err) {
     next(err);
   }
@@ -766,7 +769,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
 
         // 2. Check Authorization
         const isOwnerDomain = (incomingRequestDomain === saasDomain);
-        const isAuthorizedDomain = (incomingRequestDomain === project.websiteUrl);
+        const isAuthorizedDomain = (incomingRequestDomain === normalizeDomain(project.websiteUrl));
         const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
         if (!isOwnerDomain && !isAuthorizedDomain && !isDevDomain && project.websiteUrl) {
@@ -1159,7 +1162,7 @@ exports.verifyPlugin = async (req, res, next) => {
         project.websiteUrl = incomingDomain;
         await project.save();
         console.log(`🔒 Project "${project.name}" locked to domain: ${incomingDomain}`);
-      } else if (project.websiteUrl !== incomingDomain) {
+      } else if (normalizeDomain(project.websiteUrl) !== incomingDomain) {
         // Domain mismatch!
         console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
         return res.status(403).json({
@@ -1349,10 +1352,10 @@ exports.getDynamicPage = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Domain and path are required' });
     }
 
-    // Normalize path to slug
-    const cleanSlug = reqPath.replace(/^\/+|\/+$/g, '').split('/')[0];
+    // Normalize path to slug (handle nested paths/pre-slugs)
+    const cleanSlug = reqPath.replace(/^\/+|\/+$/g, '');
 
-    if (!cleanSlug) {
+    if (!cleanSlug || cleanSlug === '') {
       return res.status(404).json({ status: 'error', message: 'No slug found in path' });
     }
 
@@ -1401,7 +1404,7 @@ exports.getDynamicPage = async (req, res, next) => {
         }
 
         // Project-wide domain check (skip if valid API Key is present)
-        if (!isApiKeyMatch && project.websiteUrl && incomingRequestDomain !== project.websiteUrl && incomingRequestDomain !== saasDomain) {
+        if (!isApiKeyMatch && project.websiteUrl && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain) {
           return res.status(403).json({ status: 'error', message: `Domain ${incomingRequestDomain} is not authorized for this project.` });
         }
       }
