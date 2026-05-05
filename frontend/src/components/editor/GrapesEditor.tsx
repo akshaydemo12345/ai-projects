@@ -1016,12 +1016,16 @@ const GrapesEditor = () => {
 
       // ─── Register Form Embed Component ───
       editor.DomComponents.addType('form-embed', {
+        isComponent: el => el.classList && el.classList.contains('form-embed-container'),
         model: {
           defaults: {
             tagName: 'div',
             draggable: true,
             droppable: false,
-            attributes: { class: 'form-embed-container' },
+            attributes: { 
+              class: 'form-embed-container',
+              'data-gjs-type': 'form-embed' 
+            },
             embedCode: '',
             embedType: 'html',
             traits: [
@@ -1029,6 +1033,7 @@ const GrapesEditor = () => {
                 type: 'textarea',
                 name: 'embedCode',
                 label: 'Embed Code',
+                placeholder: 'Paste your HubSpot, Typeform, or Jotform code here...',
                 changeProp: 1,
               },
               {
@@ -1036,60 +1041,145 @@ const GrapesEditor = () => {
                 name: 'embedType',
                 label: 'Embed Type',
                 options: [
-                  { id: 'html', name: 'HTML' },
-                  { id: 'script', name: 'Script' },
+                  { id: 'embed', name: 'Embed' },
                   { id: 'iframe', name: 'IFrame' },
-                  { id: 'shortcode', name: 'Shortcode' },
+                  { id: 'script', name: 'Script' },
+                  { id: 'html', name: 'HTML' },
                 ],
                 changeProp: 1,
               },
             ],
           },
           init() {
-            this.on('change:embedCode', this.handleUpdate);
+            // Listen for property changes from the traits panel
+            this.on('change:embedCode change:embedType', this.handleUpdate);
+
+            // Initial sync from attributes if loading from HTML
+            const attrCode = this.getAttributes()['data-embed-code'];
+            const attrType = this.getAttributes()['data-embed-type'];
+            if (attrCode && !this.get('embedCode')) this.set('embedCode', attrCode, { silent: true });
+            if (attrType && !this.get('embedType')) this.set('embedType', attrType, { silent: true });
+            
+            // If we have code, ensure it's rendered as components for export
+            if (this.get('embedCode')) {
+              this.handleUpdate();
+            }
           },
           handleUpdate() {
-            const code = this.get('embedCode');
-            // We set the components so GrapesJS exports it, 
-            // but we'll override the view to show a placeholder
-            this.components(code);
+            const code = this.get('embedCode') || '';
+            const type = this.get('embedType') || 'html';
+            
+            // Store values in attributes so they survive save/load (persistence)
+            this.addAttributes({ 
+              'data-embed-code': code,
+              'data-embed-type': type
+            });
+            
+            // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
+            // Using components() ensures the code is included in the exported HTML.
+            this.components(`<div class="embed-inner-wrapper">${code}</div>`);
+            
+            // Trigger a view refresh
+            this.trigger('rerender-view');
           },
         },
         view: {
+          init() {
+            this.listenTo(this.model, 'change:embedCode change:embedType rerender-view', this.render);
+          },
           onRender() {
             const model = this.model;
             const code = model.get('embedCode');
             const type = model.get('embedType');
             
-            // In the editor, we don't want to execute the raw code (especially scripts)
-            // as it can break the editor UI or cause multiple loads.
+            // Clear the view element to manage our own preview
+            this.el.innerHTML = '';
+            
             if (!code) {
               this.el.innerHTML = `
-                <div style="padding: 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif;">
-                  <div style="font-size: 32px; margin-bottom: 12px;">🔌</div>
-                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">Form Embed Module</div>
-                  <div style="font-size: 13px;">Paste your embed code (HubSpot, Typeform, etc.) in the Traits panel.</div>
+                <div style="padding: 40px 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif; pointer-events: none;">
+                  <div style="font-size: 40px; margin-bottom: 16px; filter: grayscale(1);">🔌</div>
+                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 16px;">Form Embed Module</div>
+                  <div style="font-size: 13px; max-width: 300px; margin: 0 auto; line-height: 1.5;">Paste your HubSpot, Jotform, or Typeform code in the <b>Properties</b> panel on the right.</div>
                 </div>
               `;
               return;
             }
 
-            this.el.innerHTML = `
-              <div style="padding: 20px; border: 1px solid var(--primary); background: rgba(124,58,237,0.03); border-radius: 12px; position: relative; min-height: 100px; overflow: hidden; font-family: 'Inter', sans-serif;">
-                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); z-index: 10;">
-                   <div style="background: var(--primary); color: white; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                     ${type} Embed Active
-                   </div>
-                   <div style="margin-top: 8px; font-size: 12px; color: #64748b; font-weight: 500;">Preview hidden in editor to prevent conflicts</div>
-                </div>
-                <div style="opacity: 0.4; pointer-events: none;">
-                  <div style="height: 12px; width: 60%; background: #e2e8f0; border-radius: 4px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 40%; background: #e2e8f0; border-radius: 6px;"></div>
-                </div>
-              </div>
+            // Add the "Active" badge
+            const badge = document.createElement('div');
+            badge.className = 'embed-badge';
+            badge.style.cssText = `
+              position: absolute; top: 0; right: 0; background: #6366f1; color: white;
+              padding: 2px 10px; font-size: 10px; font-weight: 800; border-bottom-left-radius: 8px;
+              z-index: 100; pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             `;
+            badge.innerText = `${type} Active`;
+            this.el.style.position = 'relative';
+            this.el.appendChild(badge);
+
+            // Create a preview container
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'embed-preview-container';
+            previewContainer.style.width = '100%';
+            previewContainer.style.minHeight = '100px';
+            this.el.appendChild(previewContainer);
+
+            // For Script/Embed/IFrame types, we use an iframe for the EDITOR PREVIEW.
+            // This prevents complex scripts from breaking the main editor or disappearing after render.
+            if (type === 'script' || type === 'embed' || type === 'iframe' || code.includes('<script')) {
+              const iframe = document.createElement('iframe');
+              iframe.className = 'embed-preview-iframe';
+              iframe.style.width = '100%';
+              iframe.style.border = 'none';
+              iframe.style.minHeight = '200px';
+              iframe.style.display = 'block';
+              iframe.style.pointerEvents = 'none'; // Allow clicking the component itself for selection
+              previewContainer.appendChild(iframe);
+
+              const doc = iframe.contentWindow?.document;
+              if (doc) {
+                doc.open();
+                doc.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <style>
+                        body { margin: 0; padding: 0; font-family: sans-serif; display: flex; justify-content: center; overflow: hidden; }
+                        * { max-width: 100%; }
+                      </style>
+                    </head>
+                    <body>
+                      <div id="embed-wrapper">${code}</div>
+                      <script>
+                        function updateHeight() {
+                          try {
+                            const wrapper = document.getElementById('embed-wrapper');
+                            const height = wrapper ? wrapper.offsetHeight : document.body.scrollHeight;
+                            if (height > 0 && window.frameElement) {
+                              window.frameElement.style.height = (height + 20) + 'px';
+                            }
+                          } catch (e) {}
+                        }
+                        window.onload = updateHeight;
+                        // Use ResizeObserver for more immediate feedback if available
+                        if (window.ResizeObserver) {
+                          const ro = new ResizeObserver(updateHeight);
+                          ro.observe(document.body);
+                        } else {
+                          setInterval(updateHeight, 2000);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+                doc.close();
+              }
+            } else {
+              // Standard HTML preview
+              previewContainer.innerHTML = code;
+            }
           },
         },
       });

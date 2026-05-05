@@ -4,13 +4,19 @@ import { useEffect, useState, useRef } from "react";
 
 export const ModernLoader = ({ 
   isComplete = false, 
-  onFinished = () => {} 
+  onFinished = () => {},
+  message = "Analyzing your requirements..."
 }: { 
   isComplete?: boolean; 
   onFinished?: () => void;
+  message?: string;
 }) => {
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Analyzing your requirements...");
+  const [statusText, setStatusText] = useState(message);
+
+  useEffect(() => {
+    if (message) setStatusText(message);
+  }, [message]);
 
   const statusSteps = [
     { p: 0, t: "Analyzing your requirements..." },
