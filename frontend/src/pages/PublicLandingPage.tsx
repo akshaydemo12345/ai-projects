@@ -477,7 +477,40 @@ const PublicLandingPage = () => {
       }
 
       if (isThankYouPage) {
-        // Fetch dynamic Thank You page from backend
+        // 🚀 PRIORITIZE SAVED CONTENT FROM DATABASE
+        const savedThankYouHtml = pageData.thankYouPageContent;
+        const savedThankYouCss = pageData.thankYouPageStyles || '';
+
+        if (savedThankYouHtml && savedThankYouHtml.length > 50) {
+          console.log("💎 Using saved Thank You page content from DB");
+          let finalThankYouHtml = savedThankYouHtml;
+          
+          // Inject dependencies if it's a fragment
+          if (!finalThankYouHtml.toLowerCase().includes('<!doctype') && !finalThankYouHtml.toLowerCase().includes('<html')) {
+             finalThankYouHtml = `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>Thank You | ${projectName}</title>
+                  ${coreDependencies}
+                  <style>${savedThankYouCss}</style>
+                </head>
+                <body>${finalThankYouHtml}</body>
+              </html>
+             `;
+          }
+
+          const doc = iframeRef.current?.contentDocument;
+          if (doc) {
+            doc.open();
+            doc.write(finalThankYouHtml);
+            doc.close();
+          }
+          return;
+        }
+
+        // Fallback to fetch from render API if not in main object
         fetch(`${API_URL}/api/thank-you/render/${slug}`)
           .then(response => {
             if (!response.ok) {

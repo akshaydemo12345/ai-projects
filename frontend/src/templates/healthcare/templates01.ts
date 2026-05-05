@@ -7,7 +7,7 @@ export const healthcare01Styles = `
 
 :root {
   --on-surface: #141d23;
-  --surface-container- lowest: #ffffff;
+  --surface-container-lowest: #ffffff;
   --on-primary: #000000ff;
   --primary: PRIMARY_COLOR_PLACEHOLDER;
   --background: #ffffff;

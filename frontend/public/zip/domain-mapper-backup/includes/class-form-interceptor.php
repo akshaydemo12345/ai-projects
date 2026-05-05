@@ -184,7 +184,10 @@ class DomainMapper_Form_Interceptor {
             // Route through dm-relay to avoid CORS and ensure proxy relaying
             var response = await fetch(RELAY_PREFIX + TARGET_HOST + '/api/leads', {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
                 body: JSON.stringify(data),
                 mode: 'cors'
             });

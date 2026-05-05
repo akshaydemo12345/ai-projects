@@ -34,14 +34,21 @@ const CATEGORIES: any[] = [
     name: 'Forms',
     isGrid: true,
     blocks: [
-      { id: 'custom-label', label: 'Field Label', icon: <div className="text-[18px] text-zinc-400">🏷️</div> },
-      { id: 'custom-input', label: 'Input Box', icon: <div className="w-[28px] h-[10px] border-[1.5px] border-zinc-400 flex items-center px-1"><div className="w-[2px] h-[6px] bg-zinc-400" /></div> },
-      { id: 'custom-textarea', label: 'Message Area', icon: <div className="w-[28px] h-[20px] border-[1.5px] border-zinc-400 flex items-start justify-end p-[2px]"><div className="w-0 h-0 border-b-[4px] border-zinc-400 border-l-[4px] border-l-transparent"></div></div> },
-      { id: 'custom-textarea', label: 'Plain Area', icon: <div className="w-[28px] h-[20px] border-[1.5px] border-zinc-400 flex items-start justify-end p-[2px]"><div className="w-0 h-0 border-b-[4px] border-zinc-400 border-l-[4px] border-l-transparent"></div></div> },
-      { id: 'custom-select', label: 'Select Box', icon: <div className="w-[28px] h-[12px] border-[1.5px] border-zinc-400 flex items-center justify-end px-1"><div className="w-0 h-0 border-t-[3px] border-zinc-400 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent"></div></div> },
-      { id: 'custom-button', label: 'Button', icon: <div className="w-[26px] h-[12px] bg-zinc-400 flex items-center justify-center"><div className="w-[10px] h-[2px] bg-zinc-800"></div></div> },
-      { id: 'custom-check', label: 'Checkbox', icon: <div className="w-[12px] h-[12px] border-[1.5px] border-zinc-400 flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-[1px]"></div></div> },
-      { id: 'custom-radio', label: 'Radio', icon: <div className="w-[14px] h-[14px] border-[1.5px] border-zinc-400 rounded-full flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-full"></div></div> }
+      { id: 'custom-form', label: 'Form', icon: <div className="w-[24px] h-[18px] flex flex-col justify-between"><div className="h-[4px] border border-zinc-400 w-full" /><div className="h-[4px] border border-zinc-400 w-full" /><div className="h-[5px] bg-zinc-400 w-1/2" /></div> },
+      { id: 'custom-input', label: 'Input', icon: <div className="w-[28px] h-[10px] border-[1.5px] border-zinc-400 rounded-sm flex items-center px-1"><div className="w-[2px] h-[6px] bg-zinc-400" /></div> },
+      { id: 'custom-textarea', label: 'Textarea', icon: <div className="w-[28px] h-[20px] border-[1.5px] border-zinc-400 rounded-sm flex items-start justify-end p-[2px]"><div className="w-0 h-0 border-b-[4px] border-zinc-400 border-l-[4px] border-l-transparent"></div></div> },
+      { id: 'custom-select', label: 'Select', icon: <div className="w-[28px] h-[12px] border-[1.5px] border-zinc-400 rounded-sm flex items-center justify-end px-1"><div className="w-0 h-0 border-t-[3px] border-zinc-400 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent"></div></div> },
+      { id: 'custom-button', label: 'Button', icon: <div className="w-[26px] h-[12px] bg-zinc-400 rounded-sm flex items-center justify-center"><div className="w-[10px] h-[2px] bg-zinc-800 rounded-sm"></div></div> },
+      { id: 'custom-check', label: 'Checkbox', icon: <div className="w-[12px] h-[12px] border-[1.5px] border-zinc-400 rounded-sm flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-[1px]"></div></div> },
+      { id: 'custom-radio', label: 'Radio', icon: <div className="w-[14px] h-[14px] border-[1.5px] border-zinc-400 rounded-full flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-full"></div></div> },
+      { id: 'lead-form', label: 'Lead Form', icon: <div className="w-[24px] h-[24px] border-[1.5px] border-zinc-400 rounded-sm flex items-center justify-center text-[10px] font-bold text-zinc-400">📋</div> }
+    ]
+  },
+  {
+    name: 'Embeds',
+    isGrid: true,
+    blocks: [
+      { id: 'form-embed', label: 'Form Embed', icon: <div className="w-[24px] h-[24px] border-[1.5px] border-zinc-400 rounded-sm flex items-center justify-center text-[10px] font-bold text-zinc-400">{'</>'}</div> }
     ]
   },
   {
@@ -64,7 +71,7 @@ const CATEGORIES: any[] = [
 const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({
-    Basic: true, Forms: true, 'Data Sources': true, Layout: true
+    Basic: true, Forms: true, Embeds: true, 'Data Sources': true, Layout: true
   });
 
   const toggleCat = (cat: string) => {
