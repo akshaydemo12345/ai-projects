@@ -99,6 +99,7 @@ const GrapesEditor = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+  const [isEditorFullyLoaded, setIsEditorFullyLoaded] = useState(false);
 
   const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
@@ -237,10 +238,10 @@ const GrapesEditor = () => {
       // Inject :root CSS variables
       const canvasDoc = editor.Canvas.getDocument();
       if (canvasDoc) {
-        let brandingTag = canvasDoc.getElementById('branding-vars-init') as HTMLStyleElement | null;
+        let brandingTag = canvasDoc.getElementById('branding-vars') as HTMLStyleElement | null;
         if (!brandingTag) {
           brandingTag = canvasDoc.createElement('style');
-          brandingTag.id = 'branding-vars-init';
+          brandingTag.id = 'branding-vars';
           canvasDoc.head.appendChild(brandingTag);
         }
         brandingTag.innerHTML = `
@@ -248,17 +249,22 @@ const GrapesEditor = () => {
           --primary: ${currentPage.primaryColor || '#7c3aed'}; 
           --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
           --accent: ${currentPage.secondaryColor || '#6366f1'};
+          --gold: ${currentPage.primaryColor || '#7c3aed'};
+          --btn-bg: ${currentPage.primaryColor || '#7c3aed'};
+          --btn-text: #ffffff;
+          --body-bg: #ffffff;
+          --body-text: #0f172a;
+          --heading-color: #0f172a;
+          --subheading-color: #475569;
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
           --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
         }
-        .btn-primary, .button-primary, button[type="submit"], button.btn-primary, .bg-primary,
-        .form-box button, .footer-action button, .cta-band button, .badge {
-          background-color: var(--primary) !important;
-          background: var(--primary) !important;
-          color: white !important;
-          border-color: var(--primary) !important;
-        }
-        .text-primary { color: var(--primary) !important; }
-        .border-primary { border-color: var(--primary) !important; }
         
         input, textarea, select {
           color: #0f172a !important;
@@ -277,10 +283,10 @@ const GrapesEditor = () => {
       }
 
       // Safe-guard body styles from being purged by GrapesJS
-      // ─── Placeholder Replacement ───
+      // ─── Placeholder Replacement (Dynamic) ───
       const finalStyles = (dbStyles || '')
-        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, currentPage.primaryColor || '#7c3aed')
-        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, currentPage.secondaryColor || '#6366f1')
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '');
 
       editor.setStyle(finalStyles);
@@ -370,7 +376,6 @@ const GrapesEditor = () => {
     if (projectLoading || pageLoading || !page || !project || editorRef.current) return;
 
     console.log('🚀 Initializing GrapesJS Editor...');
-    let isEditorFullyLoaded = false;
 
     // ─── Style GrapesJS Modal Header Only ───
     const style = document.createElement('style');
@@ -415,13 +420,12 @@ const GrapesEditor = () => {
       width: 'auto',
       fromElement: false,
       storageManager: false,
-      allowScripts: 1,
+      undoManager: { trackSelection: false },
       parser: {
         optionsHtml: {
           allowScripts: true
         }
       },
-      undoManager: { trackSelection: false },
       plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
       pluginsOpts: {
         'grapesjs-preset-webpage': {
@@ -432,7 +436,7 @@ const GrapesEditor = () => {
       },
       canvas: {
         styles: [
-          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap',
+          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600&family=Outfit:wght@300;400;600&display=swap',
           'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
           'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
           'https://fonts.googleapis.com/icon?family=Material+Icons',
@@ -456,7 +460,28 @@ const GrapesEditor = () => {
           { name: 'Spacing', open: false, buildProps: ['margin', 'padding'] },
           { name: 'Size', open: false, buildProps: ['width', 'min-width', 'max-width', 'height', 'min-height', 'max-height'] },
           { name: 'Position', open: false, buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'] },
-          { name: 'Typography', open: false, buildProps: ['font-family', 'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform'] },
+          { 
+            name: 'Typography', 
+            open: false, 
+            properties: [
+              {
+                property: 'font-family',
+                name: 'Font Family',
+                type: 'select',
+                list: [
+                  { id: 'Inter', name: 'Inter' },
+                  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
+                  { id: 'Montserrat', name: 'Montserrat' },
+                  { id: 'Playfair Display', name: 'Playfair Display' },
+                  { id: 'Dancing Script', name: 'Dancing Script' },
+                  { id: 'DM Serif Display', name: 'DM Serif Display' },
+                  { id: 'Manrope', name: 'Manrope' },
+                  { id: 'Outfit', name: 'Outfit' },
+                ]
+              },
+              'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform'
+            ]
+          },
           { name: 'Background', open: false, buildProps: ['background-color', 'background', 'background-image', 'background-repeat', 'background-position', 'background-size'] },
           { name: 'Border', open: false, buildProps: ['border', 'border-radius', 'outline'] },
           { name: 'Shadow', open: false, buildProps: ['box-shadow', 'text-shadow'] },
@@ -813,11 +838,14 @@ const GrapesEditor = () => {
             btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; color: #e2e8f0; cursor: pointer; transition: all 0.2s;';
             btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
             btn.onclick = () => {
-              const currentClasses = selected.getClasses();
-              const newClasses = currentClasses.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
-              newClasses.push('fas');
-              newClasses.push(icon);
-              selected.setClass(newClasses);
+              const classModels = selected.getClasses();
+              const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
+              
+              const filteredClasses = classes.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
+              filteredClasses.push('fas');
+              filteredClasses.push(icon);
+              
+              selected.setClass(filteredClasses);
               modal.close();
             };
             btn.onmouseenter = () => { btn.style.background = '#2a2a3e'; btn.style.borderColor = '#7c3aed'; };
@@ -836,7 +864,7 @@ const GrapesEditor = () => {
     });
 
     editor.on('load', () => {
-      isEditorFullyLoaded = true;
+      setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
       // Configure RTE after load to avoid TS errors in init
@@ -869,10 +897,14 @@ const GrapesEditor = () => {
               setTimeout(() => {
                 const selected = editor.getSelected();
                 if (!selected) return;
-                const tagName = selected.get('tagName') || '';
-                const classes = selected.getClasses();
-                const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
-                const isCustomCode = selected.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (selected.getAttributes?.()['data-gjs-type'] === 'custom-code');
+                
+                const type = selected.get('type');
+                const tagName = (selected.get('tagName') || '').toLowerCase();
+                const classModels = selected.getClasses();
+                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
+                
+                const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
+                const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
 
                 if (isIcon) {
                   editor.runCommand('open-icon-picker');
@@ -882,14 +914,8 @@ const GrapesEditor = () => {
               }, 50);
             }, true);
           }
-        } catch (e) { /* frame not ready */ }
+        } catch (e) { /* Canvas frame not ready yet */ }
       }, 1500);
-
-      /* 
-      editor.on('component:add', (model) => {
-        ... removed auto-open on drop as per user request ...
-      });
-      */
 
 
       // ─── Auto-open editor on drop ───
@@ -1029,7 +1055,7 @@ const GrapesEditor = () => {
                 type: 'textarea',
                 name: 'embedCode',
                 label: 'Embed Code',
-                changeProp: 1,
+                changeProp: true,
               },
               {
                 type: 'select',
@@ -1041,55 +1067,62 @@ const GrapesEditor = () => {
                   { id: 'iframe', name: 'IFrame' },
                   { id: 'shortcode', name: 'Shortcode' },
                 ],
-                changeProp: 1,
+                changeProp: true,
               },
             ],
           },
           init() {
-            this.on('change:embedCode', this.handleUpdate);
+            this.on('change:embedCode change:embedType', this.handleUpdate.bind(this));
+            this.handleUpdate();
           },
           handleUpdate() {
-            const code = this.get('embedCode');
-            // We set the components so GrapesJS exports it, 
-            // but we'll override the view to show a placeholder
-            this.components(code);
+            const code = this.get('embedCode') || '';
+            const type = this.get('embedType') || 'html';
+            let content = code;
+            
+            if (type === 'script' && code && !code.includes('<script')) {
+              content = `<script>${code}</script>`;
+            } else if (type === 'iframe' && code && !code.includes('<iframe')) {
+              content = `<iframe src="${code}" width="100%" height="500px" frameborder="0"></iframe>`;
+            }
+            
+            this.set('components', content);
           },
         },
         view: {
+          init() {
+            this.listenTo(this.model, 'change:embedCode change:embedType', this.render.bind(this));
+          },
           onRender() {
             const model = this.model;
             const code = model.get('embedCode');
-            const type = model.get('embedType');
+            const type = String(model.get('embedType') || 'html').toUpperCase();
             
-            // In the editor, we don't want to execute the raw code (especially scripts)
-            // as it can break the editor UI or cause multiple loads.
             if (!code) {
               this.el.innerHTML = `
                 <div style="padding: 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif;">
                   <div style="font-size: 32px; margin-bottom: 12px;">🔌</div>
                   <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">Form Embed Module</div>
-                  <div style="font-size: 13px;">Paste your embed code (HubSpot, Typeform, etc.) in the Traits panel.</div>
+                  <div style="font-size: 13px;">Paste your embed code in the Traits panel.</div>
                 </div>
               `;
-              return;
+            } else {
+              this.el.innerHTML = `
+                <div style="padding: 20px; border: 1px solid var(--primary); background: rgba(124,58,237,0.03); border-radius: 12px; position: relative; min-height: 100px; overflow: hidden; font-family: 'Inter', sans-serif;">
+                  <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); z-index: 10;">
+                     <div style="background: var(--primary); color: white; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                       ${type} Embed Active
+                     </div>
+                     <div style="margin-top: 8px; font-size: 12px; color: #64748b; font-weight: 500;">Preview hidden in editor to prevent conflicts</div>
+                  </div>
+                  <div style="opacity: 0.3; pointer-events: none;">
+                    <div style="height: 12px; width: 60%; background: #e2e8f0; border-radius: 4px; margin-bottom: 12px;"></div>
+                    <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
+                    <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
+                  </div>
+                </div>
+              `;
             }
-
-            this.el.innerHTML = `
-              <div style="padding: 20px; border: 1px solid var(--primary); background: rgba(124,58,237,0.03); border-radius: 12px; position: relative; min-height: 100px; overflow: hidden; font-family: 'Inter', sans-serif;">
-                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); z-index: 10;">
-                   <div style="background: var(--primary); color: white; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                     ${type} Embed Active
-                   </div>
-                   <div style="margin-top: 8px; font-size: 12px; color: #64748b; font-weight: 500;">Preview hidden in editor to prevent conflicts</div>
-                </div>
-                <div style="opacity: 0.4; pointer-events: none;">
-                  <div style="height: 12px; width: 60%; background: #e2e8f0; border-radius: 4px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 100%; background: #f1f5f9; border-radius: 6px; margin-bottom: 12px;"></div>
-                  <div style="height: 40px; width: 40%; background: #e2e8f0; border-radius: 6px;"></div>
-                </div>
-              </div>
-            `;
           },
         },
       });
@@ -1482,15 +1515,13 @@ const GrapesEditor = () => {
     }
   };
 
-  // Effect to re-apply content if page data updates (e.g. after AI edit)
+  // ─── Branding Sync (Reactive to Sidebar) ───
   useEffect(() => {
-    if (editorRef.current && page) {
-      applyContentToEditor(editorRef.current);
-
-      // Dynamically inject/update branding variables in the canvas head
+    if (editorRef.current) {
       const canvas = editorRef.current.Canvas;
       const doc = canvas.getDocument();
       if (!doc) return;
+      
       const head = doc.head;
       const styleId = 'branding-vars';
       let styleEl = head.querySelector(`#${styleId}`);
@@ -1499,23 +1530,40 @@ const GrapesEditor = () => {
         styleEl.id = styleId;
         head.appendChild(styleEl);
       }
+      
+      // Update variables in real-time
       styleEl.innerHTML = `
         :root {
           --primary: ${themePrimary};
           --secondary: ${themeSecondary};
           --accent: ${themeSecondary};
+          --gold: ${themePrimary};
+          --btn-bg: ${themePrimary};
+          --btn-text: #ffffff;
+          --body-bg: #ffffff;
+          --body-text: #0f172a;
+          --heading-color: #0f172a;
+          --subheading-color: #475569;
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
           --button-gradient: linear-gradient(135deg, ${themePrimary}, ${themeSecondary});
         }
-        input, textarea, select {
-          color: #0f172a !important;
-          background-color: #ffffff !important;
-        }
-        input::placeholder, textarea::placeholder {
-          color: #94a3b8 !important;
-        }
       `;
+      console.log('🎨 Branding variables updated in canvas:', themePrimary, themeSecondary);
     }
-  }, [page, themePrimary, themeSecondary]);
+  }, [themePrimary, themeSecondary]);
+
+  // Initial content load (Only once when page data arrives)
+  useEffect(() => {
+    if (editorRef.current && page && !isEditorFullyLoaded) {
+      applyContentToEditor(editorRef.current);
+    }
+  }, [page, isEditorFullyLoaded]);
 
   // Initialize hasSaved if page already has content
   useEffect(() => {
@@ -1542,7 +1590,7 @@ const GrapesEditor = () => {
     // Capture internal global styles injected by GlobalStylesPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
-    const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
+    const brandingStyleTag = canvasDoc.getElementById('branding-vars');
     const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
     const styleData = globalCss + '\n' + css;
@@ -1796,6 +1844,14 @@ const GrapesEditor = () => {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
 
+      // Capture internal global styles injected by GlobalStylesPanel
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+
+      const styleData = globalCss + '\n' + css;
+
       const updateData: Partial<LandingPage> = {
         status: 'published',
         metaTitle: pageTitle,
@@ -1804,14 +1860,14 @@ const GrapesEditor = () => {
         secondaryColor: themeSecondary,
         accentColor: themeSecondary,
         landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
-        landingPageStyles: mode === 'landing' ? css : page?.landingPageStyles,
+        landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
         thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
-        thankYouPageStyles: mode === 'thank-you' ? css : page?.thankYouPageStyles,
+        thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
       };
 
       if (mode === 'landing') {
         updateData.content = html;
-        updateData.styles = css;
+        updateData.styles = styleData;
       } else {
         updateData.content = page?.landingPageContent;
         updateData.styles = page?.landingPageStyles;

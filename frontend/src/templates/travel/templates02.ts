@@ -4,7 +4,7 @@
 export const travel02Styles = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#1a0f08; --cream:#f4ead5; --amber:PRIMARY_COLOR_PLACEHOLDER; --gold:SECONDARY_COLOR_PLACEHOLDER;
+  --bg:#1a0f08; --cream:#f4ead5; --primary:PRIMARY_COLOR_PLACEHOLDER; --secondary:SECONDARY_COLOR_PLACEHOLDER;
   --ink:#1a0f08; --muted:#a89580;
   --serif:'Playfair Display',serif; --sans:'Outfit',sans-serif;
 }
@@ -17,13 +17,13 @@ a{color:inherit;text-decoration:none}
 .nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(26,15,8,.4);backdrop-filter:blur(16px)}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;color:#fff}
 .logo{font-family:var(--serif);font-weight:900;letter-spacing:.05em;font-size:1.3rem;color:#fff}
-.logo small{color:var(--gold);margin-left:.25rem;font-size:.85rem}
+.logo small{color:var(--secondary);margin-left:.25rem;font-size:.85rem}
 .nav nav{display:flex;gap:2.5rem}
 .nav nav a{font-size:.9rem;font-weight:500;color:#fff;opacity:.85;transition:opacity .2s}
-.nav nav a:hover{opacity:1;color:var(--gold)}
+.nav nav a:hover{opacity:1;color:var(--secondary)}
 .btn{display:inline-block;padding:.85rem 1.75rem;background:#fff;color:var(--ink);border-radius:4px;font-weight:600;font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;transition:all .3s;border:0;cursor:pointer;font-family:inherit}
-.btn-amber{background:var(--amber);color:#fff}
-.btn-amber:hover{background:var(--gold);transform:translateY(-2px);box-shadow:0 10px 30px rgba(217,119,6,.4)}
+.btn-primary{background:var(--btn-bg, var(--primary)); color:var(--btn-text, #fff); border:none;}
+.btn-primary:hover{background:var(--secondary) !important; transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,0.2)}
 .btn.large{padding:1.15rem 2.5rem;font-size:.95rem}
 .w-full{width:100%}
 
@@ -32,14 +32,14 @@ a{color:inherit;text-decoration:none}
 .hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,15,8,.7) 0%,rgba(26,15,8,.3) 40%,rgba(26,15,8,.85) 100%);z-index:1}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1.5fr;gap:4rem;align-items:center;color:#fff}
 .hero-text{padding-left:2rem}
-.kicker{font-size:.75rem;letter-spacing:.3em;color:var(--gold);font-weight:600;display:block;margin-bottom:1.5rem}
+.kicker{font-size:.75rem;letter-spacing:.3em;color:var(--secondary);font-weight:600;display:block;margin-bottom:1.5rem}
 .hero h1{font-family:var(--serif);font-size:clamp(3rem,7vw,6.5rem);font-weight:900;line-height:.95;letter-spacing:-.02em;margin-bottom:1.75rem}
 .hero-text p{font-size:1.1rem;max-width:520px;color:rgba(255,255,255,.85);margin-bottom:2.5rem;font-weight:300}
 .cta-row{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
 .play{display:inline-flex;align-items:center;gap:.75rem;color:#fff;font-weight:500;font-size:.9rem}
 .play-ico{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;backdrop-filter:blur(10px)}
 
-.hero-card{background:rgba(244,234,213,.97);color:var(--ink);padding:2rem;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.4);border-top:4px solid var(--amber)}
+.hero-card{background:rgba(244,234,213,.97);color:var(--ink);padding:2rem;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.4);border-top:4px solid var(--primary)}
 .hero-card h4{font-family:var(--serif);font-size:1.5rem;margin-bottom:1.5rem;font-weight:700}
 .hero-card label{display:block;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:1rem}
 .hero-card select{display:block;width:100%;margin-top:.4rem;padding:.85rem 1rem;border:1px solid rgba(26,15,8,.15);border-radius:4px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);outline:0;cursor:pointer}
@@ -47,13 +47,13 @@ a{color:inherit;text-decoration:none}
 
 .features{background:var(--bg);color:var(--cream);padding:4rem 0}
 .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2.5rem}
-.feat span{font-family:var(--serif);font-size:2rem;color:var(--gold);font-weight:700;display:block;margin-bottom:.75rem}
+.feat span{font-family:var(--serif);font-size:2rem;color:var(--secondary);font-weight:700;display:block;margin-bottom:.75rem}
 .feat h4{font-family:var(--serif);font-size:1.4rem;margin-bottom:.5rem;font-weight:700}
 .feat p{color:rgba(244,234,213,.65);font-size:.95rem}
 
 .experiences{padding:7rem 0;background:var(--cream)}
 .sec-head{text-align:center;margin-bottom:4rem}
-.sec-head .kicker{color:var(--amber)}
+.sec-head .kicker{color:var(--primary)}
 .sec-head h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:700;letter-spacing:-.02em;line-height:1.05}
 .exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem}
 .exp{background:#fff;border-radius:8px;overflow:hidden;transition:all .4s cubic-bezier(.2,.8,.2,1);position:relative}
@@ -61,30 +61,30 @@ a{color:inherit;text-decoration:none}
 .exp img{aspect-ratio:4/3;object-fit:cover;transition:transform .8s}
 .exp:hover img{transform:scale(1.06)}
 .exp-info{padding:1.75rem}
-.badge{display:inline-block;background:var(--ink);color:var(--gold);font-size:.65rem;letter-spacing:.2em;font-weight:700;padding:.4rem .75rem;border-radius:3px;margin-bottom:.85rem}
+.badge{display:inline-block;background:var(--ink);color:var(--secondary);font-size:.65rem;letter-spacing:.2em;font-weight:700;padding:.4rem .75rem;border-radius:3px;margin-bottom:.85rem}
 .exp h3{font-family:var(--serif);font-size:1.6rem;font-weight:700;margin-bottom:.25rem}
-.meta{font-size:.85rem;color:var(--amber);font-weight:600;margin-bottom:.75rem;letter-spacing:.05em}
-.exp-info p{color:PRIMARY_COLOR_PLACEHOLDER;font-size:.92rem;margin-bottom:1rem}
+.meta{font-size:.85rem;color:var(--primary);font-weight:600;margin-bottom:.75rem;letter-spacing:.05em}
+.exp-info p{opacity:0.8;font-size:.92rem;margin-bottom:1rem}
 .price{font-size:.85rem;color:var(--muted);border-top:1px dashed rgba(26,15,8,.15);padding-top:1rem}
 .price strong{color:var(--ink);font-size:1.4rem;font-family:var(--serif);font-weight:700}
 
 .testimonial{background:var(--ink);color:var(--cream);padding:7rem 0;text-align:center}
-.testimonial .kicker{color:var(--gold)}
+.testimonial .kicker{color:var(--secondary)}
 .testimonial blockquote{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.4rem);font-style:italic;font-weight:500;line-height:1.4;max-width:900px;margin:1.5rem auto;color:#fff}
-.testimonial cite{font-style:normal;font-size:.85rem;letter-spacing:.15em;color:var(--gold);font-weight:500}
+.testimonial cite{font-style:normal;font-size:.85rem;letter-spacing:.15em;color:var(--secondary);font-weight:500}
 
-.cta-final{background:linear-gradient(135deg,var(--amber),#b45309);color:#fff;padding:6rem 0;text-align:center}
+.cta-final{background:linear-gradient(135deg,var(--primary),#b45309);color:#fff;padding:6rem 0;text-align:center}
 .cta-final h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:700;margin-bottom:1rem}
 .cta-final p{font-size:1.15rem;opacity:.9;margin-bottom:2rem}
 .cta-final .btn{background:var(--ink);color:var(--cream)}
 .cta-final .btn:hover{background:#fff;color:var(--ink)}
 
 footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
-.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:3rem;margin-bottom:3rem}
 .foot-grid p{color:rgba(244,234,213,.6);font-size:.9rem;margin-top:.75rem}
-.foot-grid h5{font-family:var(--serif);font-size:1rem;margin-bottom:1rem;color:var(--gold);font-weight:700}
+.foot-grid h5{font-family:var(--serif);font-size:1rem;margin-bottom:1rem;color:var(--secondary);font-weight:700}
 .foot-grid a{display:block;font-size:.9rem;color:rgba(244,234,213,.7);margin-bottom:.5rem;transition:color .2s}
-.foot-grid a:hover{color:var(--gold)}
+.foot-grid a:hover{color:var(--secondary)}
 .foot-bottom{padding-top:2rem;border-top:1px solid rgba(244,234,213,.1)}
 .foot-bottom p{font-size:.8rem;color:rgba(244,234,213,.5)}
 
@@ -101,15 +101,14 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 .wildlife{padding:8rem 0;background:#fff}
 .wildlife-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .wildlife-text h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.5rem);font-weight:700;margin-bottom:1.5rem;line-height:1.1}
-.wildlife-text p{font-size:1.1rem;color:PRIMARY_COLOR_PLACEHOLDER;margin-bottom:2rem}
+.wildlife-text p{font-size:1.1rem;opacity:0.8;margin-bottom:2rem}
 .wildlife-list{list-style:none;margin-bottom:2.5rem}
 .wildlife-list li{margin-bottom:1rem;position:relative;padding-left:1.5rem;font-size:1rem;color:#3d3329}
-.wildlife-list li::before{content:"→";position:absolute;left:0;color:var(--amber);font-weight:700}
+.wildlife-list li::before{content:"→";position:absolute;left:0;color:var(--primary);font-weight:700}
 .wildlife-list strong{color:var(--ink)}
 
 .wildlife-images{position:relative;padding:2rem}
 .wildlife-img-main img{width:90%;border-radius:12px;box-shadow:0 30px 60px rgba(0,0,0,.15)}
-.wildlife-img-sub{position:absolute;bottom:0;right:0;width:55%}
 .wildlife-img-sub img{border-radius:12px;border:8px solid #fff;box-shadow:0 20px 40px rgba(0,0,0,.2)}
 
 /* Lodges Section */
@@ -120,21 +119,13 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 .lodge-card img{width:100%;aspect-ratio:16/10;object-fit:cover}
 .lodge-content{padding:2.5rem}
 .lodge-content h3{font-family:var(--serif);font-size:1.8rem;margin-bottom:1rem;font-weight:700}
-.lodge-content p{color:PRIMARY_COLOR_PLACEHOLDER;line-height:1.7}
+.lodge-content p{opacity:0.8;line-height:1.7}
 
 @media(max-width:900px){
   .wildlife-grid{grid-template-columns:1fr;gap:3rem}
   .wildlife-images{max-width:600px;margin:0 auto}
   .lodges-grid{grid-template-columns:1fr}
 }
-
-.newsletter{padding:7rem 0;background:var(--bg);color:var(--cream);border-top:1px solid rgba(244,234,213,.1)}
-.newsletter .booking-intro h2{color:#fff}
-.newsletter .booking-intro p{color:rgba(244,234,213,.7)}
-.newsletter .booking-form{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px)}
-.newsletter .booking-form label{color:var(--gold)}
-.newsletter .booking-form input{background:rgba(26,15,8,.5);border-color:rgba(244,234,213,.2);color:#fff}
-.newsletter .booking-form input:focus{border-color:var(--gold)}
 
 /* Gallery Section */
 .gallery{padding:8rem 0;background:var(--cream)}
@@ -143,7 +134,7 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 .gallery-item.large{grid-row:span 2}
 .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
 .gallery-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,15,8,.8),transparent);display:flex;align-items:flex-end;padding:2rem;opacity:0;transition:opacity .3s}
-.gallery-overlay span{color:var(--gold);font-size:.75rem;letter-spacing:.2em;font-weight:700;transform:translateY(10px);transition:transform .4s}
+.gallery-overlay span{color:var(--secondary);font-size:.75rem;letter-spacing:.2em;font-weight:700;transform:translateY(10px);transition:transform .4s}
 .gallery-item:hover img{transform:scale(1.05)}
 .gallery-item:hover .gallery-overlay{opacity:1}
 .gallery-item:hover .gallery-overlay span{transform:translateY(0)}
@@ -151,16 +142,16 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 /* Impact Section */
 .impact{padding:8rem 0;background:var(--bg);color:var(--cream)}
 .impact-inner{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
-.impact-text h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);margin:1rem 0 2rem;line-height:1.1;color:#fff}
+.impact-text h2{font-family:var(--serif);font-size:clamp(2.1rem,4vw,3.2rem);margin:1rem 0 2rem;line-height:1.1;color:#fff}
 .impact-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
-.stat strong{display:block;font-size:2.5rem;font-family:var(--serif);color:var(--gold);margin-bottom:.25rem}
+.stat strong{display:block;font-size:2.5rem;font-family:var(--serif);color:var(--secondary);margin-bottom:.25rem}
 .stat span{font-size:.8rem;color:rgba(244,234,213,.6);text-transform:uppercase;letter-spacing:.1em}
 .impact-image img{border-radius:12px;filter:sepia(20%) contrast(1.1)}
 
 /* Newsletter Upgrade */
 .newsletter{padding:10rem 0;background:linear-gradient(rgba(26,15,8,.85),rgba(26,15,8,.85)), url("/assets/templates/travel/templates02/hero.jpg");background-size:cover;background-position:center;background-attachment:fixed;color:var(--cream);border-top:0}
 .newsletter .booking-intro h2{font-size:3.5rem}
-.newsletter .booking-form{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px);padding:3.5rem}
+.newsletter .booking-form{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);padding:3.5rem}
 
 @media(max-width:900px){
   .gallery-grid{grid-template-columns:1fr;grid-template-rows:auto}
@@ -179,22 +170,6 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
   .press-logos{flex-direction:column;gap:2rem}
   .logo-row{gap:2rem;flex-wrap:wrap;justify-content:center}
 }
-
-/* Booking form */
-.booking{background:var(--cream);padding:7rem 0;border-top:1px solid #e8dfce}
-.booking-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:4rem;align-items:start}
-.booking-intro h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:700;color:var(--ink);margin:1rem 0}
-.booking-intro p{color:#5b5246;font-size:1.05rem;line-height:1.7}
-.booking-form{background:#fff;padding:2.5rem;border:1px solid #e8dfce;box-shadow:0 20px 60px -30px rgba(0,0,0,.2)}
-.booking-form .row{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
-.booking-form label{display:block;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink);font-weight:600;margin-bottom:.4rem}
-.booking-form label.full{display:block;margin-bottom:1.5rem}
-.booking-form input,.booking-form select,.booking-form textarea{width:100%;padding:.85rem 1rem;border:1px solid #d7cdb9;background:var(--cream);font-family:inherit;font-size:.95rem;color:var(--ink);margin-top:.4rem;transition:border .2s}
-.booking-form input:focus,.booking-form select:focus,.booking-form textarea:focus{outline:none;border-color:var(--amber)}
-.booking-form textarea{resize:vertical}
-.booking-form .btn{width:100%;justify-content:center;display:inline-flex;align-items:center;border:none;cursor:pointer}
-@media(max-width:860px){.booking-wrap{grid-template-columns:1fr;gap:2rem}.booking-form{padding:1.8rem}.booking-form .row{grid-template-columns:1fr}}
-
 
 /* UNIVERSAL RESPONSIVE CSS - Added by converter */
 .material-symbols-outlined, .material-icons {
@@ -234,7 +209,7 @@ export const travel02Html = `
         <a href="#lodges">Lodges</a>
         <a href="#about">About</a>
       </nav>
-      <a href="#" class="btn">Book Safari</a>
+      <a href="#" class="btn btn-primary">Book Safari</a>
     </div>
   </header>
 
@@ -242,15 +217,16 @@ export const travel02Html = `
     <img src="/assets/templates/travel/templates02/hero.jpg" alt="Safari sunset" class="hero-bg">
     <div class="hero-grad"></div>
     <div class="container hero-grid">
-      <form class="booking-form"
+      <form class="hero-card"
         onsubmit="event.preventDefault();alert('Thank you! We will contact you within 24 hours.');this.reset();">
+        <h4>Begin Your Safari</h4>
         <div class="row">
-          <label>Full Name<input type="text" name="name" required placeholder="Jane Doe"></label>
-          <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
+          <label>Full Name<input type="text" name="name" required placeholder="Jane Doe" style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
+          <label style="margin-top:15px;display:block">Email<input type="email" name="email" required placeholder="you@email.com" style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
         </div>
-        <div class="row">
+        <div style="margin-top:15px">
           <label>Destination
-            <select name="destination" required>
+            <select name="destination" required style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px">
               <option value="">Select a country</option>
               <option>Tanzania</option>
               <option>Kenya</option>
@@ -258,27 +234,9 @@ export const travel02Html = `
               <option>Rwanda</option>
             </select>
           </label>
-          <label>Travel Date<input type="date" name="date" required></label>
-        </div>
-        <div class="row">
-          <label>Travelers
-            <select name="guests">
-              <option>1 Guest</option>
-              <option>2 Guests</option>
-              <option>3-4 Guests</option>
-              <option>5+ Guests</option>
-            </select>
-          </label>
-          <label>Budget (USD)
-            <select name="budget">
-              <option>$2,000 - $5,000</option>
-              <option>$5,000 - $10,000</option>
-              <option>$10,000+</option>
-            </select>
-          </label>
         </div>
 
-        <button type="submit" class="btn btn-amber large">Send Inquiry →</button>
+        <button type="submit" class="btn btn-primary large w-full" style="margin-top:20px">Send Inquiry →</button>
       </form>
       <div class="hero-text">
         <span class="kicker">EST. 1998 · TANZANIA · KENYA · BOTSWANA</span>
@@ -286,7 +244,7 @@ export const travel02Html = `
         <p>Step into the heart of Africa with handcrafted safari journeys that blend raw wilderness, luxury camps, and
           unforgettable encounters with the Big Five.</p>
         <div class="cta-row">
-          <a href="#" class="btn btn-amber">View Expeditions</a>
+          <a href="#" class="btn btn-primary">View Expeditions</a>
           <a href="#" class="play"><span class="play-ico">▶</span> Watch Trailer</a>
         </div>
       </div>
@@ -378,7 +336,7 @@ export const travel02Html = `
             <li><strong>Big Five Tracking</strong> — Dedicated sunrise drives to find lions, leopards, and rhinos.</li>
             <li><strong>Nocturnal Safaris</strong> — Discover the bush after dark with specialized night tracking.</li>
           </ul>
-          <a href="#booking" class="btn btn-amber">Learn More</a>
+          <a href="#booking" class="btn btn-primary">Learn More</a>
         </div>
         <div class="wildlife-images">
           <div class="wildlife-img-main">
@@ -484,21 +442,16 @@ export const travel02Html = `
   </section>
 
   <section class="newsletter">
-    <div class="container booking-wrap">
-      <div class="booking-intro">
-        <span class="kicker">— STAY CONNECTED</span>
-        <h2>The Wild Letter</h2>
-        <p>Get exclusive safari tips, conservation news, and first access to our seasonal expeditions directly in your
-          inbox.</p>
-      </div>
-      <form class="booking-form"
-        onsubmit="event.preventDefault();alert('Subscribed! Welcome to the pack.');this.reset();">
-        <div class="row">
-          <label>First Name<input type="text" name="fname" required placeholder="Jane"></label>
-          <label>Email Address<input type="email" name="email" required placeholder="jane@example.com"></label>
-        </div>
-        <button type="submit" class="btn btn-amber large">Join the Pride →</button>
-      </form>
+    <div class="container">
+       <div style="max-width:600px;margin:0 auto;text-align:center">
+          <span class="kicker">— STAY CONNECTED</span>
+          <h2 style="font-family:var(--serif);font-size:3rem;margin-bottom:1rem">The Wild Letter</h2>
+          <p style="margin-bottom:2.5rem;opacity:0.8">Get exclusive safari tips, conservation news, and first access to our seasonal expeditions.</p>
+          <form onsubmit="event.preventDefault();alert('Subscribed!');this.reset();" style="display:flex;gap:10px">
+            <input type="email" placeholder="Your Email" required style="flex:1;padding:15px;border-radius:4px;border:none;background:rgba(255,255,255,0.1);color:#fff">
+            <button type="submit" class="btn btn-primary">Join the Pride</button>
+          </form>
+       </div>
     </div>
   </section>
 
