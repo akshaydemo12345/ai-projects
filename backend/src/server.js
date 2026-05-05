@@ -104,7 +104,7 @@ app.use('/api/thank-you', compression(), thankYouRoutes);
 app.use('/api/v1/proxy', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
 
 // 5. Public Landing Pages (Catch-all)
-app.use('/pages', compression(), publicRoutes);
+app.use('/', compression(), publicRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorMiddleware);

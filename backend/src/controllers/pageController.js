@@ -197,7 +197,7 @@ exports.getPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
+    const baseAppUrl = process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
     const previewUrl = page.previewUrl || `${baseAppUrl}/preview/${page.slug}`;
 
     return res.status(200).json({
@@ -395,7 +395,7 @@ exports.createPage = async (req, res, next) => {
       }
     }
 
-    const baseAppUrl = config.api.baseUrl.replace(/\/+$/, '');
+    const baseAppUrl = process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
     const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
 
     // 8. Update Page with AI Results

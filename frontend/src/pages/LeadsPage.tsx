@@ -259,17 +259,6 @@ const LeadsPage = () => {
     setFilterUtmCampaign("");
   };
 
-  // const selectedProjectName = (projects as any[]).find((p: any) => p._id === filterProjectId)?.name;
-  // const hasActiveFilters = !!(filterProjectId || filterPageId || search || startDate || endDate);
-
-  // const clearFilters = () => {
-  //   setFilterProjectId("");
-  //   setFilterPageId("");
-  //   setSearch("");
-  //   setStartDate("");
-  //   setEndDate("");
-  // };
-
   return (
     <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
       {/* ─── Header ─── */}
@@ -503,8 +492,8 @@ const LeadsPage = () => {
             </div>
           ) : filteredAndSortedLeads.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
-              <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
-                <Inbox className="h-8 w-8 text-slate-400" />
+              <div className="h-20 w-20 rounded-3xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
+                <Inbox className="h-10 w-10 text-slate-300" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Leads Found</h3>
               <p className="text-slate-500 max-w-xs mx-auto">
@@ -519,167 +508,237 @@ const LeadsPage = () => {
               )}
             </div>
           ) : (
-              <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
-                      <tr className="border-b border-slate-200 dark:border-slate-800">
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Full Name</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phone</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
+            <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Full Name</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phone</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredAndSortedLeads.map(lead => (
+                      <tr
+                        key={lead._id}
+                        className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                        onClick={() => setSelectedLead(lead)}
+                      >
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                              {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                                {getLField(lead, "name") || "Lead User"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="space-y-1">
+                            {getStackedContacts(lead).emails.map((email, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                                <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).emails.length === 0 && (
+                              <span className="text-xs text-slate-400 italic">No email</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="space-y-1">
+                            {getStackedContacts(lead).phones.map((phone, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                                <p className="text-xs text-slate-500 font-medium">{phone}</p>
+                              </div>
+                            ))}
+                            {getStackedContacts(lead).phones.length === 0 && (
+                              <span className="text-xs text-slate-400 italic">No phone</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            {format(new Date(lead.createdAt), "MMM d, yyyy")}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {format(new Date(lead.createdAt), "h:mm a")}
+                          </p>
+                        </td>
+                        <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 z-10 transition-all shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 w-9 p-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 w-9 p-0 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"
+                              onClick={(e) => handleDelete(lead._id, e)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {filteredAndSortedLeads.map(lead => (
-                        <tr
-                          key={lead._id}
-                          className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
-                          onClick={() => setSelectedLead(lead)}
-                        >
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-4">
-                              <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                                {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate">
-                                  {getLField(lead, "name") || "Lead User"}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-5">
-                            <div className="space-y-1">
-                              {getStackedContacts(lead).emails.map((email, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <Mail className="h-3 w-3 text-slate-400 shrink-0" />
-                                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
-                                </div>
-                              ))}
-                              {getStackedContacts(lead).emails.length === 0 && (
-                                <span className="text-xs text-slate-400 italic">No email</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-5">
-                            <div className="space-y-1">
-                              {getStackedContacts(lead).phones.map((phone, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <Phone className="h-3 w-3 text-slate-400 shrink-0" />
-                                  <p className="text-xs text-slate-500 font-medium">{phone}</p>
-                                </div>
-                              ))}
-                              {getStackedContacts(lead).phones.length === 0 && (
-                                <span className="text-xs text-slate-400 italic">No phone</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-5">
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              {format(new Date(lead.createdAt), "MMM d, yyyy")}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {format(new Date(lead.createdAt), "h:mm a")}
-                            </p>
-                          </td>
-                          <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 z-10 transition-all shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-9 w-9 p-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
-                                onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-9 w-9 p-0 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"
-                                onClick={(e) => handleDelete(lead._id, e)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                {/* Mobile Card View */}
-                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                  {filteredAndSortedLeads.map(lead => (
-                    <div
-                      key={lead._id}
-                      className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
-                      onClick={() => setSelectedLead(lead)}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                            {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                              {getLField(lead, "name") || "Lead User"}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {format(new Date(lead.createdAt), "MMM d, h:mm a")}
-                            </p>
-                          </div>
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredAndSortedLeads.map(lead => (
+                  <div
+                    key={lead._id}
+                    className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
+                    onClick={() => setSelectedLead(lead)}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                          {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">
+                            {getLField(lead, "name") || "Lead User"}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {format(new Date(lead.createdAt), "MMM d, h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg"
+                          onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg hover:text-red-500"
+                          onClick={e => handleDelete(lead._id, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
+                        <div className="space-y-1.5">
+                          {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5">
+                              <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                              <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
+                            </div>
+                          ))}
+                          {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5">
+                              <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                              <p className="text-xs text-slate-500 font-medium">{phone}</p>
+                            </div>
+                          ))}
+                          {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
+                            <p className="text-[11px] text-slate-400 italic">No contact details</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <p className="text-xs text-slate-500 font-medium">
+                          {format(new Date(lead.createdAt), "MMM d, h:mm a")}
+                        </p>
+                      </td>
+                      <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 rounded-lg"
-                            onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5"
+                            onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 rounded-lg hover:text-red-500"
-                            onClick={e => handleDelete(lead._id, e)}
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                            onClick={(e) => handleDelete(lead._id, e)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
+                      </td>
+                    </tr>
+                    ))}
+                  </tbody>
+                </table>
+            </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
-                          <div className="space-y-1.5">
-                            {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
-                              <div key={idx} className="flex items-center gap-1.5">
-                                <Mail className="h-3 w-3 text-slate-400 shrink-0" />
-                                <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
-                              </div>
-                            ))}
-                            {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
-                              <div key={idx} className="flex items-center gap-1.5">
-                                <Phone className="h-3 w-3 text-slate-400 shrink-0" />
-                                <p className="text-xs text-slate-500 font-medium">{phone}</p>
-                              </div>
-                            ))}
-                            {getStackedContacts(lead).emails.length === 0 && getStackedContacts(lead).phones.length === 0 && (
-                              <p className="text-[11px] text-slate-400 italic">No contact details</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+              {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {filteredAndSortedLeads.map(lead => (
+              <div
+                key={lead._id}
+                className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
+                onClick={() => setSelectedLead(lead)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                      {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                     </div>
-                  ))}
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {getLField(lead, "name") || "Lead User"}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {format(new Date(lead.createdAt), "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg"
+                      onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg hover:text-red-500"
+                      onClick={e => handleDelete(lead._id, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+                  ))}
               </div>
-            )
+              </div>
+          )
           }
 
           {/* Footer */}
@@ -715,29 +774,27 @@ const LeadsPage = () => {
       </div >
 
       {/* ─── Lead Detail Slide-over ─── */}
-      {
-        selectedLead && (
+      {selectedLead && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
+          onClick={() => setSelectedLead(null)}
+        >
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
-            onClick={() => setSelectedLead(null)}
+            className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
+            onClick={e => e.stopPropagation()}
           >
-            <div
-              className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
-                    {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
-                      {getLField(selectedLead, "name") || "Lead Detail"}
-                    </h2>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
-                    </div>
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
+                  {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                    {getLField(selectedLead, "name") || "Lead Detail"}
+                  </h2>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
@@ -751,158 +808,67 @@ const LeadsPage = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
-              <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary" /> Full Message
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-primary/30 shadow-sm">
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                    {getLField(selectedLead, "message")}
-                  </p>
-                </div>
-              </section>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12 custom-scrollbar">
+              {/* Message Section */}
+              {getLField(selectedLead, "message") && (
                 <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
-                  <div className="space-y-4">
-                    <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Contact Emails</p>
-                      <div className="space-y-2">
-                        {getStackedContacts(selectedLead).emails.length > 0 ? (
-                          getStackedContacts(selectedLead).emails.map((email, idx) => (
-                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 group/item">
-                              <Mail className="h-3.5 w-3.5 text-primary/60" />
-                              {email}
-                              <ExternalLink
-                                className="h-3 w-3 opacity-0 group-hover/item:opacity-100 cursor-pointer ml-auto"
-                                onClick={() => window.location.href = `mailto:${email}`}
-                              />
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
-                      <div className="space-y-2">
-                        {getStackedContacts(selectedLead).phones.length > 0 ? (
-                          getStackedContacts(selectedLead).phones.map((phone, idx) => (
-                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                              <Phone className="h-3.5 w-3.5 text-primary/60" />
-                              {phone}
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                <section>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
-                      <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-blue-400" />
-                        {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                      <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12">
-                <section className={getLField(selectedLead, "message") ? "block" : "hidden"}>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary" /> Full Inquirer Message
+                      <FileText className="h-4 w-4 text-primary" /> Full Message
                     </h3>
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
-                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-primary/30 shadow-sm">
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {getLField(selectedLead, "message")}
-                    </p>
+                  <div className="p-6 rounded-[24px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 italic text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
+                    "{getLField(selectedLead, "message")}"
                   </div>
                 </section>
+              )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  <section>
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Identity Details</h3>
-                    <div className="space-y-4">
-                      <div className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Contact Emails</p>
-                        <div className="space-y-2">
-                          {getStackedContacts(selectedLead).emails.length > 0 ? (
-                            getStackedContacts(selectedLead).emails.map((email, idx) => (
-                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 group/item">
-                                <Mail className="h-3.5 w-3.5 text-primary/60" />
-                                {email}
-                                <ExternalLink
-                                  className="h-3 w-3 opacity-0 group-hover/item:opacity-100 cursor-pointer ml-auto"
-                                  onClick={() => window.location.href = `mailto:${email}`}
-                                />
-                              </p>
-                            ))
-                          ) : (
-                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
-                        <div className="space-y-2">
-                          {getStackedContacts(selectedLead).phones.length > 0 ? (
-                            getStackedContacts(selectedLead).phones.map((phone, idx) => (
-                              <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Phone className="h-3.5 w-3.5 text-primary/60" />
-                                {phone}
-                              </p>
-                            ))
-                          ) : (
-                            <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                          )}
-                        </div>
-                      </div>
-                    </div >
-                  </section >
-                  <section>
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Technical Trace</h3>
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">IP Identifier</p>
-                        <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                          <Shield className="h-3.5 w-3.5 text-blue-400" />
-                          {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                        </p>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                        </p>
-                      </div>
+              {/* Identity Section */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-indigo-500" /> Identity Details
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Email Addresses</p>
+                    <div className="space-y-2">
+                      {getStackedContacts(selectedLead).emails.length > 0 ? (
+                        getStackedContacts(selectedLead).emails.map((email, idx) => (
+                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 text-primary/60" />
+                            {email}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                      )}
                     </div>
-                  </section>
-                </div >
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
+                    <div className="space-y-2">
+                      {getStackedContacts(selectedLead).phones.length > 0 ? (
+                        getStackedContacts(selectedLead).phones.map((phone, idx) => (
+                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-primary/60" />
+                            {phone}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-                {/* UTM / Marketing section */}
-                <section className={selectedLead.utm_source ? "block" : "hidden"}>
+              {/* Marketing Attribution */}
+              {(selectedLead as any).utm_source && (
+                <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <Globe className="h-4 w-4 text-emerald-500" /> Marketing Attribution
@@ -922,83 +888,86 @@ const LeadsPage = () => {
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
                     </div>
-                    {(selectedLead as any).utm_term && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_term}</p>
-                      </div>
-                    )}
-                    {(selectedLead as any).utm_content && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedLead as any).utm_content}</p>
-                      </div>
-                    )}
-                    {((selectedLead as any).gclid || (selectedLead as any).fbclid) && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Click Identifier</p>
-                        <p className="text-xs font-mono text-slate-500 truncate">
-                          {(selectedLead as any).gclid ? `GCLID: ${(selectedLead as any).gclid}` : `FBCLID: ${(selectedLead as any).fbclid}`}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </section>
+              )}
 
-                <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
-                    </h3>
-                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+              {/* Captured Insights */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(() => {
+                    const standardKeys = [
+                      "name", "email", "phone", "message", "full_name", "first_name", "last_name",
+                      "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
+                      "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
+                      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
+                    ];
+
+                    const shownLabels = new Set<string>();
+                    const insights: Array<{ label: string, value: any }> = [];
+
+                    Object.entries(selectedLead).forEach(([key, value]) => {
+                      if (!value || key === "data" || key === "utm") return;
+                      const lowerK = key.toLowerCase().replace(/_/g, "");
+                      if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
+                      if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+
+                      const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                      if (!shownLabels.has(label)) {
+                        shownLabels.add(label);
+                        insights.push({ label, value });
+                      }
+                    });
+
+                    return insights.length > 0 ? (
+                      insights.map((item, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                          <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
+                    );
+                  })()}
+                </div>
+              </section>
+
+              {/* Technical Trace */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-400" /> Technical Trace
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
+                    <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5 text-blue-400" />
+                      {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(() => {
-                      const standardKeys = [
-                        "name", "email", "phone", "message", "full_name", "first_name", "last_name",
-                        "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
-                        "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
-                        "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
-                      ];
-
-                      const shownLabels = new Set<string>();
-                      const insights: Array<{ label: string, value: any }> = [];
-
-                      Object.entries(selectedLead).forEach(([key, value]) => {
-                        if (!value || key === "data" || key === "utm") return;
-                        const lowerK = key.toLowerCase().replace(/_/g, "");
-
-                        // Skip standard keys and contact info (already shown in Identity Details)
-                        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
-                        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
-
-                        const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-                        if (!shownLabels.has(label)) {
-                          shownLabels.add(label);
-                          insights.push({ label, value });
-                        }
-                      });
-
-                      return insights.length > 0 ? (
-                        insights.map((item, idx) => (
-                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                            <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
-                      );
-                    })()}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
+                    </p>
                   </div>
-                </section>
-              </div>
-
-            </div >
-          </div >
-        )
-      }
-    </div >
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

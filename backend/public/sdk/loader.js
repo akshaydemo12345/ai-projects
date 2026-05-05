@@ -14,6 +14,39 @@
   // Find the mounting point or default to body
   const mountPoint = document.getElementById('pc-landing-page') || document.body;
 
+  function executeScripts(container) {
+    if (!container) return;
+    const scripts = container.querySelectorAll('script');
+    const registry = window.__PC_SCRIPT_REGISTRY__ || new Set();
+    window.__PC_SCRIPT_REGISTRY__ = registry;
+
+    scripts.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+
+      const src = oldScript.getAttribute('src');
+      if (src) {
+        if (registry.has(src)) {
+          oldScript.remove();
+          return;
+        }
+        registry.add(src);
+      }
+
+      if (oldScript.innerHTML) {
+        newScript.innerHTML = oldScript.innerHTML;
+      } else if (oldScript.textContent) {
+        newScript.textContent = oldScript.textContent;
+      }
+
+      if (oldScript.parentNode) {
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      }
+    });
+  }
+
   async function loadPage() {
     try {
       const response = await fetch(`${window.location.origin}/p/${page}?token=${token}`);
@@ -33,6 +66,9 @@
 
       // Inject HTML
       mountPoint.innerHTML = html;
+
+      // Execute scripts within HTML (important for form embeds)
+      executeScripts(mountPoint);
 
       // Inject JS
       if (js) {

@@ -591,7 +591,7 @@ export const thankYouApi = {
 
   preview: async (previewConfig: { layout: string; content?: any; branding?: any }): Promise<string> => {
     const token = localStorage.getItem('pagecraft_token');
-    const fullUrl = `${config.api.baseUrl || 'http://localhost:5000'}/api/thank-you/preview`;
+    const fullUrl = `${config.api.baseUrl || 'https://apiserver.ai-landingpages.sharehq.org'}/api/thank-you/preview`;
     
     const res = await fetch(fullUrl, {
       method: 'POST',
