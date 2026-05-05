@@ -171,11 +171,11 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           hasCustomThankYou: !!page.thankYouPageContent
         }
       });
-
-    } catch (err) {
-      next(err);
     }
-  };
+  } catch (err) {
+    next(err);
+  }
+};
 
   /**
    * GET /p/:slug
