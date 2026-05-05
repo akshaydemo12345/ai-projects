@@ -210,22 +210,8 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
-    let css = ':root {\n';
-    Object.values(currentStyles).forEach(cat => {
-      Object.values(cat).forEach(prop => {
-        css += `  ${prop.varName}: ${prop.value}${prop.unit || ''};\n`;
-      });
-    });
-    css += '}\n\n';
+    let css = '';
 
-    css += 'body, .grapesjs-safeguard-wrapper, #wrapper { background-color: var(--body-bg) !important; color: var(--body-text); font-family: var(--body-font); font-size: var(--body-size); line-height: var(--body-line-height); transition: all 0.3s ease; }\n';
-    css += 'h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); color: var(--heading-color); line-height: var(--heading-line-height); }\n';
-    css += 'h1 { font-size: var(--heading-size); }\n';
-    css += 'h2, h3 { font-size: var(--subheading-size); color: var(--subheading-color); line-height: var(--subheading-line-height); font-family: var(--subheading-font); }\n';
-    css += '.primary-button, button[type="submit"], .btn { background-color: var(--btn-bg) !important; color: var(--btn-text) !important; border-radius: var(--btn-radius) !important; }\n';
-    css += 'form, .lead-form-container { background-color: var(--form-bg) !important; }\n';
-    css += 'input, textarea, select { color: var(--input-text) !important; background-color: var(--input-bg) !important; border: 1px solid var(--input-border) !important; }\n';
-    css += 'label { color: var(--label-color) !important; }\n';
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     return css;
