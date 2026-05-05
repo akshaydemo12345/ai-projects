@@ -66,6 +66,9 @@
       let js = typeof content === 'object' ? (content?.fullJs || '') : '';
       let title = result.meta?.title || 'Landing Page';
 
+      const pageId = result.pageId || (result.meta && result.meta._id);
+      const projectId = result.projectId || (result.meta && result.meta.projectId);
+
       if (isThankYou) {
         if (result.thankYouPageContent) {
           content = result.thankYouPageContent;
@@ -108,6 +111,8 @@
             ${css}
           </style>
           ${!isThankYou ? '<script src="https://cdn.tailwindcss.com"><\/script>' : ''}
+          ${!isThankYou ? `<meta name="dm-page-id" content="${pageId}">` : ''}
+          ${!isThankYou ? `<meta name="dm-project-id" content="${projectId}">` : ''}
         </head>
         <body>
           ${html}
@@ -121,7 +126,7 @@
 
       // Initialize Lead Capture if not already in thank you state
       if (!isThankYou) {
-        initLeadCapture(apiBase, page, customThankYouUrl);
+        initLeadCapture(apiBase, page, customThankYouUrl, pageId, projectId);
       }
 
     } catch (err) {
@@ -132,12 +137,8 @@
   /**
    * ─── LEAD CAPTURE & THANK YOU REDIRECT ENGINE ─────────────────────────────
    * Handles form submission on embedded pages.
-   * After successful lead capture:
-   *   1. If page has a custom thankYouUrl (external URL like https://example.com/thanks) → go there
-   *   2. If page has a built-in thank you page → reload with ?status=thank-you (embed renders it)
-   *   3. Default → reload with ?status=thank-you (shows generic thank you)
    */
-  function initLeadCapture(apiBase, slug, customThankYouUrl) {
+  function initLeadCapture(apiBase, slug, customThankYouUrl, pageId, projectId) {
     document.addEventListener('submit', async function (e) {
       const form = e.target;
       if (form.tagName !== 'FORM') return;
@@ -204,6 +205,8 @@
       data.url = window.location.href;
       data.path = window.location.pathname;
       data.pageSlug = slug;
+      data.pageId = pageId;
+      data.projectId = projectId;
 
       try {
         const response = await fetch(`${apiBase}/api/leads`, {
@@ -228,28 +231,28 @@
           // Priority 1: Custom external thank you URL from page settings
           if (customThankYouUrl && customThankYouUrl.trim() !== '') {
             const trimmedUrl = customThankYouUrl.trim();
-            
-            // Check if it's a full external URL (starts with http/https)
             if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-              console.log('PageCraft AI: Redirecting to custom external URL:', trimmedUrl);
               window.location.href = trimmedUrl;
               return;
             }
-            
-            // If it's a relative path like /thank-you or /custom-thanks
-            // Serve it via the embed system on the BACKEND, not WordPress
-            console.log('PageCraft AI: Redirecting to custom relative URL via backend');
             window.location.href = apiBase + trimmedUrl;
             return;
           }
 
-          // Priority 2: Redirect via embed system (reloads page with ?status=thank-you)
-          // This makes the embed.js re-fetch the page data and render the thank you content
+          // Priority 2: Redirect via embed system
           console.log('PageCraft AI: Redirecting to embedded thank you page');
           const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('status', 'thank-you');
-          // Remove any hash fragments that might interfere
-          window.location.href = currentUrl.toString().split('#')[0];
+          
+          // Check if we are using pretty URLs or query params
+          if (currentUrl.searchParams.has('pg')) {
+            currentUrl.searchParams.set('status', 'thank-you');
+            window.location.href = currentUrl.toString().split('#')[0];
+          } else {
+             // Pretty URL fallback: try to append /thank-you if possible, or just use query param
+             // Most robust is to use query param as it works everywhere
+             currentUrl.searchParams.set('status', 'thank-you');
+             window.location.href = currentUrl.toString().split('#')[0];
+          }
           
         } else {
           console.error('PageCraft AI: Server returned error', result);
@@ -258,22 +261,9 @@
         }
       } catch (err) {
         console.error('Lead submission error:', err);
-        
-        // ─── FALLBACK: Even if API fails, redirect to thank you ───────
-        // This ensures the user always sees a thank you page
-        console.log('PageCraft AI: API error, redirecting to thank you as fallback');
-        if (customThankYouUrl && customThankYouUrl.trim() !== '') {
-          const trimmedUrl = customThankYouUrl.trim();
-          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-            window.location.href = trimmedUrl;
-          } else {
-            window.location.href = apiBase + trimmedUrl;
-          }
-        } else {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('status', 'thank-you');
-          window.location.href = currentUrl.toString().split('#')[0];
-        }
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('status', 'thank-you');
+        window.location.href = currentUrl.toString().split('#')[0];
       } finally {
         form.removeAttribute('data-submitting');
         if (submitBtn) {

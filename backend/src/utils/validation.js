@@ -25,11 +25,12 @@ const validate = (schema) => (req, res, next) => {
 
 const normalizeDomain = (url) => {
   if (!url) return "";
-  return url.toLowerCase()
+  const domain = url.toLowerCase()
     .replace(/^https?:\/\//, "")
     .replace(/^www\./, "")
     .split("/")[0]
     .split(":")[0];
+  return `https://${domain}`;
 };
 
 module.exports = { signupSchema, loginSchema, validate, normalizeDomain };
