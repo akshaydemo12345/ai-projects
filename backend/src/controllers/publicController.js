@@ -763,17 +763,21 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           let incomingRequestDomain = normalizeDomain(host);
           const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
 
-          // 1. If no websiteUrl is set, lock it to this domain (Auto-Authorize)
-          if (!project.websiteUrl && incomingRequestDomain && incomingRequestDomain !== saasDomain) {
-            project.websiteUrl = incomingRequestDomain;
-            await project.save();
-            console.log(`✨ Auto-authorized project "${project.name}" to domain: ${incomingRequestDomain}`);
+          // 1. If no websiteUrl is set, or it's a localhost/test domain, allow auto-lock to the first real domain that accesses it
+          const isIncomingLocal = incomingRequestDomain.includes('localhost') || incomingRequestDomain.includes('127.0.0.1') || incomingRequestDomain.endsWith('.test');
+          
+          if (incomingRequestDomain && incomingRequestDomain !== saasDomain && !isIncomingLocal) {
+            if (!project.websiteUrl || project.websiteUrl.includes('localhost') || project.websiteUrl.includes('127.0.0.1') || project.websiteUrl.endsWith('.test')) {
+              project.websiteUrl = incomingRequestDomain;
+              await project.save();
+              console.log(`✨ Auto-authorized project "${project.name}" to domain: ${incomingRequestDomain}`);
+            }
           }
 
           // 2. Check Authorization
           const isOwnerDomain = (incomingRequestDomain === saasDomain);
           const isAuthorizedDomain = (incomingRequestDomain === normalizeDomain(project.websiteUrl));
-          const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
+          const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain.includes('localhost') || incomingRequestDomain === '127.0.0.1');
 
           if (!isOwnerDomain && !isAuthorizedDomain && !isDevDomain && project.websiteUrl) {
             // Instead of a hard 403, we show a helpful "Setup Needed" page
@@ -1179,7 +1183,10 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         'title slug content seo template domain publishedAt'
       );
 
-      const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
+      // Construct dynamic target_url based on current request host if not set or for better flexibility
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers.host;
+      const normalizedBackendBase = `${protocol}://${host}/api/v1/proxy`;
 
       const preSlug = (project.preSlug || "").replace(/^\/+|\/+$/g, '');
       const allowedPaths = [];
@@ -1197,6 +1204,8 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         status: 'active',
         target_url: normalizedBackendBase,
         allowed_paths: [...allowedPaths, '/api/leads'],
+        pre_slug: preSlug,
+        website_url: project.websiteUrl,
         plan: 'pro',
         cache_time: 300,
         settings: {

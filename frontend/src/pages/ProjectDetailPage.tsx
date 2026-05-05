@@ -801,8 +801,8 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
               <div className="space-y-3">
                 {[
                   { num: 1, text: "Download and install our WordPress plugin:" },
-                  { num: 2, text: "In plugin settings, paste your token:" },
-                  { num: 3, text: "Save settings — pages will auto-sync" },
+                  { num: 2, text: "In plugin settings, paste your token & click Verify Now:" },
+                  { num: 3, text: "Click Save Settings — pages will auto-sync" },
                 ].map((s) => (
                   <div key={s.num} className="flex gap-3 items-start">
                     <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</span>
@@ -825,10 +825,12 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                       {s.num === 2 && (
                         <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 mt-1.5 cursor-pointer hover:bg-muted/80 transition-all active:scale-95"
                           onClick={async () => {
-                            const success = await copyToClipboard(project.apiToken);
+                            const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || window.location.origin).replace('localhost', '127.0.0.1');
+                            const fullToken = `${apiBaseUrl}@@${project.apiToken}`;
+                            const success = await copyToClipboard(fullToken);
                             if (success) {
                               setTokenCopiedLocal(true);
-                              toast.success("Token copied!");
+                              toast.success("Connection string copied!");
                               setTimeout(() => setTokenCopiedLocal(false), 2000);
                             }
                           }}>
@@ -1527,10 +1529,22 @@ const ProjectDetailPage = () => {
                       {
                         num: 2, title: "Website  Token", desc: "Copy & paste the API token in the plugin settings", extra: (
                           <div
-                            onClick={copyToken}
+                            onClick={() => {
+                              const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || window.location.origin).replace('localhost', '127.0.0.1');
+                              const fullToken = `${apiBaseUrl}@@${project.apiToken}`;
+                              copyToClipboard(fullToken).then(success => {
+                                if (success) {
+                                  setIntegTokenCopied(true);
+                                  toast.success("Connection string copied!");
+                                  setTimeout(() => setIntegTokenCopied(false), 2000);
+                                }
+                              });
+                            }}
                             className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
                           >
-                            <span className={`text-[10px] font-mono truncate max-w-[150px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
+                            <span className={`text-[10px] font-mono truncate max-w-[150px] ${integTokenCopied ? "text-emerald-700" : ""}`}>
+                              {project.apiToken}
+                            </span>
                             {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                           </div>
                         )
