@@ -1,5 +1,5 @@
 // Auto-generated ULTRA-DYNAMIC template — travel templates01
-// Generated: 2026-04-30T08:31:28.858Z
+// Generated: 2026-05-05T11:21:07.412Z
 
 export const travel01Styles = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +36,6 @@ a{color:inherit;text-decoration:none}
 
 .search-bar{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:.75rem;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);padding:.75rem;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,.18);max-width:780px}
 .search-bar div{padding:.5rem 1.1rem;border-right:1px solid rgba(8,145,178,.1)}
-.search-bar div:nth-child(3){border-right:0}
 .search-bar label{display:block;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:.25rem}
 .search-bar input{background:transparent !important; border:0 !important; outline:0 !important; font-family:inherit; font-size:.95rem; color:var(--ink) !important; font-weight:600; width:100%}
 .search-bar button{background:PRIMARY_COLOR_PLACEHOLDER !important; color:#fff !important; border:0 !important; padding:0 2.25rem; border-radius:18px; font-family:inherit; font-weight:600; cursor:pointer; transition:all 0.3s}
@@ -45,115 +44,83 @@ a{color:inherit;text-decoration:none}
 .islands{padding:7rem 0}
 .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3rem;gap:2rem;flex-wrap:wrap}
 .head h2{font-family:var(--serif);font-size:clamp(2.5rem,5vw,4rem);font-weight:400;line-height:1;letter-spacing:-.02em;margin-top:.75rem}
-.link{color:var(--teal);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--teal);padding-bottom:2px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:240px;gap:1.5rem}
 .island-card{position:relative;border-radius:20px;overflow:hidden;cursor:pointer;transition:transform .5s}
-.island-card:hover{transform:translateY(-4px)}
 .island-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1s}
-.island-card:hover img{transform:scale(1.08)}
 .island-card.big{grid-column:span 2;grid-row:span 2}
 .island-card.wide{grid-column:span 2}
 .island-card .info{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:1.5rem;color:#fff;background:linear-gradient(180deg,transparent 30%,rgba(6,74,110,.85) 100%)}
-.loc{font-size:.78rem;letter-spacing:.06em;opacity:.9;margin-bottom:.4rem}
-.island-card h3{font-family:var(--serif);font-size:1.4rem;line-height:1.1;margin-bottom:.5rem}
-.island-card.big h3{font-size:2rem}
-.island-card .info p{font-size:.88rem;opacity:.85;margin-bottom:.85rem;font-weight:300}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:.85rem}
-.rating{background:rgba(255,255,255,.18);backdrop-filter:blur(10px);padding:.3rem .65rem;border-radius:30px;font-weight:600}
-.cost{font-weight:700;font-size:1rem}
-.cost small{font-weight:400;opacity:.8;font-size:.75rem}
 
-.experiences{padding:6rem 0}
-.exp-flex{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
-.exp-flex h2{font-family:var(--serif);font-size:clamp(2.2rem,4.5vw,3.6rem);font-weight:400;line-height:1.05;margin-top:.5rem;margin-bottom:1.25rem;letter-spacing:-.02em}
-.lead{font-size:1.1rem;color:PRIMARY_COLOR_PLACEHOLDER;margin-bottom:2rem;max-width:480px}
-.checklist{list-style:none;margin-bottom:2.25rem}
-.checklist li{padding:.65rem 0;border-bottom:1px solid rgba(8,145,178,.12);font-weight:500;position:relative;padding-left:1.75rem}
-.checklist li::before{content:"✦";color:var(--coral);position:absolute;left:0;top:.65rem}
-.btn-fill{display:inline-block;background:var(--ink);color:#fff;padding:1rem 2rem;border-radius:50px;font-weight:600;font-size:.9rem;transition:all .3s}
-.btn-fill:hover{background:var(--teal);transform:translateY(-2px);box-shadow:0 15px 35px rgba(8,145,178,.3)}
+.fleet{padding:8rem 0;background:var(--ink);color:#fff;overflow:hidden}
+.fleet-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.fleet-text h2{font-family:var(--serif);font-size:clamp(2.5rem,5vw,4.5rem);line-height:1.1;margin-bottom:2rem}
 
-.exp-stack{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-.stat-card{padding:2.5rem 1.75rem;border-radius:24px;text-align:center}
-.glass{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.6);box-shadow:0 15px 40px rgba(8,145,178,.1)}
-.stat-card.wide{grid-column:span 2}
-.stat-card strong{display:block;font-family:var(--serif);font-size:3.5rem;color:var(--teal);line-height:1;margin-bottom:.5rem}
-.stat-card span{font-size:.85rem;font-weight:500;color:PRIMARY_COLOR_PLACEHOLDER;letter-spacing:.05em}
+/* IMPROVED: A Day In Paradise */
+.day-paradise{padding:10rem 0;background:var(--soft);position:relative}
+.sticky-split{display:grid;grid-template-columns:1fr 1.2fr;gap:8rem}
+.sticky-side{position:sticky;top:10rem;height:fit-content}
+.time-tracker{margin-top:3rem;position:relative;padding-left:1.5rem;border-left:1px solid rgba(8,145,178,0.1)}
+.time-point{margin-bottom:2.5rem;position:relative}
+.time-point::before{content:'';position:absolute;left:-1.55rem;top:0.4rem;width:9px;height:9px;border-radius:50%;background:rgba(8,145,178,0.2);transition:background 0.3s}
+.time-point.active::before{background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.time-point span{display:block;font-size:0.7rem;letter-spacing:0.2em;color:var(--teal);font-weight:700;margin-bottom:0.25rem}
+.time-point h5{font-size:1.1rem;font-weight:600;opacity:0.6;transition:opacity 0.3s}
+.time-point.active h5{opacity:1}
 
-.newsletter{padding:4rem 0 6rem}
-.glass-box{background:#ffffff !important; color:var(--ink) !important; padding:3.5rem; border-radius:32px; display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center; border: 1px solid rgba(8,145,178,0.15); box-shadow:0 20px 50px rgba(0,0,0,0.05)}
-.glass-box h2{font-family:var(--serif); font-size:clamp(1.8rem,3.5vw,2.6rem); font-weight:400; margin-bottom:.5rem; line-height:1.05; color:var(--ink)}
-.glass-box p{opacity:.7; color:var(--ink)}
-.glass-box form{display:flex; background:rgba(8,145,178,0.05) !important; border:1px solid rgba(8,145,178,0.1) !important; border-radius:50px; padding:.4rem}
-.glass-box input{flex:1; background:transparent !important; border:0 !important; outline:0 !important; padding:.85rem 1.25rem; color:var(--ink) !important; font-family:inherit; font-size:.95rem}
-.glass-box input::placeholder{color:rgba(12,74,110,.4) !important}
-.glass-box button{background:PRIMARY_COLOR_PLACEHOLDER !important; color:#fff !important; border:0 !important; padding:.85rem 1.75rem; border-radius:50px; font-family:inherit; font-weight:600; cursor:pointer; transition: transform 0.2s}
-.glass-box button:hover{transform: scale(1.05)}
+.scroll-side .moment{margin-bottom:12rem;transition:transform 0.8s ease}
+.moment img{width:100%;height:600px;object-fit:cover;border-radius:40px;box-shadow:0 30px 80px rgba(0,0,0,0.1);margin-bottom:3rem}
+.moment-content h3{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);margin-bottom:1.5rem;line-height:1.1}
+.moment-content p{font-size:1.15rem;opacity:0.8;max-width:500px}
 
-footer{padding:3rem 0}
-.foot-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:2rem;border-bottom:1px solid rgba(8,145,178,.15);margin-bottom:1.5rem;flex-wrap:wrap;gap:1.5rem}
-.links{display:flex;gap:2rem}
-.links a{font-size:.9rem;font-weight:500;opacity:.7;transition:opacity .2s}
-.links a:hover{opacity:1;color:var(--teal)}
-footer > .foot p{font-size:.85rem;opacity:.6}
+/* IMPROVED: Concierge */
+.concierge{padding:10rem 0;background:linear-gradient(180deg, #fff 0%, #f0f9ff 100%)}
+.concierge-card{background:#ffffff;border:1px solid rgba(8,145,178,0.15);border-radius:40px;padding:5rem;display:grid;grid-template-columns:1fr 1.5fr;gap:5rem;align-items:center;box-shadow:0 60px 120px rgba(8,145,178,0.1)}
+.con-visual{position:relative}
+.con-img{width:280px;height:380px;border-radius:30px;overflow:hidden;transform:rotate(-3deg);box-shadow:0 30px 60px rgba(0,0,0,0.1)}
+.con-img img{width:100%;height:100%;object-fit:cover}
+.con-badge{position:absolute;bottom:-20px;right:-20px;background:var(--ink);color:var(--teal);padding:1.5rem;border-radius:20px;transform:rotate(6deg);text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.2)}
+.con-badge strong{display:block;font-size:1.5rem;font-family:var(--serif)}
+.con-badge span{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase}
 
-/* UNIVERSAL RESPONSIVE FIXES */
+.con-text h2{font-family:var(--serif);font-size:clamp(2.5rem,4vw,4rem);margin-bottom:1.5rem;line-height:1.05}
+.con-details{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:2.5rem 0}
+.con-item label{display:block;font-size:0.7rem;text-transform:uppercase;color:var(--teal);font-weight:700;letter-spacing:0.1em;margin-bottom:0.5rem}
+.con-item p{font-weight:600;font-size:1.1rem}
+
+.testimonials-creative{padding:10rem 0;text-align:center;background:var(--ink);color:#fff}
+.test-quote{font-family:var(--serif);font-size:clamp(1.8rem,4vw,3.5rem);font-style:italic;line-height:1.3;max-width:1000px;margin:0 auto}
+
+.newsletter{padding:6rem 0;background:var(--ink);color:#fff}
+.glass-box{background:rgba(255,255,255,0.05) !important; border:1px solid rgba(255,255,255,0.1) !important; padding:4rem; border-radius:40px; display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center}
+.glass-box h2{color:#fff !important}
+.glass-box p{color:rgba(255,255,255,0.6) !important}
+.glass-box form{background:rgba(255,255,255,0.1) !important}
+.glass-box input{color:#fff !important}
+
+/* IMPROVED: Footer */
+footer{background:var(--soft);padding:8rem 0 4rem;border-top:1px solid rgba(8,145,178,0.1)}
+.foot-main{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:4rem;margin-bottom:6rem}
+.foot-brand p{margin:1.5rem 0;font-size:0.95rem;opacity:0.7;max-width:280px}
+.foot-social{display:flex;gap:1rem}
+.social-ico{width:40px;height:40px;border-radius:50%;border:1px solid rgba(8,145,178,0.2);display:flex;align-items:center;justify-content:center;transition:all 0.3s}
+.social-ico:hover{background:var(--teal);border-color:var(--teal);color:#fff;transform:translateY(-3px)}
+
+.foot-col h5{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:2rem;color:var(--teal)}
+.foot-col a{display:block;margin-bottom:0.85rem;font-size:0.95rem;opacity:0.7;transition:all 0.3s}
+.foot-col a:hover{opacity:1;padding-left:5px;color:var(--teal)}
+
+.foot-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:2rem;border-top:1px solid rgba(8,145,178,0.1);font-size:0.85rem;opacity:0.6}
+
+@media(max-width: 1100px) {
+  .foot-main { grid-template-columns: 1fr 1fr; }
+}
 @media(max-width: 900px) {
-  .container { max-width: 100% !important; padding: 0 1.5rem !important; }
-  .search-bar { grid-template-columns: 1fr !important; padding: 1.5rem !important; border-radius: 20px !important; }
-  .grid { grid-template-columns: 1fr 1fr !important; grid-auto-rows: 220px !important; }
-  .island-card.big, .island-card.wide { grid-column: span 2 !important; }
-  .exp-flex, .glass-box { grid-template-columns: 1fr !important; text-align: center !important; gap: 2rem !important; padding: 2.5rem 1.5rem !important; }
-}
-
-@media(max-width: 600px) {
-  h1 { font-size: 2.5rem !important; line-height: 1.1 !important; }
-  .grid { grid-template-columns: 1fr !important; grid-auto-rows: 280px !important; }
-  .island-card.big, .island-card.wide { grid-column: span 1 !important; }
-  .nav nav, .links { display: none !important; }
-  .foot-top { flex-direction: column !important; text-align: center !important; gap: 1.5rem !important; }
-  .glass-box form { flex-direction: column !important; border-radius: 20px !important; padding: 1rem !important; }
-  .glass-box input { width: 100% !important; text-align: center !important; margin-bottom: 0.5rem !important; }
-  .glass-box button { width: 100% !important; display: block !important; }
-}
-
-/* GLOBAL EDITOR DEFAULTS FOR NEW ELEMENTS */
-button:not(.nav *):not(.search-bar *):not(.glass-box *) {
-  background: PRIMARY_COLOR_PLACEHOLDER !important;
-  color: #fff !important;
-  padding: 12px 24px !important;
-  border-radius: 50px !important;
-  border: none !important;
-  font-family: inherit !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: all 0.3s !important;
-}
-
-input:not(.search-bar *):not(.glass-box *) {
-  width: 100% !important;
-  padding: 12px 18px !important;
-  border-radius: 8px !important;
-  border: 1px solid rgba(12,74,110,0.15) !important;
-  background: #fff !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
-  outline: none !important;
-  margin-bottom: 15px !important;
-}
-
-input:focus {
-  border-color: PRIMARY_COLOR_PLACEHOLDER !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER, transparent 90%) !important;
-}
-
-.material-symbols-outlined, .material-icons {
-  font-display: swap;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
+  .sticky-split, .concierge-card, .glass-box, .foot-main { grid-template-columns: 1fr !important; text-align: center !important; }
+  .sticky-side { position: static; margin-bottom: 4rem; }
+  .con-visual, .con-img { margin: 0 auto; }
+  .con-details { grid-template-columns: 1fr; }
+  .con-badge { right: 20px; }
+  .foot-bottom { flex-direction: column; gap: 1rem; }
 }
 `;
 
@@ -164,7 +131,12 @@ export const travel01Html = `
 <header class="nav">
   <div class="container nav-inner">
     <a href="#" class="logo">LOGO_PLACEHOLDER</a> 
-    <a href="#" class="btn-glass">contact</a>
+    <nav>
+      <a href="#islands">Destinations</a>
+      <a href="#experiences">Moments</a>
+      <a href="#fleet">The Fleet</a>
+    </nav>
+    <a href="#" class="btn-glass">Inquire Now</a>
   </div>
 </header>
 
@@ -172,14 +144,14 @@ export const travel01Html = `
   <img src="/assets/templates/travel/templates01/hero.jpg" alt="Maldives" class="hero-img">
   <div class="hero-tint"></div>
   <div class="container hero-content">
-    <span class="pill">✦ Voted #1 Island Specialist 2026</span>
+    <span class="pill">✦ PRIVATE ISLAND SPECIALISTS</span>
     <h1>Paradise,<br>privately yours.</h1>
     <p>Crystal lagoons, overwater villas, and barefoot luxury across the world's most secluded islands.</p>
     <form class="search-bar">
-      <div><label>Full Name</label><input placeholder="Your Name"></div>
-      <div><label>Email Address</label><input type="email" placeholder="mail@example.com" required></div>
-      <div><label>Phone Number</label><input placeholder="+1 234 567 890"></div>
-      <button type="submit">Submit →</button>
+      <div><label>Destination</label><input placeholder="Where to?"></div>
+      <div><label>Travelers</label><input placeholder="2 Guests"></div>
+      <div><label>Duration</label><input placeholder="7 Days"></div>
+      <button type="submit">Search →</button>
     </form>
   </div>
 </section>
@@ -188,89 +160,147 @@ export const travel01Html = `
   <div class="container">
     <div class="head">
       <div>
-        <span class="pill light">— Featured Islands</span>
+        <span class="pill light">— Featured Havens</span>
         <h2>Sun-soaked sanctuaries.</h2>
       </div>
-      <a href="#" class="link">View all →</a>
+      <a href="#" class="link">View Catalog →</a>
     </div>
     <div class="grid">
       <article class="island-card big">
         <img src="/assets/templates/travel/templates01/d1.jpg" alt="Bora Bora">
-        <div class="info">
-          <span class="loc">📍 French Polynesia</span>
-          <h3>Bora Bora Overwater Villa</h3>
-          <p>Glass floors, private plunge pools, your own slice of turquoise.</p>
-          <div class="row"><span class="rating">★ 4.98 (412)</span><span class="cost">$1,290 <small>/ night</small></span></div>
-        </div>
+        <div class="info"><h3>Bora Bora Overwater Villa</h3><p>📍 French Polynesia</p></div>
       </article>
-      <article class="island-card">
-        <img src="/assets/templates/travel/templates01/d2.jpg" alt="Coral reef snorkel">
-        <div class="info">
-          <span class="loc">📍 Great Barrier Reef</span>
-          <h3>Reef Discovery</h3>
-          <div class="row"><span class="rating">★ 4.92</span><span class="cost">$390</span></div>
-        </div>
-      </article>
-      <article class="island-card">
-        <img src="/assets/templates/travel/templates01/d3.jpg" alt="Beach hammock">
-        <div class="info">
-          <span class="loc">📍 Tulum, Mexico</span>
-          <h3>Hidden Beach Retreat</h3>
-          <div class="row"><span class="rating">★ 4.87</span><span class="cost">$520</span></div>
-        </div>
-      </article>
-      <article class="island-card wide">
-        <img src="/assets/templates/travel/templates01/d4.jpg" alt="Sunset cocktail">
-        <div class="info">
-          <span class="loc">📍 Santorini, Greece</span>
-          <h3>Cliffside Sunset Suite</h3>
-          <p>Infinity pool meets the Aegean.</p>
-          <div class="row"><span class="rating">★ 4.95</span><span class="cost">$890 <small>/ night</small></span></div>
-        </div>
-      </article>
+      <article class="island-card"><img src="/assets/templates/travel/templates01/d2.jpg" alt="Reef"><div class="info"><h3>Reef Discovery</h3></div></article>
+      <article class="island-card"><img src="/assets/templates/travel/templates01/d3.jpg" alt="Beach"><div class="info"><h3>Hidden Retreat</h3></div></article>
+      <article class="island-card wide"><img src="/assets/templates/travel/templates01/d4.jpg" alt="Sunset"><div class="info"><h3>Cliffside Suite</h3></div></article>
     </div>
   </div>
 </section>
 
-<section class="experiences" id="experiences">
-  <div class="container exp-flex">
-    <div>
-      <span class="pill light">— Curated Experiences</span>
-      <h2>Beyond the beach.</h2>
-      <p class="lead">From sunrise yoga on a private sandbank to candlelit dinners under the stars — every moment, designed.</p>
-      <ul class="checklist">
-        <li>Private island picnics</li>
-        <li>Bioluminescent kayak tours</li>
-        <li>Michelin-trained beach chefs</li>
-        <li>Personal butler & dive instructor</li>
-      </ul>
-      <a href="#" class="btn-fill">Build Your Itinerary</a>
+<section class="fleet" id="fleet">
+  <div class="container fleet-grid">
+    <div class="fleet-text">
+      <span class="pill">✦ PRIVATE TRANSFERS</span>
+      <h2>The luxury of a seamless arrival.</h2>
+      <p>Whether by private jet or bespoke yacht charter, we ensure your transition from the world to the water is absolute perfection.</p>
+      <div style="margin-top: 2rem">
+        <a href="#" class="btn-glass">Explore the Fleet</a>
+      </div>
     </div>
-    <div class="exp-stack">
-      <div class="stat-card glass"><strong>40+</strong><span>Private Islands</span></div>
-      <div class="stat-card glass"><strong>98%</strong><span>Repeat Guests</span></div>
-      <div class="stat-card glass wide"><strong>24/7</strong><span>Concierge in 12 Languages</span></div>
+    <div class="fleet-img-wrap">
+      <img src="/assets/templates/travel/templates01/yacht.png" alt="Luxury Yacht">
     </div>
   </div>
 </section>
 
-<section class="newsletter">
-  <div class="container glass-box">
-    <div>
-      <h2>Be the first to know.</h2>
-      <p>Exclusive island openings, secret offers, and stories from the sea.</p>
+<!-- IMPROVED: A DAY IN PARADISE -->
+<section class="day-paradise" id="experiences">
+  <div class="container sticky-split">
+    <div class="sticky-side">
+      <span class="pill light">— THE RHYTHM OF THE ISLAND</span>
+      <h2>A Day in<br>Paradise.</h2>
+      <div class="time-tracker">
+        <div class="time-point active"><span>08:00 AM</span><h5>First Light</h5></div>
+        <div class="time-point"><span>01:00 PM</span><h5>Noon Drift</h5></div>
+        <div class="time-point"><span>08:00 PM</span><h5>Starlit Dining</h5></div>
+      </div>
     </div>
-    <form><input placeholder="Email address"><button>Join</button></form>
+    <div class="scroll-side">
+      <div class="moment">
+        <img src="/assets/templates/travel/templates01/d3.jpg" alt="Morning">
+        <div class="moment-content">
+          <h3>Yoga & Fresh Tropics</h3>
+          <p>Begin your day with sunrise yoga on your private deck, followed by a chef-prepared breakfast featuring fruit from our island garden.</p>
+        </div>
+      </div>
+      <div class="moment">
+        <img src="/assets/templates/travel/templates01/d2.jpg" alt="Afternoon">
+        <div class="moment-content">
+          <h3>The Deep Blue</h3>
+          <p>Explore the vibrant house reef with your personal dive instructor or drift silently across the lagoon in a glass-bottom kayak.</p>
+        </div>
+      </div>
+      <div class="moment">
+        <img src="/assets/templates/travel/templates01/dinner.png" alt="Evening">
+        <div class="moment-content">
+          <h3>Dinner on the Sands</h3>
+          <p>A candlelit table set at the water's edge, featuring catch of the day and fine wines from our underwater cellar.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
+<!-- IMPROVED: CONCIERGE -->
+<section class="concierge">
+  <div class="container">
+    <div class="concierge-card">
+      <div class="con-visual">
+        <div class="con-img">
+          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600" alt="Concierge">
+        </div>
+        <div class="con-badge">
+          <strong>12+</strong>
+          <span>Yrs Exp.</span>
+        </div>
+      </div>
+      <div class="con-text">
+        <span class="pill light">— YOUR PRIVATE CONCIERGE</span>
+        <h2>Elena Rossi.</h2>
+        <p>From arranging private jet connections to curating surprise beach proposals, Elena ensures your stay is exactly as you imagined, before you even arrive.</p>
+        <div class="con-details">
+          <div class="con-item"><label>Direct Line</label><p>Priority Concierge</p></div>
+          <div class="con-item"><label>Languages</label><p>EN · IT · FR · ES</p></div>
+        </div>
+        <a href="#" class="btn-glass">Schedule a Call</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="testimonials-creative">
+  <div class="container">
+    <div class="test-quote">
+      "Azure transformed our honeymoon into a dream. We didn't just stay at a resort; we lived in a different world where every wish was anticipated."
+    </div>
+    <span class="pill" style="margin-top: 2rem">✦ MARCOS & LENA, LONDON</span>
+  </div>
+</section>
+
+
+<!-- IMPROVED: FOOTER -->
 <footer>
-  <div class="container foot">
-    <div class="foot-top">
-      <a href="#" class="logo">LOGO_PLACEHOLDER</a>
-      <div class="links"><a href="#">About</a><a href="#">Resorts</a><a href="#">Press</a><a href="#">Contact</a><a href="#">Privacy</a></div>
+  <div class="container">
+    <div class="foot-main">
+      <div class="foot-brand">
+        <div class="logo">LOGO_PLACEHOLDER</div>
+        <p>The world's leading specialists in private island and luxury retreat curation since 2008.</p>
+        <div class="foot-social">
+          <a href="#" class="social-ico">IG</a>
+          <a href="#" class="social-ico">FB</a>
+          <a href="#" class="social-ico">LI</a>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h5>Destinations</h5>
+        <a href="#">Maldives</a><a href="#">Seychelles</a><a href="#">Bora Bora</a><a href="#">Santorini</a>
+      </div>
+      <div class="foot-col">
+        <h5>Experience</h5>
+        <a href="#">Private Villas</a><a href="#">The Fleet</a><a href="#">Concierge</a><a href="#">Wellness</a>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <a href="#">London Office</a><a href="#">Dubai Office</a><a href="#">+44 20 7946 0958</a><a href="#">hello@azure.com</a>
+      </div>
     </div>
-    <p>© 2026 PROJECT_NAME_PLACEHOLDER.</p>
+    <div class="foot-bottom">
+      <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
+      <div style="display:flex; gap: 2rem">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+    </div>
   </div>
 </footer>
 `;
