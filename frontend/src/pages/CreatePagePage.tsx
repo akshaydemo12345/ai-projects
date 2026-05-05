@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { travel02Html, travel02Styles } from "../templates/travel/templates02";
+import { travel03Html, travel03Styles } from "../templates/travel/templates03";
+import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -50,11 +53,36 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/travel/templates01/heronew.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
+  },
+  {
+    id: "travel-02",
+    name: "Savanna Safari",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates02/hero.jpg",
+    gradient: "linear-gradient(135deg, #8b4513 0%, #d2691e 100%)",
+    prompt: "A premium African safari experience landing page. Earthy tones, wildlife focus, and adventure aesthetics.",
+  },
+  {
+    id: "travel-03",
+    name: "Etheria Journeys",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates03/hero.png",
+    gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
+    prompt: "A high-end luxury wellness and soul retreat landing page for Etheria Journeys. Midnight navy and gold palette, minimalist design, and serene nature focus.",
+  },
+
+  {
+    id: "finance-01",
+    name: "Finova Finance",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
+    prompt: "A modern finance and consulting landing page for Finova. Professional design with trust-building elements, service highlights, and a clean lead capture form.",
   }
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -171,6 +199,9 @@ const CreatePagePage = () => {
     switch (tpl.id) {
       case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
       case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+      case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
+      case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
+      case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
       default: tpHtml = ""; tpStyles = "";
     }
 
@@ -285,6 +316,18 @@ const CreatePagePage = () => {
         case "travel-01":
           enrichedContent = travel01Html;
           enrichedStyles = travel01Styles;
+          break;
+        case "travel-02":
+          enrichedContent = travel02Html;
+          enrichedStyles = travel02Styles;
+          break;
+        case "travel-03":
+          enrichedContent = travel03Html;
+          enrichedStyles = travel03Styles;
+          break;
+        case "finance-01":
+          enrichedContent = finance01Html;
+          enrichedStyles = finance01Styles;
           break;
         default:
           enrichedContent = "";
@@ -736,7 +779,7 @@ const CreatePagePage = () => {
                         {/* Footer Actions */}
                         <div className="bg-white border-t border-gray-100 px-3 py-3 flex items-center justify-between">
                           <span className="text-[11px] font-black text-gray-900 truncate pr-2">{tpl.name}</span>
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleViewTemplate(tpl); }}
                             className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
                             title="View Preview"
@@ -794,6 +837,10 @@ const CreatePagePage = () => {
               let tpStyles = "";
               switch (previewTemplate.id) {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+                case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
+                case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
+                case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
@@ -806,7 +853,8 @@ const CreatePagePage = () => {
               tpHtml = tpHtml
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, project?.name || "Your Business")
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
 
               tpStyles = tpStyles
                 .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1")
