@@ -79,6 +79,8 @@
         domain: CONFIG.domain,
         pageUrl: CONFIG.fullUrl,
         path: CONFIG.path,
+        pageId: CONFIG.pageId,
+        projectId: CONFIG.projectId,
         timestamp: new Date().toISOString(),
         ...getUTMParameters()
       });
@@ -108,10 +110,12 @@
 
   async function initialize() {
     try {
-      const res = await fetch(`${CONFIG.apiBase}/api/page?domain=${CONFIG.domain}&path=${CONFIG.path}`);
+      const res = await fetch(`${CONFIG.apiBase}/api/page?domain=${CONFIG.domain}&path=${CONFIG.path}${CONFIG.apiKey ? `&apiKey=${CONFIG.apiKey}` : ''}`);
       if (!res.ok) throw new Error('Dynamic load failed');
       const d = await res.json();
       if (d && d.html) {
+        CONFIG.pageId = d.pageId;
+        CONFIG.projectId = d.projectId;
         document.open();
         document.write(d.html);
         document.close();
