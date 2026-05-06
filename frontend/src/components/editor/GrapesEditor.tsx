@@ -250,7 +250,7 @@ const GrapesEditor = () => {
           --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
           --accent: ${currentPage.secondaryColor || '#6366f1'};
           --gold: ${currentPage.primaryColor || '#7c3aed'};
-          --btn-bg: ${currentPage.primaryColor || '#7c3aed'};
+          --btn-bg: ${currentPage.secondaryColor || '#6366f1'};
           --btn-text: #ffffff;
           --body-bg: #ffffff;
           --body-text: #0f172a;
