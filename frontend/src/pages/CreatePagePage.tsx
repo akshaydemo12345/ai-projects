@@ -10,8 +10,12 @@ import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { travel02Html, travel02Styles } from "../templates/travel/templates02";
+import { travel03Html, travel03Styles } from "../templates/travel/templates03";
+import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
-import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
+import { finance02Html, finance02Styles } from "../templates/finance/templates02";
+import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -54,20 +58,53 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
   },
   {
+    id: "travel-02",
+    name: "Savanna Safari Elite",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates02/screenshot3.png",
+    gradient: "linear-gradient(135deg, #78350f 0%, #1c1917 100%)",
+    prompt: "An adventurous luxury safari landing page with a floating booking form, wild animal grids, and conservation focus. Earthy tones and premium photography.",
+  },
+  {
+    id: "travel-03",
+    name: "Etheria Journeys",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates03/screenshot2.png",
+    gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
+    prompt: "A high-end luxury wellness and soul retreat landing page for Etheria Journeys. Midnight navy and gold palette, minimalist design, and serene nature focus.",
+  },
+  {
+    id: "travel-04",
+    name: "Metro City Explorer",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates04/screenshot4.png",
+    gradient: "linear-gradient(135deg, #111827 0%, #374151 100%)",
+    prompt: "A modern urban city-break landing page. Bold typography, city night photography, floating booking forms, and trending destination grids. Clean and electric feel.",
+  },
+
+  {
     id: "finance-01",
     name: "Elite Wealth",
     tag: "Finance",
-    img: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
-    prompt: "A high-end finance and wealth management landing page. Dark navy and slate theme, sophisticated typography, trust-building sections.",
+    img: "/assets/templates/finance/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
+    prompt: "A modern finance and consulting landing page for Finova. Professional design with trust-building elements, service highlights, and a clean lead capture form.",
   },
   {
-    id: "saas-01",
-    name: "BizFlow SaaS",
-    tag: "SaaS",
-    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
-    gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-    prompt: "A modern SaaS landing page for business operations. Clean white background, indigo accents, feature grid and request demo form.",
+    id: "finance-02",
+    name: "Finance Elite",
+    tag: "Finance",
+    img: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=800",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    prompt: "A premium, creative finance landing page with curved sections, glassmorphism, and high-end professional aesthetics. Perfect for elite financial advisors.",
+  },
+  {
+    id: "finance-03",
+    name: "Aureum Finance Elite",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates03/screenshot1.png",
+    gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
+    prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   }
 ];
 
@@ -227,7 +264,7 @@ const CreatePagePage = () => {
     }
   };
 
-    const handleCreate = async () => {
+  const handleCreate = async () => {
     if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
@@ -251,13 +288,29 @@ const CreatePagePage = () => {
           enrichedContent = travel01Html;
           enrichedStyles = travel01Styles;
           break;
+        case "travel-02":
+          enrichedContent = travel02Html;
+          enrichedStyles = travel02Styles;
+          break;
+        case "travel-03":
+          enrichedContent = travel03Html;
+          enrichedStyles = travel03Styles;
+          break;
+        case "travel-04":
+          enrichedContent = travel04Html;
+          enrichedStyles = travel04Styles;
+          break;
         case "finance-01":
           enrichedContent = finance01Html;
           enrichedStyles = finance01Styles;
           break;
-        case "saas-01":
-          enrichedContent = saasHeroHtml;
-          enrichedStyles = saasHeroStyles;
+        case "finance-02":
+          enrichedContent = finance02Html;
+          enrichedStyles = finance02Styles;
+          break;
+        case "finance-03":
+          enrichedContent = finance03Html;
+          enrichedStyles = finance03Styles;
           break;
         default:
           enrichedContent = "";
@@ -272,16 +325,26 @@ const CreatePagePage = () => {
         const textBlocks: string[] = [];
         const parser = new DOMParser();
         const doc = parser.parseFromString(enrichedContent, "text/html");
-        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span");
-        
+
+        // Extract from text nodes
+        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span, label, option");
         elements.forEach(el => {
           const text = el.textContent?.trim();
-          if (text && text.length > 3 && !text.includes("{") && !text.includes("<")) {
+          if (text && text.length > 2 && !text.includes("{") && !text.includes("<")) {
             textBlocks.push(text);
           }
         });
 
-        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100); // Max coverage
+        // ALSO extract from placeholders
+        const inputs = doc.querySelectorAll("input[placeholder], textarea[placeholder]");
+        inputs.forEach(el => {
+          const placeholder = el.getAttribute("placeholder")?.trim();
+          if (placeholder && placeholder.length > 2) {
+            textBlocks.push(placeholder);
+          }
+        });
+
+        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100);
 
         if (uniqueBlocks.length > 0) {
           const mappingRes = await aiApi.generate({
@@ -311,7 +374,7 @@ const CreatePagePage = () => {
               // Extract JSON if AI wrapped it in markdown
               const jsonStr = rawMapping.match(/\{[\s\S]*\}/)?.[0] || rawMapping;
               const mapping = JSON.parse(jsonStr);
-              
+
               // 2. Perform surgical replacement
               Object.entries(mapping).forEach(([idx, newText]) => {
                 const originalText = uniqueBlocks[parseInt(idx)];
@@ -352,34 +415,29 @@ const CreatePagePage = () => {
       if (project.scrapedData?.images?.length > 0) {
         const projectImages = project.scrapedData.images;
         const bannerImages = projectImages.filter((img: any) => img.type === 'banner' || img.width > 1000);
-        const generalImages = projectImages.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
-        
-        // 1. Replace specific Unsplash placeholders
-        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
-          const replacement = bannerImages.length > 0 ? bannerImages[0].url : projectImages[0].url;
-          return replacement || match;
-        });
 
-        // 2. Replace local template assets with project images
-        let imgIdx = 0;
-        enrichedContent = enrichedContent.replace(/\/assets\/templates\/.*?\.(png|jpg|jpeg|webp|svg)/gi, (match) => {
-          if (match.includes('logo')) return match; // Skip logo, handled by LOGO_PLACEHOLDER
-          const replacement = projectImages[imgIdx % projectImages.length]?.url;
-          imgIdx++;
-          return replacement || match;
+        // ONLY Replace the FIRST Unsplash image (Hero) if a HIGH-QUALITY project banner is found
+        let hasReplacedHero = false;
+        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
+          if (!hasReplacedHero && bannerImages.length > 0) {
+            const replacement = bannerImages[0].url;
+            hasReplacedHero = true;
+            return replacement || match;
+          }
+          return match; // Keep the rest static (template defaults)
         });
       }
 
       // Smart Text Replacements for Relevance
       enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
-      
+
       // Attempt to replace hero description
       if (project.description) {
         // Look for common hero paragraph patterns
         enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
         // If not found by class, try the first <p> after <h1>
         if (!enrichedContent.includes(project.description)) {
-            enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+          enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
         }
       }
 
@@ -863,8 +921,12 @@ const CreatePagePage = () => {
               switch (previewTemplate.id) {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+                case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
+                case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
+                case "travel-04": tpHtml = travel04Html; tpStyles = travel04Styles; break;
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
-                case "saas-01": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+                case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
+                case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
