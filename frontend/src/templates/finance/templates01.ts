@@ -78,7 +78,7 @@ img {
 }
 
 .btn-primary {
-    background: var(--primary);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     color: #fff;
     box-shadow: var(--shadow-elegant)
 }
@@ -180,7 +180,7 @@ img {
 .hero {
     position: relative;
     overflow: hidden;
-    background: var(--navy);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     color: #fff;
     padding: 160px 0 200px
 }
@@ -611,7 +611,7 @@ h2 {
 .mission {
     position: relative;
     overflow: hidden;
-    background: var(--navy);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     color: var(--navy-fg)
 }
 
@@ -672,7 +672,7 @@ h2 {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 24px;
-    background: var(--primary);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     padding: 48px;
     border-radius: 24px;
     color: #fff;
@@ -808,7 +808,7 @@ h2 {
 .cta-box {
     position: relative;
     overflow: hidden;
-    background: var(--primary);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     color: #fff;
     padding: 48px;
     border-radius: 24px;
@@ -975,7 +975,7 @@ h2 {
 
 /* FOOTER */
 .footer {
-    background: var(--navy);
+    background: SECONDARY_COLOR_PLACEHOLDER !important;
     color: var(--navy-fg);
     padding: 80px 0 32px
 }
