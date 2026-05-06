@@ -66,6 +66,7 @@ const PublicLandingPage = () => {
       const ACTUAL_PAGE_ID = meta?._id || pageData?._id || '';
       const PAGE_SLUG = slug || '';
       const BRAND_COLOR = pageData.primaryColor || meta?.primaryColor || '#7c3aed';
+      const SECONDARY_COLOR = pageData.secondaryColor || meta?.secondaryColor || BRAND_COLOR;
       const REDIRECT_URL = pageData.websiteUrl || '#';
       const THANK_YOU_URL = pageData.thankYouUrl || '';
       const previewPrefix = window.location.pathname.startsWith('/preview/') ? '/preview/' : '/';
@@ -362,16 +363,24 @@ const PublicLandingPage = () => {
       // ─── DYNAMIC COLOR REPLACEMENT ─────────────────────────────────────────
       const finalCss = aiCss
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_COLOR)
-        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, pageData.secondaryColor || BRAND_COLOR)
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, SECONDARY_COLOR)
         .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
 
       const brandingStyles = `
-        <style id="branding-vars">
+        <style id="branding-vars-live">
           :root {
-            --primary: ${BRAND_COLOR};
-            --secondary: ${pageData.secondaryColor || '#6366f1'};
-            --accent: ${pageData.secondaryColor || '#6366f1'};
-            --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${pageData.secondaryColor || '#6366f1'});
+            --primary: ${BRAND_COLOR} !important;
+            --secondary: ${SECONDARY_COLOR} !important;
+            --accent: ${SECONDARY_COLOR} !important;
+            --gold: ${BRAND_COLOR} !important;
+            --midnight: #0a1128 !important;
+            --ivory: #f8f9fa !important;
+            --ink: #0c4a6e !important;
+            --soft: #ffffff !important;
+            --bg: #1a0f08 !important;
+            --cream: #f4ead5 !important;
+            --muted: #a89580 !important;
+            --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${SECONDARY_COLOR}) !important;
           }
           body { 
             margin: 0;
