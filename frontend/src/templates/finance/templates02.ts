@@ -109,7 +109,7 @@ export const finance02Html = `
       <a href="#about">About</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="btn-nav">Get Started</a>
+    <a href="#contact" class="btn-primary">Get Started</a>
   </div>
 </header>
 
