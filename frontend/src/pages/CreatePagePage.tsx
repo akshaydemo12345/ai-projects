@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { finance01Html, finance01Styles } from "../templates/finance/templates01";
+import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -50,11 +52,27 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/travel/templates01/heronew.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
+  },
+  {
+    id: "finance-01",
+    name: "Elite Wealth",
+    tag: "Finance",
+    img: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
+    prompt: "A high-end finance and wealth management landing page. Dark navy and slate theme, sophisticated typography, trust-building sections.",
+  },
+  {
+    id: "saas-01",
+    name: "BizFlow SaaS",
+    tag: "SaaS",
+    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
+    gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+    prompt: "A modern SaaS landing page for business operations. Clean white background, indigo accents, feature grid and request demo form.",
   }
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "SaaS"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -232,6 +250,14 @@ const CreatePagePage = () => {
         case "travel-01":
           enrichedContent = travel01Html;
           enrichedStyles = travel01Styles;
+          break;
+        case "finance-01":
+          enrichedContent = finance01Html;
+          enrichedStyles = finance01Styles;
+          break;
+        case "saas-01":
+          enrichedContent = saasHeroHtml;
+          enrichedStyles = saasHeroStyles;
           break;
         default:
           enrichedContent = "";
@@ -836,6 +862,9 @@ const CreatePagePage = () => {
               let tpStyles = "";
               switch (previewTemplate.id) {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+                case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
+                case "saas-01": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
