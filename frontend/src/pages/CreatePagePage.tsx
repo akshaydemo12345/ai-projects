@@ -166,7 +166,7 @@ const CreatePagePage = () => {
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(8);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -767,15 +767,27 @@ const CreatePagePage = () => {
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
               {/* Search and Category Filter */}
               <div className="px-6 pt-6 space-y-4">
-                <div className="relative group">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Search templates..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="relative group flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="Search templates..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
+                    />
+                  </div>
+
+                  {visibleCount < LANDING_TEMPLATES.filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase()))).length && (
+                    <button
+                      onClick={() => setVisibleCount(prev => prev + 20)}
+                      className="whitespace-nowrap px-6 py-3.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-right-2"
+                    >
+                      <LayoutTemplate className="h-3.5 w-3.5" />
+                      View All
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -873,21 +885,7 @@ const CreatePagePage = () => {
                       </button>
                     ))}
 
-                  {/* View More Logic */}
-                  {visibleCount < LANDING_TEMPLATES.filter(t => templateCategory === "All" || t.tag === templateCategory).length && (
-                    <button
-                      onClick={() => setVisibleCount(prev => prev + 4)}
-                      className="rounded-2xl border-2 border-dashed border-violet-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4 hover:bg-violet-50 hover:border-violet-400 transition-all group"
-                    >
-                      <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Zap className="h-5 w-5 text-violet-500" />
-                      </div>
-                      <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">View More</p>
-                      <p className="text-[10px] text-violet-400">Load 4 more templates</p>
-                    </button>
-                  )}
                 </div>
-
               </div>
             </div>
           )}

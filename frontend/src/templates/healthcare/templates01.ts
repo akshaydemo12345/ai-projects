@@ -442,6 +442,17 @@ h1, h2, h3, h4, h5, h6, p {
 .cta-content { position: relative; z-index: 10; display: flex; flex-direction: column; gap: 2rem; }
 .cta-content p { max-width: 42rem; margin: 0 auto; color: rgba(255,255,255,0.9); }
 .cta-actions { display: flex; flex-direction: column; justify-content: center; gap: 1rem; padding-top: 1rem; }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-family: var(--font-h3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
 .btn-cta-1 {
   background-color: #ffffff;
   color: var(--primary);
@@ -571,7 +582,7 @@ export const healthcare01Html = `
 <span class="material-symbols-outlined">call</span>
 <span class="font-semibold">Call Now</span>
 </a>
-<button class="btn-book">Book Appointment</button>
+<button class="btn-primary">Book Appointment</button>
 </div>
 </div>
 </header>
@@ -605,7 +616,7 @@ export const healthcare01Html = `
 </li>
 </ul>
 <div class="hero-actions">
-<button class="btn-quote high-elevation font-h3">Get Free Quote</button>
+<button class="btn-primary high-elevation font-h3">Get Free Quote</button>
 <div class="hero-rating">
 <div class="hero-stars">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
