@@ -1,1512 +1,477 @@
-// Auto-generated ULTRA-DYNAMIC template — finance templates01
-// Generated: 2026-05-05T09:27:59.700Z
-
 export const finance01Styles = `
 :root {
-    --bg: #ffffff;
-    --fg: #334155;
-    --muted: #64748b;
-    --border: #e6e9f2;
-    --card: #ffffff;
-    --primary: PRIMARY_COLOR_PLACEHOLDER;
-    --primary-glow: PRIMARY_COLOR_PLACEHOLDER;
-    --navy: #0f1a3d;
-    --navy-fg: #f5f7ff;
-    --radius: 14px;
-    --shadow-md: 0 8px 24px -8px rgba(15, 26, 61, .18);
-    --shadow-elegant: 0 24px 60px -20px PRIMARY_COLOR_PLACEHOLDER;
-    --shadow-glow: 0 0 80px rgba(91, 139, 255, .45);
-    --gradient-primary: linear-gradient(135deg, PRIMARY_COLOR_PLACEHOLDER, PRIMARY_COLOR_PLACEHOLDER);
-    --gradient-hero: linear-gradient(135deg, PRIMARY_COLOR_PLACEHOLDER 0%, SECONDARY_COLOR_PLACEHOLDER 100%);
-    --gradient-soft: linear-gradient(180deg, #f6f8ff, #ffffff);
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0
-}
-
-html {
-    scroll-behavior: smooth
-}
-
-body {
-    font-family: 'Inter', system-ui, sans-serif;
-    color: var(--fg);
-    background: #ffffff;
-    -webkit-font-smoothing: antialiased;
-    line-height: 1.5
-}
-
-h1,
-h2,
-h3,
-h4 {
-    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-    letter-spacing: -.02em;
-    line-height: 1.1
-}
-
-a {
-    color: inherit;
-    text-decoration: none
-}
-
-img {
-    max-width: 100%;
-    display: block
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px
-}
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    border: none;
-    transition: all .25s
-}
-
-.btn-primary {
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    color: #fff;
-    box-shadow: var(--shadow-elegant)
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    opacity: .95
-}
-
-.btn-light {
-    background: #ffffff;
-    color: var(--navy)
-}
-
-.btn-light:hover {
-    transform: translateY(-2px)
-}
-
-.btn-outline {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, .3);
-    color: #fff
-}
-
-.btn-outline:hover {
-    background: rgba(255, 255, 255, .1);
-}
-
-.eyebrow {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--primary);
-}
-
-.section {
-    padding: 112px 0
-}
-
-/* HEADER */
-.site-header {
-    position: absolute;
-    inset: 0 0 auto 0;
-    z-index: 30;
-    padding: 24px 0
-}
-
-.site-header .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #fff;
-    font-family: 'Plus Jakarta Sans';
-    font-weight: 800;
-    font-size: 24px
-}
-
-.logo .badge {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-    background: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-shadow: var(--shadow-glow)
-}
-
-.nav {
-    display: flex;
-    gap: 32px
-}
-
-.nav a {
-    color: rgba(255, 255, 255, .8);
-    font-size: 14px;
-    font-weight: 500
-}
-
-.nav a:hover {
-    color: #fff
-}
-
-@media (max-width:900px) {
-    .nav {
-        display: none
-    }
-}
-
-/* HERO */
-.hero {
-    position: relative;
-    overflow: hidden;
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    color: #fff;
-    padding: 160px 0 200px
-}
-
-.hero::before,
-.hero::after {
-    content: "";
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    pointer-events: none
-}
-
-.hero::before {
-    width: 380px;
-    height: 380px;
-    background: rgba(255, 255, 255, 0.1);
-    top: -120px;
-    right: -120px
-}
-
-.hero::after {
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.15);
-    bottom: 0;
-    left: 33%
-}
-
-.hero-grid {
-    position: relative;
-    display: grid;
-    gap: 56px;
-    align-items: center;
-    grid-template-columns: 1fr 1fr
-}
-
-@media (max-width:960px) {
-    .hero-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, .2);
-    font-size: 12px;
-    font-weight: 500;
-    backdrop-filter: blur(8px)
-}
-
-.tag .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ffffff;
-}
-
-.hero h1 {
-    font-size: 64px;
-    font-weight: 700;
-    margin-top: 24px;
-}
-
-.hero h1 .grad {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent
-}
-
-.hero p {
-    margin-top: 24px;
-    max-width: 520px;
-    color: rgba(255, 255, 255, .78);
-    font-size: 18px
-}
-
-.hero-cta {
-    margin-top: 36px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap
-}
-
-.hero-img {
-    position: relative
-}
-
-.hero-img img {
-    width: 100%;
-    height: 520px;
-    object-fit: cover;
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, .2);
-    box-shadow: var(--shadow-elegant)
-}
-
-.float-card {
-    position: absolute;
-    left: -32px;
-    bottom: -32px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 18px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, .2);
-    backdrop-filter: blur(20px);
-    box-shadow: var(--shadow-elegant)
-}
-
-.float-card .ic {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: #f8fafc;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center
-}
-
-.float-card .num {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-}
-
-.float-card .lbl {
-    font-size: 12px;
-    color: rgba(255, 255, 255, .7)
-}
-
-.wave {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 120px
-}
-
-/* HERO FORM (overlap) */
-.hero-form-wrap {
-    position: relative;
-    z-index: 20;
-    margin-top: -96px;
-    padding: 0 24px
-}
-
-.hero-form {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr auto;
-    gap: 16px;
-    align-items: end;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: var(--shadow-elegant)
-}
-
-@media (max-width:960px) {
-    .hero-form {
-        grid-template-columns: 1fr 1fr
-    }
-
-    .hero-form .btn {
-        grid-column: 1 / -1
-    }
-}
-
-@media (max-width:560px) {
-    .hero-form {
-        grid-template-columns: 1fr
-    }
-}
-
-.field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--muted);
-    margin-bottom: 6px
-}
-
-.field .ctrl {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 48px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0 12px;
-    background: #ffffff;
-    transition: .2s
-}
-
-.field .ctrl:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(91, 139, 255, 0.2)
-}
-
-.field .ctrl i {
-    color: var(--primary);
-    font-size: 16px
-}
-
-.field input {
-    flex: 1;
-    border: 0;
-    outline: none;
-    font-size: 14px;
-    font-family: inherit;
-    background: transparent
-}
-
-.hero-form .btn {
-    height: 48px;
-    border-radius: 12px
-}
-
-/* ABOUT */
-.about-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: center
-}
-
-@media (max-width:960px) {
-    .about-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.about-img-wrap {
-    position: relative
-}
-
-.about-img-wrap img {
-    height: 480px;
-    width: 100%;
-    object-fit: cover;
-    border-radius: 32px;
-    box-shadow: var(--shadow-elegant)
-}
-
-.about-img-wrap .blob1 {
-    position: absolute;
-    left: -24px;
-    top: -24px;
-    width: 128px;
-    height: 128px;
-    border-radius: 50%;
-    background: PRIMARY_COLOR_PLACEHOLDER
-}
-
-.about-img-wrap .blob2 {
-    position: absolute;
-    right: -24px;
-    bottom: -24px;
-    width: 160px;
-    height: 160px;
-    border-radius: 32px;
-    background: #ffffff;
-    opacity: .2
-}
-
-.about-img-wrap .stat {
-    position: absolute;
-    right: 32px;
-    bottom: -32px;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 18px;
-    box-shadow: var(--shadow-elegant)
-}
-
-.about-img-wrap .stat .n {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--navy)
-}
-
-.about-img-wrap .stat .l {
-    font-size: 12px;
-    color: var(--muted)
-}
-
-h2 {
-    font-size: 44px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-top: 12px
-}
-
-.about p {
-    margin-top: 18px;
-    color: var(--muted);
-    font-size: 16px
-}
-
-.bullets {
-    margin-top: 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px
-}
-
-.bullets li {
-    display: flex;
-    gap: 14px;
-    list-style: none
-}
-
-.bullets .check {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px
-}
-
-.bullets .t {
-    font-weight: 600;
-    color: var(--navy)
-}
-
-.bullets .x {
-    font-size: 14px;
-    color: var(--muted)
-}
-
-/* SERVICES */
-.center {
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.cards {
-    margin-top: 56px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px
-}
-
-@media (max-width:960px) {
-    .cards {
-        grid-template-columns: repeat(2, 1fr)
-    }
-}
-
-@media (max-width:560px) {
-    .cards {
-        grid-template-columns: 1fr
-    }
-}
-
-.card {
-    position: relative;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 28px;
-    transition: .3s;
-    overflow: hidden
-}
-
-.card:hover {
-    transform: translateY(-8px);
-    border-color: PRIMARY_COLOR_PLACEHOLDER;
-    box-shadow: var(--shadow-elegant)
-}
-
-.card .ic {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    background: var(--primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: var(--shadow-md)
-}
-
-.card h3 {
-    margin-top: 24px;
-    font-size: 20px;
-    color: var(--navy)
-}
-
-.card p {
-    margin-top: 8px;
-    font-size: 14px;
-    color: var(--muted)
-}
-
-.card .more {
-    margin-top: 18px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--primary)
-}
-
-/* MISSION */
-.mission {
-    position: relative;
-    overflow: hidden;
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    color: var(--navy-fg)
-}
-
-.mission h2 {
-    color: #fff
-}
-
-.mission .eyebrow {
-    color: var(--primary-glow)
-}
-
-.mission-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: center
-}
-
-@media (max-width:960px) {
-    .mission-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.mission img {
-    height: 520px;
-    width: 100%;
-    object-fit: cover;
-    border-radius: 24px
-}
-
-.values {
-    margin-top: 32px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px
-}
-
-.values .v {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, .15);
-    backdrop-filter: blur(10px);
-    font-size: 14px;
-    font-weight: 500
-}
-
-.values .v i {
-    color: var(--primary-glow)
-}
-
-/* STATS */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    padding: 48px;
-    border-radius: 24px;
-    color: #fff;
-    box-shadow: var(--shadow-elegant)
-}
-
-@media (max-width:960px) {
-    .stats-row {
-        grid-template-columns: repeat(1, 1fr)
-    }
-}
-
-.stats-row .item {
-    display: flex;
-    align-items: center;
-    gap: 16px
-}
-
-.stats-row .ic {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px
-}
-
-.stats-row .n {
-    font-family: 'Plus Jakarta Sans';
-    font-size: 30px;
-    font-weight: 700
-}
-
-.stats-row .l {
-    font-size: 14px;
-    opacity: .85
-}
-
-/* CASES */
-.cases-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    flex-wrap: wrap
-}
-
-.cases-grid {
-    margin-top: 56px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px
-}
-
-@media (max-width:960px) {
-    .cases-grid {
-        grid-template-columns: repeat(2, 1fr)
-    }
-}
-
-@media (max-width:560px) {
-    .cases-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.case {
-    position: relative;
-    height: 280px;
-    border-radius: 20px;
-    overflow: hidden;
-    background: var(--navy);
-    box-shadow: var(--shadow-md);
-    color: #fff
-}
-
-.case::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, var(--navy), rgba(15, 26, 61, .3) 50%, transparent)
-}
-
-.case .ic-corner {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 80px;
-    height: 80px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, .2);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary-glow);
-    font-size: 60px !important;
-    z-index: 2
-}
-
-.case .body {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 24px;
-    z-index: 2
-}
-
-.case .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    background: #ffffff;
-    color: var(--navy);
-    font-size: 12px;
-    font-weight: 500;
-    backdrop-filter: blur(10px)
-}
-
-.case h3 {
-    margin-top: 12px;
-    font-size: 20px;
-    color: #fff
-}
-
-/* CTA */
-.cta-box {
-    position: relative;
-    overflow: hidden;
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    color: #fff;
-    padding: 48px;
-    border-radius: 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 32px;
-    flex-wrap: wrap;
-    box-shadow: var(--shadow-elegant)
-}
-
-.cta-box h2 {
-    color: #fff;
-    font-size: 32px
-}
-
-/* TESTIMONIAL */
-.testi {
-    max-width: 780px;
-    margin: 0 auto;
-    background: linear-gradient(135deg, rgba(91, 139, 255, .1), rgba(91, 139, 255, .04));
-    padding: 56px;
-    border-radius: 24px;
-    position: relative
-}
-
-.testi p {
-    font-family: 'Plus Jakarta Sans';
-    font-size: 24px;
-    color: var(--navy);
-    margin-top: 20px;
-    font-weight: 500
-}
-
-.testi .who {
-    margin-top: 32px;
-    display: flex;
-    align-items: center;
-    gap: 14px
-}
-
-.testi .av {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #ffffff;
-    color: var(--navy)
-}
-
-.testi .role {
-    font-size: 13px;
-    color: var(--muted)
-}
-
-/* BLOG */
-.blog-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
-    margin-top: 56px;
-}
-
-@media (max-width:960px) {
-    .blog-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.post {
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    transition: .3s
-}
-
-.post:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-elegant)
-}
-
-.post img {
-    height: 220px;
-    width: 100%;
-    object-fit: cover
-}
-
-.post .body {
-    padding: 24px
-}
-
-.post .pill {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: #f8fafc;
-    color: var(--primary);
-    font-size: 12px;
-    font-weight: 600
-}
-
-.post h3 {
-    margin-top: 14px;
-    font-size: 20px;
-    color: var(--navy)
-}
-
-.post .meta {
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--muted)
-}
-
-/* CONTACT */
-.contact form {
-    max-width: 720px;
-    margin: 48px auto 0;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 40px;
-    box-shadow: var(--shadow-elegant);
-    display: grid;
-    gap: 20px
-}
-
-.contact .row2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px
-}
-
-@media (max-width:560px) {
-    .contact .row2 {
-        grid-template-columns: 1fr
-    }
-}
-
-.contact label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--navy);
-    margin-bottom: 8px
-}
-
-.contact input,
-.contact textarea {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: .2s
-}
-
-.contact input:focus,
-.contact textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(91, 139, 255, 0.2)
-}
-
-/* FOOTER */
-.footer {
-    background: SECONDARY_COLOR_PLACEHOLDER !important;
-    color: var(--navy-fg);
-    padding: 80px 0 32px
-}
-
-.footer-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
-    gap: 48px
-}
-
-@media (max-width:960px) {
-    .footer-grid {
-        grid-template-columns: 1fr 1fr
-    }
-}
-
-@media (max-width:560px) {
-    .footer-grid {
-        grid-template-columns: 1fr
-    }
-}
-
-.footer h4 {
-    font-size: 18px;
-    margin-bottom: 20px
-}
-
-.footer p,
-.footer li,
-.footer a {
-    color: rgba(245, 247, 255, .7);
-    font-size: 14px
-}
-
-.footer ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px
-}
-
-.footer ul a:hover {
-    color: var(--primary-glow)
-}
-
-.contact-list {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px
-}
-
-.contact-list div {
-    display: flex;
-    align-items: center;
-    gap: 10px
-}
-
-.contact-list i {
-    color: var(--primary-glow)
-}
-
-.news {
-    margin-top: 20px;
-    display: flex;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 999px;
-    overflow: hidden;
-    backdrop-filter: blur(10px)
-}
-
-.news input {
-    flex: 1;
-    background: transparent;
-    border: 0;
-    padding: 14px 20px;
-    color: #fff;
-    outline: none;
-    font-size: 14px
-}
-
-.news input::placeholder {
-    color: rgba(245, 247, 255, .5)
-}
-
-.news button {
-    width: 48px;
-    background: var(--primary);
-    border: 0;
-    color: #fff;
-    cursor: pointer;
-    font-size: 18px
-}
-
-.socials {
-    margin-top: 24px;
-    display: flex;
-    gap: 12px
-}
-
-.socials a {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, .15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    transition: .2s
-}
-
-.socials a:hover {
-    border-color: var(--primary-glow);
-    background: var(--primary);
-    padding-top: 32px;
-    border-top: 1px solid rgba(255, 255, 255, .1);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    font-size: 13px;
-    color: rgba(245, 247, 255, .6)
-}
-
-.copy .links {
-    display: flex;
-    gap: 24px
-}
-
-.material-symbols-outlined, .material-icons {
-  font-display: swap;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
-/* UNIVERSAL RESPONSIVE FIXES */
-@media(max-width: 900px) {
-  .container { max-width: 100%; padding: 0 1.5rem; }
-  [class*="grid"], .grid { grid-template-columns: 1fr 1fr !important; gap: 1rem !important; }
-  [class*="flex"]:not(nav), .flex:not(nav) { flex-wrap: wrap; }
-  .newsletter, .glass-box, section > div { grid-template-columns: 1fr !important; text-align: center; gap: 2rem !important; }
-  form { width: 100%; }
-}
-
-@media(max-width: 600px) {
-  [class*="grid"], .grid { grid-template-columns: 1fr !important; }
-  h1 { font-size: 2.5rem !important; line-height: 1.1 !important; }
-  h2 { font-size: 2rem !important; }
-  .nav nav, .links { display: none !important; }
-  .foot-top, footer > div { flex-direction: column !important; text-align: center; gap: 1.5rem !important; }
-  .newsletter form { flex-direction: column; border-radius: 20px !important; padding: 1rem !important; }
-  .newsletter input { width: 100%; text-align: center; margin-bottom: 0.5rem; }
-  .newsletter button { width: 100%; }
-}
-`;
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --secondary: SECONDARY_COLOR_PLACEHOLDER;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background-color: #fff; color: #111; line-height: 1.5; overflow-x: hidden; }
+
+.container { max-width: 1240px; margin: 0 auto; padding: 0 1.5rem; }
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; transition: 0.3s; }
+
+/* Navigation */
+.nav { padding: 1.25rem 0; background: #fff; position: relative; z-index: 100; }
+.nav-inner { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+.logo::before { content: ''; width: 12px; height: 12px; background-color: var(--primary); border-radius: 2px; }
+.nav-links { display: flex; gap: 2.5rem; }
+.nav-links a { color: #4b5563; font-size: 0.9rem; font-weight: 600; }
+.btn-primary { background-color: var(--primary); color: #fff; padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
+
+/* Hero Section with Exact Curved Shape */
+.hero { position: relative; padding: 6rem 0 15rem; background: #fff; overflow: hidden; }
+.hero-bg-shape { 
+    position: absolute; top: 0; left: 0; width: 55%; height: 100%; 
+    background-color: var(--primary); 
+    background-image: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); 
+    z-index: 1; 
+    border-bottom-right-radius: 50% 20%; 
+}
+.hero-inner { position: relative; z-index: 10; display: grid; grid-template-columns: 1.1fr 1fr; gap: 5rem; align-items: center; }
+.hero-text { color: #fff; }
+.hero-text span { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; opacity: 0.8; }
+.hero-text h1 { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin: 1.5rem 0; }
+.hero-text p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 3.5rem; max-width: 500px; line-height: 1.7; }
+.hero-btns { display: flex; gap: 1.5rem; }
+.btn-hero-white { background-color: #fff; color: var(--primary); padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: none; }
+.btn-hero-outline { border: 1.5px solid #fff; color: #fff; padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; background: transparent; }
+
+.hero-img-box { position: relative; }
+.hero-img { border-radius: 40px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.2); }
+.hero-img img { width: 100%; height: 550px; object-fit: cover; }
+.hero-badge { 
+    position: absolute; bottom: 30px; left: -30px; 
+    background: #fff; padding: 1rem 1.5rem; border-radius: 12px; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+    display: flex; align-items: center; gap: 12px; 
+}
+.hero-badge .icon { width: 32px; height: 32px; background-color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; }
+.hero-badge span { font-size: 0.75rem; font-weight: 800; color: #111; }
+
+/* Floating Horizontal Form Bar */
+.form-bar-container { position: relative; margin-top: -80px; z-index: 100; }
+.form-bar { 
+    background: #fff; padding: 1rem; border-radius: 12px; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto; 
+    gap: 0; align-items: center; 
+    border: 1px solid #f1f5f9; 
+}
+.form-group { padding: 0.75rem 2rem; border-right: 1px solid #f1f5f9; }
+.form-group:nth-child(3) { border-right: none; }
+.form-group label { display: block; font-size: 0.6rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
+.form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #111; }
+.btn-submit { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 3rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+
+/* About Section */
+.about { padding: 12rem 0; }
+.about-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 8rem; align-items: center; }
+.about-visual { position: relative; }
+.about-img-wrap { border-radius: 30px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.1); width: 100%; }
+.about-img-wrap img { width: 100%; height: 500px; object-fit: cover; }
+.about-stats-badge { 
+    position: absolute; bottom: 30px; right: -20px; 
+    background: #fff; padding: 1.5rem 2.5rem; border-radius: 12px; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.12); 
+    text-align: center; 
+}
+.about-stats-badge h4 { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.about-stats-badge p { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-top: 5px; }
+
+.about-text span { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+.about-text h2 { font-size: 3.2rem; font-weight: 800; line-height: 1.2; margin: 1.5rem 0; }
+.about-text p { font-size: 1.05rem; color: #4b5563; margin-bottom: 3.5rem; line-height: 1.7; }
+.about-features { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+.about-item h5 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.75rem; color: #111; }
+.about-item p { font-size: 0.9rem; color: #64748b; }
+
+/* Service Cards */
+.services { padding: 10rem 0; background: #f9fafb; text-align: center; }
+.services h2 { font-size: 3rem; font-weight: 800; margin-bottom: 6rem; }
+.srv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+.srv-card { background: #fff; padding: 4rem 2.5rem; border-radius: 20px; text-align: left; border: 1px solid #f1f5f9; transition: 0.4s; }
+.srv-card:hover { transform: translateY(-15px); border-color: var(--primary); box-shadow: 0 40px 80px rgba(0,0,0,0.05); }
+.srv-icon-box { width: 50px; height: 50px; background-color: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 2rem; }
+.srv-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; }
+.srv-card p { font-size: 0.95rem; color: #64748b; margin-bottom: 2rem; line-height: 1.6; }
+.srv-link { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+
+/* Why Choose Us - Large Portrait Image */
+.why { background: #0f172a; color: #fff; padding: 12rem 0; }
+.why-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 8rem; align-items: center; }
+.why-img-box { border-radius: 40px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.3); height: 600px; }
+.why-img-box img { width: 100%; height: 100%; object-fit: cover; }
+.why-text h2 { font-size: 3.2rem; font-weight: 800; margin-bottom: 2rem; }
+.why-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 4rem; }
+.why-list-item h5 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 12px; }
+.why-list-item h5::before { content: ''; width: 8px; height: 8px; background-color: PRIMARY_COLOR_PLACEHOLDER; border-radius: 50%; }
+.why-list-item p { color: #94a3b8; font-size: 0.95rem; }
+
+/* Blue Stats Bar */
+.stats-bar { background-color: var(--primary); padding: 6rem 0; color: #fff; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+.stat-item h2 { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+.stat-item p { font-size: 0.8rem; text-transform: uppercase; font-weight: 800; margin-top: 10px; opacity: 0.8; }
+
+/* Projects / Case Studies */
+.cases { padding: 12rem 0; }
+.cases-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6rem; }
+.case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.case-card { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 4rem 3rem; border-radius: 20px; color: #fff; position: relative; transition: 0.4s; }
+.case-card span { font-size: 0.7rem; opacity: 0.6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.case-card h3 { font-size: 1.5rem; font-weight: 700; margin-top: 1.25rem; line-height: 1.3; }
+.case-icon { position: absolute; top: 4rem; right: 3rem; font-size: 1.5rem; opacity: 0.2; }
+
+/* Consultation Banner */
+.cta-banner { background-color: var(--primary); padding: 6rem 0; color: #fff; }
+.cta-inner { display: flex; justify-content: space-between; align-items: center; }
+.cta-inner h2 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; }
+
+/* Testimonial Section */
+.testimonial { padding: 12rem 0; background: #f9fafb; text-align: center; }
+.test-box { max-width: 900px; margin: 0 auto; background: #fff; padding: 6rem 4rem; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.03); }
+.test-box p { font-size: 1.6rem; color: #334155; font-style: italic; margin-bottom: 3rem; line-height: 1.7; }
+.test-meta h4 { font-size: 1.25rem; font-weight: 800; color: #111; }
+.test-meta span { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; margin-top: 5px; display: block; }
+
+/* Final Contact Form */
+.contact { padding: 12rem 0; text-align: center; }
+.contact h2 { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; }
+.contact-form { max-width: 850px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; }
+.form-full { grid-column: span 2; }
+.contact-form input, .contact-form textarea { width: 100%; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 1rem; }
+.btn-send { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 4rem; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-top: 2rem; }
+
+/* Footer */
+footer { background: #0f172a; color: #fff; padding: 10rem 0 5rem; }
+.foot-grid { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1.2fr; gap: 8rem; }
+.foot-col h5 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2.5rem; color: #fff; }
+.foot-links a { display: block; color: #94a3b8; margin-bottom: 1.2rem; font-size: 0.95rem; }
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+    .hero-bg-shape { width: 100%; height: 50%; border-bottom-right-radius: 0; border-bottom-left-radius: 0; }
+    .hero-inner { grid-template-columns: 1fr !important; text-align: center; gap: 3rem; }
+    .hero-text p { margin-left: auto; margin-right: auto; }
+    .hero-btns { justify-content: center; }
+    .hero-img img { height: 400px; }
+    .hero-badge { left: 0; bottom: -20px; }
+    
+    .form-bar { grid-template-columns: 1fr !important; gap: 0; }
+    .form-group { border-right: none; border-bottom: 1px solid #f1f5f9; padding: 1.5rem; }
+    
+    .about-grid { grid-template-columns: 1fr !important; gap: 4rem; text-align: center; }
+    .about-features { grid-template-columns: 1fr !important; }
+    .about-stats-badge { right: 0; bottom: -10px; }
+    
+    .srv-grid { grid-template-columns: 1fr 1fr !important; }
+    .why-grid { grid-template-columns: 1fr !important; text-align: center; }
+    .why-img-box { height: 400px; }
+    .why-list { grid-template-columns: 1fr !important; text-align: left; }
+    
+    .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 3rem; }
+    .case-grid { grid-template-columns: 1fr 1fr !important; }
+    
+    .cta-inner { flex-direction: column; text-align: center; gap: 3rem; }
+    .contact-form { grid-template-columns: 1fr !important; }
+    .foot-grid { grid-template-columns: 1fr 1fr !important; gap: 4rem; }
+}
+
+@media (max-width: 640px) {
+    .hero-text h1 { font-size: 2.5rem; }
+    .srv-grid, .stats-grid, .case-grid, .foot-grid { grid-template-columns: 1fr !important; }
+    .nav-links { display: none; } /* Basic mobile menu handling */
+    .btn-nav-top { padding: 0.6rem 1.2rem; font-size: 0.75rem; }
+    .test-box { padding: 3rem 2rem; }
+    .test-box p { font-size: 1.2rem; }
+}
+`
 
 export const finance01Html = `
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-    rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<!-- HEADER -->
-  <header class="site-header">
-    <div class="container row">
-      <div class="logo">LOGO_PLACEHOLDER</div>
-      <button class="btn btn-light">Get A Quote <i class="icon-arrow-right"></i></button>
-    </div>
-  </header>
+<header class="nav">
+  <div class="container nav-inner">
+    <div class="logo">LOGO_PLACEHOLDER</div>
+    <nav class="nav-links">
+      <a href="#about">About Us</a>
+      <a href="#services">Services</a>
+      <a href="#projects">Projects</a>
+      <a href="#blog">Blog</a>
+    </nav>
+    <a href="#contact" class="btn-primary">Get A Quote</a>
+  </div>
+</header>
 
-  <!-- HERO -->
+<main>
+  <!-- HERO SECTION WITH CURVED BLUE SHAPE -->
   <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <span class="tag"><span class="dot"></span> Best Finance Company</span>
-        <h1>Our Finance Can Give <span class="grad">Possibilities</span> For Business</h1>
-        <p>We deliver tailored financial strategies for ambitious companies — turning complex numbers into clear,
-          actionable opportunities for sustainable growth.</p>
-        <div class="hero-cta">
-          <button class="btn btn-light">Discover More <i class="icon-arrow-right"></i></button>
-          <button class="btn btn-outline">Contact Us</button>
+    <div class="hero-bg-shape"></div>
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <span>BEST FINANCE COMPANY</span>
+        <h1>Our Finance Can <br>Give Possibilities <br>For Business</h1>
+        <p>We deliver tailored financial strategies for ambitious companies — turning complex numbers into clear, actionable opportunities for sustainable growth.</p>
+        <div class="hero-btns">
+          <a href="#services" class="btn-hero-white">Discover More</a>
+          <a href="#contact" class="btn-hero-outline">Contact Us</a>
         </div>
       </div>
-      <div class="hero-img">
-        <img src="/assets/templates/finance/templates01/hero-image.jpeg">
-        <div class="float-card">
-          <div class="ic"><i class="icon-award"></i></div>
-          <div>
-            <div class="num">25+</div>
-            <div class="lbl eyebrow">Years Experience</div>
-          </div>
+      <div class="hero-img-box">
+        <div class="hero-img">
+          <img src="/assets/templates/finance/templates01/hero-image.jpeg" alt="Global Business">
+        </div>
+        <div class="hero-badge">
+           <div class="icon"><i class="fa-solid fa-headset"></i></div>
+           <span>24/7 Expert Support</span>
         </div>
       </div>
     </div>
-    <svg class="wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
-      <path d="M0,80 C240,140 480,20 720,60 C960,100 1200,40 1440,70 L1440,120 L0,120 Z" fill="#fff" />
-    </svg>
   </section>
 
-  <!-- HERO OVERLAP FORM -->
-  <div class="hero-form-wrap">
-    <form class="hero-form" onsubmit="event.preventDefault()">
-      <div class="field"><label>Full Name</label>
-        <div class="ctrl"><i class="icon-user"></i><input placeholder="John Carter" name="name" id="name"></div>
+  <!-- FLOATING HORIZONTAL FORM BAR -->
+  <div class="container form-bar-container">
+    <form class="form-bar">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" placeholder="John Carter">
       </div>
-      <div class="field"><label>Email</label>
-        <div class="ctrl"><i class="icon-mail"></i><input type="email" placeholder="you@company.com" name="email_address" id="email_address"></div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="you@company.com">
       </div>
-      <div class="field"><label>Phone</label>
-        <div class="ctrl"><i class="icon-phone"></i><input placeholder="+1 (555) 000-0000" name="phone" id="phone"></div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" placeholder="+1 (555) 000-0000">
       </div>
-      <button class="btn btn-primary">Get Started </button>
+      <button type="submit" class="btn-submit">Get Started</button>
     </form>
   </div>
 
-  <!-- ABOUT -->
-  <section class="section about">
+  <!-- ABOUT SECTION WITH ROUNDED SQUARE IMAGE -->
+  <section class="about" id="about">
     <div class="container about-grid">
-      <div class="about-img-wrap">
-        <div class="blob1"></div>
-        <div class="blob2"></div>
-        <img src="/assets/templates/finance/templates01/Service-Growth.jpeg">
-        <div class="stat">
-          <div class="n">6,561+</div>
-          <div class="l">Satisfied Clients</div>
+      <div class="about-visual">
+        <div class="about-img-wrap">
+          <img src="/assets/templates/finance/templates01/our-mission.jpeg" alt="Finance Expert">
+        </div>
+        <div class="about-stats-badge">
+          <h4>6,561+</h4>
+          <p>Satisfied Clients</p>
         </div>
       </div>
-      <div>
-        <span class="eyebrow">About Finova</span>
-        <h2>Get Exceptional Service For Growth</h2>
-        <p>For over two decades, we've partnered with founders and CFOs to architect financial systems that scale. Our
-          team blends deep expertise with modern tools to unlock your company's full potential.</p>
-        <ul class="bullets">
-          <li><span class="check"><i class="icon-check"></i></span>
-            <div>
-              <div class="t">Our Mission</div>
-              <div class="x">Empower businesses with clarity and confidence.</div>
-            </div>
-          </li>
-          <li><span class="check"><i class="icon-check"></i></span>
-            <div>
-              <div class="t">Our Goals</div>
-              <div class="x">Sustainable growth backed by data-driven strategy.</div>
-            </div>
-          </li>
-        </ul>
-        <div style="margin-top:32px"><button class="btn btn-primary">Explore More <i
-              class="icon-arrow-right"></i></button></div>
+      <div class="about-text">
+        <span>ABOUT FINOVA</span>
+        <h2>Get Exceptional Service <br>For Growth</h2>
+        <p>For over two decades, we've partnered with founders and CFOs to architect financial systems that scale. Our team blends deep expertise with modern tools to unlock your company's full potential.</p>
+        <div class="about-features">
+          <div class="about-item">
+            <h5>Our Mission</h5>
+            <p>Empower businesses with clarity and confidence.</p>
+          </div>
+          <div class="about-item">
+            <h5>Our Goals</h5>
+            <p>Sustainable growth backed by data-driven strategy.</p>
+          </div>
+        </div>
+        <a href="#" class="btn-primary" style="padding: 1.25rem 3.5rem; margin-top: 4rem; display: inline-block;">Explore More</a>
       </div>
     </div>
   </section>
 
-  <!-- SERVICES -->
-  <section class="section services">
+  <!-- SERVICES GRID -->
+  <section class="services" id="services">
     <div class="container">
-      <div class="center">
-        <span class="eyebrow">What We're Offering</span>
-        <h2>We Solve Finance Problems With Strategy</h2>
-      </div>
-      <div class="cards">
-        <div class="card">
-          <div class="ic"><i class="icon-pie-chart"></i></div>
+      <span style="color: #2a58e8; font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">WHAT WE'RE OFFERING</span>
+      <h2 style="margin-top: 1.5rem;">We Solve Finance Problems <br>With Strategy</h2>
+      <div class="srv-grid">
+        <div class="srv-card">
+          <div class="srv-icon-box"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
           <h3>Audit Marketing</h3>
-          <p>Detailed performance audits that uncover hidden growth levers.</p><a class="more" href="#">Read More <i
-              class="icon-arrow-right"></i></a>
+          <p>Detailed performance audits that uncover hidden growth levers.</p>
+          <a href="#" class="srv-link">Read More <i class="fa-solid fa-arrow-right-long"></i></a>
         </div>
-        <div class="card">
-          <div class="ic"><i class="icon-briefcase"></i></div>
+        <div class="srv-card">
+          <div class="srv-icon-box"><i class="fa-solid fa-comments-dollar"></i></div>
           <h3>Finance Consulting</h3>
-          <p>Strategic guidance to optimize cash flow, capital and risk.</p><a class="more" href="#">Read More <i
-              class="icon-arrow-right"></i></a>
+          <p>Strategic guidance to optimize cash flow, capital and risk.</p>
+          <a href="#" class="srv-link">Read More <i class="fa-solid fa-arrow-right-long"></i></a>
         </div>
-        <div class="card">
-          <div class="ic"><i class="icon-trending-up"></i></div>
+        <div class="srv-card">
+          <div class="srv-icon-box"><i class="fa-solid fa-chart-pie"></i></div>
           <h3>Wealth Management</h3>
-          <p>Tailored portfolio strategies for long-term prosperity.</p><a class="more" href="#">Read More <i
-              class="icon-arrow-right"></i></a>
+          <p>Tailored portfolio strategies for long-term prosperity.</p>
+          <a href="#" class="srv-link">Read More <i class="fa-solid fa-arrow-right-long"></i></a>
         </div>
-        <div class="card">
-          <div class="ic"><i class="icon-shield-check"></i></div>
+        <div class="srv-card">
+          <div class="srv-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
           <h3>Risk Advisory</h3>
-          <p>Identify, quantify and protect against critical business risks.</p><a class="more" href="#">Read More <i
-              class="icon-arrow-right"></i></a>
+          <p>Identify, quantify and protect against critical business risks.</p>
+          <a href="#" class="srv-link">Read More <i class="fa-solid fa-arrow-right-long"></i></a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- MISSION -->
-  <section class="section mission">
-    <div class="container mission-grid">
-      <img src="/assets/templates/finance/templates01/our-mission.jpeg" alt="Founder">
-      <div>
-        <span class="eyebrow">Why Choose Us</span>
-        <h2>Our Mission, Values and Motto</h2>
-        <p style="margin-top:18px;color:rgba(245,247,255,.78)">We believe great finance is invisible — it removes
-          friction, illuminates decisions and quietly compounds.</p>
-        <div class="values">
-          <div class="v"><i class="icon-check"></i> Trusted Advisory</div>
-          <div class="v"><i class="icon-check"></i> Data-Driven Strategy</div>
-          <div class="v"><i class="icon-check"></i> Long-Term Partnership</div>
-          <div class="v"><i class="icon-check"></i> Transparent Pricing</div>
-        </div>
+  <!-- WHY CHOOSE US (DARK) -->
+  <section class="why">
+    <div class="container why-grid">
+      <div class="why-img-box">
+        <img src="/assets/templates/finance/templates01/Service-Growth.jpeg" alt="Strategic Partnership">
       </div>
-    </div>
-  </section>
-
-  <!-- STATS -->
-  <section class="section" style="padding:96px 0">
-    <div class="container">
-      <div class="stats-row">
-        <div class="item">
-          <div class="ic"><i class="icon-briefcase"></i></div>
-          <div>
-            <div class="n">1,001+</div>
-            <div class="l">Projects Completed</div>
+      <div class="why-text">
+        <span style="color: #2a58e8; font-weight: 800;">WHY CHOOSE US</span>
+        <h2 style="margin-top: 1.5rem;">Our Mission, Values <br>and Motto</h2>
+        <p>We believe great finance is invisible — it removes friction, illuminates decisions and quietly compounds.</p>
+        <div class="why-list">
+          <div class="why-list-item">
+            <h5>Trusted Advisory</h5>
+            <p>Data-Driven Strategy</p>
           </div>
-        </div>
-        <div class="item">
-          <div class="ic"><i class="icon-users"></i></div>
-          <div>
-            <div class="n">6,561+</div>
-            <div class="l">Active Clients</div>
-          </div>
-        </div>
-        <div class="item">
-          <div class="ic"><i class="icon-lightbulb"></i></div>
-          <div>
-            <div class="n">600+</div>
-            <div class="l">Business Ideas</div>
-          </div>
-        </div>
-        <div class="item">
-          <div class="ic"><i class="icon-building-2"></i></div>
-          <div>
-            <div class="n">250+</div>
-            <div class="l">Global Offices</div>
+          <div class="why-list-item">
+            <h5>Long-Term Partnership</h5>
+            <p>Transparent Pricing</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CASES -->
-  <section class="section cases">
+  <!-- STATS BAR -->
+  <section class="stats-bar">
+    <div class="container stats-grid">
+      <div class="stat-item"><h2>1,001+</h2><p>Projects Completed</p></div>
+      <div class="stat-item"><h2>6,561+</h2><p>Active Clients</p></div>
+      <div class="stat-item"><h2>600+</h2><p>Business Ideas</p></div>
+      <div class="stat-item"><h2>250+</h2><p>Global Offices</p></div>
+    </div>
+  </section>
+
+  <!-- PROJECTS / CASE STUDIES -->
+  <section class="cases" id="projects">
     <div class="container">
       <div class="cases-head">
         <div>
-          <span class="eyebrow">Our Latest Projects</span>
-          <h2>Incredible Client Stories</h2>
+          <span style="color: #2a58e8; font-weight: 800;">OUR LATEST PROJECTS</span>
+          <h2 style="font-size: 3rem; font-weight: 800; margin-top: 1.5rem;">Incredible Client Stories</h2>
         </div>
-        <button class="btn" style="border:1px solid PRIMARY_COLOR_PLACEHOLDER;color:var(--primary);background:transparent">View
-          All Cases <i class="icon-arrow-right"></i></button>
+        <a href="#" style="color: #2a58e8; font-weight: 800; border-bottom: 2px solid #2a58e8;">View All Cases</a>
       </div>
-      <div class="cases-grid">
-        <div class="case">
-          <div class="ic-corner"><i class="icon-bar-chart-3"></i></div>
-          <div class="body"><span class="pill"><i class="icon-bar-chart-3"></i> Finance</span>
-            <h3>Financial Report Restructure</h3>
-          </div>
+      <div class="case-grid">
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <span>FINANCE</span>
+          <h3>Financial Report Restructure</h3>
         </div>
-        <div class="case">
-          <div class="ic-corner"><i class="icon-trending-up"></i></div>
-          <div class="body"><span class="pill"><i class="icon-trending-up"></i> Strategy</span>
-            <h3>Business Growth Solutions</h3>
-          </div>
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-chess"></i></div>
+          <span>STRATEGY</span>
+          <h3>Business Growth Solutions</h3>
         </div>
-        <div class="case">
-          <div class="ic-corner"><i class="icon-wallet"></i></div>
-          <div class="body"><span class="pill"><i class="icon-wallet"></i> Wealth</span>
-            <h3>Portfolio Optimization Plan</h3>
-          </div>
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-vault"></i></div>
+          <span>WEALTH</span>
+          <h3>Portfolio Optimization Plan</h3>
         </div>
-        <div class="case">
-          <div class="ic-corner"><i class="icon-file-search"></i></div>
-          <div class="body"><span class="pill"><i class="icon-file-search"></i> Audit</span>
-            <h3>Operational Audit Overhaul</h3>
-          </div>
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+          <span>AUDIT</span>
+          <h3>Operational Audit Overhaul</h3>
         </div>
-        <div class="case">
-          <div class="ic-corner"><i class="icon-alert-triangle"></i></div>
-          <div class="body"><span class="pill"><i class="icon-alert-triangle"></i> Risk</span>
-            <h3>Enterprise Risk Framework</h3>
-          </div>
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-shield-virus"></i></div>
+          <span>RISK</span>
+          <h3>Enterprise Risk Framework</h3>
         </div>
-        <div class="case">
-          <div class="ic-corner"><i class="icon-receipt"></i></div>
-          <div class="body"><span class="pill"><i class="icon-receipt"></i> Tax</span>
-            <h3>Cross-Border Tax Strategy</h3>
-          </div>
+        <div class="case-card">
+          <div class="case-icon"><i class="fa-solid fa-globe"></i></div>
+          <span>TAX</span>
+          <h3>Cross-Border Tax Strategy</h3>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section style="padding:64px 0">
-    <div class="container">
-      <div class="cta-box">
-        <div>
-          <span style="font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;opacity:.85">Let's
-            Talk</span>
-          <h2 style="margin-top:8px">Get a Free Expert Consultation For Your Business</h2>
-        </div>
-        <button class="btn btn-light">Book A Call <i class="icon-arrow-right"></i></button>
-      </div>
+  <!-- CONSULTATION BANNER -->
+  <section class="cta-banner">
+    <div class="container cta-inner">
+       <h2>Get a Free Expert Consultation <br>For Your Business</h2>
+       <a href="#" class="btn-hero-white" style="border-radius: 4px; padding: 1.25rem 4rem;">Book A Call</a>
     </div>
   </section>
 
   <!-- TESTIMONIAL -->
-  <section class="section">
+  <section class="testimonial">
     <div class="container">
-      <div class="testi">
-        <span class="eyebrow">Testimonial</span>
-        <p>"Finova transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the
-          numbers that move our business forward."</p>
-        <div class="who">
-          <div class="av" style="background-image: url('https://i.pravatar.cc/150?img=11')"></div>
-          <div>
-            <div class="name">Marcus Chen</div>
-            <div class="role">CFO, Helix Ventures</div>
-          </div>
+      <div class="test-box">
+        <p>"Finova transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the numbers that move our business forward."</p>
+        <div class="test-meta">
+          <h4>Marcus Chen</h4>
+          <span>CFO, Helix Ventures</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- BLOG -->
-  <section class="section blog">
+  <!-- FINAL CONTACT FORM -->
+  <section class="contact" id="contact">
     <div class="container">
-      <div class="center">
-        <span class="eyebrow">Our Blog</span>
-        <h2>Latest News and Articles</h2>
-      </div>
-      <div class="blog-grid">
-        <article class="post"><img src="/assets/templates/finance/templates01/blog-01.jpeg" alt="">
-          <div class="body"><span class="pill">Strategy</span>
-            <h3>Five Levers Every CFO Should Pull in 2026</h3>
-            <div class="meta">May 02, 2026 · 6 min read</div>
-          </div>
-        </article>
-        <article class="post"><img src="/assets/templates/finance/templates01/blog-02.jpeg" alt="">
-          <div class="body"><span class="pill">Wealth</span>
-            <h3>Building Resilient Portfolios in Uncertain Markets</h3>
-            <div class="meta">Apr 21, 2026 · 8 min read</div>
-          </div>
-        </article>
-        <article class="post"><img src="/assets/templates/finance/templates01/blog-03.jpeg" alt="">
-          <div class="body"><span class="pill">Audit</span>
-            <h3>Why Your Annual Audit Is Costing You Money</h3>
-            <div class="meta">Apr 12, 2026 · 5 min read</div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section class="section contact">
-    <div class="container">
-      <div class="center">
-        <span class="eyebrow">Get In Touch</span>
-        <h2>Ready to Talk Numbers?</h2>
-      </div>
-      <form onsubmit="event.preventDefault()">
-        <div class="row2">
-          <div><label>Your Name</label><input placeholder="Jane Doe" name="name" id="name"></div>
-          <div><label>Email</label><input type="email" placeholder="jane@company.com" name="email_address" id="email_address"></div>
+      <span>GET IN TOUCH</span>
+      <h2 style="margin-top: 1.5rem;">Ready to Talk Numbers?</h2>
+      <form class="contact-form">
+        <input type="text" placeholder="Jane Doe">
+        <input type="email" placeholder="jane@company.com">
+        <input type="tel" placeholder="+1 (555) 000-0000" class="form-full">
+        <textarea placeholder="Tell us about your business..." rows="5" class="form-full"></textarea>
+        <div class="form-full" style="text-align: center;">
+           <button type="submit" class="btn-send">Send Now</button>
         </div>
-        <div><label>Phone</label><input placeholder="+1 (555) 000-0000" name="phone" id="phone"></div>
-        <div><label>Message</label><textarea rows="5" placeholder="Tell us about your business..." name="message" id="message"></textarea></div>
-        <button class="btn btn-primary" style="justify-content:center">Send Now <i
-            class="icon-arrow-right"></i></button>
       </form>
     </div>
   </section>
+</main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div>
-          <div class="logo">LOGO_PLACEHOLDER</div>
-          <p style="margin-top:20px">Premium finance consulting for ambitious businesses. Trusted by founders, CFOs and
-            boards across 40+ countries.</p>
-          <div class="contact-list">
-            <div><i class="icon-phone"></i> +1 (208) 555-0112</div>
-            <div><i class="icon-mail"></i> hello@finova.com</div>
-            <div><i class="icon-map-pin"></i> 250 Market St, San Francisco</div>
-          </div>
-        </div>
-        <div>
-          <h4>Useful Links</h4>
-          <ul>
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">Case Studies</a></li>
-            <li><a href="#">Careers</a></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="#">Contact</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Services</h4>
-          <ul>
-            <li><a href="#">Finance Consulting</a></li>
-            <li><a href="#">Wealth Management</a></li>
-            <li><a href="#">Audit Marketing</a></li>
-            <li><a href="#">Risk Advisory</a></li>
-            <li><a href="#">Tax Strategy</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Newsletter</h4>
-          <p>Get monthly insights from our senior advisors.</p>
-          <form class="news" onsubmit="event.preventDefault()">
-            <input type="email" placeholder="Your email" name="email_address" id="email_address">
-            <button type="submit"><i class="icon-arrow-right"></i></button>
-          </form>
-        </div>
-      </div>
-      <div class="copy">
-        <div>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</div>
-        <div class="links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Cookies</a></div>
-      </div>
+<footer>
+  <div class="container foot-grid">
+    <div class="foot-col">
+       <div class="logo" style="color: #fff; font-size: 1.5rem; letter-spacing: 2px;">LOGO_PLACEHOLDER</div>
+       <p style="color: #94a3b8; line-height: 1.8;">Premium finance consulting for ambitious businesses. Trusted by founders, CFOs and boards across 40+ countries.</p>
+       <div style="margin-top: 2rem; color: #fff;">
+          <p>+1 (208) 555-0112</p>
+          <p>hello@finova.com</p>
+       </div>
     </div>
-  </footer>
-`;
+    <div class="foot-col">
+       <h5>Useful Links</h5>
+       <div class="foot-links">
+          <a href="#">About Us</a>
+          <a href="#">Case Studies</a>
+          <a href="#">Careers</a>
+          <a href="#">Pricing</a>
+       </div>
+    </div>
+    <div class="foot-col">
+       <h5>Services</h5>
+       <div class="foot-links">
+          <a href="#">Finance Consulting</a>
+          <a href="#">Wealth Management</a>
+          <a href="#">Audit Marketing</a>
+          <a href="#">Risk Advisory</a>
+       </div>
+    </div>
+    <div class="foot-col">
+       <h5>Newsletter</h5>
+       <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">Get monthly insights from our senior advisors.</p>
+       <div style="display: flex; gap: 10px;">
+          <input type="email" placeholder="Your email" style="background: #1e293b; border: none; padding: 0.8rem; border-radius: 4px; color: #fff; width: 100%;">
+          <button style="background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 0.8rem 1.2rem; border-radius: 4px;"><i class="fa-solid fa-paper-plane"></i></button>
+       </div>
+    </div>
+  </div>
+  <div class="container" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: #4b5563; font-size: 0.85rem;">
+     <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
+  </div>
+</footer>
+`
