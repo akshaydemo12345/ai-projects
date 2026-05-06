@@ -192,63 +192,7 @@ const CreatePagePage = () => {
   };
 
   const handleViewTemplate = (tpl: any) => {
-    let tpHtml = "";
-    let tpStyles = "";
-    const tName = LANDING_TEMPLATES.find(t => t.id === tpl.id)?.name || "Template";
-
-    switch (tpl.id) {
-      case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
-      case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
-      case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
-      case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
-      case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
-      default: tpHtml = ""; tpStyles = "";
-    }
-
-    // Perform replacements for preview
-    let enrichedContent = tpHtml;
-    let enrichedStyles = tpStyles;
-
-    if (project) {
-      const finalLogo = logoUrl || project.logoUrl;
-      const logoHtml = finalLogo
-        ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
-        : `<span style="color: ${primaryColor}">${project.name}</span>`;
-
-      enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
-      enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name || "My Project");
-      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
-      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
-
-      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
-      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
-    }
-
-    const fullHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${pageName || tpl.name} | Preview</title>
-          <meta name="robots" content="noindex, nofollow">
-          <link rel="canonical" href="${window.location.href}">
-          <link rel="preconnect" href="https://fonts.googleapis.com">
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link rel="dns-prefetch" href="//fonts.googleapis.com">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-          <style>
-            ${enrichedStyles}
-            body { margin: 0; padding: 0; overflow-x: hidden; }
-          </style>
-        </head>
-        <body>${enrichedContent}</body>
-      </html>
-    `;
-    localStorage.setItem('grapes-preview-html', fullHtml);
-    window.open('/preview', '_blank');
+    setPreviewTemplate(tpl);
   };
 
   const createPageMutation = useMutation({
@@ -293,7 +237,7 @@ const CreatePagePage = () => {
     }
   };
 
-  const handleCreate = () => {
+    const handleCreate = async () => {
     if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
@@ -334,6 +278,71 @@ const CreatePagePage = () => {
           enrichedStyles = "";
       }
 
+      // ───────────────────────────────────────────────────────────────────────────
+      // NEW: DEEP MAGIC FILL (Section-by-Section Text Mapping)
+      // ───────────────────────────────────────────────────────────────────────────
+      try {
+        // 1. Extract unique significant text blocks from the template
+        const textBlocks: string[] = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(enrichedContent, "text/html");
+        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span");
+        
+        elements.forEach(el => {
+          const text = el.textContent?.trim();
+          if (text && text.length > 10 && !text.includes("{") && !text.includes("<")) {
+            textBlocks.push(text);
+          }
+        });
+
+        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 30); // Limit to top 30 blocks for speed
+
+        if (uniqueBlocks.length > 0) {
+          const mappingRes = await aiApi.generate({
+            businessName: project.name,
+            industry: project.category || "Service",
+            businessDescription: project.description || "Premium services",
+            pageType: "lead generation",
+            aiPrompt: `You are a Content Engine. Map these template strings to highly relevant text for "${project.name}" (${project.category}). 
+            Context: ${project.description}.
+            
+            STRINGS TO MAP:
+            ${uniqueBlocks.map((s, i) => `${i}: ${s}`).join("\n")}
+            
+            OUTPUT RULES:
+            - Return ONLY a JSON object where keys are the numbers and values are the new text.
+            - Keep the tone professional and conversion-focused.
+            - Example: {"0": "New Headline", "1": "New Service Description"}`
+          });
+
+          const rawMapping = mappingRes?.data?.content?.fullHtml || mappingRes?.data?.content;
+          if (rawMapping) {
+            try {
+              // Extract JSON if AI wrapped it in markdown
+              const jsonStr = rawMapping.match(/\{[\s\S]*\}/)?.[0] || rawMapping;
+              const mapping = JSON.parse(jsonStr);
+              
+              // 2. Perform surgical replacement
+              Object.entries(mapping).forEach(([idx, newText]) => {
+                const originalText = uniqueBlocks[parseInt(idx)];
+                if (originalText && newText && typeof newText === "string") {
+                  // Escape regex special chars
+                  const escapedOriginal = originalText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                  const regex = new RegExp(escapedOriginal, "g");
+                  enrichedContent = enrichedContent.replace(regex, newText);
+                }
+              });
+              toast.success("Magic Fill: Full page content optimized!");
+            } catch (jsonErr) {
+              console.error("Failed to parse mapping JSON:", jsonErr);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Deep Magic Fill failed:", err);
+      }
+      // ───────────────────────────────────────────────────────────────────────────
+
       const finalLogo = logoUrl || project.logoUrl;
       const logoHtml = finalLogo
         ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
@@ -351,18 +360,44 @@ const CreatePagePage = () => {
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       if (project.scrapedData?.images?.length > 0) {
-        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner');
-        const generalImages = project.scrapedData.images.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
-        if (bannerImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, bannerImages[0].url);
-        else if (generalImages.length > 0) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1600585154340-be6161a56a0c[^'"]*/g, generalImages[0].url);
-        if (generalImages.length > 1) enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-1761839258075[^'"]*/g, generalImages[1].url);
+        const projectImages = project.scrapedData.images;
+        const bannerImages = projectImages.filter((img: any) => img.type === 'banner' || img.width > 1000);
+        const generalImages = projectImages.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
+        
+        // 1. Replace specific Unsplash placeholders
+        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
+          const replacement = bannerImages.length > 0 ? bannerImages[0].url : projectImages[0].url;
+          return replacement || match;
+        });
+
+        // 2. Replace local template assets with project images
+        let imgIdx = 0;
+        enrichedContent = enrichedContent.replace(/\/assets\/templates\/.*?\.(png|jpg|jpeg|webp|svg)/gi, (match) => {
+          if (match.includes('logo')) return match; // Skip logo, handled by LOGO_PLACEHOLDER
+          const replacement = projectImages[imgIdx % projectImages.length]?.url;
+          imgIdx++;
+          return replacement || match;
+        });
+      }
+
+      // Smart Text Replacements for Relevance
+      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
+      
+      // Attempt to replace hero description
+      if (project.description) {
+        // Look for common hero paragraph patterns
+        enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+        // If not found by class, try the first <p> after <h1>
+        if (!enrichedContent.includes(project.description)) {
+            enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+        }
       }
 
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
-        metaDescription: `Premium ${pageName.trim()} services by ${project.name}. High-quality results guaranteed.`,
+        metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
         generationMethod: "template" as const,
         content: enrichedContent,
         styles: enrichedStyles,
@@ -844,21 +879,20 @@ const CreatePagePage = () => {
                 default: tpHtml = ""; tpStyles = "";
               }
 
-              // Apply branding to preview
-              const finalLogo = logoUrl || project?.logoUrl;
-              const logoHtml = finalLogo
-                ? `<img src="${finalLogo}" alt="${project?.name}" style="height: 40px; width: auto; object-fit: contain;">`
-                : (project?.name || "Your Brand");
+              // Apply STATIC branding to preview
+              const logoHtml = `<span style="font-weight: 800; font-size: 1.5rem; color: #6366f1;">BRAND</span>`;
 
               tpHtml = tpHtml
-                .replace(/PROJECT_NAME_PLACEHOLDER/g, project?.name || "Your Business")
+                .replace(/PROJECT_NAME_PLACEHOLDER/g, "Business Name")
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
+                .replace(/CONTACT_PLACEHOLDER/g, "Contact Us");
 
               tpStyles = tpStyles
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
+                .replace(/LOGO_URL_PLACEHOLDER/g, "");
 
               return (
                 <iframe
