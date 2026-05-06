@@ -15,10 +15,31 @@ const LANDING_TEMPLATES = [
     tag: "Travel",
     img: "/assets/templates/travel/templates01/heronew.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
+  },
+  {
+    id: "travel-02",
+    name: "Savanna Safari",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates02/hero.jpg",
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  },
+  {
+    id: "travel-03",
+    name: "Etheria Journeys",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates03/hero.png",
+    gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
+  },
+  {
+    id: "finance-01",
+    name: "Finova Finance",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
   }
 ];
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
 
 const TemplatesPage = () => {
   const [templateCategory, setTemplateCategory] = useState("All");
