@@ -318,82 +318,9 @@ const CreatePagePage = () => {
       }
 
       // ───────────────────────────────────────────────────────────────────────────
-      // NEW: DEEP MAGIC FILL (Section-by-Section Text Mapping)
-      // ───────────────────────────────────────────────────────────────────────────
-      try {
-        // 1. Extract unique significant text blocks from the template
-        const textBlocks: string[] = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(enrichedContent, "text/html");
-
-        // Extract from text nodes
-        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span, label, option");
-        elements.forEach(el => {
-          const text = el.textContent?.trim();
-          if (text && text.length > 2 && !text.includes("{") && !text.includes("<")) {
-            textBlocks.push(text);
-          }
-        });
-
-        // ALSO extract from placeholders
-        const inputs = doc.querySelectorAll("input[placeholder], textarea[placeholder]");
-        inputs.forEach(el => {
-          const placeholder = el.getAttribute("placeholder")?.trim();
-          if (placeholder && placeholder.length > 2) {
-            textBlocks.push(placeholder);
-          }
-        });
-
-        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100);
-
-        if (uniqueBlocks.length > 0) {
-          const mappingRes = await aiApi.generate({
-            businessName: project.name,
-            industry: project.category || "Service",
-            businessDescription: project.description || "Premium services",
-            pageType: "lead generation",
-            aiPrompt: `You are a Content Engine. Your task is to rewrite the following template strings to be 100% relevant to "${project.name}" which is in the "${project.category}" industry.
-            Business Description: ${project.description || "A professional company providing high-quality services."}
-            ${project.scrapedData?.description ? `Scraped Website Context: ${project.scrapedData.description}` : ""}
-            
-            STRINGS TO MAP (Index: Original Text):
-            ${uniqueBlocks.map((s, i) => `${i}: ${s}`).join("\n")}
-            
-            OUTPUT RULES:
-            - Return ONLY a valid JSON object where keys are the indices (strings) and values are the new rewritten text.
-            - Ensure the new text matches the tone and length of the original.
-            - For names like "Lumina Dental" or "Azure Luxury", replace them with "${project.name}" or a relevant alternative.
-            - If a string is a service (e.g., "Dental Implants"), replace it with a service relevant to ${project.category}.
-            - IMPORTANT: If a string looks like a Material Icon name (e.g., "dentistry", "biotech", "mood"), replace it with a relevant Material Icon name from the official library (e.g., "home", "build", "security").
-            - DO NOT include any markdown formatting, only the raw JSON.`
-          });
-
-          const rawMapping = mappingRes?.data?.content?.fullHtml || mappingRes?.data?.content;
-          if (rawMapping) {
-            try {
-              // Extract JSON if AI wrapped it in markdown
-              const jsonStr = rawMapping.match(/\{[\s\S]*\}/)?.[0] || rawMapping;
-              const mapping = JSON.parse(jsonStr);
-
-              // 2. Perform surgical replacement
-              Object.entries(mapping).forEach(([idx, newText]) => {
-                const originalText = uniqueBlocks[parseInt(idx)];
-                if (originalText && newText && typeof newText === "string") {
-                  // Escape regex special chars
-                  const escapedOriginal = originalText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                  const regex = new RegExp(escapedOriginal, "g");
-                  enrichedContent = enrichedContent.replace(regex, newText);
-                }
-              });
-              toast.success("Magic Fill: Full page content optimized!");
-            } catch (jsonErr) {
-              console.error("Failed to parse mapping JSON:", jsonErr);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Deep Magic Fill failed:", err);
-      }
+      // NOTE: DEEP MAGIC FILL (Section-by-Section Text Mapping) was removed 
+      // from the automatic flow to prevent requiring an AI API Key for standard 
+      // template selection. Templates now use fast, static replacements.
       // ───────────────────────────────────────────────────────────────────────────
 
       const finalLogo = logoUrl || project.logoUrl;
@@ -441,6 +368,11 @@ const CreatePagePage = () => {
         }
       }
 
+      // We only send the aiPrompt for template enrichment if the user has modified it from the default.
+      // Otherwise, we clear it to avoid triggering the backend AI service.
+      const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
+      const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
+
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
@@ -452,7 +384,8 @@ const CreatePagePage = () => {
         landingPageContent: enrichedContent,
         landingPageStyles: enrichedStyles,
         templateId: selectedTemplate,
-        template: tName
+        template: tName,
+        aiPrompt: isPromptModified ? aiPrompt : "" // Only send if customized
       };
     } else {
       basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
@@ -466,7 +399,7 @@ const CreatePagePage = () => {
       primaryColor,
       secondaryColor,
       logoUrl,
-      aiPrompt: aiPrompt,
+      aiPrompt: basePayload.aiPrompt || "",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -862,7 +795,7 @@ const CreatePagePage = () => {
                         {/* Footer Actions */}
                         <div className="bg-white border-t border-gray-100 px-3 py-3 flex items-center justify-between">
                           <span className="text-[11px] font-black text-gray-900 truncate pr-2">{tpl.name}</span>
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleViewTemplate(tpl); }}
                             className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
                             title="View Preview"
