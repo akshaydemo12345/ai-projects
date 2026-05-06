@@ -22,7 +22,7 @@ a{color:inherit;text-decoration:none}
 .nav nav a{font-size:.9rem;font-weight:500;color:#fff;opacity:.85;transition:opacity .2s}
 .nav nav a:hover{opacity:1;color:var(--secondary)}
 .btn{display:inline-block;padding:.85rem 1.75rem;background:#fff;color:var(--ink);border-radius:4px;font-weight:600;font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;transition:all .3s;border:0;cursor:pointer;font-family:inherit}
-.btn-primary{background:var(--btn-bg, var(--primary)); color:var(--btn-text, #fff); border:none;}
+.btn-primary{background:SECONDARY_COLOR_PLACEHOLDER !important; color:var(--btn-text, #fff); border:none;}
 .btn-primary:hover{background:var(--secondary) !important; transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,0.2)}
 .btn.large{padding:1.15rem 2.5rem;font-size:.95rem}
 .w-full{width:100%}
@@ -45,7 +45,7 @@ a{color:inherit;text-decoration:none}
 .hero-card select{display:block;width:100%;margin-top:.4rem;padding:.85rem 1rem;border:1px solid rgba(26,15,8,.15);border-radius:4px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);outline:0;cursor:pointer}
 .hero-card .btn{margin-top:.5rem}
 
-.features{background:var(--bg);color:var(--cream);padding:4rem 0}
+.features{background:SECONDARY_COLOR_PLACEHOLDER !important;color:var(--cream);padding:4rem 0}
 .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2.5rem}
 .feat span{font-family:var(--serif);font-size:2rem;color:var(--secondary);font-weight:700;display:block;margin-bottom:.75rem}
 .feat h4{font-family:var(--serif);font-size:1.4rem;margin-bottom:.5rem;font-weight:700}
@@ -56,7 +56,7 @@ a{color:inherit;text-decoration:none}
 .sec-head .kicker{color:var(--primary)}
 .sec-head h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:700;letter-spacing:-.02em;line-height:1.05}
 .exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem}
-.exp{background:#fff;border-radius:8px;overflow:hidden;transition:all .4s cubic-bezier(.2,.8,.2,1);position:relative}
+.exp{background:SECONDARY_COLOR_PLACEHOLDER !important;border-radius:8px;overflow:hidden;transition:all .4s cubic-bezier(.2,.8,.2,1);position:relative}
 .exp:hover{transform:translateY(-6px);box-shadow:0 25px 60px rgba(26,15,8,.18)}
 .exp img{aspect-ratio:4/3;object-fit:cover;transition:transform .8s}
 .exp:hover img{transform:scale(1.06)}
@@ -68,7 +68,7 @@ a{color:inherit;text-decoration:none}
 .price{font-size:.85rem;color:var(--muted);border-top:1px dashed rgba(26,15,8,.15);padding-top:1rem}
 .price strong{color:var(--ink);font-size:1.4rem;font-family:var(--serif);font-weight:700}
 
-.testimonial{background:var(--ink);color:var(--cream);padding:7rem 0;text-align:center}
+.testimonial{background:SECONDARY_COLOR_PLACEHOLDER !important;color:var(--cream);padding:7rem 0;text-align:center}
 .testimonial .kicker{color:var(--secondary)}
 .testimonial blockquote{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.4rem);font-style:italic;font-weight:500;line-height:1.4;max-width:900px;margin:1.5rem auto;color:#fff}
 .testimonial cite{font-style:normal;font-size:.85rem;letter-spacing:.15em;color:var(--secondary);font-weight:500}
@@ -76,10 +76,10 @@ a{color:inherit;text-decoration:none}
 .cta-final{background:linear-gradient(135deg,var(--primary),#b45309);color:#fff;padding:6rem 0;text-align:center}
 .cta-final h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:700;margin-bottom:1rem}
 .cta-final p{font-size:1.15rem;opacity:.9;margin-bottom:2rem}
-.cta-final .btn{background:var(--ink);color:var(--cream)}
-.cta-final .btn:hover{background:#fff;color:var(--ink)}
+.cta-final .btn{background:var(--secondary);color:var(--cream)}
+.cta-final .btn:hover{background:var(--secondary);color:var(--ink)}
 
-footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
+footer{background:SECONDARY_COLOR_PLACEHOLDER !important;color:var(--cream);padding:4rem 0 2rem}
 .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:3rem;margin-bottom:3rem}
 .foot-grid p{color:rgba(244,234,213,.6);font-size:.9rem;margin-top:.75rem}
 .foot-grid h5{font-family:var(--serif);font-size:1rem;margin-bottom:1rem;color:var(--secondary);font-weight:700}
@@ -98,7 +98,7 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 @media(max-width:560px){.foot-grid{grid-template-columns:1fr}}
 
 /* Wildlife Section */
-.wildlife{padding:8rem 0;background:#fff}
+.wildlife{padding:8rem 0;background:SECONDARY_COLOR_PLACEHOLDER !important}
 .wildlife-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .wildlife-text h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.5rem);font-weight:700;margin-bottom:1.5rem;line-height:1.1}
 .wildlife-text p{font-size:1.1rem;opacity:0.8;margin-bottom:2rem}
@@ -114,7 +114,7 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 /* Lodges Section */
 .lodges{padding:8rem 0;background:var(--cream)}
 .lodges-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem}
-.lodge-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 15px 40px rgba(26,15,8,.08);transition:transform .3s}
+.lodge-card{background:SECONDARY_COLOR_PLACEHOLDER !important;border-radius:12px;overflow:hidden;box-shadow:0 15px 40px rgba(26,15,8,.08);transition:transform .3s}
 .lodge-card:hover{transform:translateY(-8px)}
 .lodge-card img{width:100%;aspect-ratio:16/10;object-fit:cover}
 .lodge-content{padding:2.5rem}
@@ -140,7 +140,7 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
 .gallery-item:hover .gallery-overlay span{transform:translateY(0)}
 
 /* Impact Section */
-.impact{padding:8rem 0;background:var(--bg);color:var(--cream)}
+.impact{padding:8rem 0;background:var(--secondary);color:var(--cream)}
 .impact-inner{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .impact-text h2{font-family:var(--serif);font-size:clamp(2.1rem,4vw,3.2rem);margin:1rem 0 2rem;line-height:1.1;color:#fff}
 .impact-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
@@ -160,7 +160,7 @@ footer{background:var(--bg);color:var(--cream);padding:4rem 0 2rem}
   .stat strong{font-size:2rem}
 }
 
-.press{padding:4rem 0;background:#fff;border-top:1px solid rgba(0,0,0,.05)}
+.press{padding:4rem 0;background:SECONDARY_COLOR_PLACEHOLDER !important;border-top:1px solid rgba(0,0,0,.05)}
 .press-logos{display:flex;align-items:center;justify-content:space-between;gap:3rem}
 .press-logos span{font-size:.7rem;letter-spacing:.25em;color:var(--muted);font-weight:700;white-space:nowrap}
 .logo-row{display:flex;gap:4rem;align-items:center;opacity:.4;filter:grayscale(1)}
@@ -221,12 +221,12 @@ export const travel02Html = `
         onsubmit="event.preventDefault();alert('Thank you! We will contact you within 24 hours.');this.reset();">
         <h4>Begin Your Safari</h4>
         <div class="row">
-          <label>Full Name<input type="text" name="name" required placeholder="Jane Doe" style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
-          <label style="margin-top:15px;display:block">Email<input type="email" name="email" required placeholder="you@email.com" style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
+          <label>Full Name<input type="text" name="name" required placeholder="Jane Doe" style="width:100%;background:var(--secondary);border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
+          <label style="margin-top:15px;display:block">Email<input type="email" name="email" required placeholder="you@email.com" style="width:100%;background:var(--secondary);border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px"></label>
         </div>
         <div style="margin-top:15px">
           <label>Destination
-            <select name="destination" required style="width:100%;background:#fff;border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px">
+            <select name="destination" required style="width:100%;background:var(--secondary);border:1px solid #ddd;padding:10px;margin-top:5px;border-radius:4px">
               <option value="">Select a country</option>
               <option>Tanzania</option>
               <option>Kenya</option>
