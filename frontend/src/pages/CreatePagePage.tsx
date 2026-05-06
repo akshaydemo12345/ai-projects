@@ -273,135 +273,81 @@ const CreatePagePage = () => {
     setIsComplete(false);
 
     let basePayload: Partial<LandingPage> = {};
+    let finalTemplateId = selectedTemplate;
+    let isAiTemplatePath = false;
 
-    if (activeMethod === "template" && selectedTemplate) {
+    // ─── AI TEMPLATE AUTO-SELECTION ───
+    if (activeMethod === "ai") {
+      const promptLower = aiPrompt.toLowerCase();
+      const projectCat = (project.category || "").toLowerCase();
+      
+      let detectedCategory = "";
+      if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
+      else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
+      else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+
+      if (detectedCategory) {
+        const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
+        if (categoryTemplates.length > 0) {
+          const randomIndex = Math.floor(Math.random() * categoryTemplates.length);
+          finalTemplateId = categoryTemplates[randomIndex].id;
+          isAiTemplatePath = true;
+          toast.info(`AI selected ${detectedCategory} template for you!`);
+        }
+      }
+    }
+
+    if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
       let enrichedStyles = "";
-      const tName = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Template";
+      const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
+      const tName = templateObj?.name || "Template";
 
-      switch (selectedTemplate) {
-        case "healthcare-01":
-          enrichedContent = healthcare01Html;
-          enrichedStyles = healthcare01Styles;
-          break;
-        case "travel-01":
-          enrichedContent = travel01Html;
-          enrichedStyles = travel01Styles;
-          break;
-        case "travel-02":
-          enrichedContent = travel02Html;
-          enrichedStyles = travel02Styles;
-          break;
-        case "travel-03":
-          enrichedContent = travel03Html;
-          enrichedStyles = travel03Styles;
-          break;
-        case "travel-04":
-          enrichedContent = travel04Html;
-          enrichedStyles = travel04Styles;
-          break;
-        case "finance-01":
-          enrichedContent = finance01Html;
-          enrichedStyles = finance01Styles;
-          break;
-        case "finance-02":
-          enrichedContent = finance02Html;
-          enrichedStyles = finance02Styles;
-          break;
-        case "finance-03":
-          enrichedContent = finance03Html;
-          enrichedStyles = finance03Styles;
-          break;
-        default:
-          enrichedContent = "";
-          enrichedStyles = "";
+      switch (finalTemplateId) {
+        case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+        case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
+        case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
+        case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
+        case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
+        case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
+        case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
+        case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        default: enrichedContent = ""; enrichedStyles = "";
       }
 
-      // ───────────────────────────────────────────────────────────────────────────
-      // NEW: DEEP MAGIC FILL (Section-by-Section Text Mapping)
-      // ───────────────────────────────────────────────────────────────────────────
-      try {
-        // 1. Extract unique significant text blocks from the template
-        const textBlocks: string[] = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(enrichedContent, "text/html");
-
-        // Extract from text nodes
-        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span, label, option");
-        elements.forEach(el => {
-          const text = el.textContent?.trim();
-          if (text && text.length > 2 && !text.includes("{") && !text.includes("<")) {
-            textBlocks.push(text);
-          }
-        });
-
-        // ALSO extract from placeholders
-        const inputs = doc.querySelectorAll("input[placeholder], textarea[placeholder]");
-        inputs.forEach(el => {
-          const placeholder = el.getAttribute("placeholder")?.trim();
-          if (placeholder && placeholder.length > 2) {
-            textBlocks.push(placeholder);
-          }
-        });
-
-        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100);
-
-        if (uniqueBlocks.length > 0) {
-          const mappingRes = await aiApi.generate({
+      // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
+      // ONLY run this if we are in the "AI" path (isAiTemplatePath === true)
+      if (isAiTemplatePath) {
+        try {
+          const generationRes = await aiApi.generate({
             businessName: project.name,
             industry: project.category || "Service",
             businessDescription: project.description || "Premium services",
             pageType: "lead generation",
-            aiPrompt: `You are a Content Engine. Your task is to rewrite the following template strings to be 100% relevant to "${project.name}" which is in the "${project.category}" industry.
-            Business Description: ${project.description || "A professional company providing high-quality services."}
-            ${project.scrapedData?.description ? `Scraped Website Context: ${project.scrapedData.description}` : ""}
-            
-            STRINGS TO MAP (Index: Original Text):
-            ${uniqueBlocks.map((s, i) => `${i}: ${s}`).join("\n")}
-            
-            OUTPUT RULES:
-            - Return ONLY a valid JSON object where keys are the indices (strings) and values are the new rewritten text.
-            - Ensure the new text matches the tone and length of the original.
-            - For names like "Lumina Dental" or "Azure Luxury", replace them with "${project.name}" or a relevant alternative.
-            - If a string is a service (e.g., "Dental Implants"), replace it with a service relevant to ${project.category}.
-            - IMPORTANT: If a string looks like a Material Icon name (e.g., "dentistry", "biotech", "mood"), replace it with a relevant Material Icon name from the official library (e.g., "home", "build", "security").
-            - DO NOT include any markdown formatting, only the raw JSON.`
+            aiPrompt: aiPrompt,
+            templateHtml: enrichedContent,
+            templateStyles: enrichedStyles
           });
 
-          const rawMapping = mappingRes?.data?.content?.fullHtml || mappingRes?.data?.content;
-          if (rawMapping) {
-            try {
-              // Extract JSON if AI wrapped it in markdown
-              const jsonStr = rawMapping.match(/\{[\s\S]*\}/)?.[0] || rawMapping;
-              const mapping = JSON.parse(jsonStr);
-
-              // 2. Perform surgical replacement
-              Object.entries(mapping).forEach(([idx, newText]) => {
-                const originalText = uniqueBlocks[parseInt(idx)];
-                if (originalText && newText && typeof newText === "string") {
-                  // Escape regex special chars
-                  const escapedOriginal = originalText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                  const regex = new RegExp(escapedOriginal, "g");
-                  enrichedContent = enrichedContent.replace(regex, newText);
-                }
-              });
-              toast.success("Magic Fill: Full page content optimized!");
-            } catch (jsonErr) {
-              console.error("Failed to parse mapping JSON:", jsonErr);
+          const aiResult = generationRes?.data?.content;
+          if (aiResult && aiResult.fullHtml) {
+            enrichedContent = aiResult.fullHtml;
+            if (aiResult.fullCss && aiResult.fullCss.length > 50) {
+               enrichedStyles = aiResult.fullCss;
             }
+            toast.success("Claude: Template regenerated with your vision!");
           }
+        } catch (err) {
+          console.error("AI Template Regeneration failed:", err);
+          toast.warning("AI regeneration failed, using base template with placeholders.");
         }
-      } catch (err) {
-        console.error("Deep Magic Fill failed:", err);
       }
-      // ───────────────────────────────────────────────────────────────────────────
 
       const finalLogo = logoUrl || project.logoUrl;
       const logoHtml = finalLogo
         ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
         : `<span style="color: ${primaryColor}">${project.name}</span>`;
 
-      // Smart replacements
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
       enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
@@ -413,29 +359,20 @@ const CreatePagePage = () => {
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       if (project.scrapedData?.images?.length > 0) {
-        const projectImages = project.scrapedData.images;
-        const bannerImages = projectImages.filter((img: any) => img.type === 'banner' || img.width > 1000);
-
-        // ONLY Replace the FIRST Unsplash image (Hero) if a HIGH-QUALITY project banner is found
+        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner' || img.width > 1000);
         let hasReplacedHero = false;
         enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
           if (!hasReplacedHero && bannerImages.length > 0) {
-            const replacement = bannerImages[0].url;
             hasReplacedHero = true;
-            return replacement || match;
+            return bannerImages[0].url || match;
           }
-          return match; // Keep the rest static (template defaults)
+          return match;
         });
       }
 
-      // Smart Text Replacements for Relevance
       enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
-
-      // Attempt to replace hero description
       if (project.description) {
-        // Look for common hero paragraph patterns
         enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
-        // If not found by class, try the first <p> after <h1>
         if (!enrichedContent.includes(project.description)) {
           enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
         }
@@ -446,13 +383,12 @@ const CreatePagePage = () => {
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
-        generationMethod: "template" as const,
+        generationMethod: isAiTemplatePath ? "ai" : "template",
         content: enrichedContent,
         styles: enrichedStyles,
-        landingPageContent: enrichedContent,
-        landingPageStyles: enrichedStyles,
-        templateId: selectedTemplate,
-        template: tName
+        templateId: finalTemplateId,
+        template: tName,
+        aiPrompt: aiPrompt
       };
     } else {
       basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
@@ -466,7 +402,8 @@ const CreatePagePage = () => {
       primaryColor,
       secondaryColor,
       logoUrl,
-      aiPrompt: aiPrompt,
+      aiPrompt: activeMethod === "ai" ? aiPrompt : "",
+      generationMethod: activeMethod === "ai" ? "ai" : "template",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -651,8 +588,6 @@ const CreatePagePage = () => {
                         <X className="h-4 w-4" />
                       </button>
                     </div>
-                    <label className="text-xs font-semibold text-gray-600 block mt-2">Customize prompt</label>
-                    <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} className="w-full min-h-[100px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 transition-all resize-none" />
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 text-center">

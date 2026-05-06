@@ -23,6 +23,7 @@ const generateSchema = z.object({
   ctaText: z.string().optional(),
   tone: z.string().optional(),
   aiPrompt: z.string().optional(),
+  templateHtml: z.string().optional(),
   figmaUrl: z.string().url('Invalid Figma URL').nullable().or(z.literal('')).optional(),
   pageId: z.string().optional(),
   services: z.array(z.string()).optional(),
