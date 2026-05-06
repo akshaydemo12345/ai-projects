@@ -719,7 +719,7 @@ export const healthcare01Html = `
 </div>
 <div class="about-text">
 <div>
-<h2 class="font-h2" style="margin-bottom: 1rem;">Why Patients Trust Lumina Dental</h2>
+<h2 class="font-h2" style="margin-bottom: 1rem;">Why Patients Trust PROJECT_NAME_PLACEHOLDER</h2>
 <p class="font-body-lg text-secondary">We believe dental care should be an experience, not just a procedure.</p>
 </div>
 <div class="about-points">

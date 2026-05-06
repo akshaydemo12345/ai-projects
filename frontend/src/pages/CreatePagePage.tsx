@@ -290,12 +290,12 @@ const CreatePagePage = () => {
         
         elements.forEach(el => {
           const text = el.textContent?.trim();
-          if (text && text.length > 10 && !text.includes("{") && !text.includes("<")) {
+          if (text && text.length > 3 && !text.includes("{") && !text.includes("<")) {
             textBlocks.push(text);
           }
         });
 
-        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 30); // Limit to top 30 blocks for speed
+        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100); // Max coverage
 
         if (uniqueBlocks.length > 0) {
           const mappingRes = await aiApi.generate({
@@ -303,16 +303,20 @@ const CreatePagePage = () => {
             industry: project.category || "Service",
             businessDescription: project.description || "Premium services",
             pageType: "lead generation",
-            aiPrompt: `You are a Content Engine. Map these template strings to highly relevant text for "${project.name}" (${project.category}). 
-            Context: ${project.description}.
+            aiPrompt: `You are a Content Engine. Your task is to rewrite the following template strings to be 100% relevant to "${project.name}" which is in the "${project.category}" industry.
+            Business Description: ${project.description || "A professional company providing high-quality services."}
+            ${project.scrapedData?.description ? `Scraped Website Context: ${project.scrapedData.description}` : ""}
             
-            STRINGS TO MAP:
+            STRINGS TO MAP (Index: Original Text):
             ${uniqueBlocks.map((s, i) => `${i}: ${s}`).join("\n")}
             
             OUTPUT RULES:
-            - Return ONLY a JSON object where keys are the numbers and values are the new text.
-            - Keep the tone professional and conversion-focused.
-            - Example: {"0": "New Headline", "1": "New Service Description"}`
+            - Return ONLY a valid JSON object where keys are the indices (strings) and values are the new rewritten text.
+            - Ensure the new text matches the tone and length of the original.
+            - For names like "Lumina Dental" or "Azure Luxury", replace them with "${project.name}" or a relevant alternative.
+            - If a string is a service (e.g., "Dental Implants"), replace it with a service relevant to ${project.category}.
+            - IMPORTANT: If a string looks like a Material Icon name (e.g., "dentistry", "biotech", "mood"), replace it with a relevant Material Icon name from the official library (e.g., "home", "build", "security").
+            - DO NOT include any markdown formatting, only the raw JSON.`
           });
 
           const rawMapping = mappingRes?.data?.content?.fullHtml || mappingRes?.data?.content;
