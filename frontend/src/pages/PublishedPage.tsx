@@ -164,7 +164,7 @@ const PublishedPage = () => {
   }
 
   const liveUrl = page.liveUrl || `${window.location.origin}/?page=${page._id}`;
-  const previewUrl = page.previewUrl || `${window.location.origin}/preview?page=${page._id}`;
+  const previewUrl = page.previewUrl || `${window.location.origin}/preview?page=${page._id}${page.previewToken ? `&token=${page.previewToken}` : ''}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
     if (success) {
