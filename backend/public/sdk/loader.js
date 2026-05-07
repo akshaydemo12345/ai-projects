@@ -3,11 +3,18 @@
  * Fetches and renders AI landing pages within WordPress
  */
 (function() {
+  const currentScript = document.currentScript || (function() {
+    const scripts = document.getElementsByTagName('script');
+    return scripts[scripts.length - 1];
+  })();
+
+  const scriptUrl = new URL(currentScript.src, window.location.origin);
+  const apiBase = scriptUrl.origin;
   const token = window.__PC_TOKEN__;
-  const page = window.__PC_PAGE__;
+  const page = window.__PC_PAGE_ID__ || window.__PC_PAGE__;
   
   if (!token || !page) {
-    console.error('PageCraft AI: Missing token or page slug');
+    console.error('PageCraft AI: Missing token or page id');
     return;
   }
 
@@ -49,7 +56,11 @@
 
   async function loadPage() {
     try {
-      const response = await fetch(`${window.location.origin}/p/${page}?token=${token}`);
+      const usePageId = /^[0-9a-fA-F]{24}$/.test(String(page || ''));
+      const endpoint = usePageId
+        ? `${apiBase}/api/public/page?page=${encodeURIComponent(page)}`
+        : `${apiBase}/api/public/page/${encodeURIComponent(page)}`;
+      const response = await fetch(endpoint);
       if (!response.ok) throw new Error('Failed to load page');
       
       const data = await response.json();
