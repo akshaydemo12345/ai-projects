@@ -69,6 +69,7 @@ export interface LandingPage {
   metaTitle?: string;
   metaDescription?: string;
   publishedUrl?: string; // Virtual/Frontend helper
+  liveUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
   accentColor?: string;
@@ -295,6 +296,14 @@ export const pagesApi = {
     return apiFetch(`/projects/${projectId}/pages/${pageId}`, {
       method: 'DELETE',
     });
+  },
+  getByPageId: async (pageId: string, token?: string) => {
+    const params = new URLSearchParams({ page: pageId });
+    if (token) params.set('token', token);
+    const response = await fetch(`${API_BASE_URL}/api/public/page?${params.toString()}`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Page not found');
+    return result;
   },
   getBySlug: async (slug: string) => {
     // 100% Public endpoint — serves content WITHOUT requiring tokens.
