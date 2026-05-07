@@ -305,9 +305,14 @@ export const pagesApi = {
     if (!response.ok) throw new Error(result.message || 'Page not found');
     return result;
   },
-  getBySlug: async (slug: string) => {
-    // 100% Public endpoint — serves content WITHOUT requiring tokens.
-    const response = await fetch(`${API_BASE_URL}/api/public/page/${slug}`);
+  getBySlug: async (slug: string, token?: string) => {
+    // 100% Public endpoint — serves content WITHOUT requiring tokens for published pages.
+    // However, for previews/drafts, we pass the previewToken.
+    const url = token 
+      ? `${API_BASE_URL}/api/public/page/${slug}?token=${token}`
+      : `${API_BASE_URL}/api/public/page/${slug}`;
+      
+    const response = await fetch(url);
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Page not found');
 
