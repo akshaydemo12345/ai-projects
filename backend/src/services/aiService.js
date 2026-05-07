@@ -404,6 +404,42 @@ const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) 
   return await callAI(prompt);
 };
 
+/**
+ * GrapesJS Editor Chat — Returns structured JSON for element modification
+ */
+const editorChatModify = async ({ elementTag, elementHtml, elementCss, instruction }) => {
+  const systemPrompt = `You are a web design AI inside a GrapesJS editor. The user gives an instruction in Hindi or English to modify a specific HTML element.
+
+Return ONLY a valid JSON object, no markdown, no explanation:
+{
+  "action": "style" | "text" | "html" | "both",
+  "css": { "camelCaseProp": "value" },
+  "text": "new text content",
+  "html": "new full HTML",
+  "summary": "brief English description of change"
+}
+
+Hindi: lal=red, nila=blue, hara=green, kala=black, safed=white, peela=yellow, baingani=purple, gulabi=pink, bada/bado=larger font, chota=smaller, gol=border-radius, center=center align, bold/mota=font-weight bold, background/peechha=background-color.`;
+
+  const userPrompt = `Element: <${elementTag}>
+HTML: ${elementHtml.slice(0, 1500)}
+CSS: ${elementCss}
+Instruction: ${instruction}`;
+
+  const result = await callAI(userPrompt, '', systemPrompt);
+  const rawText = result.fullHtml || '{}';
+
+  // Strip any markdown fences
+  const clean = rawText.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+
+  try {
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    return JSON.parse(jsonMatch ? jsonMatch[0] : clean);
+  } catch {
+    return { action: 'html', html: rawText, summary: 'AI applied changes' };
+  }
+};
+
 const generateProjectSuggestions = async ({ projectName, industry, projectDescription, services, pageTitles }) => {
   const servicesText = services && services.length > 0 ? services.join(', ') : 'various services';
   const pageTitlesText = pageTitles && pageTitles.length > 0 ? pageTitles.join(', ') : 'none';
@@ -535,6 +571,7 @@ const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPa
 module.exports = {
   generateLandingPageContent,
   improveSectionContent,
+  editorChatModify,
   generateDescriptionSuggestion,
   generateProjectSuggestions,
   generateStrategicStructure,

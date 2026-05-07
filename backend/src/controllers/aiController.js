@@ -405,6 +405,31 @@ exports.improveSection = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * @route   POST /ai/editor-chat
+ * @desc    GrapesJS editor AI assistant — returns structured JSON for element modification
+ * @access  Private
+ */
+exports.editorChat = async (req, res, next) => {
+  try {
+    const { elementTag, elementHtml, elementCss, instruction } = req.body;
+
+    if (!elementHtml || !instruction) {
+      return res.status(400).json({ status: 'fail', message: 'elementHtml and instruction are required' });
+    }
+
+    const { editorChatModify } = require('../services/aiService');
+    const result = await editorChatModify({ elementTag: elementTag || 'div', elementHtml, elementCss: elementCss || '{}', instruction });
+
+    return res.status(200).json({
+      status: 'success',
+      data: result  // { action, css, text, html, summary }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 /**
  * @route   POST /ai/generate-description
  * @desc    Generate a suggested AI prompt for a landing page
