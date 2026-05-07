@@ -9,6 +9,8 @@ import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
+import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
+import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -48,6 +50,22 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/healthcare/templates01/dental-screenshot-01.png",
     gradient: "linear-gradient(135deg, #bb0014 0%, #141d23 100%)",
     prompt: "Create a premium dental care landing page for Lumina Dental Excellence. Include a hero section with a booking form, services grid, and patient testimonials.",
+  },
+  {
+    id: "healthcare-02",
+    name: "Elite Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+    prompt: "A professional healthcare landing page with a hero background, 3 feature cards, about section with image grid, and a comprehensive services list.",
+  },
+  {
+    id: "healthcare-03",
+    name: "Lumina Medical Center",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates03/screnshort8.png",
+    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
   {
     id: "travel-01",
@@ -92,12 +110,13 @@ const LANDING_TEMPLATES: any[] = [
   },
   {
     id: "finance-02",
-    name: "Finance Elite",
+    name: "Finance Elite 02",
     tag: "Finance",
-    img: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=800",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-    prompt: "A premium, creative finance landing page with curved sections, glassmorphism, and high-end professional aesthetics. Perfect for elite financial advisors.",
+    img: "/assets/templates/finance/templates02/screen.png",
+    gradient: "linear-gradient(135deg, #0a192f 0%, #c5a059 100%)",
+    prompt: "An institutional-grade investment management landing page with high-end serif typography, a corporate navy and gold theme, and a professional consultation form.",
   },
+
   {
     id: "finance-03",
     name: "Aureum Finance Elite",
@@ -280,7 +299,7 @@ const CreatePagePage = () => {
     if (activeMethod === "ai") {
       const promptLower = aiPrompt.toLowerCase();
       const projectCat = (project.category || "").toLowerCase();
-      
+
       let detectedCategory = "";
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
@@ -305,6 +324,8 @@ const CreatePagePage = () => {
 
       switch (finalTemplateId) {
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+        case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
+        case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
         case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
         case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
         case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
@@ -333,7 +354,7 @@ const CreatePagePage = () => {
           if (aiResult && aiResult.fullHtml) {
             enrichedContent = aiResult.fullHtml;
             if (aiResult.fullCss && aiResult.fullCss.length > 50) {
-               enrichedStyles = aiResult.fullCss;
+              enrichedStyles = aiResult.fullCss;
             }
             toast.success("Claude: Template regenerated with your vision!");
           }
@@ -853,6 +874,8 @@ const CreatePagePage = () => {
               let tpStyles = "";
               switch (previewTemplate.id) {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
+                case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
                 case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
                 case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
