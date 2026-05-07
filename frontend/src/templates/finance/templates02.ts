@@ -1,227 +1,451 @@
 // Master Template — Finance Elite 02
-// Optimized for Editor Reliability — No Variables, Direct Placeholders
-// 100% Dynamic Content
+// Institutional Grade Corporate Design — Focused on Trust, Clarity, and Professionalism
+// Inspired by Global Investment Banks and Asset Management Firms
 
 export const finance02Styles = `
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Public+Sans:wght@300;400;500;600;700&display=swap');
+
 :root {
   --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
+  --slate: #475569;
+  --gold: #c5a059;
+  --bg-light: #fdfdfd;
+  --border: #e2e8f0;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Outfit', sans-serif; color: #0f172a; line-height: 1.6; background: #fff; overflow-x: hidden; }
 
-.container { max-width: 1240px; margin: 0 auto; padding: 0 1.5rem; }
-img { max-width: 100%; display: block; }
-a { text-decoration: none; color: inherit; transition: 0.3s; }
-button { cursor: pointer; border: none; font-family: inherit; transition: 0.3s; }
+* { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.3s ease; }
 
-/* Navigation */
-.nav { position: absolute; top: 0; left: 0; right: 0; z-index: 100; padding: 1.5rem 0; }
+html { scroll-behavior: smooth; }
+
+body { 
+  font-family: 'Public Sans', sans-serif; 
+  background: var(--bg-light); 
+  color: SECONDARY_COLOR_PLACEHOLDER; 
+  line-height: 1.7; 
+  overflow-x: hidden;
+}
+
+h1, h2, h3 { 
+  font-family: 'Playfair Display', serif; 
+  font-weight: 700; 
+  color: var(--navy); 
+}
+
+.container { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 0 2rem; 
+}
+
+.section-padding { padding: 8rem 0; }
+
+.text-gold { color: var(--gold); }
+
+/* NAVBAR */
+.nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 2rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
 .nav-inner { display: flex; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.6rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
-.nav-links { display: flex; gap: 2.5rem; }
-.nav-links a { color: #fff; font-weight: 500; }
-.nav-links a:hover { color: var(--primary); }
-.btn-primary { background-color: var(--primary); color: #fff; padding: 0.7rem 1.6rem; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.logo { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
 
-/* Hero */
-.hero { position: relative; min-height: 100vh; display: flex; align-items: center; background: #020617; overflow: hidden; padding: 8rem 0 10rem; }
-.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-.hero-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(15, 23, 42, 0.8), transparent); }
-.hero-grid { position: relative; z-index: 10; display: grid; grid-template-columns: 1.2fr 1fr; gap: 4rem; align-items: center; }
+.nav-links { display: flex; gap: 3rem; align-items: center; }
+.nav-links a { text-decoration: none; color: #fff; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+.nav-links a:hover { opacity: 1; }
 
-.hero-content { color: #fff; }
-.hero-tag { background: rgba(255,255,255,0.1); padding: 0.5rem 1.2rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; display: inline-block; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.2); }
-.hero h1 { font-size: 4rem; font-weight: 800; line-height: 1.1; margin-bottom: 2rem; }
-.hero p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 3rem; max-width: 550px; }
+.btn-nav {
+  background: PRIMARY_COLOR_PLACEHOLDER !important;
+  color: #fff !important;
+  padding: 0.9rem 2.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 
-.hero-form-card { background: rgba(255,255,255,0.95); padding: 3rem; border-radius: 32px; box-shadow: 0 40px 100px rgba(0,0,0,0.3); }
-.form-title h3 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; }
-.form-title p { font-size: 0.9rem; color: #64748b; margin-bottom: 2rem; }
+/* CORPORATE HERO */
+.hero {
+  height: 90vh;
+  min-height: 800px;
+  background: SECONDARY_COLOR_PLACEHOLDER !important;
+  display: flex;
+  align-items: center;
+  position: relative;
+  color: #fff;
+  overflow: hidden;
+}
 
-.form-group { margin-bottom: 1.25rem; }
-.form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; }
-.form-group input, .form-group select { width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)), url('/assets/templates/finance/templates02/hero.png');
+  background-size: cover;
+  background-position: center;
+}
 
-.btn-submit { width: 100%; background-color: var(--primary); color: #fff; padding: 1.1rem; border-radius: 12px; font-weight: 800; font-size: 1rem; margin-top: 1rem; }
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+}
 
-/* Features */
-.features { padding: 10rem 0; background: #f8fafc; }
-.section-head { text-align: center; max-width: 700px; margin: 0 auto 6rem; }
-.section-head h2 { font-size: 3rem; font-weight: 800; margin-bottom: 1.5rem; }
-.feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
-.feat-card { background: #fff; padding: 3.5rem 2.5rem; border-radius: 32px; border: 1px solid #e2e8f0; }
-.feat-icon { width: 70px; height: 70px; background-color: #f1f5f9; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 2.5rem; color: var(--primary); font-size: 1.8rem; }
+.hero h1 { 
+  font-size: clamp(3rem, 5vw, 4.5rem); 
+  color: #fff; 
+  margin-bottom: 2rem; 
+  line-height: 1.1;
+}
 
-/* Accordion (No JS) */
-.faq { padding: 10rem 0; background: #fff; }
-.faq-grid { max-width: 800px; margin: 0 auto; }
-.faq-item { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
-.faq-input { display: none; }
-.faq-label { display: flex; justify-content: space-between; padding: 1.5rem 2rem; font-weight: 700; cursor: pointer; background: #fff; }
-.faq-label::after { content: '+'; color: PRIMARY_COLOR_PLACEHOLDER; font-size: 1.5rem; }
-.faq-content { max-height: 0; overflow: hidden; padding: 0 2rem; transition: 0.3s; color: #64748b; }
-.faq-input:checked ~ .faq-content { max-height: 200px; padding-bottom: 1.5rem; }
-.faq-input:checked ~ .faq-label::after { content: '-'; }
+.hero p { 
+  font-size: 1.25rem; 
+  color: rgba(255,255,255,0.7); 
+  margin-bottom: 3.5rem; 
+  max-width: 600px;
+  font-weight: 300;
+}
 
-/* CTA */
-.cta { padding: 10rem 0; background: #fff; }
-.cta-card { background-color: var(--primary); border-radius: 60px; padding: 6rem; text-align: center; color: #fff; box-shadow: 0 30px 60px rgba(0,0,0,0.1); }
-.cta-card h2 { font-size: 3.5rem; font-weight: 800; margin-bottom: 2rem; }
-.btn-white { background-color: #fff; color: var(--primary); padding: 1.25rem 3.5rem; border-radius: 16px; font-weight: 800; font-size: 1.2rem; display: inline-block; }
+.hero-btns { display: flex; gap: 1.5rem; }
+.btn-hero-primary { background: PRIMARY_COLOR_PLACEHOLDER !important; color: #fff !important; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
+.btn-hero-outline { border: 1px solid #fff; color: #fff; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+.btn-hero-outline:hover { background: #fff; color: var(--navy); }
 
-/* Footer */
-footer { padding: 6rem 0; border-top: 1px solid #e2e8f0; }
-.foot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
+/* INSTITUTIONAL FORM SECTION */
+.form-section {
+  background: #fff;
+  padding: 6rem;
+  margin-top: -100px;
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.1);
+  border-top: 4px solid PRIMARY_COLOR_PLACEHOLDER;
+}
 
-/* Responsive Media Queries */
+.form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: center; }
+
+.form-text h2 { font-size: 2.5rem; margin-bottom: 1.5rem; }
+.form-text p { color: var(--slate); margin-bottom: 2rem; }
+
+.contact-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-group.full { grid-column: span 2; }
+.form-group label { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--slate); letter-spacing: 1px; }
+.form-group input, .form-group select {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--navy);
+}
+.form-group input:focus { border-color: PRIMARY_COLOR_PLACEHOLDER; }
+
+.btn-form {
+  grid-column: span 2;
+  background: SECONDARY_COLOR_PLACEHOLDER;
+  color: #fff;
+  padding: 1.2rem;
+  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.btn-form:hover { background: PRIMARY_COLOR_PLACEHOLDER; }
+
+/* TRUST SECTION */
+.trust-logos { padding: 4rem 0; border-bottom: 1px solid var(--border); }
+.logo-flex { display: flex; justify-content: space-between; align-items: center; opacity: 0.4; filter: grayscale(1); }
+.logo-flex img { height: 30px; }
+
+/* SERVICES GRID */
+.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem; }
+.service-item { border-left: 1px solid var(--border); padding-left: 2rem; }
+.service-item:hover { border-left-color: PRIMARY_COLOR_PLACEHOLDER; }
+.service-item span { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 700; font-size: 0.9rem; }
+.service-item h3 { font-size: 1.5rem; margin: 1rem 0; }
+.service-item p { color: var(--slate); font-size: 0.95rem; }
+
+/* EXPERTISE CONTENT */
+.expertise-block { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+.expertise-img { height: 600px; background: url('/assets/templates/finance/templates02/heritage.png'); background-size: cover; background-position: center; }
+
+/* FOOTER */
+.footer {
+  background: SECONDARY_COLOR_PLACEHOLDER !important;
+  color: #fff;
+  padding: 6rem 0 3rem;
+}
+
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 4rem; }
+.footer-logo { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; }
+.footer-p { color: rgba(255,255,255,0.5); font-size: 0.9rem; max-width: 300px; }
+.footer h4 { color: #fff; font-family: 'Public Sans', sans-serif; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 1px; }
+.footer ul { list-style: none; }
+.footer ul li { margin-bottom: 0.8rem; }
+.footer ul li a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9rem; }
+.footer ul li a:hover { color: #fff; }
+
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 3rem; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; }
+
+/* GLOBAL PRESENCE */
+.global-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4rem; text-align: center; }
+.global-item h3 { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+.global-item p { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 0.8rem; color: var(--slate); }
+
+/* CORE VALUES */
+.values-section { background: SECONDARY_COLOR_PLACEHOLDER !important; color: #fff; text-align: center; }
+.values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
+.value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
+.value-card:hover { background: rgba(255,255,255,0.05); border-color: PRIMARY_COLOR_PLACEHOLDER; }
+.value-card i { font-size: 2rem; color: var(--gold); margin-bottom: 2rem; display: block; }
+.value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+
+.value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+
+/* MINIMAL CTA */
+.cta-minimal { background: #fff; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.cta-minimal h2 { font-size: 3rem; margin-bottom: 2rem; }
+.btn-cta-dark { background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; padding: 1.2rem 4rem; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; display: inline-block; }
+.btn-cta-dark:hover { background: var(--gold); }
+
 @media (max-width: 1024px) {
-  .hero { padding: 8rem 0; text-align: center; }
-  .hero-grid { grid-template-columns: 1fr !important; gap: 4rem; }
-  .hero-content { max-width: 100%; }
-  .hero h1 { font-size: 3rem; }
-  .hero p { margin: 0 auto 3rem; }
-  .hero-form-card { max-width: 600px; margin: 0 auto; text-align: left; }
-  
-  .feat-grid { grid-template-columns: 1fr 1fr !important; }
-  .nav-links, .btn-nav { display: none; }
-  .cta-card { padding: 4rem 2rem; border-radius: 40px; }
-  .cta-card h2 { font-size: 2.5rem; }
+  .hero-content { text-align: center; margin: 0 auto; }
+  .hero-btns { justify-content: center; }
+  .form-grid { grid-template-columns: 1fr; padding: 3rem; }
+  .services-grid { grid-template-columns: 1fr 1fr; }
+  .expertise-block { grid-template-columns: 1fr; }
+  .global-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .values-grid { grid-template-columns: 1fr 1fr; }
+  .nav-links { display: none; }
 }
 
 @media (max-width: 640px) {
-  .hero h1 { font-size: 2.5rem; }
-  .feat-grid { grid-template-columns: 1fr !important; }
-  .foot-grid { grid-template-columns: 1fr !important; text-align: center; }
-  .foot-col { text-align: center !important; }
+  .services-grid { grid-template-columns: 1fr; }
+  .contact-form { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: span 1; }
+  .btn-form { grid-column: span 1; }
 }
-`
+`;
 
 export const finance02Html = `
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<header class="nav">
+<nav class="nav">
   <div class="container nav-inner">
-    <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav class="nav-links">
-      <a href="#services">Services</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <a href="#contact" class="btn-primary">Get Started</a>
+    <div class="logo" style="display: flex; align-items: center; gap: 1rem;">
+      <span style="font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">LOGO_PLACEHOLDER</span>
+    </div>
+    <div class="nav-links">
+      <a href="#about">Our Firm</a>
+      <a href="#services">Expertise</a>
+      <a href="#insights">Insights</a>
+      <a href="#contact" class="btn-nav">Client Login</a>
+    </div>
   </div>
-</header>
+</nav>
 
-<main>
-  <section class="hero">
-    <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=2000" alt="Hero" class="hero-img">
-    <div class="hero-overlay"></div>
-    <div class="container hero-grid">
-      <div class="hero-content">
-        <span class="hero-tag">✦ ELITE SOLUTIONS</span>
-        <h1>Secure Your Legacy Today.</h1>
-        <p>Premium advisory and management solutions designed for scaling firms and individuals aiming for prosperity.</p>
-      </div>
-      <div class="hero-form-card" id="contact">
-        <div class="form-title">
-          <h3>Apply for Access</h3>
-          <p>Complete the form for a bespoke strategic analysis.</p>
-        </div>
-        <form>
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" placeholder="Enter your name" required>
-          </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" placeholder="john@company.com" required>
-          </div>
-          <div class="form-group">
-            <label>Inquiry Type</label>
-            <select required>
-              <option value="">Select an option</option>
-              <option value="wealth">Wealth Curation</option>
-              <option value="strategy">Strategic Advisory</option>
-            </select>
-          </div>
-          <button type="submit" class="btn-submit">Submit Request</button>
-        </form>
+<section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="container">
+    <div class="hero-content">
+      <h1>Preserving Wealth. <br>Building <span class="text-gold">Legacies.</span></h1>
+      <p>Global institutional-grade investment management and strategic advisory for multi-generational success.</p>
+      <div class="hero-btns">
+        <a href="#contact" class="btn-hero-primary">Our Expertise</a>
+        <a href="#about" class="btn-hero-outline">Learn More</a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="features" id="services">
-    <div class="container">
-      <div class="section-head">
-        <h2>Expertise Redefined</h2>
-        <p>We combine institutional-grade intelligence with a commitment to multi-generational legacy preservation.</p>
-      </div>
-      <div class="feat-grid">
-        <div class="feat-card">
-          <div class="feat-icon"><i class="fa-solid fa-gem"></i></div>
-          <h3>Wealth Curation</h3>
-          <p>Bespoke portfolio strategies focusing on alternative assets and capital growth.</p>
-        </div>
-        <div class="feat-card">
-          <div class="feat-icon"><i class="fa-solid fa-chess-knight"></i></div>
-          <h3>Strategic Advisory</h3>
-          <p>Navigating mergers and complex capital structures with surgical precision.</p>
-        </div>
-        <div class="feat-card">
-          <div class="feat-icon"><i class="fa-solid fa-vault"></i></div>
-          <h3>Asset Protection</h3>
-          <p>Legal safeguards designed to preserve and protect your global interests.</p>
+<section class="container" id="contact">
+  <div class="form-section">
+    <div class="form-grid">
+      <div class="form-text">
+        <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px;">Inquiry</span>
+        <h2>Begin Your Consultation</h2>
+        <p>Connect with our senior advisors for a comprehensive analysis of your global financial objectives.</p>
+        <div style="margin-top: 2rem;">
+          <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Corporate HQ</h4>
+          <p style="color: var(--slate); font-size: 0.9rem;">Wall Street, New York, NY 10005</p>
         </div>
       </div>
+      <form class="contact-form">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Doe">
+        </div>
+        <div class="form-group full">
+          <label>Inquiry Type</label>
+          <select>
+            <option>Investment Management</option>
+            <option>Wealth Planning</option>
+            <option>Corporate Advisory</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Email Address</label>
+          <input type="email" placeholder="john@firm.com">
+        </div>
+        <button type="button" class="btn-form">Request Consultation</button>
+      </form>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="faq">
-    <div class="container">
-      <div class="section-head">
-        <h2>Strategic Insights</h2>
-        <p>Common questions about our elite advisory and management methodology.</p>
-      </div>
-      <div class="faq-grid">
-        <div class="faq-item">
-          <input type="checkbox" id="faq1" class="faq-input">
-          <label for="faq1" class="faq-label">How do you manage market risk?</label>
-          <div class="faq-content">
-            <p>We use multi-layer diversification and real-time monitoring to protect capital from volatility.</p>
-          </div>
-        </div>
-        <div class="faq-item">
-          <input type="checkbox" id="faq2" class="faq-input">
-          <label for="faq2" class="faq-label">Who is your typical client?</label>
-          <div class="faq-content">
-            <p>High-net-worth individuals and firms seeking strategic capital expansion and legacy protection.</p>
-          </div>
-        </div>
-      </div>
+<div class="container">
+  <div class="trust-logos">
+    <div class="logo-flex">
+      <img src="/assets/templates/finance/templates02/logo-1.png" alt="Goldman Sachs">
+      <img src="/assets/templates/finance/templates02/logo-2.png" alt="JP Morgan">
+      <img src="/assets/templates/finance/templates02/logo-3.png" alt="Morgan Stanley">
+      <img src="/assets/templates/finance/templates02/logo-4.png" alt="UBS">
     </div>
-  </section>
+  </div>
+</div>
 
-  <section class="cta">
-    <div class="container">
-      <div class="cta-card">
-        <h2>Ready to Scale Your Future?</h2>
-        <p>Join the elite circle of businesses mastering their prosperity with our dedicated solutions.</p>
-        <a href="#contact" class="btn-white">Apply for Consultation</a>
+<section class="section-padding container" id="services">
+  <div style="text-align: center; margin-bottom: 6rem;">
+    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Areas of Expertise</span>
+    <h2 style="font-size: 3.5rem; margin-top: 1.5rem;">Unrivaled Financial <br>Intelligence</h2>
+  </div>
+
+  <div class="services-grid">
+    <div class="service-item">
+      <span>01</span>
+      <h3>Asset Management</h3>
+      <p>Precision-engineered portfolios tailored to your risk profile and long-term capital preservation goals.</p>
+    </div>
+    <div class="service-item">
+      <span>02</span>
+      <h3>Wealth Strategy</h3>
+      <p>Comprehensive estate and tax optimization strategies designed to protect your global interests across generations.</p>
+    </div>
+    <div class="service-item">
+      <span>03</span>
+      <h3>Corporate Advisory</h3>
+      <p>Navigating mergers, acquisitions, and complex capital structures with unmatched institutional experience.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section-padding" style="background: #f8fafc;" id="about">
+  <div class="container expertise-block">
+    <div class="expertise-img"></div>
+    <div class="expertise-content">
+      <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px;">Our Heritage</span>
+      <h2 style="font-size: 3rem; margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
+      <p style="color: var(--slate); font-size: 1.1rem; margin-bottom: 2rem;">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
+      <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
+        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Institutional Risk Management</li>
+        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Global Market Access</li>
+        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Discreet Advisory Services</li>
+      </ul>
+      <a href="#contact" style="color: SECONDARY_COLOR_PLACEHOLDER; font-weight: 800; text-decoration: none; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">View Our Report</a>
+    </div>
+  </div>
+</section>
+
+<section class="section-padding container">
+  <div class="global-grid">
+    <div class="global-item">
+      <h3>$4.2B</h3>
+      <p>Assets Under Advisory</p>
+    </div>
+    <div class="global-item">
+      <h3>12+</h3>
+      <p>International Offices</p>
+    </div>
+    <div class="global-item">
+      <h3>98%</h3>
+      <p>Client Retention Rate</p>
+    </div>
+  </div>
+</section>
+
+<section class="section-padding values-section">
+  <div class="container">
+    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Philosophy</span>
+    <h2 style="font-size: 3rem; color: #fff; margin-top: 1.5rem;">The Pillars of Our Success</h2>
+    <div class="values-grid">
+      <div class="value-card">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h4>Integrity</h4>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-gem"></i>
+        <h4>Excellence</h4>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-eye-slash"></i>
+        <h4>Discretion</h4>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-chart-line"></i>
+        <h4>Vision</h4>
       </div>
     </div>
-  </section>
-</main>
+  </div>
+</section>
 
-<footer>
-  <div class="container foot-grid">
-    <div class="foot-col">
-      <div style="font-weight: 800; font-size: 1.5rem; margin-bottom: 1rem;">LOGO_PLACEHOLDER</div>
-      <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
+<section class="section-padding cta-minimal">
+  <div class="container">
+    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Next Steps</span>
+    <h2 style="margin: 1.5rem 0 3rem;">Ready to Secure Your <br>Financial Future?</h2>
+    <a href="#contact" class="btn-cta-dark">Request an Introduction</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <div class="footer-logo" style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 1.1rem; font-weight: 800; letter-spacing: 1px;">LOGO_PLACEHOLDER</span>
+      </div>
+      <p class="footer-p">A global investment and advisory firm dedicated to the preservation and expansion of institutional and private wealth.</p>
     </div>
-    <div class="foot-col" style="text-align: right;">
-      <p>Premium Advisory • Corporate Strategy • Wealth Management</p>
+    <div class="footer-links">
+      <h4>Intelligence</h4>
+      <ul>
+        <li><a href="#">Market Analysis</a></li>
+        <li><a href="#">Economic Outlook</a></li>
+        <li><a href="#">Strategic Reports</a></li>
+      </ul>
     </div>
+    <div class="footer-links">
+      <h4>The Firm</h4>
+      <ul>
+        <li><a href="#">Our Heritage</a></li>
+        <li><a href="#">Leadership</a></li>
+        <li><a href="#">Global Offices</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Inquiries</h4>
+      <ul>
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">Client Portal</a></li>
+        <li><a href="#">Media Center</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved. Member FINRA/SIPC. Disclosures and Privacy Policy.</p>
   </div>
 </footer>
 `
