@@ -23,8 +23,8 @@ const PublicLandingPage = () => {
   const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
 
   const { data: pageData, isLoading, error } = useQuery({
-    queryKey: ['public-page', pageId || slug],
-    queryFn: () => pageId ? pagesApi.getByPageId(pageId, token || undefined) : pagesApi.getBySlug(slug!),
+    queryKey: ['public-page', pageId || slug, token],
+    queryFn: () => pageId ? pagesApi.getByPageId(pageId, token || undefined) : pagesApi.getBySlug(slug!, token || undefined),
     enabled: !!pageId || !!slug,
     retry: 1,
   });
@@ -587,7 +587,36 @@ const PublicLandingPage = () => {
   }
 
   // Check if page exists AND is not unpublished
-  if (error || !pageData || (pageData as any).status === 'unpublished') {
+  // if (error || !pageData || (pageData as any).status === 'unpublished') {
+  // Safely resolve status from different API response structures
+// const resolvedStatus =
+//   (pageData as any)?.status ||
+//   (pageData as any)?.data?.status;
+
+// Check if page exists AND is published
+// if (
+//   error ||
+//   !pageData ||
+//   resolvedStatus === 'unpublished'
+// ) 
+// Resolve actual page object safely
+const resolvedPage =
+  (pageData as any)?.data || pageData;
+
+// Resolve page status
+const resolvedStatus = resolvedPage?.status;
+
+// Detect preview mode
+const isPreviewMode =
+  window.location.pathname.startsWith('/preview/') ||
+  !!token;
+
+// Block unpublished pages ONLY on public URLs
+if (
+  error ||
+  !resolvedPage ||
+  (!isPreviewMode && resolvedStatus === 'unpublished')
+) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
         <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">

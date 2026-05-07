@@ -1769,7 +1769,8 @@ const GrapesEditor = () => {
       return;
     }
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}`;
+    const token = page.previewToken ? `?token=${page.previewToken}` : '';
+    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };
