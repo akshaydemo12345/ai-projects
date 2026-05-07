@@ -71,7 +71,6 @@ const App = () => (
                 <Route path="plans" element={<PlansPage />} />
                 <Route path="billing" element={<BillingPage />} />
               </Route>
-              <Route path="/preview" element={<PreviewPage />} />
             </Route>
 
             {/* Public Landing Pages — Wildcard to support nested preSlugs */}

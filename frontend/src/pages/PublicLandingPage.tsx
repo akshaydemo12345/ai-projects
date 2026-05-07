@@ -8,25 +8,24 @@ const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const pgSlug = searchParams.get('pg');
+  const pageId = searchParams.get('page') || searchParams.get('pageId');
+  const token = searchParams.get('token') || searchParams.get('previewToken');
 
   // Resolve slug from splat or pathname to support nested preSlugs
   const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
   // Strip /thank-you from path to get the page slug
   const path = rawPath.replace(/\/thank-you$/i, '');
 
-  const slug = (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
+  const slug = pageId ? undefined : (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
 
-  // We might need the token from the URL if the backend requires it
-  const token = searchParams.get('token');
-
   const { data: pageData, isLoading, error } = useQuery({
-    queryKey: ['public-page', slug],
-    queryFn: () => pagesApi.getBySlug(slug!),
-    enabled: !!slug,
+    queryKey: ['public-page', pageId || slug],
+    queryFn: () => pageId ? pagesApi.getByPageId(pageId, token || undefined) : pagesApi.getBySlug(slug!),
+    enabled: !!pageId || !!slug,
     retry: 1,
   });
 
