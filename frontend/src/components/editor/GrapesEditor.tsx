@@ -60,11 +60,41 @@ const GrapesEditor = () => {
 
   // AI Chat Assistant
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([
-    { role: 'ai', content: 'Hi! I am your AI Assistant. Select an element and tell me how you want to change it (e.g. "make it red", "change text to Hello").' }
-  ]);
+
+  const WELCOME_MSG = { role: 'ai' as const, content: "Hi! How can I help you today? 😊" };
+
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ai_chat_messages_${pageId}`);
+      return saved ? JSON.parse(saved) : [WELCOME_MSG];
+    } catch { return [WELCOME_MSG]; }
+  });
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Change History — persisted in localStorage per page
+  const [aiHistory, setAiHistory] = useState<{ id: string; timestamp: string; prompt: string; element: string; summary: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ai_history_${pageId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Persist aiHistory & chatMessages to localStorage on every change
+  useEffect(() => {
+    try { localStorage.setItem(`ai_history_${pageId}`, JSON.stringify(aiHistory)); } catch { }
+  }, [aiHistory, pageId]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`ai_chat_messages_${pageId}`, JSON.stringify(chatMessages)); } catch { }
+  }, [chatMessages, pageId]);
+
+  // AI API Key (Claude - stored in localStorage)
+  const [aiApiKey, setAiApiKey] = useState<string>(() => localStorage.getItem('ai_editor_claude_key') || '');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [aiProvider, setAiProvider] = useState<'claude' | 'demo'>(() => (localStorage.getItem('ai_editor_claude_key') ? 'claude' : 'demo'));
 
   // Publish
   const [isPublishing, setIsPublishing] = useState(false);
@@ -460,9 +490,9 @@ const GrapesEditor = () => {
           { name: 'Spacing', open: false, buildProps: ['margin', 'padding'] },
           { name: 'Size', open: false, buildProps: ['width', 'min-width', 'max-width', 'height', 'min-height', 'max-height'] },
           { name: 'Position', open: false, buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'] },
-          { 
-            name: 'Typography', 
-            open: false, 
+          {
+            name: 'Typography',
+            open: false,
             properties: [
               {
                 property: 'font-family',
@@ -840,11 +870,11 @@ const GrapesEditor = () => {
             btn.onclick = () => {
               const classModels = selected.getClasses();
               const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
-              
+
               const filteredClasses = classes.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
               filteredClasses.push('fas');
               filteredClasses.push(icon);
-              
+
               selected.setClass(filteredClasses);
               modal.close();
             };
@@ -897,12 +927,12 @@ const GrapesEditor = () => {
               setTimeout(() => {
                 const selected = editor.getSelected();
                 if (!selected) return;
-                
+
                 const type = selected.get('type');
                 const tagName = (selected.get('tagName') || '').toLowerCase();
                 const classModels = selected.getClasses();
                 const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
-                
+
                 const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
                 const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
 
@@ -1079,13 +1109,13 @@ const GrapesEditor = () => {
             const code = this.get('embedCode') || '';
             const type = this.get('embedType') || 'html';
             let content = code;
-            
+
             if (type === 'script' && code && !code.includes('<script')) {
               content = `<script>${code}</script>`;
             } else if (type === 'iframe' && code && !code.includes('<iframe')) {
               content = `<iframe src="${code}" width="100%" height="500px" frameborder="0"></iframe>`;
             }
-            
+
             this.set('components', content);
           },
         },
@@ -1097,7 +1127,7 @@ const GrapesEditor = () => {
             const model = this.model;
             const code = model.get('embedCode');
             const type = String(model.get('embedType') || 'html').toUpperCase();
-            
+
             if (!code) {
               this.el.innerHTML = `
                 <div style="padding: 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif;">
@@ -1521,7 +1551,7 @@ const GrapesEditor = () => {
       const canvas = editorRef.current.Canvas;
       const doc = canvas.getDocument();
       if (!doc) return;
-      
+
       const head = doc.head;
       const styleId = 'branding-vars';
       let styleEl = head.querySelector(`#${styleId}`);
@@ -1530,7 +1560,7 @@ const GrapesEditor = () => {
         styleEl.id = styleId;
         head.appendChild(styleEl);
       }
-      
+
       // Update variables in real-time
       styleEl.innerHTML = `
         :root {
@@ -1951,111 +1981,104 @@ const GrapesEditor = () => {
     }
   };
 
-  // ─── AI Chat Processor ───
-  const processAiChat = () => {
-    if (chatInput.trim() && !chatLoading && editorRef.current) {
-      const val = chatInput.trim();
-      setChatInput('');
-      const selected = activeComponent || editorRef.current.getSelected();
-      if (!selected) {
-        toast.error('Please select an element first');
-        return;
+  // ─── AI Chat Processor (Real GPT API) ───
+  const processAiChat = async () => {
+    if (!chatInput.trim() || chatLoading || !editorRef.current) return;
+
+    const val = chatInput.trim();
+    setChatInput('');
+
+    const selected = activeComponent || editorRef.current.getSelected();
+    if (!selected) {
+      setChatMessages(prev => [...prev,
+      { role: 'user', content: val },
+      { role: 'ai', content: '⚠️ Pehle canvas mein koi element select karo, phir apna command likho.' }
+      ]);
+      return;
+    }
+
+    // Add user message
+    setChatMessages(prev => [...prev, { role: 'user', content: val }]);
+    setChatLoading(true);
+
+    const el = selected.getEl();
+    if (el) el.classList.add('ai-pulse-active');
+
+    const elementHtml = selected.toHTML();
+    const elementCss = JSON.stringify(selected.getStyle() || {});
+    const elementTag = selected.get('tagName') || 'div';
+    const elementType = selected.get('type') || 'element';
+
+    try {
+      let aiResponse = '';
+
+      // ── Call dedicated /ai/editor-chat backend endpoint ──
+      const res = await aiApi.editorChat({
+        elementTag,
+        elementHtml: elementHtml.slice(0, 1500),
+        elementCss,
+        instruction: val
+      });
+
+      // res.data is directly: { action, css, text, html, summary }
+      const parsed = res.data || {};
+
+      // Apply changes to the selected component
+      let changeApplied = false;
+      let changeSummary = parsed.summary || 'AI change applied';
+
+      if ((parsed.action === 'style' || parsed.action === 'both') && parsed.css && Object.keys(parsed.css).length > 0) {
+        // Convert camelCase to kebab-case for GrapesJS
+        const kebabCss: Record<string, string> = {};
+        Object.entries(parsed.css).forEach(([key, value]) => {
+          const kebab = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+          kebabCss[kebab] = value as string;
+        });
+        const currentStyle = selected.getStyle() || {};
+        selected.setStyle({ ...currentStyle, ...kebabCss });
+        changeApplied = true;
       }
 
-      setChatLoading(true);
-      const el = selected.getEl();
-      if (el) el.classList.add('ai-pulse-active');
-
-      setTimeout(() => {
-        try {
-          const cmd = val.toLowerCase();
-          let applied = false;
-
-          // 1. COLORS
-          const colors: Record<string, string> = {
-            'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e',
-            'black': '#000000', 'white': '#ffffff', 'yellow': '#fbbf24',
-            'orange': '#f97316', 'purple': '#7c3aed', 'pink': '#ec4899',
-            'grey': '#64748b', 'gray': '#64748b'
-          };
-
-          Object.keys(colors).forEach(c => {
-            if (cmd.includes(c)) {
-              const currentStyle = selected.getStyle() || {};
-              if (cmd.includes('bg') || cmd.includes('background')) {
-                selected.setStyle({ ...currentStyle, 'background-color': colors[c] });
-              } else {
-                selected.setStyle({ ...currentStyle, 'color': colors[c] });
-              }
-              applied = true;
-            }
-          });
-
-          // 2. LAYOUT & STYLE
-          const currentStyle = selected.getStyle() || {};
-          let nextStyle = { ...currentStyle };
-          let styleChanged = false;
-
-          if (cmd.includes('center')) { nextStyle['text-align'] = 'center'; styleChanged = true; }
-          if (cmd.includes('right')) { nextStyle['text-align'] = 'right'; styleChanged = true; }
-          if (cmd.includes('left')) { nextStyle['text-align'] = 'left'; styleChanged = true; }
-          if (cmd.includes('big') || cmd.includes('large')) { nextStyle['font-size'] = '42px'; styleChanged = true; }
-          if (cmd.includes('small')) { nextStyle['font-size'] = '12px'; styleChanged = true; }
-          if (cmd.includes('round')) { nextStyle['border-radius'] = '15px'; styleChanged = true; }
-          if (cmd.includes('circle')) { nextStyle['border-radius'] = '50%'; styleChanged = true; }
-          if (cmd.includes('padding')) { nextStyle['padding'] = '24px'; styleChanged = true; }
-          if (cmd.includes('margin')) { nextStyle['margin'] = '24px'; styleChanged = true; }
-
-          if (styleChanged) {
-            selected.setStyle(nextStyle);
-            applied = true;
-          }
-
-          // 3. TEXT CONTENT
-          const textKeywords = ['change text to', 'set text to', 'update text to', 'write', 'change text to'];
-          let newText = '';
-
-          for (const kw of textKeywords) {
-            if (cmd.includes(kw)) {
-              const regex = new RegExp(`${kw}\\s*(.*)`, 'i');
-              const match = val.match(regex);
-              if (match && match[1]) {
-                newText = match[1].trim();
-                break;
-              }
-            }
-          }
-
-          const isStyleOnly = cmd.includes('color') || cmd.includes('bg') || cmd.includes('background') || cmd.includes('size') || cmd.includes('padding') || cmd.includes('margin') || cmd.includes('align');
-
-          if (newText) {
-            if (selected.get('type') === 'wrapper' || selected.get('tagName')?.toLowerCase() === 'body') {
-              toast.warning('Select a specific element to edit text.');
-            } else {
-              selected.components(newText);
-              applied = true;
-            }
-          } else if (!isStyleOnly && cmd.includes('text') && val.split(' ').length > 2) {
-            const possibleContent = val.replace(/text/i, '').trim();
-            if (possibleContent && !colors[possibleContent]) {
-              selected.components(possibleContent);
-              applied = true;
-            }
-          }
-
-          if (applied) {
-            toast.success('✨ AI updated it successfully!');
-          } else {
-            toast.info('Try: "red color" or "write welcome"');
-          }
-        } catch (err) {
-          console.error('AI Error:', err);
-          toast.error('AI failed to update. Try again.');
-        } finally {
-          if (el) el.classList.remove('ai-pulse-active');
-          setChatLoading(false);
+      if ((parsed.action === 'text' || parsed.action === 'both') && parsed.text) {
+        if (selected.get('type') !== 'wrapper') {
+          selected.components(parsed.text);
+          changeApplied = true;
         }
-      }, 600);
+      }
+
+      if (parsed.action === 'html' && parsed.html) {
+        selected.replaceWith(parsed.html);
+        changeApplied = true;
+      }
+
+      if (changeApplied) {
+        aiResponse = `✅ Done! ${changeSummary}`;
+        const historyEntry = {
+          id: Date.now().toString(),
+          timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          prompt: val,
+          element: `${elementTag} · ${selectedLabel}`,
+          summary: changeSummary
+        };
+        setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
+        toast.success('✨ AI ne change apply kar diya!');
+      } else {
+        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo jaise: "is heading ka color lal karo"';
+      }
+
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+    } catch (err: any) {
+      console.error('AI Chat Error:', err);
+      const errMsg = err?.message || 'Unknown error';
+      setChatMessages(prev => [...prev, {
+        role: 'ai',
+        content: `❌ Error: ${errMsg}\n\nApna API key check karo (⚙️ icon pe click karo).`
+      }]);
+    } finally {
+      if (el) el.classList.remove('ai-pulse-active');
+      setChatLoading(false);
+      // Auto-scroll chat
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     }
   };
 
@@ -2159,22 +2182,22 @@ const GrapesEditor = () => {
           {/* Status Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
             <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
-            <select 
+            <select
               value={siteStatus}
               onChange={(e) => {
                 const val = e.target.value as any;
                 setSiteStatus(val);
                 // 🚀 Actually update the database!
                 updatePageMutation.mutate({ status: val });
-                
+
                 if (val === 'unpublished') {
                   toast.error('Site is now Unpublished and hidden from public view.');
                 } else {
                   toast.success(`Status changed to ${val}`);
                 }
               }}
-              style={{ 
-                background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e8f0', 
+              style={{
+                background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e8f0',
                 borderRadius: 6, padding: '4px 24px 4px 10px', fontSize: 11, fontWeight: 700, outline: 'none', cursor: 'pointer',
                 appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\'/%3E%3C/svg%3E")',
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center'
@@ -2187,15 +2210,15 @@ const GrapesEditor = () => {
             </select>
           </div>
 
-          <button 
+          <button
             onClick={() => {
               if (siteStatus === 'unpublished') {
                 toast.error('Cannot preview an Unpublished site. Please change status to Published first.');
                 return;
               }
               handlePreview();
-            }} 
-            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }} 
+            }}
+            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }}
             title="Live Preview"
           >
             <EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span>
@@ -2325,57 +2348,193 @@ const GrapesEditor = () => {
             <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
 
 
-            {/* AI Panel */}
-            <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
-              <div style={{ flex: 1, padding: 18, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 14, padding: 16 }}>
-                  <p style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.6, margin: 0 }}>
-                    Select any element and ask me to edit it. I can change text, colors, styles, or generate entire sections!
-                  </p>
-                </div>
+            {/* AI Panel - Full Featured */}
+            <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden', minWidth: 280 }}>
 
-                {/* Selection Info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                  <span style={{ color: '#cbd5e1', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Editing context:</span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#1a1a2e', padding: '8px 12px', borderRadius: 10, border: '1px solid #2a2a3e', width: 'fit-content', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{selectedLabel}</span>
-                  <button onClick={() => setSelectedLabel('Body')} style={{ color: '#cbd5e1', background: 'none', border: 'none', marginLeft: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
-                </div>
+              {/* ── AI Panel Header Tabs ── */}
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #1e1e2d', background: '#0a0a14', padding: '0 12px' }}>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#64748b' : '#a78bfa', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #7c3aed', transition: 'all 0.2s' }}
+                >✨ AI Chat</button>
+                <button
+                  onClick={() => setShowHistory(true)}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#a78bfa' : '#64748b', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #7c3aed' : 'none', transition: 'all 0.2s', position: 'relative' }}
+                >
+                  🕐 History
+                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#7c3aed', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
+                </button>
+                <button
+                  onClick={() => setShowApiKeyInput(v => !v)}
+                  title="API Key Settings"
+                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(124,58,237,0.2)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#64748b', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
+                >⚙️</button>
               </div>
 
-              {/* Input Area (Bottom) */}
-              <div style={{ padding: 18, borderTop: '1px solid #1e1e2d', background: '#0a0a14' }}>
-                <div style={{
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a3e', borderRadius: 14,
-                  padding: '12px', display: 'flex', flexDirection: 'column', gap: 10,
-                  transition: 'border-color 0.2s',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
-                }}>
-                  <textarea
-                    ref={aiInputRef}
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        processAiChat();
-                      }
-                    }}
-                    placeholder="Ask AI anything..."
-                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 13, resize: 'none', outline: 'none', minHeight: 60, fontFamily: 'inherit' }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#4a4a6a', fontSize: 10 }}>Press Enter</span>
-                    <button
-                      onClick={processAiChat}
-                      style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                    >Send <SparklesIcon /></button>
+              {/* ── API Key Settings ── */}
+              {showApiKeyInput && (
+                <div style={{ padding: '12px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12 }}>🤖</span>
+                    <span style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
                   </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="password"
+                      value={aiApiKey}
+                      onChange={e => setAiApiKey(e.target.value)}
+                      placeholder="sk-ant-api03-..."
+                      style={{ flex: 1, background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (aiApiKey.trim()) {
+                          localStorage.setItem('ai_editor_claude_key', aiApiKey.trim());
+                          setAiProvider('claude');
+                          toast.success('✅ Claude API Key saved!');
+                        } else {
+                          localStorage.removeItem('ai_editor_claude_key');
+                          setAiProvider('demo');
+                          toast.info('API Key removed. Using demo mode.');
+                        }
+                        setShowApiKeyInput(false);
+                      }}
+                      style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >Save</button>
+                  </div>
+                  <div style={{ fontSize: 10, color: aiApiKey ? '#10b981' : '#f97316', marginTop: 6 }}>
+                    {aiApiKey ? '✅ Claude AI active (claude-3-5-haiku)' : '⚠️ Demo mode — limited commands only'}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#4a4a6a', marginTop: 4 }}>Key is stored locally in your browser only.</div>
                 </div>
-              </div>
+              )}
+
+              {/* ── HISTORY TAB ── */}
+              {showHistory ? (
+                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {aiHistory.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <span style={{ fontSize: 10, color: '#64748b' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
+                      <button
+                        onClick={() => { setAiHistory([]); localStorage.removeItem(`ai_history_${pageId}`); }}
+                        style={{ fontSize: 10, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
+                      >🗑️ Clear All</button>
+                    </div>
+                  )}
+                  {aiHistory.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        color: '#4a4a6a',
+                        fontSize: 13,
+                        padding: '32px 0',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <div style={{ fontSize: 32, marginBottom: 10 }}>✨</div>
+
+                      No AI updates yet.<br />
+                      Select any element and give a prompt to start editing.
+                    </div>
+                  ) : (
+                    aiHistory.map(h => (
+                      <div key={h.id} style={{ background: '#1a1a2e', borderRadius: 10, border: '1px solid #2a2a3e', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 9, color: '#64748b', fontWeight: 700 }}>🕐 {h.timestamp}</span>
+                          <span style={{ fontSize: 9, background: 'rgba(124,58,237,0.2)', color: '#a78bfa', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#e2e8f0', fontStyle: 'italic' }}>"{h.prompt}"</div>
+                        <div style={{ fontSize: 11, color: '#10b981' }}>✅ {h.summary}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* ── CHAT TAB ── */}
+
+                  {/* Selection Context Bar */}
+                  <div style={{ padding: '8px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeComponent ? '#10b981' : '#f97316', boxShadow: activeComponent ? '0 0 6px #10b981' : '0 0 6px #f97316', flexShrink: 0 }} />
+                    <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {activeComponent ? `🎯 ${selectedLabel}` : '⬅️ Select an element on canvas'}
+                    </span>
+                    <button
+                      onClick={() => { setChatMessages([WELCOME_MSG]); localStorage.removeItem(`ai_chat_messages_${pageId}`); }}
+                      title="Chat clear karo"
+                      style={{ fontSize: 11, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
+                    >🗑️</button>
+                    <span style={{ fontSize: 9, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                      🤖 Claude AI
+                    </span>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} style={{ display: 'flex', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-end' }}>
+                        {msg.role === 'ai' && (
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>✨</div>
+                        )}
+                        <div style={{
+                          maxWidth: '80%',
+                          background: msg.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#6366f1)' : '#1a1a2e',
+                          color: '#e2e8f0',
+                          borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                          padding: '9px 12px',
+                          fontSize: 12,
+                          lineHeight: 1.6,
+                          border: msg.role === 'ai' ? '1px solid #2a2a3e' : 'none',
+                          whiteSpace: 'pre-line',
+                          wordBreak: 'break-word'
+                        }}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {chatLoading && (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✨</div>
+                        <div style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
+                          {[0, 1, 2].map(d => (
+                            <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', animation: `bounce 1.2s ${d * 0.2}s infinite` }} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Input Area */}
+                  <div style={{ padding: '12px 14px', borderTop: '1px solid #1e1e2d', background: '#0a0a14' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${chatInput.trim() ? '#7c3aed' : '#2a2a3e'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}>
+                      <textarea
+                        ref={aiInputRef}
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            processAiChat();
+                          }
+                        }}
+                        placeholder="Hindi ya English mein likhو... e.g. 'is button ka color blue karo'"
+                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#4a4a6a', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
+                        <button
+                          onClick={processAiChat}
+                          disabled={chatLoading || !chatInput.trim()}
+                          style={{ background: chatLoading || !chatInput.trim() ? '#2a2a3e' : 'linear-gradient(135deg,#7c3aed,#6366f1)', color: chatLoading || !chatInput.trim() ? '#64748b' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
+                        >
+                          {chatLoading ? '...' : <><SparklesIcon /> Send</>}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* SEO Panel */}
@@ -2405,7 +2564,7 @@ const GrapesEditor = () => {
                 onSelect={async (html, css) => {
                   if (editorRef.current) {
                     console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
-                    
+
                     // Clear both HTML and CSS to prevent merging
                     editorRef.current.setComponents('');
                     try {
@@ -2420,7 +2579,7 @@ const GrapesEditor = () => {
                       if (editorRef.current.UndoManager && editorRef.current.UndoManager.clear) {
                         editorRef.current.UndoManager.clear();
                       }
-                    } catch (e) {}
+                    } catch (e) { }
 
                     let finalHtml = html;
                     let finalCss = css || '';
@@ -2446,7 +2605,7 @@ const GrapesEditor = () => {
                       editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
                       editorRef.current.setStyle(finalCss);
                     }
-                    
+
                     // Force refresh
                     editorRef.current.refresh();
                     console.log('✨ Canvas updated with new Thank You template.');

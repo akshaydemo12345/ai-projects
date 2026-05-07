@@ -339,6 +339,12 @@ export const aiApi = {
       body: JSON.stringify(sectionData),
     });
   },
+  editorChat: async (data: { elementTag: string; elementHtml: string; elementCss: string; instruction: string }) => {
+    return apiFetch('/ai/editor-chat', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
   generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string; currentPrompt?: string }) => {
     return apiFetch('/ai/generate-description', {
       method: 'POST',
