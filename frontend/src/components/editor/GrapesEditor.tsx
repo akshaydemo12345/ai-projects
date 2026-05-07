@@ -1772,6 +1772,12 @@ const GrapesEditor = () => {
       toast.error('Failed to create download package');
       return;
     }
+    // ── Create img/ subfolder inside landing-page/ ──
+    const imgFolder = landingPageFolder.folder('img');
+    if (!imgFolder) {
+      toast.error('Failed to create img folder');
+      return;
+    }
 
     // 3. Extract and Download Images
     const imageUrls = new Set<string>();
@@ -1781,11 +1787,13 @@ const GrapesEditor = () => {
       try { return new URL(url, window.location.origin).href; } catch (e) { return null; }
     };
 
-    const imgRegex = /(?:src|data-src|poster|url\(['"]?)=["']?([^"'>)]+)["']?/g;
+    // Match src="...", url('...'), url("..."), background-image: url(...)
+    const imgRegex = /(?:src|data-src|poster)=["']([^"'>]+)["']|url\(['"]?([^'")]+)['"]?\)/g;
     [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
       let m;
       while ((m = imgRegex.exec(content)) !== null) {
-        const url = getFullUrl(m[1]);
+        const rawUrl = m[1] || m[2];
+        const url = getFullUrl(rawUrl);
         if (url) imageUrls.add(url);
       }
     });
@@ -1811,34 +1819,39 @@ const GrapesEditor = () => {
           const rawFilename = fullUrl.split('/').pop()?.split('?')[0] || 'image';
           let extension = blob.type.split('/')[1] || 'png';
           if (extension === 'jpeg') extension = 'jpg';
+          if (extension === 'svg+xml') extension = 'svg';
+          if (extension === 'webp') extension = 'webp';
 
           // Truncate original name and add hash to keep it short but unique
-          let cleanBase = rawFilename.replace(/[^a-zA-Z0-9]/g, '_').substr(0, 20);
+          let cleanBase = rawFilename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_').substr(0, 20);
           if (!cleanBase) cleanBase = 'asset';
           const filename = `${cleanBase}_${urlHash}.${extension}`;
 
-          landingPageFolder.file(filename, blob);
-          imageMap[origUrl] = filename;
+          // ── Save image inside img/ subfolder ──
+          imgFolder.file(filename, blob);
+          // Map original URL → relative path from HTML file (img/filename)
+          imageMap[origUrl] = `img/${filename}`;
         }
       } catch (err) { }
     });
 
     await Promise.all(downloadPromises);
 
-    // 4. Replace paths in HTML and CSS
+    // 4. Replace ALL original URLs with img/filename paths in HTML and CSS
     const sortedUrls = Object.keys(imageMap).sort((a, b) => b.length - a.length);
     sortedUrls.forEach((oldUrl) => {
-      const newPath = imageMap[oldUrl];
-      const regex = new RegExp(oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      const newPath = imageMap[oldUrl]; // e.g. "img/hero_abc123.jpg"
+      const escaped = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'g');
       formattedLandingHtml = formattedLandingHtml.replace(regex, newPath);
       formattedLandingCss = formattedLandingCss.replace(regex, newPath);
       formattedThankYouHtml = formattedThankYouHtml.replace(regex, newPath);
       formattedThankYouCss = formattedThankYouCss.replace(regex, newPath);
     });
 
-    // Final sweep: Convert remaining / paths to absolute for safety
+    // Final sweep: Convert any remaining relative /path/ src refs to absolute (for images not downloaded)
     const origin = window.location.origin;
-    const relativeRegex = /src=["']\/([^"'][^"'>]*)["']/g;
+    const relativeRegex = /src=["']\/([^"'>][^"'>]*)["']/g;
     formattedLandingHtml = formattedLandingHtml.replace(relativeRegex, `src="${origin}/$1"`);
     formattedThankYouHtml = formattedThankYouHtml.replace(relativeRegex, `src="${origin}/$1"`);
 
@@ -1855,6 +1868,7 @@ const GrapesEditor = () => {
       landingPageFolder.file(tyCssFileName, formattedThankYouCss);
     }
 
+    const totalImages = Object.keys(imageMap).length;
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const zipUrl = URL.createObjectURL(zipBlob);
     const zipAnchor = document.createElement('a');
@@ -1862,7 +1876,7 @@ const GrapesEditor = () => {
     zipAnchor.download = `${page?.slug || 'landing-page'}-package.zip`;
     zipAnchor.click();
     URL.revokeObjectURL(zipUrl);
-    toast.success('Landing page package downloaded!');
+    toast.success(`✅ Downloaded! HTML + CSS + ${totalImages} image(s) in img/ folder`);
   };
 
   // ─── Publish ───
