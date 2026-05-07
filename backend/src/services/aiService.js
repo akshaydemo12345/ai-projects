@@ -2,6 +2,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
+const cheerio = require('cheerio');
 
 const CLAUDE_MODEL_CANDIDATES = [
   'claude-3-5-sonnet-20241022',
@@ -16,41 +17,155 @@ const OpenAI = require('openai');
  * Build SYSTEM prompt (Claude-Level Master UI Designer)
  */
 const buildSystemPrompt = () => {
-  return `Act as a world-class UI/UX Designer. Goal: Generate a unique, premium, high-converting landing page.
-DESIGN: 
-- No navbar/nav links. Logo only: <img src="{{LOGO_URL}}" class="h-8 w-auto">.
-- Use scraped images if provided, else 'https://picsum.photos/seed/design/1200/800'.
-- BG Images: inline style="background-image: url('...').
-- High-impact typography (H1: text-6xl). Use backdrop-blur-md for floating UI.
-- CRITICAL: Use [var(--primary)] and [var(--secondary)] for ALL brand colors. No HEX.
-OUTPUT:
-- SINGLE \`\`\`html block only.
-- 5+ distinct sections (Hero, Form, Features, Social Proof, FAQ, Footer).
-- MANDATORY: Visible lead form in Hero or Section 2.
-- Max 2000 tokens. Be concise. Minimal Tailwind classes. No placeholders.`;
+  return `
+Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
+Your goal is to generate a UNIQUE, premium, high-converting landing page.
+ 
+VARIATION PRIORITY:
+- Never repeat a rigid template.
+- Pick a fresh visual direction based on user prompt + business context.
+- Vary section order, visual hierarchy, spacing rhythm, and composition.
+- Avoid producing "same skeleton with replaced text".
+- Use at least one distinctive design motif (timeline, bento cards, split hero, editorial layout, diagonal section transitions, or storytelling flow).
+ 
+CRITICAL DESIGN RULES:
+- DO NOT generate a navigation menu or navbar links.
+- Place only the brand logo near the top inside the hero/banner area: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
+- The top area should look like a clean branded banner, not a traditional website navbar.
+- Use high-quality images from 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800'.
+- BACKGROUND IMAGES: Use inline styles only: style="background-image: url('...'); background-size: cover; background-position: center;"
+- SECTION RHYTHM: Alternate backgrounds (e.g., bg-white, then bg-gray-50, then a dark section).
+- TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
+- GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
+ 
+REQUIRED COVERAGE (MANDATORY LONG-FORM EXPERIENCE):
+1. You MUST generate a minimum of 8 visual sections by default.
+2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar, 3. Why Choose Us...") you MUST include EVERY SINGLE ONE of them in the exact order requested.
+3. DO NOT MERGE sections. DO NOT SKIP sections. If the user asks for 15 sections, you generate 15 distinct, high-fidelity sections.
+4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
+ 
+OUTPUT FORMATTING:
+- YOU MUST OUTPUT EVERYTHING IN ONE SINGLE \`\`\`html BLOCK.
+- BE CONCISE BUT PREMIUM. Every section should be roughly 800-1200 characters of code.
+- Avoid extremely verbose descriptions. Use powerful, punchy copy.
+- DO NOT split the page into multiple code blocks.
+ 
+LENGTH + COMPLETENESS:
+- Generate a full, deep-scroll landing page with ALL requested sections.
+- For 15 sections, you should aim for a total output of around 15,000 to 20,000 characters.
+- If you are too verbose in the early sections, you will run out of space. BALANCE your length.
+- NEVER use placeholders. You MUST write the full HTML and full copy for EVERY requested section.
+- DO NOT STOP early. You MUST finish all 15 sections.
+ 
+PLANNING:
+- Map out the code density for each section in your head before starting. Ensure section 15 is just as good as section 1.
+ 
+OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
+`;
 };
 
+
 /**
- * Build SYSTEM prompt for Smart Template Enrichment (Content Injector)
+ * Build SYSTEM prompt for Smart Template Enrichment (JSON Content Injector)
  */
 const buildTemplateSystemPrompt = () => {
   return `
-Act as a World-Class Creative UI/UX Designer & Senior Copywriter.
-Your task is to take the provided HTML template as a foundation and EVOLVE it into a unique, high-end masterpiece tailored to the user's vision.
+Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
+Your task is to take the provided Content Map (JSON) of an HTML template and TRANSFORM it into a unique, ultra-premium masterpiece.
 
-CREATIVE FREEDOM:
-1. You MAY enhance the layout, rearrange sections, and add new creative elements to improve the UI/UX.
-2. You SHOULD improve the typography, spacing, and visual hierarchy to make it feel even more premium.
-3. Keep the premium design system (Tailwind classes, glassmorphism, gradients) but make it unique.
-4. Replace placeholder text with persuasive, high-converting copy.
-5. Update <img> src attributes using high-quality Unsplash keywords: 'https://images.unsplash.com/photo-[RANDOM_ID]?auto=format&fit=crop&q=80&w=1200&[KEYWORD]'.
-   (Note: Use descriptive keywords like 'luxury-travel', 'modern-office', 'premium-healthcare' to ensure high-end photography).
+GOAL: Return a NEW JSON object containing updated content AND a specialized CSS block to make the design look world-class.
 
-CRITICAL REQUIREMENTS:
-- Use [var(--primary)] and [var(--secondary)] for ALL brand colors. No hardcoded HEX.
-- Output a complete, valid HTML document with all necessary styles.
-- Return the FULL updated HTML in a single \`\`\`html block. No explanation.
+JSON STRUCTURE:
+{
+  "contentMap": { ... updated keys from the input ... },
+  "premiumCss": "/* Your ultra-premium CSS here */",
+  "seo": { "title": "...", "description": "..." }
+}
+
+RULES FOR CONTENT:
+1. TEXT (t- keys): Write high-converting, persuasive, and punchy copy. No placeholders.
+2. IMAGES (i- keys): Generate high-quality Unsplash URLs using the 'i-X.src' field. Use descriptive keywords for high-end photography.
+
+RULES FOR PREMIUM CSS:
+1. TYPOGRAPHY: Scale the fonts. H1 should be massive (text-5xl to text-7xl). Use Google Fonts imports if needed.
+2. DEPTH & GLASSMORPHISM: Add backdrop-blur-md, semi-transparent backgrounds, and soft realistic shadows to cards and sections.
+3. RHYTHM: Add padding (py-24, py-32) to sections to let them breathe.
+4. COLORS: Use [var(--primary)] and [var(--secondary)] for all branding.
+5. ANIMATIONS: Add subtle hover effects and smooth transitions to buttons and cards.
+6. MOBILE: Ensure your premium CSS is fully responsive.
+
+CRITICAL: Return ONLY the valid JSON object. No explanation. No markdown code blocks.
 `;
+};
+
+/**
+ * Helper: Extract all text and image content from HTML using Cheerio
+ */
+const extractContentMap = (html) => {
+  const $ = cheerio.load(html);
+  const map = {};
+  let idCounter = 1;
+
+  // Find text-containing elements
+  $('h1, h2, h3, h4, h5, h6, p, span, a, li, label, .pill, button').each((i, el) => {
+    const $el = $(el);
+    // Only target elements with direct text and no children to avoid overlapping replacements
+    const directText = $el.contents().filter(function () {
+      return this.nodeType === 3;
+    }).text().trim();
+
+    if (directText.length > 1) {
+      const id = `t-${idCounter++}`;
+      $el.attr('data-ai-id', id);
+      map[id] = directText;
+    }
+  });
+
+  // Find images
+  $('img').each((i, el) => {
+    const $el = $(el);
+    const id = `i-${idCounter++}`;
+    $el.attr('data-ai-id', id);
+    map[id] = {
+      src: $el.attr('src') || '',
+      alt: $el.attr('alt') || ''
+    };
+  });
+
+  return { htmlWithIds: $.html(), contentMap: map };
+};
+
+/**
+ * Helper: Inject new content back into HTML using Cheerio
+ */
+const injectContentMap = (htmlWithIds, newMap) => {
+  const $ = cheerio.load(htmlWithIds);
+
+  Object.keys(newMap).forEach(id => {
+    const value = newMap[id];
+    const $el = $(`[data-ai-id="${id}"]`);
+
+    if ($el.length) {
+      if (id.startsWith('t-')) {
+        // Replace ONLY the text node part to preserve sub-elements if any
+        $el.contents().filter(function () {
+          return this.nodeType === 3;
+        }).first().replaceWith(value);
+      } else if (id.startsWith('i-')) {
+        if (typeof value === 'object') {
+          if (value.src) $el.attr('src', value.src);
+          if (value.alt) $el.attr('alt', value.alt);
+        } else if (typeof value === 'string') {
+          $el.attr('src', value);
+        }
+      }
+    }
+  });
+
+  // Remove the temporary IDs
+  $('[data-ai-id]').removeAttr('data-ai-id');
+
+  return $.html();
 };
 
 /**
@@ -111,10 +226,12 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
   const primaryHex = userPrompt.match(/- PRIMARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed';
   const secondaryHex = userPrompt.match(/- SECONDARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
+  const businessName = userPrompt.match(/- Name: ([\s\S]*?) \|/)?.[1] || 'design';
 
   const finalSystemPrompt = systemPrompt
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
-    .replace(/\[SECONDARY_HEX\]/g, secondaryHex);
+    .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
+    .replace(/{{BUSINESS_NAME_KEYWORD}}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
 
   // 1. Try OpenAI first if available (often more reliable)
   if (openaiKey) {
@@ -129,8 +246,8 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
           { role: 'system', content: finalSystemPrompt },
           { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
         ],
-        max_tokens: 4000,
-        temperature: 0.7
+        max_tokens: 8000,
+        temperature: 0.8
       });
 
       const rawText = response.choices[0].message.content;
@@ -168,8 +285,8 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
         const response = await anthropic.messages.create({
           model,
-          max_tokens: 4000,
-          temperature: 0.7,
+          max_tokens: 8000,
+          temperature: 0.8,
           system: finalSystemPrompt,
           messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
         });
@@ -254,59 +371,30 @@ const cleanHTML = (raw) => {
 };
 
 const generateLandingPageContent = async (input) => {
-  // 1. SKIP separate strategy call for speed!
-  // 2. Build the Persona-based System Prompt
-  const systemPrompt = input.templateHtml ? buildTemplateSystemPrompt() : buildSystemPrompt();
+  // 1. Build the Master AI Designer System Prompt
+  const systemPrompt = buildSystemPrompt();
 
-  // Extract scrapedImages from scrapedData if available
-  const scrapedImages = input.scrapedData?.images || [];
-
-  // 3. Build a detailed user prompt that combines identity and goal
+  // 2. Build the User Context and Prompt
   let userPrompt = `
 ${buildUserPrompt(input)}
 
-# SPEED OPTIMIZATION:
-Generate this page FAST. Do not over-elaborate.
-
-# MANDATORY LAYOUT SECTIONS (HIGH-CONVERTING LANDING PAGE):
-1. Hero Section with dynamic branding, strong headline, and clear Call to Action.
-2. Lead Generation Form with industry-specific fields - MUST BE VISIBLE AND FUNCTIONAL. This is NON-NEGOTIABLE.
-3. Industry Context (Benefits, Features, and Value Propositions).
-4. Social Proof / Reviews / Testimonials.
-5. Trust Building Section (stats, achievements, certifications, trust badges).
-6. FAQs Section addressing common objections.
-7. Simple Footer with contact information.
+# INSTRUCTION:
+Generate a world-class, premium landing page. 
+${input.templateHtml ? 'Use the following HTML as DESIGN INSPIRATION/BASELINE, but EVOLVE it into a unique, custom-designed masterpiece. Do not feel restricted by its structure.' : ''}
+${input.templateHtml ? `\n# BASELINE INSPIRATION:\n${input.templateHtml}\n` : ''}
 
 # CORE REQUIREMENTS:
-- Generate a complete, high-converting landing page.
-- Include strong hero section with compelling headline.
+- Generate a complete, high-converting landing page with 8+ sections.
+- Include strong hero section with compelling headline (massive typography).
 - Include CTA in strategic positions.
-- Include industry-specific form with relevant fields.
-- Include meaningful, benefit-driven content throughout.
-- Include industry-relevant images (real estate: homes, healthcare: doctors, etc.).
-- Include relevant video suggestions where useful (testimonials, demos, explainers).
-- Include testimonials section with realistic customer quotes.
-- Include FAQs section addressing common objections.
-- Include trust-building sections (badges, stats, achievements).
-- Include SEO-friendly headings with proper hierarchy (H1, H2, H3).
-- Make layout depend on industry for optimal user experience.
-- Form position should depend on business type (hero side, sticky, bottom, popup).
+- Include industry-specific form.
+- Use bento grids, mesh gradients, and glassmorphism.
+- Include testimonials, FAQs, and trust badges.
 - Content should be persuasive and conversion-focused.
-- Use modern landing page structure with alternating backgrounds.
-- Vary section designs (bento, grid, list, split, etc.) for visual interest.
+- Vary section designs for visual interest.
 `;
 
-  // 4. Handle Template Enrichment if applicable
-  if (input.templateHtml) {
-    userPrompt = `
-    # CRITICAL TASK: SMART TEMPLATE CONTENT REPLACEMENT
-    ${input.templateHtml}
-    
-    USER'S VISION: "${input.aiPrompt}"
-    `;
-  }
-
-  // 5. Handle Vision / Image-to-Design
+  // 3. Handle Vision / Image-to-Design
   const result = await callAI(userPrompt, input.logoUrl, systemPrompt);
   return result;
 };
@@ -411,7 +499,7 @@ const generateStrategicStructure = async (input) => {
   const userPrompt = `Industry: ${industry}, Business: ${businessName}, Services: ${services.join(', ')}, Description: ${businessDescription}. Generate structure JSON.`;
 
   const result = await callAI(userPrompt, '', systemPrompt);
-  
+
   try {
     let text = result.fullHtml || '';
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -432,7 +520,7 @@ const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPa
   const userPrompt = `Optimize this page: ${JSON.stringify(existingPage)} using ${JSON.stringify(projectData)}.`;
 
   const result = await callAI(userPrompt, '', systemPrompt);
-  
+
   try {
     const text = result.fullHtml || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
