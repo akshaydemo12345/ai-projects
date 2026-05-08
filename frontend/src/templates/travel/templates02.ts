@@ -119,11 +119,6 @@ export const travel02Html = `
 <header class="nav">
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav class="nav-links">
-      <a href="#encounters">Encounters</a>
-      <a href="#about">Story</a>
-      <a href="#contact">Contact</a>
-    </nav>
     <a href="#contact" class="btn-primary">Book Now</a>
   </div>
 </header>

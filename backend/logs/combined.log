@@ -27245,3 +27245,83 @@ Require stack:
 [2026-05-08T07:54:04.611Z] [INFO] ✅ MongoDB Connected Successfully
 [2026-05-08T07:54:04.621Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
 [2026-05-08T07:54:04.622Z] [INFO] 🚀 Server running on port 5000
+[2026-05-08T07:55:18.057Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f/pages/69fd8ff36fc92fa71c694bb3 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:55:18.075Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 54ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:55:56.732Z] [INFO] User logged in {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-08T07:55:56.736Z] [HTTP] POST /auth/login 200 260ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:55:56.773Z] [HTTP] GET /projects 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:56:01.033Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:56:02.775Z] [HTTP] GET /api/public/page/xaxsawswq 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:56:06.861Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:56:08.644Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:56:08.694Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:56:15.206Z] [HTTP] POST /ai/project-suggestions 200 6579ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:57:49.757Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:57:49.813Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 61ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:57:56.089Z] [HTTP] POST /ai/project-suggestions 200 6358ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:11.903Z] [INFO] Creating page for project 69fab98dd654b969bc04c14f {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-08T07:58:11.963Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 69fd97933bf5c4eca0938aac
+[2026-05-08T07:58:11.963Z] [INFO] 📝 [SCHEMA] Syncing 4 fields for page 69fd97933bf5c4eca0938aac (dscdscs)
+[2026-05-08T07:58:11.974Z] [HTTP] POST /projects/69fab98dd654b969bc04c14f/pages 201 76ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:12.011Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:14.576Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f/pages/69fd97933bf5c4eca0938aac 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:14.617Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 74ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:14.633Z] [HTTP] GET /api/thank-you/layouts 304 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:14.637Z] [HTTP] GET /api/thank-you/config/69fd97933bf5c4eca0938aac 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:19.166Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:58:19.186Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:19.957Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:23.142Z] [HTTP] DELETE /projects/69fab98dd654b969bc04c14f/pages/69fd8ff36fc92fa71c694bb3 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:23.171Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:24.615Z] [HTTP] POST /ai/project-suggestions 200 5461ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:27.740Z] [HTTP] DELETE /projects/69fab98dd654b969bc04c14f/pages/69fc111cb8674bb0bb0271c9 200 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:27.757Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:31.096Z] [HTTP] DELETE /projects/69fab98dd654b969bc04c14f/pages/69fd97933bf5c4eca0938aac 200 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:31.124Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:32.135Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:58:32.152Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:58:36.794Z] [HTTP] POST /ai/project-suggestions 200 4667ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:59:51.508Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:59:51.527Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 43ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:59:57.486Z] [HTTP] POST /ai/project-suggestions 200 5997ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:10.844Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:00:10.874Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:12.907Z] [HTTP] POST /ai/project-suggestions 200 2074ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:21.832Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:00:21.858Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 55ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:24.908Z] [HTTP] POST /ai/project-suggestions 200 3109ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:33.677Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:00:33.692Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 48ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:00:39.685Z] [HTTP] POST /ai/project-suggestions 200 6036ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:20.850Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:01:20.888Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 68ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:23.811Z] [HTTP] POST /ai/project-suggestions 200 2996ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:33.172Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:01:33.230Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 72ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:39.423Z] [HTTP] POST /ai/project-suggestions 200 6272ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:44.962Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:01:44.987Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:49.894Z] [HTTP] POST /ai/project-suggestions 200 4948ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:01:55.575Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:01:55.596Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:02:00.914Z] [HTTP] POST /ai/project-suggestions 200 5352ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:21:51.194Z] [INFO] User logged in {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-08T08:21:51.196Z] [HTTP] POST /auth/login 200 275ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:21:51.221Z] [HTTP] GET /projects 200 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:22:45.342Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:22:48.340Z] [HTTP] GET /projects 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:24:30.981Z] [HTTP] GET /projects 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:24:46.834Z] [HTTP] GET /projects 304 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:24:55.126Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:24:58.982Z] [HTTP] GET /projects 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:25:49.423Z] [HTTP] GET /projects 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:25:55.569Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:25:58.817Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:25:58.843Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:01.485Z] [HTTP] POST /ai/project-suggestions 200 2685ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:42.557Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:43.986Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T08:26:44.009Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:46.638Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:47.162Z] [HTTP] GET /projects 304 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T08:26:49.564Z] [HTTP] POST /ai/project-suggestions 200 5598ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}

@@ -2,26 +2,26 @@ import { Eye, ExternalLink } from "lucide-react";
 
 const templates = [
   {
-    name: "SaaS Modern",
-    category: "Software",
+    name: "SaaS Platform",
+    category: "SaaS",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
     color: "from-blue-500 to-indigo-600"
   },
   {
-    name: "Digital Agency",
-    category: "Service",
+    name: "Dental Excellence",
+    category: "Local Business",
     image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80",
     color: "from-violet-500 to-purple-600"
   },
   {
-    name: "E-commerce Pro",
-    category: "Shop",
+    name: "Luxury Real Estate",
+    category: "Real Estate",
     image: "https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&w=800&q=80",
     color: "from-emerald-500 to-teal-600"
   },
   {
-    name: "Portfolio Dark",
-    category: "Personal",
+    name: "Elite Coaching",
+    category: "Coaching",
     image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80",
     color: "from-slate-700 to-slate-900"
   }

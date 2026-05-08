@@ -155,11 +155,6 @@ export const travel03Html = `
 <header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:2rem 0;color:#fff">
   <div class="container" style="display:flex;justify-content:space-between;align-items:center">
     <a href="#" class="logo" style="font-family:var(--serif);font-size:1.8rem;letter-spacing:2px">LOGO_PLACEHOLDER</a>
-    <nav style="display:flex;gap:3rem;font-size:0.8rem;letter-spacing:2px;text-transform:uppercase">
-      <a href="#destinations">Journeys</a>
-      <a href="#retreats">Retreats</a>
-      <a href="#contact">Contact</a>
-    </nav>
   </div>
 </header>
 
