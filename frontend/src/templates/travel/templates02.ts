@@ -2,6 +2,10 @@
 // Using user-provided assets from /assets/templates/travel/templates02/
 
 export const travel02Styles = `
+:root {
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --secondary: SECONDARY_COLOR_PLACEHOLDER;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Outfit', sans-serif; background: #f5f5f4; color: #1c1917; line-height: 1.6; overflow-x: hidden; }
 
@@ -14,8 +18,8 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .nav-inner { display: flex; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
 .nav-links a { color: #fff; margin-left: 2.5rem; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; opacity: 0.8; }
-.nav-links a:hover { opacity: 1; color: SECONDARY_COLOR_PLACEHOLDER; }
-.btn-nav { background: #fff; color: #1c1917; padding: 0.7rem 1.5rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+.nav-links a:hover { opacity: 1; color: var(--secondary); }
+.btn-primary { background-color: #fff; color: #1c1917; padding: 0.7rem 1.5rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; border: none; cursor: pointer; }
 
 /* Hero Section */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; background: #1c1917; color: #fff; padding: 10rem 0; }
@@ -28,7 +32,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .input-group label { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #78716c; margin-bottom: 0.5rem; }
 .input-group input, .input-group select { width: 100%; padding: 0.8rem; border: 1px solid #e7e5e4; border-radius: 4px; font-family: inherit; }
-.btn-book { grid-column: span 2; background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 1.2rem; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
+.btn-submit { grid-column: span 2; background-color: var(--secondary); color: #fff; border: none; padding: 1.2rem; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
 
 .hero-text h1 { font-size: clamp(3rem, 7vw, 5.5rem); line-height: 1; font-weight: 800; margin-bottom: 2rem; }
 .hero-text p { font-size: 1.25rem; opacity: 0.9; margin-bottom: 3rem; max-width: 500px; }
@@ -36,13 +40,13 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 /* Stats Bar */
 .stats-bar { background: #1c1917; padding: 6rem 0; color: #fff; }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; }
-.stat-item span { color: SECONDARY_COLOR_PLACEHOLDER; font-size: 1.5rem; font-weight: 800; display: block; margin-bottom: 1rem; }
+.stat-item span { color: var(--secondary); font-size: 1.5rem; font-weight: 800; display: block; margin-bottom: 1rem; }
 .stat-item h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
 .stat-item p { color: #78716c; font-size: 0.9rem; }
 
 /* Journeys Grid */
 .journeys { padding: 10rem 0; background: #f5f5f4; }
-.section-tag { color: SECONDARY_COLOR_PLACEHOLDER; text-transform: uppercase; font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; display: block; margin-bottom: 1rem; text-align: center; }
+.section-tag { color: var(--secondary); text-transform: uppercase; font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; display: block; margin-bottom: 1rem; text-align: center; }
 .section-title { font-size: 3.5rem; font-weight: 800; text-align: center; margin-bottom: 5rem; }
 
 .journey-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
@@ -50,7 +54,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .journey-card:hover { transform: translateY(-10px); }
 .journey-card img { height: 240px; width: 100%; object-fit: cover; }
 .journey-info { padding: 2rem; }
-.journey-info .tag { background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; font-size: 0.6rem; font-weight: 800; padding: 0.3rem 0.6rem; text-transform: uppercase; display: inline-block; margin-bottom: 1rem; }
+.journey-info .tag { background-color: var(--secondary); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 0.3rem 0.6rem; text-transform: uppercase; display: inline-block; margin-bottom: 1rem; }
 .journey-info h3 { font-size: 1.2rem; margin-bottom: 1rem; }
 .journey-info p { color: #78716c; font-size: 0.9rem; margin-bottom: 1.5rem; }
 .journey-link { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #1c1917; display: flex; align-items: center; gap: 0.5rem; }
@@ -87,11 +91,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .conservation { padding: 10rem 0; background: #1c1917; color: #fff; }
 .con-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 6rem; align-items: center; }
 .con-stats { display: flex; gap: 4rem; margin-top: 4rem; }
-.con-stat h5 { font-size: 2.5rem; color: SECONDARY_COLOR_PLACEHOLDER; margin-bottom: 0.5rem; }
+.con-stat h5 { font-size: 2.5rem; color: var(--secondary); margin-bottom: 0.5rem; }
 .con-stat p { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #78716c; }
 
 /* Final CTA Bar */
-.final-cta { padding: 6rem 0; background: SECONDARY_COLOR_PLACEHOLDER; text-align: center; color: #fff; }
+.final-cta { padding: 6rem 0; background-color: var(--secondary); text-align: center; color: #fff; }
 .final-cta h2 { font-size: 2rem; margin-bottom: 2rem; font-weight: 700; }
 .btn-final { background: #1c1917; color: #fff; padding: 1rem 3rem; border-radius: 4px; font-weight: 800; text-transform: uppercase; display: inline-block; }
 
@@ -116,11 +120,11 @@ export const travel02Html = `
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
     <nav class="nav-links">
-      <a href="#destinations">Expeditions</a>
-      <a href="#about">Philosophy</a>
-      <a href="#gallery">Journal</a>
+      <a href="#encounters">Encounters</a>
+      <a href="#about">Story</a>
+      <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="btn-nav">Inquire Now</a>
+    <a href="#contact" class="btn-primary">Book Now</a>
   </div>
 </header>
 
@@ -144,11 +148,11 @@ export const travel02Html = `
             <label>Duration</label>
             <select><option>7-10 Days</option><option>14+ Days</option></select>
           </div>
-          <div class="input-group">
-            <label>Budget</label>
-            <select><option>Luxury</option><option>Ultra Elite</option></select>
+          <div class="input-group" style="grid-column: span 2;">
+            <label>Guests</label>
+            <input type="text" placeholder="2 Adults">
           </div>
-          <button type="submit" class="btn-book">Explore Adventures</button>
+          <button type="submit" class="btn-submit">Plan My Journey →</button>
         </div>
       </form>
       
