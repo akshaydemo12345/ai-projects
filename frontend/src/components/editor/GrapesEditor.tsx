@@ -1159,7 +1159,7 @@ const GrapesEditor = () => {
 
             // Add the "Active" badge
             const badge = document.createElement('div');
-            badge.className = 'embed-badge';rgba(78, 120, 219, 1)
+            badge.className = 'embed-badge';
             badge.style.cssText = `
               position: absolute; top: 0; right: 0; background: #6366f1; color: white;
               padding: 2px 10px; font-size: 10px; font-weight: 800; border-bottom-left-radius: 8px;
