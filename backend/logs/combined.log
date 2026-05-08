@@ -27212,3 +27212,36 @@ Require stack:
 [2026-05-07T06:03:52.858Z] [HTTP] GET /api/thank-you/config/69fc2a23c0e03b8e08a462c8 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-07T06:03:54.851Z] [HTTP] GET /api/thank-you/config/69fc2a23c0e03b8e08a462c8 304 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-07T06:03:54.860Z] [HTTP] GET /api/thank-you/layouts 304 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T06:38:50.732Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-08T06:38:50.747Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-08T06:38:50.748Z] [INFO] 🚀 Server running on port 5000
+[2026-05-08T07:24:56.147Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-08T07:24:56.157Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-08T07:24:56.158Z] [INFO] 🚀 Server running on port 5000
+[2026-05-08T07:25:08.070Z] [INFO] User logged in {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-08T07:25:08.075Z] [HTTP] POST /auth/login 200 282ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:08.110Z] [HTTP] GET /projects 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:10.328Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 41ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:12.758Z] [HTTP] GET /api/public/page/xaxsawswq 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:15.063Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:17.104Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-08T07:25:17.150Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:21.493Z] [HTTP] POST /ai/project-suggestions 200 4410ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:39.671Z] [INFO] Creating page for project 69fab98dd654b969bc04c14f {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-08T07:25:39.721Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 69fd8ff36fc92fa71c694bb3
+[2026-05-08T07:25:39.721Z] [INFO] 📝 [SCHEMA] Syncing 4 fields for page 69fd8ff36fc92fa71c694bb3 (dwqdw)
+[2026-05-08T07:25:39.731Z] [HTTP] POST /projects/69fab98dd654b969bc04c14f/pages 201 66ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:39.770Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:42.328Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f/pages/69fd8ff36fc92fa71c694bb3 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:42.387Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 304 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:42.396Z] [HTTP] GET /api/thank-you/config/69fd8ff36fc92fa71c694bb3 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:42.402Z] [HTTP] GET /api/thank-you/layouts 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:45.521Z] [HTTP] GET /api/public/page/dwqdw?token=ba527e4e1ee27c8a9f9d0c1163851d9b 200 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:57.575Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f/pages/69fd8ff36fc92fa71c694bb3 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:25:57.592Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:26:12.943Z] [HTTP] GET /api/public/page/dwqdw?token=ba527e4e1ee27c8a9f9d0c1163851d9b 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:26:21.778Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f/pages/69fd8ff36fc92fa71c694bb3 200 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:26:21.791Z] [HTTP] GET /projects/69fab98dd654b969bc04c14f 200 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-08T07:54:04.611Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-08T07:54:04.621Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-08T07:54:04.622Z] [INFO] 🚀 Server running on port 5000
