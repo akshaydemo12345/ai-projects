@@ -19,7 +19,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const formRoutes = require('./routes/formRoutes');
 const thankYouRoutes = require('./routes/thankYouRoutes');
-const proxyRoutes = require('./routes/proxyRoutes');
+// const proxyRoutes = require('./routes/proxyRoutes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { sanitizeInput } = require('./middleware/sanitizeInput');
 const { cookieParser } = require('./middleware/cookieParser');
@@ -91,6 +91,10 @@ app.use('/user', userRoutes);
 // 2. Dashboard Logic
 app.use('/projects', projectRoutes);
 app.use('/pages', pageRoutes);
+
+const proxyRoutes = require('./routes/proxyRoutes');
+app.use('/api/v1/proxy', proxyRoutes);
+
 app.use('/ai', aiRoutes);
 app.post('/api/pages/project-suggestions', require('./middleware/authMiddleware').protect, require('./controllers/aiController').getProjectSuggestions);
 app.use('/admin', adminRoutes);
@@ -101,7 +105,7 @@ app.use('/api/forms', compression(), formRoutes);
 app.use('/api/thank-you', compression(), thankYouRoutes);
 
 // 4. Proxy Engine (Isolated Prefix) - Must be BEFORE public catch-all
-app.use('/api/v1/proxy', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
+// app.use('/api/v1/proxy', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
 
 // 5. Public Landing Pages (Catch-all)
 app.use('/', compression(), publicRoutes);
