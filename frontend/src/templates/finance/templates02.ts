@@ -246,12 +246,6 @@ export const finance02Html = `
     <div class="logo" style="display: flex; align-items: center; gap: 1rem;">
       <span style="font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">LOGO_PLACEHOLDER</span>
     </div>
-    <div class="nav-links">
-      <a href="#about">Our Firm</a>
-      <a href="#services">Expertise</a>
-      <a href="#insights">Insights</a>
-      <a href="#contact" class="btn-nav">Client Login</a>
-    </div>
   </div>
 </nav>
 

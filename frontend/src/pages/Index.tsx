@@ -4,6 +4,11 @@ import FeaturesSection from "@/components/landing/FeaturesSection";
 import PricingSection from "@/components/landing/PricingSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import TemplatesSection from "@/components/landing/TemplatesSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import LeadManagementSection from "@/components/landing/LeadManagementSection";
+import PerformanceMarketingSection from "@/components/landing/PerformanceMarketingSection";
+import ComparisonSection from "@/components/landing/ComparisonSection";
+import FAQSection from "@/components/landing/FAQSection";
 import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
 
@@ -13,9 +18,14 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <FeaturesSection />
-      <PricingSection />
       <HowItWorksSection />
       <TemplatesSection />
+      <LeadManagementSection />
+      <PerformanceMarketingSection />
+      <ComparisonSection />
+      <TestimonialsSection />
+      <PricingSection />
+      <FAQSection />
       <CtaSection />
       <Footer />
     </div>

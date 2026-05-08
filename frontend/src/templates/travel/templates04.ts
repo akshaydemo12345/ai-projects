@@ -147,12 +147,6 @@ export const travel04Html = `
 <header class="nav">
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav class="nav-links">
-      <a href="#trending">Cities</a>
-      <a href="#how">City Breaks</a>
-      <a href="#trending">Guides</a>
-      <a href="#trending">Deals</a>
-    </nav>
     <div class="nav-right">
        <a href="#" style="font-size: 0.8rem; font-weight: 700;">Sign in</a>
        <a href="#contact" class="btn-primary">Get Started</a>
