@@ -1124,15 +1124,19 @@ const GrapesEditor = () => {
           handleUpdate() {
             const code = this.get('embedCode') || '';
             const type = this.get('embedType') || 'html';
-            let content = code;
-
-            if (type === 'script' && code && !code.includes('<script')) {
-              content = `<script>${code}</script>`;
-            } else if (type === 'iframe' && code && !code.includes('<iframe')) {
-              content = `<iframe src="${code}" width="100%" height="500px" frameborder="0"></iframe>`;
-            }
-
-            this.set('components', content);
+            
+            // Store values in attributes so they survive save/load (persistence)
+            this.addAttributes({ 
+              'data-embed-code': code,
+              'data-embed-type': type
+            });
+            
+            // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
+            // Using components() ensures the code is included in the exported HTML.
+            this.components(`<div class="embed-inner-wrapper">${code}</div>`);
+            
+            // Trigger a view refresh
+            this.trigger('rerender-view');
           },
         },
         view: {
@@ -1155,7 +1159,7 @@ const GrapesEditor = () => {
 
             // Add the "Active" badge
             const badge = document.createElement('div');
-            badge.className = 'embed-badge';
+            badge.className = 'embed-badge';rgba(78, 120, 219, 1)
             badge.style.cssText = `
               position: absolute; top: 0; right: 0; background: #6366f1; color: white;
               padding: 2px 10px; font-size: 10px; font-weight: 800; border-bottom-left-radius: 8px;
@@ -1791,7 +1795,8 @@ const GrapesEditor = () => {
       return;
     }
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}`;
+    const token = page.previewToken ? `?token=${page.previewToken}` : '';
+    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };

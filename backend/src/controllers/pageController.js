@@ -11,6 +11,7 @@ const AIService = require('../services/aiService');
 const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 const AppError = require('../utils/AppError');
 const FormSchema = require('../models/FormSchema');
@@ -196,8 +197,9 @@ exports.getPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
-    const previewUrl = page.previewUrl || `${baseAppUrl}/preview/${page.slug}`;
+    const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrl = page.previewUrl || (page.previewToken ? `${frontendUrl}/preview?page=${page._id}&token=${page.previewToken}` : `${frontendUrl}/preview?page=${page._id}`);
+    const liveUrl = page.liveUrl || (page.domain ? `https://${page.domain}/?page=${page._id}` : `${frontendUrl}/?page=${page._id}`);
 
     return res.status(200).json({
       success: true,
@@ -206,7 +208,8 @@ exports.getPage = async (req, res, next) => {
         page: {
           ...page.toObject(),
           name: page.title,
-          previewUrl
+          previewUrl,
+          liveUrl
         }
       },
     });
@@ -394,8 +397,8 @@ exports.createPage = async (req, res, next) => {
       }
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
-    const previewUrl = `${baseAppUrl}/preview/${page.slug}`;
+    const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrl = `${frontendUrl}/preview?page=${page._id}&token=${page.previewToken}`;
 
     // 8. Update Page with AI Results
     if (aiResponse.fullHtml && aiResponse.fullHtml.trim().length > 100) {
@@ -548,8 +551,10 @@ exports.updatePage = async (req, res, next) => {
       const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
       updateData.slug = uniqueSlug;
 
-      const baseAppUrl = process.env.APP_BASE_URL || 'http://my-ai-backend.test:5000';
-      updateData.previewUrl = `${baseAppUrl}/preview/${uniqueSlug}`;
+      const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+      const previewToken = currentPage.previewToken || crypto.randomBytes(16).toString('hex');
+      updateData.previewToken = previewToken;
+      updateData.previewUrl = `${frontendUrl}/preview?page=${currentPage._id}&token=${previewToken}`;
     }
 
     const updatedPage = await Page.findByIdAndUpdate(
@@ -630,18 +635,24 @@ exports.publishPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
-    const baseAppUrl = process.env.APP_BASE_URL || 'https://app.yourdomain.com';
+    const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
     let liveUrl;
+
+    if (!page.previewToken) {
+      page.previewToken = crypto.randomBytes(16).toString('hex');
+    }
+    page.previewUrl = `${frontendUrl}/preview?page=${page._id}&token=${page.previewToken}`;
 
     if (parsed.data.domain) {
       page.domain = parsed.data.domain;
-      liveUrl = `https://${parsed.data.domain}`;
+      liveUrl = `https://${parsed.data.domain}/?page=${page._id}`;
     } else if (parsed.data.subdomain) {
       page.domain = `${parsed.data.subdomain}.${process.env.APP_DOMAIN || 'pages.yourdomain.com'}`;
-      liveUrl = `https://${page.domain}`;
+      liveUrl = `https://${page.domain}/?page=${page._id}`;
     } else {
-      liveUrl = `${baseAppUrl}/${page.slug}`;
+      liveUrl = `${frontendUrl}/?page=${page._id}`;
     }
+    page.liveUrl = liveUrl;
 
     const oldStatus = page.status;
     page.status = 'published';
@@ -675,6 +686,7 @@ exports.publishPage = async (req, res, next) => {
       data: {
         page,
         liveUrl,
+        previewUrl: page.previewUrl,
         apiToken: page.apiToken
       },
     });

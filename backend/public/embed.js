@@ -13,12 +13,13 @@
   const token = currentScript.getAttribute('data-token') || url.searchParams.get('token');
   const searchParams = new URLSearchParams(window.location.search);
   const qPage = searchParams.get('pg') || searchParams.get('landing') || searchParams.get('page') || searchParams.get('p');
+  const attrPageId = currentScript.getAttribute('data-page-id');
   const attrPage = currentScript.getAttribute('data-page');
   const hashPage = window.location.hash.includes('page=') ? window.location.hash.split('page=')[1] : null;
   const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
   const pathPage = pathParts.length > 0 ? pathParts.join('/') : null;
 
-  const page = qPage || attrPage || hashPage || pathPage;
+  const page = qPage || attrPageId || attrPage || hashPage || pathPage;
   
   const apiBase = url.origin;
   console.log('🚀 PageCraft AI: Initializing...', { 
@@ -45,7 +46,10 @@
       const isThankYou = searchParams.get('status') === 'thank-you' || window.location.pathname.replace(/\/+$/, '').endsWith('/thank-you');
 
       // We use the public endpoint that returns the rendered HTML or at least the raw data
-      const response = await fetch(`${apiBase}/api/public/page/${page}`, {
+      const endpoint = /^[0-9a-fA-F]{24}$/.test(String(page || ''))
+        ? `${apiBase}/api/public/page?page=${encodeURIComponent(page)}`
+        : `${apiBase}/api/public/page/${encodeURIComponent(page)}`;
+      const response = await fetch(endpoint, {
         headers: {
           'bypass-tunnel-reminder': 'true'
         }

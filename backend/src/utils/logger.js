@@ -56,6 +56,13 @@ const httpLogger = (req, res, next) => {
   res.on('finish', () => {
     const duration = Date.now() - start;
     const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'http';
+    
+    // Skip logging for common junk paths (bots/scanners) to keep logs clean
+    const junkPattern = /\.(php|asp|aspx|jsp|cgi|ico|png|jpg|jpeg|gif|css|js|map|txt|xml|json|webmanifest)$|^\.well-known/i;
+    if (res.statusCode === 404 && junkPattern.test(req.originalUrl)) {
+      return;
+    }
+
     log(level, `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`, {
       ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
       userAgent: req.headers['user-agent'],

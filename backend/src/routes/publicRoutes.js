@@ -1,13 +1,13 @@
 'use strict';
 
 const express = require('express');
-const { 
+const {
   getPublicPageBySlug,
-  getPublicPageByDomain, 
-  verifyPlugin, 
-  getPreview, 
-  getPreviewHTML, 
-  getPublicPageHTML, 
+  getPublicPageByDomain,
+  verifyPlugin,
+  getPreview,
+  getPreviewHTML,
+  getPublicPageHTML,
   handleFormSubmission,
   downloadPlugin,
   getSitemap,
@@ -17,11 +17,20 @@ const {
 const router = express.Router();
 
 // ─── JSON API: used by the React frontend ────────────────────────────────────
+router.get('/api/public/page', getPublicPageBySlug);
 router.get('/api/public/page/:slug(*)', getPublicPageBySlug);
 
 // ─── Public Preview Rendering ────────────────────────────────────────────────
-router.get('/preview/:token', getPreview);
+router.get('/preview/:token/json', getPreview);
+router.get('/preview/:token', (req, res) => {
+  const { token } = req.params;
+  return res.redirect(307, `/preview/${token}/html`);
+});
 router.get('/preview/:token/html', getPreviewHTML);
+router.get('/preview', getPreviewHTML);
+
+// ─── Public Page Rendering (Query param based) ───────────────────────────────
+router.get('/', getPublicPageHTML);
 
 // ─── Domain + Plugin Routes ──────────────────────────────────────────────────
 router.get('/domain/:domain', getPublicPageByDomain);
@@ -36,34 +45,8 @@ router.get('/api/page', require('../controllers/publicController').getDynamicPag
 router.post('/api/leads', require('../controllers/publicController').submitDynamicLead);
 
 
-// ─── Smart Slug Route (HTML for browsers/WP, JSON for API clients) ───────────
-/**
- * @route   GET /:slug
- * @desc    Serves full rendered HTML to browsers and WordPress plugin.
- *          Returns JSON only if the client explicitly sends Accept: application/json.
- * @access  Public
- */
-router.get('/:slug(*)', (req, res, next) => {
-  const acceptsJson = req.headers['accept']?.includes('application/json');
-  const hasApiToken = !!req.headers['x-api-token'];
-  const isXHR = req.headers['x-requested-with'] === 'XMLHttpRequest';
-
-  // Only return JSON for explicit API/AJAX requests from the React dashboard
-  // We distinguish dashboard requests by checking if they are XHR AND want JSON.
-  // The WP Relay has the API token but expects HTML for the slug route.
-  if (acceptsJson && isXHR) {
-    return next(); // Fall through to JSON API handler or 404
-  }
-
-  // Default: render full HTML (for browsers, WordPress plugin, iframes)
-  return getPublicPageHTML(req, res, next);
-});
-
-/**
- * @route   POST /:slug
- * @desc    Auto-handles form submissions POSTed directly to a page slug.
- *          Redirects to /:slug/thank-you upon success.
- */
+// NOTE: Slug-based public page routing has been removed in favor of query param based page IDs.
+// Legacy form submissions that still POST to slug-based endpoints are supported here.
 router.post('/:slug(*)', handleFormSubmission);
 
 module.exports = router;
