@@ -719,7 +719,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
             {/* Action buttons */}
             <div className="w-full flex flex-col gap-3">
               <Button
-                className="w-full h-11 gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-md"
+                className="w-full h-11 gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0 shadow-md"
                 onClick={() => { onClose(); navigate("/dashboard"); }}
               >
                 <ArrowLeft className="h-4 w-4" />
