@@ -15,7 +15,7 @@ class EmailService {
    */
   async sendEmail({ to, subject, htmlContent, fromName, fromEmail, brevoKey }) {
     const finalApiKey = brevoKey || process.env.BREVO_API_KEY;
-    
+
     if (!finalApiKey) {
       console.warn('⚠️ Brevo API Key missing. Skipping email.');
       return;
@@ -38,7 +38,7 @@ class EmailService {
     console.log(`   From: "${finalFromName}" <${finalFromEmail}>`);
     console.log(`   To: ${to}`);
     console.log(`   Subject: ${subject}`);
-    
+
     if (brevoKey) {
       console.log(`   Using project-specific API Key: ${brevoKey.substring(0, 10)}...`);
     } else {
