@@ -111,25 +111,6 @@ const NotificationPanel = ({
   </div>
 );
 
-// ─── Plain Message Textarea ───────────────────────────────
-const MessageBox = ({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) => (
-  <textarea
-    rows={8}
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    placeholder={placeholder}
-    className="w-full rounded-xl border border-border/60 bg-background/50 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none shadow-inner"
-  />
-);
-
 // ─── Page ─────────────────────────────────────────────────
 const MailManagementPage = () => {
   const [searchParams] = useSearchParams();
@@ -202,7 +183,6 @@ const MailManagementPage = () => {
           enabled: adminCfg.enabled,
           email: admin.sendToEmail,
           subject: admin.subject,
-          message: admin.message,
         },
         fromName: admin.fromName,
         fromEmail: admin.fromEmail,
@@ -226,7 +206,6 @@ const MailManagementPage = () => {
         userNotification: {
           enabled: userCfg.enabled,
           subject: user.subject,
-          message: user.message,
           replyTo: user.replyTo,
           bcc: user.bcc,
         }
@@ -281,8 +260,7 @@ const MailManagementPage = () => {
           sendToEmail: proj.adminNotification.email || "",
           subject: proj.adminNotification.subject || prev.subject,
           templateId: proj.adminNotification.templateId || "",
-          message: proj.adminNotification.message || "",
-          fromName: proj.fromName || "",
+          fromName: proj.fromName || proj.name || "",
           fromEmail: proj.fromEmail || "",
         }));
         setAdminCfg(prev => ({ ...prev, enabled: proj.adminNotification.enabled }));
@@ -292,10 +270,9 @@ const MailManagementPage = () => {
           ...prev,
           subject: proj.userNotification.subject || prev.subject,
           templateId: proj.userNotification.templateId || "",
-          message: proj.userNotification.message || "",
           replyTo: proj.userNotification.replyTo || "",
           bcc: proj.userNotification.bcc || "",
-          fromName: proj.fromName || "",
+          fromName: proj.fromName || proj.name || "",
           fromEmail: proj.fromEmail || "",
         }));
         setUserCfg(prev => ({ ...prev, enabled: proj.userNotification.enabled }));
@@ -402,7 +379,7 @@ const MailManagementPage = () => {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Global From Name</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Project Name:</label>
                   <Input 
                     placeholder="AI Projects Team" 
                     value={admin.fromName} 
@@ -411,7 +388,7 @@ const MailManagementPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Global From Email</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">From Email</label>
                   <Input 
                     placeholder="notifications@yourdomain.com" 
                     value={admin.fromEmail} 
@@ -495,14 +472,7 @@ const MailManagementPage = () => {
               />
             </Field>
 
-            <Field label="Personalized Message" hint="This text will appear at the top of the notification email.">
-              <Textarea 
-                placeholder="e.g. Great news! A new lead has just expressed interest..." 
-                value={admin.message}
-                onChange={(e) => setAdmin((a) => ({ ...a, message: e.target.value }))}
-                className="min-h-[100px] rounded-lg bg-background/50 border-border/40 text-sm resize-none"
-              />
-            </Field>
+
           </NotificationPanel>
           
 
@@ -556,14 +526,7 @@ const MailManagementPage = () => {
               />
             </Field>
 
-            <Field label="Personalized Message" hint="The content of your auto-reply email.">
-              <Textarea 
-                placeholder="e.g. Thank you for reaching out! We have received your inquiry..." 
-                value={user.message}
-                onChange={(e) => setUser((u) => ({ ...u, message: e.target.value }))}
-                className="min-h-[100px] rounded-lg bg-background/50 border-border/40 text-sm resize-none"
-              />
-            </Field>
+
 
 
           </NotificationPanel>

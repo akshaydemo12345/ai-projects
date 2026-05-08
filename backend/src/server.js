@@ -76,8 +76,8 @@ app.use(passport.session());
 
 // TEST ROUTE (Heartbeat)
 app.get('/api/heartbeat', (req, res) => {
-  res.json({ 
-    status: 'success', 
+  res.json({
+    status: 'success',
     message: 'AI Landing Page API is running',
     version: '1.0.0',
     env: process.env.NODE_ENV || 'development'
