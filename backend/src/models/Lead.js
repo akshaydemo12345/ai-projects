@@ -41,13 +41,23 @@ const leadSchema = new mongoose.Schema({
     fbclid: String,
     msclkid: String
   },
+  // 🚀 FLATTENED UTMs for easier filtering and storage insurance
+  utm_source: { type: String, index: true },
+  utm_medium: { type: String, index: true },
+  utm_campaign: { type: String, index: true },
+  utm_term: String,
+  utm_content: String,
+  gclid: String,
+  fbclid: String,
+  msclkid: String,
   isDeleted: {
     type: Boolean,
     default: false
   }
 }, { 
   timestamps: true,
-  strict: false // Allows for future expansion without migrations
+  strict: false,
+  minimize: false // 🚀 CRITICAL: Ensure empty objects (like utm/meta) are still saved to DB
 });
 
 // Compound index for fast lookups
