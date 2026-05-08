@@ -9,9 +9,15 @@ import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/
 import { toast } from "sonner";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
+import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
+import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { travel02Html, travel02Styles } from "../templates/travel/templates02";
+import { travel03Html, travel03Styles } from "../templates/travel/templates03";
+import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
-import { saasHeroHtml, saasHeroStyles } from "../templates/saasHero";
+import { finance02Html, finance02Styles } from "../templates/finance/templates02";
+import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -46,6 +52,22 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "Create a premium dental care landing page for Lumina Dental Excellence. Include a hero section with a booking form, services grid, and patient testimonials.",
   },
   {
+    id: "healthcare-02",
+    name: "Elite Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+    prompt: "A professional healthcare landing page with a hero background, 3 feature cards, about section with image grid, and a comprehensive services list.",
+  },
+  {
+    id: "healthcare-03",
+    name: "Lumina Medical Center",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates03/screnshort8.png",
+    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  },
+  {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
@@ -54,20 +76,54 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
   },
   {
+    id: "travel-02",
+    name: "Savanna Safari Elite",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates02/screenshot3.png",
+    gradient: "linear-gradient(135deg, #78350f 0%, #1c1917 100%)",
+    prompt: "An adventurous luxury safari landing page with a floating booking form, wild animal grids, and conservation focus. Earthy tones and premium photography.",
+  },
+  {
+    id: "travel-03",
+    name: "Etheria Journeys",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates03/screenshot2.png",
+    gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
+    prompt: "A high-end luxury wellness and soul retreat landing page for Etheria Journeys. Midnight navy and gold palette, minimalist design, and serene nature focus.",
+  },
+  {
+    id: "travel-04",
+    name: "Metro City Explorer",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates04/screenshot4.png",
+    gradient: "linear-gradient(135deg, #111827 0%, #374151 100%)",
+    prompt: "A modern urban city-break landing page. Bold typography, city night photography, floating booking forms, and trending destination grids. Clean and electric feel.",
+  },
+
+  {
     id: "finance-01",
     name: "Elite Wealth",
     tag: "Finance",
-    img: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
-    prompt: "A high-end finance and wealth management landing page. Dark navy and slate theme, sophisticated typography, trust-building sections.",
+    img: "/assets/templates/finance/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
+    prompt: "A modern finance and consulting landing page for Finova. Professional design with trust-building elements, service highlights, and a clean lead capture form.",
   },
   {
-    id: "saas-01",
-    name: "BizFlow SaaS",
-    tag: "SaaS",
-    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
-    gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-    prompt: "A modern SaaS landing page for business operations. Clean white background, indigo accents, feature grid and request demo form.",
+    id: "finance-02",
+    name: "Finance Elite 02",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates02/screen.png",
+    gradient: "linear-gradient(135deg, #0a192f 0%, #c5a059 100%)",
+    prompt: "An institutional-grade investment management landing page with high-end serif typography, a corporate navy and gold theme, and a professional consultation form.",
+  },
+
+  {
+    id: "finance-03",
+    name: "Aureum Finance Elite",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates03/screenshot1.png",
+    gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
+    prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   }
 ];
 
@@ -129,7 +185,7 @@ const CreatePagePage = () => {
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(8);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -227,7 +283,7 @@ const CreatePagePage = () => {
     }
   };
 
-    const handleCreate = async () => {
+  const handleCreate = async () => {
     if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
     if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
     if (!project) return;
@@ -236,109 +292,83 @@ const CreatePagePage = () => {
     setIsComplete(false);
 
     let basePayload: Partial<LandingPage> = {};
+    let finalTemplateId = selectedTemplate;
+    let isAiTemplatePath = false;
 
-    if (activeMethod === "template" && selectedTemplate) {
+    // ─── AI TEMPLATE AUTO-SELECTION ───
+    if (activeMethod === "ai") {
+      const promptLower = aiPrompt.toLowerCase();
+      const projectCat = (project.category || "").toLowerCase();
+
+      let detectedCategory = "";
+      if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
+      else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
+      else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+
+      if (detectedCategory) {
+        const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
+        if (categoryTemplates.length > 0) {
+          const randomIndex = Math.floor(Math.random() * categoryTemplates.length);
+          finalTemplateId = categoryTemplates[randomIndex].id;
+          isAiTemplatePath = true;
+          toast.info(`AI selected ${detectedCategory} template for you!`);
+        }
+      }
+    }
+
+    if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
       let enrichedStyles = "";
-      const tName = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name || "Template";
+      const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
+      const tName = templateObj?.name || "Template";
 
-      switch (selectedTemplate) {
-        case "healthcare-01":
-          enrichedContent = healthcare01Html;
-          enrichedStyles = healthcare01Styles;
-          break;
-        case "travel-01":
-          enrichedContent = travel01Html;
-          enrichedStyles = travel01Styles;
-          break;
-        case "finance-01":
-          enrichedContent = finance01Html;
-          enrichedStyles = finance01Styles;
-          break;
-        case "saas-01":
-          enrichedContent = saasHeroHtml;
-          enrichedStyles = saasHeroStyles;
-          break;
-        default:
-          enrichedContent = "";
-          enrichedStyles = "";
+      switch (finalTemplateId) {
+        case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+        case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
+        case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+        case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
+        case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
+        case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
+        case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
+        case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
+        case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
+        case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        default: enrichedContent = ""; enrichedStyles = "";
       }
 
-      // ───────────────────────────────────────────────────────────────────────────
-      // NEW: DEEP MAGIC FILL (Section-by-Section Text Mapping)
-      // ───────────────────────────────────────────────────────────────────────────
-      try {
-        // 1. Extract unique significant text blocks from the template
-        const textBlocks: string[] = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(enrichedContent, "text/html");
-        const elements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, a, span");
-        
-        elements.forEach(el => {
-          const text = el.textContent?.trim();
-          if (text && text.length > 3 && !text.includes("{") && !text.includes("<")) {
-            textBlocks.push(text);
-          }
-        });
-
-        const uniqueBlocks = Array.from(new Set(textBlocks)).slice(0, 100); // Max coverage
-
-        if (uniqueBlocks.length > 0) {
-          const mappingRes = await aiApi.generate({
+      // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
+      // ONLY run this if we are in the "AI" path (isAiTemplatePath === true)
+      if (isAiTemplatePath) {
+        try {
+          const generationRes = await aiApi.generate({
             businessName: project.name,
             industry: project.category || "Service",
             businessDescription: project.description || "Premium services",
             pageType: "lead generation",
-            aiPrompt: `You are a Content Engine. Your task is to rewrite the following template strings to be 100% relevant to "${project.name}" which is in the "${project.category}" industry.
-            Business Description: ${project.description || "A professional company providing high-quality services."}
-            ${project.scrapedData?.description ? `Scraped Website Context: ${project.scrapedData.description}` : ""}
-            
-            STRINGS TO MAP (Index: Original Text):
-            ${uniqueBlocks.map((s, i) => `${i}: ${s}`).join("\n")}
-            
-            OUTPUT RULES:
-            - Return ONLY a valid JSON object where keys are the indices (strings) and values are the new rewritten text.
-            - Ensure the new text matches the tone and length of the original.
-            - For names like "Lumina Dental" or "Azure Luxury", replace them with "${project.name}" or a relevant alternative.
-            - If a string is a service (e.g., "Dental Implants"), replace it with a service relevant to ${project.category}.
-            - IMPORTANT: If a string looks like a Material Icon name (e.g., "dentistry", "biotech", "mood"), replace it with a relevant Material Icon name from the official library (e.g., "home", "build", "security").
-            - DO NOT include any markdown formatting, only the raw JSON.`
+            aiPrompt: aiPrompt,
+            templateHtml: enrichedContent,
+            templateStyles: enrichedStyles
           });
 
-          const rawMapping = mappingRes?.data?.content?.fullHtml || mappingRes?.data?.content;
-          if (rawMapping) {
-            try {
-              // Extract JSON if AI wrapped it in markdown
-              const jsonStr = rawMapping.match(/\{[\s\S]*\}/)?.[0] || rawMapping;
-              const mapping = JSON.parse(jsonStr);
-              
-              // 2. Perform surgical replacement
-              Object.entries(mapping).forEach(([idx, newText]) => {
-                const originalText = uniqueBlocks[parseInt(idx)];
-                if (originalText && newText && typeof newText === "string") {
-                  // Escape regex special chars
-                  const escapedOriginal = originalText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                  const regex = new RegExp(escapedOriginal, "g");
-                  enrichedContent = enrichedContent.replace(regex, newText);
-                }
-              });
-              toast.success("Magic Fill: Full page content optimized!");
-            } catch (jsonErr) {
-              console.error("Failed to parse mapping JSON:", jsonErr);
+          const aiResult = generationRes?.data?.content;
+          if (aiResult && aiResult.fullHtml) {
+            enrichedContent = aiResult.fullHtml;
+            if (aiResult.fullCss && aiResult.fullCss.length > 50) {
+              enrichedStyles = aiResult.fullCss;
             }
+            toast.success("Claude: Template regenerated with your vision!");
           }
+        } catch (err) {
+          console.error("AI Template Regeneration failed:", err);
+          toast.warning("AI regeneration failed, using base template with placeholders.");
         }
-      } catch (err) {
-        console.error("Deep Magic Fill failed:", err);
       }
-      // ───────────────────────────────────────────────────────────────────────────
 
       const finalLogo = logoUrl || project.logoUrl;
       const logoHtml = finalLogo
         ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
         : `<span style="color: ${primaryColor}">${project.name}</span>`;
 
-      // Smart replacements
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
       enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
@@ -350,36 +380,22 @@ const CreatePagePage = () => {
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       if (project.scrapedData?.images?.length > 0) {
-        const projectImages = project.scrapedData.images;
-        const bannerImages = projectImages.filter((img: any) => img.type === 'banner' || img.width > 1000);
-        const generalImages = projectImages.filter((img: any) => img.type !== 'banner' && img.type !== 'logo');
-        
-        // 1. Replace specific Unsplash placeholders
+        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner' || img.width > 1000);
+        let hasReplacedHero = false;
         enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
-          const replacement = bannerImages.length > 0 ? bannerImages[0].url : projectImages[0].url;
-          return replacement || match;
-        });
-
-        // 2. Replace local template assets with project images
-        let imgIdx = 0;
-        enrichedContent = enrichedContent.replace(/\/assets\/templates\/.*?\.(png|jpg|jpeg|webp|svg)/gi, (match) => {
-          if (match.includes('logo')) return match; // Skip logo, handled by LOGO_PLACEHOLDER
-          const replacement = projectImages[imgIdx % projectImages.length]?.url;
-          imgIdx++;
-          return replacement || match;
+          if (!hasReplacedHero && bannerImages.length > 0) {
+            hasReplacedHero = true;
+            return bannerImages[0].url || match;
+          }
+          return match;
         });
       }
 
-      // Smart Text Replacements for Relevance
       enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
-      
-      // Attempt to replace hero description
       if (project.description) {
-        // Look for common hero paragraph patterns
         enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
-        // If not found by class, try the first <p> after <h1>
         if (!enrichedContent.includes(project.description)) {
-            enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+          enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
         }
       }
 
@@ -388,13 +404,12 @@ const CreatePagePage = () => {
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
-        generationMethod: "template" as const,
+        generationMethod: isAiTemplatePath ? "ai" : "template",
         content: enrichedContent,
         styles: enrichedStyles,
-        landingPageContent: enrichedContent,
-        landingPageStyles: enrichedStyles,
-        templateId: selectedTemplate,
-        template: tName
+        templateId: finalTemplateId,
+        template: tName,
+        aiPrompt: aiPrompt
       };
     } else {
       basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
@@ -408,7 +423,8 @@ const CreatePagePage = () => {
       primaryColor,
       secondaryColor,
       logoUrl,
-      aiPrompt: aiPrompt,
+      aiPrompt: activeMethod === "ai" ? aiPrompt : "",
+      generationMethod: activeMethod === "ai" ? "ai" : "template",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -593,8 +609,6 @@ const CreatePagePage = () => {
                         <X className="h-4 w-4" />
                       </button>
                     </div>
-                    <label className="text-xs font-semibold text-gray-600 block mt-2">Customize prompt</label>
-                    <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} className="w-full min-h-[100px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 transition-all resize-none" />
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -709,15 +723,27 @@ const CreatePagePage = () => {
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
               {/* Search and Category Filter */}
               <div className="px-6 pt-6 space-y-4">
-                <div className="relative group">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Search templates..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="relative group flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="Search templates..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
+                    />
+                  </div>
+
+                  {visibleCount < LANDING_TEMPLATES.filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase()))).length && (
+                    <button
+                      onClick={() => setVisibleCount(prev => prev + 20)}
+                      className="whitespace-nowrap px-6 py-3.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-right-2"
+                    >
+                      <LayoutTemplate className="h-3.5 w-3.5" />
+                      View All
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -815,21 +841,7 @@ const CreatePagePage = () => {
                       </button>
                     ))}
 
-                  {/* View More Logic */}
-                  {visibleCount < LANDING_TEMPLATES.filter(t => templateCategory === "All" || t.tag === templateCategory).length && (
-                    <button
-                      onClick={() => setVisibleCount(prev => prev + 4)}
-                      className="rounded-2xl border-2 border-dashed border-violet-200 aspect-[4/3] flex flex-col items-center justify-center gap-2 text-center p-4 hover:bg-violet-50 hover:border-violet-400 transition-all group"
-                    >
-                      <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Zap className="h-5 w-5 text-violet-500" />
-                      </div>
-                      <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">View More</p>
-                      <p className="text-[10px] text-violet-400">Load 4 more templates</p>
-                    </button>
-                  )}
                 </div>
-
               </div>
             </div>
           )}
@@ -862,9 +874,15 @@ const CreatePagePage = () => {
               let tpStyles = "";
               switch (previewTemplate.id) {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
+                case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+                case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
+                case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
+                case "travel-04": tpHtml = travel04Html; tpStyles = travel04Styles; break;
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
-                case "saas-01": tpHtml = saasHeroHtml; tpStyles = saasHeroStyles; break;
+                case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
+                case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 

@@ -48,5 +48,6 @@ router.post('/project-suggestions', protect, aiRateLimit, require('../controller
 router.post('/pages/project-suggestions', protect, aiRateLimit, require('../controllers/aiController').getProjectSuggestions);
 router.post('/optimize-page', protect, aiRateLimit, require('../controllers/aiController').optimizePage);
 router.post('/strategic-plan', protect, aiRateLimit, require('../controllers/aiController').getStrategicPlan);
+router.post('/editor-chat', protect, aiRateLimit, require('../controllers/aiController').editorChat);
 
 module.exports = router;
