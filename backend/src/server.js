@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const compression = require('compression');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const passport = require('passport');
 const session = require('express-session');
 require('./config/passport');
@@ -60,7 +59,8 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-app.use(morgan('dev'));
+// Custom HTTP Logger is used instead of Morgan to support better filtering
+// app.use(morgan('dev'));
 
 // SESSION
 app.use(session({
@@ -73,13 +73,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// TEST ROUTE
-app.get('/', (req, res) => {
-  res.json({ message: 'AI Landing Page API is running' });
+// TEST ROUTE (Heartbeat)
+app.get('/api/heartbeat', (req, res) => {
+  res.json({ 
+    status: 'success', 
+    message: 'AI Landing Page API is running',
+    version: '1.0.0',
+    env: process.env.NODE_ENV || 'development'
+  });
 });
 
 // ROUTES
-
 // 1. Auth & User
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);

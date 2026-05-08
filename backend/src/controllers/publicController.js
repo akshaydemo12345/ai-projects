@@ -31,70 +31,84 @@ const normalizeScript = (value = '') => {
 };
 
 /**
- * GET /api/public/page/:slug
- * 100% Public endpoint — serves content WITHOUT requiring tokens.
+ * GET /api/public/page
+ * Supports query param page={pageId} or legacy slug-based page lookups.
+ * 100% Public endpoint — serves content WITHOUT requiring tokens for published pages.
  */
 exports.getPublicPageBySlug = async (req, res, next) => {
   try {
-    const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-    let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
-    
-    // Strip proxy prefix if present (WP Relay compatibility)
-    cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
-    const slugParts = cleanSlug.split('/');
-
-    let isThankYou = false;
-    let pageSlug = "";
-    let urlPreSlug = "";
-
-    if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-      isThankYou = true;
-      pageSlug = slugParts[slugParts.length - 2];
-      urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-    } else {
-      pageSlug = slugParts[slugParts.length - 1];
-      urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-    }
-
-    if (!pageSlug) return next(new AppError('Page not found', 404));
-
-    // Find all potential pages with this slug
-    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+    const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
+    const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     let pageDoc = null;
 
-    if (potentialPages.length > 0) {
-      for (const p of potentialPages) {
-        const project = await Project.findById(p.projectId);
-        const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
-        if (projectPreSlug === urlPreSlug) {
-          pageDoc = p;
-          break;
-        }
+    if (requestedPageId) {
+      if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
+        pageDoc = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
+      }
+      if (!pageDoc) {
+        pageDoc = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
       }
     }
 
-    // Fallback: Legacy support (only if no page found via dynamic detection)
-    if (!pageDoc && slugParts.length === 1) {
-      pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-      // Only use legacy if the project has NO preSlug
-      if (pageDoc) {
-        const project = await Project.findById(pageDoc.projectId);
-        if (project && project.preSlug) {
-          pageDoc = null; // Enforce preSlug
+    if (!pageDoc) {
+      const rawSlug = String(req.params.slug || req.params[0] || '').trim();
+      let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+      cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
+      const slugParts = cleanSlug.split('/');
+
+      let pageSlug = '';
+      let urlPreSlug = '';
+
+      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+        pageSlug = slugParts[slugParts.length - 2];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+      } else {
+        pageSlug = slugParts[slugParts.length - 1];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+      }
+
+      if (!pageSlug) return next(new AppError('Page not found', 404));
+
+      const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+
+      if (potentialPages.length > 0) {
+        for (const p of potentialPages) {
+          const project = await Project.findById(p.projectId);
+          const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+          if (projectPreSlug === urlPreSlug) {
+            pageDoc = p;
+            break;
+          }
+        }
+      }
+
+      if (!pageDoc && slugParts.length === 1) {
+        pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+        if (pageDoc) {
+          const project = await Project.findById(pageDoc.projectId);
+          if (project && project.preSlug) {
+            pageDoc = null;
+          }
         }
       }
     }
 
     if (!pageDoc) return next(new AppError('Page not found', 404));
 
-    // Increment views
+    if (pageDoc.status !== 'published' && previewToken && previewToken !== pageDoc.previewToken) {
+      return next(new AppError('Page not found', 404));
+    }
+
+    if (pageDoc.status !== 'published' && !previewToken) {
+      return next(new AppError('Page not found', 404));
+    }
+
     const page = await Page.findByIdAndUpdate(
       pageDoc._id,
       { $inc: { views: 1 } },
       { new: true }
     ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
-    // ─── BRANDING FALLBACK: Use project values if page values are missing ───
     let primaryColor = page.primaryColor;
     let secondaryColor = page.secondaryColor;
     let logoUrl = page.logoUrl;
@@ -108,24 +122,24 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         if (!logoUrl) logoUrl = project.logoUrl;
         if (!websiteUrl) websiteUrl = project.websiteUrl;
 
-        // Increment project views as well
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
 
-        // Check lock
         if (project.websiteUrl) {
           const forwardedHost = req.headers['x-forwarded-host'];
           const referer = req.headers['referer'];
 
-          let incomingRequestDomain = "";
+          let incomingRequestDomain = '';
           if (forwardedHost) {
             incomingRequestDomain = normalizeDomain(forwardedHost);
           } else if (referer) {
             incomingRequestDomain = normalizeDomain(referer);
           }
 
-          const isProxied = req.headers['x-proxy-by'] || forwardedHost;
+          const saasDomain = normalizeDomain(process.env.APP_DOMAIN || 'localhost');
+          const isProxied = req.headers['x-proxy-by'] || (forwardedHost && incomingRequestDomain !== saasDomain);
+          const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
-          if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl)) {
+          if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain && !isDevDomain) {
             return res.status(403).json({
               status: 'error',
               message: 'This landing page is not authorized for this domain.'
@@ -277,13 +291,10 @@ const buildLeadCaptureScript = (page) => {
         var tyUrl=window.pageThankYouUrl||"";
         if(tyUrl&&tyUrl.trim()!==""){
           window.location.replace(tyUrl)
-        }else if(window.location.pathname&&window.location.pathname!=='/'){
-          var currentPath=window.location.pathname.replace(/\\/+$/,'');
-          window.location.replace(window.location.origin+currentPath+"/thank-you")
-        }else if(SL){
-          window.location.replace(window.location.origin+"/"+SL+"/thank-you")
-        }else{
-          window.location.replace(window.location.href.split('?')[0].replace(/\\/+$/,'')+"/thank-you")
+        } else {
+          var currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('status','thank-you');
+          window.location.replace(currentUrl.toString().split('#')[0]);
         }
       }
     })
@@ -404,7 +415,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   // ── Thank You Redirect Script ────────────────────────────────────────────
   // Handles Gravity Forms and generic form submission success events
   const thankYouUrl = page.thankYouUrl?.trim() || '';
-  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var currentPath=window.location.pathname.replace(/\\/+$/,'');if(currentPath.indexOf('/thank-you')===-1){window.location.replace(currentPath+'/thank-you')}}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
+  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var url=new URL(window.location.href);url.searchParams.set('status','thank-you');window.location.replace(url.toString().split('#')[0])}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
   const encodedTyScript = Buffer.from(rawTyScript).toString('base64');
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
@@ -647,19 +658,33 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
 
 
 /**
- * GET /preview/:token/html
- * Serves draft content as full rendered HTML.
+ * GET /preview/:token/html or /preview?page={pageId}&token={previewToken}
+ * Serves draft or published content as full rendered HTML.
  */
 exports.getPreviewHTML = async (req, res, next) => {
   try {
-    const { token } = req.params;
-    const page = await Page.findOne({
-      $or: [
-        { previewToken: token },
-        { slug: token },
-        { _id: token && token.length === 24 ? token : null }
-      ],
-    }).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId');
+    const pageId = String(req.query.page || req.query.pageId || '').trim();
+    const token = String(req.params.token || req.query.token || req.query.previewToken || '').trim();
+    let page = null;
+
+    if (pageId && /^[0-9a-fA-F]{24}$/.test(pageId)) {
+      page = await Page.findById(pageId).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
+      if (page && page.status !== 'published') {
+        if (!token || token !== page.previewToken) {
+          return next(new AppError('Preview expired or invalid', 404));
+        }
+      }
+    }
+
+    if (!page) {
+      const tokenId = token && token.length === 24 ? token : null;
+      page = await Page.findOne({
+        $or: [
+          { previewToken: token },
+          { _id: tokenId }
+        ],
+      }).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
+    }
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
 
@@ -676,66 +701,75 @@ exports.getPreviewHTML = async (req, res, next) => {
  */
 exports.getPublicPageHTML = async (req, res, next) => {
   try {
-    const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-    let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
-
-    // Strip proxy prefix if present (WP Relay compatibility)
-    cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
-
-    // ─── DYNAMIC SLUG DETECTION (Pre-Slug Support) ───
-    const slugParts = cleanSlug.split('/');
-    let isThankYou = false;
-    let pageSlug = "";
-    let urlPreSlug = "";
-
-    if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-      isThankYou = true;
-      pageSlug = slugParts[slugParts.length - 2];
-      urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-    } else {
-      pageSlug = slugParts[slugParts.length - 1];
-      urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-    }
-
-    if (!pageSlug) return next(new AppError('Page not found', 404));
-
-    // Find all potential pages with this slug
-    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+    const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
+    const previewToken = String(req.query.token || req.query.previewToken || '').trim();
+    const isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
     let page = null;
 
-    if (potentialPages.length > 0) {
-      // Filter by project preSlug
-      for (const p of potentialPages) {
-        const project = await Project.findById(p.projectId);
-        const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
-        if (projectPreSlug === urlPreSlug) {
-          page = p;
-          break;
+    if (requestedPageId) {
+      if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
+        page = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
+      }
+      if (!page) {
+        page = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
+      }
+    }
+
+    if (!page) {
+      const rawSlug = String(req.params.slug || req.params[0] || '').trim();
+      let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
+      cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
+      const slugParts = cleanSlug.split('/');
+
+      let pageSlug = '';
+      let urlPreSlug = '';
+
+      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+        pageSlug = slugParts[slugParts.length - 2];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+      } else {
+        pageSlug = slugParts[slugParts.length - 1];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+      }
+
+      if (!pageSlug) return next(new AppError('Page not found', 404));
+
+      const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+
+      if (potentialPages.length > 0) {
+        for (const p of potentialPages) {
+          const project = await Project.findById(p.projectId);
+          const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+          if (projectPreSlug === urlPreSlug) {
+            page = p;
+            break;
+          }
+        }
+      }
+
+      if (!page && slugParts.length === 1) {
+        page = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+        if (page) {
+          const project = await Project.findById(page.projectId);
+          if (project && project.preSlug) {
+            page = null;
+          }
         }
       }
     }
 
-    // Fallback: Legacy support (only if no page found via dynamic detection)
-    if (!page && slugParts.length === 1) {
-      const legacySlug = slugParts[0];
-      page = await Page.findOne({ slug: legacySlug, isDeleted: { $ne: true } });
-      // Only use legacy if the project has NO preSlug
-      if (page) {
-        const project = await Project.findById(page.projectId);
-        if (project && project.preSlug) {
-          page = null; // Enforce preSlug
-        }
-      }
-    }
+    if (!page) return next(new AppError('Page not found or no page id provided', 404));
 
-    if (!page) return next(new AppError('Page not found or not published', 404));
+    if (page.status !== 'published' && (!previewToken || previewToken !== page.previewToken)) {
+      return next(new AppError('Page not found or not published', 404));
+    }
 
     // Increment views
     page.views += 1;
     await page.save({ validateBeforeSave: false });
 
-    // Use the actual detected slug for canonical and redirection
-    const normalizedSlug = pageSlug;
+    // Use the actual slug value for compatibility, but canonical root URL is query parameter based.
+    const normalizedSlug = page.slug || '';
 
     // ─── SMART DOMAIN AUTHORIZATION ───
     if (page.projectId) {
@@ -800,7 +834,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const hostHeader = req.headers['host'];
     const requestHost = forwardedHost || hostHeader || '';
     const canonicalUrl = requestHost
-      ? `http${req.secure ? 's' : ''}://${requestHost}/${cleanSlug}`
+      ? `http${req.secure ? 's' : ''}://${requestHost}/?page=${page._id}`
       : '';
 
     res.setHeader('Content-Type', 'text/html');
@@ -1227,12 +1261,17 @@ exports.getPreview = async (req, res, next) => {
 
     if (!page) return next(new AppError('Preview expired or invalid link', 404));
 
+    const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrl = page.previewToken
+      ? `${frontendUrl}/preview?page=${page._id}&token=${page.previewToken}`
+      : `${frontendUrl}/preview?page=${page._id}`;
+
     res.status(200).json({
       status: 'success',
       data: {
         page,
         isPreview: true,
-        tempUrl: `${process.env.APP_BASE_URL}/preview/${page.previewToken || page._id}`
+        tempUrl: previewUrl
       },
     });
   } catch (err) {

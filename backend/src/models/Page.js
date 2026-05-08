@@ -69,10 +69,6 @@ const pageSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  previewUrl: {
-    type: String,
-    trim: true,
-  },
   aiPrompt: {
     type: String,
     trim: true,
@@ -154,6 +150,14 @@ const pageSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
+  },
+  previewUrl: {
+    type: String,
+    trim: true,
+  },
+  liveUrl: {
+    type: String,
+    trim: true,
   },
   seo: {
     title: String,

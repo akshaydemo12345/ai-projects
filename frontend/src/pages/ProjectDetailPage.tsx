@@ -1362,7 +1362,7 @@ const ProjectDetailPage = () => {
                           const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
                           const url = page.status === "published"
                             ? `/${preSlugPrefix}${page.slug}`
-                            : `/preview/${preSlugPrefix}${page.slug}`;
+                            : `/preview/${preSlugPrefix}${page.slug}?token=${page.previewToken}`;
                           window.open(url, '_blank');
                         }}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
