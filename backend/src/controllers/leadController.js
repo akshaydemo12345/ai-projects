@@ -73,10 +73,27 @@ exports.createLead = async (req, res) => {
     // 3. Normalize Data for Storage
     const leadData = normalizeData(schema.fields, rawData);
 
-    // 4. UTMs & Meta
+    // 4. UTMs & Meta Extraction
     const utm = {};
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    
+    // First, try from request body
     utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
+
+    // Fallback: Parse from URL or referrer if missing
+    const sourceUrl = rawData.url || rawData.pageUrl || rawData.referer || rawData.referrer || req.headers.referer || req.get('referer');
+    if (sourceUrl && sourceUrl.includes('?')) {
+      try {
+        const urlParams = new URLSearchParams(sourceUrl.split('?')[1]);
+        utmFields.forEach(k => {
+          const val = urlParams.get(k);
+          if (val && !utm[k]) utm[k] = val; // Only fill if not already present
+        });
+      } catch (e) {}
+    }
+
+    console.log("📥 [LEAD-CREATE] REQ BODY:", JSON.stringify(rawData, null, 2));
+    console.log("🚩 [LEAD-CREATE] UTM VALUES:", utm);
 
     // 5. Create Lead
     const lead = await Lead.create({
@@ -85,11 +102,14 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
+      // Spread UTM fields to top level for insurance
+      ...utm,
       meta: {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        domain: rawData.domain || req.get('origin'),
-        url: rawData.url || req.headers.referer
+        referer: rawData.referer || rawData.referrer || req.headers.referer || req.get('referer') || '',
+        domain: rawData.domain || req.get('origin') || '',
+        url: rawData.url || rawData.pageUrl || req.get('referer') || ''
       }
     });
 
@@ -159,10 +179,51 @@ exports.createLead = async (req, res) => {
                           <div class="value">${leadData.phone || leadData.tel || 'Not provided'}</div>
                         </td>
                       </tr>
-                      <tr>
+                              <tr>
                         <td style="padding: 12px 0;">
                           <div class="label">Message</div>
                           <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <div class="data-card">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Source</div>
+                          <div class="value">${utm.utm_source || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Medium</div>
+                          <div class="value">${utm.utm_medium || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Campaign</div>
+                          <div class="value">${utm.utm_campaign || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Term</div>
+                          <div class="value">${utm.utm_term || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Content</div>
+                          <div class="value">${utm.utm_content || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">Referral URL</div>
+                          <div class="value">${lead.meta?.referer || '—'}</div>
                         </td>
                       </tr>
                     </table>
@@ -227,6 +288,36 @@ exports.createLead = async (req, res) => {
                   <p>${customUserMessage}</p>
                   <div style="margin: 30px 0;">
                     <span style="padding: 12px 24px; border-radius: 50px; background-color: ${pColor}; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">We'll talk soon!</span>
+                  </div>
+                        </div>
+
+                  <div class="data-card" style="margin-top: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Source</div>
+                          <div class="value">${utm.utm_source || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Medium</div>
+                          <div class="value">${utm.utm_medium || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">UTM Campaign</div>
+                          <div class="value">${utm.utm_campaign || '—'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">Referral URL</div>
+                          <div class="value">${lead.meta?.referer || '—'}</div>
+                        </td>
+                      </tr>
+                    </table>
                   </div>
                 </div>
                 <div class="footer">
@@ -361,7 +452,17 @@ exports.getLeads = async (req, res) => {
         userAgent: lead.meta?.userAgent,
         ...lead.utm,
         data: lead.data || {},
-        utm: lead.utm || {}
+        utm: lead.utm || {},
+        meta: lead.meta || {},
+        // Explicitly ensure UTM fields are at the top level for the UI
+        utm_source: lead.utm?.utm_source,
+        utm_medium: lead.utm?.utm_medium,
+        utm_campaign: lead.utm?.utm_campaign,
+        utm_term: lead.utm?.utm_term,
+        utm_content: lead.utm?.utm_content,
+        gclid: lead.utm?.gclid,
+        fbclid: lead.utm?.fbclid,
+        msclkid: lead.utm?.msclkid
       };
 
       // Map dynamic fields using FormSchema
@@ -456,8 +557,8 @@ exports.exportLeads = async (req, res) => {
     const fieldToLabel = {};
     schemas.forEach(s => s.fields.forEach(f => { fieldToLabel[f.field_name] = f.label; }));
 
-    const headerLabels = ['Name', 'Email', 'Phone', 'Message', 'Date', 'Page', 'Source', 'Medium', 'Campaign', 'Term', 'Content', 'IP Address'];
-    const standardKeys = ['name', 'email', 'phone', 'message', 'createdAt', 'pageSlug', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ip'];
+    const headerLabels = ['Name', 'Email', 'Phone', 'Message', 'Date', 'Page', 'Source', 'Medium', 'Campaign', 'Term', 'Content', 'Referral URL', 'IP Address'];
+    const standardKeys = ['name', 'email', 'phone', 'message', 'createdAt', 'pageSlug', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'referer', 'ip'];
 
     const shownLabels = new Set(headerLabels.map(l => l.toLowerCase()));
     const dynamicColumns = [];
@@ -507,6 +608,7 @@ exports.exportLeads = async (req, res) => {
         l.utm?.utm_campaign || '',
         l.utm?.utm_term || '',
         l.utm?.utm_content || '',
+        l.meta?.referer || '',
         l.meta?.ip || l.ip || ''
       ];
 
@@ -550,9 +652,23 @@ exports.getLeadFilters = async (req, res) => {
       match.projectId = new mongoose.Types.ObjectId(projectId);
     }
 
-    const utmSources = await Lead.distinct('utm.utm_source', match);
-    const utmMediums = await Lead.distinct('utm.utm_medium', match);
-    const utmCampaigns = await Lead.distinct('utm.utm_campaign', match);
+    // Try both flattened and nested for backward compatibility
+    const [flatSources, nestedSources] = await Promise.all([
+      Lead.distinct('utm_source', match),
+      Lead.distinct('utm.utm_source', match)
+    ]);
+    const [flatMediums, nestedMediums] = await Promise.all([
+      Lead.distinct('utm_medium', match),
+      Lead.distinct('utm.utm_medium', match)
+    ]);
+    const [flatCampaigns, nestedCampaigns] = await Promise.all([
+      Lead.distinct('utm_campaign', match),
+      Lead.distinct('utm.utm_campaign', match)
+    ]);
+
+    const utmSources = [...new Set([...flatSources, ...nestedSources])];
+    const utmMediums = [...new Set([...flatMediums, ...nestedMediums])];
+    const utmCampaigns = [...new Set([...flatCampaigns, ...nestedCampaigns])];
 
     res.status(200).json({
       status: 'success',

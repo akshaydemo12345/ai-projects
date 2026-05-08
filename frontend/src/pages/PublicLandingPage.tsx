@@ -264,7 +264,19 @@ const PublicLandingPage = () => {
               }
               if (!data.email) {
                 var eInput = form.querySelector('input[type="email"], input[name*="email"]');
-                data.email = formData.get('email') || (eInput ? eInput.value : "") || 'unknown@example.com';
+                data.email = formData.get('email') || (eInput ? eInput.value : "") || '';
+              }
+              
+              // Capture full URL and domain from parent window
+              try {
+                var parentUrl = parent !== window ? parent.location.href : window.location.href;
+                var parentDomain = parent !== window ? parent.location.hostname : window.location.hostname;
+                data.url = parentUrl;
+                data.domain = parentDomain;
+              } catch (e) {
+                // Fallback if cross-origin
+                data.url = window.location.href;
+                data.domain = window.location.hostname;
               }
               
               submitLead(data, form, btn, originalBtnText);

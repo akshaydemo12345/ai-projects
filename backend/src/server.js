@@ -28,6 +28,7 @@ const logger = require('./utils/logger');
 
 const path = require('path');
 const app = express();
+app.set('trust proxy', true);
 
 // STATIC SERVING
 app.use(express.static(path.join(__dirname, '../public')));
