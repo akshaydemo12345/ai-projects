@@ -59,7 +59,7 @@
       const usePageId = /^[0-9a-fA-F]{24}$/.test(String(page || ''));
       const endpoint = usePageId
         ? `${apiBase}/api/public/page?page=${encodeURIComponent(page)}&token=${encodeURIComponent(token)}`
-        : `${apiBase}/api/public/page/${encodeURIComponent(page)}?token=${encodeURIComponent(token)}`;
+        : `${apiBase}/api/public/page/${encodeURIComponent(page)}`;
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error('Failed to load page');
       
