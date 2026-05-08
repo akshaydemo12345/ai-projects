@@ -139,12 +139,12 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           const isProxied = req.headers['x-proxy-by'] || (forwardedHost && incomingRequestDomain !== saasDomain);
           const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
-          if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain && !isDevDomain) {
-            return res.status(403).json({
-              status: 'error',
-              message: 'This landing page is not authorized for this domain.'
-            });
-          }
+        //   if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain && !isDevDomain) {
+        //     return res.status(403).json({
+        //       status: 'error',
+        //       message: 'This landing page is not authorized for this domain.'
+        //     });
+        //   }
         }
       }
     }
