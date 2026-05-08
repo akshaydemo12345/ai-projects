@@ -2,6 +2,10 @@
 // Optimized for Editor Reliability — No Variables, Direct Placeholders
 
 export const travel01Styles = `
+:root {
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --secondary: SECONDARY_COLOR_PLACEHOLDER;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Manrope', sans-serif; color: #0c4a6e; line-height: 1.6; background: #fff; overflow-x: hidden; }
 
@@ -14,7 +18,7 @@ a { text-decoration: none; color: inherit; }
 .nav-inner { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 1rem 2rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); }
 .logo { font-size: 1.5rem; font-weight: 800; color: #fff; }
 .nav nav a { color: #fff; margin-left: 2rem; font-weight: 500; }
-.btn-nav { background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; padding: 0.7rem 1.5rem; border-radius: 50px; font-weight: 600; }
+.btn-primary { background-color: var(--secondary); color: #fff; padding: 0.7rem 1.5rem; border-radius: 50px; font-weight: 600; border: none; cursor: pointer; }
 
 /* Hero */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; background: #0c4a6e; color: #fff; padding: 10rem 0; overflow: hidden; }
@@ -29,9 +33,9 @@ a { text-decoration: none; color: inherit; }
 .search-bar { background: #fff; padding: 1rem; border-radius: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
 .search-field { padding: 0.5rem 1rem; border-right: 1px solid #eee; }
 .search-field:last-child { border: none; }
-.search-field label { display: block; font-size: 0.7rem; font-weight: 800; color: SECONDARY_COLOR_PLACEHOLDER; text-transform: uppercase; margin-bottom: 0.3rem; }
+.search-field label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 0.3rem; }
 .search-field input { border: none; outline: none; width: 100%; font-size: 1rem; font-weight: 600; }
-.btn-search { background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; border-radius: 16px; padding: 1rem 2rem; font-weight: 700; border: none; }
+.btn-submit { background-color: var(--secondary); color: #fff; border-radius: 16px; padding: 1rem 2rem; font-weight: 700; border: none; cursor: pointer; }
 
 /* Grid Sections */
 .islands { padding: 10rem 0; background: #fff; }
@@ -56,7 +60,7 @@ a { text-decoration: none; color: inherit; }
 .faq-item { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; }
 .faq-input { display: none; }
 .faq-label { display: flex; justify-content: space-between; padding: 1.5rem 2rem; font-weight: 700; cursor: pointer; }
-.faq-label::after { content: '+'; color: SECONDARY_COLOR_PLACEHOLDER; font-size: 1.5rem; }
+.faq-label::after { content: '+'; color: var(--secondary); font-size: 1.5rem; }
 .faq-content { max-height: 0; overflow: hidden; padding: 0 2rem; transition: 0.3s; color: #64748b; }
 .faq-input:checked ~ .faq-content { max-height: 200px; padding-bottom: 1.5rem; }
 .faq-input:checked ~ .faq-label::after { content: '-'; }
@@ -102,12 +106,12 @@ export const travel01Html = `
 <header class="nav">
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav class="nav-links">
-      <a href="#destinations">Destinations</a>
-      <a href="#fleet">The Fleet</a>
-      <a href="#about">Experience</a>
+    <nav>
+      <a href="#islands">Destinations</a>
+      <a href="#fleet">Our Fleet</a>
+      <a href="#faq">FAQ</a>
     </nav>
-    <a href="#contact" class="btn-nav">Inquire Now</a>
+    <a href="#contact" class="btn-primary">Book Now</a>
   </div>
 </header>
 
@@ -120,22 +124,26 @@ export const travel01Html = `
       <h1>Paradise, <br>Privately Yours.</h1>
       <p>Crystal lagoons, overwater villas, and barefoot luxury across the world's most secluded islands.</p>
       <div class="search-bar">
+        <form style="display: contents;">
         <div class="search-field">
           <label>Destination</label>
           <input type="text" placeholder="Where to?">
         </div>
         <div class="search-field">
-          <label>Travelers</label>
-          <input type="text" placeholder="2 Guests">
+          <label>Guests</label>
+          <input type="text" placeholder="2 Adults">
         </div>
         <div class="search-field">
           <label>Duration</label>
           <input type="text" placeholder="7 Days">
         </div>
-        <button class="btn-search">Explore Now</button>
+        <button type="submit" class="btn-submit">Search</button>
+      </form>
       </div>
     </div>
-  </sect  <section class="brands" style="padding: 4rem 0; background: #fff; border-bottom: 1px solid #f1f5f9;">
+  </section>
+
+  <section class="brands" style="padding: 4rem 0; background: #fff; border-bottom: 1px solid #f1f5f9;">
     <div class="container" style="display: flex; justify-content: space-between; align-items: center; opacity: 0.4; filter: grayscale(1); flex-wrap: wrap; gap: 2rem;">
       <i class="fa-brands fa-airbnb" style="font-size: 2rem;"></i>
       <i class="fa-brands fa-expedia" style="font-size: 2rem;"></i>
@@ -148,7 +156,7 @@ export const travel01Html = `
   <section class="islands" id="destinations">
     <div class="container">
       <div style="text-align: center; margin-bottom: 4rem;">
-        <span style="color: SECONDARY_COLOR_PLACEHOLDER; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em;">Featured Havens</span>
+        <span style="color: var(--secondary); font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em;">Featured Havens</span>
         <h2 style="font-size: 3.5rem; font-weight: 800; color: #0c4a6e; margin-top: 1rem;">Sun-soaked sanctuaries.</h2>
       </div>
       <div class="grid">

@@ -23,6 +23,7 @@ const generateSchema = z.object({
   ctaText: z.string().optional(),
   tone: z.string().optional(),
   aiPrompt: z.string().optional(),
+  templateHtml: z.string().optional(),
   figmaUrl: z.string().url('Invalid Figma URL').nullable().or(z.literal('')).optional(),
   pageId: z.string().optional(),
   services: z.array(z.string()).optional(),
@@ -399,6 +400,31 @@ exports.improveSection = async (req, res, next) => {
         creditsRemaining: user.credits,
         aiUsage: improved.aiUsage
       }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route   POST /ai/editor-chat
+ * @desc    GrapesJS editor AI assistant — returns structured JSON for element modification
+ * @access  Private
+ */
+exports.editorChat = async (req, res, next) => {
+  try {
+    const { elementTag, elementHtml, elementCss, instruction } = req.body;
+
+    if (!elementHtml || !instruction) {
+      return res.status(400).json({ status: 'fail', message: 'elementHtml and instruction are required' });
+    }
+
+    const { editorChatModify } = require('../services/aiService');
+    const result = await editorChatModify({ elementTag: elementTag || 'div', elementHtml, elementCss: elementCss || '{}', instruction });
+
+    return res.status(200).json({
+      status: 'success',
+      data: result  // { action, css, text, html, summary }
     });
   } catch (err) {
     next(err);
