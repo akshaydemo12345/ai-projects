@@ -4,10 +4,10 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 
 const CLAUDE_MODEL_CANDIDATES = [
-  'claude-3-haiku-20240307', // Extremely cheap and fast
-  'claude-3-5-haiku-20241022',
-  'claude-3-5-sonnet-20241022',
   process.env.ANTHROPIC_MODEL,
+  'claude-3-5-sonnet-latest',
+  'claude-3-5-haiku-latest',
+  'claude-3-opus-latest',
 ].filter(Boolean);
 
 /**
