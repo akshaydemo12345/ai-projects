@@ -10,6 +10,20 @@ const LANDING_TEMPLATES = [
     gradient: "linear-gradient(135deg, #bb0014 0%, #141d23 100%)",
   },
   {
+    id: "healthcare-02",
+    name: "Elite Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+  },
+  {
+    id: "healthcare-03",
+    name: "Lumina Medical Center",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates03/hero.png",
+    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+  },
+  {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
@@ -36,6 +50,13 @@ const LANDING_TEMPLATES = [
     tag: "Finance",
     img: "/assets/templates/finance/templates01/screenshot.png",
     gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
+  },
+  {
+    id: "finance-02",
+    name: "Finance Elite 02",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates02/hero.png",
+    gradient: "linear-gradient(135deg, #0a192f 0%, #c5a059 100%)",
   }
 ];
 
