@@ -2,6 +2,10 @@
 // 100% Matching User Content & Premium Dark-Gold Aesthetic
 
 export const finance03Styles = `
+:root {
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --secondary: SECONDARY_COLOR_PLACEHOLDER;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Outfit', sans-serif; background: #050505; color: #ffffff; line-height: 1.6; overflow-x: hidden; }
 
@@ -12,11 +16,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 /* Navigation */
 .nav { position: absolute; top: 0; left: 0; right: 0; z-index: 100; padding: 2.5rem 0; }
 .nav-inner { display: flex; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.5rem; font-weight: 800; color: PRIMARY_COLOR_PLACEHOLDER; letter-spacing: 2px; text-transform: uppercase; }
+.logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
 .nav-links { display: flex; gap: 3rem; }
 .nav-links a { color: #fff; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-.nav-links a:hover { color: PRIMARY_COLOR_PLACEHOLDER; opacity: 1; }
-.btn-nav { border: 1px solid PRIMARY_COLOR_PLACEHOLDER; color: PRIMARY_COLOR_PLACEHOLDER; padding: 0.8rem 1.8rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+.nav-links a:hover { color: var(--primary); opacity: 1; }
+.btn-primary { border: 1px solid var(--primary); color: var(--primary); padding: 0.8rem 1.8rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; background: transparent; cursor: pointer; }
 
 /* Hero Section */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; padding: 12rem 0 10rem; background: #000; }
@@ -29,23 +33,23 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .hero-form-bar { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); padding: 1rem; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; border: 1px solid rgba(255,255,255,0.1); width: 100%; margin-top: 4rem; }
 .form-field { padding: 0.5rem 1.5rem; border-right: 1px solid rgba(255,255,255,0.1); }
 .form-field:last-of-type { border-right: none; }
-.form-field label { display: block; font-size: 0.65rem; text-transform: uppercase; color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 1px; }
+.form-field label { display: block; font-size: 0.65rem; text-transform: uppercase; color: var(--primary); font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 1px; }
 .form-field input, .form-field select { background: transparent; border: none; outline: none; color: #fff; width: 100%; font-size: 0.95rem; font-weight: 500; }
-.btn-quote { background: PRIMARY_COLOR_PLACEHOLDER; color: #000; border: none; padding: 1rem 2.5rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
+.btn-submit { background-color: var(--primary); color: #000; border: none; padding: 1rem 2.5rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
 
 /* Offerings Section */
 .offerings { padding: 10rem 0; background: #050505; }
-.section-tag { color: PRIMARY_COLOR_PLACEHOLDER; text-transform: uppercase; font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; display: block; margin-bottom: 1.5rem; }
+.section-tag { color: var(--primary); text-transform: uppercase; font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; display: block; margin-bottom: 1.5rem; }
 .offerings h2 { font-size: 3.5rem; font-weight: 600; margin-bottom: 1.5rem; }
 .offerings-lead { color: #777; font-size: 1.2rem; max-width: 600px; margin-bottom: 5rem; }
 
 .off-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
 .off-card { background: rgba(255,255,255,0.02); padding: 4rem 2.5rem; border: 1px solid rgba(255,255,255,0.05); transition: 0.4s; }
-.off-card:hover { border-color: PRIMARY_COLOR_PLACEHOLDER; transform: translateY(-10px); background: rgba(255,255,255,0.04); }
-.off-icon { font-size: 2rem; color: PRIMARY_COLOR_PLACEHOLDER; margin-bottom: 2.5rem; }
+.off-card:hover { border-color: var(--primary); transform: translateY(-10px); background: rgba(255,255,255,0.04); }
+.off-icon { font-size: 2rem; color: var(--primary); margin-bottom: 2.5rem; }
 .off-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
 .off-card p { color: #666; font-size: 0.95rem; margin-bottom: 3rem; }
-.off-link { color: PRIMARY_COLOR_PLACEHOLDER; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 0.75rem; letter-spacing: 1px; }
+.off-link { color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 0.75rem; letter-spacing: 1px; }
 
 /* Stats Bar */
 .stats-bar { padding: 8rem 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -57,7 +61,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .standard { padding: 10rem 0; background: #000; }
 .std-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 6rem; }
 .std-item { text-align: center; }
-.std-icon { font-size: 2rem; color: PRIMARY_COLOR_PLACEHOLDER; margin-bottom: 2rem; }
+.std-icon { font-size: 2rem; color: var(--primary); margin-bottom: 2rem; }
 .std-item h4 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
 .std-item p { color: #666; font-size: 0.95rem; }
 
@@ -65,7 +69,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .journey { padding: 10rem 0; background: #050505; }
 .journey-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 5rem; }
 .step-card { padding: 4rem 2.5rem; border: 1px solid rgba(255,255,255,0.05); position: relative; background: #000; }
-.step-num { position: absolute; top: 2rem; left: 2.5rem; color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 1.2rem; }
+.step-num { position: absolute; top: 2rem; left: 2.5rem; color: var(--primary); font-weight: 800; font-size: 1.2rem; }
 .step-card h3 { font-size: 1.4rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1.5rem; }
 .step-card p { color: #777; font-size: 0.95rem; }
 
@@ -73,7 +77,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .voices { padding: 10rem 0; background: #000; }
 .voices-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; margin-top: 6rem; }
 .voice-card { background: rgba(255,255,255,0.02); padding: 4rem; border: 1px solid rgba(255,255,255,0.05); }
-.stars { color: PRIMARY_COLOR_PLACEHOLDER; font-size: 0.75rem; margin-bottom: 2rem; }
+.stars { color: var(--primary); font-size: 0.75rem; margin-bottom: 2rem; }
 .voice-text { font-size: 1.1rem; color: #ccc; font-style: italic; margin-bottom: 3rem; line-height: 1.8; }
 .voice-author h4 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 0.25rem; }
 .voice-author span { font-size: 0.75rem; color: #666; }
@@ -81,10 +85,10 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 /* Final CTA Section */
 .cta-section { padding: 10rem 0; background: #050505; position: relative; overflow: hidden; }
 .cta-trust-bar { display: flex; gap: 4rem; margin-bottom: 4rem; opacity: 0.6; }
-.trust-item { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: PRIMARY_COLOR_PLACEHOLDER; }
+.trust-item { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
 .cta-section h2 { font-size: 4.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 2rem; }
 .cta-section p { font-size: 1.25rem; color: #666; margin-bottom: 4rem; max-width: 600px; }
-.btn-apply { background: PRIMARY_COLOR_PLACEHOLDER; color: #000; padding: 1.25rem 3.5rem; border-radius: 4px; font-weight: 800; display: inline-block; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; }
+.btn-final { background-color: var(--primary); color: #000; padding: 1.25rem 3.5rem; border-radius: 4px; font-weight: 800; display: inline-block; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; border: none; cursor: pointer; }
 
 /* Footer */
 footer { padding: 10rem 0 5rem; background: #000; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -112,11 +116,11 @@ export const finance03Html = `
     <div class="logo">LOGO_PLACEHOLDER</div>
     <nav class="nav-links">
       <a href="#services">Services</a>
-      <a href="#about">Wealth hub</a>
-      <a href="#process">Process</a>
-      <a href="#contact">Contact</a>
+      <a href="#about">Philosophy</a>
+      <a href="#projects">Expertise</a>
+      <a href="#faq">FAQ</a>
     </nav>
-    <a href="#contact" class="btn-nav">Get Started</a>
+    <a href="#contact" class="btn-primary">Get Analysis</a>
   </div>
 </header>
 
@@ -147,15 +151,10 @@ export const finance03Html = `
           <input type="email" placeholder="john@aureum.com" required>
         </div>
         <div class="form-field">
-          <label>Service Type</label>
-          <select required>
-            <option value="">Choose Service</option>
-            <option value="loan">Loan</option>
-            <option value="wealth">Wealth Management</option>
-            <option value="corporate">Corporate Finance</option>
-          </select>
+          <label>Strategy</label>
+          <select><option>Wealth Management</option><option>Corporate Tax</option></select>
         </div>
-        <button type="submit" class="btn-quote">Get Quote</button>
+        <button type="submit" class="btn-submit">Analyze</button>
       </form>
     </div>
   </section>
@@ -320,13 +319,12 @@ export const finance03Html = `
   <section class="cta-section">
     <div class="container">
       <div class="cta-trust-bar">
-        <div class="trust-item"><i class="fa-solid fa-user-shield"></i> Institutional Grade</div>
-        <div class="trust-item"><i class="fa-solid fa-earth-americas"></i> Global Reach</div>
-        <div class="trust-item"><i class="fa-solid fa-user-check"></i> Bank-Grade Security</div>
+        <div class="trust-item"><i class="fa-solid fa-shield-halved"></i> SECURE ASSETS</div>
+        <div class="trust-item"><i class="fa-solid fa-award"></i> TOP RATED</div>
       </div>
-      <h2>Secure Your Financial <br>Legacy Today.</h2>
-      <p>Pioneering institutional-grade financial vehicles for the modern global investor.</p>
-      <a href="#contact" class="btn-apply">Apply Now</a>
+      <h2>Ready to Scale <br>Your Wealth?</h2>
+      <p>Join over 5,000 elite partners who have optimized their financial future with Aureum's proprietary strategies.</p>
+      <a href="#contact" class="btn-final">Open Your Account</a>
     </div>
     <!-- Decorative Graphic -->
     <div style="position: absolute; bottom: -20px; right: 50px; opacity: 0.05; font-size: 20rem; pointer-events: none;">
