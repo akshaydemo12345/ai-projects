@@ -128,6 +128,12 @@ const LeadsPage = () => {
   });
 
   // ── Field helper ──────────────────────────────────────────────────────────
+  const isPlaceholderEmail = (value: any) => {
+    if (!value || typeof value !== 'string') return false;
+    const normalized = value.trim().toLowerCase();
+    return /^(unknown@example\.com|test@|.*@example\.com|no[-_.]?reply@|noreply@|^none@)/i.test(normalized);
+  };
+
   const getLField = (l: any, field: string) => {
     const lowerField = field.toLowerCase();
 
@@ -137,8 +143,19 @@ const LeadsPage = () => {
       if (val) return val;
     }
     if (field === "email") {
-      const val = l["Email Address"] || l.email || l.email_address || l.user_email || (l.data?.email || l.data?.user_email || l.data?.e_mail || l.data?.contact_email || "");
-      if (val) return val;
+      const candidates = [
+        l["Email Address"],
+        l.email,
+        l.email_address,
+        l.user_email,
+        l.data?.email,
+        l.data?.user_email,
+        l.data?.e_mail,
+        l.data?.contact_email
+      ];
+      for (const candidate of candidates) {
+        if (candidate && !isPlaceholderEmail(candidate)) return candidate;
+      }
     }
     if (field === "phone") {
       const val = l["Phone Number"] || l.phone || l.phone_number || l.tel || l.mobile || l.mobile_number || (l.data?.phone || l.data?.tel || l.data?.mobile || "");
@@ -163,8 +180,9 @@ const LeadsPage = () => {
       Object.entries(obj).forEach(([key, value]) => {
         if (!value || typeof value !== 'string') return;
         const k = key.toLowerCase().replace(/_/g, "");
-        if (k.includes("email")) emails.add(value);
-        else if (k.includes("phone") || k.includes("mobile") || k.includes("tel") || k.includes("contact")) {
+        if (k.includes("email")) {
+          if (!isPlaceholderEmail(value)) emails.add(value);
+        } else if (k.includes("phone") || k.includes("mobile") || k.includes("tel") || k.includes("contact")) {
           // Avoid adding names that might have "contact" in them
           if (value.match(/[0-9]/)) phones.add(value);
         }
@@ -258,6 +276,53 @@ const LeadsPage = () => {
     setFilterUtmMedium("");
     setFilterUtmCampaign("");
   };
+
+  const identityContacts = selectedLead ? getStackedContacts(selectedLead) : { emails: [], phones: [] };
+
+  const referralUrl = selectedLead ? (
+    selectedLead.meta?.url ||
+    selectedLead.meta?.referer ||
+    (selectedLead.meta?.domain && selectedLead.pageSlug
+      ? `https://${selectedLead.meta.domain.replace(/\/+$|\s+$/g, '')}/${selectedLead.pageSlug.replace(/^\/+/, '')}`
+      : "")
+  ) : "";
+
+  // Robust UTM Extraction Fallback
+  const getUTM = (key: string) => {
+    // 1. Try direct field
+    let val = (selectedLead as any)?.[key];
+    if (val) return val;
+
+    // 2. Try nested utm object
+    val = (selectedLead as any)?.utm?.[key];
+    if (val) return val;
+
+    // 3. Fallback: Parse from Referral URL
+    if (referralUrl) {
+      try {
+        const url = new URL(referralUrl);
+        return url.searchParams.get(key) || "";
+      } catch (e) {
+        // Handle cases where referralUrl is just a slug or invalid URL
+        if (referralUrl.includes('?')) {
+          const params = new URLSearchParams(referralUrl.split('?')[1]);
+          return params.get(key) || "";
+        }
+      }
+    }
+    return "";
+  };
+
+  const utm_source = getUTM("utm_source");
+  const utm_medium = getUTM("utm_medium");
+  const utm_campaign = getUTM("utm_campaign");
+  const utm_term = getUTM("utm_term");
+  const utm_content = getUTM("utm_content");
+  const gclid = getUTM("gclid");
+  const fbclid = getUTM("fbclid");
+  const msclkid = getUTM("msclkid");
+
+  const hasUTMs = utm_source || utm_medium || utm_campaign || utm_term || utm_content || gclid || fbclid || msclkid;
 
   return (
     <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
@@ -378,8 +443,8 @@ const LeadsPage = () => {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Project dropdown */}
-          <Select value={filterProjectId || "all"} onValueChange={(val) => {
-            setFilterProjectId(val === "all" ? "" : val);
+          <Select value={filterProjectId} onValueChange={(val) => {
+            setFilterProjectId(val || "");
             setFilterPageId("");
           }}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
@@ -389,7 +454,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="">All Projects</SelectItem>
               {(projects as any[]).map((p: any) => (
                 <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
               ))}
@@ -398,8 +463,8 @@ const LeadsPage = () => {
 
           {/* Page dropdown */}
           <Select
-            value={filterPageId || "all"}
-            onValueChange={(val) => setFilterPageId(val === "all" ? "" : val)}
+            value={filterPageId}
+            onValueChange={(val) => setFilterPageId(val || "")}
             disabled={!filterProjectId}
           >
             <SelectTrigger
@@ -414,7 +479,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Pages</SelectItem>
+              <SelectItem value="">All Pages</SelectItem>
               {(projectPages as any[]).map((pg: any) => (
                 <SelectItem key={pg._id} value={pg._id}>
                   {pg.name || pg.slug}
@@ -424,7 +489,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Source dropdown */}
-          <Select value={filterUtmSource || "all"} onValueChange={(val) => setFilterUtmSource(val === "all" ? "" : val)}>
+          <Select value={filterUtmSource} onValueChange={(val) => setFilterUtmSource(val || "")}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -432,7 +497,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Any Source</SelectItem>
+              <SelectItem value="">Any Source</SelectItem>
               {leadFilters?.utmSources.map((s: string) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -440,7 +505,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Medium dropdown */}
-          <Select value={filterUtmMedium || "all"} onValueChange={(val) => setFilterUtmMedium(val === "all" ? "" : val)}>
+          <Select value={filterUtmMedium} onValueChange={(val) => setFilterUtmMedium(val || "")}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -448,7 +513,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Any Medium</SelectItem>
+              <SelectItem value="">Any Medium</SelectItem>
               {leadFilters?.utmMediums.map((s: string) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -736,7 +801,7 @@ const LeadsPage = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
               {/* Message Section */}
               {getLField(selectedLead, "message") && (
                 <section>
@@ -753,78 +818,49 @@ const LeadsPage = () => {
               )}
 
               {/* Identity Section */}
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-indigo-500" /> Identity Details
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Email Addresses</p>
-                    <div className="space-y-2">
-                      {getStackedContacts(selectedLead).emails.length > 0 ? (
-                        getStackedContacts(selectedLead).emails.map((email, idx) => (
-                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 text-primary/60" />
-                            {email}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
-                    <div className="space-y-2">
-                      {getStackedContacts(selectedLead).phones.length > 0 ? (
-                        getStackedContacts(selectedLead).phones.map((phone, idx) => (
-                          <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Phone className="h-3.5 w-3.5 text-primary/60" />
-                            {phone}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-sm font-bold text-slate-400 italic">Not Disclosed</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Marketing Attribution */}
-              {(selectedLead as any).utm_source && (
+              {(identityContacts.emails.length > 0 || identityContacts.phones.length > 0) && (
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-emerald-500" /> Marketing Attribution
+                      <Shield className="h-4 w-4 text-indigo-500" /> Identity Details
                     </h3>
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_source || "—"}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Medium</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_medium || "—"}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {identityContacts.emails.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Email Addresses</p>
+                        <div className="space-y-2">
+                          {identityContacts.emails.map((email, idx) => (
+                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              <Mail className="h-3.5 w-3.5 text-primary/60" />
+                              {email}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {identityContacts.phones.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
+                        <div className="space-y-2">
+                          {identityContacts.phones.map((phone, idx) => (
+                            <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              <Phone className="h-3.5 w-3.5 text-primary/60" />
+                              {phone}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </section>
               )}
 
-              {/* Captured Insights */}
               <section>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
+                    <FileText className="h-4 w-4 text-amber-500" /> Form Fields
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
@@ -833,15 +869,15 @@ const LeadsPage = () => {
                     const standardKeys = [
                       "name", "email", "phone", "message", "full_name", "first_name", "last_name",
                       "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
-                      "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
-                      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
+                      "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
+                      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm", "meta", "url", "referer"
                     ];
 
                     const shownLabels = new Set<string>();
                     const insights: Array<{ label: string, value: any }> = [];
 
                     Object.entries(selectedLead).forEach(([key, value]) => {
-                      if (!value || key === "data" || key === "utm") return;
+                      if (!value || key === "data" || key === "utm" || key === "meta") return;
                       const lowerK = key.toLowerCase().replace(/_/g, "");
                       if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
                       if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
@@ -867,30 +903,62 @@ const LeadsPage = () => {
                 </div>
               </section>
 
-              {/* Technical Trace */}
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-slate-400" /> Technical Trace
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
-                    <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <Shield className="h-3.5 w-3.5 text-blue-400" />
-                      {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                    </p>
+              {/* UTM Details */}
+              {hasUTMs ? (
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-emerald-500" /> UTM Details
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_source || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Medium</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_medium || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_campaign || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_term || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_content || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Tracking IDs</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white break-words">
+                        {[(selectedLead as any).gclid, (selectedLead as any).fbclid, (selectedLead as any).msclkid].filter(Boolean).join(" / ") || "—"}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {referralUrl && (
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-slate-500" /> Referral URL
+                    </h3>
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
-                    </p>
+                    <a href={referralUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-words">
+                      {referralUrl}
+                    </a>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
+
             </div>
           </div>
         </div>

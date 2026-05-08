@@ -232,9 +232,15 @@ const buildLeadCaptureScript = (page) => {
   const rawScript = `!function(){
   var A="${apiBaseUrl}", SL="${pageSlug}", PI="${pageId}", PJ="${projectId}";
   
-  // Persistence Utility
+  // Persistence Utility: Capture UTMs Immediately
   function sUTM(){
     var q=new URLSearchParams(window.location.search);
+    try {
+      if(window.top !== window && window.top.location.search) {
+        var pq = new URLSearchParams(window.top.location.search);
+        pq.forEach(function(v,k){if(!q.has(k))q.append(k,v)});
+      }
+    } catch(e) {}
     if(window.location.hash&&window.location.hash.indexOf("?")!==-1){
       var hq=new URLSearchParams(window.location.hash.split("?")[1]);
       hq.forEach(function(v,k){if(!q.has(k))q.append(k,v)});
@@ -243,25 +249,29 @@ const buildLeadCaptureScript = (page) => {
     keys.forEach(function(k){
       var v=q.get(k);
       if(v){
-        try{sessionStorage.setItem("dm_"+k,v)}catch(e){}
+        try{
+          sessionStorage.setItem("dm_"+k,v);
+          localStorage.setItem("dm_"+k,v);
+        }catch(e){}
       }
+    });
+    console.log("💎 [TRACKER] UTM Captured on load:", {
+      source: sessionStorage.getItem("dm_utm_source"),
+      medium: sessionStorage.getItem("dm_utm_medium")
     });
   }
   sUTM();
 
-  function getUTM(){
-    var u={};
-    var keys=["utm_source","utm_medium","utm_campaign","utm_term","utm_content","gclid","fbclid","msclkid"];
-    keys.forEach(function(k){
-      var v=null;
-      try{v=sessionStorage.getItem("dm_"+k)}catch(e){}
-      if(!v){
-        var q=new URLSearchParams(window.location.search);
-        v=q.get(k);
-      }
-      if(v)u[k]=v;
-    });
-    return u;
+  function getUTM(k){
+    var v=null;
+    try{
+      v=sessionStorage.getItem("dm_"+k) || localStorage.getItem("dm_"+k);
+    }catch(e){}
+    if(!v){
+      var q=new URLSearchParams(window.location.search);
+      v=q.get(k);
+    }
+    return v || "";
   }
 
   function send(d,f,b,t,n){
@@ -290,11 +300,15 @@ const buildLeadCaptureScript = (page) => {
 
         var tyUrl=window.pageThankYouUrl||"";
         if(tyUrl&&tyUrl.trim()!==""){
-          window.location.replace(tyUrl)
+          // Append current params to preserve tracking
+          var currentParams = window.location.search;
+          var separator = tyUrl.indexOf('?') !== -1 ? '&' : '?';
+          var finalUrl = currentParams ? (tyUrl + separator + currentParams.replace('?', '')) : tyUrl;
+          window.location.replace(finalUrl);
         } else {
           var currentUrl = new URL(window.location.href);
           currentUrl.searchParams.set('status','thank-you');
-          window.location.replace(currentUrl.toString().split('#')[0]);
+          window.location.replace(currentUrl.toString());
         }
       }
     })
@@ -351,8 +365,11 @@ const buildLeadCaptureScript = (page) => {
       if (k && v && String(v).trim() !== "" && !data[k]) data[k] = v;
     });
 
-    var utms=getUTM();
-    Object.keys(utms).forEach(function(k){data[k]=utms[k]});
+    // UTM capture
+    var utmKeys = ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","gclid","fbclid","msclkid"];
+    utmKeys.forEach(function(k){
+      data[k] = getUTM(k);
+    });
 
     console.log('📡 [TRACKER] Final Data for submission:', data);
     send(data,f,b,t,1)
@@ -998,10 +1015,27 @@ exports.handleFormSubmission = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Required fields missing', fields: missingFields });
     }
 
-    // 4. UTMs
+    // 4. UTMs Extraction
     const utm = {};
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+    
+    // First, try from request body
     utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
+
+    // Fallback: Parse from URL if missing
+    const sourceUrl = rawData.url || rawData.pageUrl || rawData.referer || req.get('referer');
+    if (sourceUrl && sourceUrl.includes('?')) {
+      try {
+        const urlParams = new URLSearchParams(sourceUrl.split('?')[1]);
+        utmFields.forEach(k => {
+          const val = urlParams.get(k);
+          if (val && !utm[k]) utm[k] = val; // Only fill if not already present
+        });
+      } catch (e) {}
+    }
+
+    console.log("📥 [PUBLIC-FORM] REQ BODY:", JSON.stringify(rawData, null, 2));
+    console.log("🚩 [PUBLIC-FORM] UTM VALUES:", utm);
 
     // 5. Create Lead
     const lead = await Lead.create({
@@ -1010,11 +1044,13 @@ exports.handleFormSubmission = async (req, res, next) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
+      // Spread UTM fields to top level for insurance
+      ...utm,
       meta: {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         domain: rawData.domain || req.get('origin'),
-        url: rawData.url || req.get('referer')
+        url: rawData.url || rawData.pageUrl || req.get('referer')
       }
     });
 

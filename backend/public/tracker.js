@@ -11,12 +11,41 @@
     fullUrl: window.location.href
   };
 
+  // Immediate Capture
+  (function captureUTMs() {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      try {
+        if (window.top !== window && window.top.location.search) {
+          const pq = new URLSearchParams(window.top.location.search);
+          pq.forEach((v, k) => { if (!q.has(k)) q.append(k, v); });
+        }
+      } catch (e) {}
+
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      utmKeys.forEach(key => {
+        const val = q.get(key);
+        if (val) {
+          try {
+            sessionStorage.setItem('dm_' + key, val);
+            localStorage.setItem('dm_' + key, val);
+          } catch (e) {}
+        }
+      });
+      console.log('💎 [TRACKER] UTM Captured on load:', {
+        source: sessionStorage.getItem('dm_utm_source'),
+        medium: sessionStorage.getItem('dm_utm_medium')
+      });
+    } catch (e) {}
+  })();
+
   function getUTMParameters() {
     const utms = {};
     try {
+      const q = new URLSearchParams(window.location.search);
       const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
       utmKeys.forEach(key => {
-        const val = sessionStorage.getItem('dm_' + key) || (new URLSearchParams(window.location.search)).get(key);
+        const val = sessionStorage.getItem('dm_' + key) || localStorage.getItem('dm_' + key) || q.get(key);
         if (val) utms[key.toLowerCase()] = val;
       });
     } catch (e) {}
@@ -77,10 +106,11 @@
       // Metadata injection
       Object.assign(data, {
         domain: CONFIG.domain,
-        pageUrl: CONFIG.fullUrl,
+        url: CONFIG.fullUrl,
         path: CONFIG.path,
         pageId: CONFIG.pageId,
         projectId: CONFIG.projectId,
+        referer: document.referrer || '',
         timestamp: new Date().toISOString(),
         ...getUTMParameters()
       });
@@ -97,8 +127,15 @@
         if (result.success || result.status === 'success') {
           showToast('Inquiry Received!');
           setTimeout(() => {
-            if (result.thankYouUrl) window.location.href = result.thankYouUrl;
-            else form.reset();
+            if (result.redirect || result.thankYouUrl) {
+              const tyUrl = result.redirect || result.thankYouUrl;
+              const currentParams = window.location.search;
+              const separator = tyUrl.indexOf('?') !== -1 ? '&' : '?';
+              const finalUrl = currentParams ? (tyUrl + separator + currentParams.replace('?', '')) : tyUrl;
+              window.location.href = finalUrl;
+            } else {
+              form.reset();
+            }
           }, 800);
         } else {
           showToast(result.message || 'Validation error', 'error');
