@@ -399,6 +399,11 @@ const CreatePagePage = () => {
         }
       }
 
+      // We only send the aiPrompt for template enrichment if the user has modified it from the default.
+      // Otherwise, we clear it to avoid triggering the backend AI service.
+      const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
+      const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
+
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
@@ -830,7 +835,7 @@ const CreatePagePage = () => {
                         {/* Footer Actions */}
                         <div className="bg-white border-t border-gray-100 px-3 py-3 flex items-center justify-between">
                           <span className="text-[11px] font-black text-gray-900 truncate pr-2">{tpl.name}</span>
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleViewTemplate(tpl); }}
                             className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
                             title="View Preview"

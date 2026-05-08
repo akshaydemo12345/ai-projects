@@ -8,25 +8,24 @@ const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const pgSlug = searchParams.get('pg');
+  const pageId = searchParams.get('page') || searchParams.get('pageId');
+  const token = searchParams.get('token') || searchParams.get('previewToken');
 
   // Resolve slug from splat or pathname to support nested preSlugs
   const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
   // Strip /thank-you from path to get the page slug
   const path = rawPath.replace(/\/thank-you$/i, '');
 
-  const slug = (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
+  const slug = pageId ? undefined : (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isThankYouPage = window.location.pathname.endsWith('/thank-you') || searchParams.get('thankyou') === 'true';
 
-  // We might need the token from the URL if the backend requires it
-  const token = searchParams.get('token');
-
   const { data: pageData, isLoading, error } = useQuery({
-    queryKey: ['public-page', slug],
-    queryFn: () => pagesApi.getBySlug(slug!),
-    enabled: !!slug,
+    queryKey: ['public-page', pageId || slug, token],
+    queryFn: () => pageId ? pagesApi.getByPageId(pageId, token || undefined) : pagesApi.getBySlug(slug!, token || undefined),
+    enabled: !!pageId || !!slug,
     retry: 1,
   });
 
@@ -588,7 +587,36 @@ const PublicLandingPage = () => {
   }
 
   // Check if page exists AND is not unpublished
-  if (error || !pageData || (pageData as any).status === 'unpublished') {
+  // if (error || !pageData || (pageData as any).status === 'unpublished') {
+  // Safely resolve status from different API response structures
+// const resolvedStatus =
+//   (pageData as any)?.status ||
+//   (pageData as any)?.data?.status;
+
+// Check if page exists AND is published
+// if (
+//   error ||
+//   !pageData ||
+//   resolvedStatus === 'unpublished'
+// ) 
+// Resolve actual page object safely
+const resolvedPage =
+  (pageData as any)?.data || pageData;
+
+// Resolve page status
+const resolvedStatus = resolvedPage?.status;
+
+// Detect preview mode
+const isPreviewMode =
+  window.location.pathname.startsWith('/preview/') ||
+  !!token;
+
+// Block unpublished pages ONLY on public URLs
+if (
+  error ||
+  !resolvedPage ||
+  (!isPreviewMode && resolvedStatus === 'unpublished')
+) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
         <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">

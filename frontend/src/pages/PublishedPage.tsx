@@ -7,16 +7,13 @@ import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 
 // --- WordPress Steps ---
-const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlug: string }) => {
+const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: string }) => {
   const token = project.apiToken || 'PC-TOKEN-PENDING';
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
 
-  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-  const fullPageSlug = `${preSlug ? preSlug + '/' : ''}${pageSlug}`;
-  
   const script = token
-    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE__ = "${fullPageSlug}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
+    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE_ID__ = "${pageId}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
     : '';
 
   const copyToken = async () => { 
@@ -110,12 +107,10 @@ const WordPressIntegration = ({ project, pageSlug }: { project: Project, pageSlu
 };
 
 // --- Script Integration ---
-const ScriptIntegration = ({ project, pageSlug }: { project: Project, pageSlug: string }) => {
+const ScriptIntegration = ({ project, pageId }: { project: Project, pageId: string }) => {
   const [copied, setCopied] = useState(false);
   const token = project.apiToken || 'PC-TOKEN-PENDING';
-  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-  const fullPageSlug = `${preSlug ? preSlug + '/' : ''}${pageSlug}`;
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${token}" data-page="${fullPageSlug}" async></script>`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${token}" data-page-id="${pageId}" async></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
@@ -168,8 +163,8 @@ const PublishedPage = () => {
     );
   }
 
-  const preSlug = project.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-  const liveUrl = `${window.location.origin}/${preSlug ? preSlug + '/' : ''}${page.slug}`;
+  const liveUrl = page.liveUrl || `${window.location.origin}/?page=${page._id}`;
+  const previewUrl = page.previewUrl || `${window.location.origin}/preview?page=${page._id}${page.previewToken ? `&token=${page.previewToken}` : ''}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
     if (success) {
@@ -234,7 +229,7 @@ const PublishedPage = () => {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0 }}>WordPress Integration (Recommended)</h3>
             </div>
             <div style={{ background: '#f8fafc', borderRadius: 10, padding: 22, border: '1px solid #e5e7eb' }}>
-              <WordPressIntegration project={project} pageSlug={page.slug || "page"} />
+              <WordPressIntegration project={project} pageId={page._id} />
             </div>
           </div>
 
@@ -244,7 +239,7 @@ const PublishedPage = () => {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0 }}>Script Integration (Any Website)</h3>
             </div>
             <div style={{ background: '#f8fafc', borderRadius: 10, padding: 22, border: '1px solid #e5e7eb' }}>
-              <ScriptIntegration project={project} pageSlug={page.slug || "page"} />
+              <ScriptIntegration project={project} pageId={page._id} />
             </div>
           </div>
         </div>
