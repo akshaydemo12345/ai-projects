@@ -128,7 +128,7 @@ const LANDING_TEMPLATES: any[] = [
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "SaaS"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -650,7 +650,7 @@ const CreatePagePage = () => {
               </div>
               <div className="flex-1 px-7 py-8 flex flex-col gap-4">
                 {[
-                  { title: "High-Converting SaaS", desc: "Perfect for software products with pricing and features.", color: "bg-blue-50 text-blue-600", icon: <Zap className="h-4 w-4" />, prompt: "A modern SaaS landing page for a cloud storage product. Include a hero section with a signup form, tiered pricing table, trust badges, and a features grid with icons." },
+
                   { title: "Local Business Lead Gen", desc: "Optimized for roofing, plumbing, or dental services.", color: "bg-emerald-50 text-emerald-600", icon: <MapPin className="h-4 w-4" />, prompt: "PPC landing page for a local roofing company. High-visibility phone number, service area map, 'Get a Quote' form above the fold, and client testimonials." },
                   { title: "Digital Agency Portfolio", desc: "Showcase creative work and service packages.", color: "bg-violet-50 text-violet-600", icon: <Eye className="h-4 w-4" />, prompt: "Luxury digital agency landing page. Dark theme with neon accents, project gallery slider, service list with hover effects, and a team introduction section." },
                   { title: "Real Estate Showcase", desc: "Display properties with high-quality imagery.", color: "bg-amber-50 text-amber-600", icon: <LayoutTemplate className="h-4 w-4" />, prompt: "Premium real estate landing page. Hero image of a luxury apartment, property feature list (sqft, beds, baths), interactive map, and an inquiry form for agents." }

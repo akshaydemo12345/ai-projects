@@ -570,13 +570,7 @@ export const healthcare01Html = `
 <header class="site-header">
 <div class="header-wrapper">
 <a class="header-logo" href="#">LOGO_PLACEHOLDER</a>
-<nav class="nav-menu">
-<a href="#services">Services</a>
-<a href="#about">About Us</a>
-<a href="#process">Our Process</a>
-<a href="#testimonials">Testimonials</a>
-<a href="#faqs">FAQs</a>
-</nav>
+
 <div class="header-actions">
 <a class="action-call" href="tel:1234567890">
 <span class="material-symbols-outlined">call</span>

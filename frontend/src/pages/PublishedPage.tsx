@@ -13,7 +13,7 @@ const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: s
   const [copiedToken, setCopiedToken] = useState(false);
 
   const script = token
-    ? `<!-- PageCraft AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE_ID__ = "${pageId}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
+    ? `<!-- Buildify AI Integration -->\n<script>\n  window.__PC_TOKEN__ = "${token}";\n  window.__PC_PAGE_ID__ = "${pageId}";\n</script>\n<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/sdk/loader.js" async defer></script>`
     : '';
 
   const copyToken = async () => { 
@@ -63,7 +63,7 @@ const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: s
           </a>
         </div>
         <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
-          Go to your WordPress dashboard → <strong>Plugins → Add New</strong> → Search for <strong>"PageCraft AI"</strong> → Install &amp; Activate.
+          Go to your WordPress dashboard → <strong>Plugins → Add New</strong> → Search for <strong>"Buildify AI"</strong> → Install &amp; Activate.
         </p>
       </div>
 

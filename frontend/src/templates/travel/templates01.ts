@@ -106,11 +106,6 @@ export const travel01Html = `
 <header class="nav">
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav>
-      <a href="#islands">Destinations</a>
-      <a href="#fleet">Our Fleet</a>
-      <a href="#faq">FAQ</a>
-    </nav>
     <a href="#contact" class="btn-primary">Book Now</a>
   </div>
 </header>
