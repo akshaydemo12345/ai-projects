@@ -25,7 +25,7 @@ const LoginPage = () => {
       if (isSignUp) {
         response = await authApi.signup({ name, email, password });
         toast.success("Account created successfully!", {
-          description: "Welcome to PageCraft! Let's start building your first project.",
+          description: "Welcome to Buildify! Let's start building your first project.",
         });
       } else {
         response = await authApi.login({ email, password });
@@ -53,7 +53,7 @@ const LoginPage = () => {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">PageCraft</span>
+            <span className="text-xl font-bold">Buildify</span>
           </div>
 
           <h1 className="text-4xl font-bold leading-tight mb-4">
@@ -87,7 +87,7 @@ const LoginPage = () => {
             ))}
           </div>
           <p className="text-sm text-white/90 italic mb-3">
-            "PageCraft cut our landing page creation from weeks to minutes."
+            "Buildify cut our landing page creation from weeks to minutes."
           </p>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold">

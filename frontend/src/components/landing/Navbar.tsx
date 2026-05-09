@@ -7,10 +7,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Zap className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">PageCraft</span>
+          <img src="/assets/Buildify-logo.png" alt="Buildify Logo" className="h-40 w-auto" />
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
