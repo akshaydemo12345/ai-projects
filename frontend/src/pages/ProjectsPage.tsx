@@ -325,22 +325,11 @@ const ProjectsPage = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs text-primary hover:text-primary font-bold group-hover:bg-primary/5 transition-colors"
+                      className="h-8 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm transition-all"
                       onClick={() => navigate(`/dashboard/projects/${project._id}`)}
                     >
                       Go to Dashboard →
                     </Button>
-                    {/* <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-7 px-2 text-[10px] gap-1.5 font-bold bg-muted hover:bg-primary/10 hover:text-primary transition-all"
-                      title="Email Settings"
-                      onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
-                    >
-                      <Mail className="h-3 w-3" />
-                      Email
-                    </Button> */}
                     <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
                       {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
                       {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}

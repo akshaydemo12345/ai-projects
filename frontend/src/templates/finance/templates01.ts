@@ -195,12 +195,6 @@ export const finance01Html = `
 <header class="nav">
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
-    <nav class="nav-links">
-      <a href="#about">About Us</a>
-      <a href="#services">Services</a>
-      <a href="#projects">Projects</a>
-      <a href="#blog">Blog</a>
-    </nav>
     <a href="#contact" class="btn-primary">Get A Quote</a>
   </div>
 </header>
