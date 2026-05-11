@@ -1,0 +1,99 @@
+### REST Client File for VS Code
+### Install "REST Client" extension to run these natively or use Postman.
+### Change the token and inputs dynamically as you test.
+
+@baseUrl = http://localhost:5000
+
+# ─── Auth Flow ─────────────────────────────────────────────────────────
+
+### 1. Register a new user
+# @name register
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "tester@example.com",
+  "password": "Password123!"
+}
+
+### 2. Login (This issues a JWT and HTTP-only refresh token)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "tester@example.com",
+  "password": "Password123!"
+}
+
+### Save accessToken from login response and assign it manually or copy it:
+@token = {{login.response.body.data.accessToken}}
+
+# ─── Page Management ───────────────────────────────────────────────────
+
+### 3. Create a Draft Page
+# @name createPage
+POST {{baseUrl}}/pages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "My Super AI SaaS",
+  "slug": "ai-saas-demo"
+}
+
+@pageId = {{createPage.response.body.data.page._id}}
+
+# ─── AI Generation ──────────────────────────────────────────────────────
+
+### 4. Generate AI Content & Map to the page
+### NOTE: Requires a valid OPENAI_API_KEY in your .env file
+POST {{baseUrl}}/ai/generate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "pageId": "{{pageId}}",
+  "businessName": "PageCraft Competitor",
+  "industry": "Marketing SaaS",
+  "pageType": "Waitlist",
+  "targetAudience": "Marketers & Founders",
+  "ctaText": "Get Early Access",
+  "designUrl": "https://app.figr.design/artifacts/a047b29c-4dd2-4590-b350-0c20a0be821a"
+}
+
+# ─── Publishing & Lead Capture ──────────────────────────────────────────
+
+### 5. Publish the Page
+POST {{baseUrl}}/pages/{{pageId}}/publish
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "subdomain": "saas-launch"
+}
+
+### 6. View the Public Page via Subdomain
+GET {{baseUrl}}/p/domain/saas-launch.localhost
+
+
+### 7. Capture a lead automatically on the public page
+POST {{baseUrl}}/pages/{{pageId}}/leads
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@earlyadopter.com",
+  "message": "Can't wait!"
+}
+
+# ─── Analytics ──────────────────────────────────────────────────────────
+
+### 8. Fetch Dashboard Stats (Views, Conversions, Draft counts)
+GET {{baseUrl}}/user/dashboard
+Authorization: Bearer {{token}}
+
+### 9. Download Leads CSV (Open this link in browser normally)
+GET {{baseUrl}}/pages/{{pageId}}/export-leads
+Authorization: Bearer {{token}}

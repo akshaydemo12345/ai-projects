@@ -1,0 +1,3383 @@
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import grapesjs from 'grapesjs';
+import type { Editor } from 'grapesjs';
+import 'grapesjs/dist/css/grapes.min.css';
+// @ts-ignore
+import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
+// @ts-ignore
+import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
+import JSZip from 'jszip';
+import './grapes-custom.css';
+import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
+import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { copyToClipboard } from '@/lib/utils';
+import BlocksPanel from './BlocksPanel';
+import GlobalStylesPanel from './GlobalStylesPanel';
+import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
+const GrapesEditor = () => {
+  const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
+  const queryClient = useQueryClient();
+  const editorRef = useRef<Editor | null>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ['project', projId],
+    queryFn: () => projectsApi.getById(projId!),
+    enabled: !!projId,
+  });
+
+  const { data: page, isLoading: pageLoading } = useQuery({
+    queryKey: ['page', projId, pageId],
+    queryFn: () => pagesApi.getById(projId!, pageId!),
+    enabled: !!projId && !!pageId,
+  });
+
+  const updatePageMutation = useMutation({
+    mutationFn: (data: Partial<LandingPage>) => pagesApi.update(projId!, pageId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projId] });
+    }
+  });
+
+  const [codeView, setCodeView] = useState(false);
+  const [htmlCode, setHtmlCode] = useState('');
+  const [cssCode, setCssCode] = useState('');
+  const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>('blocks');
+  const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
+  const [mode, setMode] = useState<'landing' | 'thank-you'>(searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing');
+  // AI Prompt
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [editAiOpen, setEditAiOpen] = useState(false);
+  const [editAiPrompt, setEditAiPrompt] = useState('');
+
+  // AI Chat Assistant
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const WELCOME_MSG = { role: 'ai' as const, content: "Hi! How can I help you today? 😊" };
+
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ai_chat_messages_${pageId}`);
+      return saved ? JSON.parse(saved) : [WELCOME_MSG];
+    } catch { return [WELCOME_MSG]; }
+  });
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Change History — persisted in localStorage per page
+  const [aiHistory, setAiHistory] = useState<{ id: string; timestamp: string; prompt: string; element: string; summary: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ai_history_${pageId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Persist aiHistory & chatMessages to localStorage on every change
+  useEffect(() => {
+    try { localStorage.setItem(`ai_history_${pageId}`, JSON.stringify(aiHistory)); } catch { }
+  }, [aiHistory, pageId]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`ai_chat_messages_${pageId}`, JSON.stringify(chatMessages)); } catch { }
+  }, [chatMessages, pageId]);
+
+  // AI API Key (Claude - stored in localStorage)
+  const [aiApiKey, setAiApiKey] = useState<string>(() => localStorage.getItem('ai_editor_claude_key') || '');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [aiProvider, setAiProvider] = useState<'claude' | 'demo'>(() => (localStorage.getItem('ai_editor_claude_key') ? 'claude' : 'demo'));
+
+  // Publish
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
+  // SEO Settings
+  const [seoOpen, setSeoOpen] = useState(false);
+  const [pageTitle, setPageTitle] = useState('');
+  const [metaDesc, setMetaDesc] = useState('');
+  const [noIndex, setNoIndex] = useState(false);
+  const [noFollow, setNoFollow] = useState(false);
+  const [themePrimary, setThemePrimary] = useState('#7c3aed');
+  const [themeSecondary, setThemeSecondary] = useState('#6366f1');
+  // Custom Color Picker
+  const [colorPicker, setColorPicker] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    color: string;
+    fieldEl: HTMLElement | null;
+    cssProperty: string;
+  }>({ visible: false, x: 0, y: 0, color: '#000000', fieldEl: null, cssProperty: '' });
+
+  // Selection Context
+  const [selectedLabel, setSelectedLabel] = useState<string>('Body');
+  const [activeComponent, setActiveComponent] = useState<any>(null);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+
+  // UI Panels
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+  const [isEditorFullyLoaded, setIsEditorFullyLoaded] = useState(false);
+
+  const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
+
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const cpObserverRef = useRef<MutationObserver | null>(null);
+  const aiInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (page) {
+      setPageTitle(page.metaTitle || page.name || 'Landing Page');
+      setMetaDesc(page.metaDescription || '');
+      setNoIndex(page.noIndex || false);
+      setNoFollow(page.noFollow || false);
+      setThemePrimary(page.primaryColor || '#7c3aed');
+      setThemeSecondary(page.secondaryColor || '#6366f1');
+      setSiteStatus(page.status || 'draft');
+    }
+  }, [page]);
+
+
+  // Ref to track page data for closures
+  const pageDataRef = useRef(page);
+  useEffect(() => {
+    pageDataRef.current = page;
+  }, [page]);
+
+  // Auto-focus AI input when tab switches to AI
+  useEffect(() => {
+    if (leftTab === 'ai' && isSidebarOpen) {
+      setTimeout(() => aiInputRef.current?.focus(), 150);
+    }
+  }, [leftTab, isSidebarOpen]);
+
+  // ── Sync Document Metadata for SPA ──
+  useEffect(() => {
+    if (page) {
+      const currentTitle = page.metaTitle || page.name || 'Landing Page';
+      document.title = `${currentTitle} | AI Project Hub`;
+
+      // Update ALL meta description tags to be sure
+      const metaDescriptions = document.querySelectorAll('meta[name="description"]');
+      const targetContent = page.metaDescription || 'High-converting AI landing page.';
+
+      if (metaDescriptions.length > 0) {
+        metaDescriptions.forEach(tag => tag.setAttribute('content', targetContent));
+      } else {
+        const newTag = document.createElement('meta');
+        newTag.setAttribute('name', 'description');
+        newTag.setAttribute('content', targetContent);
+        document.head.appendChild(newTag);
+      }
+    }
+  }, [page?.name, page?.metaTitle, page?.metaDescription]);
+
+  // Handle content application
+  const applyContentToEditor = (editor: any, forcedMode?: 'landing' | 'thank-you') => {
+    const currentPage = pageDataRef.current;
+    if (!editor || !currentPage) return;
+
+    const activeMode = forcedMode || mode;
+    console.log('🔄 Applying content to editor. Mode:', activeMode, 'Page ID:', currentPage._id);
+
+    let dbContent: string = '';
+    let dbStyles: string = '';
+
+    // 1. Resolve Content Structure based on Mode
+    if (activeMode === 'thank-you') {
+      dbContent = currentPage.thankYouPageContent || '';
+      dbStyles = currentPage.thankYouPageStyles || '';
+    } else {
+      // Landing Page Mode (Legacy Support)
+      if (currentPage.landingPageContent) {
+        dbContent = currentPage.landingPageContent;
+        dbStyles = currentPage.landingPageStyles || '';
+      } else if (typeof currentPage.content === 'object' && currentPage.content !== null) {
+        dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
+        dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
+      } else if (typeof currentPage.content === 'string') {
+        dbContent = currentPage.content;
+      }
+
+      if (currentPage.styles && !dbStyles) {
+        dbStyles = currentPage.styles;
+      }
+    }
+
+    // 2. Intelligent Extraction
+    if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head')) {
+      console.log('📄 Full HTML detected. Extracting body and styles...');
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(dbContent, 'text/html');
+
+        // Extract Styles
+        const styleTags = Array.from(doc.querySelectorAll('style'));
+        const extractedStyles = styleTags.map(s => s.textContent).join('\n');
+        if (extractedStyles) {
+          dbStyles = (dbStyles || '') + '\n' + extractedStyles;
+        }
+
+        // Take body content or fallback to full text if body is somehow empty
+        let bodyHtml = doc.body.innerHTML.trim();
+        if (!bodyHtml || bodyHtml.length < 20) {
+          console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
+          bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
+        }
+        dbContent = bodyHtml;
+
+        // Apply body style to wrapper
+        const bodyStyle = doc.body.getAttribute('style');
+        if (bodyStyle) {
+          // @ts-ignore
+          editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
+        }
+      } catch (e) {
+        console.error('❌ Failed to parse full HTML, using raw fallback:', e);
+      }
+    }
+
+    // 3. Set to Editor
+    if (dbContent && dbContent.trim().length > 10) {
+      console.log('💎 Injecting branding variables and setting content...');
+
+      // Clear then set
+      editor.setComponents('');
+      try {
+        if (editor.DomComponents && editor.DomComponents.clear) editor.DomComponents.clear();
+        // @ts-ignore
+        if (editor.Css && editor.Css.clear) editor.Css.clear();
+        // @ts-ignore
+        if (editor.UndoManager && editor.UndoManager.clear) editor.UndoManager.clear();
+      } catch (e) {
+        console.warn('GrapesJS soft clear returned a warning:', e);
+      }
+
+      // Inject :root CSS variables
+      const canvasDoc = editor.Canvas.getDocument();
+      if (canvasDoc) {
+        let brandingTag = canvasDoc.getElementById('branding-vars') as HTMLStyleElement | null;
+        if (!brandingTag) {
+          brandingTag = canvasDoc.createElement('style');
+          brandingTag.id = 'branding-vars';
+          canvasDoc.head.appendChild(brandingTag);
+        }
+        brandingTag.innerHTML = `
+        :root { 
+          --primary: ${currentPage.primaryColor || '#7c3aed'}; 
+          --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
+          --accent: ${currentPage.secondaryColor || '#6366f1'};
+          --gold: ${currentPage.primaryColor || '#7c3aed'};
+          --btn-bg: ${currentPage.secondaryColor || '#6366f1'};
+          --btn-text: #ffffff;
+          --body-bg: #ffffff;
+          --body-text: #0f172a;
+          --heading-color: #0f172a;
+          --subheading-color: #475569;
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
+          --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
+        }
+        
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
+        `;
+        const allButtons = canvasDoc.querySelectorAll('form button');
+        allButtons.forEach(btn => {
+          if (btn.getAttribute('type') === 'button') {
+            btn.setAttribute('type', 'submit');
+          }
+        });
+      }
+
+      // Safe-guard body styles from being purged by GrapesJS
+      // ─── Placeholder Replacement (Dynamic) ───
+      const finalStyles = (dbStyles || '')
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
+        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '');
+
+      editor.setStyle(finalStyles);
+
+
+
+      // ─── Synchronous Branding & Logo Replacement ───
+      if (currentPage.logoUrl) {
+        dbContent = dbContent.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, currentPage.logoUrl);
+        dbContent = dbContent.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, currentPage.logoUrl);
+        dbContent = dbContent.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, currentPage.logoUrl);
+
+        // Flexible attribute replacement
+        dbContent = dbContent.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
+          const combined = p1 + p2;
+          const updated = combined.replace(/src="[^"]*"/gi, '');
+          return `<img src="${currentPage.logoUrl}"${updated} id="page-logo">`;
+        });
+      }
+
+      if (currentPage.primaryColor) {
+        let pColor = currentPage.primaryColor.trim();
+        if (pColor && pColor !== '#ffffff' && pColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(pColor, 'gi'), 'var(--primary)');
+          if (pColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(pColor.slice(0, 7), 'gi'), 'var(--primary)');
+          }
+        }
+      }
+      if (currentPage.secondaryColor) {
+        let sColor = currentPage.secondaryColor.trim();
+        if (sColor && sColor !== '#ffffff' && sColor !== '#000000') {
+          dbContent = dbContent.replace(new RegExp(sColor, 'gi'), 'var(--secondary)');
+          if (sColor.length === 9) {
+            dbContent = dbContent.replace(new RegExp(sColor.slice(0, 7), 'gi'), 'var(--secondary)');
+          }
+        }
+      }
+
+      dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
+      dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
+
+      const configHTML = `
+      <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: 'var(--primary)',
+                secondary: 'var(--secondary)',
+                accent: 'var(--accent)'
+              }
+            }
+          }
+        }
+      </script>
+      `;
+      dbContent = configHTML + dbContent;
+
+      editor.setComponents(dbContent);
+    } else {
+      console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
+      if (mode === 'thank-you') {
+        editor.setComponents(`
+          <section style="display: flex; min-height: 80vh; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; padding: 40px 20px; text-align: center; font-family: sans-serif;">
+            <div style="background: white; padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+              <div style="width: 80px; height: 80px; background-color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <h1 style="font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Thank You!</h1>
+              <p style="font-size: 18px; color: #64748b; margin-bottom: 32px; line-height: 1.6;">Your request has been successfully submitted. We will get back to you shortly.</p>
+              <a href="/" style="display: inline-block; background-color: var(--primary, #6366f1); color: white; padding: 14px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">Return to Home</a>
+            </div>
+          </section>
+        `);
+      } else {
+        editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
+          `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
+          `<p>Start editing by choosing a block from the left or use the AI generator.</p>` +
+          `</div>`);
+      }
+    }
+  };
+
+  // Effect to handle editor initialization (ONCE per pageId)
+  useEffect(() => {
+    if (projectLoading || pageLoading || !page || !project || editorRef.current) return;
+
+    console.log('🚀 Initializing GrapesJS Editor...');
+
+    // ─── Style GrapesJS Modal Header Only ───
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .gjs-mdl-header { background-color: #1e1e2d !important; border-bottom: 1px solid #2a2a3e !important; padding: 15px 20px !important; }
+      .gjs-mdl-title { color: #f8fafc !important; font-weight: bold !important; font-size: 16px !important; }
+      .gjs-mdl-btn-close { color: #94a3b8 !important; }
+      .gjs-mdl-content { background-color: #111827 !important; padding: 0 !important; }
+      
+      /* Asset Manager Upload Styling */
+      .gjs-am-uploadFile {
+        background-color: #1f2937 !important;
+        border: 2px dashed #374151 !important;
+        color: #9ca3af !important;
+        padding: 40px 20px !important;
+        border-radius: 12px !important;
+        margin: 20px !important;
+        text-align: center !important;
+      }
+      .gjs-am-assets-cont {
+        background-color: #111827 !important;
+        padding: 15px !important;
+      }
+      .gjs-am-add-asset {
+        background-color: #1f2937 !important;
+        color: #f3f4f6 !important;
+        border: 1px solid #374151 !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+      }
+      .gjs-am-asset {
+        background-color: #1f2937 !important;
+        border-radius: 8px !important;
+        margin: 5px !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const editor = grapesjs.init({
+      container: '#gjs',
+      height: '100%',
+      width: 'auto',
+      fromElement: false,
+      storageManager: false,
+      undoManager: { trackSelection: false },
+      parser: {
+        optionsHtml: {
+          allowScripts: true
+        }
+      },
+      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
+      pluginsOpts: {
+        'grapesjs-preset-webpage': {
+          blocksBasicOpts: { flexGrid: true },
+          addBasicStyle: true,
+        },
+        'grapesjs-blocks-basic': { flexGrid: true },
+      },
+      canvas: {
+        styles: [
+          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600&family=Outfit:wght@300;400;600&display=swap',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+          'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+          'https://fonts.googleapis.com/icon?family=Material+Icons',
+        ],
+        scripts: [
+          'https://cdn.tailwindcss.com',
+        ],
+      },
+      deviceManager: {
+        devices: [
+          { id: 'desktop', name: 'Desktop', width: '' },
+          { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
+          { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '480px' },
+        ],
+      },
+      panels: { defaults: [] },
+      styleManager: {
+        appendTo: '#styles-container',
+        sectors: [
+          { name: 'Layout', open: true, buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'gap'] },
+          { name: 'Spacing', open: false, buildProps: ['margin', 'padding'] },
+          { name: 'Size', open: false, buildProps: ['width', 'min-width', 'max-width', 'height', 'min-height', 'max-height'] },
+          { name: 'Position', open: false, buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'] },
+          {
+            name: 'Typography',
+            open: false,
+            properties: [
+              {
+                property: 'font-family',
+                name: 'Font Family',
+                type: 'select',
+                list: [
+                  { id: 'Inter', name: 'Inter' },
+                  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
+                  { id: 'Montserrat', name: 'Montserrat' },
+                  { id: 'Playfair Display', name: 'Playfair Display' },
+                  { id: 'Dancing Script', name: 'Dancing Script' },
+                  { id: 'DM Serif Display', name: 'DM Serif Display' },
+                  { id: 'Manrope', name: 'Manrope' },
+                  { id: 'Outfit', name: 'Outfit' },
+                ]
+              },
+              'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform'
+            ]
+          },
+          { name: 'Background', open: false, buildProps: ['background-color', 'background', 'background-image', 'background-repeat', 'background-position', 'background-size'] },
+          { name: 'Border', open: false, buildProps: ['border', 'border-radius', 'outline'] },
+          { name: 'Shadow', open: false, buildProps: ['box-shadow', 'text-shadow'] },
+          { name: 'Effects', open: false, buildProps: ['opacity', 'transform', 'transition', 'cursor', 'overflow'] },
+        ],
+      },
+      traitManager: { appendTo: '#traits-container' },
+      layerManager: { appendTo: '#layers-container' },
+      blockManager: { appendTo: '#blocks-container' },
+    });
+
+    // ─── Pre-Load Registration (Ensures existing HTML icons are typed correctly) ───
+    editor.DomComponents.addType('icon', {
+      isComponent: el => (el.tagName === 'I' || el.tagName === 'SPAN') &&
+        (el.classList && (el.classList.contains('fa') || el.classList.contains('fas') || el.classList.contains('fab') || el.classList.contains('far'))),
+      model: {
+        defaults: {
+          tagName: 'i',
+          droppable: false,
+          editable: false,
+          resizable: true,
+          stylable: true,
+          traits: [
+            {
+              type: 'button',
+              text: 'Select Icon',
+              full: true,
+              command: 'open-icon-picker',
+            },
+            {
+              type: 'color',
+              label: 'Icon Color',
+              name: 'color',
+              changeProp: true,
+            },
+            {
+              type: 'number',
+              label: 'Icon Size (px)',
+              name: 'fontSize',
+              changeProp: true,
+            }
+          ]
+        },
+        init() {
+          this.on('change:color', this.handleColorChange);
+          this.on('change:fontSize', this.handleSizeChange);
+        },
+        handleColorChange() {
+          const color = this.get('color');
+          if (color) {
+            this.addStyle({ color: color });
+          }
+        },
+        handleSizeChange() {
+          const size = this.get('fontSize');
+          if (size) {
+            this.addStyle({ 'font-size': size + 'px' });
+          }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('input', {
+      isComponent: el => el.tagName === 'INPUT',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'placeholder', 'type', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('textarea', {
+      isComponent: el => el.tagName === 'TEXTAREA',
+      model: {
+        defaults: {
+          tagName: 'textarea',
+          traits: [
+            'id', 'name', 'placeholder', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; min-height: 100px; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('select', {
+      isComponent: el => el.tagName === 'SELECT',
+      model: {
+        defaults: {
+          tagName: 'select',
+          traits: [
+            'id', 'name', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' },
+            {
+              type: 'options',
+              label: 'Options',
+              name: 'options',
+            }
+          ],
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
+        }
+      }
+    });
+
+    // ─── SELECT OPTIONS SYNC LOGIC ───
+    editor.on('component:update:attributes:options-list', (component) => {
+      if (component.get('tagName') !== 'select') return;
+      const optionsStr = component.getAttributes()['options-list'];
+      if (!optionsStr) return;
+
+      try {
+        const options = optionsStr.split(',').filter(Boolean).map((opt: string) => {
+          const parts = opt.split(':');
+          const val = parts[0]?.trim();
+          const name = parts[1]?.trim() || val;
+          return { tagName: 'option', attributes: { value: val }, content: name };
+        });
+
+        if (options.length > 0) {
+          component.components().reset(options);
+        }
+      } catch (err) {
+        console.error('Error parsing options-list:', err);
+      }
+    });
+
+    editor.DomComponents.addType('checkbox', {
+      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'checkbox',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'value', 'checked', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('radio', {
+      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'radio',
+      model: {
+        defaults: {
+          tagName: 'input',
+          traits: [
+            'id', 'name', 'value', 'checked', 'required',
+            { type: 'text', label: 'Label Text', name: 'data-label' }
+          ],
+          attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('button', {
+      model: {
+        defaults: {
+          traits: [
+            'name', 'type',
+            { type: 'text', label: 'Label Text', name: 'text' }
+          ],
+          attributes: { style: 'background: #7c3aed; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
+        }
+      }
+    });
+
+    editor.DomComponents.addType('custom-code', {
+      isComponent: el => (el.classList && el.classList.contains('gjs-custom-code')) || el.getAttribute?.('data-gjs-type') === 'custom-code',
+      model: {
+        defaults: {
+          tagName: 'div',
+          name: 'Custom Code',
+          classes: ['gjs-custom-code'],
+          droppable: false,
+          editable: false,
+          attributes: { 'data-gjs-type': 'custom-code' },
+          traits: [
+            {
+              type: 'button',
+              text: 'Edit Code',
+              full: true,
+              command: 'open-custom-code-editor',
+            }
+          ],
+        }
+      }
+    });
+
+    // ─── Custom Code Editor Command ───
+    editor.Commands.add('open-custom-code-editor', {
+      run(editor, sender) {
+        const selected = editor.getSelected();
+        if (!selected) return;
+
+        const modal = editor.Modal;
+        const container = document.createElement('div');
+        // Retrieve code: prioritize data-code, then inner content
+        let currentCode = selected.getAttributes()['data-code'] || '';
+
+        if (!currentCode) {
+          // Fallback: try to get the inner HTML from components
+          const components = selected.get('components');
+          if (components && components.length > 0) {
+            currentCode = selected.toHTML().replace(/^<div[^>]*>|<\/div>$/gi, '');
+          } else {
+            currentCode = selected.get('content') || '';
+          }
+        }
+
+        // If it's the default placeholder, show empty string
+        if (currentCode.includes('Click to Edit Custom Code') || currentCode.includes('Paste your HTML code here')) {
+          currentCode = '';
+        }
+
+        container.style.backgroundColor = '#161622';
+        container.style.padding = '20px';
+        container.style.borderRadius = '12px';
+        container.style.color = '#e2e8f0';
+
+        container.innerHTML = `
+          <div style="padding: 0 0 16px;">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px;">Paste your HTML/Shortcode below and click "Save Changes"</p>
+            <textarea id="custom-html-edit-input" rows="12" placeholder="&lt;div&gt;Your HTML here...&lt;/div&gt;"
+              style="width:100%; background:#0a0a14; color:#e2e8f0; border:1px solid #2a2a3e; border-radius:8px; padding:12px; font-family:'Fira Code',monospace; font-size:13px; outline:none; resize:vertical; box-sizing:border-box;"
+            >${currentCode}</textarea>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button id="custom-code-edit-cancel" style="background:#1e1e2d; color:#94a3b8; border:1px solid #2a2a3e; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px;">Cancel</button>
+            <button id="custom-code-edit-save" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px; font-weight:700;">Save Changes</button>
+          </div>
+        `;
+
+        const btnSave = container.querySelector('#custom-code-edit-save') as HTMLButtonElement;
+        const btnCancel = container.querySelector('#custom-code-edit-cancel') as HTMLButtonElement;
+        const input = container.querySelector('#custom-html-edit-input') as HTMLTextAreaElement;
+
+        btnSave.addEventListener('click', () => {
+          const newHtml = input.value;
+          // Store the raw code in a custom attribute for later editing
+          selected.addAttributes({ 'data-code': newHtml });
+          selected.set('content', newHtml);
+          // Force re-render of components
+          selected.components(newHtml);
+          modal.close();
+        });
+
+        btnCancel.addEventListener('click', () => modal.close());
+
+        modal.setTitle('Edit Custom Code');
+        modal.setContent(container);
+        modal.open();
+
+        // Auto-focus and SELECT the text for easy replacement
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        }, 50);
+      }
+    });
+
+    // ─── Native GrapesJS Icon Picker Command ───
+    editor.Commands.add('open-icon-picker', {
+      run(editor, sender) {
+        const selected = editor.getSelected();
+        if (!selected) return;
+
+        const modal = editor.Modal;
+        const container = document.createElement('div');
+        container.className = 'icon-picker-container';
+        container.innerHTML = `
+          <div style="padding: 10px; margin-bottom: 15px; background: #1a1a2e; border-radius: 8px;">
+            <input type="text" id="icon-search" placeholder="Search icons..." 
+              style="width: 100%; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; color: #fff; border-radius: 6px; outline: none;">
+          </div>
+          <div id="icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 5px;">
+          </div>
+        `;
+
+        const icons = [
+          // General
+          'fa-star', 'fa-heart', 'fa-user', 'fa-home', 'fa-search', 'fa-envelope',
+          'fa-bell', 'fa-camera', 'fa-check', 'fa-times', 'fa-cog', 'fa-settings',
+          'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down',
+          'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down',
+          'fa-play', 'fa-pause', 'fa-stop', 'fa-forward', 'fa-backward',
+          // Files & Media
+          'fa-music', 'fa-video', 'fa-image', 'fa-file', 'fa-folder', 'fa-file-pdf',
+          'fa-file-word', 'fa-file-excel', 'fa-file-image', 'fa-file-video', 'fa-file-audio',
+          'fa-file-code', 'fa-file-alt', 'fa-file-archive', 'fa-folder-open',
+          // Actions
+          'fa-edit', 'fa-save', 'fa-trash', 'fa-trash-alt', 'fa-copy', 'fa-cut', 'fa-paste',
+          'fa-lock', 'fa-unlock', 'fa-key', 'fa-eye', 'fa-eye-slash', 'fa-download', 'fa-upload',
+          'fa-share', 'fa-share-alt', 'fa-reply', 'fa-forward', 'fa-redo', 'fa-undo',
+          'fa-print', 'fa-compress', 'fa-expand', 'fa-plus', 'fa-minus', 'fa-times-circle',
+          'fa-check-circle', 'fa-info-circle', 'fa-exclamation-circle', 'fa-question-circle',
+          // Security & Account
+          'fa-shield-alt', 'fa-user-shield', 'fa-user-lock', 'fa-fingerprint',
+          'fa-id-card', 'fa-id-badge', 'fa-address-card', 'fa-passport',
+          // People & Social
+          'fa-users', 'fa-user-friends', 'fa-user-plus', 'fa-user-minus', 'fa-user-check',
+          'fa-comment', 'fa-comments', 'fa-thumbs-up', 'fa-thumbs-down',
+          'fa-heart-broken', 'fa-hand-peace', 'fa-hands-helping',
+          // Medical & Health
+          'fa-user-md', 'fa-stethoscope', 'fa-tooth', 'fa-heartbeat', 'fa-heart',
+          'fa-hospital', 'fa-ambulance', 'fa-pills', 'fa-syringe', 'fa-prescription-bottle',
+          'fa-thermometer', 'fa-bandage', 'fa-brain', 'fa-capsules', 'fa-dna',
+          'fa-first-aid', 'fa-flask', 'fa-microscope', 'fa-notes-medical',
+          'fa-wheelchair', 'fa-user-nurse', 'fa-vials', 'fa-x-ray', 'fa-lungs',
+          'fa-virus', 'fa-virus-slash', 'fa-hand-holding-medical', 'fa-laptop-medical',
+          // Communication
+          'fa-phone', 'fa-phone-alt', 'fa-phone-volume', 'fa-fax', 'fa-map-marker-alt',
+          'fa-map', 'fa-globe', 'fa-globe-americas', 'fa-wifi', 'fa-satellite-dish',
+          // Technology
+          'fa-laptop', 'fa-mobile-alt', 'fa-tablet-alt', 'fa-desktop', 'fa-cloud',
+          'fa-server', 'fa-database', 'fa-code', 'fa-terminal', 'fa-microchip',
+          'fa-robot', 'fa-cogs', 'fa-code-branch', 'fa-bug', 'fa-plug',
+          'fa-broadcast-tower', 'fa-satellite', 'fa-hard-drive', 'fa-memory',
+          // Business & Finance
+          'fa-calendar', 'fa-clock', 'fa-chart-bar', 'fa-chart-pie', 'fa-chart-line',
+          'fa-shopping-cart', 'fa-credit-card', 'fa-wallet', 'fa-money-bill',
+          'fa-money-check', 'fa-receipt', 'fa-percentage', 'fa-tag', 'fa-tags',
+          'fa-barcode', 'fa-qrcode', 'fa-store', 'fa-cash-register',
+          // Delivery & Transport
+          'fa-gift', 'fa-truck', 'fa-plane', 'fa-car', 'fa-bicycle', 'fa-ship',
+          'fa-train', 'fa-bus', 'fa-motorcycle', 'fa-rocket', 'fa-parachute-box',
+          // Nature & Weather
+          'fa-bolt', 'fa-fire', 'fa-leaf', 'fa-water', 'fa-sun', 'fa-moon',
+          'fa-cloud-sun', 'fa-cloud-rain', 'fa-snowflake', 'fa-wind', 'fa-mountain',
+          'fa-tree', 'fa-seedling', 'fa-paw', 'fa-dove', 'fa-fish',
+          // Emoji
+          'fa-smile', 'fa-grin', 'fa-laugh', 'fa-meh', 'fa-frown', 'fa-sad-cry',
+          'fa-angry', 'fa-surprise', 'fa-kiss', 'fa-grimace', 'fa-tired',
+          // Misc
+          'fa-trophy', 'fa-medal', 'fa-award', 'fa-certificate', 'fa-graduation-cap',
+          'fa-book', 'fa-bookmark', 'fa-newspaper', 'fa-pen', 'fa-pencil-alt',
+          'fa-paint-brush', 'fa-palette', 'fa-magic', 'fa-wand-magic-sparkles',
+          'fa-gem', 'fa-crown', 'fa-hat-wizard', 'fa-dice', 'fa-gamepad',
+          'fa-headphones', 'fa-microphone', 'fa-camera-retro', 'fa-film',
+          'fa-utensils', 'fa-coffee', 'fa-pizza-slice', 'fa-hamburger',
+          'fa-glass-cheers', 'fa-cocktail', 'fa-wine-glass', 'fa-beer',
+        ];
+
+
+        const renderGrid = (filter = '') => {
+          const grid = container.querySelector('#icon-grid')!;
+          grid.innerHTML = '';
+          icons.filter(i => i.includes(filter)).forEach(icon => {
+            const btn = document.createElement('button');
+            btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; color: #e2e8f0; cursor: pointer; transition: all 0.2s;';
+            btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
+            btn.onclick = () => {
+              const classModels = selected.getClasses();
+              const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
+
+              const filteredClasses = classes.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
+              filteredClasses.push('fas');
+              filteredClasses.push(icon);
+
+              selected.setClass(filteredClasses);
+              modal.close();
+            };
+            btn.onmouseenter = () => { btn.style.background = '#2a2a3e'; btn.style.borderColor = '#7c3aed'; };
+            btn.onmouseleave = () => { btn.style.background = '#1a1a2e'; btn.style.borderColor = '#2a2a3e'; };
+            grid.appendChild(btn);
+          });
+        };
+
+        renderGrid();
+        container.querySelector('#icon-search')!.addEventListener('input', (e: any) => renderGrid(e.target.value));
+
+        modal.setTitle('Select Icon');
+        modal.setContent(container);
+        modal.open();
+      }
+    });
+
+    editor.on('load', () => {
+      setIsEditorFullyLoaded(true);
+      console.log('📤 GrapesJS Loaded - applying content');
+
+      // Configure RTE after load to avoid TS errors in init
+      const rte = editor.RichTextEditor;
+      rte.add('foreColor', {
+        icon: '<i class="fa fa-font" style="color: #6366f1"></i>',
+        attributes: { title: 'Text Color' },
+        result: (rte: any, action: any) => {
+          const color = prompt('Enter color (hex or name):', '#6366f1');
+          if (color) rte.exec('foreColor', color);
+        }
+      });
+      rte.add('hiliteColor', {
+        icon: '<i class="fa fa-paint-brush"></i>',
+        attributes: { title: 'Background Color' },
+        result: (rte: any, action: any) => {
+          const color = prompt('Enter background color:', '#ffff00');
+          if (color) rte.exec('hiliteColor', color);
+        }
+      });
+
+      // ── Canvas click: icon picker on EVERY click on an icon ──
+      setTimeout(() => {
+        try {
+          const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
+          const frameDoc = frameEl?.contentDocument;
+          if (frameDoc) {
+            frameDoc.addEventListener('click', () => {
+              // Wait a bit for GrapesJS selection to settle
+              setTimeout(() => {
+                const selected = editor.getSelected();
+                if (!selected) return;
+
+                const type = selected.get('type');
+                const tagName = (selected.get('tagName') || '').toLowerCase();
+                const classModels = selected.getClasses();
+                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
+
+                const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
+                const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
+
+                if (isIcon) {
+                  editor.runCommand('open-icon-picker');
+                } else if (isCustomCode) {
+                  editor.runCommand('open-custom-code-editor');
+                }
+              }, 50);
+            }, true);
+          }
+        } catch (e) { /* Canvas frame not ready yet */ }
+      }, 1500);
+
+
+      // ─── Auto-open editor on drop ───
+      editor.on('block:drag:stop', (model) => {
+        if (!model) return;
+        const classes = model.getClasses ? model.getClasses() : [];
+        const isCustomCode = model.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
+        if (isCustomCode) {
+          setTimeout(() => {
+            editor.select(model);
+            editor.runCommand('open-custom-code-editor');
+          }, 100);
+        }
+      });
+
+      editor.on('component:dblclick', (model) => {
+        const tagName = model.get('tagName');
+        const classes = model.getClasses();
+        const isIcon = model.is('icon') || tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+
+        if (isIcon) {
+          editor.runCommand('open-icon-picker');
+        } else if (model.get('type') === 'custom-code') {
+          editor.runCommand('open-custom-code-editor');
+        }
+      });
+
+
+      editor.BlockManager.add('icon', {
+        label: '<i class="fas fa-star" style="font-size: 24px; margin-bottom: 8px;"></i><div>Icon</div>',
+        category: 'Basic',
+        content: {
+          type: 'icon',
+          classes: ['fas', 'fa-star'],
+          style: { 'font-size': '32px', 'color': 'var(--primary)', 'display': 'inline-block' }
+        }
+      });
+
+      editor.BlockManager.add('custom-code', {
+        label: '<i class="fas fa-code" style="font-size: 24px; margin-bottom: 8px;"></i><div>Custom Code</div>',
+        category: 'Basic',
+        content: {
+          type: 'custom-code',
+          classes: ['gjs-custom-code'],
+          content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+        }
+      });
+
+      // ─── Register Form Traits (Automatic mapping to HTML tags) ───
+      editor.DomComponents.addType('form', {
+        isComponent: el => el.tagName === 'FORM',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'title', label: 'Title' },
+              { type: 'text', name: 'action', label: 'Action URL' },
+              { type: 'select', name: 'method', label: 'Method', options: [{ id: 'POST', name: 'POST' }, { id: 'GET', name: 'GET' }] },
+              { type: 'text', name: 'success-msg', label: 'Success Message' },
+              { type: 'text', name: 'redirect-url', label: 'Redirect URL' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('input', {
+        isComponent: el => el.tagName === 'INPUT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              {
+                type: 'select', name: 'type', label: 'Type', options: [
+                  { id: 'text', name: 'Text' },
+                  { id: 'email', name: 'Email' },
+                  { id: 'number', name: 'Number' },
+                  { id: 'tel', name: 'Phone' },
+                  { id: 'password', name: 'Password' },
+                ]
+              },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('textarea', {
+        isComponent: el => el.tagName === 'TEXTAREA',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'text', name: 'placeholder', label: 'Placeholder' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+            ],
+          },
+        },
+      });
+
+      editor.DomComponents.addType('select', {
+        isComponent: el => el.tagName === 'SELECT',
+        model: {
+          defaults: {
+            traits: [
+              { type: 'text', name: 'id', label: 'ID' },
+              { type: 'text', name: 'name', label: 'Field Name' },
+              { type: 'checkbox', name: 'required', label: 'Required' },
+              {
+                type: 'button',
+                name: 'add-option',
+                text: 'Add Option',
+                command: (ed: any, trait: any) => {
+                  const model = trait.target;
+                  model.components().add({ type: 'option', content: 'New Option', attributes: { value: 'new' } });
+                }
+              }
+            ],
+          },
+        },
+      });
+
+      // ─── Register Form Embed Component ───
+      editor.DomComponents.addType('form-embed', {
+        isComponent: el => el.classList && el.classList.contains('form-embed-container'),
+        model: {
+          defaults: {
+            tagName: 'div',
+            draggable: true,
+            droppable: false,
+            attributes: { 
+              class: 'form-embed-container',
+              'data-gjs-type': 'form-embed' 
+            },
+            embedCode: '',
+            embedType: 'html',
+            traits: [
+              {
+                type: 'textarea',
+                name: 'embedCode',
+                label: 'Embed Code',
+                placeholder: 'Paste your HubSpot, Typeform, or Jotform code here...',
+                changeProp: true
+              },
+              {
+                type: 'select',
+                name: 'embedType',
+                label: 'Embed Type',
+                options: [
+                  { id: 'embed', name: 'Embed' },
+                  { id: 'iframe', name: 'IFrame' },
+                  { id: 'script', name: 'Script' },
+                  { id: 'html', name: 'HTML' },
+                ],
+                changeProp: true,
+              },
+            ],
+          },
+          init() {
+            // Listen for property changes from the traits panel
+            this.on('change:embedCode change:embedType', this.handleUpdate);
+
+            // Initial sync from attributes if loading from HTML
+            const attrCode = this.getAttributes()['data-embed-code'];
+            const attrType = this.getAttributes()['data-embed-type'];
+            if (attrCode && !this.get('embedCode')) this.set('embedCode', attrCode, { silent: true });
+            if (attrType && !this.get('embedType')) this.set('embedType', attrType, { silent: true });
+            
+            // If we have code, ensure it's rendered as components for export
+            if (this.get('embedCode')) {
+              this.handleUpdate();
+            }
+          },
+          handleUpdate() {
+            const code = this.get('embedCode') || '';
+            const type = this.get('embedType') || 'html';
+            
+            // Store values in attributes so they survive save/load (persistence)
+            this.addAttributes({ 
+              'data-embed-code': code,
+              'data-embed-type': type
+            });
+            
+            // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
+            // Using components() ensures the code is included in the exported HTML.
+            this.components(`<div class="embed-inner-wrapper">${code}</div>`);
+            
+            // Trigger a view refresh
+            this.trigger('rerender-view');
+          },
+        },
+        view: {
+          init() {
+            this.listenTo(this.model, 'change:embedCode change:embedType rerender-view', this.render);
+          },
+          onRender() {
+            const model = this.model;
+            const code = model.get('embedCode');
+            const type = String(model.get('embedType') || 'html').toUpperCase();
+            if (!code) {
+              this.el.innerHTML = `
+                <div style="padding: 40px 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif; pointer-events: none;">
+                  <div style="font-size: 40px; margin-bottom: 16px; filter: grayscale(1);">🔌</div>
+                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 16px;">Form Embed Module</div>
+                  <div style="font-size: 13px; max-width: 300px; margin: 0 auto; line-height: 1.5;">Paste your HubSpot, Jotform, or Typeform code in the <b>Properties</b> panel on the right.</div>
+                </div>
+              `;
+            }
+
+            // Add the "Active" badge
+            const badge = document.createElement('div');
+            badge.className = 'embed-badge';
+            badge.style.cssText = `
+              position: absolute; top: 0; right: 0; background: #6366f1; color: white;
+              padding: 2px 10px; font-size: 10px; font-weight: 800; border-bottom-left-radius: 8px;
+              z-index: 100; pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            `;
+            badge.innerText = `${type} Active`;
+            this.el.style.position = 'relative';
+            this.el.appendChild(badge);
+
+            // Create a preview container
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'embed-preview-container';
+            previewContainer.style.width = '100%';
+            previewContainer.style.minHeight = '100px';
+            this.el.appendChild(previewContainer);
+
+            // For Script/Embed/IFrame types, we use an iframe for the EDITOR PREVIEW.
+            // This prevents complex scripts from breaking the main editor or disappearing after render.
+            if (type === 'script' || type === 'embed' || type === 'iframe' || code.includes('<script')) {
+              const iframe = document.createElement('iframe');
+              iframe.className = 'embed-preview-iframe';
+              iframe.style.width = '100%';
+              iframe.style.border = 'none';
+              iframe.style.minHeight = '200px';
+              iframe.style.display = 'block';
+              iframe.style.pointerEvents = 'none'; // Allow clicking the component itself for selection
+              previewContainer.appendChild(iframe);
+
+              const doc = iframe.contentWindow?.document;
+              if (doc) {
+                doc.open();
+                doc.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <style>
+                        body { margin: 0; padding: 0; font-family: sans-serif; display: flex; justify-content: center; overflow: hidden; }
+                        * { max-width: 100%; }
+                      </style>
+                    </head>
+                    <body>
+                      <div id="embed-wrapper">${code}</div>
+                      <script>
+                        function updateHeight() {
+                          try {
+                            const wrapper = document.getElementById('embed-wrapper');
+                            const height = wrapper ? wrapper.offsetHeight : document.body.scrollHeight;
+                            if (height > 0 && window.frameElement) {
+                              window.frameElement.style.height = (height + 20) + 'px';
+                            }
+                          } catch (e) {}
+                        }
+                        window.onload = updateHeight;
+                        // Use ResizeObserver for more immediate feedback if available
+                        if (window.ResizeObserver) {
+                          const ro = new ResizeObserver(updateHeight);
+                          ro.observe(document.body);
+                        } else {
+                          setInterval(updateHeight, 2000);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+                doc.close();
+              }
+            } else {
+              // Standard HTML preview
+              previewContainer.innerHTML = code;
+            }
+          },
+        },
+      });
+
+      applyContentToEditor(editor);
+      // Set up custom color picker injection after load
+      setTimeout(() => injectCustomColorPickers(editor), 500);
+
+      // ─── Add Native GrapesJS Custom Blocks ───
+      const bm = editor.BlockManager;
+
+      // 1. BASIC CATEGORY
+      bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
+      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:20px; min-height: 50px; justify-content:center;"><div style="flex:1;">1 Column</div></div>' });
+      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 2</div></div>' });
+      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 2</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 3</div></div>' });
+      bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
+      bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
+      bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
+      bm.add('custom-image', { label: 'Image', category: 'Basic', attributes: { class: 'fa fa-picture-o' }, content: { type: 'image', style: { color: 'black' }, activeOnRender: 1 } });
+      bm.add('custom-quote', { label: 'Quote', category: 'Basic', attributes: { class: 'fa fa-quote-right' }, content: '<blockquote style="border-left: 4px solid var(--primary); padding-left: 15px; margin: 20px 0; font-style: italic; color: #4b5563;">Insert your quote here.</blockquote>' });
+      bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
+
+      // 2. FORMS CATEGORY
+      bm.add('custom-form', {
+        label: 'Form',
+        category: 'Forms',
+        attributes: { class: 'fa fa-wpforms' },
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '20px', border: '1px solid var(--input-border)', borderRadius: '8px', minHeight: '100px', backgroundColor: 'var(--form-bg)' },
+          components: [
+            {
+              type: 'label',
+              content: 'Email',
+              editable: true,
+              style: { color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+            },
+            {
+              type: 'input',
+              attributes: { type: 'email', placeholder: 'your@email.com' },
+              style: { width: '100%', padding: '8px', color: 'var(--input-text)', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '4px', marginBottom: '15px' }
+            },
+            {
+              type: 'button',
+              content: 'Submit',
+              attributes: { type: 'submit' },
+              style: { padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }
+            }
+          ]
+        }
+      });
+
+      bm.add('custom-input', {
+        label: 'Input',
+        category: 'Forms',
+        attributes: { class: 'fa fa-keyboard-o' },
+        content: {
+          type: 'input',
+          attributes: { placeholder: 'Type here...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-textarea', {
+        label: 'Textarea',
+        category: 'Forms',
+        attributes: { class: 'fa fa-file-text-o' },
+        content: {
+          type: 'textarea',
+          attributes: { placeholder: 'Type message...' },
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', minHeight: '100px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+        }
+      });
+
+      bm.add('custom-select', {
+        label: 'Select',
+        category: 'Forms',
+        attributes: { class: 'fa fa-caret-square-o-down' },
+        content: {
+          type: 'select',
+          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
+          components: [
+            { type: 'option', content: 'Option 1', attributes: { value: '1' } },
+            { type: 'option', content: 'Option 2', attributes: { value: '2' } }
+          ]
+        }
+      });
+
+      bm.add('custom-check', {
+        label: 'Checkbox',
+        category: 'Forms',
+        attributes: { class: 'fa fa-check-square-o' },
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'checkbox', style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Checkbox Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-radio', {
+        label: 'Radio',
+        category: 'Forms',
+        attributes: { class: 'fa fa-dot-circle-o' },
+        content: {
+          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+          components: [
+            { type: 'radio', attributes: { name: 'radioGrp' }, style: { width: 'auto' } },
+            { type: 'text', tagName: 'span', content: 'Radio Label', style: { color: 'var(--label-color)' } }
+          ]
+        }
+      });
+
+      bm.add('custom-button', {
+        label: 'Button',
+        category: 'Forms',
+        attributes: { class: 'fa fa-hand-pointer-o' },
+        content: {
+          type: 'button',
+          content: 'Button Text',
+          style: { display: 'inline-block', padding: '12px 24px', backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }
+        }
+      });
+
+      bm.add('custom-label', {
+        label: 'Label',
+        category: 'Forms',
+        attributes: { class: 'fa fa-tag' },
+        content: {
+          type: 'label',
+          content: 'Field Label',
+          style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+        }
+      });
+
+      bm.add('form-embed', {
+        label: 'Form Embed',
+        category: 'Embeds',
+        attributes: { class: 'fa fa-code' },
+        content: {
+          type: 'form-embed',
+        }
+      });
+
+      // 3. EXTRA CATEGORY
+      bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
+      bm.add('custom-map', { label: 'Google Maps', category: 'Extra', attributes: { class: 'fa fa-map-marker' }, content: { type: 'map', style: { height: '350px' } } });
+      bm.add('custom-linkblock', { label: 'Link Block', category: 'Extra', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: '<div>Link Block Content</div>', style: { display: 'inline-block', padding: '10px' } } });
+      bm.add('custom-countdown', { label: 'Countdown', category: 'Extra', attributes: { class: 'fa fa-clock-o' }, content: '<div data-gjs-type="countdown" style="text-align: center; font-size: 2rem; font-weight: bold; padding: 20px;">00:00:00:00</div>' });
+
+      // 4. DATA CATEGORY
+      bm.add('custom-table', { label: 'Data Table', category: 'Data', attributes: { class: 'fa fa-table' }, content: '<table style="width:100%; border-collapse: collapse; margin: 20px 0;"><tr style="background:#f1f5f9;"><th style="border:1px solid #ccc; padding:10px;">Header 1</th><th style="border:1px solid #ccc; padding:10px;">Header 2</th></tr><tr><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 1</td><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 2</td></tr></table>' });
+      bm.add('custom-dynamic-fields', { label: 'Dynamic Fields', category: 'Data', attributes: { class: 'fa fa-database' }, content: '<div style="padding: 15px; border: 1px dashed var(--primary); background: rgba(124,58,237,0.05); text-align: center; font-family: monospace; color: var(--primary);">{{ DYNAMIC_CONTENT }}</div>' });
+
+      // ─── Add Custom Lead Form Block ───
+      editor.BlockManager.add('lead-form', {
+        label: 'Lead Form',
+        category: 'Forms',
+        attributes: { class: 'fa fa-paper-plane' },
+        content: {
+          type: 'form',
+          droppable: true,
+          style: { padding: '40px', background: 'var(--form-bg)', border: '1px solid var(--input-border)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto' },
+          components: [
+            { type: 'text', tagName: 'h3', content: 'Get Started Now', editable: true, style: { margin: '0 0 10px 0', fontSize: '24px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' } },
+            { type: 'text', tagName: 'p', content: 'Fill out your details and we will get back to you.', editable: true, style: { margin: '0 0 20px 0', fontSize: '14px', color: '#64748b', textAlign: 'center' } },
+            {
+              tagName: 'div',
+              droppable: true,
+              style: { display: 'flex', flexDirection: 'column', gap: '16px' },
+              components: [
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Name', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'text', name: 'name', required: 'true', placeholder: 'Your Name' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Email', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'email', name: 'email', required: 'true', placeholder: 'email@example.com' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  droppable: true,
+                  tagName: 'div',
+                  components: [
+                    { type: 'label', content: 'Phone', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                    { type: 'input', attributes: { type: 'tel', name: 'phone', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                  ]
+                },
+                {
+                  type: 'button',
+                  content: 'Send Inquiry',
+                  attributes: { type: 'submit' },
+                  style: { marginTop: '10px', padding: '14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }
+                }
+              ]
+            }
+          ]
+        }
+      });
+
+      // 5. REGISTER ALL BLOCKS FROM BLOCK_DEFS
+      const { BLOCK_DEFS } = require('./blockDefs');
+      BLOCK_DEFS.forEach((b: any) => {
+        if (!bm.get(b.type)) {
+          bm.add(b.type, {
+            label: b.label,
+            category: b.category,
+            content: b.defaultContent,
+          });
+        }
+      });
+
+      // 6. DYNAMIC LABEL SYNC LOGIC
+      editor.on('component:update:attributes:data-label', (component) => {
+        const newLabel = component.getAttributes()['data-label'];
+        if (!newLabel) return;
+
+        // Find associated label: 
+        // 1. Check parent for a label
+        // 2. Check siblings for a label
+        const parent = component.parent();
+        if (parent) {
+          const labelComp = parent.components().find((c: any) => c.get('tagName') === 'label');
+          if (labelComp) {
+            // If it's a wrapper label like <label>Text <input/></label>
+            if (labelComp === component.parent() && labelComp.get('tagName') === 'label') {
+              const content = labelComp.get('content') || '';
+              // Simple replacement for radio/checkbox labels
+              labelComp.set('content', `${newLabel} `);
+            } else {
+              labelComp.set('content', newLabel);
+            }
+          }
+        }
+      });
+    });
+
+    // Fallback if load already happened
+    setTimeout(() => applyContentToEditor(editor), 1000);
+
+    editorRef.current = editor;
+    setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
+
+    return () => {
+      if (cpObserverRef.current) {
+        cpObserverRef.current.disconnect();
+        cpObserverRef.current = null;
+      }
+      if (editorRef.current) {
+        editorRef.current.destroy();
+        editorRef.current = null;
+      }
+    };
+  }, [pageId, projectLoading, pageLoading]);
+
+  // ─── Custom Color Picker Injection ───
+  const injectCustomColorPickers = (editor: Editor) => {
+    const container = document.getElementById('styles-container');
+    if (!container) return;
+
+    const processFields = () => {
+      const fields = container.querySelectorAll<HTMLElement>('.gjs-field-colorp:not([data-cp-injected])');
+      fields.forEach((fieldEl) => {
+        fieldEl.setAttribute('data-cp-injected', 'true');
+        const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
+        if (!swatch) return;
+
+        swatch.style.cursor = 'pointer';
+
+        swatch.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Get current color from hidden input
+          const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
+          const rawColor = hiddenInput?.value || swatch.style.background || '#000000';
+          const hexColor = normalizeToHex(rawColor);
+
+          // Get CSS property name from parent class or label
+          const propWrapper = fieldEl.closest<HTMLElement>('.gjs-sm-property');
+          const labelEl = propWrapper?.querySelector('.gjs-sm-label');
+          const labelText = (labelEl?.textContent || '').trim().toLowerCase();
+          const cssProperty = resolveCssProp(labelText, propWrapper);
+
+          // Position the picker to the LEFT of the right sidebar
+          const rect = swatch.getBoundingClientRect();
+          const pickerW = 260;
+          const pickerH = 380;
+          // Open to the left of the sidebar: right edge of picker = left edge of swatch
+          let x = rect.left - pickerW - 10;
+          // Vertically: align top with swatch, clamp so it stays in viewport
+          let y = rect.top;
+          if (y + pickerH > window.innerHeight - 10) y = window.innerHeight - pickerH - 10;
+          if (y < 10) y = 10;
+          // If opening left goes off screen, open below instead
+          if (x < 10) {
+            x = rect.left;
+            y = rect.bottom + 6;
+            if (x + pickerW > window.innerWidth - 10) x = window.innerWidth - pickerW - 10;
+          }
+
+          setColorPicker({ visible: true, x, y, color: hexColor, fieldEl, cssProperty });
+        });
+      });
+    };
+
+    // Initial scan
+    processFields();
+
+    // Watch for new fields (e.g. when sector opens)
+    if (cpObserverRef.current) cpObserverRef.current.disconnect();
+    const obs = new MutationObserver(processFields);
+    obs.observe(container, { childList: true, subtree: true });
+    cpObserverRef.current = obs;
+
+    // Also re-inject when component is selected
+    editor.on('component:selected', (model) => {
+      setTimeout(processFields, 200);
+
+      const tagName = model.get('tagName') || 'div';
+      const classes = model.getClasses();
+      const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+
+      const isCustomCode = model.get('type') === 'custom-code' ||
+        classes.includes('gjs-custom-code') ||
+        (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
+
+      // 1. Handle UI Tab Switching
+      if (isCustomCode) {
+        setRightTab('traits');
+      } else if (isIcon) {
+        // Do NOT switch tabs automatically
+      } else {
+        // Elements selected - stay in current tab for better UX
+      }
+
+      setActiveComponent(model);
+
+      // Update Selection Label for AI
+      const type = model.get('type') || '';
+      const name = model.get('name') || type || tagName;
+
+      // Capitalize first letter and format
+      let readableName = name.charAt(0).toUpperCase() + name.slice(1);
+      if (readableName === 'Wrapper') readableName = 'Body';
+      setSelectedLabel(readableName);
+    });
+
+
+
+
+    editor.on('component:deselected', () => {
+      setSelectedLabel('Body');
+    });
+
+    editor.on('styleManager:sector:open', () => setTimeout(processFields, 150));
+  };
+
+  // ─── Apply color from custom picker ───
+  const applyColorFromPicker = (hex: string) => {
+    const { fieldEl, cssProperty } = colorPicker;
+    setColorPicker(prev => ({ ...prev, color: hex }));
+
+    // Update the visual swatch
+    if (fieldEl) {
+      const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
+      if (swatch) swatch.style.background = hex;
+      // Trigger GrapesJS hidden input change
+      const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
+      if (hiddenInput) {
+        hiddenInput.value = hex;
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    // Apply style directly to selected element
+    if (editorRef.current && cssProperty) {
+      const selected = editorRef.current.getSelected();
+      if (selected) selected.addStyle({ [cssProperty]: hex });
+    }
+  };
+
+  // ─── Branding Sync (Reactive to Sidebar) ───
+  useEffect(() => {
+    if (editorRef.current) {
+      const canvas = editorRef.current.Canvas;
+      const doc = canvas.getDocument();
+      if (!doc) return;
+
+      const head = doc.head;
+      const styleId = 'branding-vars';
+      let styleEl = head.querySelector(`#${styleId}`);
+      if (!styleEl) {
+        styleEl = doc.createElement('style');
+        styleEl.id = styleId;
+        head.appendChild(styleEl);
+      }
+
+      // Update variables in real-time
+      styleEl.innerHTML = `
+        :root {
+          --primary: ${themePrimary};
+          --secondary: ${themeSecondary};
+          --accent: ${themeSecondary};
+          --gold: ${themePrimary};
+          --btn-bg: ${themePrimary};
+          --btn-text: #ffffff;
+          --body-bg: #ffffff;
+          --body-text: #0f172a;
+          --heading-color: #0f172a;
+          --subheading-color: #475569;
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
+          --button-gradient: linear-gradient(135deg, ${themePrimary}, ${themeSecondary});
+        }
+      `;
+      console.log('🎨 Branding variables updated in canvas:', themePrimary, themeSecondary);
+    }
+  }, [themePrimary, themeSecondary]);
+
+  // Initial content load (Only once when page data arrives)
+  useEffect(() => {
+    if (editorRef.current && page && !isEditorFullyLoaded) {
+      applyContentToEditor(editorRef.current);
+    }
+  }, [page, isEditorFullyLoaded]);
+
+  // Initialize hasSaved if page already has content
+  useEffect(() => {
+    if (page && (page.landingPageContent || page.content)) {
+      setHasSaved(true);
+    }
+  }, [page]);
+
+
+  // ─── Device ───
+  const switchDevice = (d: 'desktop' | 'tablet' | 'mobile') => {
+    setActiveDevice(d);
+    editorRef.current?.Devices.select(d);
+  };
+
+  // ─── Save ───
+  const handleSave = async () => {
+    if (!editorRef.current) return;
+    setIsSaving(true);
+    console.log('💾 Saving page content...');
+    const html = editorRef.current.getHtml();
+    const css = editorRef.current.getCss() || '';
+
+    // Capture internal global styles injected by GlobalStylesPanel
+    const canvasDoc = editorRef.current.Canvas.getDocument();
+    const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+    const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+
+    const styleData = globalCss + '\n' + css;
+
+    const updateData: Partial<LandingPage> = {
+      metaTitle: pageTitle,
+      metaDescription: metaDesc,
+      primaryColor: themePrimary,
+      secondaryColor: themeSecondary,
+      accentColor: themeSecondary,
+      landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+      landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
+      thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+      thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
+    };
+
+    if (mode === 'landing') {
+      updateData.content = html;
+      updateData.styles = styleData;
+    } else {
+      updateData.content = page?.landingPageContent;
+      updateData.styles = page?.landingPageStyles;
+    }
+
+    try {
+      await updatePageMutation.mutateAsync(updateData);
+      setHasSaved(true);
+      toast.success(`${mode === 'thank-you' ? 'Thank You' : 'Landing'} page saved!`);
+    } catch (err) {
+      toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const switchMode = (newMode: 'landing' | 'thank-you') => {
+    if (newMode === mode) return;
+
+    // 1. Save current editor state into memory/local page state
+    if (editorRef.current) {
+      const html = editorRef.current.getHtml();
+      const css = editorRef.current.getCss() || '';
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+
+      if (page) {
+        if (mode === 'landing') {
+          page.landingPageContent = html;
+          page.landingPageStyles = globalCss + '\n' + css;
+        } else {
+          page.thankYouPageContent = html;
+          page.thankYouPageStyles = globalCss + '\n' + css;
+        }
+      }
+    }
+
+    // 2. Switch Mode
+    setMode(newMode);
+
+    // Sync URL
+    const newParams = new URLSearchParams(searchParams);
+    if (newMode === 'thank-you') newParams.set('mode', 'thankyou');
+    else newParams.delete('mode');
+    navigate(`?${newParams.toString()}`, { replace: true });
+
+    // 3. Update Sidebar Tab if needed
+    if (newMode === 'thank-you') {
+      setLeftTab('thank-you');
+      // Force an immediate sync from the thank you panel if it's already mounted
+      setTimeout(() => {
+        const thankYouHtml = page?.thankYouPageContent;
+        if (thankYouHtml && editorRef.current) {
+          applyContentToEditor(editorRef.current, 'thank-you');
+        }
+      }, 100);
+    } else if (leftTab === 'thank-you') {
+      setLeftTab('blocks');
+    }
+
+    // 4. Load content of new mode
+    setTimeout(() => {
+      if (editorRef.current) {
+        applyContentToEditor(editorRef.current, newMode);
+      }
+    }, 100);
+  };
+
+  // ─── Preview ───
+  const handlePreview = () => {
+    if (!page?.slug) {
+      toast.error('Please save your page first to generate a slug');
+      return;
+    }
+    const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+    const token = page.previewToken ? `?token=${page.previewToken}` : '';
+    const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
+    console.log('🔗 Opening Preview URL:', previewUrl);
+    window.open(previewUrl, '_blank');
+  };
+
+
+  // ─── Code ───
+  const openCode = () => {
+    if (!editorRef.current) return;
+    const rawHtml = editorRef.current.getHtml();
+    const rawCss = editorRef.current.getCss() ?? '';
+    setHtmlCode(formatHtmlPretty(rawHtml));
+    setCssCode(formatCssPretty(rawCss));
+    setCodeView(true);
+  };
+
+  // ─── Apply code ───
+  const applyCode = () => {
+    if (!editorRef.current) return;
+    editorRef.current.setComponents(htmlCode);
+    editorRef.current.setStyle(cssCode);
+    toast.success('Code applied!');
+    setCodeView(false);
+  };
+
+  const downloadHtml = async () => {
+    if (!editorRef.current) {
+      toast.error('Editor not ready');
+      return;
+    }
+
+    // 1. Get raw content directly from editor to ensure latest state
+    let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
+    let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
+
+    let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
+    let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
+
+    let formattedLandingHtml = formatHtmlPretty(landingHtml);
+    let formattedLandingCss = formatCssPretty(landingCss);
+    let formattedThankYouHtml = thankYouHtml ? formatHtmlPretty(thankYouHtml) : '';
+    let formattedThankYouCss = thankYouCss ? formatCssPretty(thankYouCss) : '';
+
+    const cssFileName = 'landing-page.css';
+    const tyCssFileName = 'thankyou-page.css';
+    const pageTitle = page?.name || 'Landing Page';
+    const metaDesc = page?.metaDescription || '';
+
+    // 2. Setup Zip
+    const zip = new JSZip();
+    const landingPageFolder = zip.folder('landing-page');
+    if (!landingPageFolder) {
+      toast.error('Failed to create download package');
+      return;
+    }
+    // ── Create img/ subfolder inside landing-page/ ──
+    const imgFolder = landingPageFolder.folder('img');
+    if (!imgFolder) {
+      toast.error('Failed to create img folder');
+      return;
+    }
+
+    // 3. Extract and Download Images
+    const imageUrls = new Set<string>();
+    const getFullUrl = (url: string) => {
+      if (!url || url.startsWith('data:')) return null;
+      if (url.startsWith('http') || url.startsWith('//')) return url.startsWith('//') ? `https:${url}` : url;
+      try { return new URL(url, window.location.origin).href; } catch (e) { return null; }
+    };
+
+    // Match src="...", url('...'), url("..."), background-image: url(...)
+    const imgRegex = /(?:src|data-src|poster)=["']([^"'>]+)["']|url\(['"]?([^'")]+)['"]?\)/g;
+    [formattedLandingHtml, formattedLandingCss, formattedThankYouHtml, formattedThankYouCss].forEach(content => {
+      let m;
+      while ((m = imgRegex.exec(content)) !== null) {
+        const rawUrl = m[1] || m[2];
+        const url = getFullUrl(rawUrl);
+        if (url) imageUrls.add(url);
+      }
+    });
+
+    const imageMap: Record<string, string> = {};
+    const downloadPromises = Array.from(imageUrls).map(async (origUrl) => {
+      const fullUrl = getFullUrl(origUrl);
+      if (!fullUrl) return;
+      try {
+        let blob: Blob | null = null;
+        try {
+          const res = await fetch(fullUrl, { mode: 'cors' });
+          if (res.ok) blob = await res.blob();
+        } catch (e) {
+          try {
+            const res = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(fullUrl)}`);
+            if (res.ok) blob = await res.blob();
+          } catch (e2) { }
+        }
+
+        if (blob) {
+          const urlHash = Math.random().toString(36).substr(2, 6);
+          const rawFilename = fullUrl.split('/').pop()?.split('?')[0] || 'image';
+          let extension = blob.type.split('/')[1] || 'png';
+          if (extension === 'jpeg') extension = 'jpg';
+          if (extension === 'svg+xml') extension = 'svg';
+          if (extension === 'webp') extension = 'webp';
+
+          // Truncate original name and add hash to keep it short but unique
+          let cleanBase = rawFilename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_').substr(0, 20);
+          if (!cleanBase) cleanBase = 'asset';
+          const filename = `${cleanBase}_${urlHash}.${extension}`;
+
+          // ── Save image inside img/ subfolder ──
+          imgFolder.file(filename, blob);
+          // Map original URL → relative path from HTML file (img/filename)
+          imageMap[origUrl] = `img/${filename}`;
+        }
+      } catch (err) { }
+    });
+
+    await Promise.all(downloadPromises);
+
+    // 4. Replace ALL original URLs with img/filename paths in HTML and CSS
+    const sortedUrls = Object.keys(imageMap).sort((a, b) => b.length - a.length);
+    sortedUrls.forEach((oldUrl) => {
+      const newPath = imageMap[oldUrl]; // e.g. "img/hero_abc123.jpg"
+      const escaped = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'g');
+      formattedLandingHtml = formattedLandingHtml.replace(regex, newPath);
+      formattedLandingCss = formattedLandingCss.replace(regex, newPath);
+      formattedThankYouHtml = formattedThankYouHtml.replace(regex, newPath);
+      formattedThankYouCss = formattedThankYouCss.replace(regex, newPath);
+    });
+
+    // Final sweep: Convert any remaining relative /path/ src refs to absolute (for images not downloaded)
+    const origin = window.location.origin;
+    const relativeRegex = /src=["']\/([^"'>][^"'>]*)["']/g;
+    formattedLandingHtml = formattedLandingHtml.replace(relativeRegex, `src="${origin}/$1"`);
+    formattedThankYouHtml = formattedThankYouHtml.replace(relativeRegex, `src="${origin}/$1"`);
+
+    // 5. Build final HTML files
+    const finalLandingHtml = buildFullHtml(formattedLandingHtml, formattedLandingCss, pageTitle, metaDesc, cssFileName);
+
+    // 6. Generate ZIP
+    landingPageFolder.file('landing-page.html', finalLandingHtml);
+    landingPageFolder.file(cssFileName, formattedLandingCss);
+    if (formattedThankYouHtml) {
+      const tyTitle = `${pageTitle} - Thank You`;
+      const finalTyHtml = buildFullHtml(formattedThankYouHtml, formattedThankYouCss, tyTitle, metaDesc, tyCssFileName);
+      landingPageFolder.file('thankyou-page.html', finalTyHtml);
+      landingPageFolder.file(tyCssFileName, formattedThankYouCss);
+    }
+
+    const totalImages = Object.keys(imageMap).length;
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const zipAnchor = document.createElement('a');
+    zipAnchor.href = zipUrl;
+    zipAnchor.download = `${page?.slug || 'landing-page'}-package.zip`;
+    zipAnchor.click();
+    URL.revokeObjectURL(zipUrl);
+    toast.success(`✅ Downloaded! HTML + CSS + ${totalImages} image(s) in img/ folder`);
+  };
+
+  // ─── Publish ───
+  const handlePublish = async () => {
+    if (!editorRef.current) return;
+    setIsPublishing(true);
+
+    try {
+      const html = editorRef.current.getHtml();
+      const css = editorRef.current.getCss() || '';
+
+      // Capture internal global styles injected by GlobalStylesPanel
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+
+      const styleData = globalCss + '\n' + css;
+
+      const updateData: Partial<LandingPage> = {
+        status: 'published',
+        metaTitle: pageTitle,
+        metaDescription: metaDesc,
+        primaryColor: themePrimary,
+        secondaryColor: themeSecondary,
+        accentColor: themeSecondary,
+        landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+        landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
+        thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+        thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
+      };
+
+      if (mode === 'landing') {
+        updateData.content = html;
+        updateData.styles = styleData;
+      } else {
+        updateData.content = page?.landingPageContent;
+        updateData.styles = page?.landingPageStyles;
+      }
+
+      await updatePageMutation.mutateAsync(updateData);
+
+      setIsPublishing(false);
+      // Build the public URL for display
+      const slug = pageDataRef.current?.slug || pageId;
+      const preSlugPrefix = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
+      const url = `${window.location.origin}/${preSlugPrefix ? preSlugPrefix + '/' : ''}${slug}`;
+      setPublishedUrl(url);
+      setPublishModalOpen(true);
+    } catch (err) {
+      setIsPublishing(false);
+      toast.error('Failed to publish page');
+    }
+  };
+
+  // ─── AI prompt ───
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim() || !editorRef.current) return;
+    setAiLoading(true);
+
+    const selected = editorRef.current.getSelected();
+    const prompt = aiPrompt.trim();
+
+    try {
+      const res = await aiApi.improve({
+        sectionType: selected ? selected.get('tagName') || 'section' : 'new section',
+        currentContent: selected ? selected.toHTML() : '<div>New AI Content</div>',
+        aiPrompt: prompt,
+        pageId
+      });
+
+      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
+
+      if (selected) {
+        selected.replaceWith(improvedHtml);
+      } else {
+        editorRef.current.addComponents(improvedHtml);
+      }
+
+      setAiLoading(false);
+      setAiPrompt('');
+      setAiOpen(false);
+      toast.success('✨ AI section generated!');
+    } catch (err: any) {
+      setAiLoading(false);
+      toast.error(err.message || 'Failed to generate AI content');
+    }
+  };
+
+  const handleEditAiGenerate = async () => {
+    if (!editAiPrompt.trim() || !editorRef.current) return;
+    const selected = editorRef.current.getSelected();
+    if (!selected) return;
+
+    setAiLoading(true);
+    const prompt = editAiPrompt.trim();
+
+    try {
+      const res = await aiApi.improve({
+        sectionType: selected.get('tagName') || 'component',
+        currentContent: selected.toHTML(),
+        aiPrompt: prompt,
+        pageId
+      });
+
+      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
+      selected.replaceWith(improvedHtml);
+
+      setAiLoading(false);
+      setEditAiPrompt('');
+      setEditAiOpen(false);
+      toast.success('✨ Component edited with AI!');
+    } catch (err: any) {
+      setAiLoading(false);
+      toast.error(err.message || 'Failed to edit with AI');
+    }
+  };
+
+  // ─── AI Chat Processor (Real GPT API) ───
+  const processAiChat = async () => {
+    if (!chatInput.trim() || chatLoading || !editorRef.current) return;
+
+    const val = chatInput.trim();
+    setChatInput('');
+
+    const selected = activeComponent || editorRef.current.getSelected();
+    if (!selected) {
+      setChatMessages(prev => [...prev,
+      { role: 'user', content: val },
+      { role: 'ai', content: '⚠️ Pehle canvas mein koi element select karo, phir apna command likho.' }
+      ]);
+      return;
+    }
+
+    // Add user message
+    setChatMessages(prev => [...prev, { role: 'user', content: val }]);
+    setChatLoading(true);
+
+    const el = selected.getEl();
+    if (el) el.classList.add('ai-pulse-active');
+
+    const elementHtml = selected.toHTML();
+    const elementCss = JSON.stringify(selected.getStyle() || {});
+    const elementTag = selected.get('tagName') || 'div';
+    const elementType = selected.get('type') || 'element';
+
+    try {
+      let aiResponse = '';
+
+      // ── Call dedicated /ai/editor-chat backend endpoint ──
+      const res = await aiApi.editorChat({
+        elementTag,
+        elementHtml: elementHtml.slice(0, 1500),
+        elementCss,
+        instruction: val
+      });
+
+      // res.data is directly: { action, css, text, html, summary }
+      const parsed = res.data || {};
+
+      // Apply changes to the selected component
+      let changeApplied = false;
+      let changeSummary = parsed.summary || 'AI change applied';
+
+      if ((parsed.action === 'style' || parsed.action === 'both') && parsed.css && Object.keys(parsed.css).length > 0) {
+        // Convert camelCase to kebab-case for GrapesJS
+        const kebabCss: Record<string, string> = {};
+        Object.entries(parsed.css).forEach(([key, value]) => {
+          const kebab = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+          kebabCss[kebab] = value as string;
+        });
+        const currentStyle = selected.getStyle() || {};
+        selected.setStyle({ ...currentStyle, ...kebabCss });
+        changeApplied = true;
+      }
+
+      if ((parsed.action === 'text' || parsed.action === 'both') && parsed.text) {
+        if (selected.get('type') !== 'wrapper') {
+          selected.components(parsed.text);
+          changeApplied = true;
+        }
+      }
+
+      if (parsed.action === 'html' && parsed.html) {
+        selected.replaceWith(parsed.html);
+        changeApplied = true;
+      }
+
+      if (changeApplied) {
+        aiResponse = `✅ Done! ${changeSummary}`;
+        const historyEntry = {
+          id: Date.now().toString(),
+          timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          prompt: val,
+          element: `${elementTag} · ${selectedLabel}`,
+          summary: changeSummary
+        };
+        setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
+        toast.success('✨ AI ne change apply kar diya!');
+      } else {
+        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo jaise: "is heading ka color lal karo"';
+      }
+
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+    } catch (err: any) {
+      console.error('AI Chat Error:', err);
+      const errMsg = err?.message || 'Unknown error';
+      setChatMessages(prev => [...prev, {
+        role: 'ai',
+        content: `❌ Error: ${errMsg}\n\nApna API key check karo (⚙️ icon pe click karo).`
+      }]);
+    } finally {
+      if (el) el.classList.remove('ai-pulse-active');
+      setChatLoading(false);
+      // Auto-scroll chat
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  };
+
+  if (projectLoading || pageLoading || !page || !project) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a2e]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-white font-medium">Loading Editor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, system-ui, sans-serif', background: '#f5f5f5', overflow: 'hidden' }}>
+
+      {/* ═══════════════ TOP BAR ═══════════════ */}
+      <div style={{
+        height: 54, flexShrink: 0,
+        background: '#0f0f1a', borderBottom: '1px solid #1e1e2d',
+        display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
+        zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+      }}>
+        {/* Logo & Page Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+            {project?.name?.charAt(0).toUpperCase() || 'G'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
+            <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
+          </div>
+        </div>
+
+        <Sep />
+
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(`/dashboard/projects/${projId}`)}
+          style={{
+            ...outlineBtn,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#60a5fa',
+            padding: '6px 12px',
+            fontSize: 11,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={14} /> Back to Pages
+        </button>
+
+
+        {/* Mode Switcher */}
+        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+          <TBtn title="Edit Landing Page" active={mode === 'landing'} onClick={() => switchMode('landing')}>
+            <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Landing Page</span>
+          </TBtn>
+          <TBtn title="Edit Thank You Page" active={mode === 'thank-you'} onClick={() => switchMode('thank-you')}>
+            <SuccessIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Thank You Page</span>
+          </TBtn>
+        </div>
+
+        <Sep />
+
+        {/* Device Switcher (Centered look) */}
+        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+          <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
+          <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
+          <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
+        </div>
+
+        <Sep />
+
+        <div style={{ flex: 1 }} />
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={downloadHtml}
+            disabled={!hasSaved}
+            style={{
+              ...outlineBtn,
+              background: !hasSaved ? 'rgba(52,211,153,0.05)' : 'rgba(52,211,153,0.1)',
+              border: !hasSaved ? '1px solid rgba(52,211,153,0.1)' : '1px solid rgba(52,211,153,0.3)',
+              color: !hasSaved ? '#34d399' : '#34d399',
+              padding: '7px 14px',
+              opacity: !hasSaved ? 0.5 : 1,
+              cursor: !hasSaved ? 'not-allowed' : 'pointer'
+            }}
+            title={!hasSaved ? "Please save your page first before downloading" : "Download HTML Package"}
+          >
+            <DownloadIcon /> <span style={{ marginLeft: 6 }}>Download HTML</span>
+          </button>
+
+          {/* Status Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
+            <select
+              value={siteStatus}
+              onChange={(e) => {
+                const val = e.target.value as any;
+                setSiteStatus(val);
+                // 🚀 Actually update the database!
+                updatePageMutation.mutate({ status: val });
+
+                if (val === 'unpublished') {
+                  toast.error('Site is now Unpublished and hidden from public view.');
+                } else {
+                  toast.success(`Status changed to ${val}`);
+                }
+              }}
+              style={{
+                background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e8f0',
+                borderRadius: 6, padding: '4px 24px 4px 10px', fontSize: 11, fontWeight: 700, outline: 'none', cursor: 'pointer',
+                appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center'
+              }}
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="republished">Republished</option>
+              <option value="unpublished">Unpublished</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => {
+              if (siteStatus === 'unpublished') {
+                toast.error('Cannot preview an Unpublished site. Please change status to Published first.');
+                return;
+              }
+              handlePreview();
+            }}
+            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }}
+            title="Live Preview"
+          >
+            <EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span>
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
+            title="Save Changes"
+          >
+            {isSaving ? <SpinnerIcon /> : <SaveIcon />}
+            <span style={{ marginLeft: 6 }}>{isSaving ? 'Saving...' : 'Save'}</span>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
+          <button onClick={handlePublish} disabled={isPublishing} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
+            padding: '7px 22px', fontSize: 13, fontWeight: 800, cursor: isPublishing ? 'not-allowed' : 'pointer',
+            boxShadow: isPublishing ? 'none' : '0 4px 15px rgba(124,58,237,0.4)',
+            transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
+          }}>
+            {isPublishing ? 'Publishing...' : <><RocketIcon /> Publish</>}
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════ MAIN BODY ═══════════════ */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+        {/* ══ DUAL-COLUMN LEFT SIDEBAR ══ */}
+        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #1e1e2d' }}>
+          {/* Vertical Toolbar (Narrow) */}
+          <div style={{
+            width: 58, flexShrink: 0, background: '#0b0b18',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            padding: '16px 0', gap: 18, borderRight: '1px solid #1e1e30'
+          }}>
+            <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
+            <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+          </div>
+
+          {/* Panel Content (Dynamic) */}
+          <div style={{
+            width: isSidebarOpen ? 280 : 0,
+            opacity: isSidebarOpen ? 1 : 0,
+            flexShrink: 0, background: '#12121e',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            borderRight: isSidebarOpen ? '1px solid #1e1e2d' : 'none'
+          }}>
+            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
+              </span>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
+            </div>
+
+            <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <BlocksPanel
+                onAdd={(type) => {
+                  if (!editorRef.current) return;
+                  const editor = editorRef.current;
+
+                  if (type === 'icon') {
+                    // Add a default icon then open the picker
+                    const added = editor.addComponents({
+                      type: 'icon',
+                      classes: ['fas', 'fa-star'],
+                      style: { 'font-size': '32px', 'color': '#7c3aed', 'display': 'inline-block', 'cursor': 'pointer' }
+                    });
+                    if (added && added[0]) {
+                      editor.select(added[0]);
+                      setTimeout(() => editor.runCommand('open-icon-picker'), 100);
+                    }
+                    return;
+                  }
+
+                  if (type === 'custom-code') {
+                    const added = editor.addComponents({
+                      type: 'custom-code',
+                      classes: ['gjs-custom-code'],
+                      content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+                    });
+                    if (added && added[0]) {
+                      editor.select(added[0]);
+                      setTimeout(() => editor.runCommand('open-custom-code-editor'), 100);
+                    }
+                    return;
+                  }
+
+                  const block = editor.BlockManager.get(type);
+                  if (block) {
+                    editor.addComponents(block.get('content'));
+                  }
+                }}
+                onDragStart={(type, ev) => {
+                  if (!editorRef.current) return;
+                  const block = editorRef.current.BlockManager.get(type);
+                  if (block) {
+                    editorRef.current.BlockManager.startDrag(block, { event: ev.nativeEvent } as any);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Hidden Native Blocks Container */}
+            <div id="blocks-container" style={{ display: 'none' }} />
+
+            {/* Theme / Styles */}
+            <div style={{ flex: 1, display: leftTab === 'theme' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <GlobalStylesPanel
+                editor={editorInstance}
+                initialPrimary={page?.primaryColor}
+                initialSecondary={page?.secondaryColor}
+                onBrandingColorsChange={({ primary, secondary }) => {
+                  setThemePrimary(primary);
+                  setThemeSecondary(secondary);
+                }}
+              />
+            </div>
+
+            {/* Layers */}
+            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
+
+
+            {/* AI Panel - Full Featured */}
+            <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden', minWidth: 280 }}>
+
+              {/* ── AI Panel Header Tabs ── */}
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #1e1e2d', background: '#0a0a14', padding: '0 12px' }}>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#64748b' : '#a78bfa', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #7c3aed', transition: 'all 0.2s' }}
+                >✨ AI Chat</button>
+                <button
+                  onClick={() => setShowHistory(true)}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#a78bfa' : '#64748b', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #7c3aed' : 'none', transition: 'all 0.2s', position: 'relative' }}
+                >
+                  🕐 History
+                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#7c3aed', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
+                </button>
+                <button
+                  onClick={() => setShowApiKeyInput(v => !v)}
+                  title="API Key Settings"
+                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(124,58,237,0.2)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#64748b', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
+                >⚙️</button>
+              </div>
+
+              {/* ── API Key Settings ── */}
+              {showApiKeyInput && (
+                <div style={{ padding: '12px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12 }}>🤖</span>
+                    <span style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="password"
+                      value={aiApiKey}
+                      onChange={e => setAiApiKey(e.target.value)}
+                      placeholder="sk-ant-api03-..."
+                      style={{ flex: 1, background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (aiApiKey.trim()) {
+                          localStorage.setItem('ai_editor_claude_key', aiApiKey.trim());
+                          setAiProvider('claude');
+                          toast.success('✅ Claude API Key saved!');
+                        } else {
+                          localStorage.removeItem('ai_editor_claude_key');
+                          setAiProvider('demo');
+                          toast.info('API Key removed. Using demo mode.');
+                        }
+                        setShowApiKeyInput(false);
+                      }}
+                      style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >Save</button>
+                  </div>
+                  <div style={{ fontSize: 10, color: aiApiKey ? '#10b981' : '#f97316', marginTop: 6 }}>
+                    {aiApiKey ? '✅ Claude AI active (claude-3-5-haiku)' : '⚠️ Demo mode — limited commands only'}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#4a4a6a', marginTop: 4 }}>Key is stored locally in your browser only.</div>
+                </div>
+              )}
+
+              {/* ── HISTORY TAB ── */}
+              {showHistory ? (
+                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {aiHistory.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <span style={{ fontSize: 10, color: '#64748b' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
+                      <button
+                        onClick={() => { setAiHistory([]); localStorage.removeItem(`ai_history_${pageId}`); }}
+                        style={{ fontSize: 10, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
+                      >🗑️ Clear All</button>
+                    </div>
+                  )}
+                  {aiHistory.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        color: '#4a4a6a',
+                        fontSize: 13,
+                        padding: '32px 0',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <div style={{ fontSize: 32, marginBottom: 10 }}>✨</div>
+
+                      No AI updates yet.<br />
+                      Select any element and give a prompt to start editing.
+                    </div>
+                  ) : (
+                    aiHistory.map(h => (
+                      <div key={h.id} style={{ background: '#1a1a2e', borderRadius: 10, border: '1px solid #2a2a3e', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 9, color: '#64748b', fontWeight: 700 }}>🕐 {h.timestamp}</span>
+                          <span style={{ fontSize: 9, background: 'rgba(124,58,237,0.2)', color: '#a78bfa', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#e2e8f0', fontStyle: 'italic' }}>"{h.prompt}"</div>
+                        <div style={{ fontSize: 11, color: '#10b981' }}>✅ {h.summary}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* ── CHAT TAB ── */}
+
+                  {/* Selection Context Bar */}
+                  <div style={{ padding: '8px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeComponent ? '#10b981' : '#f97316', boxShadow: activeComponent ? '0 0 6px #10b981' : '0 0 6px #f97316', flexShrink: 0 }} />
+                    <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {activeComponent ? `🎯 ${selectedLabel}` : '⬅️ Select an element on canvas'}
+                    </span>
+                    <button
+                      onClick={() => { setChatMessages([WELCOME_MSG]); localStorage.removeItem(`ai_chat_messages_${pageId}`); }}
+                      title="Chat clear karo"
+                      style={{ fontSize: 11, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
+                    >🗑️</button>
+                    <span style={{ fontSize: 9, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                      🤖 Claude AI
+                    </span>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} style={{ display: 'flex', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-end' }}>
+                        {msg.role === 'ai' && (
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>✨</div>
+                        )}
+                        <div style={{
+                          maxWidth: '80%',
+                          background: msg.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#6366f1)' : '#1a1a2e',
+                          color: '#e2e8f0',
+                          borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                          padding: '9px 12px',
+                          fontSize: 12,
+                          lineHeight: 1.6,
+                          border: msg.role === 'ai' ? '1px solid #2a2a3e' : 'none',
+                          whiteSpace: 'pre-line',
+                          wordBreak: 'break-word'
+                        }}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {chatLoading && (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✨</div>
+                        <div style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
+                          {[0, 1, 2].map(d => (
+                            <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', animation: `bounce 1.2s ${d * 0.2}s infinite` }} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Input Area */}
+                  <div style={{ padding: '12px 14px', borderTop: '1px solid #1e1e2d', background: '#0a0a14' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${chatInput.trim() ? '#7c3aed' : '#2a2a3e'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}>
+                      <textarea
+                        ref={aiInputRef}
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            processAiChat();
+                          }
+                        }}
+                        placeholder="Hindi ya English mein likhو... e.g. 'is button ka color blue karo'"
+                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#4a4a6a', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
+                        <button
+                          onClick={processAiChat}
+                          disabled={chatLoading || !chatInput.trim()}
+                          style={{ background: chatLoading || !chatInput.trim() ? '#2a2a3e' : 'linear-gradient(135deg,#7c3aed,#6366f1)', color: chatLoading || !chatInput.trim() ? '#64748b' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
+                        >
+                          {chatLoading ? '...' : <><SparklesIcon /> Send</>}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* SEO Panel */}
+            <div style={{ flex: 1, display: leftTab === 'seo' ? 'flex' : 'none', flexDirection: 'column', padding: 20, gap: 20 }}>
+              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Page Meta Title</label>
+                <input type="text" value={pageTitle} onChange={e => setPageTitle(e.target.value)} placeholder="Enter page title..." style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
+              </div>
+              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Meta Description</label>
+                <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} placeholder="Enter SEO description..." rows={5} style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', resize: 'none' }} />
+              </div>
+              <button onClick={() => { updatePageMutation.mutate({ metaTitle: pageTitle, metaDescription: metaDesc }); toast.success('SEO Settings Saved'); }} style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Update Settings</button>
+            </div>
+
+            {/* Thank You Panel */}
+            <div style={{ flex: 1, display: leftTab === 'thank-you' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
+              <ThankYouEditorPanel
+                key={`${pageId}-${mode}`}
+                pageId={pageId || ''}
+                industry={page?.industry}
+                onSave={() => {
+                  toast.success('Thank You settings saved!');
+                  handleSave(); // 🚀 Also save the canvas HTML/CSS so they don't get out of sync!
+                  queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
+                }}
+                onSelect={async (html, css) => {
+                  if (editorRef.current) {
+                    console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
+
+                    // Clear both HTML and CSS to prevent merging
+                    editorRef.current.setComponents('');
+                    try {
+                      if (editorRef.current.DomComponents && editorRef.current.DomComponents.clear) {
+                        editorRef.current.DomComponents.clear();
+                      }
+                      // @ts-ignore
+                      if (editorRef.current.Css && editorRef.current.Css.clear) {
+                        editorRef.current.Css.clear();
+                      }
+                      // @ts-ignore
+                      if (editorRef.current.UndoManager && editorRef.current.UndoManager.clear) {
+                        editorRef.current.UndoManager.clear();
+                      }
+                    } catch (e) { }
+
+                    let finalHtml = html;
+                    let finalCss = css || '';
+
+                    // Robust parsing for full HTML templates
+                    if (html.toLowerCase().includes('<body')) {
+                      try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                        if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+                        finalHtml = doc.body.innerHTML;
+                        console.log('✅ Parsed full HTML body content.');
+                      } catch (e) {
+                        console.error('Error parsing Thank You HTML:', e);
+                      }
+                    }
+
+                    // Apply new content
+                    editorRef.current.setComponents(finalHtml);
+                    if (finalCss) {
+                      finalCss = finalCss.replace(/body\s*\{/g, 'body, .grapesjs-safeguard-wrapper {');
+                      editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
+                      editorRef.current.setStyle(finalCss);
+                    }
+
+                    // Force refresh
+                    editorRef.current.refresh();
+                    console.log('✨ Canvas updated with new Thank You template.');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ══ CANVAS (light grey bg) ══ */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e2e8f0' }}>
+          <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
+        </div>
+
+        {/* ══ RIGHT SIDEBAR ══ */}
+        <div style={{
+          width: 280, flexShrink: 0, background: '#0f0f1a',
+          borderLeft: '1px solid #1e1e2d', display: 'flex', flexDirection: 'column',
+        }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', padding: '0 10px', borderBottom: '1px solid #1e1e2d', height: 48, alignItems: 'center', background: '#0a0a14' }}>
+            <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
+            <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
+          </div>
+          <div id="styles-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none' }} />
+          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none' }} />
+        </div>
+      </div>
+
+      {/* ═══════════════ AI PROMPT MODAL ═══════════════ */}
+      {aiOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 520, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SparklesIcon />
+              </div>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>AI Section Generator</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: 20 }}>
+              <p style={{ color: '#94a3b8', fontSize: 13, margin: '0 0 12px' }}>
+                Describe what you want to add or change. If you select an element on canvas first, AI will replace that section.
+              </p>
+
+              {/* Quick prompts */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                {['Add hero section', 'Add contact form', 'Add pricing table', 'Add testimonials', 'Add FAQ section', 'Add CTA banner'].map(q => (
+                  <button
+                    key={q}
+                    onClick={() => setAiPrompt(q)}
+                    style={{
+                      background: '#252540', color: '#a5b4fc', border: '1px solid #2a2a3e',
+                      borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                    }}
+                  >{q}</button>
+                ))}
+              </div>
+
+              <textarea
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                placeholder="e.g., Create a hero section with a lead capture form for a roofing company..."
+                rows={4}
+                style={{
+                  width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e',
+                  borderRadius: 8, padding: 14, fontSize: 13, fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <button onClick={() => setAiOpen(false)} style={{ flex: 1, background: '#252540', color: '#94a3b8', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAiGenerate}
+                  disabled={aiLoading || !aiPrompt.trim()}
+                  style={{
+                    flex: 2, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff',
+                    border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    opacity: (aiLoading || !aiPrompt.trim()) ? 0.5 : 1,
+                  }}
+                >
+                  {aiLoading ? '✨ Generating...' : '✨ Generate Section'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════ EDIT COMPONENT AI MODAL ═══════════════ */}
+      {editAiOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 440, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
+                <SparklesIcon />
+              </div>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Edit component with AI</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setEditAiOpen(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ padding: 20 }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Describe your changes</label>
+              <textarea
+                value={editAiPrompt}
+                onChange={e => setEditAiPrompt(e.target.value)}
+                onKeyDown={e => {
+                  if (e.ctrlKey && e.key === 'Enter') {
+                    handleEditAiGenerate();
+                  }
+                }}
+                placeholder="e.g. Make the text more compelling and add a secondary button."
+                rows={3}
+                autoFocus
+                style={{
+                  width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e',
+                  borderRadius: 8, padding: 14, fontSize: 13, fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Submit with <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#cbd5e1', fontSize: 11, fontFamily: 'inherit' }}>Ctrl</kbd> + <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#cbd5e1', fontSize: 11, fontFamily: 'inherit' }}>↵</kbd>
+                </span>
+                <button
+                  onClick={handleEditAiGenerate}
+                  disabled={aiLoading || !editAiPrompt.trim()}
+                  style={{
+                    background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff',
+                    border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    opacity: (aiLoading || !editAiPrompt.trim()) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 6
+                  }}
+                >
+                  {aiLoading ? 'Editing...' : 'Edit with AI'} <SparklesIcon />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════ SEO MODAL ═══════════════ */}
+      {seoOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 480, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#10b981,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                <SettingsIcon />
+              </div>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>SEO & Page Settings</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setSeoOpen(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Page Title</label>
+                <input
+                  type="text"
+                  value={pageTitle}
+                  onChange={e => setPageTitle(e.target.value)}
+                  placeholder="E.g. My Awesome Landing Page"
+                  style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Meta Description</label>
+                <textarea
+                  value={metaDesc}
+                  onChange={e => setMetaDesc(e.target.value)}
+                  placeholder="Brief description of your page for search engines..."
+                  rows={4}
+                  style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+              <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={noIndex} onChange={e => setNoIndex(e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Hide from search engines (noindex)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={noFollow} onChange={e => setNoFollow(e.target.checked)} style={{ cursor: 'pointer' }} />
+                  Do not follow links (nofollow)
+                </label>
+              </div>
+              <button
+                onClick={() => {
+                  updatePageMutation.mutate({
+                    metaTitle: pageTitle,
+                    metaDescription: metaDesc,
+                    noIndex,
+                    noFollow
+                  });
+                  setSeoOpen(false);
+                  toast.success('SEO Settings updated!');
+                }}
+                style={{ width: '100%', background: 'linear-gradient(135deg,#10b981,#3b82f6)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════ PUBLISH SUCCESS MODAL ═══════════════ */}
+      {publishModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ width: 500, background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: 20, border: '1px solid rgba(124,58,237,0.4)', overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.6)', animation: 'publishPop 0.35s cubic-bezier(0.34,1.56,0.64,1)' }}>
+            {/* Top gradient banner */}
+            <div style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #06b6d4 100%)', padding: '32px 32px 28px', textAlign: 'center', position: 'relative' }}>
+              {/* Confetti dots */}
+              {['#fbbf24', '#34d399', '#f87171', '#60a5fa', '#a78bfa'].map((c, i) => (
+                <div key={i} style={{ position: 'absolute', width: 8, height: 8, borderRadius: '50%', background: c, top: `${10 + i * 14}%`, left: `${8 + i * 16}%`, opacity: 0.8 }} />
+              ))}
+              {['#f87171', '#34d399', '#fbbf24'].map((c, i) => (
+                <div key={i} style={{ position: 'absolute', width: 6, height: 6, borderRadius: '50%', background: c, top: `${20 + i * 20}%`, right: `${6 + i * 14}%`, opacity: 0.7 }} />
+              ))}
+              <button
+                onClick={() => setPublishModalOpen(false)}
+                style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s', zIndex: 10 }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.2)' }}>
+                <span style={{ fontSize: 36 }}>🚀</span>
+              </div>
+              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>Are you sure you want to publish your site?</h2>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px 28px' }}>
+              {/* Live URL */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Live URL</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px' }}>
+                  <span style={{ color: '#10b981', fontSize: 12, flex: 1, fontFamily: 'monospace', wordBreak: 'break-all', fontWeight: 600 }}>{publishedUrl}</span>
+                  <button
+                    onClick={async (e) => {
+                      const btn = e.currentTarget;
+                      const originalContent = btn.innerHTML;
+                      const success = await copyToClipboard(publishedUrl);
+                      if (success) {
+                        toast.success('URL copied to clipboard!');
+                        btn.innerHTML = '<span style="display:flex;align-items:center;gap:4px">Copied!</span>';
+                        btn.style.background = 'rgba(16,185,129,0.2)';
+                        btn.style.color = '#34d399';
+                        setTimeout(() => {
+                          btn.innerHTML = originalContent;
+                          btn.style.background = 'rgba(124,58,237,0.2)';
+                          btn.style.color = '#a78bfa';
+                        }, 2000);
+                      } else {
+                        toast.error('Failed to copy. Please copy manually.');
+                      }
+                    }}
+                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <Copy size={12} />
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+
+
+
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: 10 }}>
+
+                <button
+                  onClick={() => {
+                    setPublishModalOpen(false);
+                    setSiteStatus('published');
+                    toast.success('Site successfully published and status updated!');
+                  }}
+                  style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
+                >
+                  Publish
+                </button>
+              </div>
+            </div>
+          </div>
+          <style dangerouslySetInnerHTML={{ __html: `@keyframes publishPop { 0%{opacity:0;transform:scale(0.85) translateY(20px)} 100%{opacity:1;transform:scale(1) translateY(0)} }` }} />
+        </div>
+      )}
+
+
+
+      {/* ═══════════════ CODE VIEW MODAL ═══════════════ */}
+      {codeView && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.9)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ height: 48, background: '#1a1a2e', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10 }}>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Code Editor</span>
+            <div style={{ flex: 1 }} />
+            <button onClick={applyCode} style={{ ...modalBtn, background: '#7c3aed' }}>Apply Code</button>
+            <button onClick={downloadHtml} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
+            <button onClick={() => setCodeView(false)} style={{ ...modalBtn, background: '#374151' }}>Close</button>
+          </div>
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #2a2a3e' }}>
+              <div style={{ padding: '8px 14px', background: '#0f0f1e', color: '#818cf8', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>HTML</div>
+              <textarea
+                value={htmlCode} onChange={e => setHtmlCode(e.target.value)}
+                style={{ flex: 1, background: '#0a0a16', color: '#e2e8f0', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '8px 14px', background: '#0f0f1e', color: '#22d3ee', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>CSS</div>
+              <textarea
+                value={cssCode} onChange={e => setCssCode(e.target.value)}
+                style={{ flex: 1, background: '#0a0a16', color: '#e2e8f0', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════ CUSTOM COLOR PICKER ═══════════════ */}
+      {colorPicker.visible && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))}
+            style={{ position: 'fixed', inset: 0, zIndex: 999990 }}
+          />
+          {/* Picker Panel */}
+          <div
+            ref={colorPickerRef}
+            style={{
+              position: 'fixed',
+              left: colorPicker.x,
+              top: colorPicker.y,
+              zIndex: 999999,
+              width: 260,
+              maxHeight: 'calc(100vh - 20px)',
+              overflowY: 'auto',
+              background: '#1a1a2e',
+              border: '1px solid rgba(124,58,237,0.4)',
+              borderRadius: 14,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+              overflow: 'hidden',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                {colorPicker.cssProperty || 'Color'}
+              </span>
+              <button onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))} style={{ background: 'none', border: 'none', color: '#4a4a6a', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 2 }}>✕</button>
+            </div>
+
+            {/* Gradient Spectrum Bar */}
+            <div style={{ padding: '10px 14px 6px' }}>
+              <div style={{ width: '100%', height: 24, borderRadius: 6, background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)', marginBottom: 6, cursor: 'crosshair', border: '1px solid rgba(255,255,255,0.1)' }}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const ratio = (e.clientX - rect.left) / rect.width;
+                  const hue = Math.round(ratio * 360);
+                  const hex = hslToHex(hue, 100, 50);
+                  applyColorFromPicker(hex);
+                }}
+              />
+              {/* Lightness bar */}
+              <div style={{ width: '100%', height: 16, borderRadius: 6, background: `linear-gradient(to right, #000000, ${colorPicker.color}, #ffffff)`, marginBottom: 8, cursor: 'crosshair', border: '1px solid rgba(255,255,255,0.1)' }}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const ratio = (e.clientX - rect.left) / rect.width;
+                  const lighter = blendWithWhiteBlack(colorPicker.color, ratio);
+                  applyColorFromPicker(lighter);
+                }}
+              />
+            </div>
+
+            {/* Hex Input + Preview */}
+            <div style={{ padding: '0 14px 10px', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: colorPicker.color, border: '2px solid rgba(255,255,255,0.15)', flexShrink: 0 }} />
+              <input
+                type="text"
+                value={colorPicker.color}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                    setColorPicker(prev => ({ ...prev, color: val }));
+                    if (val.length === 7) applyColorFromPicker(val);
+                  }
+                }}
+                style={{ flex: 1, background: '#111128', color: '#e2e8f0', border: '1px solid #252545', borderRadius: 6, padding: '7px 10px', fontSize: 12, fontFamily: 'monospace', outline: 'none' }}
+              />
+              {/* Native picker as fallback */}
+              <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Open system color picker">
+                <input
+                  type="color"
+                  value={colorPicker.color.length === 7 ? colorPicker.color : '#7c3aed'}
+                  onChange={e => applyColorFromPicker(e.target.value)}
+                  style={{ width: 28, height: 28, padding: 0, border: '1px solid #252545', borderRadius: 6, cursor: 'pointer', background: 'none' }}
+                />
+              </label>
+            </div>
+
+            {/* Preset Color Swatches */}
+            <div style={{ padding: '0 14px 14px' }}>
+              <div style={{ fontSize: 9, color: '#4a4a6a', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>Presets</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {[
+                  '#000000', '#ffffff', '#f8fafc', '#1e293b', '#334155',
+                  '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+                  '#3b82f6', '#6366f1', '#7c3aed', '#a855f7', '#ec4899',
+                  '#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#64748b',
+                ].map(c => (
+                  <button
+                    key={c}
+                    onClick={() => applyColorFromPicker(c)}
+                    title={c}
+                    style={{
+                      width: 22, height: 22, borderRadius: 5, background: c,
+                      border: colorPicker.color === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)',
+                      cursor: 'pointer', padding: 0, flexShrink: 0,
+                      boxShadow: colorPicker.color === c ? '0 0 0 2px #7c3aed' : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Apply Button */}
+            <div style={{ padding: '0 14px 14px' }}>
+              <button
+                onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))}
+                style={{ width: '100%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              >
+                ✓ Apply Color
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+/* ══════ HELPER COMPONENTS ══════ */
+
+/* ── Color Picker Helpers ── */
+const normalizeToHex = (color: string): string => {
+  if (!color || color === 'transparent' || color === 'none') return '#000000';
+  color = color.trim();
+  if (color.startsWith('#')) {
+    if (color.length === 4) return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+    return color.slice(0, 7);
+  }
+  const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
+  return '#000000';
+};
+
+const resolveCssProp = (label: string, wrapper: HTMLElement | null): string => {
+  const labelMap: Record<string, string> = {
+    'color': 'color', 'text color': 'color', 'font color': 'color', 'colour': 'color',
+    'background': 'background-color', 'background color': 'background-color',
+    'background-color': 'background-color', 'bg color': 'background-color', 'bg': 'background-color',
+    'border': 'border-color', 'border color': 'border-color', 'border-color': 'border-color',
+    'text-shadow': 'text-shadow', 'box-shadow': 'box-shadow',
+  };
+  if (labelMap[label]) return labelMap[label];
+  // Try to extract from wrapper class names
+  if (wrapper) {
+    const cls = Array.from(wrapper.classList).join(' ');
+    if (cls.includes('background-color')) return 'background-color';
+    if (cls.includes('border-color')) return 'border-color';
+    if (cls.includes('color')) return 'color';
+  }
+  return label || 'color';
+};
+
+const hslToHex = (h: number, s: number, l: number): string => {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const clr = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * clr).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+const blendWithWhiteBlack = (hex: string, ratio: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const blend = (channel: number) => {
+    if (ratio < 0.5) return Math.round(channel * (ratio * 2));
+    return Math.round(channel + (255 - channel) * ((ratio - 0.5) * 2));
+  };
+  return '#' + [blend(r), blend(g), blend(b)].map(n => n.toString(16).padStart(2, '0')).join('');
+};
+
+const Sep = () => <div style={{ width: 1, height: 20, background: '#2a2a3e', margin: '0 2px' }} />;
+
+const TBtn = ({ children, onClick, title, active = false }: { children: React.ReactNode; onClick: () => void; title?: string; active?: boolean }) => (
+  <button title={title} onClick={onClick} style={{
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: active ? 'rgba(124,58,237,0.2)' : 'transparent',
+    color: active ? '#a78bfa' : '#94a3b8',
+    border: 'none', borderRadius: 5, padding: '5px 8px', cursor: 'pointer',
+    transition: 'all .12s', minWidth: 30, height: 30,
+  }}
+    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#252540'; (e.currentTarget as HTMLButtonElement).style.color = '#e2e8f0'; } }}
+    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
+  >{children}</button>
+);
+const TabButton = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
+  <button onClick={onClick} style={{
+    padding: '12px 16px', fontSize: 11, fontWeight: 700, border: 'none',
+    background: 'none', cursor: 'pointer', letterSpacing: 0.5,
+    color: active ? '#fff' : '#64748b',
+    borderBottom: `2px solid ${active ? '#7c3aed' : 'transparent'}`,
+    transition: 'all .2s',
+    textTransform: 'uppercase'
+  }}>{children}</button>
+);
+
+const NavIcon = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
+  <button onClick={onClick} style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+    width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+    color: active ? '#a78bfa' : '#94a3b8', transition: 'all .2s'
+  }}>
+    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(124,58,237,0.1)' : 'transparent' }}>
+      {children[0]}
+    </div>
+    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{children[1]}</span>
+  </button>
+);
+
+/* ── Styles ── */
+const outlineBtn: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', background: 'transparent',
+  border: '1px solid #2a2a3e', borderRadius: 7, padding: '6px 12px',
+  fontSize: 13, fontWeight: 500, color: '#e2e8f0', cursor: 'pointer',
+};
+const modalBtn: React.CSSProperties = {
+  color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px',
+  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+};
+
+/* ── SVG Icons ── */
+const LayoutIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /></svg>;
+const CodeIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>;
+const DesktopIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>;
+const TabletIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
+const MobileIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
+const UndoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" /></svg>;
+const RedoIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 14 20 9 15 4" /><path d="M4 20v-7a4 4 0 0 1 4-4h12" /></svg>;
+const ZapIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+);
+const TrashIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>;
+const EyeIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
+const SaveIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
+const SparklesIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" /></svg>;
+const SettingsIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
+const RocketIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></svg>;
+const GridIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>;
+const LayersIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>;
+const SuccessIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+const GemIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z" /><path d="M11 3 8 9l3 12" /><path d="m13 3 3 6-3 12" /><path d="M2 9h20" /></svg>;
+
+const HomeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
+const LogoutIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+const PaletteIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.06 0 1.92-.86 1.92-1.92 0-.49-.19-.94-.5-1.28-.3-.32-.48-.75-.48-1.2 0-.96.79-1.74 1.76-1.74h2.15c2.81 0 5.15-2.3 5.15-5.15C22 6.35 17.5 2 12 2zm-4.5 9c-.83 0-1.5-.67-1.5-1.5S6.67 8 7.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3.5c-.83 0-1.5-.67-1.5-1.5S10.17 4.5 11 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5S14.17 4.5 15 4.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5 3.5c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" /></svg>;
+const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
+const SpinnerIcon = () => (
+  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
+
+function parseInlineStyle(styleStr: string): Record<string, string> {
+  const styleObj: Record<string, string> = {};
+  if (!styleStr) return styleObj;
+  // Split by semicolon not inside parentheses (to handle data URLs/functions)
+  const props = styleStr.split(/;(?![^(]*\))/);
+  props.forEach(prop => {
+    const [key, ...valParts] = prop.split(':');
+    if (key && valParts.length > 0) {
+      styleObj[key.trim()] = valParts.join(':').trim();
+    }
+  });
+  return styleObj;
+}
+
+function buildFullHtml(html: string, css: string, title = 'Landing Page', desc = '', externalCssFile = 'landing-page.css') {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${title}</title>
+  ${desc ? `<meta name="description" content="${desc}"/>` : ''}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Icons&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./${externalCssFile}"/>
+  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-family:'Inter',system-ui,sans-serif}</style>
+</head>
+<body>${html}</body>
+</html>`;
+}
+
+function formatCssPretty(css: string): string {
+  return css
+    .replace(/\s+/g, ' ')
+    .replace(/\s*{\s*/g, ' {\n  ')
+    .replace(/;\s*/g, ';\n  ')
+    .replace(/\s*}\s*/g, '\n}\n\n')
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+}
+
+function formatHtmlPretty(html: string): string {
+  if (!html.trim()) return '';
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const formatNode = (node: Node, indentLevel: number): string => {
+    const indent = '  '.repeat(indentLevel);
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = (node.textContent || '').trim();
+      return text ? `${indent}${text}\n` : '';
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+    const attrs = Array.from(el.attributes)
+      .map((attr) => `${attr.name}="${attr.value}"`)
+      .join(' ');
+    const openTag = attrs ? `<${tag} ${attrs}>` : `<${tag}>`;
+    const closeTag = `</${tag}>`;
+    const children = Array.from(el.childNodes);
+
+    if (!children.length) {
+      return `${indent}${openTag}${closeTag}\n`;
+    }
+
+    const childrenTextOnly = children.every(
+      (child) => child.nodeType === Node.TEXT_NODE && (child.textContent || '').trim()
+    );
+
+    if (childrenTextOnly) {
+      const inlineText = children.map((child) => (child.textContent || '').trim()).join(' ');
+      return `${indent}${openTag}${inlineText}${closeTag}\n`;
+    }
+
+    let result = `${indent}${openTag}\n`;
+    children.forEach((child) => {
+      result += formatNode(child, indentLevel + 1);
+    });
+    result += `${indent}${closeTag}\n`;
+    return result;
+  };
+
+  return Array.from(container.childNodes)
+    .map((node) => formatNode(node, 0))
+    .join('')
+    .trim();
+}
+
+export default GrapesEditor;

@@ -1,0 +1,133 @@
+FULL SIMPLE FLOW:-
+Login → JWT → Dashboard → Create Page → AI Generate → Edit → Save → Publish → Domain Map → Live
+
+
+1. User Login / Signup Flow
+[Frontend: Login/Signup Page]
+    ↓ (Enter: Name, Email, Password / Click Google)
+[API Call → POST /auth/signup OR /auth/login]
+    ↓
+[Backend]
+    ↓ Validate Input
+    ↓ Check User in DB
+    ↓ Hash Password / Verify Password
+    ↓ (If Google → verify token)
+    ↓ Generate JWT Token
+    ↓ Store user session (optional Redis)
+    ↓
+[Response → JWT + User Data]
+    ↓
+[Frontend]
+    ↓ Store Token (localStorage / cookie)
+    ↓ Redirect → Dashboard
+    
+    
+ 
+    
+2. Dashboard Load Flow
+[Frontend: Dashboard खुला]
+    ↓
+[API Call → GET /user/profile]
+    ↓
+[Backend]
+    ↓ Verify JWT Middleware
+    ↓ Fetch User Data from DB
+    ↓
+[Response → User Info + Existing Pages]
+    ↓
+[Frontend]
+    ↓ Show "Create Landing Page"
+    
+    
+    
+3. Create Landing Page Flow
+[Frontend: Click "Create Page"]
+    ↓
+[User selects Template + enters Title]
+    ↓
+[API Call → POST /pages]
+    ↓
+[Backend]
+    ↓ Verify JWT
+    ↓ Create new record in landing_pages table
+    ↓ status = "draft"
+    ↓
+[Response → page_id]
+    ↓
+[Frontend]
+    ↓ Redirect → Page Editor
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+4. AI Content Generate Flow
+[Frontend: Click "Generate AI Content"]
+    ↓ (User inputs business info)
+[API Call → POST /ai/generate]
+    ↓
+[Backend]
+    ↓ Verify JWT
+    ↓ Send prompt → AI API (OpenAI)
+    ↓ Get Response (headline, content, CTA)
+    ↓ Save content in DB (optional)
+    ↓
+[Response → AI Content JSON]
+    ↓
+[Frontend]
+    ↓ Auto-fill Landing Page Editor
+    
+    
+    
+    
+    
+    
+5. Edit & Save Landing Page    
+[Frontend: User edits content/images]
+    ↓
+[Auto Save / Manual Save]
+    ↓
+[API Call → PUT /pages/:id]
+    ↓
+[Backend]
+    ↓ Verify JWT
+    ↓ Update landing_pages (JSON content store)
+    ↓
+[Response → Success]
+
+
+
+
+
+
+6. Publish Landing Page Flow
+
+[Frontend: Click "Publish"]
+    ↓
+[User enters Domain / Subdomain]
+    ↓
+[API Call → POST /pages/:id/publish]
+    ↓
+[Backend]
+    ↓ Verify JWT
+    ↓ Validate domain/subdomain
+    ↓ Update DB:
+        status = "published"
+        domain = user-domain.com
+    ↓
+    ↓ Generate Routing Config:
+        map domain → page_id
+    ↓
+    ↓ (Background Job Trigger)
+        → Create Nginx config OR update routing system
+        → Setup SSL (Let's Encrypt)
+    ↓
+[Response → "Published Successfully"]
+    ↓
+[Frontend]
+    ↓ Show Live URL

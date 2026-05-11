@@ -1,0 +1,941 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
+  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
+import { toast } from "sonner";
+import { ModernLoader } from "@/components/ui/ModernLoader";
+import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
+import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
+import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
+import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { travel02Html, travel02Styles } from "../templates/travel/templates02";
+import { travel03Html, travel03Styles } from "../templates/travel/templates03";
+import { travel04Html, travel04Styles } from "../templates/travel/templates04";
+import { finance01Html, finance01Styles } from "../templates/finance/templates01";
+import { finance02Html, finance02Styles } from "../templates/finance/templates02";
+import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+// Templates removed as per user request
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+const autoSlug = (v: string) =>
+  v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+const generateAiPage = (
+  prompt: string,
+  project: Project,
+  branding: { primary: string; secondary: string; logo?: string }
+): Partial<LandingPage> => ({
+  name: prompt.slice(0, 50).trim() || "AI Generated Page",
+  slug: autoSlug(prompt.slice(0, 40).trim() || "ai-page") + "-" + Date.now().toString(36),
+  metaTitle: `${project.name} — ${prompt.slice(0, 30)}`,
+  metaDescription: `${prompt.slice(0, 120)} | ${project.name}`,
+  primaryColor: branding.primary,
+  secondaryColor: branding.secondary,
+  logoUrl: branding.logo,
+  accentColor: "#6366f1",
+  generationMethod: "ai" as const,
+  aiPrompt: prompt,
+});
+
+// ─── Template definitions ─────────────────────────────────────────────────────
+const LANDING_TEMPLATES: any[] = [
+  {
+    id: "healthcare-01",
+    name: "Lumina Dental",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates01/dental-screenshot-01.png",
+    gradient: "linear-gradient(135deg, #bb0014 0%, #141d23 100%)",
+    prompt: "Create a premium dental care landing page for Lumina Dental Excellence. Include a hero section with a booking form, services grid, and patient testimonials.",
+  },
+  {
+    id: "healthcare-02",
+    name: "Elite Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+    prompt: "A professional healthcare landing page with a hero background, 3 feature cards, about section with image grid, and a comprehensive services list.",
+  },
+  {
+    id: "healthcare-03",
+    name: "Lumina Medical Center",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates03/screnshort8.png",
+    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  },
+  {
+    id: "travel-01",
+    name: "Azure Luxury Escapes",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates01/heronew.png",
+    gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
+    prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
+  },
+  {
+    id: "travel-02",
+    name: "Savanna Safari Elite",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates02/screenshot3.png",
+    gradient: "linear-gradient(135deg, #78350f 0%, #1c1917 100%)",
+    prompt: "An adventurous luxury safari landing page with a floating booking form, wild animal grids, and conservation focus. Earthy tones and premium photography.",
+  },
+  {
+    id: "travel-03",
+    name: "Etheria Journeys",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates03/screenshot2.png",
+    gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
+    prompt: "A high-end luxury wellness and soul retreat landing page for Etheria Journeys. Midnight navy and gold palette, minimalist design, and serene nature focus.",
+  },
+  {
+    id: "travel-04",
+    name: "Metro City Explorer",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates04/screenshot4.png",
+    gradient: "linear-gradient(135deg, #111827 0%, #374151 100%)",
+    prompt: "A modern urban city-break landing page. Bold typography, city night photography, floating booking forms, and trending destination grids. Clean and electric feel.",
+  },
+
+  {
+    id: "finance-01",
+    name: "Elite Wealth",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
+    prompt: "A modern finance and consulting landing page for Finova. Professional design with trust-building elements, service highlights, and a clean lead capture form.",
+  },
+  {
+    id: "finance-02",
+    name: "Finance Elite 02",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates02/screen.png",
+    gradient: "linear-gradient(135deg, #0a192f 0%, #c5a059 100%)",
+    prompt: "An institutional-grade investment management landing page with high-end serif typography, a corporate navy and gold theme, and a professional consultation form.",
+  },
+
+  {
+    id: "finance-03",
+    name: "Aureum Finance Elite",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates03/screenshot1.png",
+    gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
+    prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
+  }
+];
+
+
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "SaaS"];
+type CreationMethod = "ai" | "figma" | "template";
+
+// ─── CreatePagePage ───────────────────────────────────────────────────────────
+const CreatePagePage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: project, isLoading } = useQuery({
+    queryKey: ["project", id],
+    queryFn: () => projectsApi.getById(id!),
+    enabled: !!id,
+  });
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ["project-suggestions", id],
+    queryFn: () => aiApi.projectSuggestions(id!),
+    enabled: !!id,
+  });
+
+  const dynamicSuggestions = suggestionsData?.data?.suggestions || [];
+
+  const [activeMethod, setActiveMethod] = useState<CreationMethod>("ai");
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templateCategory, setTemplateCategory] = useState("All");
+
+  const [pageName, setPageName] = useState("");
+  const [pageSlug, setPageSlug] = useState("");
+  const [noIndexNoFollow, setNoIndexNoFollow] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#7c3aed");
+  const [secondaryColor, setSecondaryColor] = useState("#6366f1");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+  const scrollbarStyles = `
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  `;
+  const [figmaFile, setFigmaFile] = useState<File | null>(null);
+  const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
+  const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(4);
+
+  const [showLoader, setShowLoader] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [createdPage, setCreatedPage] = useState<any>(null);
+
+  useEffect(() => {
+    if (project) {
+      setPrimaryColor(project.primaryColor || "#7c3aed");
+      setSecondaryColor(project.secondaryColor || "#6366f1");
+      if (project.logoUrl) {
+        setLogoPreview(project.logoUrl);
+        setLogoUrl(project.logoUrl);
+      }
+    }
+  }, [project]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoPreview(URL.createObjectURL(file));
+    const r = new FileReader();
+    r.onloadend = () => setLogoUrl(r.result as string);
+    r.readAsDataURL(file);
+  };
+
+  const handleFigmaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFigmaFile(file);
+    if (file.type.startsWith("image/")) {
+      setFigmaPreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => setFigmaBase64(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+    toast.success(`"${file.name}" selected`);
+  };
+
+  const handleTemplateSelect = (tpl: typeof LANDING_TEMPLATES[0]) => {
+    if (selectedTemplate === tpl.id) {
+      setSelectedTemplate(null);
+      setAiPrompt("");
+      toast.info(`Deselected: ${tpl.name}`);
+    } else {
+      setSelectedTemplate(tpl.id);
+      setAiPrompt(tpl.prompt);
+      setActiveMethod("template");
+      toast.info(`Selected Template: ${tpl.name}`);
+    }
+  };
+
+  const handleViewTemplate = (tpl: any) => {
+    setPreviewTemplate(tpl);
+  };
+
+  const createPageMutation = useMutation({
+    mutationFn: async (page: Partial<LandingPage>) => {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 60000)
+      );
+      return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
+    },
+    onSuccess: (newPage) => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setCreatedPage(newPage);
+      setIsComplete(true);
+    },
+    onError: (err: any) => {
+      console.error("Mutation Error:", err);
+      toast.error(err.message || "Failed to create page");
+      setShowLoader(false);
+      setIsComplete(false);
+    },
+  });
+
+  const handleGenerateMagicPrompt = async () => {
+    if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
+    setIsGeneratingPrompt(true);
+    try {
+      const res = await aiApi.generateDescription({
+        pageName,
+        industry: project?.category || "Service",
+        projectDesc: project?.description,
+        currentPrompt: aiPrompt.trim() || undefined
+      });
+      const suggestionText = typeof res.data.suggestion === 'object'
+        ? res.data.suggestion.suggestion
+        : res.data.suggestion;
+      setAiPrompt(suggestionText);
+      toast.success(aiPrompt.trim() ? "Prompt expanded!" : "Magic prompt generated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
+    if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
+    if (!project) return;
+
+    setShowLoader(true);
+    setIsComplete(false);
+
+    let basePayload: Partial<LandingPage> = {};
+    let finalTemplateId = selectedTemplate;
+    let isAiTemplatePath = false;
+
+    // ─── AI TEMPLATE AUTO-SELECTION ───
+    if (activeMethod === "ai") {
+      const promptLower = aiPrompt.toLowerCase();
+      const projectCat = (project.category || "").toLowerCase();
+
+      let detectedCategory = "";
+      if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
+      else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
+      else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+
+      if (detectedCategory) {
+        const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
+        if (categoryTemplates.length > 0) {
+          const randomIndex = Math.floor(Math.random() * categoryTemplates.length);
+          finalTemplateId = categoryTemplates[randomIndex].id;
+          isAiTemplatePath = true;
+          toast.info(`AI selected ${detectedCategory} template for you!`);
+        }
+      }
+    }
+
+    if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
+      let enrichedContent = "";
+      let enrichedStyles = "";
+      const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
+      const tName = templateObj?.name || "Template";
+
+      switch (finalTemplateId) {
+        case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+        case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
+        case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+        case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
+        case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
+        case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
+        case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
+        case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
+        case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
+        case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        default: enrichedContent = ""; enrichedStyles = "";
+      }
+
+      // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
+      // ONLY run this if we are in the "AI" path (isAiTemplatePath === true)
+      if (isAiTemplatePath) {
+        try {
+          const generationRes = await aiApi.generate({
+            businessName: project.name,
+            industry: project.category || "Service",
+            businessDescription: project.description || "Premium services",
+            pageType: "lead generation",
+            aiPrompt: aiPrompt,
+            templateHtml: enrichedContent,
+            templateStyles: enrichedStyles
+          });
+
+          const aiResult = generationRes?.data?.content;
+          if (aiResult && aiResult.fullHtml) {
+            enrichedContent = aiResult.fullHtml;
+            if (aiResult.fullCss && aiResult.fullCss.length > 50) {
+              enrichedStyles = aiResult.fullCss;
+            }
+            toast.success("Claude: Template regenerated with your vision!");
+          }
+        } catch (err) {
+          console.error("AI Template Regeneration failed:", err);
+          toast.warning("AI regeneration failed, using base template with placeholders.");
+        }
+      }
+
+      const finalLogo = logoUrl || project.logoUrl;
+      const logoHtml = finalLogo
+        ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
+        : `<span style="color: ${primaryColor}">${project.name}</span>`;
+
+      enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
+      enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
+
+      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
+
+      if (project.scrapedData?.images?.length > 0) {
+        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner' || img.width > 1000);
+        let hasReplacedHero = false;
+        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
+          if (!hasReplacedHero && bannerImages.length > 0) {
+            hasReplacedHero = true;
+            return bannerImages[0].url || match;
+          }
+          return match;
+        });
+      }
+
+      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
+      if (project.description) {
+        enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+        if (!enrichedContent.includes(project.description)) {
+          enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+        }
+      }
+
+      // We only send the aiPrompt for template enrichment if the user has modified it from the default.
+      // Otherwise, we clear it to avoid triggering the backend AI service.
+      const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
+      const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
+
+      basePayload = {
+        name: pageName.trim(),
+        slug: pageSlug.trim() || autoSlug(pageName),
+        metaTitle: `${project.name} - ${pageName.trim()}`,
+        metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
+        generationMethod: isAiTemplatePath ? "ai" : "template",
+        content: enrichedContent,
+        styles: enrichedStyles,
+        templateId: finalTemplateId,
+        template: tName,
+        aiPrompt: aiPrompt
+      };
+    } else {
+      basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+    }
+
+    createPageMutation.mutate({
+      ...basePayload,
+      name: pageName.trim(),
+      slug: pageSlug.trim() || basePayload.slug,
+      noIndexNoFollow,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
+      aiPrompt: activeMethod === "ai" ? aiPrompt : "",
+      generationMethod: activeMethod === "ai" ? "ai" : "template",
+      accentColor: "#6366f1",
+      type: "ppc",
+      status: "draft",
+    });
+  };
+
+  const handleLoaderFinished = () => {
+    if (createdPage) {
+      toast.success("Page generated successfully!");
+      navigate(`/editor/${id}/${createdPage._id}`);
+    }
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
+  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
+      {/* ══ TOP NAV ══ */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3 shadow-sm">
+        <button
+          onClick={() => navigate(`/dashboard/projects/${id}`)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <span className="text-gray-300">/</span>
+        {project && <span className="text-sm text-gray-400 truncate max-w-[160px]">{project.name}</span>}
+        <span className="text-gray-300">/</span>
+        <span className="text-sm font-semibold text-gray-800">Create New Page</span>
+      </div>
+
+      <div className="flex-1 flex min-h-0">
+        {/* LEFT PANEL */}
+        <div className="flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 w-full md:w-[52%] lg:w-[55%]">
+          <div className="px-8 pt-10 pb-6 border-b border-gray-50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-md"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl font-black text-gray-900">Create New Page</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Fill in the details, pick a method, generate.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 px-8 py-7 space-y-7">
+            <section>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Page Identity</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Page Name *</label>
+                  <input
+                    value={pageName}
+                    onChange={(e) => { setPageName(e.target.value); setPageSlug(autoSlug(e.target.value)); }}
+                    placeholder="e.g. Roofing Delhi"
+                    className="w-full h-11 border border-gray-200 bg-gray-50 rounded-xl px-4 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-1.5 block">URL Slug</label>
+                  <div className="flex items-center h-11 border border-gray-200 bg-gray-50 rounded-xl overflow-hidden focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 transition-all">
+                    <span className="px-3 h-full flex items-center bg-gray-100 text-xs font-bold text-gray-500 border-r border-gray-200 whitespace-nowrap">/</span>
+                    <input
+                      value={pageSlug}
+                      onChange={(e) => setPageSlug(autoSlug(e.target.value))}
+                      placeholder="roofing-delhi"
+                      className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div
+                onClick={() => setNoIndexNoFollow(!noIndexNoFollow)}
+                className={`mt-4 flex items-center justify-between border ${noIndexNoFollow ? 'border-violet-400 bg-violet-50' : 'border-gray-200 bg-gray-50'} rounded-xl px-4 py-3 cursor-pointer transition-all hover:border-violet-300`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Hide from Search Engines</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Set page as "No index, No follow"</p>
+                </div>
+                <div className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 ease-in-out ${noIndexNoFollow ? 'bg-violet-600' : 'bg-gray-300'}`}>
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-300 ease-in-out ${noIndexNoFollow ? 'translate-x-4' : 'translate-x-1'}`} />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Branding</p>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div>
+                  <p className="text-[11px] text-gray-600 mb-1 font-semibold">Primary</p>
+                  <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
+                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: primaryColor }} />
+                    <span className="text-xs font-mono text-gray-500 uppercase">{primaryColor}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-600 mb-1 font-semibold">Secondary</p>
+                  <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
+                    <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: secondaryColor }} />
+                    <span className="text-xs font-mono text-gray-500 uppercase">{secondaryColor}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-600 mb-1 font-semibold">Logo</p>
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
+                  <label htmlFor="logo-upload" className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all">
+                    {logoPreview ? <img src={logoPreview} alt="Logo" className="h-5 w-5 object-contain rounded" /> : <Upload className="h-4 w-4 text-gray-400" />}
+                    <span className="text-xs text-gray-500">{logoPreview ? "Change" : "Upload"}</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Creation Method</p>
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                {[
+                  { key: "ai" as const, label: "✨ Describe with AI", icon: <Brain className="h-3.5 w-3.5" /> },
+                  { key: "template" as const, label: "🗂️ Template", icon: <LayoutTemplate className="h-3.5 w-3.5" /> },
+                ].map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => setActiveMethod(m.key)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${activeMethod === m.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    {m.icon} {m.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {activeMethod === "ai" && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-600">Describe your page *</label>
+                  <button
+                    onClick={handleGenerateMagicPrompt}
+                    disabled={!pageName.trim() || isGeneratingPrompt}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg px-2.5 py-1 transition-all disabled:opacity-40"
+                  >
+                    {isGeneratingPrompt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} ✨ Magic Write
+                  </button>
+                </div>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners..."
+                  className="w-full min-h-[130px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {dynamicSuggestions.slice(0, 6).map((item: any, idx: number) => {
+                    const suggestion = typeof item === 'string' ? item : item.suggestion;
+                    return (
+                      <button key={idx} onClick={() => { setAiPrompt(suggestion); setTimeout(handleGenerateMagicPrompt, 100); }}
+                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
+                      >
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+
+            {activeMethod === "template" && (
+              <section className="space-y-3">
+                {selectedTemplate ? (
+                  <>
+                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <p className="text-sm font-semibold text-emerald-700">
+                        Template: {LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name}
+                      </p>
+                      <button onClick={() => { setSelectedTemplate(null); setAiPrompt(""); }} className="ml-auto text-emerald-500 hover:text-emerald-700">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <LayoutTemplate className="h-10 w-10 text-gray-300 mb-3" />
+                    <p className="text-sm font-semibold text-gray-500">Select a template from the right panel →</p>
+                  </div>
+                )}
+              </section>
+            )}
+
+            <div className="flex gap-3 pt-2 pb-6">
+              <button onClick={() => navigate(`/dashboard/projects/${id}`)} className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-800 font-semibold transition-all">
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={createPageMutation.isPending || !pageName.trim()}
+                className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
+              >
+                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate with AI</>}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────── RIGHT PANEL ─────────────────────────────── */}
+        <div className="hidden md:flex flex-col w-1/2 bg-gray-50 overflow-y-auto border-l border-gray-100">
+          {activeMethod === 'ai' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">AI Prompt Inspiration</p>
+                <p className="text-sm text-gray-500 mt-0.5">Click a preset to instantly build your landing page</p>
+              </div>
+              <div className="flex-1 px-7 py-8 flex flex-col gap-4">
+                {[
+                  { title: "High-Converting SaaS", desc: "Perfect for software products with pricing and features.", color: "bg-blue-50 text-blue-600", icon: <Zap className="h-4 w-4" />, prompt: "A modern SaaS landing page for a cloud storage product. Include a hero section with a signup form, tiered pricing table, trust badges, and a features grid with icons." },
+                  { title: "Local Business Lead Gen", desc: "Optimized for roofing, plumbing, or dental services.", color: "bg-emerald-50 text-emerald-600", icon: <MapPin className="h-4 w-4" />, prompt: "PPC landing page for a local roofing company. High-visibility phone number, service area map, 'Get a Quote' form above the fold, and client testimonials." },
+                  { title: "Digital Agency Portfolio", desc: "Showcase creative work and service packages.", color: "bg-violet-50 text-violet-600", icon: <Eye className="h-4 w-4" />, prompt: "Luxury digital agency landing page. Dark theme with neon accents, project gallery slider, service list with hover effects, and a team introduction section." },
+                  { title: "Real Estate Showcase", desc: "Display properties with high-quality imagery.", color: "bg-amber-50 text-amber-600", icon: <LayoutTemplate className="h-4 w-4" />, prompt: "Premium real estate landing page. Hero image of a luxury apartment, property feature list (sqft, beds, baths), interactive map, and an inquiry form for agents." }
+                ].map((preset, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setAiPrompt(preset.prompt);
+                      toast.success(`Loaded ${preset.title} preset`);
+                    }}
+                    className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all text-left flex gap-4 group"
+                  >
+                    <div className={`h-12 w-12 rounded-xl flex-shrink-0 flex items-center justify-center ${preset.color}`}>
+                      {preset.icon || <Sparkles className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-gray-900 group-hover:text-violet-600 transition-colors">{preset.title}</h3>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{preset.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeMethod === 'figma' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Design to Code Tips</p>
+                <p className="text-sm text-gray-500 mt-0.5">Best practices for Figma and Image uploads</p>
+              </div>
+              <div className="flex-1 px-10 py-12 flex flex-col items-center justify-center text-center space-y-8">
+                <div className="relative">
+                  <div className="h-24 w-24 rounded-[32px] bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-200">
+                    <Figma className="h-10 w-10 text-white" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-white shadow-lg flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                  </div>
+                </div>
+
+                <div className="max-w-xs space-y-4">
+                  <h3 className="text-lg font-black text-gray-900">How it works</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Our AI analyzes your design image or Figma export and converts it into a clean, responsive Tailwind CSS landing page.
+                  </p>
+                </div>
+
+                <div className="w-full space-y-3">
+                  {[
+                    "Use high-resolution screenshots",
+                    "Ensure text is clearly legible",
+                    "Avoid overlapping complex elements",
+                    "Keep layout hierarchy standard"
+                  ].map((tip, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 text-left">
+                      <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-4 py-2 rounded-full">
+                    Average processing time: 45s
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeMethod === 'template' && (
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
+              {/* Search and Category Filter */}
+              <div className="px-6 pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative group flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-violet-500 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="Search templates..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-gray-400 text-gray-800"
+                    />
+                  </div>
+
+                  {visibleCount < LANDING_TEMPLATES.filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase()))).length && (
+                    <button
+                      onClick={() => setVisibleCount(prev => prev + 20)}
+                      className="whitespace-nowrap px-6 py-3.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-right-2"
+                    >
+                      <LayoutTemplate className="h-3.5 w-3.5" />
+                      View All
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {TEMPLATE_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setTemplateCategory(cat)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${templateCategory === cat
+                        ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-100"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600"
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Template Grid */}
+              <div className="flex-1 px-6 py-6 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  {LANDING_TEMPLATES
+                    .filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase())))
+                    .slice(0, visibleCount)
+                    .map((tpl, idx) => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => {
+                          handleTemplateSelect(tpl);
+                        }}
+                        className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
+                          ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
+                          : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
+                          }`}
+                      >
+                        {/* Image / Gradient placeholder */}
+                        <div
+                          className="w-full aspect-[4/3] relative overflow-hidden"
+                          style={{ background: tpl.gradient }}
+                        >
+                          {tpl.img ? (
+                            <div className="absolute inset-0 w-full h-full overflow-y-hidden group-hover:overflow-y-auto custom-scrollbar">
+                              <img
+                                src={tpl.img}
+                                alt={tpl.name}
+                                className="w-full h-auto"
+                              />
+                            </div>
+                          ) : (
+                            /* Placeholder mockup shapes */
+                            <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-30">
+                              <div className="w-full h-4 bg-white rounded-md" />
+                              <div className="w-3/4 h-3 bg-white rounded-md" />
+                              <div className="w-1/2 h-3 bg-white rounded-md" />
+                              <div className="flex gap-2 mt-2">
+                                <div className="w-16 h-7 bg-white rounded-lg" />
+                                <div className="w-14 h-7 bg-white/50 rounded-lg" />
+                              </div>
+                              <div className="flex-1 grid grid-cols-3 gap-2 mt-2">
+                                <div className="bg-white/40 rounded-xl" />
+                                <div className="bg-white/40 rounded-xl" />
+                                <div className="bg-white/40 rounded-xl" />
+                              </div>
+                              <div className="w-full h-8 bg-white/30 rounded-lg mt-1" />
+                            </div>
+                          )}
+
+                          {/* Selected overlay */}
+                          {selectedTemplate === tpl.id && (
+                            <div className="absolute inset-0 bg-violet-900/20 flex items-center justify-center">
+                              <div className="bg-white rounded-full p-1.5 shadow-xl">
+                                <CheckCircle2 className="h-5 w-5 text-violet-600" />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="absolute top-2.5 left-2.5 bg-gray-900 backdrop-blur-sm text-white text-[10px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+                            <span className="text-violet-400">{String(idx + 1).padStart(2, '0')}</span>
+                            <span className="w-px h-2 bg-gray-700" />
+                            <span className="uppercase tracking-wider">{tpl.tag}</span>
+                          </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="bg-white border-t border-gray-100 px-3 py-3 flex items-center justify-between">
+                          <span className="text-[11px] font-black text-gray-900 truncate pr-2">{tpl.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleViewTemplate(tpl); }}
+                            className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                            title="View Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </button>
+                    ))}
+
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Template Preview Modal ── */}
+      {previewTemplate && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
+            <div>
+              <h3 className="text-white font-bold text-lg">{previewTemplate.name}</h3>
+              <p className="text-white/50 text-xs uppercase tracking-widest font-black">{previewTemplate.tag} Template</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { handleTemplateSelect(previewTemplate); setPreviewTemplate(null); }}
+                className="bg-white text-black px-5 py-2 rounded-full text-xs font-bold hover:bg-violet-100 transition-all flex items-center gap-2"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Use Template
+              </button>
+              <button onClick={() => setPreviewTemplate(null)} className="p-2 h-10 w-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 w-full bg-white relative">
+            {(() => {
+              let tpHtml = "";
+              let tpStyles = "";
+              switch (previewTemplate.id) {
+                case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
+                case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
+                case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
+                case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
+                case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
+                case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
+                case "travel-04": tpHtml = travel04Html; tpStyles = travel04Styles; break;
+                case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
+                case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
+                case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
+                default: tpHtml = ""; tpStyles = "";
+              }
+
+              // Apply STATIC branding to preview
+              const logoHtml = `<span style="font-weight: 800; font-size: 1.5rem; color: #6366f1;">BRAND</span>`;
+
+              tpHtml = tpHtml
+                .replace(/PROJECT_NAME_PLACEHOLDER/g, "Business Name")
+                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
+                .replace(/CONTACT_PLACEHOLDER/g, "Contact Us");
+
+              tpStyles = tpStyles
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
+                .replace(/LOGO_URL_PLACEHOLDER/g, "");
+
+              return (
+                <iframe
+                  srcDoc={`
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta charset="utf-8">
+                        <title>Preview</title>
+                        <script src="https://cdn.tailwindcss.com"></script>
+                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+                        <style>
+                          ${tpStyles}
+                          /* Helper styles for preview */
+                          body { margin: 0; padding: 0; overflow-x: hidden; }
+                        </style>
+                      </head>
+                      <body>
+                        ${tpHtml}
+                      </body>
+                    </html>
+                  `}
+                  className="absolute inset-0 w-full h-full border-none"
+                />
+              );
+            })()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CreatePagePage;
