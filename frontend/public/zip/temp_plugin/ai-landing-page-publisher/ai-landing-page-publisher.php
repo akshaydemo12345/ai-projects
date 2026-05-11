@@ -72,11 +72,17 @@ function ailp_register_rewrite_rules()
         }
         // Match: /slug  and  /slug/anything
         add_rewrite_rule(
-            '^' . preg_quote($slug, '#') . '(/.*)?$',
+            '^' . trim(preg_quote($slug, '#'), '/') . '/?$',
             'index.php?ailp_slug=' . rawurlencode($slug),
             'top'
         );
     }
+
+    // Proxy common asset paths to ensure white-labeling works for images/icons
+    add_rewrite_rule('^assets/(.*)$', 'index.php?ailp_slug=assets/$matches[1]', 'top');
+    add_rewrite_rule('^static/(.*)$', 'index.php?ailp_slug=static/$matches[1]', 'top');
+    add_rewrite_rule('^fonts/(.*)$', 'index.php?ailp_slug=fonts/$matches[1]', 'top');
+    add_rewrite_rule('^icons/(.*)$', 'index.php?ailp_slug=icons/$matches[1]', 'top');
 }
 
 function ailp_add_query_vars($vars)
@@ -95,7 +101,10 @@ function ailp_handle_proxy()
     if ($slug === '') {
         $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
         foreach (ailp_get_allowed_paths() as $allowed) {
-            if (trim($allowed, '/') === $path) {
+            $allowed_clean = trim($allowed, '/');
+            $path_clean = trim($path, '/');
+
+            if ($allowed_clean === $path_clean) {
                 $slug = $path;
                 break;
             }
@@ -159,7 +168,7 @@ function ailp_handle_proxy()
     }
 
     // Send response
-    status_header((int)$status_code ?: 200);
+    status_header((int) $status_code ?: 200);
 
     // Forward safe headers
     $skip = array(
@@ -185,7 +194,13 @@ function ailp_handle_proxy()
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
 
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
     echo $body;
     exit;
 }
@@ -215,7 +230,7 @@ function ailp_build_upstream_url($target, $request_uri)
     $target = preg_replace('#^https?://#i', '', rtrim($target, '/'));
     $path = strtok($request_uri, '?');
     $qs = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
-    $url = 'http://' . $target . $path;
+    $url = 'https://' . $target . $path;
     if ($qs) {
         $url .= '?' . $qs;
     }
@@ -235,7 +250,8 @@ function ailp_forward_headers($target_host)
             $headers[$name] = $value;
         }
     }
-    $headers['host'] = $target_host;
+    // $headers['host'] = $target_host;
+    $headers['Host'] = preg_replace('#^https?://#i', '', $target_host);
     $headers['x-forwarded-for'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     return $headers;
 }
@@ -248,39 +264,93 @@ function ailp_sanitize_and_rewrite_body($body, $target, $source_host, $content_t
 {
     $ct = strtolower($content_type);
     $is_html = (strpos($ct, 'html') !== false);
-    
+
     if (!$is_html && strpos($ct, 'css') === false && strpos($ct, 'javascript') === false && strpos($ct, 'json') === false) {
         return $body;
     }
 
     $target_bare = preg_replace('#^https?://#i', '', rtrim($target, '/'));
+    $protocol = is_ssl() ? 'https://' : 'http://';
 
     // Aggressive masking: replace ALL target domain variations with client domain
-    $body = str_ireplace('https://' . $target_bare, 'https://' . $source_host, $body);
-    $body = str_ireplace('http://' . $target_bare, 'https://' . $source_host, $body); // Force HTTPS on frontend usually
+    $body = str_ireplace('https://' . $target_bare, $protocol . $source_host, $body);
+    $body = str_ireplace('http://' . $target_bare, $protocol . $source_host, $body);
     $body = str_ireplace('//' . $target_bare, '//' . $source_host, $body);
     $body = str_ireplace('\/\/' . $target_bare, '\/\/' . $source_host, $body); // Handle JSON escaped slashes
+
+    // Rewrite asset URLs in HTML attributes
+    $body = preg_replace_callback(
+        '/(src|href|action)=["\']([^"\']+)["\']/i',
+        function ($m) use ($source_host, $target_bare, $protocol) {
+            $attr = $m[1];
+            $url = $m[2];
+
+            // Skip common non-asset URLs
+            if (
+                strpos($url, 'data:') === 0 ||
+                strpos($url, 'javascript:') === 0 ||
+                strpos($url, '#') === 0 ||
+                strpos($url, 'mailto:') === 0 ||
+                strpos($url, 'tel:') === 0
+            ) {
+                return $m[0];
+            }
+
+            // Relative assets (no protocol, no double slash)
+            if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+                $url_path = (strpos($url, '/') === 0) ? $url : '/' . $url;
+                $url = $protocol . $source_host . $url_path;
+            }
+
+            // Rewrite upstream domain if it still exists
+            $url = str_replace($target_bare, $source_host, $url);
+
+            return $attr . '="' . esc_url($url) . '"';
+        },
+        $body
+    );
+
+    // Rewrite CSS url() calls
+    $body = preg_replace_callback(
+        '/url\(\s*["\']?([^"\'\)]+)["\']?\s*\)/i',
+        function ($m) use ($source_host, $protocol) {
+            $url = $m[1];
+            
+            if (
+                strpos($url, 'data:') === 0 ||
+                strpos($url, 'http') === 0 ||
+                strpos($url, '//') === 0 ||
+                strpos($url, '#') === 0
+            ) {
+                return $m[0];
+            }
+
+            $url_path = (strpos($url, '/') === 0) ? $url : '/' . $url;
+            return 'url("' . $protocol . $source_host . $url_path . '")';
+        },
+        $body
+    );
 
     if ($is_html) {
         // 1. Remove HTML comments (except IE conditionals) securely
         $body = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $body);
-        
-        // 2. Remove standard WordPress noise generators (useful if SaaS runs WP)
+
+        // 2. Remove standard WordPress noise generators
         $body = preg_replace('/<meta name="?generator"?[^>]+>/i', '', $body);
         $body = preg_replace('/<link rel="?https:\/\/api\.w\.org\/"?[^>]+>/i', '', $body);
         $body = preg_replace('/<link rel="?(?:alternate|EditURI|wlwmanifest|shortlink)"?[^>]+>/i', '', $body);
-        
+
         // 3. Remove WP Emoji Noise
         $body = preg_replace('/<script[^>]*>window\._wpemojiSettings.*?<\/script>/is', '', $body);
         $body = preg_replace('/<script[^>]+src="[^"]+wp-emoji-release\.min\.js"[^>]*><\/script>/is', '', $body);
-        
+
         // 4. Remove WP Embed script
         $body = preg_replace('/<script[^>]+src="[^"]+wp-embed\.min\.js"[^>]*><\/script>/is', '', $body);
-        
-        // 5. Remove builder trace comments (Divi/Elementor) or any left over footprints
+
+        // 5. Remove builder trace comments
         $body = preg_replace('/<!--\s*(?:Divi|Elementor|WP|Plugin)[^>]*-->/i', '', $body);
-        
-        // 6. Cleanup excessive empty newlines created by regex stripping
+
+        // 6. Cleanup excessive empty newlines
         $body = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $body);
     }
 
@@ -334,7 +404,7 @@ function ailp_render_settings_page()
     $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
     $target = isset($settings['target_domain']) ? $settings['target_domain'] : '';
     $paths = isset($settings['allowed_paths']) ? $settings['allowed_paths'] : '';
-?>
+    ?>
     <div class="wrap">
         <h1>🚀 AI Landing Page Publisher</h1>
 
@@ -376,9 +446,10 @@ function ailp_render_settings_page()
                             </span>
                             <?php if ($target): ?>
                                 <p class="description" style="margin-top:6px;">Connected to:
-                                    <code><?php echo esc_html($target); ?></code></p>
-                            <?php
-    endif; ?>
+                                    <code><?php echo esc_html($target); ?></code>
+                                </p>
+                                <?php
+                            endif; ?>
                         </td>
                     </tr>
                     <?php if ($paths): ?>
@@ -387,17 +458,17 @@ function ailp_render_settings_page()
                             <td>
                                 <?php foreach (explode(',', str_replace(array("\r", "\n"), ',', $paths)) as $p): ?>
                                     <?php $p = trim($p);
-            if ($p): ?>
+                                    if ($p): ?>
                                         <code
                                             style="display:inline-block;margin:2px 4px 2px 0;">/<?php echo esc_html(ltrim($p, '/')); ?></code>
+                                        <?php
+                                    endif; ?>
                                     <?php
-            endif; ?>
-                                <?php
-        endforeach; ?>
+                                endforeach; ?>
                             </td>
                         </tr>
-                    <?php
-    endif; ?>
+                        <?php
+                    endif; ?>
                 </table>
             </div>
 
@@ -476,13 +547,13 @@ function ailp_ajax_verify()
 
     // Default backend if not provided in the token. 
     // Using the current detected machine IP (192.168.1.7) for local network reliability.
-    $default_backend = 'http://192.168.1.7:5000';
+    // $default_backend = 'http://192.168.1.7:5000';
+    $default_backend = 'https://app.ai-landingpages.sharehq.org';
 
     if (count($parts) === 2) {
         $endpoint = trim($parts[0]);
         $token = trim($parts[1]);
-    }
-    else {
+    } else {
         $endpoint = $default_backend;
         $token = $api_key;
     }
@@ -523,9 +594,16 @@ function ailp_ajax_verify()
     $settings = get_option(AILP_OPTION, array());
     $settings['api_key'] = $api_key;
     $settings['status'] = 'active';
-    // Mapping from backend response: target_url -> target_domain, allowed_paths -> allowed_paths
-    $settings['target_domain'] = isset($body['target_url']) ? $body['target_url'] : '';
-    $settings['allowed_paths'] = isset($body['allowed_paths']) ? implode("\n", (array)$body['allowed_paths']) : '';
+    // Mapping from backend response: target_url -> target_domain
+    $target_domain = 'app.ai-landingpages.sharehq.org';
+    if (isset($body['target_domain'])) {
+        $target_domain = preg_replace('#^https?://#i', '', trim($body['target_domain']));
+    } elseif (isset($body['target_url'])) {
+        $parsed_target = parse_url($body['target_url']);
+        $target_domain = isset($parsed_target['host']) ? $parsed_target['host'] : $target_domain;
+    }
+    $settings['target_domain'] = $target_domain;
+    $settings['allowed_paths'] = isset($body['allowed_paths']) ? implode("\n", (array) $body['allowed_paths']) : '';
     update_option(AILP_OPTION, $settings);
 
     // Re-register rewrite rules with the new paths
@@ -533,7 +611,7 @@ function ailp_ajax_verify()
     flush_rewrite_rules();
 
     $project_name = isset($body['projectName']) ? $body['projectName'] : 'Project';
-    $paths_display = isset($body['allowed_paths']) ? implode(', ', (array)$body['allowed_paths']) : '';
+    $paths_display = isset($body['allowed_paths']) ? implode(', ', (array) $body['allowed_paths']) : '';
     wp_send_json_success(array(
         'message' => '✅ Activated! "' . esc_html($project_name) . '" is live: ' . esc_html($paths_display),
     ));

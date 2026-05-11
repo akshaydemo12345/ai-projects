@@ -1,4 +1,4 @@
-(function() {
+(function () {
   'use strict';
 
   const scriptTag = document.currentScript;
@@ -10,6 +10,28 @@
     path: window.location.pathname,
     fullUrl: window.location.href
   };
+  const landingUrl = window.location.href;
+  const previousReferrer = document.referrer;
+
+  function cacheUtmParameters() {
+    try {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
+      utmKeys.forEach(key => {
+        const value = params.get(key);
+        if (value) {
+          sessionStorage.setItem('dm_' + key, value);
+        }
+      });
+    } catch (e) { }
+  }
+
+  function cacheReferer() {
+    try {
+      const ref = document.referrer;
+      if (ref) sessionStorage.setItem('dm_referer', ref);
+    } catch (e) { }
+  }
 
   // Immediate Capture
   (function captureUTMs() {
@@ -20,7 +42,7 @@
           const pq = new URLSearchParams(window.top.location.search);
           pq.forEach((v, k) => { if (!q.has(k)) q.append(k, v); });
         }
-      } catch (e) {}
+      } catch (e) { }
 
       const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
       utmKeys.forEach(key => {
@@ -29,14 +51,14 @@
           try {
             sessionStorage.setItem('dm_' + key, val);
             localStorage.setItem('dm_' + key, val);
-          } catch (e) {}
+          } catch (e) { }
         }
       });
       console.log('💎 [TRACKER] UTM Captured on load:', {
         source: sessionStorage.getItem('dm_utm_source'),
         medium: sessionStorage.getItem('dm_utm_medium')
       });
-    } catch (e) {}
+    } catch (e) { }
   })();
 
   function getUTMParameters() {
@@ -44,11 +66,14 @@
     try {
       const q = new URLSearchParams(window.location.search);
       const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
       utmKeys.forEach(key => {
-        const val = sessionStorage.getItem('dm_' + key) || localStorage.getItem('dm_' + key) || q.get(key);
-        if (val) utms[key.toLowerCase()] = val;
+        const stored = sessionStorage.getItem('dm_' + key);
+        const query = params.get(key);
+        const value = query || stored;
+        if (value) utms[key.toLowerCase()] = value;
       });
-    } catch (e) {}
+    } catch (e) { }
     return utms;
   }
 
@@ -61,13 +86,16 @@
   }
 
   function handleForms() {
-    document.addEventListener('submit', function(e) {
+    document.addEventListener('submit', function (e) {
       const form = e.target;
       if (form.tagName !== 'FORM') return;
       e.preventDefault();
 
+      cacheUtmParameters();
+      cacheReferer();
       const data = {};
-      
+      const formData = [];
+
       // DEEP CRAWLER: Combine form elements AND global inputs (for decoupled templates)
       const collectors = [
         ...Array.from(form.querySelectorAll('input, select, textarea')),
@@ -78,70 +106,89 @@
       collectors.forEach((el, index) => {
         // Aligned Naming Strategy
         let key = el.getAttribute('name') || el.getAttribute('id') || el.getAttribute('data-name');
-        
+        let label = el.getAttribute('data-label') || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '';
+
         if (!key) {
-          const label = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
-          const source = (label ? label.innerText : '') || el.getAttribute('placeholder') || '';
+          const labelEl = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
+          const source = (labelEl ? labelEl.innerText : '') || label || '';
           if (source) {
             key = source.toLowerCase().trim()
-                  .replace(/[^a-z0-9]/g, '_')
-                  .replace(/_+/g, '_')
-                  .replace(/^_|_$/g, '');
+              .replace(/[^a-z0-9]/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_|_$/g, '');
+            label = source.trim();
           }
         }
 
         // Generic fallback to match backend 'field_index' if absolutely no identifier
         if (!key) key = `field_${index}`;
+        if (!label) label = key;
 
-        // Value Extractors
+        let value = '';
         if (el.type === 'checkbox') {
-          data[key] = el.checked ? (el.value || 'Yes') : '';
+          value = el.checked ? (el.value || 'Yes') : '';
+          data[key] = value;
         } else if (el.type === 'radio') {
-          if (el.checked) data[key] = el.value;
+          if (el.checked) {
+            value = el.value;
+            data[key] = value;
+          }
         } else {
-          data[key] = el.value;
+          value = el.value;
+          data[key] = value;
         }
+
+        formData.push({ name: key, label: label, value, type: el.type || el.tagName.toLowerCase() });
       });
 
       // Metadata injection
+      const referralSource = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+      const referralUrl = window.location.href;
+
       Object.assign(data, {
         domain: CONFIG.domain,
-        url: CONFIG.fullUrl,
+        url: referralUrl,
         path: CONFIG.path,
         pageId: CONFIG.pageId,
         projectId: CONFIG.projectId,
         referer: document.referrer || '',
         timestamp: new Date().toISOString(),
-        ...getUTMParameters()
+        trackingDetails: {
+          referral_url: referralUrl,
+          referral_source: referralSource
+        },
+        referer: previousReferrer || '',
+        ...getUTMParameters(),
+        formData
       });
 
       console.log('💎 [TRACKER] Deep Crawl Result:', data);
-      
+
       fetch(`${CONFIG.apiBase}/api/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-      .then(res => res.json())
-      .then(result => {
-        if (result.success || result.status === 'success') {
-          showToast('Inquiry Received!');
-          setTimeout(() => {
-            if (result.redirect || result.thankYouUrl) {
-              const tyUrl = result.redirect || result.thankYouUrl;
-              const currentParams = window.location.search;
-              const separator = tyUrl.indexOf('?') !== -1 ? '&' : '?';
-              const finalUrl = currentParams ? (tyUrl + separator + currentParams.replace('?', '')) : tyUrl;
-              window.location.href = finalUrl;
-            } else {
-              form.reset();
-            }
-          }, 800);
-        } else {
-          showToast(result.message || 'Validation error', 'error');
-        }
-      })
-      .catch(() => showToast('Connection failed', 'error'));
+        .then(res => res.json())
+        .then(result => {
+          if (result.success || result.status === 'success') {
+            showToast('Inquiry Received!');
+            setTimeout(() => {
+              if (result.redirect || result.thankYouUrl) {
+                const tyUrl = result.redirect || result.thankYouUrl;
+                const currentParams = window.location.search;
+                const separator = tyUrl.indexOf('?') !== -1 ? '&' : '?';
+                const finalUrl = currentParams ? (tyUrl + separator + currentParams.replace('?', '')) : tyUrl;
+                window.location.href = finalUrl;
+              } else {
+                form.reset();
+              }
+            }, 800);
+          } else {
+            showToast(result.message || 'Validation error', 'error');
+          }
+        })
+        .catch(() => showToast('Connection failed', 'error'));
     }, true);
   }
 

@@ -88,7 +88,10 @@ function normalizeData(schemaFields, rawData) {
   // Pass 2: Discovery pass (Extra fields)
   // Logic: ONLY keep fields that aren't already processed AND aren't obvious aliases 
   // of processed fields (like email_address vs email)
-  const systemFields = ['pageid', 'pageslug', 'projectid', 'domain', 'url', 'token', 'timestamp', 'path', 'data'];
+  const systemFields = [
+    'pageid', 'pageslug', 'projectid', 'domain', 'url', 'token', 'timestamp', 'path', 'data',
+    'formdata', 'formdetails', 'referer', 'referrer', 'referral_url', 'referrer_url', 'thankyouurl', 'pageurl'
+  ];
   
   Object.keys(rawData).forEach(key => {
     const nKey = normalizeKey(key);
