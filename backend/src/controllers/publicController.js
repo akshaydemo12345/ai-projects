@@ -1263,6 +1263,7 @@ exports.verifyPlugin = async (req, res, next) => {
     res.status(200).json({
       status: 'active',
       target_url: normalizedBackendBase,
+      target_domain: config.api.baseUrl.replace(/^https?:\/\//i, ''),
       allowed_paths: [...allowedPaths, '/api/leads'],
       plan: 'pro',
       cache_time: 300,
