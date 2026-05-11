@@ -377,9 +377,24 @@ exports.getLeads = async (req, res) => {
   try {
     const { projectId, pageId, search, startDate, endDate, isDeleted, utmSource, utmMedium, utmCampaign } = req.query;
 
+    // Get user's projects
+    const userProjects = await Project.find({ userId: req.user._id, isDeleted: false }).select('_id');
+    const userProjectIds = userProjects.map(p => p._id);
+
     // 1. Build Query
     const query = { isDeleted: isDeleted === 'true' };
-    if (projectId) query.projectId = projectId;
+    
+    // Filter by user's projects
+    query.projectId = { $in: userProjectIds };
+    
+    // If specific projectId requested, ensure it belongs to user
+    if (projectId) {
+      if (!userProjectIds.some(id => id.toString() === projectId)) {
+        return res.status(403).json({ status: 'fail', message: 'Access denied to this project' });
+      }
+      query.projectId = projectId; // Override to specific project
+    }
+    
     if (pageId) query.pageId = pageId;
 
     if (utmSource) query['utm.utm_source'] = utmSource;
@@ -541,9 +556,24 @@ exports.exportLeads = async (req, res) => {
   try {
     const { projectId, pageId, search, startDate, endDate, utmSource, utmMedium, utmCampaign } = req.query;
 
+    // Get user's projects
+    const userProjects = await Project.find({ userId: req.user._id, isDeleted: false }).select('_id');
+    const userProjectIds = userProjects.map(p => p._id);
+
     // 1. Reuse query logic
     const query = { isDeleted: false };
-    if (projectId) query.projectId = projectId;
+    
+    // Filter by user's projects
+    query.projectId = { $in: userProjectIds };
+    
+    // If specific projectId requested, ensure it belongs to user
+    if (projectId) {
+      if (!userProjectIds.some(id => id.toString() === projectId)) {
+        return res.status(403).json({ status: 'fail', message: 'Access denied to this project' });
+      }
+      query.projectId = projectId; // Override to specific project
+    }
+    
     if (pageId) query.pageId = pageId;
 
     if (utmSource) query['utm.utm_source'] = utmSource;
@@ -569,11 +599,17 @@ exports.exportLeads = async (req, res) => {
     const fieldToLabel = {};
     schemas.forEach(s => s.fields.forEach(f => { fieldToLabel[f.field_name] = f.label; }));
 
-    const headerLabels = ['Name', 'Email', 'Phone', 'Message', 'Date', 'Page', 'Source', 'Medium', 'Campaign', 'Term', 'Content', 'Referral URL', 'IP Address'];
-    const standardKeys = ['name', 'email', 'phone', 'message', 'createdAt', 'pageSlug', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'referer', 'ip'];
+    const headerLabels = ['Name', 'Email', 'Phone', 'Message', 'Date', 'Page', 'Page URL', 'Referral URL', 'Source', 'Medium', 'Campaign', 'Term', 'Content', 'IP Address'];
+    const standardKeys = ['name', 'email', 'phone', 'message', 'createdAt', 'pageSlug', 'pageUrl', 'referral_url', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ip'];
 
     const shownLabels = new Set(headerLabels.map(l => l.toLowerCase()));
     const dynamicColumns = [];
+
+    const getFormDataArray = (lead) => {
+      if (Array.isArray(lead.formData)) return lead.formData;
+      if (Array.isArray(lead.formDetails)) return lead.formDetails;
+      return [];
+    };
 
     leads.forEach(l => {
       const allData = { ...(l.data || {}), ...l.utm };
@@ -597,6 +633,25 @@ exports.exportLeads = async (req, res) => {
           dynamicColumns.push({ key: k, label });
         }
       });
+
+      const formDataArray = getFormDataArray(l);
+      formDataArray.forEach((field, idx) => {
+        if (!field) return;
+        const key = String(field.name || field.label || `form_field_${idx}`).trim();
+        if (!key) return;
+
+        const lowerK = key.toLowerCase().replace(/_/g, "");
+        if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
+        if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+        const skipKeys = ["name", "fullname", "message", "comment", "ip", "pageslug", "projectid", "pageid", "formdata", "trackingdetails", "utm"];
+        if (skipKeys.includes(lowerK)) return;
+
+        const label = String(field.label || field.name || key).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        if (!shownLabels.has(label.toLowerCase())) {
+          shownLabels.add(label.toLowerCase());
+          dynamicColumns.push({ key, label });
+        }
+      });
     });
 
     const headers = [...headerLabels, ...dynamicColumns.map(c => c.label)];
@@ -616,6 +671,18 @@ exports.exportLeads = async (req, res) => {
         }
       });
 
+      const fullPageUrl = l.meta?.url || l.trackingDetails?.referral_url || '';
+      const referralUrl = l.trackingDetails?.referral_url || l.meta?.url || '';
+
+      const formDataArray = getFormDataArray(l);
+      const formDataLookup = formDataArray.reduce((acc, field, idx) => {
+        if (!field) return acc;
+        const key = String(field.name || field.label || `form_field_${idx}`).trim();
+        if (!key) return acc;
+        acc[key] = field.value;
+        return acc;
+      }, {});
+
       const row = [
         l.data?.full_name || l.data?.name || l.name || '',
         Array.from(emails).join("; ") || l.email || '',
@@ -623,6 +690,8 @@ exports.exportLeads = async (req, res) => {
         l.data?.message || l.data?.comment || l.message || '',
         new Date(l.createdAt).toLocaleString(),
         l.pageSlug || '',
+        fullPageUrl,
+        referralUrl,
         l.utm?.utm_source || '',
         l.utm?.utm_medium || '',
         l.utm?.utm_campaign || '',
@@ -634,7 +703,9 @@ exports.exportLeads = async (req, res) => {
 
       // Add dynamic values
       dynamicColumns.forEach(col => {
-        row.push(l.data?.[col.key] || l[col.key] || '');
+        row.push(
+          l.data?.[col.key] || l[col.key] || formDataLookup[col.key] || ''
+        );
       });
 
       return row.map(v => {
@@ -658,8 +729,20 @@ exports.exportLeads = async (req, res) => {
 
 exports.deleteLead = async (req, res) => {
   try {
-    const lead = await Lead.findByIdAndUpdate(req.params.id, { isDeleted: true });
-    if (lead) Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } }).catch(() => { });
+    // First find the lead to check ownership
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ status: 'fail', message: 'Lead not found' });
+    }
+    
+    // Check if the lead's project belongs to the user
+    const project = await Project.findById(lead.projectId);
+    if (!project || project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ status: 'fail', message: 'Access denied to this lead' });
+    }
+    
+    await Lead.findByIdAndUpdate(req.params.id, { isDeleted: true });
+    Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } }).catch(() => { });
     res.status(200).json({ status: 'success', message: 'Lead soft-deleted' });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
@@ -672,8 +755,16 @@ exports.deleteLead = async (req, res) => {
 exports.getLeadFilters = async (req, res) => {
   try {
     const { projectId } = req.query;
-    const match = { isDeleted: false };
+    
+    // Get user's projects
+    const userProjects = await Project.find({ userId: req.user._id, isDeleted: false }).select('_id');
+    const userProjectIds = userProjects.map(p => p._id);
+    
+    const match = { isDeleted: false, projectId: { $in: userProjectIds } };
     if (projectId && mongoose.Types.ObjectId.isValid(projectId)) {
+      if (!userProjectIds.some(id => id.toString() === projectId)) {
+        return res.status(403).json({ status: 'fail', message: 'Access denied to this project' });
+      }
       match.projectId = new mongoose.Types.ObjectId(projectId);
     }
 
