@@ -122,7 +122,11 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
 
         if (project.websiteUrl) {
-          const forwardedHost = req.headers['x-forwarded-host'];
+          // BUG-FIX #1: x-forwarded-host may be a comma-list when nginx/reverse-proxy sits
+          // in front of Node. e.g. "rsdevelopercachechecking.rocketsites.ai, apiserver.ai-..."
+          // Always take only the FIRST (leftmost / original client) hop.
+          const rawForwardedHost = req.headers['x-forwarded-host'];
+          const forwardedHost = rawForwardedHost ? rawForwardedHost.split(',')[0].trim() : null;
           const referer = req.headers['referer'];
 
           let incomingRequestDomain = '';
@@ -136,12 +140,12 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           const isProxied = req.headers['x-proxy-by'] || (forwardedHost && incomingRequestDomain !== saasDomain);
           const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
-        //   if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain && !isDevDomain) {
-        //     return res.status(403).json({
-        //       status: 'error',
-        //       message: 'This landing page is not authorized for this domain.'
-        //     });
-        //   }
+          //   if (isProxied && incomingRequestDomain && incomingRequestDomain !== normalizeDomain(project.websiteUrl) && incomingRequestDomain !== saasDomain && !isDevDomain) {
+          //     return res.status(403).json({
+          //       status: 'error',
+          //       message: 'This landing page is not authorized for this domain.'
+          //     });
+          //   }
         }
       }
     }
@@ -792,7 +796,11 @@ exports.getPublicPageHTML = async (req, res, next) => {
         // Increment project views
         await Project.findByIdAndUpdate(page.projectId, { $inc: { views: 1 } });
 
-        const forwardedHost = req.headers['x-forwarded-host'];
+        // BUG-FIX #1: x-forwarded-host may be a comma-list when nginx/reverse-proxy sits
+        // in front of Node. e.g. "rsdevelopercachechecking.rocketsites.ai, apiserver.ai-..."
+        // Always take only the FIRST (leftmost / original client) hop.
+        const rawForwardedHost = req.headers['x-forwarded-host'];
+        const forwardedHost = rawForwardedHost ? rawForwardedHost.split(',')[0].trim() : null;
         const hostHeader = req.headers['host'];
         const referer = req.headers['referer'];
 
@@ -844,9 +852,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
     }
 
     // ── Build canonical URL from the requesting host (WP domain) ─────────
-    const forwardedHost = req.headers['x-forwarded-host'];
-    const hostHeader = req.headers['host'];
-    const requestHost = forwardedHost || hostHeader || '';
+    // BUG-FIX #1: take only first value of x-forwarded-host (may be comma-list from reverse-proxy)
+    const rawFwdHost = req.headers['x-forwarded-host'];
+    const requestHost = (rawFwdHost ? rawFwdHost.split(',')[0].trim() : null) || req.headers['host'] || '';
     const canonicalUrl = requestHost
       ? `http${req.secure ? 's' : ''}://${requestHost}/?page=${page._id}`
       : '';
@@ -1015,7 +1023,7 @@ exports.handleFormSubmission = async (req, res, next) => {
     // 4. UTMs Extraction
     const utm = {};
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-    
+
     // First, try from request body
     utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
 
@@ -1028,7 +1036,7 @@ exports.handleFormSubmission = async (req, res, next) => {
           const val = urlParams.get(k);
           if (val && !utm[k]) utm[k] = val; // Only fill if not already present
         });
-      } catch (e) {}
+      } catch (e) { }
     }
 
     console.log("📥 [PUBLIC-FORM] REQ BODY:", JSON.stringify(rawData, null, 2));
@@ -1121,9 +1129,11 @@ exports.handleFormSubmission = async (req, res, next) => {
         thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}/thank-you`;
       }
     }
-    
+
     // Ensure absolute URL for JSON response
-    const host = req.get('x-forwarded-host') || req.get('host');
+    // BUG-FIX #1: split comma-list from reverse-proxy x-forwarded-host
+    const rawFwdHostForm = req.get('x-forwarded-host');
+    const host = (rawFwdHostForm ? rawFwdHostForm.split(',')[0].trim() : null) || req.get('host');
     let absoluteThankYouUrl = thankYouUrl;
     if (host && absoluteThankYouUrl.startsWith('/')) {
       const protocol = req.protocol || 'http';
@@ -1259,6 +1269,7 @@ exports.verifyPlugin = async (req, res, next) => {
 
     res.status(200).json({
       status: 'active',
+      source_url: project.websiteUrl || domain,   // BUG-FIX #3: plugin's class-api.php reads this in update_options()
       target_url: normalizedBackendBase,
       target_domain: config.api.baseUrl.replace(/^https?:\/\//i, ''),
       allowed_paths: [...allowedPaths, '/api/leads'],
@@ -1373,7 +1384,9 @@ exports.getSitemap = async (req, res) => {
       .populate({ path: 'projectId', select: 'websiteUrl' })
       .lean();
 
-    const host = req.headers['x-forwarded-host'] || req.headers['host'] || '';
+    // BUG-FIX #1: split comma-list from reverse-proxy
+    const rawFwdHostSitemap = req.headers['x-forwarded-host'];
+    const host = (rawFwdHostSitemap ? rawFwdHostSitemap.split(',')[0].trim() : null) || req.headers['host'] || '';
     const baseUrl = `http${req.secure ? 's' : ''}://${host}`;
 
     const urlEntries = pages
@@ -1400,7 +1413,9 @@ exports.getSitemap = async (req, res) => {
  * Serves a permissive robots.txt that points to sitemap.
  */
 exports.getRobotsTxt = (req, res) => {
-  const host = req.headers['x-forwarded-host'] || req.headers['host'] || '';
+  // BUG-FIX #1: split comma-list from reverse-proxy
+  const rawFwdHostRobots = req.headers['x-forwarded-host'];
+  const host = (rawFwdHostRobots ? rawFwdHostRobots.split(',')[0].trim() : null) || req.headers['host'] || '';
   const baseUrl = `http${req.secure ? 's' : ''}://${host}`;
   const txt = [
     'User-agent: *',

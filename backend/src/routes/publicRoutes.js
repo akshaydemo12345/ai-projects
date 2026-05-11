@@ -46,6 +46,13 @@ router.post('/api/leads', require('../controllers/publicController').submitDynam
 
 
 // NOTE: Slug-based public page routing has been removed in favor of query param based page IDs.
+// BUG-FIX #4: GET slug route was incorrectly removed. It is still required for:
+//   1. WordPress plugin requests that need slug-based page resolution
+//   2. Custom-domain / direct hits (e.g. visiting the WP URL directly in a browser)
+//   3. Any fallback where page is identified by URL path, not a query param
+// MUST come after all specific GET routes above, and BEFORE the POST handler.
+router.get('/:slug(*)', getPublicPageHTML);
+
 // Legacy form submissions that still POST to slug-based endpoints are supported here.
 router.post('/:slug(*)', handleFormSubmission);
 
