@@ -443,8 +443,8 @@ const LeadsPage = () => {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Project dropdown */}
-          <Select value={filterProjectId} onValueChange={(val) => {
-            setFilterProjectId(val || "");
+          <Select value={filterProjectId || "all-projects"} onValueChange={(val) => {
+            setFilterProjectId(val === "all-projects" ? "" : val);
             setFilterPageId("");
           }}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
@@ -454,7 +454,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Projects</SelectItem>
+              <SelectItem value="all-projects">All Projects</SelectItem>
               {(projects as any[]).map((p: any) => (
                 <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
               ))}
@@ -463,8 +463,8 @@ const LeadsPage = () => {
 
           {/* Page dropdown */}
           <Select
-            value={filterPageId}
-            onValueChange={(val) => setFilterPageId(val || "")}
+            value={filterPageId || "all-pages"}
+            onValueChange={(val) => setFilterPageId(val === "all-pages" ? "" : val)}
             disabled={!filterProjectId}
           >
             <SelectTrigger
@@ -479,7 +479,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Pages</SelectItem>
+              <SelectItem value="all-pages">All Pages</SelectItem>
               {(projectPages as any[]).map((pg: any) => (
                 <SelectItem key={pg._id} value={pg._id}>
                   {pg.name || pg.slug}
@@ -489,7 +489,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Source dropdown */}
-          <Select value={filterUtmSource} onValueChange={(val) => setFilterUtmSource(val || "")}>
+<Select value={filterUtmSource || "any-source"} onValueChange={(val) => setFilterUtmSource(val === "any-source" ? "" : val)}> 
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -497,7 +497,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Source</SelectItem>
+              <SelectItem value="any-source">Any Source</SelectItem>
               {leadFilters?.utmSources.map((s: string) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -505,7 +505,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Medium dropdown */}
-          <Select value={filterUtmMedium} onValueChange={(val) => setFilterUtmMedium(val || "")}>
+          <Select value={filterUtmMedium || "any-medium"} onValueChange={(val) => setFilterUtmMedium(val === "any-medium" ? "" : val)}> 
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -513,7 +513,7 @@ const LeadsPage = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Medium</SelectItem>
+              <SelectItem value="any-medium">Any Medium</SelectItem>
               {leadFilters?.utmMediums.map((s: string) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
