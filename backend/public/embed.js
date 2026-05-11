@@ -22,6 +22,71 @@
   const page = qPage || attrPageId || attrPage || hashPage || pathPage;
   
   const apiBase = url.origin;
+
+  function buildLandingUrl() {
+    const origin = window.location.origin;
+    const path = window.location.pathname.replace(/\/+$|^\/+$/g, '');
+    const search = window.location.search;
+    const currentFullUrl = window.location.href;
+
+    // If the browser URL already contains a path, preserve it exactly.
+    if (path && path !== '') {
+      return currentFullUrl;
+    }
+
+    // If no path is present, but we know the page slug, reconstruct the intended URL.
+    if (page) {
+      const pagePath = page.startsWith('/') ? page : `/${page}`;
+      const params = new URLSearchParams(search);
+      ['pg', 'landing', 'page', 'p'].forEach(key => params.delete(key));
+      const queryString = params.toString();
+      return `${origin}${pagePath}${queryString ? `?${queryString}` : ''}`;
+    }
+
+    return currentFullUrl;
+  }
+
+  const landingUrl = buildLandingUrl();
+  const previousReferrer = document.referrer;
+
+  function cacheUtmParameters() {
+    try {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
+      utmKeys.forEach(key => {
+        const value = params.get(key);
+        if (value) {
+          sessionStorage.setItem('dm_' + key, value);
+        }
+      });
+    } catch (e) {}
+  }
+
+  function cacheReferer() {
+    try {
+      const ref = document.referrer;
+      if (ref) sessionStorage.setItem('dm_referer', ref);
+    } catch (e) {}
+  }
+
+  function getUTMParameters() {
+    const utms = {};
+    try {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
+      utmKeys.forEach(key => {
+        const stored = sessionStorage.getItem('dm_' + key);
+        const query = params.get(key);
+        const value = query || stored;
+        if (value) utms[key] = value;
+      });
+    } catch (e) {}
+    return utms;
+  }
+
+  cacheUtmParameters();
+  cacheReferer();
+
   console.log('🚀 PageCraft AI: Initializing...', { 
     detectedPage: page, 
     source: qPage ? 'URL Query' : attrPage ? 'Data Attribute' : hashPage ? 'Hash' : pathPage ? 'URL Path' : 'None',
@@ -170,8 +235,52 @@
 
       const formData = new FormData(form);
       const data = {};
+      const capturedFormFields = [];
+
       formData.forEach((value, key) => {
         data[key] = value;
+      });
+
+      Array.from(form.elements).forEach((el, index) => {
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) return;
+        let name = el.name || el.id || el.getAttribute('data-name');
+        let label = el.getAttribute('data-label') || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '';
+
+        if (!name) {
+          const labelEl = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
+          const source = (labelEl ? labelEl.innerText : '') || label || '';
+          if (source) {
+            name = source.toLowerCase().trim()
+              .replace(/[^a-z0-9]/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_|_$/g, '');
+            label = source.trim();
+          }
+        }
+
+        if (!name) {
+          name = `field_${index}`;
+        }
+        if (!label) {
+          label = name;
+        }
+
+        let value = '';
+        if (el.type === 'checkbox') {
+          value = el.checked ? (el.value || 'Yes') : '';
+        } else if (el.type === 'radio') {
+          if (!el.checked) return;
+          value = el.value;
+        } else {
+          value = el.value;
+        }
+
+        capturedFormFields.push({
+          name,
+          label,
+          value,
+          type: el.type || el.tagName.toLowerCase()
+        });
       });
 
       // --- Robust Lead Data Extraction ---
@@ -205,12 +314,22 @@
       }
 
       // Add metadata
+      const referralSource = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+      const referralUrl = window.location.href;
+
       data.domain = window.location.hostname;
-      data.url = window.location.href;
+      data.url = referralUrl;
       data.path = window.location.pathname;
       data.pageSlug = slug;
       data.pageId = pageId;
       data.projectId = projectId;
+      data.trackingDetails = {
+        referral_url: referralUrl,
+        referral_source: referralSource
+      };
+      data.referer = previousReferrer || '';
+      Object.assign(data, getUTMParameters());
+      data.formData = capturedFormFields;
 
       try {
         const response = await fetch(`${apiBase}/api/leads`, {
