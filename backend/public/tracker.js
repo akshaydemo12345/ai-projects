@@ -10,14 +10,39 @@
     path: window.location.pathname,
     fullUrl: window.location.href
   };
+  const landingUrl = window.location.href;
+  const previousReferrer = document.referrer;
+
+  function cacheUtmParameters() {
+    try {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
+      utmKeys.forEach(key => {
+        const value = params.get(key);
+        if (value) {
+          sessionStorage.setItem('dm_' + key, value);
+        }
+      });
+    } catch (e) {}
+  }
+
+  function cacheReferer() {
+    try {
+      const ref = document.referrer;
+      if (ref) sessionStorage.setItem('dm_referer', ref);
+    } catch (e) {}
+  }
 
   function getUTMParameters() {
     const utms = {};
     try {
       const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      const params = new URLSearchParams(window.location.search);
       utmKeys.forEach(key => {
-        const val = sessionStorage.getItem('dm_' + key) || (new URLSearchParams(window.location.search)).get(key);
-        if (val) utms[key.toLowerCase()] = val;
+        const stored = sessionStorage.getItem('dm_' + key);
+        const query = params.get(key);
+        const value = query || stored;
+        if (value) utms[key.toLowerCase()] = value;
       });
     } catch (e) {}
     return utms;
@@ -37,7 +62,10 @@
       if (form.tagName !== 'FORM') return;
       e.preventDefault();
 
+      cacheUtmParameters();
+      cacheReferer();
       const data = {};
+      const formData = [];
       
       // DEEP CRAWLER: Combine form elements AND global inputs (for decoupled templates)
       const collectors = [
@@ -49,40 +77,59 @@
       collectors.forEach((el, index) => {
         // Aligned Naming Strategy
         let key = el.getAttribute('name') || el.getAttribute('id') || el.getAttribute('data-name');
+        let label = el.getAttribute('data-label') || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '';
         
         if (!key) {
-          const label = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
-          const source = (label ? label.innerText : '') || el.getAttribute('placeholder') || '';
+          const labelEl = document.querySelector(`label[for="${el.id}"]`) || el.closest('label');
+          const source = (labelEl ? labelEl.innerText : '') || label || '';
           if (source) {
             key = source.toLowerCase().trim()
                   .replace(/[^a-z0-9]/g, '_')
                   .replace(/_+/g, '_')
                   .replace(/^_|_$/g, '');
+            label = source.trim();
           }
         }
 
         // Generic fallback to match backend 'field_index' if absolutely no identifier
         if (!key) key = `field_${index}`;
+        if (!label) label = key;
 
-        // Value Extractors
+        let value = '';
         if (el.type === 'checkbox') {
-          data[key] = el.checked ? (el.value || 'Yes') : '';
+          value = el.checked ? (el.value || 'Yes') : '';
+          data[key] = value;
         } else if (el.type === 'radio') {
-          if (el.checked) data[key] = el.value;
+          if (el.checked) {
+            value = el.value;
+            data[key] = value;
+          }
         } else {
-          data[key] = el.value;
+          value = el.value;
+          data[key] = value;
         }
+
+        formData.push({ name: key, label: label, value, type: el.type || el.tagName.toLowerCase() });
       });
 
       // Metadata injection
+      const referralSource = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+      const referralUrl = window.location.href;
+
       Object.assign(data, {
         domain: CONFIG.domain,
-        pageUrl: CONFIG.fullUrl,
+        url: referralUrl,
         path: CONFIG.path,
         pageId: CONFIG.pageId,
         projectId: CONFIG.projectId,
         timestamp: new Date().toISOString(),
-        ...getUTMParameters()
+        trackingDetails: {
+          referral_url: referralUrl,
+          referral_source: referralSource
+        },
+        referer: previousReferrer || '',
+        ...getUTMParameters(),
+        formData
       });
 
       console.log('💎 [TRACKER] Deep Crawl Result:', data);

@@ -98,10 +98,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     if (pageDoc.status !== 'published' && previewToken && previewToken !== pageDoc.previewToken) {
       return next(new AppError('Page not found', 404));
     }
-
-    if (pageDoc.status !== 'published' && !previewToken) {
-      return next(new AppError('Page not found', 404));
-    }
+    // Removed strict token requirement for drafts based on user request
 
     const page = await Page.findByIdAndUpdate(
       pageDoc._id,
@@ -670,7 +667,7 @@ exports.getPreviewHTML = async (req, res, next) => {
     if (pageId && /^[0-9a-fA-F]{24}$/.test(pageId)) {
       page = await Page.findById(pageId).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
       if (page && page.status !== 'published') {
-        if (!token || token !== page.previewToken) {
+        if (token && token !== page.previewToken) {
           return next(new AppError('Preview expired or invalid', 404));
         }
       }
@@ -760,7 +757,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
 
     if (!page) return next(new AppError('Page not found or no page id provided', 404));
 
-    if (page.status !== 'published' && (!previewToken || previewToken !== page.previewToken)) {
+    if (page.status !== 'published' && previewToken && previewToken !== page.previewToken) {
       return next(new AppError('Page not found or not published', 404));
     }
 
