@@ -31,6 +31,10 @@ const leadSchema = new mongoose.Schema({
     domain: String,
     url: String
   },
+  trackingDetails: {
+    referral_url: String,
+    referral_source: String
+  },
   utm: {
     utm_source: String,
     utm_medium: String,

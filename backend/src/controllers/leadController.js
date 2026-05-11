@@ -32,7 +32,7 @@ exports.createLead = async (req, res) => {
 
     if (!schema || !schema.fields?.length) {
       logger.warn(`❌ [LEAD] No schema found for page: ${pageSlug || pageId}`);
-      
+
       // Auto-Sync Attempt if schema is missing but page exists
       if (page) {
         syncFormSchema(page).catch(e => logger.error('Background Sync Failed:', e));
@@ -43,9 +43,9 @@ exports.createLead = async (req, res) => {
 
     // 2. Validate & Normalize using Centralized Utility (with Auto-Healing)
     const missingFields = validateForm(schema.fields, rawData);
-    
+
     // Check for Likely Template Mismatch inside the controller to trigger sync
-    const submittedKeys = Object.keys(rawData).filter(k => 
+    const submittedKeys = Object.keys(rawData).filter(k =>
       !['pageslug', 'pageid', 'projectid', 'domain', 'url', 'token', 'timestamp', 'path'].includes(k.toLowerCase())
     );
     let matchCount = 0;
@@ -63,10 +63,10 @@ exports.createLead = async (req, res) => {
 
     if (missingFields.length > 0) {
       logger.warn(`⚠️ [LEAD] Required fields missing: ${missingFields.join(', ')}`);
-      return res.status(400).json({ 
-        status: "fail", 
-        message: "Required fields missing", 
-        fields: missingFields 
+      return res.status(400).json({
+        status: "fail",
+        message: "Required fields missing",
+        fields: missingFields
       });
     }
 
@@ -76,24 +76,14 @@ exports.createLead = async (req, res) => {
     // 4. UTMs & Meta Extraction
     const utm = {};
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-    
+
     // First, try from request body
     utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
 
-    // Fallback: Parse from URL or referrer if missing
-    const sourceUrl = rawData.url || rawData.pageUrl || rawData.referer || rawData.referrer || req.headers.referer || req.get('referer');
-    if (sourceUrl && sourceUrl.includes('?')) {
-      try {
-        const urlParams = new URLSearchParams(sourceUrl.split('?')[1]);
-        utmFields.forEach(k => {
-          const val = urlParams.get(k);
-          if (val && !utm[k]) utm[k] = val; // Only fill if not already present
-        });
-      } catch (e) {}
-    }
-
-    console.log("📥 [LEAD-CREATE] REQ BODY:", JSON.stringify(rawData, null, 2));
-    console.log("🚩 [LEAD-CREATE] UTM VALUES:", utm);
+    const trackingDetails = rawData.trackingDetails || {};
+    const referralUrl = trackingDetails.referral_url || rawData.url || rawData.pageUrl || req.headers.referer || '';
+    const referralSource = trackingDetails.referral_source || rawData.referrer || rawData.referer || 'Direct';
+    const formData = rawData.formData || rawData.formDetails || undefined;
 
     // 5. Create Lead
     const lead = await Lead.create({
@@ -102,14 +92,17 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
-      // Spread UTM fields to top level for insurance
-      ...utm,
+      formData,
+      trackingDetails: {
+        referral_url: referralUrl,
+        referral_source: referralSource
+      },
       meta: {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        referer: rawData.referer || rawData.referrer || req.headers.referer || req.get('referer') || '',
-        domain: rawData.domain || req.get('origin') || '',
-        url: rawData.url || rawData.pageUrl || req.get('referer') || ''
+        domain: rawData.domain || req.get('origin'),
+        url: referralUrl,
+        referer: rawData.referrer || rawData.referer || (referralSource === 'Direct' ? '' : referralSource)
       }
     });
 
@@ -120,13 +113,13 @@ exports.createLead = async (req, res) => {
       const project = await Project.findById(schema.project_id);
       if (project) {
         const now = new Date().toLocaleString();
-        
+
         // 1. Admin Notification
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
           const pColor = project.primaryColor || '#7c3aed';
           const customMessage = project.adminNotification.message || "Great news! A new lead has just expressed interest through your landing page. Here are the captured details:";
-          
+
           const adminMsg = `
             <!DOCTYPE html>
             <html>
@@ -179,12 +172,34 @@ exports.createLead = async (req, res) => {
                           <div class="value">${leadData.phone || leadData.tel || 'Not provided'}</div>
                         </td>
                       </tr>
-                              <tr>
-                        <td style="padding: 12px 0;">
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                           <div class="label">Message</div>
                           <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
                         </td>
                       </tr>
+                      <tr>
+                        <td style="padding: 12px 0; ${(utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content)) ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
+                          <div class="label">Referral URL</div>
+                          <div class="value" style="word-break: break-all; font-size: 13px;">
+                            ${referralUrl ? `<a href="${referralUrl}" style="color: ${pColor};">${referralUrl}</a>` : 'Direct'}
+                          </div>
+                        </td>
+                      </tr>
+                      ${utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content) ? `
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">UTM Details</div>
+                          <div class="value" style="font-size: 13px;">
+                            ${utm.utm_source ? `<strong>Source:</strong> ${utm.utm_source}<br>` : ''}
+                            ${utm.utm_medium ? `<strong>Medium:</strong> ${utm.utm_medium}<br>` : ''}
+                            ${utm.utm_campaign ? `<strong>Campaign:</strong> ${utm.utm_campaign}<br>` : ''}
+                            ${utm.utm_content ? `<strong>Content:</strong> ${utm.utm_content}<br>` : ''}
+                            ${utm.utm_term ? `<strong>Term:</strong> ${utm.utm_term}` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                      ` : ''}
                     </table>
                   </div>
 
@@ -258,7 +273,7 @@ exports.createLead = async (req, res) => {
           const pColor = project.primaryColor || '#7c3aed';
           const userName = leadData.name || leadData.full_name || 'there';
           const customUserMessage = project.userNotification.message || "Thank you for reaching out to us! We have received your inquiry and our team is already looking into it. We will get back to you as soon as possible.";
-          
+
           const userMsg = `
             <!DOCTYPE html>
             <html>
@@ -396,7 +411,7 @@ exports.getLeads = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 1000;
     const skip = (page - 1) * limit;
-    
+
     const sortByParam = req.query.sortBy || 'newest';
     let sortQuery = { createdAt: -1 };
 
@@ -413,7 +428,7 @@ exports.getLeads = async (req, res) => {
       .lean();
 
     const total = await Lead.countDocuments(query);
-    
+
     // Calculate Today's Leads count for the current filters
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -447,22 +462,19 @@ exports.getLeads = async (req, res) => {
         projectId: lead.projectId,
         pageId: lead.pageId,
         pageSlug: lead.pageSlug,
+        url: lead.meta?.url,
+        trackingDetails: lead.trackingDetails || {
+          referral_url: lead.meta?.url,
+          referral_source: lead.meta?.referer || 'Direct'
+        },
         createdAt: lead.createdAt,
         ip: lead.meta?.ip,
         userAgent: lead.meta?.userAgent,
+        referer: lead.meta?.referer,
         ...lead.utm,
         data: lead.data || {},
-        utm: lead.utm || {},
-        meta: lead.meta || {},
-        // Explicitly ensure UTM fields are at the top level for the UI
-        utm_source: lead.utm?.utm_source,
-        utm_medium: lead.utm?.utm_medium,
-        utm_campaign: lead.utm?.utm_campaign,
-        utm_term: lead.utm?.utm_term,
-        utm_content: lead.utm?.utm_content,
-        gclid: lead.utm?.gclid,
-        fbclid: lead.utm?.fbclid,
-        msclkid: lead.utm?.msclkid
+        formData: lead.formData || [],
+        utm: lead.utm || {}
       };
 
       // Map dynamic fields using FormSchema
@@ -533,7 +545,7 @@ exports.exportLeads = async (req, res) => {
     const query = { isDeleted: false };
     if (projectId) query.projectId = projectId;
     if (pageId) query.pageId = pageId;
-    
+
     if (utmSource) query['utm.utm_source'] = utmSource;
     if (utmMedium) query['utm.utm_medium'] = utmMedium;
     if (utmCampaign) query['utm.utm_campaign'] = utmCampaign;
@@ -567,9 +579,17 @@ exports.exportLeads = async (req, res) => {
       const allData = { ...(l.data || {}), ...l.utm };
       Object.keys(allData).forEach(k => {
         const lowerK = k.toLowerCase().replace(/_/g, "");
+
         // Skip standard keys and contact info
         if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
         if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+
+        // Skip explicitly handled or internal system fields
+        const skipKeys = ["name", "fullname", "message", "comment", "ip", "pageslug", "projectid", "pageid", "formdata", "trackingdetails", "utm"];
+        if (skipKeys.includes(lowerK)) return;
+
+        // Skip plain objects (internal nested data) to prevent [object Object] in CSV
+        if (typeof allData[k] === 'object' && allData[k] !== null && !Array.isArray(allData[k])) return;
 
         const label = fieldToLabel[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
         if (!shownLabels.has(label.toLowerCase())) {
@@ -600,7 +620,7 @@ exports.exportLeads = async (req, res) => {
         l.data?.full_name || l.data?.name || l.name || '',
         Array.from(emails).join("; ") || l.email || '',
         Array.from(phones).join("; ") || l.phone || '',
-        l.data?.message || l.message || '',
+        l.data?.message || l.data?.comment || l.message || '',
         new Date(l.createdAt).toLocaleString(),
         l.pageSlug || '',
         l.utm?.utm_source || '',
@@ -617,7 +637,12 @@ exports.exportLeads = async (req, res) => {
         row.push(l.data?.[col.key] || l[col.key] || '');
       });
 
-      return row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      return row.map(v => {
+        let val = v;
+        if (Array.isArray(v)) val = v.join(', ');
+        else if (typeof v === 'object' && v !== null) val = ''; // Exclude any remaining plain objects
+        return `"${String(val).replace(/"/g, '""')}"`;
+      }).join(',');
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
