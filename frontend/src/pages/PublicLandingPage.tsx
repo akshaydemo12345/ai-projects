@@ -11,12 +11,14 @@ const PublicLandingPage = () => {
   const pageId = searchParams.get('page') || searchParams.get('pageId');
   const token = searchParams.get('token') || searchParams.get('previewToken');
 
-  // Resolve slug from splat or pathname to support nested preSlugs
+  // Resolve slug from hash, splat or pathname to support nested preSlugs
+  const hashRaw = window.location.hash.replace(/^#+/, '');
   const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
   // Strip /thank-you from path to get the page slug
   const path = rawPath.replace(/\/thank-you$/i, '');
+  const hashPath = hashRaw.replace(/\/thank-you$/i, '');
 
-  const slug = pageId ? undefined : (path.startsWith('preview/') ? path.replace('preview/', '') : path) || pgSlug;
+  const slug = pageId ? undefined : (path.startsWith('preview/') ? path.replace('preview/', '') : (hashPath || path)) || pgSlug;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
