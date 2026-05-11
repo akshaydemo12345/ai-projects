@@ -451,6 +451,12 @@ export interface Lead {
     url?: string;
     referer?: string;
   };
+  referer?: string;
+  url?: string;
+  trackingDetails?: {
+    referral_url?: string;
+    referral_source?: string;
+  };
   formData?: Array<{ name: string; label: string; value: any; type?: string }>;
   createdAt: string;
 }
