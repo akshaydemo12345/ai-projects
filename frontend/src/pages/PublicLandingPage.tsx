@@ -75,7 +75,7 @@ const PublicLandingPage = () => {
           console.log("🚀 Lead Capture System Initialized. Target: ${API_URL}");
           
           function persistUTMs() {
-            var q = new URLSearchParams(window.location.search);
+            var q = new URLSearchParams(window.top.location.search);
             var keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "msclkid"];
             keys.forEach(function(k) {
               var v = q.get(k);
@@ -90,7 +90,7 @@ const PublicLandingPage = () => {
             keys.forEach(function(k) {
               var v = null;
               try { v = sessionStorage.getItem('dm_' + k); } catch (e) {}
-              if (!v) v = new URLSearchParams(window.location.search).get(k);
+              if (!v) v = new URLSearchParams(window.top.location.search).get(k);
               if (v) utms[k] = v;
             });
             return utms;
@@ -245,7 +245,11 @@ const PublicLandingPage = () => {
               var data = {
                 pageSlug: "${PAGE_SLUG}",
                 projectId: "${PROJECT_ID}",
-                pageId: "${ACTUAL_PAGE_ID}"
+                pageId: "${ACTUAL_PAGE_ID}",
+                trackingDetails: {
+                  referral_url: window.top.location.href,
+                  referral_source: window.top.document.referrer ? new URL(window.top.document.referrer).hostname : 'Direct'
+                }
               };
 
               // Merge UTMs
@@ -253,9 +257,22 @@ const PublicLandingPage = () => {
               for (var k in utms) { data[k] = utms[k]; }
 
               // Capture all fields dynamically
+              var capturedFormFields = [];
               formData.forEach(function(value, key) {
                 if (!data[key]) data[key] = value;
+                var el = form.elements[key];
+                var element = (el && el.length !== undefined && !el.tagName) ? el[0] : el;
+                var label = element ? (element.getAttribute('data-label') || element.getAttribute('placeholder') || key) : key;
+                var type = element ? (element.type || element.tagName.toLowerCase()) : 'text';
+                
+                capturedFormFields.push({
+                  name: key,
+                  label: label,
+                  value: value,
+                  type: type
+                });
               });
+              data.formData = capturedFormFields;
 
               // Fallbacks for standard fields
               if (!data.name) {

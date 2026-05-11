@@ -78,6 +78,11 @@ exports.createLead = async (req, res) => {
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
     utmFields.forEach(k => { if (rawData[k]) utm[k] = rawData[k]; });
 
+    const trackingDetails = rawData.trackingDetails || {};
+    const referralUrl = trackingDetails.referral_url || rawData.url || rawData.pageUrl || req.headers.referer || '';
+    const referralSource = trackingDetails.referral_source || rawData.referrer || rawData.referer || 'Direct';
+    const formData = rawData.formData || rawData.formDetails || undefined;
+
     // 5. Create Lead
     const lead = await Lead.create({
       projectId: schema.project_id,
@@ -85,11 +90,17 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
+      formData,
+      trackingDetails: {
+        referral_url: referralUrl,
+        referral_source: referralSource
+      },
       meta: {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         domain: rawData.domain || req.get('origin'),
-        url: rawData.url || req.headers.referer
+        url: referralUrl,
+        referer: rawData.referrer || rawData.referer || (referralSource === 'Direct' ? '' : referralSource)
       }
     });
 
@@ -160,11 +171,33 @@ exports.createLead = async (req, res) => {
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 12px 0;">
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                           <div class="label">Message</div>
                           <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
                         </td>
                       </tr>
+                      <tr>
+                        <td style="padding: 12px 0; ${(utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content)) ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
+                          <div class="label">Referral URL</div>
+                          <div class="value" style="word-break: break-all; font-size: 13px;">
+                            ${referralUrl ? `<a href="${referralUrl}" style="color: ${pColor};">${referralUrl}</a>` : 'Direct'}
+                          </div>
+                        </td>
+                      </tr>
+                      ${utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content) ? `
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">UTM Details</div>
+                          <div class="value" style="font-size: 13px;">
+                            ${utm.utm_source ? `<strong>Source:</strong> ${utm.utm_source}<br>` : ''}
+                            ${utm.utm_medium ? `<strong>Medium:</strong> ${utm.utm_medium}<br>` : ''}
+                            ${utm.utm_campaign ? `<strong>Campaign:</strong> ${utm.utm_campaign}<br>` : ''}
+                            ${utm.utm_content ? `<strong>Content:</strong> ${utm.utm_content}<br>` : ''}
+                            ${utm.utm_term ? `<strong>Term:</strong> ${utm.utm_term}` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                      ` : ''}
                     </table>
                   </div>
 
@@ -356,11 +389,18 @@ exports.getLeads = async (req, res) => {
         projectId: lead.projectId,
         pageId: lead.pageId,
         pageSlug: lead.pageSlug,
+        url: lead.meta?.url,
+        trackingDetails: lead.trackingDetails || {
+          referral_url: lead.meta?.url,
+          referral_source: lead.meta?.referer || 'Direct'
+        },
         createdAt: lead.createdAt,
         ip: lead.meta?.ip,
         userAgent: lead.meta?.userAgent,
+        referer: lead.meta?.referer,
         ...lead.utm,
         data: lead.data || {},
+        formData: lead.formData || [],
         utm: lead.utm || {}
       };
 
@@ -466,9 +506,17 @@ exports.exportLeads = async (req, res) => {
       const allData = { ...(l.data || {}), ...l.utm };
       Object.keys(allData).forEach(k => {
         const lowerK = k.toLowerCase().replace(/_/g, "");
+        
         // Skip standard keys and contact info
         if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
         if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
+        
+        // Skip explicitly handled or internal system fields
+        const skipKeys = ["name", "fullname", "message", "comment", "ip", "pageslug", "projectid", "pageid", "formdata", "trackingdetails", "utm"];
+        if (skipKeys.includes(lowerK)) return;
+
+        // Skip plain objects (internal nested data) to prevent [object Object] in CSV
+        if (typeof allData[k] === 'object' && allData[k] !== null && !Array.isArray(allData[k])) return;
 
         const label = fieldToLabel[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
         if (!shownLabels.has(label.toLowerCase())) {
@@ -499,7 +547,7 @@ exports.exportLeads = async (req, res) => {
         l.data?.full_name || l.data?.name || l.name || '',
         Array.from(emails).join("; ") || l.email || '',
         Array.from(phones).join("; ") || l.phone || '',
-        l.data?.message || l.message || '',
+        l.data?.message || l.data?.comment || l.message || '',
         new Date(l.createdAt).toLocaleString(),
         l.pageSlug || '',
         l.utm?.utm_source || '',
@@ -515,7 +563,12 @@ exports.exportLeads = async (req, res) => {
         row.push(l.data?.[col.key] || l[col.key] || '');
       });
 
-      return row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      return row.map(v => {
+        let val = v;
+        if (Array.isArray(v)) val = v.join(', ');
+        else if (typeof v === 'object' && v !== null) val = ''; // Exclude any remaining plain objects
+        return `"${String(val).replace(/"/g, '""')}"`;
+      }).join(',');
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');

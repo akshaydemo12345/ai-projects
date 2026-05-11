@@ -4,7 +4,7 @@ import {
   Search, Download, Trash2, Mail, Phone,
   FileText, ArrowUpDown, Filter, Loader2, Clock, CheckCircle2,
   Inbox, ChevronLeft, ChevronRight, X, Shield, Globe, MapPin,
-  ExternalLink, Eye, ChevronDown, Calendar
+  ExternalLink, Eye, ChevronDown, Calendar, Clipboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -736,7 +736,7 @@ const LeadsPage = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-12 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
               {/* Message Section */}
               {getLField(selectedLead, "message") && (
                 <section>
@@ -756,7 +756,7 @@ const LeadsPage = () => {
               <section>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-indigo-500" /> Identity Details
+                    <Shield className="h-4 w-4 text-indigo-500" /> Lead Information
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
@@ -791,19 +791,37 @@ const LeadsPage = () => {
                       )}
                     </div>
                   </div>
+                  
+                  {selectedLead.formData?.filter(field => {
+                    const lower = (field.name || '').toLowerCase();
+                    return !lower.includes('name') && 
+                           !lower.includes('email') && 
+                           !lower.includes('phone') && 
+                           !lower.includes('tel') && 
+                           !lower.includes('message') && 
+                           !lower.includes('comment');
+                  }).map((field, idx) => (
+                    <div key={`extra-${idx}`} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">{field.label || field.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white break-all flex items-center gap-2">
+                        <Clipboard className="h-3.5 w-3.5 text-primary/60" />
+                        {String(field.value || '—')}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </section>
 
-              {/* Marketing Attribution */}
-              {(selectedLead as any).utm_source && (
+              {/* UTM Details */}
+              {((selectedLead as any).utm_source || (selectedLead as any).utm_medium || (selectedLead as any).utm_campaign || (selectedLead as any).utm_content || (selectedLead as any).utm_term) && (
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-emerald-500" /> Marketing Attribution
+                      <Globe className="h-4 w-4 text-emerald-500" /> UTM Details
                     </h3>
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_source || "—"}</p>
@@ -816,56 +834,18 @@ const LeadsPage = () => {
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
                     </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_content || "—"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_term || "—"}</p>
+                    </div>
                   </div>
                 </section>
               )}
 
-              {/* Captured Insights */}
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-amber-500" /> Captured Insights
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(() => {
-                    const standardKeys = [
-                      "name", "email", "phone", "message", "full_name", "first_name", "last_name",
-                      "tel", "mobile", "domain", "pageurl", "path", "timestamp", "utm_source",
-                      "utm_medium", "utm_campaign", "gclid", "fbclid", "msclkid", "_id", "projectId", "pageId",
-                      "pageSlug", "createdAt", "ip", "userAgent", "Full Name", "Email Address", "Phone Number", "data", "utm"
-                    ];
-
-                    const shownLabels = new Set<string>();
-                    const insights: Array<{ label: string, value: any }> = [];
-
-                    Object.entries(selectedLead).forEach(([key, value]) => {
-                      if (!value || key === "data" || key === "utm") return;
-                      const lowerK = key.toLowerCase().replace(/_/g, "");
-                      if (standardKeys.some(sk => sk.toLowerCase().replace(/_/g, "") === lowerK)) return;
-                      if (lowerK.includes("email") || lowerK.includes("phone") || lowerK.includes("mobile") || lowerK.includes("tel") || lowerK.includes("contact")) return;
-
-                      const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-                      if (!shownLabels.has(label)) {
-                        shownLabels.add(label);
-                        insights.push({ label, value });
-                      }
-                    });
-
-                    return insights.length > 0 ? (
-                      insights.map((item, idx) => (
-                        <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                          <p className="text-[10px] text-slate-400 uppercase font-extrabold mb-1">{item.label}</p>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{String(item.value || "—")}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-slate-400 italic col-span-2">No additional custom fields were captured.</p>
-                    );
-                  })()}
-                </div>
-              </section>
 
               {/* Technical Trace */}
               <section>
@@ -875,18 +855,11 @@ const LeadsPage = () => {
                   </h3>
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">User IP</p>
-                    <p className="text-sm font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <Shield className="h-3.5 w-3.5 text-blue-400" />
-                      {selectedLead.meta?.ip || selectedLead.ip || "Unknown"}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Origin Page</p>
-                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.pageSlug || "Direct URL"}
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Referral URL</p>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-all flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.trackingDetails?.referral_url || selectedLead.url || selectedLead.meta?.url || selectedLead.pageSlug || "Direct URL"}
                     </p>
                   </div>
                 </div>
