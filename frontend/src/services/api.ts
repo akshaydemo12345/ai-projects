@@ -309,9 +309,11 @@ export const pagesApi = {
   getBySlug: async (slug: string, token?: string) => {
     // 100% Public endpoint — serves content WITHOUT requiring tokens for published pages.
     // However, for previews/drafts, we pass the previewToken.
+    // Add timestamp to bust browser cache
+    const cacheBuster = `cb=${Date.now()}`;
     const url = token 
-      ? `${API_BASE_URL}/api/public/page/${slug}?token=${token}`
-      : `${API_BASE_URL}/api/public/page/${slug}`;
+      ? `${API_BASE_URL}/api/public/page/${slug}?token=${token}&${cacheBuster}`
+      : `${API_BASE_URL}/api/public/page/${slug}?${cacheBuster}`;
       
     const response = await fetch(url);
     const result = await response.json();
