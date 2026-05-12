@@ -28,18 +28,134 @@ const generateAiPage = (
   prompt: string,
   project: Project,
   branding: { primary: string; secondary: string; logo?: string }
-): Partial<LandingPage> => ({
-  name: prompt.slice(0, 50).trim() || "AI Generated Page",
-  slug: autoSlug(prompt.slice(0, 40).trim() || "ai-page") + "-" + Date.now().toString(36),
-  metaTitle: `${project.name} — ${prompt.slice(0, 30)}`,
-  metaDescription: `${prompt.slice(0, 120)} | ${project.name}`,
-  primaryColor: branding.primary,
-  secondaryColor: branding.secondary,
-  logoUrl: branding.logo,
-  accentColor: "#6366f1",
-  generationMethod: "ai" as const,
-  aiPrompt: prompt,
-});
+): Partial<LandingPage> => {
+  const dummyHtml = `
+    <div style="font-family: 'Inter', sans-serif; color: #333;">
+      <!-- Section 1: Hero -->
+      <section style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 100px 20px; text-align: center; color: white;">
+        <h1 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">Welcome to ${project.name || "Our Business"}</h1>
+        <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto 30px; opacity: 0.9;">${prompt ? prompt.slice(0, 100) + '...' : 'Discover our premium services tailored just for you. Innovative solutions for modern problems.'}</p>
+        <button style="background: white; color: var(--primary); padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">Get Started Now</button>
+      </section>
+
+      <!-- Section 2: Features -->
+      <section style="padding: 80px 20px; background: #f8fafc; text-align: center;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 40px; color: #0f172a;">Why Choose Us</h2>
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 1000px; margin: 0 auto;">
+          <div style="flex: 1; min-width: 250px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; margin-bottom: 15px;">🚀</div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 10px;">Lightning Fast</h3>
+            <p style="color: #64748b; font-size: 0.95rem;">Experience unparalleled speed and performance with our optimized solutions.</p>
+          </div>
+          <div style="flex: 1; min-width: 250px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; margin-bottom: 15px;">🛡️</div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 10px;">Secure & Reliable</h3>
+            <p style="color: #64748b; font-size: 0.95rem;">Your data is protected with enterprise-grade security and encryption.</p>
+          </div>
+          <div style="flex: 1; min-width: 250px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; margin-bottom: 15px;">💡</div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 10px;">Smart AI</h3>
+            <p style="color: #64748b; font-size: 0.95rem;">Leverage artificial intelligence to automate and streamline your workflows.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: About Us -->
+      <section style="padding: 80px 20px; max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 40px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+          <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" alt="About Us" style="width: 100%; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);" />
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: #0f172a;">About ${project.name || "Our Business"}</h2>
+          <p style="color: #64748b; font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;">We are a dedicated team of professionals committed to delivering excellence. With years of experience and a passion for innovation, we help businesses achieve their full potential.</p>
+          <p style="color: #64748b; font-size: 1.1rem; line-height: 1.6;">Our mission is to empower you with the tools and strategies needed to succeed in today's fast-paced digital landscape.</p>
+        </div>
+      </section>
+
+      <!-- Section 4: Testimonials -->
+      <section style="padding: 80px 20px; background: #0f172a; color: white; text-align: center;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 40px;">What Our Clients Say</h2>
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 1000px; margin: 0 auto;">
+          <div style="flex: 1; min-width: 250px; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px;">
+            <div style="color: #fbbf24; font-size: 1.5rem; margin-bottom: 15px;">★★★★★</div>
+            <p style="font-style: italic; margin-bottom: 20px; font-size: 1.05rem;">"An absolute game-changer. The platform is incredibly intuitive and the results were immediate."</p>
+            <h4 style="font-weight: 600;">Sarah Jenkins</h4>
+            <span style="font-size: 0.85rem; opacity: 0.7;">Marketing Director</span>
+          </div>
+          <div style="flex: 1; min-width: 250px; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px;">
+            <div style="color: #fbbf24; font-size: 1.5rem; margin-bottom: 15px;">★★★★★</div>
+            <p style="font-style: italic; margin-bottom: 20px; font-size: 1.05rem;">"The best investment we've made this year. Exceptional support and a flawless product."</p>
+            <h4 style="font-weight: 600;">Michael Chen</h4>
+            <span style="font-size: 0.85rem; opacity: 0.7;">CEO, TechFlow</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Lead Capture Form -->
+      <section style="padding: 80px 20px; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 15px; color: #0f172a;">Ready to Get Started?</h2>
+        <p style="color: #64748b; margin-bottom: 30px; font-size: 1.1rem;">Fill out the form below and our team will contact you shortly.</p>
+        <form style="display: flex; flex-direction: column; gap: 15px; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: left;">
+          <div>
+            <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #334155;">Full Name</label>
+            <input type="text" placeholder="John Doe" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box;" required />
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #334155;">Email Address</label>
+            <input type="email" placeholder="john@example.com" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box;" required />
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #334155;">How can we help?</label>
+            <textarea placeholder="Tell us about your project..." rows="4" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical;" required></textarea>
+          </div>
+          <button type="submit" style="background: var(--primary); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 10px;">Submit Request</button>
+        </form>
+      </section>
+
+      <!-- Section 6: Footer -->
+      <footer style="background: #0f172a; color: #94a3b8; padding: 60px 20px 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; text-align: left; gap: 40px; margin-bottom: 40px;">
+          <div style="flex: 1; min-width: 250px;">
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 20px; font-weight: bold;">${project.name || "Our Business"}</h3>
+            <p style="line-height: 1.6;">Providing premium services and innovative solutions for businesses worldwide. Your success is our priority.</p>
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Quick Links</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">About Us</a></li>
+              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Our Services</a></li>
+              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Testimonials</a></li>
+              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Contact</a></li>
+            </ul>
+          </div>
+          <div style="flex: 1; min-width: 250px;">
+            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Contact Us</h4>
+            <p style="margin-bottom: 10px;">Email: hello@example.com</p>
+            <p style="margin-bottom: 10px;">Phone: +1 (555) 123-4567</p>
+            <p>Address: 123 Business Avenue, Suite 100<br/>New York, NY 10001</p>
+          </div>
+        </div>
+        <div style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem;">
+          <p>&copy; ${new Date().getFullYear()} ${project.name || "Our Business"}. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  `;
+
+  return {
+    name: prompt.slice(0, 50).trim() || "AI Generated Page",
+    slug: autoSlug(prompt.slice(0, 40).trim() || "ai-page") + "-" + Date.now().toString(36),
+    metaTitle: `${project.name} — ${prompt.slice(0, 30)}`,
+    metaDescription: `${prompt.slice(0, 120)} | ${project.name}`,
+    primaryColor: branding.primary,
+    secondaryColor: branding.secondary,
+    logoUrl: branding.logo,
+    accentColor: "#6366f1",
+    generationMethod: "ai" as const,
+    aiPrompt: prompt,
+    content: dummyHtml,
+  };
+};
 
 // ─── Template definitions ─────────────────────────────────────────────────────
 const LANDING_TEMPLATES: any[] = [
@@ -244,7 +360,7 @@ const CreatePagePage = () => {
   const createPageMutation = useMutation({
     mutationFn: async (page: Partial<LandingPage>) => {
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 60000)
+        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 180000)
       );
       return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
     },

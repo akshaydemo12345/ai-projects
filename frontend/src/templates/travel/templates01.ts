@@ -112,7 +112,7 @@ export const travel01Html = `
 
 <main>
   <section class="hero">
-    <img src="/assets/templates/travel/templates01/hero.jpg" alt="Hero" class="hero-img">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1600" alt="Hero" class="hero-img">
     <div class="hero-overlay"></div>
     <div class="container hero-content">
       <span class="pill">✦ PRIVATE ISLAND SPECIALISTS</span>
@@ -122,15 +122,15 @@ export const travel01Html = `
         <form style="display: contents;">
         <div class="search-field">
           <label>Destination</label>
-          <input type="text" placeholder="Where to?">
+          <input type="text" name="destination" placeholder="Where to?">
         </div>
         <div class="search-field">
           <label>Guests</label>
-          <input type="text" placeholder="2 Adults">
+          <input type="text" name="guests" placeholder="2 Adults">
         </div>
         <div class="search-field">
           <label>Duration</label>
-          <input type="text" placeholder="7 Days">
+          <input type="text" name="duration" placeholder="7 Days">
         </div>
         <button type="submit" class="btn-submit">Search</button>
       </form>
@@ -156,26 +156,26 @@ export const travel01Html = `
       </div>
       <div class="grid">
         <div class="island-card big">
-          <img src="/assets/templates/travel/templates01/d1.jpg" alt="Island">
+          <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=800" alt="Island">
           <div class="island-info">
             <h3>Bora Bora Overwater Villa</h3>
             <p>📍 French Polynesia</p>
           </div>
         </div>
         <div class="island-card">
-          <img src="/assets/templates/travel/templates01/d2.jpg" alt="Island">
+          <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=400" alt="Island">
           <div class="island-info">
             <h3>Reef Discovery</h3>
           </div>
         </div>
         <div class="island-card">
-          <img src="/assets/templates/travel/templates01/d3.jpg" alt="Island">
+          <img src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=400" alt="Island">
           <div class="island-info">
             <h3>Cliffside Suite</h3>
           </div>
         </div>
         <div class="island-card" style="grid-column: span 2;">
-          <img src="/assets/templates/travel/templates01/d4.jpg" alt="Island">
+          <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=800" alt="Island">
           <div class="island-info">
             <h3>Hidden Retreat</h3>
           </div>
@@ -215,7 +215,7 @@ export const travel01Html = `
   <section class="faq" style="padding: 10rem 0; background: #fff;">
     <div class="container" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 6rem; align-items: center;">
       <div class="faq-visual">
-        <img src="/assets/templates/travel/templates01/d3.jpg" alt="Insights" style="border-radius: 40px; box-shadow: 0 40px 80px rgba(0,0,0,0.15);">
+        <img src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&q=80&w=800" alt="Insights" style="border-radius: 40px; box-shadow: 0 40px 80px rgba(0,0,0,0.15);">
       </div>
       <div class="faq-content-wrap">
         <div style="margin-bottom: 3rem;">

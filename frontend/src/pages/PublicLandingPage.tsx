@@ -453,20 +453,18 @@ const PublicLandingPage = () => {
       const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
 
       if (isFullDoc) {
-        // Inject styles into head of full document if provided separately
-        if (finalCss && finalCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) {
-          const styleTag = `<style id="ai-generated-styles">${finalCss}</style>`;
-          if (finalHtml.toLowerCase().includes('</head>')) {
-            finalHtml = finalHtml.replace(/<\/head>/i, styleTag + coreDependencies + '</head>');
-          } else if (finalHtml.toLowerCase().includes('<head>')) {
-            finalHtml = finalHtml.replace(/<head>/i, '<head>' + styleTag + coreDependencies);
-          } else {
-            finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + styleTag + coreDependencies + '</head>');
-          }
+        const styleTag = (finalCss && finalCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) 
+          ? `<style id="ai-generated-styles">${finalCss}</style>` 
+          : '';
+          
+        const headContent = styleTag + coreDependencies;
+
+        if (finalHtml.toLowerCase().includes('</head>')) {
+          finalHtml = finalHtml.replace(/<\/head>/i, headContent + '</head>');
+        } else if (finalHtml.toLowerCase().includes('<html')) {
+          finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + headContent + '</head>');
         } else {
-          if (finalHtml.toLowerCase().includes('</head>')) {
-            finalHtml = finalHtml.replace(/<\/head>/i, coreDependencies + '</head>');
-          }
+          finalHtml = '<head>' + headContent + '</head>' + finalHtml;
         }
 
         // Inject lead capture

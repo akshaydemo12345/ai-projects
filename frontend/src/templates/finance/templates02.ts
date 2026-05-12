@@ -84,7 +84,7 @@ h1, h2, h3 {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)), url('/assets/templates/finance/templates02/hero.png');
+  background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600');
   background-size: cover;
   background-position: center;
 }
@@ -178,7 +178,7 @@ h1, h2, h3 {
 
 /* EXPERTISE CONTENT */
 .expertise-block { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
-.expertise-img { height: 600px; background: url('/assets/templates/finance/templates02/heritage.png'); background-size: cover; background-position: center; }
+.expertise-img { height: 600px; background: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200'); background-size: cover; background-position: center; }
 
 /* FOOTER */
 .footer {
@@ -278,15 +278,15 @@ export const finance02Html = `
       <form class="contact-form">
         <div class="form-group">
           <label>First Name</label>
-          <input type="text" placeholder="John">
+          <input type="text" name="first_name" placeholder="John">
         </div>
         <div class="form-group">
           <label>Last Name</label>
-          <input type="text" placeholder="Doe">
+          <input type="text" name="last_name" placeholder="Doe">
         </div>
         <div class="form-group full">
           <label>Inquiry Type</label>
-          <select>
+          <select name="inquiry_type">
             <option>Investment Management</option>
             <option>Wealth Planning</option>
             <option>Corporate Advisory</option>
@@ -294,9 +294,9 @@ export const finance02Html = `
         </div>
         <div class="form-group full">
           <label>Email Address</label>
-          <input type="email" placeholder="john@firm.com">
+          <input type="email" name="email_address" placeholder="john@firm.com">
         </div>
-        <button type="button" class="btn-form">Request Consultation</button>
+        <button type="submit" class="btn-form">Request Consultation</button>
       </form>
     </div>
   </div>
@@ -305,10 +305,10 @@ export const finance02Html = `
 <div class="container">
   <div class="trust-logos">
     <div class="logo-flex">
-      <img src="/assets/templates/finance/templates02/logo-1.png" alt="Goldman Sachs">
-      <img src="/assets/templates/finance/templates02/logo-2.png" alt="JP Morgan">
-      <img src="/assets/templates/finance/templates02/logo-3.png" alt="Morgan Stanley">
-      <img src="/assets/templates/finance/templates02/logo-4.png" alt="UBS">
+      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">GOLDMAN SACHS</span>
+      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">JP MORGAN</span>
+      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">MORGAN STANLEY</span>
+      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">UBS</span>
     </div>
   </div>
 </div>
