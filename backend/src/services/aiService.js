@@ -4,9 +4,10 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 
 const CLAUDE_MODEL_CANDIDATES = [
-  'claude-3-5-sonnet-20241022', // Sonnet first for full-page quality
-  'claude-3-5-haiku-20241022',  // Fallback 1
-  'claude-haiku-4-5',           // Fallback 2
+  'claude-sonnet-4-20250514',   // Best quality
+  'claude-3-5-sonnet-latest',   // Stable fallback
+  'claude-3-5-haiku-latest',    // Fast + cheap fallback
+  'claude-haiku-4-5',           // Extra fallback
   process.env.ANTHROPIC_MODEL,  // Custom override from .env
 ].filter(Boolean);
 
