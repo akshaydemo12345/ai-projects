@@ -72,7 +72,9 @@ const PricingSection = () => {
                 </span>
                 <span className="text-sm text-muted-foreground">{plan.period}</span>
               </div>
-              <Button variant={plan.ctaVariant} className="mt-6 w-full">{plan.cta}</Button>
+              <button className="mt-6 w-full inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
+                {plan.cta}
+              </button>
               <ul className="mt-6 space-y-3">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">

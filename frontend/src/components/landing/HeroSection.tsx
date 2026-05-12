@@ -23,13 +23,13 @@ const HeroSection = () => {
         <div className="mt-10 flex flex-col items-center justify-center gap-6">
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/login">
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 gap-2 px-8">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
                 Start Free <ArrowRight className="h-4 w-4" />
-              </Button>
+              </button>
             </Link>
-            <Button size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 gap-2 px-8">
+            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
               <Eye className="h-4 w-4" /> Watch Demo
-            </Button>
+            </button>
           </div>
           <p className="text-sm text-primary-foreground/50 italic">
             Built for marketers, agencies, and businesses running high-performance ad campaigns.
