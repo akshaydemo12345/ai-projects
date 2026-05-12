@@ -724,7 +724,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
           .replace(/PRIMARY_COLOR_PLACEHOLDER/g, pColor)
           .replace(/SECONDARY_COLOR_PLACEHOLDER/g, sColor)
           .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
-          
+
         if (!html.includes('id="ai-generated-styles"')) {
           html = html.replace(/<\/head>/i, `  <style id="ai-generated-styles">${processedCss}</style>\n</head>`);
         }
@@ -1216,6 +1216,21 @@ exports.handleFormSubmission = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Form schema not found. Please ensure page is published and form is configured.' });
     }
 
+    // ── FIX: Resolve pageSlug from the Page document BEFORE Lead.create ──────
+    // The WP proxy form only posts raw fields (name, phone, etc.) — no metadata.
+    // schema.page_slug does NOT exist in FormSchema, so it is always undefined.
+    // We must look up the real slug now, while we have schema.page_id guaranteed.
+    if (!pageSlug || !projectId) {
+      try {
+        const _pg = await Page.findById(schema.page_id).select('slug projectId').lean();
+        if (_pg) {
+          if (!pageSlug) pageSlug = _pg.slug;
+          if (!projectId) projectId = String(_pg.projectId || '');
+        }
+      } catch (_e) { /* non-fatal */ }
+    }
+    if (!pageSlug) pageSlug = String(schema.page_id); // absolute last-resort
+
     // 2. Helpers for Dynamic Matching
     const normalizeKey = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
     const slugify = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -1251,7 +1266,16 @@ exports.handleFormSubmission = async (req, res, next) => {
         if (label.includes("subject") || label.includes("title")) candidates.push("subject", "title", "topic");
       }
       if (field.type === "number") candidates.push("amount", "quantity", "count", "age", "price");
-      if (field.type === "date" || field.type === "time") candidates.push("date", "time", "appointment", "schedule", "on_date");
+      if (field.type === "date" || field.type === "time") candidates.push(
+        "date", "time", "appointment", "schedule", "on_date",
+        "travel_date", "traveldate", "departure_date", "departuredate",
+        "checkin", "check_in", "check_in_date", "checkout", "check_out",
+        "booking_date", "bookingdate", "arrival_date", "arrivaldate",
+        "visit_date", "visitdate", "preferred_date", "preferreddate",
+        "start_date", "startdate", "end_date", "enddate",
+        "from_date", "fromdate", "to_date", "todate",
+        "service_date", "servicedate", "event_date", "eventdate"
+      );
       if (field.type === "select" || field.type === "radio") candidates.push("service", "category", "type", "option", "selection", "plan");
       if (field.type === "checkbox") candidates.push("agree", "accept", "consent", "newsletter", "terms");
 
@@ -1278,15 +1302,37 @@ exports.handleFormSubmission = async (req, res, next) => {
         missingFields.push(field.label || field.field_name);
       }
 
-      // Store using ONE persistent key (prioritize semantic name)
       const storageKey = field.name || field.field_name;
       if (value !== undefined) {
         leadData[storageKey] = value;
       }
     }
 
+    // Passthrough: also capture any submitted key NOT matched by the schema.
+    // Handles field-name drift (HTML name="travel_date" vs schema label "date").
+    const _sysKeys = new Set(['pageId', 'pageSlug', 'projectId', 'timestamp', 'url', 'domain',
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'gclid', 'fbclid', 'msclkid', 'redirect', 'pageUrl', 'referer']);
+    const _schemaKeys = new Set(schema.fields.map(f => normalizeKey(f.name || f.field_name)));
+    Object.entries(rawData).forEach(([k, v]) => {
+      if (!_sysKeys.has(k) && v !== undefined && v !== null && String(v).trim() !== '') {
+        const nk = normalizeKey(k);
+        if (!_schemaKeys.has(nk) && !Object.keys(leadData).some(lk => normalizeKey(lk) === nk)) {
+          leadData[k] = typeof v === 'string' ? v.trim() : v;
+        }
+      }
+    });
+
+    // FIX: Soft-warn — NEVER hard-fail on missing required fields.
+    // Previously this returned 400 and the lead was lost entirely.
+    // Now we log the warning and save with whatever data was received.
+    // Only hard-fail when the post is completely empty (bot protection).
     if (missingFields.length > 0) {
-      return res.status(400).json({ status: 'fail', message: 'Required fields missing', fields: missingFields });
+      logger.warn(`[FORM] Missing required fields [${missingFields.join(', ')}] on "${pageSlug}" — saving with available data`);
+    }
+    const _allEmpty = Object.values(leadData).every(v => !v || String(v).trim() === '');
+    if (_allEmpty && schema.fields.length > 0) {
+      return res.status(400).json({ status: 'fail', message: 'No form data received', fields: missingFields });
     }
 
     // 4. UTMs Extraction
@@ -1313,9 +1359,9 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     // 5. Create Lead
     const lead = await Lead.create({
-      projectId: schema.project_id,
-      pageId: schema.page_id,
-      pageSlug: pageSlug || schema.page_slug,
+      projectId: schema.project_id || projectId,
+      pageId: schema.page_id || pageId,
+      pageSlug: pageSlug,          // FIX: always resolved above — never undefined
       data: leadData,
       utm,
       // Spread UTM fields to top level for insurance
@@ -1816,4 +1862,3 @@ exports.getDynamicPage = async (req, res, next) => {
 };
 
 // End of file
-
