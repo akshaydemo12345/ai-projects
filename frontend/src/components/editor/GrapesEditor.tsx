@@ -2002,7 +2002,11 @@ const GrapesEditor = () => {
       // Build the public URL for display
       const slug = pageDataRef.current?.slug || pageId;
       const preSlugPrefix = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-      const url = `${window.location.origin}/${preSlugPrefix ? preSlugPrefix + '/' : ''}${slug}`;
+      
+      // Use project websiteUrl (normalized by backend) or fallback to current origin
+      const baseUrl = project?.websiteUrl || project?.url || window.location.origin;
+      const url = `${baseUrl.replace(/\/+$/, '')}/${preSlugPrefix ? preSlugPrefix + '/' : ''}${slug}`;
+      
       setPublishedUrl(url);
       setPublishModalOpen(true);
     } catch (err) {

@@ -33,6 +33,7 @@ export interface Project {
   name: string;
   description: string;
   url?: string;
+  websiteUrl?: string;
   category: string;
   apiToken: string;
   userId: string;
