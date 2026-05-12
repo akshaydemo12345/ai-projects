@@ -23,7 +23,7 @@ class SyncService {
         const lib = isLocal ? http : https;
         const port = domain.includes(':') ? domain.split(':')[1] : (isLocal ? 80 : 443);
         const host = domain.includes(':') ? domain.split(':')[0] : domain;
-        
+
         const options = {
           hostname: host,
           port: port,

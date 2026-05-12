@@ -2935,7 +2935,7 @@ const GrapesEditor = () => {
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.2)' }}>
                 <span style={{ fontSize: 36 }}>🚀</span>
               </div>
-              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>Are you sure you want to publish your site?</h2>
+              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>Your site is now live!</h2>
             </div>
 
             {/* Body */}
@@ -2944,7 +2944,7 @@ const GrapesEditor = () => {
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Live URL</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px' }}>
-                  <span style={{ color: '#10b981', fontSize: 12, flex: 1, fontFamily: 'monospace', wordBreak: 'break-all', fontWeight: 600 }}>{publishedUrl}</span>
+                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#10b981', fontSize: 12, flex: 1, textDecoration: 'underline', fontFamily: 'monospace', wordBreak: 'break-all', fontWeight: 600 }}>{publishedUrl}</a>
                   <button
                     onClick={async (e) => {
                       const btn = e.currentTarget;
@@ -2987,7 +2987,7 @@ const GrapesEditor = () => {
                   }}
                   style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
                 >
-                  Publish
+                  Done
                 </button>
               </div>
             </div>
