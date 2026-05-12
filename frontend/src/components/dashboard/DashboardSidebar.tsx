@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, MailOpen
+  Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, MailOpen, Layout
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -40,8 +40,8 @@ const DashboardSidebar = () => {
       {/* Workspace */}
       <div className="p-4">
         <div className="flex items-center gap-2 cursor-pointer">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg">
+            <Layout className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{user?.name || "Workspace"}</p>
