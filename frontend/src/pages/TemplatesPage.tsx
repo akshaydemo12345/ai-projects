@@ -133,7 +133,7 @@ const TemplatesPage = () => {
           </div>
 
           {/* Grid Area */}
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {filtered.map((tpl, idx) => (
               <div
                 key={tpl.id}
@@ -141,7 +141,7 @@ const TemplatesPage = () => {
               >
                 {/* Image / Gradient placeholder */}
                 <div
-                  className="w-full aspect-[4/3] relative overflow-hidden p-4"
+                  className="w-full aspect-[4/4] relative overflow-hidden p-4"
                 >
                   <div
                     className="w-full h-full  overflow-hidden relative shadow-inner border border-black/[0.03]"

@@ -902,7 +902,7 @@ const CreatePagePage = () => {
                       >
                         {/* Image / Gradient placeholder */}
                         <div
-                          className="w-full aspect-[4/3] relative overflow-hidden"
+                          className="w-full aspect-[4/4] relative overflow-hidden"
                           style={{ background: tpl.gradient }}
                         >
                           {tpl.img ? (
