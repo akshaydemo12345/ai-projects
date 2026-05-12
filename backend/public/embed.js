@@ -12,14 +12,26 @@
   const url = new URL(currentScript.src, window.location.origin);
   const token = currentScript.getAttribute('data-token') || url.searchParams.get('token');
   const searchParams = new URLSearchParams(window.location.search);
-  const qPage = searchParams.get('pg') || searchParams.get('landing') || searchParams.get('page') || searchParams.get('p');
+  const qPage = searchParams.get('pg') || searchParams.get('landing') || searchParams.get('page') || searchParams.get('p') || searchParams.get('slug') || searchParams.get('route');
   const attrPageId = currentScript.getAttribute('data-page-id');
   const attrPage = currentScript.getAttribute('data-page');
-  const hashPage = window.location.hash.includes('page=') ? window.location.hash.split('page=')[1] : null;
+  const hashRaw = window.location.hash.replace(/^#+\/*/, ''); // Remove # and leading slashes
+  // Support both #lp/test-script and #page=lp/test-script, while stripping query params
+  const hashPage = (hashRaw.includes('page=') ? hashRaw.split('page=')[1] : hashRaw).split('?')[0].replace(/\/+$/, '');
   const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  const pathPage = pathParts.length > 0 ? pathParts.join('/') : null;
+  const pathPage = pathParts.length > 0 && pathParts[0] !== '' ? pathParts.join('/') : null;
 
-  const page = qPage || attrPageId || attrPage || hashPage || pathPage;
+  // PRIORITY: URL (Query > Hash) > Script Attributes > URL Path
+  // This enables dynamic routing via URL even if a data-page is set on the script tag.
+  const page = qPage || hashPage || attrPageId || attrPage || pathPage;
+  
+  console.log('💎 [SDK] Resolved Slug:', page);
+  
+  // Re-initialize on hash change to support SPA-like navigation
+  window.addEventListener('hashchange', () => {
+    console.log('🔄 [SDK] Hash changed, reloading for routing...');
+    window.location.reload();
+  });
   
   const apiBase = url.origin;
 
@@ -182,6 +194,13 @@
           ${!isThankYou ? '<script src="https://cdn.tailwindcss.com"><\/script>' : ''}
           ${!isThankYou ? `<meta name="dm-page-id" content="${pageId}">` : ''}
           ${!isThankYou ? `<meta name="dm-project-id" content="${projectId}">` : ''}
+          <script>
+            // Persist SDK Routing: Listen for hash changes even after document replacement
+            window.addEventListener('hashchange', function() {
+               console.log('SDK: Hash changed, reloading for routing...');
+               window.location.reload();
+            });
+          </script>
         </head>
         <body>
           ${html}

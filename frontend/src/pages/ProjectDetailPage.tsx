@@ -651,9 +651,9 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [scriptCopied, setScriptCopied] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const publishUrl = page.publishedUrl || `${window.location.origin}/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" data-page="${project.preSlug ? project.preSlug + '/' : ''}${page.slug}" async></script>`;
+  const publishUrl = page.publishedUrl || `${window.location.origin}/#/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
+  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" async></script>`;
 
   const handlePublish = () => {
     onPublished({ ...page, status: "published", publishedUrl: publishUrl });
@@ -1099,7 +1099,7 @@ const ProjectDetailPage = () => {
   const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
-  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || window.location.origin}/embed.js" data-token="${project?.apiToken}" async></script>`;
+  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
 
 

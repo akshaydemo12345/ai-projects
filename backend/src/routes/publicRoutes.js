@@ -30,7 +30,7 @@ router.get('/preview/:token/html', getPreviewHTML);
 router.get('/preview', getPreviewHTML);
 
 // ─── Public Page Rendering (Query param based) ───────────────────────────────
-// router.get('/', getPublicPageHTML); // Removed as slug-based routing is deprecated
+router.get('/', getPublicPageHTML); 
 
 // ─── Domain + Plugin Routes ──────────────────────────────────────────────────
 router.get('/domain/:domain', getPublicPageByDomain);
