@@ -4,101 +4,114 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 const cheerio = require('cheerio');
 
+/**
+ * =========================================
+ * PREMIUM CLAUDE MODELS
+ * =========================================
+ */
 const CLAUDE_MODEL_CANDIDATES = [
+<<<<<<< HEAD
   process.env.ANTHROPIC_MODEL,
   'claude-3-5-sonnet-latest',
   'claude-3-5-haiku-latest',
   'claude-3-opus-latest',
 ].filter(Boolean);
+=======
+  'claude-sonnet-4-20250514',
+  'claude-3-5-sonnet-latest',
+  'claude-3-5-haiku-latest'
+];
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
 
 const OpenAI = require('openai');
 
 /**
- * Build SYSTEM prompt (Claude-Level Master UI Designer)
+ * =========================================
+ * PREMIUM SYSTEM PROMPT
+ * =========================================
  */
-const buildSystemPrompt = () => {
+const buildSystemPrompt = (seed = '') => {
   return `
-Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
-Your goal is to generate a UNIQUE, premium, high-converting landing page.
- 
-VARIATION PRIORITY:
-- Never repeat a rigid template.
-- Pick a fresh visual direction based on user prompt + business context.
-- Vary section order, visual hierarchy, spacing rhythm, and composition.
-- Avoid producing "same skeleton with replaced text".
-- Use at least one distinctive design motif (timeline, bento cards, split hero, editorial layout, diagonal section transitions, or storytelling flow).
- 
-CRITICAL DESIGN RULES:
-- DO NOT generate a navigation menu or navbar links.
-- Place only the brand logo near the top inside the hero/banner area: <img src="{{LOGO_URL}}" alt="Brand Logo" class="h-8 w-auto">
-- The top area should look like a clean branded banner, not a traditional website navbar.
-- Use high-quality images from 'https://picsum.photos/seed/[ANY_UNIQUE_WORD]/1200/800'.
-- BACKGROUND IMAGES: Use inline styles only: style="background-image: url('...'); background-size: cover; background-position: center;"
-- SECTION RHYTHM: Alternate backgrounds (e.g., bg-white, then bg-gray-50, then a dark section).
-- TYPOGRAPHY: Scale your fonts. H1 should be text-5xl to text-7xl for premium feel.
-- GLASSMORPHISM: Use backdrop-blur-md with semi-transparent backgrounds for floating elements.
- 
-REQUIRED COVERAGE (MANDATORY LONG-FORM EXPERIENCE):
-1. You MUST generate a minimum of 8 visual sections by default.
-2. CRITICAL: If the USER provides a specific list of sections (e.g., "1. Hero, 2. Trust Bar, 3. Why Choose Us...") you MUST include EVERY SINGLE ONE of them in the exact order requested.
-3. DO NOT MERGE sections. DO NOT SKIP sections. If the user asks for 15 sections, you generate 15 distinct, high-fidelity sections.
-4. Each section must have its own unique design (bento, grid, list, split, etc.) and professional copy.
- 
-OUTPUT FORMATTING:
-- YOU MUST OUTPUT EVERYTHING IN ONE SINGLE \`\`\`html BLOCK.
-- BE CONCISE BUT PREMIUM. Every section should be roughly 800-1200 characters of code.
-- Avoid extremely verbose descriptions. Use powerful, punchy copy.
-- DO NOT split the page into multiple code blocks.
- 
-LENGTH + COMPLETENESS:
-- Generate a full, deep-scroll landing page with ALL requested sections.
-- For 15 sections, you should aim for a total output of around 15,000 to 20,000 characters.
-- If you are too verbose in the early sections, you will run out of space. BALANCE your length.
-- NEVER use placeholders. You MUST write the full HTML and full copy for EVERY requested section.
-- DO NOT STOP early. You MUST finish all 15 sections.
- 
-PLANNING:
-- Map out the code density for each section in your head before starting. Ensure section 15 is just as good as section 1.
- 
-OUTPUT: Full complete HTML enclosed in a SINGLE \`\`\`html block. No explanation.
+You are a World-Class Senior UI/UX Design Director and Conversion Architect.
+
+MISSION:
+Generate a COMPLETE premium landing page with a UNIQUE layout every single time.
+
+DESIGN SEED:
+${seed}
+
+CRITICAL RULES:
+- NEVER generate duplicate layouts.
+- Every page MUST feel premium like Stripe, Linear, Framer, Apple.
+- Use different section flow every generation.
+- Use asymmetric layouts.
+- Use layered gradients.
+- Use glassmorphism.
+- Use floating cards.
+- Use alternating dark/light sections.
+- Use premium typography.
+- Use deep-scroll storytelling layouts.
+- Use modern SaaS visuals.
+- Use Bento Grid sections sometimes.
+- Use Split Hero sometimes.
+- Use Timeline Flow sometimes.
+- Use Card Mosaic layouts sometimes.
+
+MANDATORY:
+- NO NAVBAR LINKS
+- TOP HEADER MUST CONTAIN ONLY LOGO
+
+- Logo MUST use this exact HTML:
+<img src="{{LOGO_URL}}" alt="Logo" class="h-12 w-auto object-contain">
+
+- Logo MUST appear at top-left.
+- Logo MUST be visible on both dark and light backgrounds.
+- NEVER remove or modify {{LOGO_URL}}
+
+- HERO SECTION REQUIRED
+- LEAD FORM REQUIRED
+- TESTIMONIALS REQUIRED
+- FAQ REQUIRED
+- FOOTER REQUIRED
+- MINIMUM 8 SECTIONS
+- FULL PAGE REQUIRED
+- NEVER STOP EARLY
+
+IMAGE RULES:
+Use:
+https://picsum.photos/seed/[keyword]/1200/800
+
+COLORS:
+ONLY USE:
+var(--primary)
+var(--secondary)
+
+TYPOGRAPHY:
+- H1 = text-6xl to text-7xl
+- modern spacing
+- premium whitespace
+
+TECH STACK:
+- TailwindCSS CDN
+- Responsive Design
+- Modern Animations
+- Mobile First
+- Premium spacing
+- Glassmorphism cards
+- Smooth hover effects
+
+OUTPUT:
+RETURN ONLY:
+\`\`\`html
+FULL HTML
+\`\`\`
+
+NO EXPLANATION.
 `;
 };
 
-
 /**
- * Build SYSTEM prompt for Smart Template Enrichment (JSON Content Injector)
- */
-const buildTemplateSystemPrompt = () => {
-  return `
-Act as a world-class UI/UX Design Director and Conversion Strategist with 20+ years of experience.
-Your task is to take the provided Content Map (JSON) of an HTML template and TRANSFORM it into a unique, ultra-premium masterpiece.
-
-GOAL: Return a NEW JSON object containing updated content AND a specialized CSS block to make the design look world-class.
-
-JSON STRUCTURE:
-{
-  "contentMap": { ... updated keys from the input ... },
-  "premiumCss": "/* Your ultra-premium CSS here */",
-  "seo": { "title": "...", "description": "..." }
-}
-
-RULES FOR CONTENT:
-1. TEXT (t- keys): Write high-converting, persuasive, and punchy copy. No placeholders.
-2. IMAGES (i- keys): Generate high-quality Unsplash URLs using the 'i-X.src' field. Use descriptive keywords for high-end photography.
-
-RULES FOR PREMIUM CSS:
-1. TYPOGRAPHY: Scale the fonts. H1 should be massive (text-5xl to text-7xl). Use Google Fonts imports if needed.
-2. DEPTH & GLASSMORPHISM: Add backdrop-blur-md, semi-transparent backgrounds, and soft realistic shadows to cards and sections.
-3. RHYTHM: Add padding (py-24, py-32) to sections to let them breathe.
-4. COLORS: Use [var(--primary)] and [var(--secondary)] for all branding.
-5. ANIMATIONS: Add subtle hover effects and smooth transitions to buttons and cards.
-6. MOBILE: Ensure your premium CSS is fully responsive.
-
-CRITICAL: Return ONLY the valid JSON object. No explanation. No markdown code blocks.
-`;
-};
-
-/**
+<<<<<<< HEAD
  * Helper: Extract all text and image content from HTML using Cheerio
  */
 const extractContentMap = (html) => {
@@ -170,33 +183,80 @@ const injectContentMap = (htmlWithIds, newMap) => {
 
 /**
  * Build USER prompt (Business Context + Branding)
+=======
+ * =========================================
+ * USER PROMPT
+ * =========================================
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
  */
 const buildUserPrompt = (input) => {
-  const { businessName, industry, businessDescription, ctaText, logoUrl, primaryColor, secondaryColor, scrapedData } = input;
-  const scrapedImages = scrapedData?.images?.slice(0, 5) || [];
-
   return `
-# CONTEXT:
-- Name: ${businessName} | Industry: ${industry}
-- Desc: ${businessDescription}
-- Goal: ${input.aiPrompt} | CTA: ${ctaText || 'Get Started'}
-- Colors: Primary [var(--primary)] (${primaryColor}), Secondary [var(--secondary)] (${secondaryColor})
-- Logo: {{LOGO_URL}} (${logoUrl})
+BUSINESS NAME:
+${input.businessName}
 
+<<<<<<< HEAD
 # RULES:
 - Lead form mandatory. 
 - Headlines must be conversion-focused. 
 - Use [var(--primary)] for background-colors.
 - Output detailed content, not placeholders.`;
+=======
+INDUSTRY:
+${input.industry}
+
+BUSINESS DESCRIPTION:
+${input.businessDescription}
+
+GOAL:
+${input.aiPrompt}
+
+CTA:
+${input.ctaText || 'Get Started'}
+
+LOGO URL:
+{{LOGO_URL}}
+
+PRIMARY COLOR:
+${input.primaryColor || '#7c3aed'}
+
+SECONDARY COLOR:
+${input.secondaryColor || '#6366f1'}
+
+MANDATORY SECTIONS:
+1. Header with Logo
+2. Hero
+3. Lead Form
+4. Features
+5. Benefits
+6. Testimonials
+7. Stats
+8. FAQ
+9. CTA Banner
+10. Footer
+
+IMPORTANT:
+- Form must be visible.
+- Use real content.
+- Use modern premium layout.
+- Use unique layout.
+- Complete FULL page.
+- Make page feel ultra premium.
+- Add premium cards.
+- Add gradient backgrounds.
+- Add hover animations.
+- Add glassmorphism.
+- Add deep scroll sections.
+`;
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
 };
 
 /**
- * Call Claude only
- */
-/**
- * Calculate cost based on model and tokens
+ * =========================================
+ * COST CALCULATOR
+ * =========================================
  */
 const calculateCost = (model, inputTokens, outputTokens) => {
+<<<<<<< HEAD
   const pricing = {
     'claude-3-5-sonnet': { input: 0.000003, output: 0.000015 },
     'claude-3-5-haiku': { input: 0.000001, output: 0.000005 },
@@ -204,17 +264,45 @@ const calculateCost = (model, inputTokens, outputTokens) => {
     'gpt-4o-mini': { input: 0.00000015, output: 0.0000006 },
     'gpt-4o': { input: 0.000005, output: 0.000015 },
     'default': { input: 0.000003, output: 0.000015 }
+=======
+
+  const pricing = {
+    'claude-sonnet': {
+      input: 0.000003,
+      output: 0.000015
+    },
+
+    'claude-haiku': {
+      input: 0.00000025,
+      output: 0.00000125
+    },
+
+    default: {
+      input: 0.000003,
+      output: 0.000015
+    }
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
   };
 
-  const modelKey = Object.keys(pricing).find(key => model.toLowerCase().includes(key)) || 'default';
-  const { input, output } = pricing[modelKey];
+  const modelKey =
+    Object.keys(pricing).find(key =>
+      model.toLowerCase().includes(key)
+    ) || 'default';
 
-  return (inputTokens * input) + (outputTokens * output);
+  const price = pricing[modelKey];
+
+  return (
+    (inputTokens * price.input) +
+    (outputTokens * price.output)
+  );
 };
 
 /**
- * Call Claude only
+ * =========================================
+ * CLEAN HTML
+ * =========================================
  */
+<<<<<<< HEAD
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
@@ -545,12 +633,196 @@ const generateStrategicStructure = async (input) => {
     logger.error('Strategic Plan JSON Error:', err.message);
     throw new Error('Strategic Plan Generation Failed');
   }
+=======
+const cleanHTML = (raw) => {
+
+  if (!raw) return '';
+
+  const regex =
+    /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
+
+  const matches = [];
+
+  let match;
+
+  while ((match = regex.exec(raw)) !== null) {
+
+    if (match[1]) {
+      matches.push(match[1].trim());
+    }
+  }
+
+  if (matches.length > 0) {
+    return matches.join('\n');
+  }
+
+  return raw
+    .replace(/```html/gi, '')
+    .replace(/```/g, '')
+    .trim();
 };
 
 /**
- * AI Landing Page Optimization Engine
- * Fixes, improves, and upgrades existing landing pages using real data.
+ * =========================================
+ * PROCESS RESULT
+ * =========================================
  */
+const processResult = (raw, logoUrl) => {
+
+  let clean = cleanHTML(raw);
+
+  const finalLogo =
+    logoUrl && logoUrl.trim() !== ''
+      ? logoUrl
+      : 'https://placehold.co/200x60?text=LOGO';
+
+  clean = clean.replace(
+    /\{\{LOGO_URL\}\}/gi,
+    finalLogo
+  );
+
+  clean = clean.replace(
+    /\{\{logoUrl\}\}/gi,
+    finalLogo
+  );
+
+  const titleMatch = clean.match(
+    /<title>(.*?)<\/title>/i
+  );
+
+  const title =
+    titleMatch
+      ? titleMatch[1]
+      : 'Landing Page';
+
+  return {
+
+    fullHtml: clean,
+
+    fullCss: '',
+
+    fullJs: '',
+
+    seo: {
+      title
+    }
+  };
+};
+
+/**
+ * =========================================
+ * CLAUDE AI CALL
+ * =========================================
+ */
+const callAI = async (
+  userPrompt,
+  logoUrl = '',
+  systemPrompt = ''
+) => {
+
+  const anthropicKey =
+    process.env.ANTHROPIC_API_KEY;
+
+  if (!anthropicKey) {
+
+    throw new Error(
+      'ANTHROPIC_API_KEY missing'
+    );
+  }
+
+  const anthropic = new Anthropic({
+    apiKey: anthropicKey
+  });
+
+  let lastError = null;
+
+  for (const model of CLAUDE_MODEL_CANDIDATES) {
+
+    try {
+
+      logger.info(
+        `[AI] Attempting Claude model: ${model}`
+      );
+
+      const response =
+        await anthropic.messages.create({
+
+          model,
+
+          max_tokens: 20000,
+
+          temperature: 1,
+
+          system: systemPrompt,
+
+          messages: [
+            {
+              role: 'user',
+              content: userPrompt
+            }
+          ]
+        });
+
+      const rawText =
+        response.content[0].text;
+
+      const usage =
+        response.usage;
+
+      const result =
+        processResult(
+          rawText,
+          logoUrl
+        );
+
+      return {
+
+        ...result,
+
+        aiUsage: {
+
+          promptTokens:
+            usage.input_tokens,
+
+          completionTokens:
+            usage.output_tokens,
+
+          totalTokens:
+            usage.input_tokens +
+            usage.output_tokens,
+
+          cost: calculateCost(
+            model,
+            usage.input_tokens,
+            usage.output_tokens
+          ),
+
+          model
+        }
+      };
+
+    } catch (err) {
+
+      lastError = err;
+
+      logger.error(
+        `[AI] Claude failed (${model}): ${err.message}`
+      );
+    }
+  }
+
+  throw new Error(
+    `Claude generation failed: ${lastError?.message}`
+  );
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
+};
+
+/**
+ * =========================================
+ * GENERATE LANDING PAGE
+ * =========================================
+ */
+<<<<<<< HEAD
 const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPage }) => {
   const systemPrompt = `You are a CRO Architect. Map images and optimize sections. Output ONLY JSON.`;
   const userPrompt = `Optimize this page: ${JSON.stringify(existingPage)} using ${JSON.stringify(projectData)}.`;
@@ -567,13 +839,295 @@ const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPa
     throw new Error('Optimization Engine Failed');
   }
 };
+=======
+const generateLandingPageContent =
+  async (input) => {
 
+    const uniqueSeed = `
+${input.businessName}
+-${input.industry}
+-${Date.now()}
+-${Math.random()
+        .toString(36)
+        .substring(2, 8)}
+`;
+
+    const systemPrompt =
+      buildSystemPrompt(uniqueSeed);
+
+    const userPrompt =
+      buildUserPrompt(input);
+
+    return await callAI(
+      userPrompt,
+      input.logoUrl,
+      systemPrompt
+    );
+  };
+
+/**
+ * =========================================
+ * IMPROVE SECTION
+ * =========================================
+ */
+const improveSectionContent =
+  async ({
+    sectionType,
+    currentContent,
+    aiPrompt
+  }) => {
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
+
+const prompt = `
+Improve this section.
+
+TYPE:
+${sectionType}
+
+CURRENT CONTENT:
+${JSON.stringify(currentContent)}
+
+INSTRUCTION:
+${aiPrompt}
+`;
+
+return await callAI(prompt);
+  };
+
+/**
+ * =========================================
+ * GENERATE DESCRIPTION
+ * =========================================
+ */
+const generateDescriptionSuggestion =
+  async ({
+    pageName,
+    industry,
+    projectDesc,
+    currentPrompt
+  }) => {
+
+    const prompt = `
+Generate a premium landing page description.
+
+PAGE:
+${pageName}
+
+INDUSTRY:
+${industry}
+
+DESCRIPTION:
+${projectDesc}
+
+PROMPT:
+${currentPrompt}
+
+Generate highly premium,
+conversion-focused copy.
+`;
+
+    const result =
+      await callAI(prompt);
+
+    return {
+      suggestion:
+        result.fullHtml || ''
+    };
+  };
+
+/**
+ * =========================================
+ * PROJECT SUGGESTIONS
+ * =========================================
+ */
+const generateProjectSuggestions =
+  async ({
+    projectName,
+    industry,
+    projectDescription
+  }) => {
+
+    const prompt = `
+Generate 6 premium landing page ideas.
+
+PROJECT:
+${projectName}
+
+INDUSTRY:
+${industry}
+
+DESCRIPTION:
+${projectDescription}
+
+Return ONLY JSON array.
+`;
+
+    const result =
+      await callAI(prompt);
+
+    try {
+
+      return JSON.parse(
+        result.fullHtml
+      );
+
+    } catch {
+
+      return [];
+    }
+  };
+
+/**
+ * =========================================
+ * STRATEGIC STRUCTURE
+ * =========================================
+ */
+const generateStrategicStructure =
+  async (input) => {
+
+    const prompt = `
+Generate a strategic landing page structure.
+
+BUSINESS:
+${input.businessName}
+
+INDUSTRY:
+${input.industry}
+
+DESCRIPTION:
+${input.businessDescription}
+
+Return JSON only.
+`;
+
+    const result =
+      await callAI(prompt);
+
+    try {
+
+      return JSON.parse(
+        result.fullHtml
+      );
+
+    } catch {
+
+      return {
+        sections: []
+      };
+    }
+  };
+
+/**
+ * =========================================
+ * OPTIMIZE STRUCTURE
+ * =========================================
+ */
+const optimizeStrategicStructure =
+  async ({
+    projectData,
+    scrapedData,
+    existingPage
+  }) => {
+
+    const prompt = `
+Optimize this landing page.
+
+PROJECT:
+${JSON.stringify(projectData)}
+
+SCRAPED:
+${JSON.stringify(scrapedData)}
+
+EXISTING:
+${JSON.stringify(existingPage)}
+
+Return JSON only.
+`;
+
+    const result =
+      await callAI(prompt);
+
+    try {
+
+      return JSON.parse(
+        result.fullHtml
+      );
+
+    } catch {
+
+      return {
+        sections: []
+      };
+    }
+  };
+
+/**
+ * =========================================
+ * EDITOR CHAT MODIFY
+ * =========================================
+ */
+const editorChatModify =
+  async ({
+    elementTag,
+    elementHtml,
+    instruction
+  }) => {
+
+    const prompt = `
+Modify this HTML element.
+
+TAG:
+${elementTag}
+
+HTML:
+${elementHtml}
+
+INSTRUCTION:
+${instruction}
+
+Return JSON only.
+`;
+
+    const result =
+      await callAI(prompt);
+
+    try {
+
+      return JSON.parse(
+        result.fullHtml
+      );
+
+    } catch {
+
+      return {
+        action: 'html',
+        html: result.fullHtml
+      };
+    }
+  };
+
+/**
+ * =========================================
+ * EXPORTS
+ * =========================================
+ */
 module.exports = {
+
   generateLandingPageContent,
+
   improveSectionContent,
+<<<<<<< HEAD
   editorChatModify,
+=======
+
+>>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
   generateDescriptionSuggestion,
+
   generateProjectSuggestions,
+
   generateStrategicStructure,
-  optimizeStrategicStructure
+
+  optimizeStrategicStructure,
+
+  editorChatModify
 };

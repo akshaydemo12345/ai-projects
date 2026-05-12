@@ -7,6 +7,9 @@ const { validateForm, normalizeData } = require('../utils/dynamicValidator');
 const logger = require('../utils/logger');
 const { syncFormSchema } = require('../utils/schemaSync');
 const emailService = require('../services/emailService');
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middleware/authMiddleware');
 
 /**
  * @desc    Create a new dynamic lead from a landing page form
@@ -737,3 +740,21 @@ exports.getTrackerJs = (req, res) => {
   }
   res.status(404).send('Tracker not found');
 };
+
+// ─── Route Definitions ────────────────────────────────────────────────────────
+
+// Public: Create Lead (from landing pages)
+router.post('/', exports.createLead);
+
+// Public: Tracker.js serving
+router.get('/tracker.js', exports.getTrackerJs);
+
+// Protected: All other lead management routes
+router.use(protect);
+
+router.get('/', exports.getLeads);
+router.get('/filters', exports.getLeadFilters);
+router.get('/export', exports.exportLeads);
+router.delete('/:id', exports.deleteLead);
+
+module.exports = router;
