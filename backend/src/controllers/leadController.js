@@ -120,6 +120,50 @@ exports.createLead = async (req, res) => {
           const pColor = project.primaryColor || '#7c3aed';
           const customMessage = project.adminNotification.message || "Great news! A new lead has just expressed interest through your landing page. Here are the captured details:";
 
+          // Build lead details rows dynamically from schema
+          let leadDetailsRows = '';
+          if (schema && schema.fields) {
+            schema.fields.forEach(field => {
+              const value = leadData[field.field_name] || leadData[field.name] || 'Not provided';
+              leadDetailsRows += `
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                  <div class="label">${field.label || field.field_name}</div>
+                  <div class="value">${value}</div>
+                </td>
+              </tr>
+              `;
+            });
+          } else {
+            // Fallback to hardcoded fields if no schema
+            leadDetailsRows = `
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                <div class="label">Full Name</div>
+                <div class="value">${leadData.name || leadData.full_name || 'Not provided'}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                <div class="label">Email Address</div>
+                <div class="value">${leadData.email || leadData.email_address || 'Not provided'}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                <div class="label">Phone Number</div>
+                <div class="value">${leadData.phone || leadData.tel || 'Not provided'}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <div class="label">Message</div>
+                <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
+              </td>
+            </tr>
+            `;
+          }
+
           const adminMsg = `
             <!DOCTYPE html>
             <html>
@@ -153,43 +197,32 @@ exports.createLead = async (req, res) => {
                   <p class="intro">${customMessage}</p>
                   
                   <div class="data-card">
+                    <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 700; color: #1e293b;">Lead Details</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${leadDetailsRows}
+                    </table>
+                  </div>
+                  
+                  <div class="data-card">
+                    <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 700; color: #1e293b;">Referral Information</h3>
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Full Name</div>
-                          <div class="value">${leadData.name || leadData.full_name || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Email Address</div>
-                          <div class="value">${leadData.email || leadData.email_address || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Phone Number</div>
-                          <div class="value">${leadData.phone || leadData.tel || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Message</div>
-                          <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; ${(utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content)) ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
+                        <td style="padding: 12px 0;">
                           <div class="label">Referral URL</div>
                           <div class="value" style="word-break: break-all; font-size: 13px;">
                             ${referralUrl ? `<a href="${referralUrl}" style="color: ${pColor};">${referralUrl}</a>` : 'Direct'}
                           </div>
                         </td>
                       </tr>
-                      ${utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content) ? `
+                    </table>
+                  </div>
+                  
+                  ${utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content) ? `
+                  <div class="data-card">
+                    <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 700; color: #1e293b;">UTM Tracking Details</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 12px 0;">
-                          <div class="label">UTM Details</div>
                           <div class="value" style="font-size: 13px;">
                             ${utm.utm_source ? `<strong>Source:</strong> ${utm.utm_source}<br>` : ''}
                             ${utm.utm_medium ? `<strong>Medium:</strong> ${utm.utm_medium}<br>` : ''}
@@ -199,54 +232,9 @@ exports.createLead = async (req, res) => {
                           </div>
                         </td>
                       </tr>
-                      ` : ''}
                     </table>
                   </div>
-
-                  <div class="data-card">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Source</div>
-                          <div class="value">${utm.utm_source || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Medium</div>
-                          <div class="value">${utm.utm_medium || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Campaign</div>
-                          <div class="value">${utm.utm_campaign || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Term</div>
-                          <div class="value">${utm.utm_term || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Content</div>
-                          <div class="value">${utm.utm_content || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0;">
-                          <div class="label">Referral URL</div>
-                          <div class="value">${lead.meta?.referer || '—'}</div>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-
-                  <div style="text-align: center;">
-                    <p style="font-size: 12px; color: #94a3b8;">Captured from: <strong>${pageSlug || schema.page_slug || 'Landing Page'}</strong></p>
-                  </div>
+                  ` : ''}
                 </div>
                 <div class="footer">
                   <p>Powered by AI Landing Page Builder</p>
@@ -304,36 +292,9 @@ exports.createLead = async (req, res) => {
                   <div style="margin: 30px 0;">
                     <span style="padding: 12px 24px; border-radius: 50px; background-color: ${pColor}; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">We'll talk soon!</span>
                   </div>
-                        </div>
+                 </div>
 
-                  <div class="data-card" style="margin-top: 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Source</div>
-                          <div class="value">${utm.utm_source || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Medium</div>
-                          <div class="value">${utm.utm_medium || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Campaign</div>
-                          <div class="value">${utm.utm_campaign || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0;">
-                          <div class="label">Referral URL</div>
-                          <div class="value">${lead.meta?.referer || '—'}</div>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
+            
                 </div>
                 <div class="footer">
                   <p>This is an automated confirmation from ${project.fromName || 'our team'}.</p>
