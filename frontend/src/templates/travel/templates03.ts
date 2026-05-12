@@ -159,22 +159,22 @@ export const travel03Html = `
 </header>
 
 <section class="hero">
-  <img src="/assets/templates/travel/templates03/hero.png" class="hero-img" alt="Luxury Bali Retreat">
+  <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=1600" class="hero-img" alt="Luxury Bali Retreat">
   <div class="hero-overlay"></div>
   <div class="container hero-content">
     <div class="hero-text">
       <p class="kicker" style="color:var(--secondary)">Handcrafted Journeys for the Soul</p>
       <h1>The Art of<br/>Slowing Down.</h1>
     </div>
-    <form class="hero-form" onsubmit="event.preventDefault();alert('Thank you! Our journey designer will contact you shortly.');">
+    <form class="hero-form">
       <h3>Begin Your Pause</h3>
       <div class="form-field full">
         <label>Full Name</label>
-        <input type="text" placeholder="Jane Doe" required>
+        <input type="text" name="full_name" placeholder="Jane Doe" required>
       </div>
       <div class="form-field">
         <label>Destination</label>
-        <select>
+        <select name="destination">
           <option>Bali Serenity</option>
           <option>Patagonian Silence</option>
           <option>Nordic Stillness</option>
@@ -182,7 +182,7 @@ export const travel03Html = `
       </div>
       <div class="form-field">
         <label>Travel Date</label>
-        <input type="date" required>
+        <input type="date" name="travel_date" required>
       </div>
       <button type="submit" class="btn-primary">Request Private Inquiry</button>
     </form>
@@ -199,7 +199,7 @@ export const travel03Html = `
       <a href="#" style="border-bottom:1px solid var(--primary);padding-bottom:5px;color:var(--primary);font-size:0.9rem">Learn More</a>
     </div>
     <div class="philo-img">
-      <img src="/assets/templates/travel/templates03/spa.png" alt="Zen Spa Interior">
+      <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=800" alt="Zen Spa Interior">
     </div>
   </div>
 </section>
@@ -212,14 +212,14 @@ export const travel03Html = `
     </div>
     <div class="dest-grid">
       <div class="dest-card">
-        <img src="/assets/templates/travel/templates03/hero.png" alt="Bali">
+        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=600" alt="Bali">
         <div class="dest-card-overlay">
           <span>INDONESIA</span>
           <h3>Ubud Serenity</h3>
         </div>
       </div>
       <div class="dest-card">
-        <img src="/assets/templates/travel/templates03/patagonia.png" alt="Patagonia">
+        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=600" alt="Patagonia">
         <div class="dest-card-overlay">
           <span>CHILE</span>
           <h3>Patagonian Silence</h3>
@@ -267,7 +267,7 @@ export const travel03Html = `
   <div class="container designer-card">
     <div class="des-img-wrap">
       <div class="des-img">
-        <img src="/assets/templates/travel/templates03/designer.png" alt="Journey Designer">
+        <img src="https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&q=80&w=600" alt="Journey Designer">
       </div>
       <div class="des-badge">
         <strong>15+</strong>

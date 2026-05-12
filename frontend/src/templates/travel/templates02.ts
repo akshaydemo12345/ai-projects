@@ -126,26 +126,26 @@ export const travel02Html = `
 <main>
   <!-- HERO SECTION -->
   <section class="hero">
-    <img src="/assets/templates/travel/templates02/hero.jpg" alt="African Savanna" class="hero-img">
+    <img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=1600" alt="African Savanna" class="hero-img">
     <div class="container hero-content">
       <form class="booking-card">
         <h3>Plan Your Escape</h3>
         <div class="booking-grid">
           <div class="input-group">
             <label>Destination</label>
-            <select><option>Serengeti, TZ</option><option>Maasai Mara, KE</option><option>Okavango, BW</option></select>
+            <select name="destination"><option>Serengeti, TZ</option><option>Maasai Mara, KE</option><option>Okavango, BW</option></select>
           </div>
           <div class="input-group">
             <label>Travelers</label>
-            <input type="number" placeholder="2 Adults">
+            <input type="number" name="travelers" placeholder="2 Adults">
           </div>
           <div class="input-group">
             <label>Duration</label>
-            <select><option>7-10 Days</option><option>14+ Days</option></select>
+            <select name="duration"><option>7-10 Days</option><option>14+ Days</option></select>
           </div>
           <div class="input-group" style="grid-column: span 2;">
-            <label>Guests</label>
-            <input type="text" placeholder="2 Adults">
+            <label>Full Name</label>
+            <input type="text" name="full_name" placeholder="2 Adults">
           </div>
           <button type="submit" class="btn-submit">Plan My Journey →</button>
         </div>
@@ -197,7 +197,7 @@ export const travel02Html = `
       
       <div class="journey-grid">
         <div class="journey-card">
-          <img src="/assets/templates/travel/templates02/d1.jpg" alt="Lion">
+          <img src="https://images.unsplash.com/photo-1547970810-dc1eac37d174?auto=format&fit=crop&q=80&w=400" alt="Lion">
           <div class="journey-info">
             <span class="tag">BIG FIVE</span>
             <h3>The King's Trail</h3>
@@ -206,7 +206,7 @@ export const travel02Html = `
           </div>
         </div>
         <div class="journey-card">
-          <img src="/assets/templates/travel/templates02/d2.jpg" alt="Sunset">
+          <img src="https://images.unsplash.com/photo-1551232864-3f0890e1777d?auto=format&fit=crop&q=80&w=400" alt="Sunset">
           <div class="journey-info">
             <span class="tag">AERIAL</span>
             <h3>Infinite Skies Safari</h3>
@@ -215,7 +215,7 @@ export const travel02Html = `
           </div>
         </div>
         <div class="journey-card">
-          <img src="/assets/templates/travel/templates02/d3.jpg" alt="Camp">
+          <img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=400" alt="Camp">
           <div class="journey-info">
             <span class="tag">LUXURY</span>
             <h3>Bush Suite Retreat</h3>
@@ -224,7 +224,7 @@ export const travel02Html = `
           </div>
         </div>
         <div class="journey-card">
-          <img src="/assets/templates/travel/templates02/d4.jpg" alt="Zebra">
+          <img src="https://images.unsplash.com/photo-1589825743636-17e3d3a2e4fb?auto=format&fit=crop&q=80&w=400" alt="Zebra">
           <div class="journey-info">
             <span class="tag">WATER</span>
             <h3>Delta Dream</h3>
@@ -259,8 +259,8 @@ export const travel02Html = `
         <a href="#" class="btn-book" style="display: inline-block;">Explore Philosophy</a>
       </div>
       <div class="encounter-visual">
-        <img src="/assets/templates/travel/templates02/wildlife_elephant.png" alt="Safari" class="img-big">
-        <img src="/assets/templates/travel/templates02/wildlife_leopard.png" alt="Safari Detail" class="img-small">
+        <img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&q=80&w=800" alt="Safari" class="img-big">
+        <img src="https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&q=80&w=400" alt="Safari Detail" class="img-small">
       </div>
     </div>
   </section>
@@ -271,14 +271,14 @@ export const travel02Html = `
       <h2 class="section-title">Sleep where the wild things are.</h2>
       <div class="sleep-grid">
         <div class="sleep-card">
-          <img src="/assets/templates/travel/templates02/lodge_luxury_tent.png" alt="Tent">
+          <img src="https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&q=80&w=600" alt="Tent">
           <div class="sleep-content">
              <h3>Bush Suite Retreat</h3>
              <p>Our canvas-walled suites offer absolute luxury with uninterrupted views of the plains.</p>
           </div>
         </div>
         <div class="sleep-card">
-          <img src="/assets/templates/travel/templates02/lodge_campfire.png" alt="Lodge">
+          <img src="https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&q=80&w=600" alt="Lodge">
           <div class="sleep-content">
              <h3>Starlit Sanctuary</h3>
              <p>Open-air dining and fire-pit gatherings under the infinite African sky.</p>
@@ -301,9 +301,9 @@ export const travel02Html = `
     <div class="container">
       <h2 class="section-title">The wild through your lens.</h2>
       <div class="lens-grid">
-        <div class="lens-item tall"><img src="/assets/templates/travel/templates02/gallery_delta.png" alt="Landscape"></div>
-        <div class="lens-item"><img src="/assets/templates/travel/templates02/gallery_lion.png" alt="Lion"></div>
-        <div class="lens-item"><img src="/assets/templates/travel/templates02/gallery_zebra.png" alt="Zebra"></div>
+        <div class="lens-item tall"><img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=600" alt="Landscape"></div>
+        <div class="lens-item"><img src="https://images.unsplash.com/photo-1547970810-dc1eac37d174?auto=format&fit=crop&q=80&w=400" alt="Lion"></div>
+        <div class="lens-item"><img src="https://images.unsplash.com/photo-1589825743636-17e3d3a2e4fb?auto=format&fit=crop&q=80&w=400" alt="Zebra"></div>
       </div>
     </div>
   </section>
@@ -322,7 +322,7 @@ export const travel02Html = `
         </div>
       </div>
       <div class="con-visual">
-         <img src="/assets/templates/travel/templates02/hero.jpg" alt="Conservation" style="border-radius: 4px; box-shadow: 0 40px 80px rgba(0,0,0,0.3);">
+         <img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=800" alt="Conservation" style="border-radius: 4px; box-shadow: 0 40px 80px rgba(0,0,0,0.3);">
       </div>
     </div>
   </section>

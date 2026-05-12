@@ -50,7 +50,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       if (!pageDoc) {
         pageDoc = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
       }
-      
+
       // If not found by ID/Token, treat requestedPageId as a potential slug
       if (!pageDoc && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
         const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
@@ -76,7 +76,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
               break;
             }
           }
-          
+
           if (!pageDoc && slugParts.length === 1) {
             const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
             if (p) {
@@ -115,7 +115,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
             }
           }
         }
-        
+
         if (!pageDoc && slugParts.length === 1) {
           pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
           if (pageDoc) {
@@ -309,7 +309,7 @@ exports.getPublicPage = async (req, res, next) => {
  * Uses absolute APP_BASE_URL so it works from any domain (WordPress, custom domain, etc.)
  */
 const buildLeadCaptureScript = (page) => {
-  const apiBaseUrl = (process.env.APP_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org').replace(/\/+$/, '');
+  const apiBaseUrl = (config.api?.baseUrl || process.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
   const pageSlug = page.slug || '';
   const pageId = String(page._id || '');
   const projectId = String(page.projectId || '');
@@ -391,9 +391,8 @@ const buildLeadCaptureScript = (page) => {
           var finalUrl = currentParams ? (tyUrl + separator + currentParams.replace('?', '')) : tyUrl;
           window.location.replace(finalUrl);
         } else {
-          var currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('status','thank-you');
-          window.location.replace(currentUrl.toString());
+          var u = new URL(window.location.href);
+          window.location.replace(u.origin + u.pathname + u.search + '#' + SL + '?status=thank-you');
         }
       }
     })
@@ -470,6 +469,7 @@ const buildLeadCaptureScript = (page) => {
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
 const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
+  const apiBaseUrl = (config.api?.baseUrl || process.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
   const { title, content, seo, metaTitle, metaDescription } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
 
@@ -478,6 +478,19 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
   let finalHtml = aiHtml;
+
+  // ─── FIX RELATIVE /assets/ PATHS → Absolute CDN/API URL ─────────────────
+  // This ensures old saved pages with local /assets/ paths render correctly
+  // on any external domain without needing republishing.
+  finalHtml = finalHtml.replace(/src="\/assets\//g, `src="${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/src='\/assets\//g, `src='${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/url\(\/assets\//g, `url(${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/url\('\/assets\//g, `url('${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/url\("\/assets\//g, `url("${apiBaseUrl}/assets/`);
+  // Also fix old saved content with hardcoded localhost:5000/assets/ → production URL
+  finalHtml = finalHtml.replace(/src="https?:\/\/localhost:\d+\/assets\//g, `src="${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/src='https?:\/\/localhost:\d+\/assets\//g, `src='${apiBaseUrl}/assets/`);
+  finalHtml = finalHtml.replace(/url\(https?:\/\/localhost:\d+\/assets\//g, `url(${apiBaseUrl}/assets/`);
 
   // ─── DYNAMIC REPLACEMENTS: Logo & Branding ──────────────────────────────
   const finalLogo = page.logoUrl || '';
@@ -517,7 +530,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   // ── Thank You Redirect Script ────────────────────────────────────────────
   // Handles Gravity Forms and generic form submission success events
   const thankYouUrl = page.thankYouUrl?.trim() || '';
-  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var url=new URL(window.location.href);url.searchParams.set('status','thank-you');window.location.replace(url.toString().split('#')[0])}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
+  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var u=new URL(window.location.href);window.location.replace(u.origin+u.pathname+u.search+"#"+window.pageSlug+"?status=thank-you")}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
   const encodedTyScript = Buffer.from(rawTyScript).toString('base64');
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
@@ -587,6 +600,31 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
     `<link rel="dns-prefetch" href="//fonts.googleapis.com">`,
     `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`,
+    `<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">`,
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />`,
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />`,
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />`,
+    `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">`,
+    `<style>
+      .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp {
+        font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', 'Material Symbols Sharp', sans-serif;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: 'liga';
+      }
+    </style>`,
+    `<script src="https://unpkg.com/lucide@latest"><\/script>`,
     `<script src="https://cdn.tailwindcss.com"></script>`,
     `<script type="application/ld+json">${JSON.stringify(schemaOrg)}</script>`,
   ].filter(Boolean).join('\n    ');
@@ -646,9 +684,13 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     }
 
     if (/<\/head>/i.test(html)) {
+      // Force inject Base URL for assets
+      if (!html.includes('<base ')) {
+        html = html.replace(/<head>/i, `<head>\n  <base href="${apiBaseUrl}/">`);
+      }
+
       // Force inject SEO and Performance tags
       const extraMeta = `
-    <meta name="robots" content="noindex, nofollow">
     ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : ''}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -656,6 +698,14 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
 
       if (!html.includes('name="robots"')) {
         html = html.replace(/<\/head>/i, `${extraMeta}\n</head>`);
+      }
+
+      // Inject CDN libraries (FA icons + Material Symbols) if missing
+      if (!html.includes('font-awesome') && !html.includes('fontawesome')) {
+        html = html.replace(/<\/head>/i, `  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\n</head>`);
+      }
+      if (!html.includes('Material+Symbols') && !html.includes('material-symbols')) {
+        html = html.replace(/<\/head>/i, `  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />\n</head>`);
       }
 
       // Force inject Tailwind, Fonts, and Branding if missing
@@ -743,6 +793,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     <meta name="dm-page-id" content="${page._id}">
     <meta name="dm-project-id" content="${page.projectId}">
     <meta name="dm-page-slug" content="${page.slug}">
+    <base href="${apiBaseUrl}/">
     ${seoMetaBlock}
     ${brandingStyles}
     ${finalHeaderScript}
@@ -754,6 +805,11 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     ${aiJs ? `<script>${aiJs}</script>` : ''}
     ${leadScript}
     ${finalFooterScript}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.lucide) window.lucide.createIcons();
+      });
+    </script>
 </body>
 </html>`;
 };
@@ -807,6 +863,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const pgSlug = String(req.query.pg || '').trim();
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     const isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
+    const forceRender = req.query.render === 'true';
     let page = null;
 
     // 1. Resolve via ID or Preview Token
@@ -817,7 +874,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
       if (!page) {
         page = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
       }
-      
+
       // If not found by ID/Token, treat requestedPageId as a potential slug
       if (!page && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
         const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
@@ -843,7 +900,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
               break;
             }
           }
-          
+
           if (!page && slugParts.length === 1) {
             const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
             if (p) {
@@ -882,7 +939,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
             }
           }
         }
-        
+
         if (!page && slugParts.length === 1) {
           page = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
           if (page) {
@@ -913,7 +970,59 @@ exports.getPublicPageHTML = async (req, res, next) => {
         urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
       }
 
-      if (!pageSlug) return next(new AppError('Page not found', 404));
+      if (!pageSlug && !forceRender) {
+        // If it's a domain-only hit, check if the domain itself is mapped to a page
+        const domainPage = await Page.findOne({ domain: req.get('host'), status: 'published', isDeleted: { $ne: true } });
+        if (domainPage) {
+          page = domainPage;
+        } else {
+          // Serve a bootstrap script that can resolve hash fragments (e.g. /#testing1234)
+          // without changing the URL (staying on /#testing1234)
+          return res.status(200).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Loading...</title>
+              <style>
+                body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; }
+                .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+              </style>
+              <script>
+                (function() {
+                  var hash = window.location.hash;
+                  if (hash && hash.length > 1) {
+                    var slug = hash.substring(1).split('?')[0];
+                    if (slug) {
+                      // Fetch the actual HTML content for this slug
+                      // We use a query param 'render=true' to tell the server to skip bootstrap
+                      fetch('/' + slug + '?render=true' + window.location.search.replace('?', '&'))
+                        .then(function(r) { 
+                          if (!r.ok) throw new Error('Not found');
+                          return r.text(); 
+                        })
+                        .then(function(html) {
+                          document.open();
+                          document.write(html);
+                          document.close();
+                        })
+                        .catch(function(e) {
+                          document.body.innerHTML = '<div style="text-align:center"><h1>404 - Page Not Found</h1><p>The requested page could not be located.</p></div>';
+                        });
+                      return;
+                    }
+                  }
+                  document.body.innerHTML = '<div style="text-align:center"><h1>404</h1><p>Please provide a page slug in the URL hash (e.g. /#your-page).</p></div>';
+                })();
+              </script>
+            </head>
+            <body>
+              <div class="loader"></div>
+            </body>
+            </html>
+          `);
+        }
+      }
 
       const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
 
