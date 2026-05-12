@@ -28002,3 +28002,11 @@ Require stack:
 [2026-05-12T04:21:36.443Z] [HTTP] GET /api/public/page/sqswqswq 304 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-12T04:21:38.412Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-12T04:21:43.449Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:21:48.483Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:21:53.512Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:21:58.537Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:22:03.572Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:22:08.617Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:22:13.668Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T04:30:29.512Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T04:30:29.523Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
