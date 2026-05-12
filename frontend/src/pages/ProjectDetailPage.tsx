@@ -767,7 +767,8 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const [scriptCopied, setScriptCopied] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const publishUrl = page.publishedUrl || `${window.location.origin}/#/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
+  const baseUrl = project?.websiteUrl || project?.url || window.location.origin;
+  const publishUrl = page.publishedUrl || `${baseUrl.replace(/\/+$/, '')}/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
   const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" async></script>`;
 

@@ -719,8 +719,15 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
         html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
       }
       // Inject AI-generated CSS if not already present
-      if (aiCss && !html.includes(aiCss.substring(0, 20))) {
-        html = html.replace(/<\/head>/i, `  <style>${aiCss}</style>\n</head>`);
+      if (aiCss) {
+        let processedCss = aiCss
+          .replace(/PRIMARY_COLOR_PLACEHOLDER/g, pColor)
+          .replace(/SECONDARY_COLOR_PLACEHOLDER/g, sColor)
+          .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
+          
+        if (!html.includes('id="ai-generated-styles"')) {
+          html = html.replace(/<\/head>/i, `  <style id="ai-generated-styles">${processedCss}</style>\n</head>`);
+        }
       }
       if (finalHeaderScript) {
         html = html.replace(/<\/head>/i, `${finalHeaderScript}\n</head>`);
