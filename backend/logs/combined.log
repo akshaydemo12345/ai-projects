@@ -27328,3 +27328,11 @@ Require stack:
 [2026-05-08T12:00:41.639Z] [INFO] ✅ MongoDB Connected Successfully
 [2026-05-08T12:00:41.648Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
 [2026-05-08T12:00:41.649Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T06:53:42.282Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T06:53:42.314Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T06:53:42.318Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T06:53:43.173Z] [HTTP] OPTIONS /projects/6a018462f8b979c40810ee6e 204 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-12T06:53:43.183Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-12T06:53:43.232Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-12T06:53:43.285Z] [HTTP] GET /projects/6a018462f8b979c40810ee6e 200 69ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-12T06:53:49.858Z] [HTTP] POST /ai/project-suggestions 200 6670ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
