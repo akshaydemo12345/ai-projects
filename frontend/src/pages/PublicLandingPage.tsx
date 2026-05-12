@@ -396,118 +396,134 @@ const PublicLandingPage = () => {
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, SECONDARY_COLOR)
         .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
 
-      const brandingStyles = `
-        <style id="branding-vars-live">
-          :root {
-            --primary: ${BRAND_COLOR} !important;
-            --secondary: ${SECONDARY_COLOR} !important;
-            --accent: ${SECONDARY_COLOR} !important;
-            --gold: ${BRAND_COLOR} !important;
-            --midnight: #0a1128 !important;
-            --ivory: #f8f9fa !important;
-            --ink: #0c4a6e !important;
-            --soft: #ffffff !important;
-            --bg: #1a0f08 !important;
-            --cream: #f4ead5 !important;
-            --muted: #a89580 !important;
-            --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${SECONDARY_COLOR}) !important;
-          }
-          body { 
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            min-height: 100vh;
-            background-color: ${isDark ? '#0a0a0f' : '#ffffff'};
-            color: ${isDark ? '#f8fafc' : '#0f172a'};
-          }
-          
-          /* Forced project-based background matching if user didn't specify */
-          .saas-hero-container, .agency-container, .lead-gen-container, .business-container {
-             background-color: ${isDark ? '#0a0a0f' : '#ffffff'} !important;
-          }
-          
-          /* Guarantee form input visibility overrides */
-          input, textarea, select {
-            color: #0f172a !important;
-            background-color: #f8fafc !important;
-            border: 1px solid #cbd5e1 !important;
-          }
-          input::placeholder, textarea::placeholder {
-            color: #94a3b8 !important;
-          }
-        </style>
+      // Consolidate all CSS for more reliable injection
+      const allStyles = `
+        /* Modern Reset & Base */
+        * { box-sizing: border-box; }
+        html, body { 
+          margin: 0; 
+          padding: 0; 
+          min-height: 100vh; 
+          font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+          overflow-x: hidden;
+          background-color: ${isDark ? '#0a0a0f' : '#ffffff'};
+          color: ${isDark ? '#f8fafc' : '#0f172a'};
+        }
+        
+        /* Branding Variables */
+        :root {
+          --primary: ${BRAND_COLOR};
+          --secondary: ${SECONDARY_COLOR};
+          --accent: ${SECONDARY_COLOR};
+          --gold: ${BRAND_COLOR};
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
+          --button-gradient: linear-gradient(135deg, ${BRAND_COLOR}, ${SECONDARY_COLOR});
+        }
+        
+        /* Forced project-based background matching (fallback only) */
+        .saas-hero-container, .agency-container, .lead-gen-container, .business-container {
+           background-color: ${isDark ? '#0a0a0f' : '#ffffff'};
+        }
+        
+        /* Form Visibility Fixes */
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #f8fafc !important;
+          border: 1px solid #cbd5e1 !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
+        
+        /* User/AI Custom CSS */
+        ${finalCss}
       `;
+
+      const brandingStyles = `<style id="pagecraft-injected-styles">${allStyles}</style>`;
 
       const coreDependencies = `
         <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+          tailwind.config = {
+            theme: {
+              extend: {
+                colors: {
+                  primary: '${BRAND_COLOR}',
+                  secondary: '${SECONDARY_COLOR}',
+                }
+              }
+            }
+          }
+        </script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
         ${brandingStyles}
       `;
 
+      // Clean HTML from any AI-added code blocks if they leaked
+      let cleanHtml = finalHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
+
       // Ensure styles and scripts are injected even into full documents
-      const isFullDoc = finalHtml.toLowerCase().includes('<!doctype') || finalHtml.toLowerCase().includes('<html');
+      const isFullDoc = cleanHtml.toLowerCase().includes('<!doctype') || cleanHtml.toLowerCase().includes('<html');
+
+      let documentToWrite = '';
 
       if (isFullDoc) {
-        const styleTag = (finalCss && finalCss.trim() && !finalHtml.toLowerCase().includes('id="ai-generated-styles"')) 
-          ? `<style id="ai-generated-styles">${finalCss}</style>` 
-          : '';
-          
-        const headContent = styleTag + coreDependencies;
-
-        if (finalHtml.toLowerCase().includes('</head>')) {
-          finalHtml = finalHtml.replace(/<\/head>/i, headContent + '</head>');
-        } else if (finalHtml.toLowerCase().includes('<html')) {
-          finalHtml = finalHtml.replace(/<html[^>]*>/i, (m) => m + '<head>' + headContent + '</head>');
-        } else {
-          finalHtml = '<head>' + headContent + '</head>' + finalHtml;
+        const headContent = coreDependencies;
+        
+        documentToWrite = cleanHtml;
+        
+        // Inject head content
+        if (documentToWrite.toLowerCase().includes('</head>')) {
+          documentToWrite = documentToWrite.replace(/<\/head>/i, headContent + '</head>');
+        } else if (documentToWrite.toLowerCase().includes('<html')) {
+          documentToWrite = documentToWrite.replace(/<html[^>]*>/i, (m) => m + '<head>' + headContent + '</head>');
         }
 
-        // Inject lead capture
-        if (finalHtml.toLowerCase().includes('</body>')) {
-          finalHtml = finalHtml.replace(/<\/body>/i, leadCaptureScript + '</body>');
+        // Inject lead capture and styles
+        const footerContent = `
+          ${leadCaptureScript}
+          <script>
+            // Force Tailwind to process the new content
+            if (window.tailwind) {
+              tailwind.track();
+            }
+          </script>
+        `;
+
+        if (documentToWrite.toLowerCase().includes('</body>')) {
+          documentToWrite = documentToWrite.replace(/<\/body>/i, footerContent + '</body>');
         } else {
-          finalHtml += leadCaptureScript;
+          documentToWrite += footerContent;
         }
       } else {
         // It's a fragment: Wrap it with proper metadata and reset styles
-        // Strip <body> and </body> if they exist to avoid nesting
-        const bodyInner = finalHtml
-          .replace(/<body[^>]*>/i, '')
-          .replace(/<\/body>/i, '');
-
-        finalHtml = `
+        documentToWrite = `
           <!DOCTYPE html>
           <html>
             <head>
               <meta charset="utf-8">
               <title>${meta?.title || 'Landing Page'}</title>
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <meta name="description" content="${targetDesc}">
-              <meta name="robots" content="noindex, nofollow">
-              <link rel="canonical" href="${window.location.href}">
-              <link rel="preconnect" href="https://fonts.googleapis.com">
-              <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-              <link rel="dns-prefetch" href="//fonts.googleapis.com">
-              <base href="${window.location.origin}">
               ${coreDependencies}
-              <style>
-                /* Modern Reset */
-                * { box-sizing: border-box; }
-                body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
-                img { max-width: 100%; height: auto; display: block; }
-                
-                ${finalCss}
-              </style>
             </head>
             <body>
-              ${bodyInner}
+              ${cleanHtml}
               <script>${aiJs}</script>
               ${leadCaptureScript}
+              <script>
+                if (window.tailwind) {
+                  tailwind.track();
+                }
+              </script>
             </body>
           </html>
         `;
@@ -531,9 +547,20 @@ const PublicLandingPage = () => {
                   <meta charset="utf-8">
                   <title>Thank You | ${projectName}</title>
                   ${coreDependencies}
-                  <style>${savedThankYouCss}</style>
+                  <style>
+                    * { box-sizing: border-box; }
+                    html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; }
+                    ${savedThankYouCss}
+                  </style>
                 </head>
-                <body>${finalThankYouHtml}</body>
+                <body>
+                  ${finalThankYouHtml}
+                  <script>
+                    if (window.tailwind) {
+                      tailwind.track();
+                    }
+                  </script>
+                </body>
               </html>
              `;
           }
@@ -600,7 +627,7 @@ const PublicLandingPage = () => {
       const doc = iframeRef.current?.contentDocument;
       if (doc) {
         doc.open();
-        doc.write(finalHtml);
+        doc.write(documentToWrite);
         doc.close();
       }
     }

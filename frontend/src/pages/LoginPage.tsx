@@ -49,11 +49,8 @@ const LoginPage = () => {
       {/* Left Panel - Purple Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(260,80%,55%)] p-12 text-white relative overflow-hidden">
         <div>
-          <div className="flex items-center gap-2 mb-16">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold">Buildify</span>
+          <div className="mb-16">
+            <img src="/assets/Buildify-logo.png" alt="Buildify" className="h-16 w-auto" />
           </div>
 
           <h1 className="text-4xl font-bold leading-tight mb-4">
