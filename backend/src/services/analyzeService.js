@@ -841,7 +841,7 @@ const extractProjectData = async (url) => {
 
     const bulkMedia = extractBulkMedia($, normalizedUrl);
     const structuredData = extractStructuredData($);
-    
+
     // Add form fields to scrapedData if not already present
     if (structuredData.forms && structuredData.forms.length > 0) {
       structuredData.forms = structuredData.forms;
@@ -1488,17 +1488,17 @@ const extractStructuredData = ($) => {
   $('form').each((i, formEl) => {
     const $form = $(formEl);
     const fields = [];
-    
+
     $form.find('input, select, textarea').each((j, fieldEl) => {
       const $field = $(fieldEl);
       const type = $field.attr('type') || $field.prop('tagName').toLowerCase();
       const name = $field.attr('name') || '';
       const placeholder = $field.attr('placeholder') || '';
-      const label = $field.closest('label').text().trim() || 
-                   $field.prev('label').text().trim() || 
-                   $field.parent().find('label').first().text().trim() || '';
+      const label = $field.closest('label').text().trim() ||
+        $field.prev('label').text().trim() ||
+        $field.parent().find('label').first().text().trim() || '';
       const required = $field.attr('required') !== undefined;
-      
+
       if (type !== 'hidden' && type !== 'submit' && type !== 'button') {
         fields.push({
           type,
@@ -1509,7 +1509,7 @@ const extractStructuredData = ($) => {
         });
       }
     });
-    
+
     if (fields.length > 0) {
       data.forms.push({
         id: $form.attr('id') || `form_${i}`,

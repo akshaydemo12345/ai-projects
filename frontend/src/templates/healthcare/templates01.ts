@@ -584,7 +584,7 @@ export const healthcare01Html = `
 <!-- Hero Section -->
 <section class="hero-wrapper">
 <div class="hero-bg">
-<img data-alt="High-quality professional dental clinic interior background" src="/assets/templates/healthcare/templates01/hero-image.png"/>
+<img data-alt="High-quality professional dental clinic interior background" src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=1600" alt="Dental Clinic Interior"/>
 <div class="hero-overlay"></div>
 </div>
 <div class="container hero-content">
@@ -712,7 +712,7 @@ export const healthcare01Html = `
 <div class="container about-grid">
 <div class="about-img-wrapper">
 <div class="about-img-box">
-<img data-alt="portrait of a smiling female dentist in a white lab coat standing in a high-tech dental office" src="/assets/templates/healthcare/templates01/dentist.png"/>
+<img data-alt="portrait of a smiling female dentist in a white lab coat standing in a high-tech dental office" src="https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?auto=format&fit=crop&q=80&w=800" alt="Female Dentist"/>
 </div>
 <div class="about-badge high-elevation">
 <div class="badge-top">
@@ -805,7 +805,7 @@ export const healthcare01Html = `
 <div class="testimonial-card low-elevation">
 <p class="testimonial-quote text-secondary">"The best dental experience I've ever had. The technology they use is mind-blowing, and I didn't feel a thing during my root canal."</p>
 <div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a smiling young woman with long dark hair in a bright outdoor setting" src="/assets/templates/healthcare/templates01/client-01.png"/>
+<img class="testimonial-img" data-alt="headshot of a smiling young woman with long dark hair in a bright outdoor setting" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Sarah Jenkins"/>
 <div>
 <h5 class="testimonial-name">Sarah Jenkins</h5>
 <p class="font-caption text-secondary">Patient for 3 Years</p>
@@ -815,7 +815,7 @@ export const healthcare01Html = `
 <div class="testimonial-card low-elevation">
 <p class="testimonial-quote text-secondary">"Invisalign at Lumina was so seamless. My teeth look perfect now and the team was incredibly supportive throughout the process."</p>
 <div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a professional man in a blue shirt smiling confidently" src="/assets/templates/healthcare/templates01/client-02.png"/>
+<img class="testimonial-img" data-alt="headshot of a professional man in a blue shirt smiling confidently" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" alt="Michael Chen"/>
 <div>
 <h5 class="testimonial-name">Michael Chen</h5>
 <p class="font-caption text-secondary">Invisalign Patient</p>
@@ -825,7 +825,7 @@ export const healthcare01Html = `
 <div class="testimonial-card low-elevation">
 <p class="testimonial-quote text-secondary">"I used to have dental anxiety, but the staff here made me feel so welcome and relaxed. Highly recommend to everyone."</p>
 <div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a mature woman with a warm and friendly smile" src="/assets/templates/healthcare/templates01/client-03.png"/>
+<img class="testimonial-img" data-alt="headshot of a mature woman with a warm and friendly smile" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200" alt="Linda Ross"/>
 <div>
 <h5 class="testimonial-name">Linda Ross</h5>
 <p class="font-caption text-secondary">General Patient</p>
