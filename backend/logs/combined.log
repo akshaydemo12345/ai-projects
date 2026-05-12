@@ -28178,3 +28178,154 @@ Require stack:
 [2026-05-12T06:40:31.341Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-12T06:40:36.361Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-12T06:40:41.379Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:23:06.513Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:06.538Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:23:06.568Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:06.618Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:06.674Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:23:07.601Z] [ERROR] UNCAUGHT EXCEPTION {"message":"listen EADDRINUSE: address already in use 0.0.0.0:5000","stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5000\n    at Server.setupListenHandle [as _listen2] (node:net:1937:16)\n    at listenInCluster (node:net:1994:12)\n    at node:net:2203:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"}
+[2026-05-12T07:23:17.050Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 58ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:23:18.215Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:23:18.257Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 49ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:23:32.750Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:32.765Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:23:32.789Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:32.813Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:23:32.826Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:23:32.842Z] [ERROR] UNCAUGHT EXCEPTION {"message":"listen EADDRINUSE: address already in use 0.0.0.0:5000","stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5000\n    at Server.setupListenHandle [as _listen2] (node:net:1937:16)\n    at listenInCluster (node:net:1994:12)\n    at node:net:2203:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"}
+[2026-05-12T07:26:27.918Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:26:27.930Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:26:39.328Z] [HTTP] GET /api/public/page/sqswqswq?token=8a7f7d2f1a9b73f0a3e814bf57b0bbe2 304 51ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:40.717Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:26:40.765Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 70ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:40.775Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 63ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:40.898Z] [HTTP] GET /api/public/page/sqswqswq?token=8a7f7d2f1a9b73f0a3e814bf57b0bbe2 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:41.185Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:26:41.204Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:47.503Z] [INFO] [AI] Raw response received. Length: 588 characters. Usage: {"input_tokens":315,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":111,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:26:47.507Z] [HTTP] POST /ai/project-suggestions 200 6334ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:47.886Z] [INFO] [AI] Raw response received. Length: 527 characters. Usage: {"input_tokens":315,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":96,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:26:47.890Z] [HTTP] POST /ai/project-suggestions 200 7206ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:50.002Z] [HTTP] POST /ai/generate-description 200 6829ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:26:52.465Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:27:12.056Z] [HTTP] GET /api/public/page/sqswqswq?token=8a7f7d2f1a9b73f0a3e814bf57b0bbe2 304 40ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:27:17.945Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:27:17.976Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 50ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:27:26.117Z] [INFO] [AI] Raw response received. Length: 679 characters. Usage: {"input_tokens":315,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":124,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:27:26.119Z] [HTTP] POST /ai/project-suggestions 200 8196ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:27:28.680Z] [INFO] [AI] Raw response received. Length: 11250 characters. Usage: {"input_tokens":4257,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":3525,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:27:28.702Z] [HTTP] POST /ai/generate 200 36244ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:27:28.728Z] [INFO] Creating page for project 6a02a406b44aeff14b05ba8d {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-12T07:27:28.766Z] [INFO] Starting AI generation for page 6a02d660ca26bc4947c6d863 (Template: false)
+[2026-05-12T07:27:28.767Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:28:40.223Z] [INFO] [AI] Raw response received. Length: 21616 characters. Usage: {"input_tokens":1211,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":8000,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:28:40.273Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a02d660ca26bc4947c6d863
+[2026-05-12T07:28:40.274Z] [INFO] 📝 [SCHEMA] Syncing 8 fields for page 6a02d660ca26bc4947c6d863 (swswsw)
+[2026-05-12T07:28:40.284Z] [HTTP] POST /projects/6a02a406b44aeff14b05ba8d/pages 201 71567ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:40.354Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 49ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:41.061Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d/pages/6a02d660ca26bc4947c6d863 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:41.074Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 51ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:41.111Z] [HTTP] GET /api/thank-you/layouts 304 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:41.115Z] [HTTP] GET /api/thank-you/config/6a02d660ca26bc4947c6d863 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:53.865Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a02d660ca26bc4947c6d863
+[2026-05-12T07:28:53.865Z] [INFO] 📝 [SCHEMA] Syncing 8 fields for page 6a02d660ca26bc4947c6d863 (swswsw)
+[2026-05-12T07:28:53.872Z] [HTTP] PUT /projects/6a02a406b44aeff14b05ba8d/pages/6a02d660ca26bc4947c6d863 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:53.893Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d/pages/6a02d660ca26bc4947c6d863 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:28:53.921Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:29:39.225Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:29:39.234Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:29:39.784Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 304 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:29:41.666Z] [HTTP] GET /api/public/page/swswsw 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:29:46.355Z] [INFO] [AI] Raw response received. Length: 591 characters. Usage: {"input_tokens":320,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":102,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:29:46.356Z] [HTTP] POST /ai/project-suggestions 200 7146ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:29:58.002Z] [HTTP] GET /projects/6a02a406b44aeff14b05ba8d 200 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:01.345Z] [HTTP] GET /projects 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:03.003Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:04.262Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:30:04.280Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:08.312Z] [INFO] [AI] Raw response received. Length: 600 characters. Usage: {"input_tokens":329,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":135,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:30:08.313Z] [HTTP] POST /ai/project-suggestions 200 4070ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:12.948Z] [HTTP] POST /ai/generate-description 200 6785ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:30:15.154Z] [INFO] Creating page for project 6a02c9abf11f5197d117403c {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-12T07:30:15.183Z] [INFO] Starting AI generation for page 6a02d707ca26bc4947c6d9b3 (Template: false)
+[2026-05-12T07:30:15.184Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:31:26.933Z] [INFO] [AI] Raw response received. Length: 22525 characters. Usage: {"input_tokens":1329,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":6624,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:31:26.993Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a02d707ca26bc4947c6d9b3
+[2026-05-12T07:31:26.993Z] [INFO] 📝 [SCHEMA] Syncing 7 fields for page 6a02d707ca26bc4947c6d9b3 (xdwasdwqswq)
+[2026-05-12T07:31:26.999Z] [HTTP] POST /projects/6a02c9abf11f5197d117403c/pages 201 71853ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:31:27.051Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:31:27.731Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d707ca26bc4947c6d9b3 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:31:27.751Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 60ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:31:27.777Z] [HTTP] GET /api/thank-you/config/6a02d707ca26bc4947c6d9b3 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:31:27.781Z] [HTTP] GET /api/thank-you/layouts 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:32:05.879Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:32:05.883Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:32:05.900Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:32:05.902Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:32:05.908Z] [ERROR] UNCAUGHT EXCEPTION {"message":"listen EADDRINUSE: address already in use 0.0.0.0:5000","stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5000\n    at Server.setupListenHandle [as _listen2] (node:net:1937:16)\n    at listenInCluster (node:net:1994:12)\n    at node:net:2203:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"}
+[2026-05-12T07:32:54.326Z] [HTTP] GET /api/heartbeat 200 8ms {"ip":"127.0.0.1","userAgent":"curl/7.68.0"}
+[2026-05-12T07:34:57.634Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:34:57.690Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 68ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:34:59.637Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:34:59.665Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:35:04.263Z] [INFO] [AI] Raw response received. Length: 519 characters. Usage: {"input_tokens":338,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":111,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:35:04.266Z] [HTTP] POST /ai/project-suggestions 200 6660ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:35:04.267Z] [INFO] [AI] Raw response received. Length: 536 characters. Usage: {"input_tokens":338,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":110,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:35:04.270Z] [HTTP] POST /ai/project-suggestions 200 4652ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:35:12.299Z] [HTTP] POST /ai/generate-description 200 9569ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:35:19.332Z] [INFO] Creating page for project 6a02c9abf11f5197d117403c {"userId":"69f2e0a920ff876994ea3f1b"}
+[2026-05-12T07:35:19.366Z] [INFO] Starting AI generation for page 6a02d837a546ca4cea661d26 (Template: false)
+[2026-05-12T07:35:19.367Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:37:22.191Z] [INFO] [AI] Raw response received. Length: 40945 characters. Usage: {"input_tokens":1657,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":11158,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:37:22.249Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a02d837a546ca4cea661d26
+[2026-05-12T07:37:22.249Z] [INFO] 📝 [SCHEMA] Syncing 7 fields for page 6a02d837a546ca4cea661d26 (xdewderder)
+[2026-05-12T07:37:22.256Z] [HTTP] POST /projects/6a02c9abf11f5197d117403c/pages 201 122927ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:22.356Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 73ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:23.049Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:23.067Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 57ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:23.087Z] [HTTP] GET /api/thank-you/config/6a02d837a546ca4cea661d26 200 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:23.090Z] [HTTP] GET /api/thank-you/layouts 304 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:48.821Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-12T07:37:48.844Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:49.445Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:53.419Z] [INFO] [AI] Raw response received. Length: 635 characters. Usage: {"input_tokens":344,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":132,"service_tier":"standard","inference_geo":"not_available"}
+[2026-05-12T07:37:53.421Z] [HTTP] POST /ai/project-suggestions 200 4608ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:54.491Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:57.104Z] [HTTP] GET /api/thank-you/layouts 304 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:57.112Z] [HTTP] GET /api/thank-you/config/6a02d837a546ca4cea661d26 304 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:57.130Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:37:57.146Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 42ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:00.116Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a02d837a546ca4cea661d26
+[2026-05-12T07:38:00.116Z] [INFO] 📝 [SCHEMA] Syncing 7 fields for page 6a02d837a546ca4cea661d26 (xdewderder)
+[2026-05-12T07:38:00.119Z] [HTTP] PUT /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 200 43ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:00.144Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:00.187Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 50ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:02.840Z] [HTTP] GET /api/public/page/xdewderder?token=518e490a4e6afddbed80e660149c1b85 200 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:23.146Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:38:23.163Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 44ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:48:45.067Z] [ERROR] POST /ai/editor-chat → editorChatModify is not a function {"statusCode":500,"stack":"TypeError: editorChatModify is not a function\n    at exports.editorChat (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/src/controllers/aiController.js:423:26)\n    at Layer.handle [as handle_request] (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/node_modules/express/lib/router/layer.js:95:5)\n    at next (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/node_modules/express/lib/router/route.js:149:13)\n    at /var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/src/middleware/rateLimiter.js:35:14\n    at Layer.handle [as handle_request] (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/node_modules/express/lib/router/layer.js:95:5)\n    at next (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/node_modules/express/lib/router/route.js:149:13)\n    at protect (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/src/middleware/authMiddleware.js:27:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+[2026-05-12T07:48:45.068Z] [ERROR] POST /ai/editor-chat 500 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:50:34.860Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:50:34.890Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:50:34.894Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:50:34.892Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:50:34.939Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:51:23.697Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:51:23.724Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:51:23.726Z] [INFO] 🚀 Server running on port 5000
+[2026-05-12T07:51:23.779Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-12T07:51:23.805Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-12T07:52:01.251Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 304 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:01.277Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 81ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:01.320Z] [HTTP] GET /api/thank-you/layouts 304 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:01.329Z] [HTTP] GET /api/thank-you/config/6a02d837a546ca4cea661d26 304 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:11.295Z] [INFO] [AI] Attempting OpenAI model: gpt-4o-mini
+[2026-05-12T07:52:17.095Z] [HTTP] POST /ai/editor-chat 200 5807ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:36.404Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c/pages/6a02d837a546ca4cea661d26 304 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:36.431Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 304 55ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:39.730Z] [HTTP] GET /api/thank-you/config/6a02d837a546ca4cea661d26 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:39.733Z] [HTTP] GET /api/thank-you/layouts 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:40.774Z] [INFO] Thank You config updated for page 6a02d837a546ca4cea661d26 {"userId":"69f2e0a920ff876994ea3f1b","layout":"healthcare"}
+[2026-05-12T07:52:40.776Z] [HTTP] PUT /api/thank-you/config/6a02d837a546ca4cea661d26 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:43.113Z] [HTTP] GET /projects/6a02c9abf11f5197d117403c 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-12T07:52:43.616Z] [HTTP] GET /projects 200 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
