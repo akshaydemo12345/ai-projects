@@ -3,11 +3,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 
-/**
- * =========================================
- * PREMIUM CLAUDE MODELS
- * =========================================
- */
 const CLAUDE_MODEL_CANDIDATES = [
   'claude-sonnet-4-20250514',
   'claude-3-5-sonnet-latest',
@@ -29,44 +24,44 @@ Generate a COMPLETE premium landing page with a UNIQUE layout every single time.
 DESIGN SEED:
 ${seed}
 
-CRITICAL RULES:
-- NEVER generate duplicate layouts.
-- Every page MUST feel premium like Stripe, Linear, Framer, Apple.
-- Use different section flow every generation.
-- Use asymmetric layouts.
+CRITICAL DESIGN RULES:
+- NEVER repeat layouts from previous generations.
+- Every generation MUST feel visually different.
+- Use Stripe, Linear, Apple, Framer, Vercel inspired design quality.
+- Use cinematic spacing.
 - Use layered gradients.
 - Use glassmorphism.
 - Use floating cards.
+- Use asymmetrical layouts.
 - Use alternating dark/light sections.
 - Use premium typography.
-- Use deep-scroll storytelling layouts.
+- Use deep-scroll storytelling sections.
 - Use modern SaaS visuals.
-- Use Bento Grid sections sometimes.
-- Use Split Hero sometimes.
-- Use Timeline Flow sometimes.
-- Use Card Mosaic layouts sometimes.
+- Use Bento Grid layouts.
+- Use Card Mosaic layouts.
+- Use Timeline Flow layouts.
+- Use editorial layouts.
+- Add visual depth everywhere.
+- Every section must feel premium.
+- Hero section must feel award-winning.
 
 MANDATORY:
 - NO NAVBAR LINKS
-- TOP HEADER MUST CONTAIN ONLY LOGO
-
-- Logo MUST use this exact HTML:
-<img src="{{LOGO_URL}}" alt="Logo" class="h-12 w-auto object-contain">
-
-- Logo MUST appear at top-left.
-- Logo MUST be visible on both dark and light backgrounds.
-- NEVER remove or modify {{LOGO_URL}}
-
+- ONLY LOGO
 - HERO SECTION REQUIRED
 - LEAD FORM REQUIRED
 - TESTIMONIALS REQUIRED
 - FAQ REQUIRED
 - FOOTER REQUIRED
-- MINIMUM 8 SECTIONS
+- MINIMUM 10 SECTIONS
 - FULL PAGE REQUIRED
 - NEVER STOP EARLY
 
-IMAGE RULES:
+LOGO RULE:
+Use:
+<img src="{{LOGO_URL}}" alt="Logo" class="h-10 w-auto">
+
+IMAGE RULE:
 Use:
 https://picsum.photos/seed/[keyword]/1200/800
 
@@ -77,17 +72,9 @@ var(--secondary)
 
 TYPOGRAPHY:
 - H1 = text-6xl to text-7xl
-- modern spacing
-- premium whitespace
-
-TECH STACK:
-- TailwindCSS CDN
-- Responsive Design
-- Modern Animations
-- Mobile First
-- Premium spacing
-- Glassmorphism cards
-- Smooth hover effects
+- Large headings
+- Premium whitespace
+- Strong hierarchy
 
 OUTPUT:
 RETURN ONLY:
@@ -121,39 +108,34 @@ ${input.aiPrompt}
 CTA:
 ${input.ctaText || 'Get Started'}
 
-LOGO URL:
-{{LOGO_URL}}
-
 PRIMARY COLOR:
 ${input.primaryColor || '#7c3aed'}
 
 SECONDARY COLOR:
 ${input.secondaryColor || '#6366f1'}
 
+LOGO:
+{{LOGO_URL}}
+
 MANDATORY SECTIONS:
-1. Header with Logo
-2. Hero
+1. Hero
+2. Brand Banner
 3. Lead Form
 4. Features
 5. Benefits
-6. Testimonials
+6. Process
 7. Stats
-8. FAQ
-9. CTA Banner
-10. Footer
+8. Testimonials
+9. FAQ
+10. CTA
+11. Footer
 
 IMPORTANT:
+- Use modern premium layouts.
+- Use real conversion-focused copy.
+- Use unique layouts.
 - Form must be visible.
-- Use real content.
-- Use modern premium layout.
-- Use unique layout.
 - Complete FULL page.
-- Make page feel ultra premium.
-- Add premium cards.
-- Add gradient backgrounds.
-- Add hover animations.
-- Add glassmorphism.
-- Add deep scroll sections.
 `;
 };
 
@@ -162,7 +144,11 @@ IMPORTANT:
  * COST CALCULATOR
  * =========================================
  */
-const calculateCost = (model, inputTokens, outputTokens) => {
+const calculateCost = (
+  model,
+  inputTokens,
+  outputTokens
+) => {
 
   const pricing = {
     'claude-sonnet': {
@@ -232,7 +218,10 @@ const cleanHTML = (raw) => {
  * PROCESS RESULT
  * =========================================
  */
-const processResult = (raw, logoUrl) => {
+const processResult = (
+  raw,
+  logoUrl
+) => {
 
   let clean = cleanHTML(raw);
 
@@ -251,9 +240,10 @@ const processResult = (raw, logoUrl) => {
     finalLogo
   );
 
-  const titleMatch = clean.match(
-    /<title>(.*?)<\/title>/i
-  );
+  const titleMatch =
+    clean.match(
+      /<title>(.*?)<\/title>/i
+    );
 
   const title =
     titleMatch
@@ -295,9 +285,10 @@ const callAI = async (
     );
   }
 
-  const anthropic = new Anthropic({
-    apiKey: anthropicKey
-  });
+  const anthropic =
+    new Anthropic({
+      apiKey: anthropicKey
+    });
 
   let lastError = null;
 
@@ -314,7 +305,7 @@ const callAI = async (
 
           model,
 
-          max_tokens: 20000,
+          max_tokens: 16000,
 
           temperature: 1,
 
