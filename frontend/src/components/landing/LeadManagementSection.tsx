@@ -35,7 +35,7 @@ const features = [
 
 const LeadManagementSection = () => {
   return (
-    <section id="lead-management" className="relative py-32 bg-gradient-to-b from-white via-white to-slate-50">
+    <section id="lead-management" className="relative py-32 bg-gradient-to-b from-white via-white to-slate-50 overflow-hidden">
       {/* Decorative purple background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/8 rounded-full blur-3xl"></div>
