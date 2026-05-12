@@ -107,7 +107,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 .hero-bg-image {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('/assets/templates/healthcare/templates03/hero.png');
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600');
   background-size: cover;
   background-position: center;
   animation: slowZoom 20s infinite alternate linear;
@@ -565,13 +565,14 @@ export const healthcare03Html = `
       </div>
     </div>
     <div class="booking-inputs">
+      <form class="booking-inputs" style="display:contents;">
       <div class="input-item">
         <label>Preferred Date</label>
-        <input type="date" placeholder="Select Date">
+        <input type="date" name="preferred_date" placeholder="Select Date">
       </div>
       <div class="input-item">
         <label>Choose Service</label>
-        <select>
+        <select name="service">
           <option>General Checkup</option>
           <option>Cardiology</option>
           <option>Dental Care</option>
@@ -580,9 +581,10 @@ export const healthcare03Html = `
       </div>
       <div class="input-item">
         <label>Phone Number</label>
-        <input type="tel" placeholder="Enter Number">
+        <input type="tel" name="phone" placeholder="Enter Number">
       </div>
-      <button type="button" class="btn-booking-now">BOOK NOW</button>
+      <button type="submit" class="btn-booking-now">BOOK NOW</button>
+      </form>
     </div>
   </div>
 </section>
@@ -614,8 +616,8 @@ export const healthcare03Html = `
 
 <section class="section-padding container about-03" id="about">
   <div class="about-imgs">
-    <img src="/assets/templates/healthcare/templates03/about-main.png" alt="Doctor" class="img-main">
-    <img src="/assets/templates/healthcare/templates03/about-sub.png" alt="Patient" class="img-sub">
+    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="Doctor" class="img-main">
+    <img src="https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500" alt="Patient" class="img-sub">
   </div>
   <div class="about-text-03">
     <h2>Our Quality System Is Ready To <span class="text-primary">Help You!</span></h2>
@@ -676,7 +678,7 @@ export const healthcare03Html = `
     <div class="test-card-03">
       <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
       <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="/assets/templates/healthcare/templates03/patient-1.png" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
         <div>
           <h4>Sarah Johnson</h4>
           <span style="font-size:0.8rem; color:var(--text-light);">Cardiac Patient</span>
@@ -687,7 +689,7 @@ export const healthcare03Html = `
     <div class="test-card-03">
       <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
       <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="/assets/templates/healthcare/templates03/patient-2.png" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
         <div>
           <h4>Mark Wilson</h4>
           <span style="font-size:0.8rem; color:var(--text-light);">General Wellness</span>
@@ -698,7 +700,7 @@ export const healthcare03Html = `
     <div class="test-card-03">
       <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
       <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="/assets/templates/healthcare/templates03/patient-3.png" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
+        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
         <div>
           <h4>Emily Davis</h4>
           <span style="font-size:0.8rem; color:var(--text-light);">Dental Care</span>
@@ -717,7 +719,7 @@ export const healthcare03Html = `
   <div class="doctors-grid-03">
     <div class="doctor-card-03">
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates03/doctor-1.png" alt="Doctor">
+        <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=400" alt="Doctor">
       </div>
       <h4>Dr. James Wilson</h4>
       <span>Cardiology Specialist</span>
@@ -728,7 +730,7 @@ export const healthcare03Html = `
     </div>
     <div class="doctor-card-03">
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates03/doctor-2.png" alt="Doctor">
+        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=400" alt="Doctor">
       </div>
       <h4>Dr. Emily Brown</h4>
       <span>Neurology Expert</span>
@@ -739,7 +741,7 @@ export const healthcare03Html = `
     </div>
     <div class="doctor-card-03">
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates03/doctor-3.png" alt="Doctor">
+        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400" alt="Doctor">
       </div>
       <h4>Dr. Michael Chen</h4>
       <span>Dental Surgeon</span>
@@ -755,10 +757,10 @@ export const healthcare03Html = `
   <div class="faq-03-grid">
     <div class="faq-high-tech">
       <div class="faq-img-1">
-        <img src="/assets/templates/healthcare/templates03/faq-tech.png" alt="Technology">
+        <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800" alt="Technology">
       </div>
       <div class="faq-img-2">
-        <img src="/assets/templates/healthcare/templates03/about-sub.png" alt="Specialist">
+        <img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&q=80&w=500" alt="Specialist">
       </div>
     </div>
     <div class="faq-content-03">

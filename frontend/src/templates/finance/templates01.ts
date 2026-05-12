@@ -215,7 +215,7 @@ export const finance01Html = `
       </div>
       <div class="hero-img-box">
         <div class="hero-img">
-          <img src="/assets/templates/finance/templates01/hero-image.jpeg" alt="Global Business">
+          <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800" alt="Global Business">
         </div>
         <div class="hero-badge">
            <div class="icon"><i class="fa-solid fa-headset"></i></div>
@@ -230,15 +230,15 @@ export const finance01Html = `
     <form class="form-bar">
       <div class="form-group">
         <label>Full Name</label>
-        <input type="text" placeholder="John Carter">
+        <input type="text" name="full_name" placeholder="John Carter">
       </div>
       <div class="form-group">
         <label>Email Address</label>
-        <input type="email" placeholder="you@company.com">
+        <input type="email" name="email_address" placeholder="you@company.com">
       </div>
       <div class="form-group">
         <label>Phone Number</label>
-        <input type="tel" placeholder="+1 (555) 000-0000">
+        <input type="tel" name="phone" placeholder="+1 (555) 000-0000">
       </div>
       <button type="submit" class="btn-submit">Get Started</button>
     </form>
@@ -249,7 +249,7 @@ export const finance01Html = `
     <div class="container about-grid">
       <div class="about-visual">
         <div class="about-img-wrap">
-          <img src="/assets/templates/finance/templates01/our-mission.jpeg" alt="Finance Expert">
+          <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=600" alt="Finance Expert">
         </div>
         <div class="about-stats-badge">
           <h4>6,561+</h4>
@@ -313,7 +313,7 @@ export const finance01Html = `
   <section class="why">
     <div class="container why-grid">
       <div class="why-img-box">
-        <img src="/assets/templates/finance/templates01/Service-Growth.jpeg" alt="Strategic Partnership">
+        <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&q=80&w=600" alt="Strategic Partnership">
       </div>
       <div class="why-text">
         <span style="color: #2a58e8; font-weight: 800;">WHY CHOOSE US</span>
@@ -415,10 +415,10 @@ export const finance01Html = `
       <span>GET IN TOUCH</span>
       <h2 style="margin-top: 1.5rem;">Ready to Talk Numbers?</h2>
       <form class="contact-form">
-        <input type="text" placeholder="Jane Doe">
-        <input type="email" placeholder="jane@company.com">
-        <input type="tel" placeholder="+1 (555) 000-0000" class="form-full">
-        <textarea placeholder="Tell us about your business..." rows="5" class="form-full"></textarea>
+        <input type="text" name="full_name" placeholder="Jane Doe">
+        <input type="email" name="email_address" placeholder="jane@company.com">
+        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="form-full">
+        <textarea name="message" placeholder="Tell us about your business..." rows="5" class="form-full"></textarea>
         <div class="form-full" style="text-align: center;">
            <button type="submit" class="btn-send">Send Now</button>
         </div>

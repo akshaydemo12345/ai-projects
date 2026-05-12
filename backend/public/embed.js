@@ -24,15 +24,15 @@
   // PRIORITY: URL (Query > Hash) > Script Attributes > URL Path
   // This enables dynamic routing via URL even if a data-page is set on the script tag.
   const page = qPage || hashPage || attrPageId || attrPage || pathPage;
-  
+
   console.log('💎 [SDK] Resolved Slug:', page);
-  
+
   // Re-initialize on hash change to support SPA-like navigation
   window.addEventListener('hashchange', () => {
     console.log('🔄 [SDK] Hash changed, reloading for routing...');
     window.location.reload();
   });
-  
+
   const apiBase = url.origin;
 
   function buildLandingUrl() {
@@ -71,14 +71,14 @@
           sessionStorage.setItem('dm_' + key, value);
         }
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function cacheReferer() {
     try {
       const ref = document.referrer;
       if (ref) sessionStorage.setItem('dm_referer', ref);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function getUTMParameters() {
@@ -92,18 +92,18 @@
         const value = query || stored;
         if (value) utms[key] = value;
       });
-    } catch (e) {}
+    } catch (e) { }
     return utms;
   }
 
   cacheUtmParameters();
   cacheReferer();
 
-  console.log('🚀 PageCraft AI: Initializing...', { 
-    detectedPage: page, 
+  console.log('🚀 PageCraft AI: Initializing...', {
+    detectedPage: page,
     source: qPage ? 'URL Query' : attrPage ? 'Data Attribute' : hashPage ? 'Hash' : pathPage ? 'URL Path' : 'None',
     token: token ? 'Provided' : 'Missing',
-    href: window.location.href 
+    href: window.location.href
   });
 
   if (!token) {
@@ -120,7 +120,10 @@
     try {
       console.log('PageCraft AI: Loading page...', page);
       const searchParams = new URLSearchParams(window.location.search);
-      const isThankYou = searchParams.get('status') === 'thank-you' || window.location.pathname.replace(/\/+$/, '').endsWith('/thank-you');
+      const hashRaw = window.location.hash.replace(/^#+\/*/, '');
+      const isThankYou = searchParams.get('status') === 'thank-you' ||
+        hashRaw.includes('status=thank-you') ||
+        window.location.pathname.replace(/\/+$/, '').endsWith('/thank-you');
 
       // We use the public endpoint that returns the rendered HTML or at least the raw data
       const endpoint = /^[0-9a-fA-F]{24}$/.test(String(page || ''))
@@ -169,10 +172,24 @@
       }
 
       const html = typeof content === 'string' ? content : (content?.fullHtml || '');
-      
+
       // ─── RESOLVE THANK YOU URL ────────────────────────────────────────
       // Priority: page.thankYouUrl (custom URL set in page settings) > default embed thank-you
       const customThankYouUrl = result.thankYouUrl || (result.meta && result.meta.thankYouUrl) || '';
+
+      // Branding fallback
+      const pColor = result.primaryColor || '#7c3aed';
+      const sColor = result.secondaryColor || '#6366f1';
+      const detectDark = (css.includes('#0f172a') || html.includes('bg-slate-950') || html.includes('bg-[#0f172a]'));
+      const finalLogo = result.logoUrl || '';
+
+      let processedHtml = html;
+      if (finalLogo) {
+        processedHtml = processedHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
+        processedHtml = processedHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
+        processedHtml = processedHtml.replace(/\{\{LOGO_URL\}\}/gi, finalLogo);
+        processedHtml = processedHtml.replace(/\{\{logoUrl\}\}/gi, finalLogo);
+      }
 
       // Clean the entire document for a pure landing page experience
       document.open();
@@ -182,12 +199,55 @@
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <base href="${apiBase}/">
           <title>${title}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+          <script src="https://unpkg.com/lucide@latest"><\/script>
           <style>
             :root {
-              --primary: ${result.primaryColor || '#7c3aed'};
-              --secondary: ${result.secondaryColor || '#6366f1'};
-              --accent: ${result.accentColor || result.secondaryColor || '#6366f1'};
+              --primary: ${pColor};
+              --secondary: ${sColor};
+              --accent: ${sColor};
+              --button-gradient: linear-gradient(135deg, ${pColor}, ${sColor});
+            }
+            body { 
+              background-color: ${detectDark ? '#0f172a' : '#ffffff'}; 
+              color: ${detectDark ? '#f8fafc' : '#0f172a'}; 
+              margin: 0; 
+              overflow-x: hidden;
+            }
+            /* Guarantee form input visibility overrides */
+            input, textarea, select {
+              color: #0f172a !important;
+              background-color: #f8fafc !important;
+              border: 1px solid #cbd5e1 !important;
+            }
+            input::placeholder, textarea::placeholder {
+              color: #94a3b8 !important;
+            }
+            .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp {
+              font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', 'Material Symbols Sharp', sans-serif;
+              font-weight: normal;
+              font-style: normal;
+              font-size: 24px;
+              line-height: 1;
+              letter-spacing: normal;
+              text-transform: none;
+              display: inline-block;
+              white-space: nowrap;
+              word-wrap: normal;
+              direction: ltr;
+              -webkit-font-smoothing: antialiased;
+              text-rendering: optimizeLegibility;
+              -moz-osx-font-smoothing: grayscale;
+              font-feature-settings: 'liga';
             }
             ${css}
           </style>
@@ -200,10 +260,13 @@
                console.log('SDK: Hash changed, reloading for routing...');
                window.location.reload();
             });
+            window.addEventListener('DOMContentLoaded', function() {
+               if (window.lucide) window.lucide.createIcons();
+            });
           </script>
         </head>
         <body>
-          ${html}
+          ${processedHtml}
           ${js ? `<script>${js}<\/script>` : ''}
         </body>
         </html>
@@ -384,18 +447,16 @@
           // Priority 2: Redirect via embed system
           console.log('PageCraft AI: Redirecting to embedded thank you page');
           const currentUrl = new URL(window.location.href);
-          
-          // Check if we are using pretty URLs or query params
-          if (currentUrl.searchParams.has('pg')) {
-            currentUrl.searchParams.set('status', 'thank-you');
-            window.location.href = currentUrl.toString().split('#')[0];
-          } else {
-             // Pretty URL fallback: try to append /thank-you if possible, or just use query param
-             // Most robust is to use query param as it works everywhere
-             currentUrl.searchParams.set('status', 'thank-you');
-             window.location.href = currentUrl.toString().split('#')[0];
-          }
-          
+
+          // Use hash routing as requested (#slug?status=thank-you)
+          const redirectHash = (slug || '') + '?status=thank-you';
+
+          // Clear query params that might conflict
+          currentUrl.searchParams.delete('pg');
+          currentUrl.searchParams.delete('status');
+
+          window.location.href = currentUrl.origin + currentUrl.pathname + currentUrl.search + '#' + redirectHash;
+
         } else {
           console.error('PageCraft AI: Server returned error', result);
           hideGlobalLoader();
@@ -573,7 +634,7 @@
       `;
       document.head.appendChild(style);
     }
-    
+
     // Show with delay to ensure browser paints
     setTimeout(() => {
       loader.classList.add('active');

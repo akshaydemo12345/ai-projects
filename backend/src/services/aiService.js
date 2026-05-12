@@ -4,9 +4,9 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 
 const CLAUDE_MODEL_CANDIDATES = [
-  'claude-haiku-4-5',           // Latest Haiku — fastest & cheapest
-  'claude-3-5-haiku-20241022',  // Haiku 3.5 fallback
-  'claude-3-5-sonnet-20241022', // Sonnet fallback
+  'claude-3-5-sonnet-20241022', // Sonnet first for full-page quality
+  'claude-3-5-haiku-20241022',  // Fallback 1
+  'claude-haiku-4-5',           // Fallback 2
   process.env.ANTHROPIC_MODEL,  // Custom override from .env
 ].filter(Boolean);
 
@@ -25,7 +25,7 @@ OUTPUT:
 - SINGLE \`\`\`html block only.
 - 5+ distinct sections (Hero, Form, Features, Social Proof, FAQ, Footer).
 - MANDATORY: Visible lead form in Hero or Section 2.
-- Max 2000 tokens. Be concise. Minimal Tailwind classes. No placeholders.`;
+- Generate a complete, full-length page including the Footer. Do not skip sections. Minimal Tailwind classes. No placeholders.`;
 };
 
 /**
@@ -126,7 +126,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 
       const response = await anthropic.messages.create({
         model,
-        max_tokens: 1200, // Strictly capped to 1200 tokens to minimize costs
+        max_tokens: 8000, // Increased to allow full page generation
         temperature: 0.7,
         system: finalSystemPrompt,
         messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
@@ -525,7 +525,7 @@ Generate ONLY the JSON object.
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 1200,
+    max_tokens: 8000,
     messages: messages,
   });
 
@@ -635,7 +635,7 @@ Transform this existing structure into a high-converting masterpiece. Use the re
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 1200,
+    max_tokens: 8000,
     temperature: 0.1,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
