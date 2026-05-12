@@ -4,24 +4,11 @@ const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 const cheerio = require('cheerio');
 
-/**
- * =========================================
- * PREMIUM CLAUDE MODELS
- * =========================================
- */
 const CLAUDE_MODEL_CANDIDATES = [
-<<<<<<< HEAD
-  process.env.ANTHROPIC_MODEL,
-  'claude-3-5-sonnet-latest',
-  'claude-3-5-haiku-latest',
-  'claude-3-opus-latest',
-].filter(Boolean);
-=======
   'claude-sonnet-4-20250514',
   'claude-3-5-sonnet-latest',
   'claude-3-5-haiku-latest'
 ];
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
 
 const OpenAI = require('openai');
 
@@ -40,44 +27,44 @@ Generate a COMPLETE premium landing page with a UNIQUE layout every single time.
 DESIGN SEED:
 ${seed}
 
-CRITICAL RULES:
-- NEVER generate duplicate layouts.
-- Every page MUST feel premium like Stripe, Linear, Framer, Apple.
-- Use different section flow every generation.
-- Use asymmetric layouts.
+CRITICAL DESIGN RULES:
+- NEVER repeat layouts from previous generations.
+- Every generation MUST feel visually different.
+- Use Stripe, Linear, Apple, Framer, Vercel inspired design quality.
+- Use cinematic spacing.
 - Use layered gradients.
 - Use glassmorphism.
 - Use floating cards.
+- Use asymmetrical layouts.
 - Use alternating dark/light sections.
 - Use premium typography.
-- Use deep-scroll storytelling layouts.
+- Use deep-scroll storytelling sections.
 - Use modern SaaS visuals.
-- Use Bento Grid sections sometimes.
-- Use Split Hero sometimes.
-- Use Timeline Flow sometimes.
-- Use Card Mosaic layouts sometimes.
+- Use Bento Grid layouts.
+- Use Card Mosaic layouts.
+- Use Timeline Flow layouts.
+- Use editorial layouts.
+- Add visual depth everywhere.
+- Every section must feel premium.
+- Hero section must feel award-winning.
 
 MANDATORY:
 - NO NAVBAR LINKS
-- TOP HEADER MUST CONTAIN ONLY LOGO
-
-- Logo MUST use this exact HTML:
-<img src="{{LOGO_URL}}" alt="Logo" class="h-12 w-auto object-contain">
-
-- Logo MUST appear at top-left.
-- Logo MUST be visible on both dark and light backgrounds.
-- NEVER remove or modify {{LOGO_URL}}
-
+- ONLY LOGO
 - HERO SECTION REQUIRED
 - LEAD FORM REQUIRED
 - TESTIMONIALS REQUIRED
 - FAQ REQUIRED
 - FOOTER REQUIRED
-- MINIMUM 8 SECTIONS
+- MINIMUM 10 SECTIONS
 - FULL PAGE REQUIRED
 - NEVER STOP EARLY
 
-IMAGE RULES:
+LOGO RULE:
+Use:
+<img src="{{LOGO_URL}}" alt="Logo" class="h-10 w-auto">
+
+IMAGE RULE:
 Use:
 https://picsum.photos/seed/[keyword]/1200/800
 
@@ -88,17 +75,9 @@ var(--secondary)
 
 TYPOGRAPHY:
 - H1 = text-6xl to text-7xl
-- modern spacing
-- premium whitespace
-
-TECH STACK:
-- TailwindCSS CDN
-- Responsive Design
-- Modern Animations
-- Mobile First
-- Premium spacing
-- Glassmorphism cards
-- Smooth hover effects
+- Large headings
+- Premium whitespace
+- Strong hierarchy
 
 OUTPUT:
 RETURN ONLY:
@@ -111,96 +90,15 @@ NO EXPLANATION.
 };
 
 /**
-<<<<<<< HEAD
- * Helper: Extract all text and image content from HTML using Cheerio
- */
-const extractContentMap = (html) => {
-  const $ = cheerio.load(html);
-  const map = {};
-  let idCounter = 1;
-
-  // Find text-containing elements
-  $('h1, h2, h3, h4, h5, h6, p, span, a, li, label, .pill, button').each((i, el) => {
-    const $el = $(el);
-    // Only target elements with direct text and no children to avoid overlapping replacements
-    const directText = $el.contents().filter(function () {
-      return this.nodeType === 3;
-    }).text().trim();
-
-    if (directText.length > 1) {
-      const id = `t-${idCounter++}`;
-      $el.attr('data-ai-id', id);
-      map[id] = directText;
-    }
-  });
-
-  // Find images
-  $('img').each((i, el) => {
-    const $el = $(el);
-    const id = `i-${idCounter++}`;
-    $el.attr('data-ai-id', id);
-    map[id] = {
-      src: $el.attr('src') || '',
-      alt: $el.attr('alt') || ''
-    };
-  });
-
-  return { htmlWithIds: $.html(), contentMap: map };
-};
-
-/**
- * Helper: Inject new content back into HTML using Cheerio
- */
-const injectContentMap = (htmlWithIds, newMap) => {
-  const $ = cheerio.load(htmlWithIds);
-
-  Object.keys(newMap).forEach(id => {
-    const value = newMap[id];
-    const $el = $(`[data-ai-id="${id}"]`);
-
-    if ($el.length) {
-      if (id.startsWith('t-')) {
-        // Replace ONLY the text node part to preserve sub-elements if any
-        $el.contents().filter(function () {
-          return this.nodeType === 3;
-        }).first().replaceWith(value);
-      } else if (id.startsWith('i-')) {
-        if (typeof value === 'object') {
-          if (value.src) $el.attr('src', value.src);
-          if (value.alt) $el.attr('alt', value.alt);
-        } else if (typeof value === 'string') {
-          $el.attr('src', value);
-        }
-      }
-    }
-  });
-
-  // Remove the temporary IDs
-  $('[data-ai-id]').removeAttr('data-ai-id');
-
-  return $.html();
-};
-
-/**
- * Build USER prompt (Business Context + Branding)
-=======
  * =========================================
  * USER PROMPT
  * =========================================
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
  */
 const buildUserPrompt = (input) => {
   return `
 BUSINESS NAME:
 ${input.businessName}
 
-<<<<<<< HEAD
-# RULES:
-- Lead form mandatory. 
-- Headlines must be conversion-focused. 
-- Use [var(--primary)] for background-colors.
-- Output detailed content, not placeholders.`;
-=======
 INDUSTRY:
 ${input.industry}
 
@@ -213,41 +111,35 @@ ${input.aiPrompt}
 CTA:
 ${input.ctaText || 'Get Started'}
 
-LOGO URL:
-{{LOGO_URL}}
-
 PRIMARY COLOR:
 ${input.primaryColor || '#7c3aed'}
 
 SECONDARY COLOR:
 ${input.secondaryColor || '#6366f1'}
 
+LOGO:
+{{LOGO_URL}}
+
 MANDATORY SECTIONS:
-1. Header with Logo
-2. Hero
+1. Hero
+2. Brand Banner
 3. Lead Form
 4. Features
 5. Benefits
-6. Testimonials
+6. Process
 7. Stats
-8. FAQ
-9. CTA Banner
-10. Footer
+8. Testimonials
+9. FAQ
+10. CTA
+11. Footer
 
 IMPORTANT:
+- Use modern premium layouts.
+- Use real conversion-focused copy.
+- Use unique layouts.
 - Form must be visible.
-- Use real content.
-- Use modern premium layout.
-- Use unique layout.
 - Complete FULL page.
-- Make page feel ultra premium.
-- Add premium cards.
-- Add gradient backgrounds.
-- Add hover animations.
-- Add glassmorphism.
-- Add deep scroll sections.
 `;
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
 };
 
 /**
@@ -255,6 +147,7 @@ IMPORTANT:
  * COST CALCULATOR
  * =========================================
  */
+<<<<<<< HEAD
 const calculateCost = (model, inputTokens, outputTokens) => {
 <<<<<<< HEAD
   const pricing = {
@@ -265,33 +158,40 @@ const calculateCost = (model, inputTokens, outputTokens) => {
     'gpt-4o': { input: 0.000005, output: 0.000015 },
     'default': { input: 0.000003, output: 0.000015 }
 =======
+=======
+const calculateCost = (
+  model,
+  inputTokens,
+  outputTokens
+) => {
+>>>>>>> fb2fec7ec04217cab705d40924e042e9b4be66a7
 
   const pricing = {
-    'claude-sonnet': {
-      input: 0.000003,
-      output: 0.000015
-    },
+      'claude-sonnet': {
+        input: 0.000003,
+        output: 0.000015
+      },
 
-    'claude-haiku': {
-      input: 0.00000025,
-      output: 0.00000125
-    },
+      'claude-haiku': {
+        input: 0.00000025,
+        output: 0.00000125
+      },
 
-    default: {
-      input: 0.000003,
-      output: 0.000015
-    }
+      default: {
+        input: 0.000003,
+        output: 0.000015
+      }
 >>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
-  };
+    };
 
-  const modelKey =
-    Object.keys(pricing).find(key =>
-      model.toLowerCase().includes(key)
-    ) || 'default';
+    const modelKey =
+      Object.keys(pricing).find(key =>
+        model.toLowerCase().includes(key)
+      ) || 'default';
 
-  const price = pricing[modelKey];
+    const price = pricing[modelKey];
 
-  return (
+    return(
     (inputTokens * price.input) +
     (outputTokens * price.output)
   );
@@ -667,7 +567,10 @@ const cleanHTML = (raw) => {
  * PROCESS RESULT
  * =========================================
  */
-const processResult = (raw, logoUrl) => {
+const processResult = (
+  raw,
+  logoUrl
+) => {
 
   let clean = cleanHTML(raw);
 
@@ -686,9 +589,10 @@ const processResult = (raw, logoUrl) => {
     finalLogo
   );
 
-  const titleMatch = clean.match(
-    /<title>(.*?)<\/title>/i
-  );
+  const titleMatch =
+    clean.match(
+      /<title>(.*?)<\/title>/i
+    );
 
   const title =
     titleMatch
@@ -730,9 +634,10 @@ const callAI = async (
     );
   }
 
-  const anthropic = new Anthropic({
-    apiKey: anthropicKey
-  });
+  const anthropic =
+    new Anthropic({
+      apiKey: anthropicKey
+    });
 
   let lastError = null;
 
@@ -749,7 +654,7 @@ const callAI = async (
 
           model,
 
-          max_tokens: 20000,
+          max_tokens: 16000,
 
           temperature: 1,
 
