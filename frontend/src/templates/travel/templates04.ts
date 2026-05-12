@@ -168,23 +168,23 @@ export const travel04Html = `
           <div class="form-grid">
             <div class="form-group">
               <label>Name</label>
-              <input type="text" placeholder="Your name">
+              <input type="text" name="full_name" placeholder="Your name">
             </div>
             <div class="form-group">
               <label>Email</label>
-              <input type="email" placeholder="you@email.com">
+              <input type="email" name="email_address" placeholder="you@email.com">
             </div>
             <div class="form-group">
               <label>City</label>
-              <select><option>Pick a city</option><option>Tokyo</option><option>New York</option><option>London</option></select>
+              <select name="city"><option>Pick a city</option><option>Tokyo</option><option>New York</option><option>London</option></select>
             </div>
             <div class="form-group">
               <label>Travelers</label>
-              <select><option>1 Traveler</option><option>2 Travelers</option></select>
+              <select name="travelers"><option>1 Traveler</option><option>2 Travelers</option></select>
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label>Weekend Of</label>
-              <input type="date">
+              <input type="date" name="travel_date">
             </div>
             <button type="submit" class="btn-submit">Plan My Weekend →</button>
           </div>
@@ -193,7 +193,7 @@ export const travel04Html = `
       
       <div class="hero-visual">
         <div class="hero-img-wrap">
-          <img src="/assets/templates/travel/templates04/hero.jpg" alt="City Night">
+          <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800" alt="City Night">
         </div>
         <div class="weather-badge">
            <h4>92°F</h4>
@@ -229,7 +229,7 @@ export const travel04Html = `
       <div class="trend-grid">
         <div class="trend-card">
           <div class="trend-img">
-            <img src="/assets/templates/travel/templates04/d1.jpg" alt="New York">
+            <img src="https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&q=80&w=600" alt="New York">
             <div class="trend-num">01</div>
           </div>
           <div class="trend-info">
@@ -244,7 +244,7 @@ export const travel04Html = `
         
         <div class="trend-card">
           <div class="trend-img">
-            <img src="/assets/templates/travel/templates04/d2.jpg" alt="London">
+            <img src="https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&q=80&w=600" alt="London">
             <div class="trend-num">02</div>
           </div>
           <div class="trend-info">
@@ -259,7 +259,7 @@ export const travel04Html = `
 
         <div class="trend-card">
           <div class="trend-img">
-            <img src="/assets/templates/travel/templates04/d3.jpg" alt="Singapore">
+            <img src="https://images.unsplash.com/photo-1508964942454-1a56651d54ac?auto=format&fit=crop&q=80&w=600" alt="Singapore">
             <div class="trend-num">03</div>
           </div>
           <div class="trend-info">
@@ -274,7 +274,7 @@ export const travel04Html = `
 
         <div class="trend-card">
           <div class="trend-img">
-            <img src="/assets/templates/travel/templates04/d4.jpg" alt="Rome">
+            <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=600" alt="Rome">
             <div class="trend-num">04</div>
           </div>
           <div class="trend-info">

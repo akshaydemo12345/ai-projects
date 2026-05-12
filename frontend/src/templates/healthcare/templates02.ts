@@ -521,7 +521,7 @@ export const healthcare02Html = `
 
 <section class="hero">
   <div class="hero-bg">
-    <img src="/assets/templates/healthcare/templates02/bg-02.png" alt="Hero">
+    <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=1600" alt="Hero">
   </div>
   <div class="hero-overlay"></div>
   <div class="container hero-content">
@@ -554,9 +554,9 @@ export const healthcare02Html = `
 <section class="section-padding container">
   <div class="about">
     <div class="about-bento">
-      <div class="bento-item-1"><img src="/assets/templates/healthcare/templates02/about-02.png" alt="Doctor Large"></div>
-      <div class="bento-item-2"><img src="/assets/templates/healthcare/templates02/about-03.png" alt="Care Small"></div>
-      <div class="bento-item-3"><img src="/assets/templates/healthcare/templates02/image-02.png" alt="Team Small"></div>
+      <div class="bento-item-1"><img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="Doctor Large"></div>
+      <div class="bento-item-2"><img src="https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=400" alt="Care Small"></div>
+      <div class="bento-item-3"><img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&q=80&w=400" alt="Team Small"></div>
     </div>
     <div class="about-text">
       <span>ABOUT US</span>
@@ -628,7 +628,7 @@ export const healthcare02Html = `
       </div>
     </div>
     <div class="stats-image">
-      <img src="/assets/templates/healthcare/templates02/blog-1.png" alt="Stats">
+      <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800" alt="Stats">
     </div>
   </div>
 </section>
@@ -642,7 +642,7 @@ export const healthcare02Html = `
     <div class="doctor-card">
       <div class="doctor-badge">TOP RATED</div>
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates02/doctors-01.png" alt="Doctor 1">
+        <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=600" alt="Doctor 1">
         <div class="doctor-overlay">
           <a href="#" class="doctor-social">T</a>
           <a href="#" class="doctor-social">L</a>
@@ -654,7 +654,7 @@ export const healthcare02Html = `
     <div class="doctor-card">
       <div class="doctor-badge">EXPERT</div>
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates02/doctors-02.png" alt="Doctor 2">
+        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=600" alt="Doctor 2">
         <div class="doctor-overlay">
           <a href="#" class="doctor-social">T</a>
           <a href="#" class="doctor-social">L</a>
@@ -666,7 +666,7 @@ export const healthcare02Html = `
     <div class="doctor-card">
       <div class="doctor-badge">SPECIALIST</div>
       <div class="doctor-img-box">
-        <img src="/assets/templates/healthcare/templates02/doctors-03.png" alt="Doctor 3">
+        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=600" alt="Doctor 3">
         <div class="doctor-overlay">
           <a href="#" class="doctor-social">T</a>
           <a href="#" class="doctor-social">L</a>
@@ -680,7 +680,7 @@ export const healthcare02Html = `
 
 <section class="section-padding container faq-section">
   <div class="faq-image">
-    <img src="/assets/templates/healthcare/templates02/about-02.png" alt="FAQ">
+    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="FAQ">
   </div>
   <div class="faq-content">
     <div class="faq-header">
@@ -714,14 +714,14 @@ export const healthcare02Html = `
   <div class="container">
     <h2>Contact For Urgent Service</h2>
     <div class="contact-card">
-      <div class="contact-grid">
-        <input type="text" placeholder="First Name">
-        <input type="text" placeholder="Last Name">
-        <input type="email" placeholder="Email Address">
-        <input type="tel" placeholder="Phone Number">
-        <textarea rows="4" placeholder="Your Message"></textarea>
-        <button class="btn-submit">SUBMIT NOW</button>
-      </div>
+      <form class="contact-grid">
+        <input type="text" name="first_name" placeholder="First Name">
+        <input type="text" name="last_name" placeholder="Last Name">
+        <input type="email" name="email_address" placeholder="Email Address">
+        <input type="tel" name="phone" placeholder="Phone Number">
+        <textarea name="message" rows="4" placeholder="Your Message" style="grid-column: span 2;"></textarea>
+        <button type="submit" class="btn-submit" style="grid-column: span 2;">SUBMIT NOW</button>
+      </form>
     </div>
   </div>
 </section>

@@ -121,7 +121,7 @@ export const finance03Html = `
 <main>
   <!-- HERO SECTION -->
   <section class="hero">
-    <img src="/assets/templates/finance/templates03/hero.png" alt="Luxury Executive Office" class="hero-img">
+    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1400" alt="Luxury Executive Office" class="hero-img">
     <div class="container" style="position: relative; z-index: 10;">
       <div class="hero-content">
         <h1>Smart Financial <br>Solutions for <br>Your Future</h1>
@@ -134,19 +134,19 @@ export const finance03Html = `
       <form class="hero-form-bar">
         <div class="form-field">
           <label>Full Name</label>
-          <input type="text" placeholder="John Doe" required>
+          <input type="text" name="full_name" placeholder="John Doe" required>
         </div>
         <div class="form-field">
           <label>Phone Number</label>
-          <input type="tel" placeholder="+1 (555) 000-0000" required>
+          <input type="tel" name="phone" placeholder="+1 (555) 000-0000" required>
         </div>
         <div class="form-field">
           <label>Email Address</label>
-          <input type="email" placeholder="john@aureum.com" required>
+          <input type="email" name="email_address" placeholder="john@aureum.com" required>
         </div>
         <div class="form-field">
           <label>Strategy</label>
-          <select><option>Wealth Management</option><option>Corporate Tax</option></select>
+          <select name="strategy"><option>Wealth Management</option><option>Corporate Tax</option></select>
         </div>
         <button type="submit" class="btn-submit">Analyze</button>
       </form>

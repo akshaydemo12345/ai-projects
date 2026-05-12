@@ -194,25 +194,25 @@ const detectImageSection = ($, el, alt, parentClass) => {
  */
 const extractFormFields = ($) => {
   const forms = [];
-  
+
   $('form').each((i, formEl) => {
     const $form = $(formEl);
     const fields = [];
-    
+
     // Extract all input fields
     $form.find('input, select, textarea').each((j, fieldEl) => {
       const $field = $(fieldEl);
       const type = $field.attr('type') || $field.prop('tagName').toLowerCase();
       const name = $field.attr('name') || '';
       const placeholder = $field.attr('placeholder') || '';
-      const label = $field.closest('label').text().trim() || 
-                   $field.prev('label').text().trim() || 
-                   $field.parent().find('label').first().text().trim() || '';
+      const label = $field.closest('label').text().trim() ||
+        $field.prev('label').text().trim() ||
+        $field.parent().find('label').first().text().trim() || '';
       const required = $field.attr('required') !== undefined;
-      
+
       // Skip hidden fields and submit buttons
       if (type === 'hidden' || type === 'submit' || type === 'button') return;
-      
+
       fields.push({
         type,
         name: name || `field_${fields.length}`,
@@ -221,7 +221,7 @@ const extractFormFields = ($) => {
         required
       });
     });
-    
+
     if (fields.length > 0) {
       forms.push({
         action: $form.attr('action') || '',
@@ -230,7 +230,7 @@ const extractFormFields = ($) => {
       });
     }
   });
-  
+
   return forms;
 };
 
@@ -244,7 +244,7 @@ const extractVideos = ($, baseUrl) => {
   $('video').each((i, el) => {
     const src = $(el).attr('src');
     const poster = $(el).attr('poster');
-    
+
     if (src) {
       let fullUrl = src;
       if (!src.startsWith('http')) {
@@ -337,7 +337,7 @@ const extractTextContent = ($) => {
   $('[class*="service"], [class*="feature"]').each((i, el) => {
     const title = $(el).find('h1, h2, h3, h4').first().text().trim();
     const description = $(el).find('p').first().text().trim();
-    
+
     if (title && description) {
       content.push({
         type: 'text',
@@ -351,10 +351,10 @@ const extractTextContent = ($) => {
   $('button, a[href]').each((i, el) => {
     const text = $(el).text().trim();
     const className = $(el).attr('class')?.toLowerCase() || '';
-    
-    if (text.length > 3 && text.length < 50 && 
-        (className.includes('cta') || className.includes('button') || 
-         className.includes('submit') || className.includes('action'))) {
+
+    if (text.length > 3 && text.length < 50 &&
+      (className.includes('cta') || className.includes('button') ||
+        className.includes('submit') || className.includes('action'))) {
       content.push({
         type: 'text',
         category: 'cta',
@@ -379,10 +379,10 @@ const extractTextContent = ($) => {
   $('p').each((i, el) => {
     const text = $(el).text().trim();
     const parentClass = $(el).parent().attr('class')?.toLowerCase() || '';
-    
+
     // Short, punchy text in prominent positions
-    if (text.length > 15 && text.length < 150 && 
-        (parentClass.includes('hero') || parentClass.includes('banner') || parentClass.includes('headline'))) {
+    if (text.length > 15 && text.length < 150 &&
+      (parentClass.includes('hero') || parentClass.includes('banner') || parentClass.includes('headline'))) {
       content.push({
         type: 'text',
         category: 'tagline',
@@ -438,7 +438,7 @@ const detectStructure = ($, images, textContent) => {
     const title = $(el).find('h1, h2, h3, h4').first().text().trim();
     const description = $(el).find('p').first().text().trim();
     const image = $(el).find('img').first().attr('src');
-    
+
     if (title && structure.services.length < 10) {
       structure.services.push({
         title,
@@ -452,7 +452,7 @@ const detectStructure = ($, images, textContent) => {
   $('[class*="feature"], [class*="Feature"]').each((i, el) => {
     const title = $(el).find('h1, h2, h3, h4').first().text().trim();
     const description = $(el).find('p').first().text().trim();
-    
+
     if (title && structure.features.length < 10) {
       structure.features.push({
         title,
@@ -465,7 +465,7 @@ const detectStructure = ($, images, textContent) => {
   $('[class*="testimonial"], [class*="review"]').each((i, el) => {
     const text = $(el).find('p, blockquote').first().text().trim();
     const author = $(el).find('[class*="author"], [class*="name"]').first().text().trim();
-    
+
     if (text.length > 30 && structure.testimonials.length < 10) {
       structure.testimonials.push({
         text,
@@ -479,7 +479,7 @@ const detectStructure = ($, images, textContent) => {
     const title = $(el).find('h1, h2, h3').first().text().trim();
     const price = $(el).find('[class*="price"], [class*="amount"]').first().text().trim();
     const features = $(el).find('li').map((j, li) => $(li).text().trim()).get();
-    
+
     if (title && structure.pricing.length < 10) {
       structure.pricing.push({
         title,
@@ -493,9 +493,9 @@ const detectStructure = ($, images, textContent) => {
   $('button, a[href]').each((i, el) => {
     const text = $(el).text().trim();
     const className = $(el).attr('class')?.toLowerCase() || '';
-    
-    if (text.length > 3 && text.length < 50 && 
-        (className.includes('cta') || className.includes('button'))) {
+
+    if (text.length > 3 && text.length < 50 &&
+      (className.includes('cta') || className.includes('button'))) {
       if (structure.cta.buttons.length < 5) {
         structure.cta.buttons.push(text);
       }
@@ -513,7 +513,7 @@ const cleanAndOptimize = (structuredContent, images, videos) => {
 
   // Remove duplicates
   const seenStrings = new Set();
-  
+
   // Clean hero
   cleaned.hero.headline = cleanText(cleaned.hero.headline, seenStrings);
   cleaned.hero.subheadline = cleanText(cleaned.hero.subheadline, seenStrings);
@@ -576,8 +576,8 @@ const cleanText = (text, seenStrings) => {
  */
 const extractMeta = ($) => {
   const title = $('title').text().trim() || $('meta[property="og:title"]').attr('content') || '';
-  const description = $('meta[name="description"]').attr('content') || 
-                    $('meta[property="og:description"]').attr('content') || '';
+  const description = $('meta[name="description"]').attr('content') ||
+    $('meta[property="og:description"]').attr('content') || '';
 
   return {
     title,
