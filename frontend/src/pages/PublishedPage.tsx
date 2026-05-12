@@ -163,7 +163,8 @@ const PublishedPage = () => {
     );
   }
 
-  const liveUrl = page.liveUrl || `${window.location.origin}/?page=${page._id}`;
+  const baseUrl = project?.websiteUrl || project?.url || window.location.origin;
+  const liveUrl = page.liveUrl || `${baseUrl.replace(/\/+$/, '')}/${project?.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
   const previewUrl = page.previewUrl || `${window.location.origin}/preview?page=${page._id}${page.previewToken ? `&token=${page.previewToken}` : ''}`;
   const copyUrl = async () => { 
     const success = await copyToClipboard(liveUrl);
