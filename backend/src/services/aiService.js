@@ -1,6 +1,7 @@
 'use strict';
 
 const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
 const logger = require('../utils/logger');
 
 const CLAUDE_MODEL_CANDIDATES = [
@@ -14,19 +15,32 @@ const CLAUDE_MODEL_CANDIDATES = [
 /**
  * Build SYSTEM prompt (Claude-Level Master UI Designer)
  */
-const buildSystemPrompt = () => {
-  return `Act as a world-class UI/UX Designer. Goal: Generate a unique, premium, high-converting landing page.
-DESIGN: 
-- No navbar/nav links. Logo only: <img src="{{LOGO_URL}}" class="h-8 w-auto">.
-- Use scraped images if provided, else 'https://picsum.photos/seed/design/1200/800'.
-- BG Images: inline style="background-image: url('...').
-- High-impact typography (H1: text-6xl). Use backdrop-blur-md for floating UI.
-- CRITICAL: Use [var(--primary)] and [var(--secondary)] for ALL brand colors. No HEX.
-OUTPUT:
-- SINGLE \`\`\`html block only.
-- 5+ distinct sections (Hero, Form, Features, Social Proof, FAQ, Footer).
-- MANDATORY: Visible lead form in Hero or Section 2.
-- Generate a complete, full-length page including the Footer. Do not skip sections. Minimal Tailwind classes. No placeholders.`;
+const buildSystemPrompt = (seed = '') => {
+  return `You are a world-class UI/UX Design Director and Senior Conversion Architect. Your mission: generate a COMPLETE, UNIQUE, high-converting landing page — every single time.
+
+UNIQUENESS MANDATE (CRITICAL):
+- Design Seed: "${seed}" — use this to inspire a FRESH visual direction you have NOT used before.
+- NEVER produce the same skeleton with replaced text.
+- Pick ONE distinct design motif per page: e.g. Bento Grid, Split Hero, Diagonal Sections, Editorial Layout, Storytelling Scroll, Card Mosaic, or Timeline Flow.
+- Vary: section ORDER, visual hierarchy, spacing, hero style, and color treatment for each generation.
+
+DESIGN RULES:
+- No navbar/nav menu. Logo only in top area: <img src="{{LOGO_URL}}" alt="Logo" class="h-10 w-auto">.
+- Use Picsum images: 'https://picsum.photos/seed/[UNIQUE_KEYWORD]/1200/800' — vary the seed keyword per image.
+- Background images: inline style only: style="background-image: url('...'); background-size: cover; background-position: center;"
+- H1 must be text-5xl to text-7xl for premium feel.
+- Use glassmorphism: backdrop-blur-md + semi-transparent backgrounds for floating elements.
+- Alternate section backgrounds: white → slate-50 → dark → white etc.
+- Use [var(--primary)] and [var(--secondary)] for ALL brand colors. NEVER use hardcoded hex.
+
+COMPLETENESS MANDATE (NON-NEGOTIABLE):
+- Generate MINIMUM 8 distinct sections. DO NOT STOP EARLY.
+- MANDATORY sections: Hero, Lead Form, Features/Benefits, Social Proof/Testimonials, Trust/Stats, FAQ, and Footer.
+- EVERY section must have real, conversion-focused copy — NO placeholders whatsoever.
+- The lead form MUST be visible and functional — include relevant input fields for the industry.
+- Complete the FULL page including the footer before ending your response.
+- Output ONLY a single \`\`\`html block. No explanation text before or after.
+- Aim for 12,000–16,000 characters of HTML. A full-length deep-scroll page.`;
 };
 
 /**
@@ -85,6 +99,8 @@ const calculateCost = (model, inputTokens, outputTokens) => {
     'claude-3-5-sonnet': { input: 0.000003, output: 0.000015 },
     'claude-3-haiku': { input: 0.00000025, output: 0.00000125 },
     'claude-3-opus': { input: 0.000015, output: 0.000075 },
+    'gpt-4o-mini': { input: 0.00000015, output: 0.0000006 },
+    'gpt-4o': { input: 0.000005, output: 0.000015 },
     'default': { input: 0.000003, output: 0.000015 } // Default to Sonnet pricing
   };
 
@@ -99,67 +115,111 @@ const calculateCost = (model, inputTokens, outputTokens) => {
  */
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
 
-  if (!anthropicKey) {
-    logger.error('Anthropic API key is missing');
-    throw new Error('ANTHROPIC_API_KEY is not configured in .env');
+  if (!anthropicKey && !openaiKey) {
+    logger.error('AI API keys are missing');
+    throw new Error('Neither ANTHROPIC_API_KEY nor OPENAI_API_KEY is configured in .env');
   }
 
-  // Inject colors into system prompt
+  // Inject colors and context into system prompt
   const primaryHex = userPrompt.match(/- PRIMARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed';
   const secondaryHex = userPrompt.match(/- SECONDARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
+  const businessNameMatch = userPrompt.match(/# CONTEXT:[\s\S]*?- Name: ([\s\S]*?) \|/);
+  const businessName = businessNameMatch ? businessNameMatch[1].trim() : 'design';
 
   const finalSystemPrompt = systemPrompt
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
-    .replace(/\[SECONDARY_HEX\]/g, secondaryHex);
+    .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
+    .replace(/{{BUSINESS_NAME_KEYWORD}}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
 
-  const anthropic = new Anthropic({ apiKey: anthropicKey });
-  let lastError = null;
-
-  for (const model of CLAUDE_MODEL_CANDIDATES) {
+  // 1. Try OpenAI first if available (often more reliable/stable)
+  if (openaiKey) {
     try {
-      logger.info(`[AI] Attempting Claude model: ${model}`);
+      const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+      logger.info(`[AI] Attempting OpenAI model: ${model}`);
+      const openai = new OpenAI({ apiKey: openaiKey });
 
-      // Handle both string prompt and structured messages (for Vision)
-      const messageContent = typeof userPrompt === 'string'
-        ? userPrompt
-        : userPrompt;
-
-      const response = await anthropic.messages.create({
+      const response = await openai.chat.completions.create({
         model,
-        max_tokens: 8000, // Increased to allow full page generation
-        temperature: 0.7,
-        system: finalSystemPrompt,
-        messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
+        messages: [
+          { role: 'system', content: finalSystemPrompt },
+          { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
+        ],
+        max_tokens: 8000,
+        temperature: 1.0 // High variation
       });
 
-      const rawText = response.content[0].text;
+      const rawText = response.choices[0].message.content;
       const usage = response.usage;
-
-      logger.info(`[AI] Raw response received. Length: ${rawText.length} characters. Usage: ${JSON.stringify(usage)}`);
-
       const result = processResult(rawText, logoUrl);
 
       return {
         ...result,
         aiUsage: {
-          promptTokens: usage.input_tokens,
-          completionTokens: usage.output_tokens,
-          totalTokens: usage.input_tokens + usage.output_tokens,
-          cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+          promptTokens: usage.prompt_tokens,
+          completionTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens),
           model: model
         }
       };
     } catch (err) {
-      lastError = err;
-      logger.error(`[AI] Claude model failed (${model}): ${err.message}`);
-      const msg = String(err.message || '');
-      const isModelNotFound = msg.includes('not_found_error') || msg.includes('model:');
-      if (!isModelNotFound) break;
+      logger.error(`[AI] OpenAI failed: ${err.message}`);
+      // Fallback to Anthropic
     }
   }
 
-  throw new Error(`Claude generation failed: ${lastError?.message || 'Unknown Claude error'}`);
+  // 2. Fallback to Anthropic candidates
+  if (anthropicKey) {
+    const anthropic = new Anthropic({ apiKey: anthropicKey });
+    let lastError = null;
+
+    for (const model of CLAUDE_MODEL_CANDIDATES) {
+      try {
+        logger.info(`[AI] Attempting Claude model: ${model}`);
+
+        const messageContent = typeof userPrompt === 'string'
+          ? userPrompt
+          : userPrompt;
+
+        const response = await anthropic.messages.create({
+          model,
+          max_tokens: 16000, // Full page — never truncate
+          temperature: 1.0,  // Maximum variation — no duplicate pages
+          system: finalSystemPrompt,
+          messages: Array.isArray(messageContent) ? messageContent : [{ role: 'user', content: messageContent }],
+        });
+
+        const rawText = response.content[0].text;
+        const usage = response.usage;
+
+        logger.info(`[AI] Raw response received. Length: ${rawText.length} characters.`);
+
+        const result = processResult(rawText, logoUrl);
+
+        return {
+          ...result,
+          aiUsage: {
+            promptTokens: usage.input_tokens,
+            completionTokens: usage.output_tokens,
+            totalTokens: usage.input_tokens + usage.output_tokens,
+            cost: calculateCost(model, usage.input_tokens, usage.output_tokens),
+            model: model
+          }
+        };
+      } catch (err) {
+        lastError = err;
+        logger.error(`[AI] Claude model failed (${model}): ${err.message}`);
+        const msg = String(err.message || '').toLowerCase();
+        const isModelNotFound = msg.includes('not_found') || msg.includes('model:');
+        if (!isModelNotFound) break;
+      }
+    }
+    throw new Error(`AI generation failed: ${lastError?.message || 'Unknown error'}`);
+  }
+
+  throw new Error('AI generation failed: No provider succeeded');
 };
 
 /**
@@ -214,59 +274,52 @@ const cleanHTML = (raw) => {
 };
 
 const generateLandingPageContent = async (input) => {
-  // 1. SKIP separate strategy call for speed!
-  // 2. Build the Persona-based System Prompt
-  const systemPrompt = input.templateHtml ? buildTemplateSystemPrompt() : buildSystemPrompt();
+  // Generate a unique seed to force design variation on every call
+  const uniqueSeed = `${input.industry}-${input.businessName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // Build the System Prompt with the unique seed baked in
+  const systemPrompt = input.templateHtml ? buildTemplateSystemPrompt() : buildSystemPrompt(uniqueSeed);
 
   // Extract scrapedImages from scrapedData if available
   const scrapedImages = input.scrapedData?.images || [];
 
-  // 3. Build a detailed user prompt that combines identity and goal
+  // Build the detailed user prompt
   let userPrompt = `
 ${buildUserPrompt(input)}
 
-# SPEED OPTIMIZATION:
-Generate this page FAST. Do not over-elaborate.
+# DESIGN VARIATION SEED: "${uniqueSeed}"
+Use this seed to choose a visual style and section layout you have NOT used before. Be creative and unexpected.
 
-# MANDATORY LAYOUT SECTIONS (HIGH-CONVERTING LANDING PAGE):
-1. Hero Section with dynamic branding, strong headline, and clear Call to Action.
-2. Lead Generation Form with industry-specific fields - MUST BE VISIBLE AND FUNCTIONAL. This is NON-NEGOTIABLE.
-3. Industry Context (Benefits, Features, and Value Propositions).
-4. Social Proof / Reviews / Testimonials.
-5. Trust Building Section (stats, achievements, certifications, trust badges).
-6. FAQs Section addressing common objections.
-7. Simple Footer with contact information.
+# MANDATORY SECTIONS (DO NOT SKIP ANY, DO NOT MERGE ANY):
+1. 🦸 Hero Section — Massive headline (text-6xl+), strong subheading, hero image, primary CTA button.
+2. 📋 Lead Generation Form — Industry-specific fields (name, phone, email + 1-2 context fields). MUST be visible, functional, styled.
+3. ✅ Features / Benefits — At least 3 unique value propositions with icons or visuals.
+4. ⭐ Social Proof / Testimonials — 3 realistic customer quotes with names, roles, and star ratings.
+5. 📊 Trust / Stats Section — 3-4 impressive numbers (e.g., clients served, years experience, success rate).
+6. 🎯 Secondary CTA Section — Mid-page conversion push with urgency copy.
+7. ❓ FAQ Section — 5 common objections answered.
+8. 🦶 Footer — Contact info, social links, copyright.
 
-# CORE REQUIREMENTS:
-- Generate a complete, high-converting landing page.
-- Include strong hero section with compelling headline.
-- Include CTA in strategic positions.
-- Include industry-specific form with relevant fields.
-- Include meaningful, benefit-driven content throughout.
-- Include industry-relevant images (real estate: homes, healthcare: doctors, etc.).
-- Include relevant video suggestions where useful (testimonials, demos, explainers).
-- Include testimonials section with realistic customer quotes.
-- Include FAQs section addressing common objections.
-- Include trust-building sections (badges, stats, achievements).
-- Include SEO-friendly headings with proper hierarchy (H1, H2, H3).
-- Make layout depend on industry for optimal user experience.
-- Form position should depend on business type (hero side, sticky, bottom, popup).
-- Content should be persuasive and conversion-focused.
-- Use modern landing page structure with alternating backgrounds.
-- Vary section designs (bento, grid, list, split, etc.) for visual interest.
+# QUALITY REQUIREMENTS:
+- Write REAL, persuasive, industry-specific copy throughout. NO placeholders.
+- Form must have REAL input fields relevant to ${input.industry}.
+- Testimonials must feel authentic — real-sounding names, specific details.
+- Images: use picsum with unique seed keywords per image (e.g. seed/rooftop, seed/teamwork, seed/success).
+- Vary the design: bento grids, split layouts, card mosaics, diagonal dividers — make it visually rich.
+- DO NOT STOP before the Footer is complete.
 `;
 
-  // 4. Handle Template Enrichment if applicable
+  // Handle Template Enrichment if applicable
   if (input.templateHtml) {
     userPrompt = `
     # CRITICAL TASK: SMART TEMPLATE CONTENT REPLACEMENT
     ${input.templateHtml}
     
     USER'S VISION: "${input.aiPrompt}"
+    DESIGN SEED: "${uniqueSeed}" — update the content to feel fresh and unique.
     `;
   }
 
-  // 5. Handle Vision / Image-to-Design
   const result = await callAI(userPrompt, input.logoUrl, systemPrompt);
   return result;
 };
@@ -662,9 +715,47 @@ Transform this existing structure into a high-converting masterpiece. Use the re
   }
 };
 
+
+/**
+ * GrapesJS Editor Chat — Returns structured JSON for element modification
+ */
+const editorChatModify = async ({ elementTag, elementHtml, elementCss, instruction }) => {
+  const systemPrompt = `You are a web design AI inside a GrapesJS editor. The user gives an instruction in Hindi or English to modify a specific HTML element.
+
+Return ONLY a valid JSON object, no markdown, no explanation:
+{
+  "action": "style" | "text" | "html" | "both",
+  "css": { "camelCaseProp": "value" },
+  "text": "new text content",
+  "html": "new full HTML",
+  "summary": "brief English description of change"
+}
+
+Hindi: lal=red, nila=blue, hara=green, kala=black, safed=white, peela=yellow, baingani=purple, gulabi=pink, bada/bado=larger font, chota=smaller, gol=border-radius, center=center align, bold/mota=font-weight bold, background/peechha=background-color.`;
+
+  const userPrompt = `Element: <${elementTag}>
+HTML: ${elementHtml.slice(0, 1500)}
+CSS: ${elementCss}
+Instruction: ${instruction}`;
+
+  const result = await callAI(userPrompt, '', systemPrompt);
+  const rawText = result.fullHtml || '{}';
+
+  // Strip any markdown fences
+  const clean = rawText.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+
+  try {
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    return JSON.parse(jsonMatch ? jsonMatch[0] : clean);
+  } catch {
+    return { action: 'html', html: rawText, summary: 'AI applied changes' };
+  }
+};
+
 module.exports = {
   generateLandingPageContent,
   improveSectionContent,
+  editorChatModify,
   generateDescriptionSuggestion,
   generateProjectSuggestions,
   generateStrategicStructure,
