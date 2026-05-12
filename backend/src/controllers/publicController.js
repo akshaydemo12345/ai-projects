@@ -38,9 +38,11 @@ const normalizeScript = (value = '') => {
 exports.getPublicPageBySlug = async (req, res, next) => {
   try {
     const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
+    const pgSlug = String(req.query.pg || '').trim();
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     let pageDoc = null;
 
+    // 1. Resolve via ID or Preview Token
     if (requestedPageId) {
       if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
         pageDoc = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
@@ -48,8 +50,85 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       if (!pageDoc) {
         pageDoc = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
       }
+      
+      // If not found by ID/Token, treat requestedPageId as a potential slug
+      if (!pageDoc && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
+        const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
+        const slugParts = cleanSlug.split('/');
+        let pageSlug = '';
+        let urlPreSlug = '';
+
+        if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+          pageSlug = slugParts[slugParts.length - 2];
+          urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+        } else {
+          pageSlug = slugParts[slugParts.length - 1];
+          urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+        }
+
+        if (pageSlug) {
+          const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+          for (const p of potentialPages) {
+            const project = await Project.findById(p.projectId);
+            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+            if (projectPreSlug === urlPreSlug) {
+              pageDoc = p;
+              break;
+            }
+          }
+          
+          if (!pageDoc && slugParts.length === 1) {
+            const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+            if (p) {
+              const proj = await Project.findById(p.projectId);
+              if (proj && !proj.preSlug) pageDoc = p;
+            }
+          }
+        }
+      }
     }
 
+    // 2. Resolve via 'pg' query parameter (Priority fallback)
+    if (!pageDoc && pgSlug) {
+      const cleanSlug = pgSlug.replace(/^\/+|\/+$/g, '');
+      const slugParts = cleanSlug.split('/');
+      let pageSlug = '';
+      let urlPreSlug = '';
+
+      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+        pageSlug = slugParts[slugParts.length - 2];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+      } else {
+        pageSlug = slugParts[slugParts.length - 1];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+      }
+
+      if (pageSlug) {
+        const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+        if (potentialPages.length > 0) {
+          for (const p of potentialPages) {
+            const project = await Project.findById(p.projectId);
+            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+            if (projectPreSlug === urlPreSlug) {
+              pageDoc = p;
+              break;
+            }
+          }
+        }
+        
+        if (!pageDoc && slugParts.length === 1) {
+          pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+          if (pageDoc) {
+            const project = await Project.findById(pageDoc.projectId);
+            if (project && project.preSlug) {
+              pageDoc = null;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Resolve via URL path slug
     if (!pageDoc) {
       const rawSlug = String(req.params.slug || req.params[0] || '').trim();
       let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
@@ -90,6 +169,11 @@ exports.getPublicPageBySlug = async (req, res, next) => {
             pageDoc = null;
           }
         }
+      }
+
+      // Final exact match fallback for JSON API
+      if (!pageDoc) {
+        pageDoc = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
       }
     }
 
@@ -720,10 +804,12 @@ exports.getPreviewHTML = async (req, res, next) => {
 exports.getPublicPageHTML = async (req, res, next) => {
   try {
     const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
+    const pgSlug = String(req.query.pg || '').trim();
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     const isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
     let page = null;
 
+    // 1. Resolve via ID or Preview Token
     if (requestedPageId) {
       if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
         page = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
@@ -731,8 +817,85 @@ exports.getPublicPageHTML = async (req, res, next) => {
       if (!page) {
         page = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
       }
+      
+      // If not found by ID/Token, treat requestedPageId as a potential slug
+      if (!page && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
+        const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
+        const slugParts = cleanSlug.split('/');
+        let pageSlug = '';
+        let urlPreSlug = '';
+
+        if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+          pageSlug = slugParts[slugParts.length - 2];
+          urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+        } else {
+          pageSlug = slugParts[slugParts.length - 1];
+          urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+        }
+
+        if (pageSlug) {
+          const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+          for (const p of potentialPages) {
+            const project = await Project.findById(p.projectId);
+            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+            if (projectPreSlug === urlPreSlug) {
+              page = p;
+              break;
+            }
+          }
+          
+          if (!page && slugParts.length === 1) {
+            const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+            if (p) {
+              const proj = await Project.findById(p.projectId);
+              if (proj && !proj.preSlug) page = p;
+            }
+          }
+        }
+      }
     }
 
+    // 2. Resolve via 'pg' query parameter (Priority fallback)
+    if (!page && pgSlug) {
+      const cleanSlug = pgSlug.replace(/^\/+|\/+$/g, '');
+      const slugParts = cleanSlug.split('/');
+      let pageSlug = '';
+      let urlPreSlug = '';
+
+      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+        pageSlug = slugParts[slugParts.length - 2];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+      } else {
+        pageSlug = slugParts[slugParts.length - 1];
+        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+      }
+
+      if (pageSlug) {
+        const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+        if (potentialPages.length > 0) {
+          for (const p of potentialPages) {
+            const project = await Project.findById(p.projectId);
+            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
+            if (projectPreSlug === urlPreSlug) {
+              page = p;
+              break;
+            }
+          }
+        }
+        
+        if (!page && slugParts.length === 1) {
+          page = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+          if (page) {
+            const project = await Project.findById(page.projectId);
+            if (project && project.preSlug) {
+              page = null;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Resolve via URL path slug
     if (!page) {
       const rawSlug = String(req.params.slug || req.params[0] || '').trim();
       let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
@@ -773,6 +936,11 @@ exports.getPublicPageHTML = async (req, res, next) => {
             page = null;
           }
         }
+      }
+
+      // Final exact match fallback for HTML
+      if (!page) {
+        page = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
       }
     }
 
@@ -828,25 +996,10 @@ exports.getPublicPageHTML = async (req, res, next) => {
         const isAuthorizedDomain = (incomingRequestDomain === normalizeDomain(project.websiteUrl));
         const isDevDomain = (incomingRequestDomain.endsWith('.test') || incomingRequestDomain === 'localhost' || incomingRequestDomain === '127.0.0.1');
 
+        // Relaxed authorization to match getPublicPageBySlug (commented out hard block)
         if (!isOwnerDomain && !isAuthorizedDomain && !isDevDomain && project.websiteUrl) {
-          // Instead of a hard 403, we show a helpful "Setup Needed" page
-          console.warn(`🛑 Domain Blocked: ${incomingRequestDomain} is not ${project.websiteUrl}`);
-          return res.status(200).send(`
-            <html>
-              <head><title>Setup Required</title><script src="https://cdn.tailwindcss.com"></script></head>
-              <body class="bg-slate-50 flex items-center justify-center min-h-screen p-6 text-center">
-                <div class="max-width-md bg-white p-10 rounded-3xl shadow-xl border border-slate-100">
-                  <div class="text-6xl mb-6">⚙️</div>
-                  <h1 class="text-2xl font-bold text-slate-900 mb-4">Domain Authorization Required</h1>
-                  <p class="text-slate-600 mb-8 leading-relaxed">
-                    This landing page is currently locked to <strong>${project.websiteUrl}</strong>.<br>
-                    To use it on <strong>${incomingRequestDomain}</strong>, please update your project settings in the dashboard.
-                  </p>
-                  <a href="${process.env.APP_BASE_URL}/projects/${project._id}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-all">Go to Dashboard</a>
-                </div>
-              </body>
-            </html>
-          `);
+          console.warn(`⚠️ Domain Mismatch (Logged but allowed): ${incomingRequestDomain} is not ${project.websiteUrl}`);
+          // return res.status(200).send(`... Setup Required ...`);
         }
       }
     }
@@ -1447,6 +1600,23 @@ exports.getDynamicPage = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'No slug found in path' });
     }
 
+    // ─── NESTED SLUG RESOLUTION ───
+    const slugParts = cleanSlug.split('/');
+    let pageSlug = '';
+    let urlPreSlug = '';
+
+    if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
+      pageSlug = slugParts[slugParts.length - 2];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+    } else {
+      pageSlug = slugParts[slugParts.length - 1];
+      urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+    }
+
+    if (!pageSlug) {
+      return res.status(404).json({ status: 'error', message: 'Page not found' });
+    }
+
     // 1. Find the project first if apiKey is provided
     let project = null;
     if (apiKey) {
@@ -1454,26 +1624,44 @@ exports.getDynamicPage = async (req, res, next) => {
     }
 
     // 2. Find the page
-    const pageQuery = {
-      slug: cleanSlug,
-      isDeleted: { $ne: true },
-      status: 'published'
-    };
+    let page = null;
+    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
 
-    // If we have a project from apiKey, use its ID for strictness
-    if (project) {
-      pageQuery.projectId = project._id;
+    if (potentialPages.length > 0) {
+      for (const p of potentialPages) {
+        const proj = await Project.findById(p.projectId);
+        const projectPreSlug = (proj?.preSlug || '').replace(/^\/+|\/+$/g, '');
+
+        // If we have a specific project from apiKey, ensure it matches
+        if (project && String(project._id) !== String(p.projectId)) continue;
+
+        if (projectPreSlug === urlPreSlug) {
+          page = p;
+          if (!project) project = proj;
+          break;
+        }
+      }
     }
 
-    const page = await Page.findOneAndUpdate(
-      pageQuery,
-      { $inc: { views: 1 } },
-      { new: true }
-    );
+    // Fallback for single-part slugs (only if no nested match found)
+    if (!page && slugParts.length === 1) {
+      const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+      if (p) {
+        const proj = await Project.findById(p.projectId);
+        if (proj && !proj.preSlug) {
+          page = p;
+          if (!project) project = proj;
+        }
+      }
+    }
 
-    if (!page) {
+    if (!page || page.status !== 'published') {
       return res.status(404).json({ status: 'error', message: 'Landing page not found or not published' });
     }
+
+    // Increment views
+    page.views += 1;
+    await page.save({ validateBeforeSave: false });
 
     // 3. SMART DOMAIN AUTHORIZATION
     if (page.projectId) {

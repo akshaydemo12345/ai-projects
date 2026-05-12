@@ -7,9 +7,12 @@
     apiBase: API_BASE || window.location.origin,
     apiKey: scriptTag ? scriptTag.getAttribute('data-api-key') : null,
     domain: window.location.hostname,
-    path: window.location.pathname,
+    path: window.location.hash.replace(/^#+/, '') || window.location.pathname,
     fullUrl: window.location.href
   };
+
+  // Support re-initialization on hash change
+  window.addEventListener('hashchange', () => window.location.reload());
   const landingUrl = window.location.href;
   const previousReferrer = document.referrer;
 
