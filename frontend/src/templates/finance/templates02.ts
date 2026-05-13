@@ -8,10 +8,11 @@ export const finance02Styles = `
 :root {
   --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
+  --accent: var(--primary);
   --slate: #475569;
-  --gold: #c5a059;
   --bg-light: #fdfdfd;
   --border: #e2e8f0;
+  --text-dark: var(--secondary);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.3s ease; }
@@ -21,7 +22,7 @@ html { scroll-behavior: smooth; }
 body { 
   font-family: 'Public Sans', sans-serif; 
   background: var(--bg-light); 
-  color: SECONDARY_COLOR_PLACEHOLDER; 
+  color: var(--text-dark); 
   line-height: 1.7; 
   overflow-x: hidden;
 }
@@ -29,7 +30,7 @@ body {
 h1, h2, h3 { 
   font-family: 'Playfair Display', serif; 
   font-weight: 700; 
-  color: var(--navy); 
+  color: var(--secondary); 
 }
 
 .container { 
@@ -40,7 +41,7 @@ h1, h2, h3 {
 
 .section-padding { padding: 8rem 0; }
 
-.text-gold { color: var(--gold); }
+.text-accent { color: var(--accent); }
 
 /* NAVBAR */
 .nav {
@@ -59,7 +60,7 @@ h1, h2, h3 {
 .nav-links a:hover { opacity: 1; }
 
 .btn-nav {
-  background: PRIMARY_COLOR_PLACEHOLDER !important;
+  background: var(--primary) !important;
   color: #fff !important;
   padding: 0.9rem 2.5rem;
   font-weight: 700;
@@ -73,7 +74,7 @@ h1, h2, h3 {
 .hero {
   height: 90vh;
   min-height: 800px;
-  background: SECONDARY_COLOR_PLACEHOLDER !important;
+  background: var(--secondary) !important;
   display: flex;
   align-items: center;
   position: relative;
@@ -111,9 +112,9 @@ h1, h2, h3 {
 }
 
 .hero-btns { display: flex; gap: 1.5rem; }
-.btn-hero-primary { background: PRIMARY_COLOR_PLACEHOLDER !important; color: #fff !important; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
+.btn-hero-primary { background: var(--primary) !important; color: #fff !important; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
 .btn-hero-outline { border: 1px solid #fff; color: #fff; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
-.btn-hero-outline:hover { background: #fff; color: var(--navy); }
+.btn-hero-outline:hover { background: #fff; color: var(--secondary); }
 
 /* INSTITUTIONAL FORM SECTION */
 .form-section {
@@ -123,7 +124,7 @@ h1, h2, h3 {
   position: relative;
   z-index: 20;
   box-shadow: 0 40px 100px rgba(0,0,0,0.1);
-  border-top: 4px solid PRIMARY_COLOR_PLACEHOLDER;
+  border-top: 4px solid var(--primary);
 }
 
 .form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: center; }
@@ -146,13 +147,13 @@ h1, h2, h3 {
   outline: none;
   font-family: inherit;
   font-size: 1rem;
-  color: var(--navy);
+  color: var(--secondary);
 }
-.form-group input:focus { border-color: PRIMARY_COLOR_PLACEHOLDER; }
+.form-group input:focus { border-color: var(--primary); }
 
 .btn-form {
   grid-column: span 2;
-  background: SECONDARY_COLOR_PLACEHOLDER;
+  background: var(--secondary);
   color: #fff;
   padding: 1.2rem;
   border: none;
@@ -161,7 +162,7 @@ h1, h2, h3 {
   letter-spacing: 2px;
   cursor: pointer;
 }
-.btn-form:hover { background: PRIMARY_COLOR_PLACEHOLDER; }
+.btn-form:hover { background: var(--primary); }
 
 /* TRUST SECTION */
 .trust-logos { padding: 4rem 0; border-bottom: 1px solid var(--border); }
@@ -171,8 +172,8 @@ h1, h2, h3 {
 /* SERVICES GRID */
 .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem; }
 .service-item { border-left: 1px solid var(--border); padding-left: 2rem; }
-.service-item:hover { border-left-color: PRIMARY_COLOR_PLACEHOLDER; }
-.service-item span { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 700; font-size: 0.9rem; }
+.service-item:hover { border-left-color: var(--primary); }
+.service-item span { color: var(--primary); font-weight: 700; font-size: 0.9rem; }
 .service-item h3 { font-size: 1.5rem; margin: 1rem 0; }
 .service-item p { color: var(--slate); font-size: 0.95rem; }
 
@@ -182,7 +183,7 @@ h1, h2, h3 {
 
 /* FOOTER */
 .footer {
-  background: SECONDARY_COLOR_PLACEHOLDER !important;
+  background: var(--secondary) !important;
   color: #fff;
   padding: 6rem 0 3rem;
 }
@@ -200,24 +201,22 @@ h1, h2, h3 {
 
 /* GLOBAL PRESENCE */
 .global-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4rem; text-align: center; }
-.global-item h3 { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+.global-item h3 { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
 .global-item p { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 0.8rem; color: var(--slate); }
 
 /* CORE VALUES */
-.values-section { background: SECONDARY_COLOR_PLACEHOLDER !important; color: #fff; text-align: center; }
+.values-section { background: var(--secondary) !important; color: #fff; text-align: center; }
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
 .value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
-.value-card:hover { background: rgba(255,255,255,0.05); border-color: PRIMARY_COLOR_PLACEHOLDER; }
-.value-card i { font-size: 2rem; color: var(--gold); margin-bottom: 2rem; display: block; }
-.value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
-
+.value-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
+.value-card i { font-size: 2rem; color: var(--accent); margin-bottom: 2rem; display: block; }
 .value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
 
 /* MINIMAL CTA */
 .cta-minimal { background: #fff; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .cta-minimal h2 { font-size: 3rem; margin-bottom: 2rem; }
-.btn-cta-dark { background: SECONDARY_COLOR_PLACEHOLDER; color: #fff; padding: 1.2rem 4rem; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; display: inline-block; }
-.btn-cta-dark:hover { background: var(--gold); }
+.btn-cta-dark { background: var(--secondary); color: #fff; padding: 1.2rem 4rem; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; display: inline-block; }
+.btn-cta-dark:hover { background: var(--accent); }
 
 @media (max-width: 1024px) {
   .hero-content { text-align: center; margin: 0 auto; }

@@ -158,7 +158,7 @@ const calculateCost = (model, inputTokens, outputTokens) => {
     'default': { input: 0.000003, output: 0.000015 }
   };
 
-  const modelKey = Object.keys(pricing).find(key => 
+  const modelKey = Object.keys(pricing).find(key =>
     model.toLowerCase().includes(key)
   ) || 'default';
 
@@ -395,171 +395,98 @@ ${aiPrompt}
 
 /**
  * =========================================
+ * EDITOR SYSTEM PROMPT
+ * =========================================
+ */
+const EDITOR_SYSTEM_PROMPT = `
+You are a Senior UI Developer. You modify GrapesJS elements based on instructions.
+You MUST return a valid JSON object with the following structure:
+{
+  "action": "style" | "text" | "both" | "html",
+  "css": { "camelCaseProperty": "value" },
+  "text": "new text content",
+  "html": "full new html if action is html",
+  "summary": "short summary of what you did"
+}
+
+RULES:
+- If changing color/spacing/size, use "action": "style" and provide "css".
+- If changing text content, use "action": "text" and provide "text".
+- Use "both" for both.
+- Use "html" ONLY if you need to rewrite the entire structure.
+- RETURN ONLY THE JSON OBJECT. NO MARKDOWN. NO EXPLANATION.
+`;
+
+/**
+ * =========================================
  * EDITOR CHAT MODIFY
  * =========================================
  */
-const editorChatModify = async ({ elementTag, elementHtml, elementCss, instruction }) => {
-  const systemPrompt = `You are a web design AI inside a GrapesJS editor. The user gives an instruction in Hindi or English to modify a specific HTML element.
+const editorChatModify = async ({
+  elementTag,
+  elementHtml,
+  elementCss,
+  instruction
+}) => {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY missing');
 
-Return ONLY a valid JSON object, no markdown, no explanation:
-{
-  "action": "style" | "text" | "html" | "both",
-  "css": { "camelCaseProp": "value" },
-  "text": "new text content",
-  "html": "new full HTML",
-  "summary": "brief English description of change"
-}
+  const anthropic = new Anthropic({ apiKey: anthropicKey });
 
-Hindi: lal=red, nila=blue, hara=green, kala=black, safed=white, peela=yellow, baingani=purple, gulabi=pink, bada/bado=larger font, chota=smaller, gol=border-radius, center=center align, bold/mota=font-weight bold, background/peechha=background-color.`;
-
-  const userPrompt = `Element: <${elementTag}>
-HTML: ${elementHtml?.slice(0, 1500)}
+  const userPrompt = `
+TAG: ${elementTag}
+HTML: ${elementHtml}
 CSS: ${elementCss}
-Instruction: ${instruction}`;
+INSTRUCTION: ${instruction}
+`;
 
-  const result = await callAI(userPrompt, '', systemPrompt);
-  const rawText = result.fullHtml || '{}';
+  let lastError = null;
+  for (const model of CLAUDE_MODEL_CANDIDATES) {
+    try {
+      logger.info(`[AI-EDITOR] Attempting model: ${model}`);
+      const response = await anthropic.messages.create({
+        model,
+        max_tokens: 4000,
+        temperature: 0,
+        system: EDITOR_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      });
 
-  // Strip any markdown fences
-  const clean = rawText.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+      const rawText = response.content[0].text;
 
-  try {
-    const jsonMatch = clean.match(/\{[\s\S]*\}/);
-    return JSON.parse(jsonMatch ? jsonMatch[0] : clean);
-  } catch {
-    return { action: 'html', html: rawText, summary: 'AI applied changes' };
-  }
-};
+      // Try to parse JSON directly or extract it if AI added markdown
+      let jsonStr = rawText.trim();
+      if (jsonStr.includes('```')) {
+        const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+        if (match && match[1]) jsonStr = match[1].trim();
+      }
 
-/**
- * =========================================
- * PROJECT SUGGESTIONS
- * =========================================
- */
-const generateProjectSuggestions = async ({ projectName, industry, projectDescription, services, pageTitles }) => {
-  const servicesText = services && services.length > 0 ? services.join(', ') : 'various services';
-  const pageTitlesText = pageTitles && pageTitles.length > 0 ? pageTitles.join(', ') : 'none';
-
-  const prompt = `
-    Generate 6 short landing page description suggestions for this business.
-
-    Project Name: ${projectName}
-    Industry: ${industry}
-    Business Description: ${projectDescription || 'Not provided'}
-    Services: ${servicesText}
-    Existing Pages: ${pageTitlesText}
-
-    Each suggestion should:
-    - be 1 sentence
-    - be concise (10-20 words)
-    - be related to lead generation
-    - be useful for a landing page
-    - help the user quickly generate a page
-    - be different from existing pages
-
-    OUTPUT FORMAT:
-    Return ONLY a JSON array of strings, like this:
-    ["suggestion 1", "suggestion 2", "suggestion 3", "suggestion 4", "suggestion 5", "suggestion 6"]
-    No other text, no markdown, no code blocks.
-  `;
-
-  const result = await callAI(prompt);
-  const responseText = result.fullHtml || '';
-
-  try {
-    const parsed = JSON.parse(responseText);
-    if (Array.isArray(parsed)) return parsed;
-    const arrayMatch = responseText.match(/\[.*\]/s);
-    if (arrayMatch) return JSON.parse(arrayMatch[0]);
-  } catch (e) {
-    // Fallback: split by newlines and clean up
-    return responseText.split('\n')
-      .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
-      .filter(line => line.length > 5)
-      .slice(0, 6);
-  }
-  return [];
-};
-
-/**
- * =========================================
- * GENERATE DESCRIPTION
- * =========================================
- */
-const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt }) => {
-  let prompt;
-
-  if (!currentPrompt || currentPrompt.trim() === '') {
-    prompt = `
-      You are an expert prompt engineer for an AI Landing Page Builder.
-      Generate a detailed landing page description for:
-      Page Name: "${pageName}"
-      Industry: "${industry}"
-      Context: ${projectDesc}
-      Make it 100-150 words, conversion-focused. Return ONLY the raw string.
-    `;
-  } else {
-    prompt = `
-      Expand and improve this landing page idea:
-      User Input: ${currentPrompt}
-      Page Name: "${pageName}"
-      Industry: "${industry}"
-      Context: ${projectDesc}
-      Make it 150-250 words. Return ONLY the raw string.
-    `;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        return {
+          ...parsed,
+          aiUsage: {
+            promptTokens: response.usage.input_tokens,
+            completionTokens: response.usage.output_tokens,
+            totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+            model
+          }
+        };
+      } catch (parseErr) {
+        logger.error('[AI-EDITOR] JSON Parse failed, returning raw as HTML fallback');
+        return {
+          action: 'html',
+          html: rawText,
+          summary: 'Applied raw AI response'
+        };
+      }
+    } catch (err) {
+      lastError = err;
+      logger.error(`[AI-EDITOR] Model failed (${model}): ${err.message}`);
+    }
   }
 
-  const result = await callAI(prompt);
-  return {
-    suggestion: result.fullHtml || result.fullCss || 'Failed to generate suggestion',
-    aiUsage: result.aiUsage
-  };
-};
-
-/**
- * =========================================
- * STRATEGIC STRUCTURE
- * =========================================
- */
-const generateStrategicStructure = async (input) => {
-  const { businessName, industry, businessDescription, services = [] } = input;
-
-  const systemPrompt = `Act as a World-Class UX Strategist. Output ONLY valid JSON for a landing page structure.`;
-  const userPrompt = `Industry: ${industry}, Business: ${businessName}, Services: ${services.join(', ')}, Description: ${businessDescription}. Generate structure JSON.`;
-
-  const result = await callAI(userPrompt, '', systemPrompt);
-
-  try {
-    let text = result.fullHtml || '';
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    return { plan: JSON.parse(jsonMatch ? jsonMatch[0] : text), aiUsage: result.aiUsage };
-  } catch (err) {
-    logger.error('Strategic Plan JSON Error:', err.message);
-    throw new Error('Strategic Plan Generation Failed');
-  }
-};
-
-/**
- * =========================================
- * OPTIMIZE STRUCTURE
- * =========================================
- */
-const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPage }) => {
-  const systemPrompt = `You are a CRO Architect. Map images and optimize sections. Output ONLY JSON.`;
-  const userPrompt = `Optimize this page: ${JSON.stringify(existingPage)} using ${JSON.stringify(projectData)}. Context: ${JSON.stringify(scrapedData)}`;
-
-  const result = await callAI(userPrompt, '', systemPrompt);
-
-  try {
-    const text = result.fullHtml || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const plan = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    return { plan, aiUsage: result.aiUsage };
-  } catch (err) {
-    logger.error('Optimization Engine JSON Error:', err.message);
-    throw new Error('Optimization Engine Failed');
-  }
+  throw new Error(`Editor AI failed: ${lastError?.message}`);
 };
 
 /**

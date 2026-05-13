@@ -231,7 +231,7 @@ class DomainMapper_Proxy
 
         http_response_code($code);
 
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? ('http://' . ($this->settings['source_domain'] ?? ''));
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? ('https://' . ($this->settings['source_domain'] ?? ''));
         if (!headers_sent()) {
             header('Access-Control-Allow-Origin: ' . $origin);
             header('Access-Control-Allow-Credentials: true');
