@@ -37,7 +37,7 @@ class DomainMapper_Form_Interceptor
         if (empty($source)) {
             return '';
         }
-        return '<script src="http://' . esc_attr($source) . '/dm-interceptor.js" defer></script>';
+        return '<script src="https://' . esc_attr($source) . '/dm-interceptor.js" defer></script>';
     }
 
     /**
@@ -49,7 +49,7 @@ class DomainMapper_Form_Interceptor
         $source = $this->strip_scheme($this->settings['source_domain'] ?? '');
         $target = $this->strip_scheme($this->settings['target_domain'] ?? '');
         $bare = (string) preg_replace('/^www\./i', '', $target);
-        $relay_prefix = 'http://' . $source . '/dm-relay/';
+        $relay_prefix = 'https://' . $source . '/dm-relay/';
         $relay_domains = $this->get_relay_domains($bare);
 
         $rp = addslashes($relay_prefix);
@@ -201,14 +201,16 @@ class DomainMapper_Form_Interceptor
 
             if (result.status === 'success') {
                 form.reset();
-                var currentPath = window.location.pathname;
                 
                 // Smart Redirection: Use backend's suggested redirect if available
                 if (result.redirect) {
                     window.location.href = result.redirect;
                 } else {
-                    var thankYouPath = currentPath.endsWith('/') ? currentPath + 'thank-you' : currentPath + '/thank-you';
-                    window.location.href = thankYouPath;
+                    // FIX: Use query parameter instead of path suffix to avoid conflicts 
+                    // with the host website's own /thank-you page.
+                    var u = new URL(window.location.href);
+                    u.searchParams.set('status', 'thank-you');
+                    window.location.href = u.toString();
                 }
             } else {
                 // FIX: On error/fail, re-enable the button and show an inline

@@ -106,9 +106,23 @@ footer { padding: 8rem 0 4rem; background: #1c1917; color: #fff; border-top: 1px
 .foot-links a:hover { color: #fff; }
 
 @media (max-width: 1024px) {
-  .hero-content, .stats-grid, .journey-grid, .encounter-content, .sleep-grid, .lens-grid, .con-grid, .foot-grid { grid-template-columns: 1fr !important; }
+  .hero-content { grid-template-columns: 1fr !important; text-align: center; gap: 4rem; }
+  .hero-text { text-align: center; }
+  .hero-text p { margin: 0 auto 3rem; }
+  .hero-btns { justify-content: center; }
+  .booking-card { margin: 0 auto; max-width: 500px; }
+  .stats-grid, .journey-grid, .sleep-grid, .lens-grid, .con-grid, .foot-grid { grid-template-columns: 1fr 1fr !important; }
+  .encounter-content { grid-template-columns: 1fr !important; }
   .img-small { position: static; width: 100%; height: 300px; margin-top: 1rem; }
   .img-big { width: 100%; }
+}
+@media (max-width: 640px) {
+  .hero h1 { font-size: 3rem; }
+  .stats-grid, .journey-grid, .sleep-grid, .lens-grid, .con-grid, .foot-grid { grid-template-columns: 1fr !important; }
+  .hero-btns { flex-direction: column; }
+  .booking-grid { grid-template-columns: 1fr; }
+  .btn-submit { grid-column: span 1; }
+  .con-stats { flex-direction: column; gap: 2rem; }
 }
 `
 
@@ -145,7 +159,11 @@ export const travel02Html = `
           </div>
           <div class="input-group" style="grid-column: span 2;">
             <label>Full Name</label>
-            <input type="text" name="full_name" placeholder="2 Adults">
+            <input type="text" name="full_name" placeholder="John Doe">
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label>Email Address</label>
+            <input type="email" name="email_address" placeholder="you@email.com">
           </div>
           <button type="submit" class="btn-submit">Plan My Journey →</button>
         </div>
