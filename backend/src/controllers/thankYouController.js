@@ -322,7 +322,8 @@ exports.renderThankYouPage = async (req, res, next) => {
  */
 exports.previewThankYouPage = async (req, res, next) => {
   try {
-    const { layout, content, branding } = req.body;
+    const { layout: rawLayout, content, branding } = req.body;
+    const layout = rawLayout || 'default';
 
     const registryPath = path.join(__dirname, '../thank-you-layouts/layout-registry.json');
     const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));

@@ -125,12 +125,12 @@ export const travel01Html = `
           <input type="text" name="destination" placeholder="Where to?">
         </div>
         <div class="search-field">
-          <label>Guests</label>
-          <input type="text" name="guests" placeholder="2 Adults">
+          <label>Email</label>
+          <input type="email" name="email_address" placeholder="you@email.com">
         </div>
         <div class="search-field">
-          <label>Duration</label>
-          <input type="text" name="duration" placeholder="7 Days">
+          <label>Guests</label>
+          <input type="text" name="guests" placeholder="2 Adults">
         </div>
         <button type="submit" class="btn-submit">Search</button>
       </form>

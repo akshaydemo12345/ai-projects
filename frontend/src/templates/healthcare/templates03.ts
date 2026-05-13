@@ -583,6 +583,10 @@ export const healthcare03Html = `
         <label>Phone Number</label>
         <input type="tel" name="phone" placeholder="Enter Number">
       </div>
+      <div class="input-item">
+        <label>Email Address</label>
+        <input type="email" name="email_address" placeholder="you@email.com">
+      </div>
       <button type="submit" class="btn-booking-now">BOOK NOW</button>
       </form>
     </div>

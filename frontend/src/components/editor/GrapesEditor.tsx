@@ -466,8 +466,9 @@ const GrapesEditor = () => {
       },
       canvas: {
         styles: [
-          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600&family=Outfit:wght@300;400;600&display=swap',
+          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Public+Sans:wght@300;400;600;700&display=swap',
           'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
           'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
           'https://fonts.googleapis.com/icon?family=Material+Icons',
         ],
@@ -1078,9 +1079,9 @@ const GrapesEditor = () => {
             tagName: 'div',
             draggable: true,
             droppable: false,
-            attributes: { 
+            attributes: {
               class: 'form-embed-container',
-              'data-gjs-type': 'form-embed' 
+              'data-gjs-type': 'form-embed'
             },
             embedCode: '',
             embedType: 'html',
@@ -1115,7 +1116,7 @@ const GrapesEditor = () => {
             const attrType = this.getAttributes()['data-embed-type'];
             if (attrCode && !this.get('embedCode')) this.set('embedCode', attrCode, { silent: true });
             if (attrType && !this.get('embedType')) this.set('embedType', attrType, { silent: true });
-            
+
             // If we have code, ensure it's rendered as components for export
             if (this.get('embedCode')) {
               this.handleUpdate();
@@ -1124,17 +1125,17 @@ const GrapesEditor = () => {
           handleUpdate() {
             const code = this.get('embedCode') || '';
             const type = this.get('embedType') || 'html';
-            
+
             // Store values in attributes so they survive save/load (persistence)
-            this.addAttributes({ 
+            this.addAttributes({
               'data-embed-code': code,
               'data-embed-type': type
             });
-            
+
             // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
             // Using components() ensures the code is included in the exported HTML.
             this.components(`<div class="embed-inner-wrapper">${code}</div>`);
-            
+
             // Trigger a view refresh
             this.trigger('rerender-view');
           },
@@ -2002,11 +2003,11 @@ const GrapesEditor = () => {
       // Build the public URL for display
       const slug = pageDataRef.current?.slug || pageId;
       const preSlugPrefix = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
-      
+
       // Use project websiteUrl (normalized by backend) or fallback to current origin
       const baseUrl = project?.websiteUrl || project?.url || window.location.origin;
       const url = `${baseUrl.replace(/\/+$/, '')}/${preSlugPrefix ? preSlugPrefix + '/' : ''}${slug}`;
-      
+
       setPublishedUrl(url);
       setPublishModalOpen(true);
     } catch (err) {
@@ -2124,10 +2125,15 @@ const GrapesEditor = () => {
       let changeApplied = false;
       let changeSummary = parsed.summary || 'AI change applied';
 
-      if ((parsed.action === 'style' || parsed.action === 'both') && parsed.css && Object.keys(parsed.css).length > 0) {
+      const aiCss = parsed.css || parsed.style || parsed.styles || {};
+      const aiText = parsed.text || parsed.content || parsed.text_content;
+      const aiHtml = parsed.html || parsed.modified_html || parsed.new_html;
+      const action = parsed.action || (aiHtml ? 'html' : aiCss ? 'style' : aiText ? 'text' : 'both');
+
+      if ((action === 'style' || action === 'both') && aiCss && Object.keys(aiCss).length > 0) {
         // Convert camelCase to kebab-case for GrapesJS
         const kebabCss: Record<string, string> = {};
-        Object.entries(parsed.css).forEach(([key, value]) => {
+        Object.entries(aiCss).forEach(([key, value]) => {
           const kebab = key.replace(/([A-Z])/g, '-$1').toLowerCase();
           kebabCss[kebab] = value as string;
         });
@@ -2136,15 +2142,15 @@ const GrapesEditor = () => {
         changeApplied = true;
       }
 
-      if ((parsed.action === 'text' || parsed.action === 'both') && parsed.text) {
+      if ((action === 'text' || action === 'both') && aiText) {
         if (selected.get('type') !== 'wrapper') {
-          selected.components(parsed.text);
+          selected.components(aiText);
           changeApplied = true;
         }
       }
 
-      if (parsed.action === 'html' && parsed.html) {
-        selected.replaceWith(parsed.html);
+      if (action === 'html' && aiHtml) {
+        selected.replaceWith(aiHtml);
         changeApplied = true;
       }
 
@@ -2160,7 +2166,7 @@ const GrapesEditor = () => {
         setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
         toast.success('✨ AI ne change apply kar diya!');
       } else {
-        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo jaise: "is heading ka color lal karo"';
+        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo.';
       }
 
       setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
@@ -2615,7 +2621,7 @@ const GrapesEditor = () => {
                             processAiChat();
                           }
                         }}
-                        placeholder="Hindi ya English mein likhو... e.g. 'is button ka color blue karo'"
+                        placeholder="How can I help you'"
                         style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
                       />
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

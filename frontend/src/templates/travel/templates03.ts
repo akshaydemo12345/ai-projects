@@ -184,6 +184,10 @@ export const travel03Html = `
         <label>Travel Date</label>
         <input type="date" name="travel_date" required>
       </div>
+      <div class="form-field">
+        <label>Email Address</label>
+        <input type="email" name="email_address" placeholder="you@email.com" required>
+      </div>
       <button type="submit" class="btn-primary">Request Private Inquiry</button>
     </form>
   </div>
