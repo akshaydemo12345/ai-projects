@@ -625,7 +625,7 @@ export const healthcare01Html = `
 </div>
 <div class="booking-card high-elevation">
 <h3 class="font-h3" style="margin-bottom: 1.5rem;">Schedule Your Visit</h3>
-<form class="booking-form" onsubmit="event.preventDefault()">
+<form class="booking-form">
 <div class="form-group">
 <label class="form-label font-label-bold">Full Name</label>
 <input class="form-input" placeholder="John Doe" type="text" name="name" id="name"/>

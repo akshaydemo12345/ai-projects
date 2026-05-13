@@ -599,48 +599,99 @@ Return JSON only.
 
 /**
  * =========================================
+ * EDITOR SYSTEM PROMPT
+ * =========================================
+ */
+const EDITOR_SYSTEM_PROMPT = `
+You are a Senior UI Developer. You modify GrapesJS elements based on instructions.
+You MUST return a valid JSON object with the following structure:
+{
+  "action": "style" | "text" | "both" | "html",
+  "css": { "camelCaseProperty": "value" },
+  "text": "new text content",
+  "html": "full new html if action is html",
+  "summary": "short summary of what you did"
+}
+
+RULES:
+- If changing color/spacing/size, use "action": "style" and provide "css".
+- If changing text content, use "action": "text" and provide "text".
+- Use "both" for both.
+- Use "html" ONLY if you need to rewrite the entire structure.
+- RETURN ONLY THE JSON OBJECT. NO MARKDOWN. NO EXPLANATION.
+`;
+
+/**
+ * =========================================
  * EDITOR CHAT MODIFY
  * =========================================
  */
-const editorChatModify =
-  async ({
-    elementTag,
-    elementHtml,
-    instruction
-  }) => {
+const editorChatModify = async ({
+  elementTag,
+  elementHtml,
+  elementCss,
+  instruction
+}) => {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY missing');
 
-    const prompt = `
-Modify this HTML element.
-
-TAG:
-${elementTag}
-
-HTML:
-${elementHtml}
-
-INSTRUCTION:
-${instruction}
-
-Return JSON only.
+  const anthropic = new Anthropic({ apiKey: anthropicKey });
+  
+  const userPrompt = `
+TAG: ${elementTag}
+HTML: ${elementHtml}
+CSS: ${elementCss}
+INSTRUCTION: ${instruction}
 `;
 
-    const result =
-      await callAI(prompt);
-
+  let lastError = null;
+  for (const model of CLAUDE_MODEL_CANDIDATES) {
     try {
+      logger.info(`[AI-EDITOR] Attempting model: ${model}`);
+      const response = await anthropic.messages.create({
+        model,
+        max_tokens: 4000,
+        temperature: 0,
+        system: EDITOR_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      });
 
-      return JSON.parse(
-        result.fullHtml
-      );
+      const rawText = response.content[0].text;
+      
+      // Try to parse JSON directly or extract it if AI added markdown
+      let jsonStr = rawText.trim();
+      if (jsonStr.includes('```')) {
+        const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+        if (match && match[1]) jsonStr = match[1].trim();
+      }
 
-    } catch {
-
-      return {
-        action: 'html',
-        html: result.fullHtml
-      };
+      try {
+        const parsed = JSON.parse(jsonStr);
+        return {
+          ...parsed,
+          aiUsage: {
+            promptTokens: response.usage.input_tokens,
+            completionTokens: response.usage.output_tokens,
+            totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+            model
+          }
+        };
+      } catch (parseErr) {
+        logger.error('[AI-EDITOR] JSON Parse failed, returning raw as HTML fallback');
+        return {
+          action: 'html',
+          html: rawText,
+          summary: 'Applied raw AI response'
+        };
+      }
+    } catch (err) {
+      lastError = err;
+      logger.error(`[AI-EDITOR] Model failed (${model}): ${err.message}`);
     }
-  };
+  }
+
+  throw new Error(`Editor AI failed: ${lastError?.message}`);
+};
 
 /**
  * =========================================
