@@ -1,6 +1,6 @@
 <?php
 /**
- * Auto-detection utilities for Domain Mapper
+ * Auto-detection utilities for Buildify AI
  *
  * Automatically detects and validates:
  * - Source Domain (WordPress domain)

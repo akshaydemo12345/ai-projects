@@ -491,6 +491,170 @@ INSTRUCTION: ${instruction}
 
 /**
  * =========================================
+ * GENERATE DESCRIPTION
+ * =========================================
+ */
+const generateDescriptionSuggestion = async ({
+  pageName,
+  industry,
+  projectDesc,
+  currentPrompt
+}) => {
+  const prompt = `
+Generate a premium landing page description.
+
+PAGE:
+${pageName}
+
+INDUSTRY:
+${industry}
+
+DESCRIPTION:
+${projectDesc}
+
+PROMPT:
+${currentPrompt}
+
+Generate highly premium, conversion-focused copy.
+`;
+
+  const result = await callAI(prompt);
+  return {
+    suggestion: result.fullHtml || ''
+  };
+};
+
+/**
+ * =========================================
+ * PROJECT SUGGESTIONS
+ * =========================================
+ */
+const generateProjectSuggestions = async ({
+  projectName,
+  industry,
+  projectDescription,
+  services,
+  pageTitles
+}) => {
+  const prompt = `
+Generate 6 premium landing page ideas.
+
+PROJECT:
+${projectName}
+
+INDUSTRY:
+${industry}
+
+DESCRIPTION:
+${projectDescription}
+${services ? `SERVICES: ${services.join(', ')}` : ''}
+${pageTitles ? `EXISTING PAGES: ${pageTitles.join(', ')}` : ''}
+
+Return ONLY JSON array of objects with "title" and "description".
+`;
+
+  const result = await callAI(prompt);
+  try {
+    let text = result.fullHtml.trim();
+    if (text.includes('```')) {
+      const match = text.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+      if (match) text = match[1].trim();
+    }
+    return JSON.parse(text);
+  } catch (err) {
+    logger.error('Failed to parse project suggestions:', err.message);
+    return [];
+  }
+};
+
+/**
+ * =========================================
+ * STRATEGIC STRUCTURE
+ * =========================================
+ */
+const generateStrategicStructure = async (input) => {
+  const prompt = `
+Generate a strategic landing page structure.
+
+BUSINESS:
+${input.businessName}
+
+INDUSTRY:
+${input.industry}
+
+DESCRIPTION:
+${input.businessDescription}
+
+Return JSON only with "plan" object containing "sections".
+`;
+
+  const result = await callAI(prompt);
+  try {
+    let text = result.fullHtml.trim();
+    if (text.includes('```')) {
+      const match = text.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+      if (match) text = match[1].trim();
+    }
+    return {
+      plan: JSON.parse(text),
+      aiUsage: result.aiUsage
+    };
+  } catch (err) {
+    logger.error('Failed to parse strategic structure:', err.message);
+    return {
+      plan: { sections: [] },
+      aiUsage: result.aiUsage
+    };
+  }
+};
+
+/**
+ * =========================================
+ * OPTIMIZE STRUCTURE
+ * =========================================
+ */
+const optimizeStrategicStructure = async ({
+  projectData,
+  scrapedData,
+  existingPage
+}) => {
+  const prompt = `
+Optimize this landing page.
+
+PROJECT:
+${JSON.stringify(projectData)}
+
+SCRAPED:
+${JSON.stringify(scrapedData)}
+
+EXISTING:
+${JSON.stringify(existingPage)}
+
+Return JSON only with "plan" object.
+`;
+
+  const result = await callAI(prompt);
+  try {
+    let text = result.fullHtml.trim();
+    if (text.includes('```')) {
+      const match = text.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+      if (match) text = match[1].trim();
+    }
+    return {
+      plan: JSON.parse(text),
+      aiUsage: result.aiUsage
+    };
+  } catch (err) {
+    logger.error('Failed to parse optimized structure:', err.message);
+    return {
+      plan: { sections: [] },
+      aiUsage: result.aiUsage
+    };
+  }
+};
+
+/**
+ * =========================================
  * EXPORTS
  * =========================================
  */

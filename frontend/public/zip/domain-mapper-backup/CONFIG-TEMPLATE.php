@@ -1,12 +1,12 @@
 <?php
 /**
- * Domain Mapper Plugin Configuration Template
+ * Buildify AI Plugin Configuration Template
  * 
- * This file contains the recommended settings for the Domain Mapper plugin
+ * This file contains the recommended settings for the Buildify AI plugin
  * to work with the AI Landing Page Backend.
  * 
  * USAGE:
- * 1. Go to WordPress Admin → Settings → Domain Mapper SaaS
+ * 1. Go to WordPress Admin → Settings → Buildify AI
  * 2. Fill in the fields below
  * 3. Click "Apply .htaccess Rules"
  * 4. Test the integration
@@ -79,11 +79,11 @@ $DM_SETTINGS_PROD = [
 
 /*
 
-STEP 1: Install Domain Mapper Plugin
+STEP 1: Install Buildify AI Plugin
 ─────────────────────────────────────
   a) Upload /domain-mapper/ to wp-content/plugins/
   b) Go to WordPress Admin → Plugins
-  c) Activate "Domain Mapper SaaS"
+  c) Activate "Buildify AI"
 
 STEP 2: Configure Backend
 ──────────────────────────
@@ -99,7 +99,7 @@ STEP 2: Configure Backend
 
 STEP 3: Configure Plugin
 ────────────────────────
-  a) Go to WordPress Admin → Settings → Domain Mapper SaaS
+  a) Go to WordPress Admin → Settings → Buildify AI
   
   b) Fill in these fields:
      
@@ -154,7 +154,7 @@ STEP 6: Troubleshooting
   
   c) Verify rewrite rules:
      apache2ctl -M | grep rewrite
-     cat .htaccess (check Domain Mapper rules)
+     cat .htaccess (check Buildify AI rules)
 
 */
 

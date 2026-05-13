@@ -271,8 +271,14 @@ class DomainMapper_Proxy
 
     private function is_relay_host_allowed(string $host): bool
     {
-        $target_bare = preg_replace('/^www\./i', '', $this->settings['target_domain'] ?? '');
-        $target_bare = preg_replace('#^https?://#i', '', $target_bare);
+        $target = $this->settings['target_domain'] ?? '';
+        $target_host = (string) wp_parse_url($target, PHP_URL_HOST);
+        if (empty($target_host)) {
+            $target_host = (string) preg_replace('#^https?://#i', '', $target);
+            $target_host = (string) strtok($target_host, '/');
+        }
+        
+        $target_bare = preg_replace('/^www\./i', '', $target_host);
 
         if (str_ends_with($host, '.' . $target_bare) || $host === $target_bare) {
             return true;

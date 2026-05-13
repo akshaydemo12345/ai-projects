@@ -528,8 +528,8 @@ exports.getStrategicPlan = async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       data: { 
-        plan: result.plan,
-        aiUsage: result.aiUsage
+        plan: plan.plan,
+        aiUsage: plan.aiUsage
       }
     });
   } catch (err) {

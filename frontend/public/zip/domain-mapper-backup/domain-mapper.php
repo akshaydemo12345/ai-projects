@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Domain Mapper SaaS
+ * Plugin Name:       Buildify AI
  * Plugin URI:        https://your-saas.com
  * Description:       Maps DomainA → DomainB via reverse proxy, keeping DomainB URL in browser.
  * Version:           1.1.0
@@ -94,7 +94,7 @@ final class DomainMapper_Loader {
     // ── .htaccess management ──────────────────────────────────────────────────
 
     /**
-     * Inject Domain Mapper rewrite rules into the root .htaccess.
+     * Inject Buildify AI rewrite rules into the root .htaccess.
      *
      * Rules are scoped to the configured allowed_paths only.
      * Everything else (Divi Builder, REST API, uploads, themes, etc.)
