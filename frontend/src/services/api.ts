@@ -620,7 +620,12 @@ export const thankYouApi = {
 
   preview: async (previewConfig: { layout: string; content?: any; branding?: any }): Promise<string> => {
     const token = localStorage.getItem('pagecraft_token');
-    const fullUrl = `${config.api.baseUrl || 'https://apiserver.ai-landingpages.sharehq.org'}/api/thank-you/preview`;
+    
+    // Use consistent API base URL
+    const baseUrl = API_BASE_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '');
+    const fullUrl = `${baseUrl.replace(/\/+$/, '')}/api/thank-you/preview`;
+    
+    console.log('📡 Fetching Thank You preview from:', fullUrl);
     
     const res = await fetch(fullUrl, {
       method: 'POST',

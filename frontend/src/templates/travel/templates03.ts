@@ -137,13 +137,20 @@ footer{padding:8rem 0 4rem}
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);} 40% {transform: translateY(-10px) translateX(-50%);} 60% {transform: translateY(-5px) translateX(-50%);} }
 
 @media (max-width: 1024px) {
+  .hero-content { grid-template-columns: 1fr; text-align: center; gap: 4rem; padding-top: 5rem; }
+  .hero-text { text-align: center; }
+  .hero-form { margin: 0 auto; max-width: 500px; }
   .dest-grid { grid-template-columns: 1fr 1fr; }
   .amen-grid { grid-template-columns: 1fr 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
-  .philo-grid, .designer-card, .dest-grid, .amen-grid, .footer-grid { grid-template-columns: 1fr; text-align: center; }
   .hero h1 { font-size: 3.5rem; }
+  .hero-content { padding: 8rem 2rem 4rem; }
+  .philo-grid, .designer-card, .dest-grid, .amen-grid, .footer-grid { grid-template-columns: 1fr; text-align: center; }
+  .philo-img { height: 400px; }
+  .designer-card { gap: 4rem; }
+  .des-img { height: 500px; box-shadow: 20px 20px 0 var(--secondary); }
   .ret-card { min-width: 300px; }
   .footer-bottom { flex-direction: column; gap: 2rem; }
 }
@@ -183,6 +190,10 @@ export const travel03Html = `
       <div class="form-field">
         <label>Travel Date</label>
         <input type="date" name="travel_date" required>
+      </div>
+      <div class="form-field full">
+        <label>Email Address</label>
+        <input type="email" name="email_address" placeholder="you@email.com" required>
       </div>
       <button type="submit" class="btn-primary">Request Private Inquiry</button>
     </form>

@@ -100,10 +100,19 @@ footer { padding: 10rem 0 5rem; background: #000; border-top: 1px solid rgba(255
 .foot-social { display: flex; gap: 1.5rem; margin-top: 1rem; color: #555; font-size: 1.2rem; }
 
 @media (max-width: 1024px) {
-  .hero-form-bar, .off-grid, .stats-grid, .std-grid, .journey-grid, .voices-grid, .foot-grid { grid-template-columns: 1fr; gap: 3rem; }
-  .form-field { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; }
+  .hero-form-bar { grid-template-columns: 1fr 1fr; }
+  .off-grid, .std-grid, .journey-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .stats-grid, .voices-grid, .foot-grid { grid-template-columns: 1fr; gap: 3rem; }
   .hero h1 { font-size: 3.5rem; }
   .cta-section h2 { font-size: 3rem; }
+}
+@media (max-width: 640px) {
+  .hero-form-bar { grid-template-columns: 1fr; }
+  .form-field { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; }
+  .off-grid, .std-grid, .journey-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 2.5rem; }
+  .cta-section h2 { font-size: 2.2rem; }
+  .nav-links { display: none; }
 }
 `
 

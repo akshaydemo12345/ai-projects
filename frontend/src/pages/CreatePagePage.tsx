@@ -301,7 +301,7 @@ const CreatePagePage = () => {
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(4);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);

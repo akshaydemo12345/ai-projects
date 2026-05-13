@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <img src="/assets/Buildify-logo.png" alt="Buildify Logo" className="h-40 w-auto" />
+              <img src="/assets/Buildify-logo.png" alt="Buildify Logo" className="h-10 w-auto" />
             </div>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               AI-powered landing page builder. Create beautiful, high-converting pages in seconds — no code required.
