@@ -179,7 +179,7 @@ wp plugin activate domain-mapper
 
 ### Step 2: Go to Plugin Settings
 
-WordPress Admin → Settings → Domain Mapper
+WordPress Admin → Settings → Buildify AI
 
 **You'll see:**
 ```

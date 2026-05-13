@@ -53,8 +53,8 @@ class DomainMapper_Settings_Page {
 
     public function register_menu(): void {
         add_options_page(
-            __( 'Domain Mapper', 'domain-mapper' ),
-            __( 'Domain Mapper', 'domain-mapper' ),
+            __( 'Buildify AI', 'domain-mapper' ),
+            __( 'Buildify AI', 'domain-mapper' ),
             self::CAPABILITY,
             self::MENU_SLUG,
             [ $this, 'render_page' ]
@@ -287,7 +287,7 @@ class DomainMapper_Settings_Page {
         $status  = $this->settings['status'] ?? 'inactive';
         if ( 'inactive' === $status && ! empty( $this->settings['api_key'] ) ) {
             printf(
-                '<div id="dm-notice-inactive" class="notice notice-warning is-dismissible"><p><strong>Domain Mapper:</strong> %s</p></div>',
+                '<div id="dm-notice-inactive" class="notice notice-warning is-dismissible"><p><strong>Buildify AI:</strong> %s</p></div>',
                 esc_html__( 'Licence is inactive. Please verify your API Key.', 'domain-mapper' )
             );
         }

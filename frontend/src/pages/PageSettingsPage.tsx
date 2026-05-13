@@ -320,10 +320,9 @@ const PageSettingsPage = () => {
           </div>
         </div>
 
-        {/* Global Save Button */}
         <div className="flex justify-center pt-8">
-          <Button onClick={handleSave} disabled={updatePageMutation.isPending} className="rounded-2xl px-16 py-8 text-xl font-black bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 gap-4 transition-all hover:scale-105 active:scale-95">
-            {updatePageMutation.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
+          <Button onClick={handleSave} disabled={updatePageMutation.isPending} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
+            {updatePageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save All Page Settings
           </Button>
         </div>

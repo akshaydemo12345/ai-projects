@@ -878,9 +878,12 @@ exports.getPublicPageHTML = async (req, res, next) => {
     let page = null;
 
     // 1. Resolve via ID or Preview Token
-    if (requestedPageId) {
-      if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
-        page = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
+    const idFromSlug = (req.params.slug && /^[0-9a-fA-F]{24}$/.test(req.params.slug)) ? req.params.slug : null;
+    const lookupId = requestedPageId || idFromSlug;
+
+    if (lookupId) {
+      if (/^[0-9a-fA-F]{24}$/.test(lookupId)) {
+        page = await Page.findOne({ _id: lookupId, isDeleted: { $ne: true } });
       }
       if (!page) {
         page = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
@@ -1148,7 +1151,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
       return require('./thankYouController').renderThankYouPage(req, res, next);
     }
 
-    res.status(200).send(renderFullHTML(page, canonicalUrl));
+    res.status(200).send(renderFullHTML(page, canonicalUrl, isThankYou));
   } catch (err) {
     console.error('❌ Public Page Error:', err);
     next(err);
@@ -1166,19 +1169,23 @@ exports.handleFormSubmission = async (req, res, next) => {
     let { pageId, pageSlug, projectId } = rawData;
 
     // --- SMART CONTEXT RESOLUTION ---
-    // If slug is missing (relay) or ends with 'proxy-form', resolve it
-    if (!pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form') {
+    // Resolve pageSlug from URL params or referer if missing or a generic relay path
+    const isRelayPath = !pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form';
+    if (isRelayPath) {
       const referer = req.get('referer') || '';
-      const urlSlug = (req.params.slug || '').replace(/^api\/v1\/proxy\//i, '');
+      const urlParamSlug = String(req.params.slug || req.params[0] || '').trim().replace(/^api\/v1\/proxy\//i, '');
+      
+      let detectedSlug = urlParamSlug;
 
-      // Try to get slug from URL param (stripping proxy-form)
-      let detectedSlug = urlSlug.replace(/\/proxy-form$/i, '');
-
-      // If still no slug, try parsing referer
+      // If URL param is empty, try parsing referer
       if (!detectedSlug && referer) {
         try {
-          const refPath = new URL(referer).pathname.replace(/^\/+|\/+$/g, '');
-          detectedSlug = refPath;
+          const refUrl = new URL(referer);
+          detectedSlug = refUrl.pathname.replace(/^\/+|\/+$/g, '');
+          // If it's on a custom domain or mapped path, the first part might be the slug
+          if (!detectedSlug && refUrl.searchParams.has('page')) {
+             // Fallback to query param if present
+          }
         } catch (e) { }
       }
 
@@ -1653,7 +1660,7 @@ exports.downloadPlugin = async (req, res, next) => {
     // Try multiple locations in order of preference
     const possiblePaths = [
       // Backend public/zip directory
-      path.resolve(__dirname, '../../public/zip/domain-mapper.zip'),
+      path.resolve(__dirname, '../../public/zip/buildify-ai.zip'),
       path.resolve(__dirname, '../../public/zip/domain-mapper-test.zip'),
       path.resolve(__dirname, '../../public/zip/ai-landing-page-publisher.zip'),
       // Frontend public/zip directory
@@ -1676,7 +1683,7 @@ exports.downloadPlugin = async (req, res, next) => {
 
     // Set correct headers for forcing a ZIP download
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="domain-mapper.zip"');
+    res.setHeader('Content-Disposition', 'attachment; filename="buildify-ai.zip"');
 
     // Stream the file for efficiency
     const fileStream = fs.createReadStream(zipPath);
