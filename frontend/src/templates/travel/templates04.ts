@@ -3,7 +3,7 @@
 
 export const travel04Styles = `
 :root {
-  --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --primary: rgb(234, 255, 0);
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,12 +21,12 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .nav-links a { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: capitalize; }
 .nav-links a:hover { color: var(--primary); }
 .nav-right { display: flex; align-items: center; gap: 2rem; }
-.btn-primary { background: var(--primary); color: #fff; padding: 0.6rem 1.4rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer; }
+.btn-primary { background: var(--primary); color: #000; padding: 0.6rem 1.4rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer; }
 
 /* Hero Section */
-.hero { padding: 6rem 0 10rem; }
+.hero { padding: 6rem 0 10rem; background: #fafafa; }
 .hero-inner { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6rem; align-items: center; }
-.hero-text span { background: #eaff00; color: #000; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 2rem; }
+.hero-text span { background: var(--primary); color: #000; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 2rem; }
 .hero h1 { font-size: 4.5rem; font-weight: 800; line-height: 1.05; margin-bottom: 2rem; letter-spacing: -2px; }
 .hero p { font-size: 1.2rem; color: #64748b; margin-bottom: 4rem; max-width: 500px; }
 
@@ -36,7 +36,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .form-group label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 0.5rem; letter-spacing: 0.5px; }
 .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; font-weight: 600; }
-.btn-submit { grid-column: span 2; background: var(--primary); color: #fff; border: none; padding: 1.2rem; border-radius: 6px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
+.btn-submit { grid-column: span 2; background: var(--primary); color: #000; border: none; padding: 1.2rem; border-radius: 6px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
 
 /* Hero Visual */
 .hero-visual { position: relative; }
@@ -164,7 +164,7 @@ export const travel04Html = `
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
     <div class="nav-right">
-       <a href="#" style="font-size: 0.8rem; font-weight: 700;">Sign in</a>
+       <a href="#" class="btn-primary" style="background: var(--primary); color: #000;">Sign in</a>
        <a href="#contact" class="btn-primary">Get Started</a>
     </div>
   </div>

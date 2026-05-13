@@ -1001,7 +1001,272 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   );
 };
 
+// ─── Token Help Modal ────────────────────────────────────────────────────────
+interface TokenHelpModalProps {
+  onClose: () => void;
+  apiToken?: string;
+}
+
+const STEPS = [
+  {
+    num: 1,
+    title: "Install & activate the plugin",
+    desc: "Add our plugin to your WordPress site.",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
+      </svg>
+    ),
+  },
+  {
+    num: 2,
+    title: "Open plugin settings",
+    desc: "Go to Site Accelerator settings in your WP admin.",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1A2 2 0 1 1 4.4 17l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1A2 2 0 1 1 7 4.4l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1A2 2 0 1 1 19.6 7l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+      </svg>
+    ),
+  },
+  {
+    num: 3,
+    title: "Copy your Website Token",
+    desc: "Copy the token from the box above.",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="7.5" cy="15.5" r="5.5" /><path d="m21 2-9.6 9.6" /><path d="m15.5 7.5 3 3L22 7l-3-3" />
+      </svg>
+    ),
+  },
+  {
+    num: 4,
+    title: "Paste token & verify",
+    desc: "Paste into the API Key field and click Verify.",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z" /><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
+      </svg>
+    ),
+  },
+  {
+    num: 5,
+    title: "Save & you're live",
+    desc: "Click Save Settings — pages auto-sync!",
+    icon: (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" />
+      </svg>
+    ),
+  },
+];
+
+const STEP_PANELS = [
+  // Step 1 — install plugin
+  <div className="space-y-3">
+    <div className="rounded-xl border border-border bg-muted/60 overflow-hidden">
+      <div className="flex items-center gap-1.5 px-3 py-2 bg-muted border-b border-border">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-green-400 inline-block" />
+        <span className="ml-2 text-[11px] text-muted-foreground">WordPress · Plugins</span>
+      </div>
+      <div className="p-4 space-y-2">
+        {[
+          { name: "Buildify AI", ver: "v1.0.4", active: true },
+          { name: "WP Rocket", ver: "v3.15", active: false },
+          { name: "UpdraftPlus", ver: "v2.22", active: false },
+        ].map((pl) => (
+          <div key={pl.name} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-background">
+            <div>
+              <p className="text-xs font-semibold">{pl.name}</p>
+              <p className="text-[10px] text-muted-foreground">{pl.ver}</p>
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${pl.active ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-muted text-muted-foreground"}`}>
+              {pl.active && <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M20 6 9 17l-5-5" /></svg>}
+              {pl.active ? "Active" : "Installed"}
+            </span>
+          </div>
+        ))}
+        <p className="text-[10px] text-muted-foreground pt-1">Go to <b>Plugins → Add New</b>, upload <code className="bg-muted px-1 rounded">buildify-ai.zip</code>, then click <b>Activate</b>.</p>
+      </div>
+    </div>
+  </div>,
+
+  // Step 2 — open settings
+  <div className="space-y-3">
+    <div className="rounded-xl border border-border bg-muted/60 overflow-hidden">
+      <div className="flex items-center gap-1.5 px-3 py-2 bg-muted border-b border-border">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-green-400 inline-block" />
+        <span className="ml-2 text-[11px] text-muted-foreground">WordPress · Site Accelerator Settings</span>
+      </div>
+      <div className="p-4 grid grid-cols-[130px_1fr] gap-3">
+        <div className="rounded-lg border border-border bg-background p-3">
+          <p className="text-[10px] font-bold mb-2 text-foreground">Site Accelerator</p>
+          <ul className="space-y-1 text-[10px] text-muted-foreground">
+            <li className="px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Licence &amp; API</li>
+            <li className="px-2 py-1">General</li>
+            <li className="px-2 py-1">Cache</li>
+          </ul>
+        </div>
+        <div className="rounded-lg border border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="h-2 w-2 rounded-full bg-primary inline-block" />
+            <p className="text-[10px] font-bold">Performance</p>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Automatically applies speed improvements based on your dashboard settings.</p>
+        </div>
+      </div>
+    </div>
+  </div>,
+
+  // Step 3 — copy token (placeholder — handled by parent)
+  <div className="space-y-3">
+    <p className="text-xs text-muted-foreground">Your Website Token is shown in the Integration panel. Click the token box to copy it to clipboard automatically.</p>
+    <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-muted/60 border-border">
+      <span className="text-[10px] font-mono text-foreground flex-1 truncate opacity-60">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>
+      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+    </div>
+    <p className="text-[10px] text-muted-foreground italic">The token above is blurred for privacy — use the copy button in the Integration panel on the left.</p>
+  </div>,
+
+  // Step 4 — paste & verify
+  <div className="space-y-3">
+    <div className="rounded-xl border border-border bg-muted/60 overflow-hidden">
+      <div className="flex items-center gap-1.5 px-3 py-2 bg-muted border-b border-border">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 inline-block" />
+        <span className="h-2.5 w-2.5 rounded-full bg-green-400 inline-block" />
+        <span className="ml-2 text-[11px] text-muted-foreground">WordPress · Licence &amp; API</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div>
+          <p className="text-[10px] font-bold mb-1">API Key</p>
+          <div className="flex gap-2">
+            <div className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-[10px] font-mono text-muted-foreground truncate">Paste your token here…</div>
+            <button className="text-[10px] bg-primary text-white px-2 py-1 rounded font-semibold">Verify</button>
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold mb-1">Licence Status</p>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">ACTIVE</span>
+        </div>
+      </div>
+    </div>
+  </div>,
+
+  // Step 5 — save & live
+  <div className="flex flex-col items-center justify-center py-6 gap-4">
+    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+      <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M20 6 9 17l-5-5" /></svg>
+    </div>
+    <p className="text-base font-bold text-foreground">You're all set!</p>
+    <p className="text-sm text-muted-foreground text-center max-w-xs">Click <b>Save Settings</b> in your WordPress plugin. Your landing pages will auto-sync within seconds.</p>
+  </div>,
+];
+
+const TokenHelpModal = ({ onClose, apiToken }: TokenHelpModalProps) => {
+  const [step, setStep] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!apiToken) return;
+    const ok = await copyToClipboard(apiToken);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="w-full max-w-2xl bg-background rounded-3xl border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="flex items-center justify-between px-7 pt-7 pb-3">
+          <div>
+            <h3 className="text-xl font-bold text-foreground">How to use your Website Token</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">Connect your WordPress site in five simple steps.</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-9 w-9 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Step Stepper */}
+        <div className="px-7 pb-2">
+          <div className="grid grid-cols-5 gap-2">
+            {STEPS.map((s, i) => (
+              <button
+                key={s.num}
+                onClick={() => setStep(i)}
+                className={`flex flex-col gap-1.5 p-2.5 rounded-xl border text-left transition-all ${i === step ? "border-primary bg-primary/5 shadow-sm" : i < step ? "border-emerald-200 bg-emerald-50" : "border-border bg-background hover:border-primary/30"}`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${i === step ? "bg-gradient-to-br from-primary to-violet-500 text-white" : i < step ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                    {i < step ? "✓" : s.num}
+                  </span>
+                  <span className={`${i === step ? "text-primary" : "text-muted-foreground"}`}>{s.icon}</span>
+                </div>
+                <p className={`text-[10px] font-semibold leading-tight ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{s.title}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="px-7 pt-4 pb-2 grid grid-cols-[1fr_1.2fr] gap-6 items-start min-h-[220px]">
+          {/* Left: description + nav */}
+          <div className="flex flex-col justify-between h-full">
+            <div>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Step {step + 1} of {STEPS.length}</p>
+              <h4 className="text-base font-bold text-foreground mb-1">{STEPS[step].title}</h4>
+              <p className="text-sm text-muted-foreground mb-4">{STEPS[step].desc}</p>
+              {/* Token copy box on step 3 */}
+              {step === 2 && apiToken && (
+                <div
+                  onClick={handleCopy}
+                  className={`flex items-center gap-2 border rounded-lg px-3 py-2 cursor-pointer transition-all ${copied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
+                >
+                  <span className={`text-[10px] font-mono flex-1 truncate ${copied ? "text-emerald-700" : "text-foreground"}`}>{apiToken}</span>
+                  {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 pt-4">
+              <button
+                disabled={step === 0}
+                onClick={() => setStep(s => Math.max(0, s - 1))}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:bg-muted transition-all disabled:opacity-30"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back
+              </button>
+              <button
+                onClick={() => step < STEPS.length - 1 ? setStep(s => s + 1) : onClose()}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-primary to-violet-600 text-white text-xs font-semibold shadow hover:brightness-105 transition-all"
+              >
+                {step < STEPS.length - 1 ? "Next step" : "Done!"}
+                {step < STEPS.length - 1 && <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 12h14M12 5l7 7-7 7" /></svg>}
+              </button>
+            </div>
+          </div>
+
+          {/* Right: visual panel */}
+          <div className="text-sm">{STEP_PANELS[step]}</div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-7 py-4 border-t border-border bg-muted/20 flex items-center justify-between">
+          <p className="text-[10px] text-muted-foreground">Need help? Contact support from your dashboard.</p>
+          <Button onClick={onClose} className="bg-primary text-white px-5 h-8 text-xs">Got it!</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Edit Project Modal ──────────────────────────────────────────────────────
+
 interface EditProjectModalProps {
   project: Project;
   onClose: () => void;
@@ -1270,40 +1535,7 @@ const ProjectDetailPage = () => {
       )}
 
       {showTokenHelp && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-2xl bg-background rounded-3xl border border-border shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300">
-            <button
-              onClick={() => setShowTokenHelp(false)}
-              className="absolute right-4 top-4 z-10 h-10 w-10 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-colors text-foreground"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="p-8">
-              <h3 className="text-xl font-bold mb-2">How to use your Website Token</h3>
-              <p className="text-sm text-muted-foreground mb-6">Paste the copied token into your WordPress plugin settings as shown below.</p>
-              <div className="rounded-2xl border border-border bg-muted/50 overflow-hidden shadow-2xl aspect-[16/10] flex items-center justify-center bg-white">
-                <img
-                  src="/assets/wordpress-plugin-settings.png"
-                  alt="WordPress Plugin Settings Guide"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    if (target.parentElement) {
-                      const div = document.createElement('div');
-                      div.className = "flex flex-col items-center gap-3 text-muted-foreground italic text-xs";
-                      div.innerHTML = '<svg class="h-10 w-10 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span>Guide Image (wordpress-plugin-settings.png)</span>';
-                      target.parentElement.appendChild(div);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-            <div className="px-8 py-4 bg-muted/30 border-t border-border flex justify-end">
-              <Button onClick={() => setShowTokenHelp(false)} className="bg-primary text-white px-6">Got it!</Button>
-            </div>
-          </div>
-        </div>
+        <TokenHelpModal onClose={() => setShowTokenHelp(false)} apiToken={project.apiToken} />
       )}
 
       {/* ─── Page Top Bar / Breadcrumb ─── */}
@@ -1656,7 +1888,7 @@ const ProjectDetailPage = () => {
                       <div key={s.num} className="flex gap-3">
                         <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 pr-1">
+                          <div className="flex items-center justify-start gap-2 pr-1">
                             <p className="text-xs font-semibold text-foreground">{s.title}</p>
                             {s.num === 2 && (
                               <button

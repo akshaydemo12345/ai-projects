@@ -20,7 +20,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .btn-primary { background-color: var(--primary); color: #fff; padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
 
 /* Hero Section with Exact Curved Shape */
-.hero { position: relative; padding: 6rem 0 15rem; background: #fff; overflow: hidden; }
+.hero { position: relative; padding: 6rem 0 15rem; background: #f8fafc; overflow: hidden; }
 .hero-bg-shape { 
     position: absolute; top: 0; left: 0; width: 55%; height: 100%; 
     background-color: var(--primary); 
@@ -56,12 +56,12 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
     box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
     display: grid; grid-template-columns: 1fr 1fr 1fr auto; 
     gap: 0; align-items: center; 
-    border: 1px solid #f1f5f9; 
+    border: 1px solid #000; 
 }
 .form-group { padding: 0.75rem 2rem; border-right: 1px solid #f1f5f9; }
 .form-group:nth-child(3) { border-right: none; }
-.form-group label { display: block; font-size: 0.6rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
-.form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #111; }
+.form-group label { display: block; font-size: 0.6rem; text-transform: uppercase; color: #000; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
+.form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #000; }
 .btn-submit { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 3rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
 
 /* About Section */
@@ -118,7 +118,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .cases { padding: 12rem 0; }
 .cases-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6rem; }
 .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-.case-card { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 4rem 3rem; border-radius: 20px; color: #fff; position: relative; transition: 0.4s; }
+.case-card { background: var(--primary); padding: 4rem 3rem; border-radius: 20px; color: #fff; position: relative; transition: 0.4s; }
 .case-card span { font-size: 0.7rem; opacity: 0.6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 .case-card h3 { font-size: 1.5rem; font-weight: 700; margin-top: 1.25rem; line-height: 1.3; }
 .case-icon { position: absolute; top: 4rem; right: 3rem; font-size: 1.5rem; opacity: 0.2; }
@@ -140,7 +140,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .contact h2 { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; }
 .contact-form { max-width: 850px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; }
 .form-full { grid-column: span 2; }
-.contact-form input, .contact-form textarea { width: 100%; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 1rem; }
+.contact-form input, .contact-form textarea { width: 100%; padding: 1.25rem; border: 1px solid #000; border-radius: 8px; font-family: inherit; font-size: 1rem; color: #000; }
 .btn-send { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 4rem; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-top: 2rem; }
 
 /* Footer */
