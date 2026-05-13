@@ -3,14 +3,13 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 const cheerio = require('cheerio');
+const OpenAI = require('openai');
 
 const CLAUDE_MODEL_CANDIDATES = [
   'claude-sonnet-4-20250514',
   'claude-3-5-sonnet-latest',
   'claude-3-5-haiku-latest'
 ];
-
-const OpenAI = require('openai');
 
 /**
  * =========================================
@@ -147,54 +146,25 @@ IMPORTANT:
  * COST CALCULATOR
  * =========================================
  */
-<<<<<<< HEAD
 const calculateCost = (model, inputTokens, outputTokens) => {
-<<<<<<< HEAD
   const pricing = {
     'claude-3-5-sonnet': { input: 0.000003, output: 0.000015 },
     'claude-3-5-haiku': { input: 0.000001, output: 0.000005 },
     'claude-3-haiku': { input: 0.00000025, output: 0.00000125 },
+    'claude-sonnet': { input: 0.000003, output: 0.000015 },
+    'claude-haiku': { input: 0.00000025, output: 0.00000125 },
     'gpt-4o-mini': { input: 0.00000015, output: 0.0000006 },
     'gpt-4o': { input: 0.000005, output: 0.000015 },
     'default': { input: 0.000003, output: 0.000015 }
-=======
-=======
-const calculateCost = (
-  model,
-  inputTokens,
-  outputTokens
-) => {
->>>>>>> fb2fec7ec04217cab705d40924e042e9b4be66a7
+  };
 
-  const pricing = {
-      'claude-sonnet': {
-        input: 0.000003,
-        output: 0.000015
-      },
+  const modelKey = Object.keys(pricing).find(key => 
+    model.toLowerCase().includes(key)
+  ) || 'default';
 
-      'claude-haiku': {
-        input: 0.00000025,
-        output: 0.00000125
-      },
+  const price = pricing[modelKey];
 
-      default: {
-        input: 0.000003,
-        output: 0.000015
-      }
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
-    };
-
-    const modelKey =
-      Object.keys(pricing).find(key =>
-        model.toLowerCase().includes(key)
-      ) || 'default';
-
-    const price = pricing[modelKey];
-
-    return(
-    (inputTokens * price.input) +
-    (outputTokens * price.output)
-  );
+  return (inputTokens * price.input) + (outputTokens * price.output);
 };
 
 /**
@@ -202,7 +172,63 @@ const calculateCost = (
  * CLEAN HTML
  * =========================================
  */
-<<<<<<< HEAD
+const cleanHTML = (raw) => {
+  if (typeof raw !== 'string') return '';
+  // Enhanced regex to find all ```html ... ``` blocks.
+  // The closing ``` is now optional (?) to handle truncated responses.
+  const regex = /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
+  let matches = [];
+  let match;
+  while ((match = regex.exec(raw)) !== null) {
+    if (match[1]) {
+      let content = match[1].trim();
+      // If content ends with backticks that weren't captured by the non-greedy match, clean them
+      content = content.replace(/```$/g, '').trim();
+      matches.push(content);
+    }
+  }
+
+  // If we found any blocks, join them.
+  if (matches.length > 0) return matches.join('\n');
+
+  // fallback logic if no code blocks are found at all
+  const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
+  if (htmlMatch) return htmlMatch[1].trim();
+
+  return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
+};
+
+/**
+ * =========================================
+ * PROCESS RESULT
+ * =========================================
+ */
+const processResult = (raw, logoUrl) => {
+  let clean = cleanHTML(raw);
+  // Case-insensitive replacement for logo tag
+  const logoPlaceholder = 'https://placehold.co/200x60/f8fafc/6366f1?text=BRAND';
+  const finalLogo = logoUrl && logoUrl.trim() !== '' ? logoUrl : logoPlaceholder;
+
+  clean = clean.replace(/\{\{LOGO_URL\}\}/gi, finalLogo);
+  clean = clean.replace(/\{\{logoUrl\}\}/gi, finalLogo);
+
+  const titleMatch = clean.match(/<title>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : 'Landing Page';
+
+  let css = '';
+  const styleMatches = clean.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+  if (styleMatches && Array.isArray(styleMatches)) {
+    css = styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n');
+  }
+
+  return { fullHtml: clean, fullCss: css, fullJs: '', seo: { title } };
+};
+
+/**
+ * =========================================
+ * AI CALL (OpenAI with Claude Fallback)
+ * =========================================
+ */
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
@@ -212,16 +238,17 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
     throw new Error('Neither ANTHROPIC_API_KEY nor OPENAI_API_KEY is configured');
   }
 
-  const primaryHex = userPrompt.match(/- PRIMARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed';
-  const secondaryHex = userPrompt.match(/- SECONDARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
-  const businessName = userPrompt.match(/- Name: ([\s\S]*?) \|/)?.[1] || 'design';
+  // Extract metadata if possible for dynamic system prompt replacement
+  const primaryHex = typeof userPrompt === 'string' ? (userPrompt.match(/- PRIMARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed') : '#7c3aed';
+  const secondaryHex = typeof userPrompt === 'string' ? (userPrompt.match(/- SECONDARY COLOR: (#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1') : '#6366f1';
+  const businessName = typeof userPrompt === 'string' ? (userPrompt.match(/- Name: ([\s\S]*?) \|/)?.[1] || 'design') : 'design';
 
   const finalSystemPrompt = systemPrompt
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
     .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
     .replace(/{{BUSINESS_NAME_KEYWORD}}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
 
-  // 1. Try OpenAI first if available (often more reliable)
+  // 1. Try OpenAI first if available
   if (openaiKey) {
     try {
       const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -308,61 +335,20 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
 };
 
 /**
- * Post-Processing
+ * =========================================
+ * GENERATE LANDING PAGE
+ * =========================================
  */
-const processResult = (raw, logoUrl) => {
-  let clean = cleanHTML(raw);
-  // Case-insensitive replacement for logo tag
-  const logoPlaceholder = 'https://placehold.co/200x60/f8fafc/6366f1?text=BRAND';
-  const finalLogo = logoUrl && logoUrl.trim() !== '' ? logoUrl : logoPlaceholder;
-
-  clean = clean.replace(/\{\{LOGO_URL\}\}/gi, finalLogo);
-  clean = clean.replace(/\{\{logoUrl\}\}/gi, finalLogo);
-
-
-  const titleMatch = clean.match(/<title>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? titleMatch[1].trim() : 'Landing Page';
-
-  let css = '';
-  const styleMatches = clean.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
-  if (styleMatches && Array.isArray(styleMatches)) {
-    css = styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n');
-  }
-
-  return { fullHtml: clean, fullCss: css, fullJs: '', seo: { title } };
-};
-
-const cleanHTML = (raw) => {
-  if (typeof raw !== 'string') return '';
-  // Enhanced regex to find all ```html ... ``` blocks.
-  // The closing ``` is now optional (?) to handle truncated responses.
-  const regex = /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
-  let matches = [];
-  let match;
-  while ((match = regex.exec(raw)) !== null) {
-    if (match[1]) {
-      let content = match[1].trim();
-      // If content ends with backticks that weren't captured by the non-greedy match, clean them
-      content = content.replace(/```$/g, '').trim();
-      matches.push(content);
-    }
-  }
-
-  // If we found any blocks, join them.
-  if (matches.length > 0) return matches.join('\n');
-
-  // fallback logic if no code blocks are found at all
-  const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
-  if (htmlMatch) return htmlMatch[1].trim();
-
-  return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
-};
-
 const generateLandingPageContent = async (input) => {
-  // 1. Build the Master AI Designer System Prompt
-  const systemPrompt = buildSystemPrompt();
+  const uniqueSeed = `
+${input.businessName}
+-${input.industry}
+-${Date.now()}
+-${Math.random().toString(36).substring(2, 8)}
+`;
 
-  // 2. Build the User Context and Prompt
+  const systemPrompt = buildSystemPrompt(uniqueSeed);
+
   let userPrompt = `
 ${buildUserPrompt(input)}
 
@@ -372,7 +358,7 @@ ${input.templateHtml ? 'Use the following HTML as DESIGN INSPIRATION/BASELINE, b
 ${input.templateHtml ? `\n# BASELINE INSPIRATION:\n${input.templateHtml}\n` : ''}
 
 # CORE REQUIREMENTS:
-- Generate a complete, high-converting landing page with 8+ sections.
+- Generate a complete, high-converting landing page with 10+ sections.
 - Include strong hero section with compelling headline (massive typography).
 - Include CTA in strategic positions.
 - Include industry-specific form.
@@ -382,18 +368,35 @@ ${input.templateHtml ? `\n# BASELINE INSPIRATION:\n${input.templateHtml}\n` : ''
 - Vary section designs for visual interest.
 `;
 
-  // 3. Handle Vision / Image-to-Design
-  const result = await callAI(userPrompt, input.logoUrl, systemPrompt);
-  return result;
+  return await callAI(userPrompt, input.logoUrl, systemPrompt);
 };
 
+/**
+ * =========================================
+ * IMPROVE SECTION
+ * =========================================
+ */
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
-  const prompt = `Improve this ${sectionType}: ${JSON.stringify(currentContent)}. Instruction: ${aiPrompt}`;
+  const prompt = `
+Improve this section.
+
+TYPE:
+${sectionType}
+
+CURRENT CONTENT:
+${JSON.stringify(currentContent)}
+
+INSTRUCTION:
+${aiPrompt}
+`;
+
   return await callAI(prompt);
 };
 
 /**
- * GrapesJS Editor Chat — Returns structured JSON for element modification
+ * =========================================
+ * EDITOR CHAT MODIFY
+ * =========================================
  */
 const editorChatModify = async ({ elementTag, elementHtml, elementCss, instruction }) => {
   const systemPrompt = `You are a web design AI inside a GrapesJS editor. The user gives an instruction in Hindi or English to modify a specific HTML element.
@@ -410,7 +413,7 @@ Return ONLY a valid JSON object, no markdown, no explanation:
 Hindi: lal=red, nila=blue, hara=green, kala=black, safed=white, peela=yellow, baingani=purple, gulabi=pink, bada/bado=larger font, chota=smaller, gol=border-radius, center=center align, bold/mota=font-weight bold, background/peechha=background-color.`;
 
   const userPrompt = `Element: <${elementTag}>
-HTML: ${elementHtml.slice(0, 1500)}
+HTML: ${elementHtml?.slice(0, 1500)}
 CSS: ${elementCss}
 Instruction: ${instruction}`;
 
@@ -428,6 +431,11 @@ Instruction: ${instruction}`;
   }
 };
 
+/**
+ * =========================================
+ * PROJECT SUGGESTIONS
+ * =========================================
+ */
 const generateProjectSuggestions = async ({ projectName, industry, projectDescription, services, pageTitles }) => {
   const servicesText = services && services.length > 0 ? services.join(', ') : 'various services';
   const pageTitlesText = pageTitles && pageTitles.length > 0 ? pageTitles.join(', ') : 'none';
@@ -459,21 +467,10 @@ const generateProjectSuggestions = async ({ projectName, industry, projectDescri
   const responseText = result.fullHtml || '';
 
   try {
-    // Try to parse as JSON array
     const parsed = JSON.parse(responseText);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-    // If not an array, try to extract array from response
+    if (Array.isArray(parsed)) return parsed;
     const arrayMatch = responseText.match(/\[.*\]/s);
-    if (arrayMatch) {
-      return JSON.parse(arrayMatch[0]);
-    }
-    // Fallback: split by newlines and clean up
-    return responseText.split('\n')
-      .map(line => line.replace(/^["'\d\.\s-]+/, '').replace(/["'\s]+$/, '').trim())
-      .filter(line => line.length > 5)
-      .slice(0, 6);
+    if (arrayMatch) return JSON.parse(arrayMatch[0]);
   } catch (e) {
     // Fallback: split by newlines and clean up
     return responseText.split('\n')
@@ -481,8 +478,14 @@ const generateProjectSuggestions = async ({ projectName, industry, projectDescri
       .filter(line => line.length > 5)
       .slice(0, 6);
   }
+  return [];
 };
 
+/**
+ * =========================================
+ * GENERATE DESCRIPTION
+ * =========================================
+ */
 const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt }) => {
   let prompt;
 
@@ -514,10 +517,12 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, 
 };
 
 /**
- * Generate a strategic landing page structure (Expert CRO Strategist)
+ * =========================================
+ * STRATEGIC STRUCTURE
+ * =========================================
  */
 const generateStrategicStructure = async (input) => {
-  const { businessName, industry, businessDescription, services = [], websiteContent = '' } = input;
+  const { businessName, industry, businessDescription, services = [] } = input;
 
   const systemPrompt = `Act as a World-Class UX Strategist. Output ONLY valid JSON for a landing page structure.`;
   const userPrompt = `Industry: ${industry}, Business: ${businessName}, Services: ${services.join(', ')}, Description: ${businessDescription}. Generate structure JSON.`;
@@ -527,210 +532,22 @@ const generateStrategicStructure = async (input) => {
   try {
     let text = result.fullHtml || '';
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const plan = JSON.parse(text);
-    return { plan, aiUsage: result.aiUsage };
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    return { plan: JSON.parse(jsonMatch ? jsonMatch[0] : text), aiUsage: result.aiUsage };
   } catch (err) {
     logger.error('Strategic Plan JSON Error:', err.message);
     throw new Error('Strategic Plan Generation Failed');
   }
-=======
-const cleanHTML = (raw) => {
-
-  if (!raw) return '';
-
-  const regex =
-    /```(?:html)?\s*([\s\S]*?)(?:```|$)/gi;
-
-  const matches = [];
-
-  let match;
-
-  while ((match = regex.exec(raw)) !== null) {
-
-    if (match[1]) {
-      matches.push(match[1].trim());
-    }
-  }
-
-  if (matches.length > 0) {
-    return matches.join('\n');
-  }
-
-  return raw
-    .replace(/```html/gi, '')
-    .replace(/```/g, '')
-    .trim();
 };
 
 /**
  * =========================================
- * PROCESS RESULT
+ * OPTIMIZE STRUCTURE
  * =========================================
  */
-const processResult = (
-  raw,
-  logoUrl
-) => {
-
-  let clean = cleanHTML(raw);
-
-  const finalLogo =
-    logoUrl && logoUrl.trim() !== ''
-      ? logoUrl
-      : 'https://placehold.co/200x60?text=LOGO';
-
-  clean = clean.replace(
-    /\{\{LOGO_URL\}\}/gi,
-    finalLogo
-  );
-
-  clean = clean.replace(
-    /\{\{logoUrl\}\}/gi,
-    finalLogo
-  );
-
-  const titleMatch =
-    clean.match(
-      /<title>(.*?)<\/title>/i
-    );
-
-  const title =
-    titleMatch
-      ? titleMatch[1]
-      : 'Landing Page';
-
-  return {
-
-    fullHtml: clean,
-
-    fullCss: '',
-
-    fullJs: '',
-
-    seo: {
-      title
-    }
-  };
-};
-
-/**
- * =========================================
- * CLAUDE AI CALL
- * =========================================
- */
-const callAI = async (
-  userPrompt,
-  logoUrl = '',
-  systemPrompt = ''
-) => {
-
-  const anthropicKey =
-    process.env.ANTHROPIC_API_KEY;
-
-  if (!anthropicKey) {
-
-    throw new Error(
-      'ANTHROPIC_API_KEY missing'
-    );
-  }
-
-  const anthropic =
-    new Anthropic({
-      apiKey: anthropicKey
-    });
-
-  let lastError = null;
-
-  for (const model of CLAUDE_MODEL_CANDIDATES) {
-
-    try {
-
-      logger.info(
-        `[AI] Attempting Claude model: ${model}`
-      );
-
-      const response =
-        await anthropic.messages.create({
-
-          model,
-
-          max_tokens: 16000,
-
-          temperature: 1,
-
-          system: systemPrompt,
-
-          messages: [
-            {
-              role: 'user',
-              content: userPrompt
-            }
-          ]
-        });
-
-      const rawText =
-        response.content[0].text;
-
-      const usage =
-        response.usage;
-
-      const result =
-        processResult(
-          rawText,
-          logoUrl
-        );
-
-      return {
-
-        ...result,
-
-        aiUsage: {
-
-          promptTokens:
-            usage.input_tokens,
-
-          completionTokens:
-            usage.output_tokens,
-
-          totalTokens:
-            usage.input_tokens +
-            usage.output_tokens,
-
-          cost: calculateCost(
-            model,
-            usage.input_tokens,
-            usage.output_tokens
-          ),
-
-          model
-        }
-      };
-
-    } catch (err) {
-
-      lastError = err;
-
-      logger.error(
-        `[AI] Claude failed (${model}): ${err.message}`
-      );
-    }
-  }
-
-  throw new Error(
-    `Claude generation failed: ${lastError?.message}`
-  );
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
-};
-
-/**
- * =========================================
- * GENERATE LANDING PAGE
- * =========================================
- */
-<<<<<<< HEAD
 const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPage }) => {
   const systemPrompt = `You are a CRO Architect. Map images and optimize sections. Output ONLY JSON.`;
-  const userPrompt = `Optimize this page: ${JSON.stringify(existingPage)} using ${JSON.stringify(projectData)}.`;
+  const userPrompt = `Optimize this page: ${JSON.stringify(existingPage)} using ${JSON.stringify(projectData)}. Context: ${JSON.stringify(scrapedData)}`;
 
   const result = await callAI(userPrompt, '', systemPrompt);
 
@@ -744,272 +561,6 @@ const optimizeStrategicStructure = async ({ projectData, scrapedData, existingPa
     throw new Error('Optimization Engine Failed');
   }
 };
-=======
-const generateLandingPageContent =
-  async (input) => {
-
-    const uniqueSeed = `
-${input.businessName}
--${input.industry}
--${Date.now()}
--${Math.random()
-        .toString(36)
-        .substring(2, 8)}
-`;
-
-    const systemPrompt =
-      buildSystemPrompt(uniqueSeed);
-
-    const userPrompt =
-      buildUserPrompt(input);
-
-    return await callAI(
-      userPrompt,
-      input.logoUrl,
-      systemPrompt
-    );
-  };
-
-/**
- * =========================================
- * IMPROVE SECTION
- * =========================================
- */
-const improveSectionContent =
-  async ({
-    sectionType,
-    currentContent,
-    aiPrompt
-  }) => {
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
-
-const prompt = `
-Improve this section.
-
-TYPE:
-${sectionType}
-
-CURRENT CONTENT:
-${JSON.stringify(currentContent)}
-
-INSTRUCTION:
-${aiPrompt}
-`;
-
-return await callAI(prompt);
-  };
-
-/**
- * =========================================
- * GENERATE DESCRIPTION
- * =========================================
- */
-const generateDescriptionSuggestion =
-  async ({
-    pageName,
-    industry,
-    projectDesc,
-    currentPrompt
-  }) => {
-
-    const prompt = `
-Generate a premium landing page description.
-
-PAGE:
-${pageName}
-
-INDUSTRY:
-${industry}
-
-DESCRIPTION:
-${projectDesc}
-
-PROMPT:
-${currentPrompt}
-
-Generate highly premium,
-conversion-focused copy.
-`;
-
-    const result =
-      await callAI(prompt);
-
-    return {
-      suggestion:
-        result.fullHtml || ''
-    };
-  };
-
-/**
- * =========================================
- * PROJECT SUGGESTIONS
- * =========================================
- */
-const generateProjectSuggestions =
-  async ({
-    projectName,
-    industry,
-    projectDescription
-  }) => {
-
-    const prompt = `
-Generate 6 premium landing page ideas.
-
-PROJECT:
-${projectName}
-
-INDUSTRY:
-${industry}
-
-DESCRIPTION:
-${projectDescription}
-
-Return ONLY JSON array.
-`;
-
-    const result =
-      await callAI(prompt);
-
-    try {
-
-      return JSON.parse(
-        result.fullHtml
-      );
-
-    } catch {
-
-      return [];
-    }
-  };
-
-/**
- * =========================================
- * STRATEGIC STRUCTURE
- * =========================================
- */
-const generateStrategicStructure =
-  async (input) => {
-
-    const prompt = `
-Generate a strategic landing page structure.
-
-BUSINESS:
-${input.businessName}
-
-INDUSTRY:
-${input.industry}
-
-DESCRIPTION:
-${input.businessDescription}
-
-Return JSON only.
-`;
-
-    const result =
-      await callAI(prompt);
-
-    try {
-
-      return JSON.parse(
-        result.fullHtml
-      );
-
-    } catch {
-
-      return {
-        sections: []
-      };
-    }
-  };
-
-/**
- * =========================================
- * OPTIMIZE STRUCTURE
- * =========================================
- */
-const optimizeStrategicStructure =
-  async ({
-    projectData,
-    scrapedData,
-    existingPage
-  }) => {
-
-    const prompt = `
-Optimize this landing page.
-
-PROJECT:
-${JSON.stringify(projectData)}
-
-SCRAPED:
-${JSON.stringify(scrapedData)}
-
-EXISTING:
-${JSON.stringify(existingPage)}
-
-Return JSON only.
-`;
-
-    const result =
-      await callAI(prompt);
-
-    try {
-
-      return JSON.parse(
-        result.fullHtml
-      );
-
-    } catch {
-
-      return {
-        sections: []
-      };
-    }
-  };
-
-/**
- * =========================================
- * EDITOR CHAT MODIFY
- * =========================================
- */
-const editorChatModify =
-  async ({
-    elementTag,
-    elementHtml,
-    instruction
-  }) => {
-
-    const prompt = `
-Modify this HTML element.
-
-TAG:
-${elementTag}
-
-HTML:
-${elementHtml}
-
-INSTRUCTION:
-${instruction}
-
-Return JSON only.
-`;
-
-    const result =
-      await callAI(prompt);
-
-    try {
-
-      return JSON.parse(
-        result.fullHtml
-      );
-
-    } catch {
-
-      return {
-        action: 'html',
-        html: result.fullHtml
-      };
-    }
-  };
 
 /**
  * =========================================
@@ -1017,22 +568,11 @@ Return JSON only.
  * =========================================
  */
 module.exports = {
-
   generateLandingPageContent,
-
   improveSectionContent,
-<<<<<<< HEAD
   editorChatModify,
-=======
-
->>>>>>> b6865f31404e3cb3ef6c418ad20bb52997091034
   generateDescriptionSuggestion,
-
   generateProjectSuggestions,
-
   generateStrategicStructure,
-
-  optimizeStrategicStructure,
-
-  editorChatModify
+  optimizeStrategicStructure
 };

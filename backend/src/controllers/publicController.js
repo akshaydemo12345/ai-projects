@@ -1445,7 +1445,7 @@ exports.handleFormSubmission = async (req, res, next) => {
         thankYouUrl = pageDoc.thankYouUrl;
       } else {
         // Build default redirect path (retaining path context)
-        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}/thank-you`;
+        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}?status=thank-you`;
       }
     }
 
@@ -1852,7 +1852,7 @@ exports.getDynamicPage = async (req, res, next) => {
       }
     }
 
-    const html = renderFullHTML(page, `http://${domain}/${cleanSlug}`);
+    const html = renderFullHTML(page, `https://${domain}/${cleanSlug}`);
 
     res.status(200).json({
       status: 'success',
