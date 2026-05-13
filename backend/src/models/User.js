@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  emailVerificationToken: String,
+  emailVerificationExpiresAt: Date,
   plan: {
     type: String,
     enum: ['free', 'pro', 'enterprise'],

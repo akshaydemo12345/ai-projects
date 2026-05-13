@@ -34,6 +34,7 @@ export interface Project {
   description: string;
   url?: string;
   category: string;
+  industry?: string;
   apiToken: string;
   userId: string;
   isDeleted: boolean;
@@ -116,10 +117,35 @@ export interface LandingPage {
 
 
 
+// Helper for refreshing the access token using the refresh token cookie.
+async function refreshAuthToken() {
+  const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Unable to refresh session');
+  }
+
+  if (!result.accessToken) {
+    throw new Error('Refresh response did not include a new access token');
+  }
+
+  localStorage.setItem('pagecraft_token', result.accessToken);
+  return result.accessToken;
+}
+
 // Helper for fetch with Auth
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('pagecraft_token');
   const fullUrl = `${API_BASE_URL}${endpoint}`;
+  const hasRetried = Boolean((options as any)._retry);
+
   console.log(`🌐 API Request: ${fullUrl}`, { hasToken: !!token, method: options.method });
 
   const headers = {
@@ -133,30 +159,62 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const timeout = 300000; // 5 minutes timeout for AI generation
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  const { _retry, ...fetchOptions } = options as any;
+
   const response = await fetch(fullUrl, {
-    ...options,
+    ...fetchOptions,
     headers,
+    credentials: 'include',
     signal: controller.signal,
   });
 
   clearTimeout(timeoutId);
 
+  if (response.status === 401 && !hasRetried) {
+    try {
+      const newToken = await refreshAuthToken();
+      const retryOptions = {
+        ...options,
+        _retry: true,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${newToken}`,
+        },
+      } as RequestInit;
+      return apiFetch(endpoint, retryOptions);
+    } catch (err) {
+      console.warn('Session refresh failed:', err);
+    }
+  }
+
   if (response.status === 401) {
-    // Unauthorized - clear token and potentially redirect
+    // Unauthorized after retry or no refresh available
     localStorage.removeItem('pagecraft_token');
     localStorage.removeItem('pagecraft_user');
     window.location.href = '/login';
     throw new Error('Session expired. Please log in again.');
   }
 
-  const result = await response.json();
+  let result: any;
+  try {
+    result = await response.json();
+  } catch (parseError) {
+    result = null;
+  }
 
   if (!response.ok) {
-    throw new Error(result.message || 'Something went wrong');
+    const errorMessage =
+      result?.message ||
+      (Array.isArray(result?.errors) ? result.errors.map((e: any) => e.message).join(', ') : response.statusText || 'Something went wrong');
+    const error = new Error(errorMessage);
+    (error as any).status = response.status;
+    (error as any).errors = result?.errors;
+    throw error;
   }
 
   return result;
 }
+
 
 // --- Auth API ---
 export const authApi = {
@@ -168,6 +226,23 @@ export const authApi = {
   },
   signup: async (data: any) => {
     return apiFetch('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  firebaseSignIn: async (data: any) => {
+    return apiFetch('/auth/firebase', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  logout: async () => {
+    return apiFetch('/auth/logout', {
+      method: 'POST',
+    });
+  },
+  resendVerificationEmail: async (data: any) => {
+    return apiFetch('/auth/resend-verification-email', {
       method: 'POST',
       body: JSON.stringify(data),
     });

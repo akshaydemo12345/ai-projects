@@ -53,12 +53,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-api-token', 'x-api-key', 'api-key', 'bypass-tunnel-reminder']
 }));
 
-// Adjusted Helmet to allow iframes and cross-site content
-app.use(helmet({
+// Adjusted Helmet to allow iframes and cross-site content.
+// Disable COOP and HSTS in local development when using HTTP / custom local host names.
+const helmetOptions = {
   contentSecurityPolicy: false, // For development and dynamic AI content
   crossOriginResourcePolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: process.env.NODE_ENV === 'production' ? { policy: 'same-origin' } : false,
+  hsts: process.env.NODE_ENV === 'production' ? { maxAge: 15552000, includeSubDomains: true } : false,
+};
+app.use(helmet(helmetOptions));
 // Custom HTTP Logger is used instead of Morgan to support better filtering
 // app.use(morgan('dev'));
 

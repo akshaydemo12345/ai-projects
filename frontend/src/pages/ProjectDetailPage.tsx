@@ -893,13 +893,13 @@ interface EditProjectModalProps {
 
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
   const [name, setName] = useState(project.name);
-  const [websiteUrl, setWebsiteUrl] = useState(project.url || "");
+  const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || project.url || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
-  const [category, setCategory] = useState(project.category || "SaaS");
+  const [category, setCategory] = useState(project.industry || project.category || "SaaS");
 
   const handleSave = () => {
     if (!name.trim()) { toast.error("Project name is required."); return; }
-    onSave({ name, url: websiteUrl, preSlug, category });
+    onSave({ name, websiteUrl, preSlug, category });
   };
 
   return (

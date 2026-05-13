@@ -1,0 +1,515 @@
+[2026-05-13T11:40:15.401Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T11:40:15.410Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T11:40:15.412Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:02:58.273Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:02:58.433Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:02:58.447Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:02:58.448Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:03:46.401Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:03:46.663Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:03:46.699Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:03:46.701Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:04:22.209Z] [HTTP] OPTIONS /auth/signup 204 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:04:22.226Z] [WARN] POST /auth/signup 400 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:05:23.911Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:05:24.088Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:05:24.098Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:05:24.099Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:05:28.838Z] [HTTP] OPTIONS /auth/signup 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:05:28.848Z] [WARN] POST /auth/signup 400 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:05:41.962Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:05:41.975Z] [WARN] POST /auth/signup 400 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:05:45.489Z] [INFO] New user registered, awaiting email verification {"userId":"6a0469192d4964638ca4ecd2","email":"testing@gmail.com"}
+[2026-05-13T12:05:46.285Z] [ERROR] POST /auth/signup → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.signup (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:60:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:05:46.287Z] [ERROR] POST /auth/signup 502 1066ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:14:17.357Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:14:17.543Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:14:17.561Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:14:17.562Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:14:43.265Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:14:43.445Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:14:43.458Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:14:43.459Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:27:40.785Z] [HTTP] OPTIONS /auth/firebase 204 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:27:43.878Z] [INFO] Created new user from Firebase auth {"userId":"6a046e3fa73db22225bb4272","email":"testionicapp690@gmail.com"}
+[2026-05-13T12:27:43.881Z] [HTTP] POST /auth/firebase 200 3093ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:27:43.896Z] [HTTP] OPTIONS /projects 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:27:43.923Z] [HTTP] GET /projects 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:28:51.570Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:28:51.749Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:28:51.761Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:28:51.762Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:29:11.273Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:29:11.457Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:29:11.468Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:29:11.470Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:29:18.639Z] [HTTP] OPTIONS /auth/logout 204 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:18.681Z] [HTTP] POST /auth/logout 200 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:28.940Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:28.956Z] [WARN] POST /auth/login 400 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:43.354Z] [HTTP] OPTIONS /auth/signup 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:43.622Z] [INFO] New user registered, awaiting email verification {"userId":"6a046eb73f14d61812269fce","email":"sdfsdf@fsd.comas"}
+[2026-05-13T12:29:44.394Z] [ERROR] POST /auth/signup → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.signup (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:62:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:29:44.395Z] [ERROR] POST /auth/signup 502 1039ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:55.627Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:29:55.638Z] [WARN] POST /auth/signup 400 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:30:05.864Z] [HTTP] OPTIONS /auth/signup 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:30:05.873Z] [WARN] POST /auth/signup 400 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:30:08.122Z] [WARN] GET /auth/signup 404 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:33.115Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:33.121Z] [ERROR] POST /auth/login → Invalid email or password {"statusCode":401,"stack":"Error: Invalid email or password\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:190:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:34:33.123Z] [WARN] POST /auth/login 401 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:33.133Z] [HTTP] OPTIONS /auth/refresh-token 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:33.141Z] [ERROR] POST /auth/refresh-token → No refresh token provided {"statusCode":401,"stack":"Error: No refresh token provided\n    at exports.refreshToken (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:239:29)\n    at Layer.handle [as handle_request] (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/layer.js:95:5)\n    at next (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/route.js:149:13)\n    at Route.dispatch (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/route.js:119:3)\n    at Layer.handle [as handle_request] (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/layer.js:95:5)\n    at /var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/index.js:284:15\n    at Function.process_params (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/index.js:346:12)\n    at next (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/index.js:280:10)\n    at Function.handle (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/index.js:175:3)\n    at router (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/node_modules/express/lib/router/index.js:47:12)"}
+[2026-05-13T12:34:33.143Z] [WARN] POST /auth/refresh-token 401 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:37.033Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:37.042Z] [WARN] POST /auth/login 400 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:56.243Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:34:56.251Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:34:56.253Z] [WARN] POST /auth/login 403 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:50:56.284Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:50:56.289Z] [ERROR] POST /auth/signup → Email already in use {"statusCode":400,"stack":"Error: Email already in use\n    at exports.signup (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:28:35)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:50:56.291Z] [WARN] POST /auth/signup 400 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:50:56.386Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:50:56.399Z] [ERROR] POST /auth/signup → Email already in use {"statusCode":400,"stack":"Error: Email already in use\n    at exports.signup (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:28:35)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:50:56.401Z] [WARN] POST /auth/signup 400 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:51:01.406Z] [HTTP] OPTIONS /auth/login 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:51:01.414Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:51:01.416Z] [WARN] POST /auth/login 403 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:51:30.081Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:51:30.095Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:51:30.098Z] [WARN] POST /auth/login 403 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:52:06.744Z] [HTTP] OPTIONS /auth/login 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:52:06.751Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:52:06.755Z] [WARN] POST /auth/login 403 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:53:49.849Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:53:49.862Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:53:49.864Z] [WARN] POST /auth/login 403 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:55:09.558Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:55:09.565Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:55:09.566Z] [WARN] POST /auth/login 403 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:56:52.409Z] [HTTP] OPTIONS /auth/login 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:56:52.414Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:56:52.414Z] [WARN] POST /auth/login 403 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:57:04.654Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T12:57:04.807Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T12:57:04.819Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T12:57:04.820Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T12:57:05.752Z] [HTTP] OPTIONS /auth/login 204 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:57:05.798Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:57:05.801Z] [WARN] POST /auth/login 403 44ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:59:46.055Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T12:59:46.065Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T12:59:46.068Z] [WARN] POST /auth/login 403 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:09.528Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:10.320Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:00:10.322Z] [ERROR] POST /auth/resend-verification-email 502 792ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:38.792Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:38.797Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:00:38.799Z] [WARN] POST /auth/login 403 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:50.305Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:50.309Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:00:50.310Z] [WARN] POST /auth/login 403 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:53.846Z] [HTTP] OPTIONS /auth/resend-verification-email 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:00:57.163Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:00:57.165Z] [ERROR] POST /auth/resend-verification-email 502 3315ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:04:07.607Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:04:11.415Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:04:11.417Z] [ERROR] POST /auth/resend-verification-email 502 3805ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:04:33.127Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:04:33.711Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:04:33.712Z] [ERROR] POST /auth/resend-verification-email 502 580ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:06.393Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:06.975Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:10:06.977Z] [ERROR] POST /auth/resend-verification-email 502 583ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:09.154Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:09.169Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:10:09.171Z] [WARN] POST /auth/login 403 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:10.666Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:10.885Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:10:10.886Z] [ERROR] POST /auth/resend-verification-email 502 216ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:24.767Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T13:10:24.967Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T13:10:24.979Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T13:10:24.980Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T13:10:28.084Z] [HTTP] OPTIONS /auth/resend-verification-email 204 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T13:10:31.923Z] [ERROR] POST /auth/resend-verification-email → Unable to send verification email. Please try again later. {"statusCode":502,"stack":"Error: Unable to send verification email. Please try again later.\n    at exports.resendVerificationEmail (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:167:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T13:10:31.928Z] [ERROR] POST /auth/resend-verification-email 502 3838ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:11:30.154Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:11:30.315Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:11:30.326Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:11:30.327Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:11:41.581Z] [HTTP] OPTIONS /auth/login 204 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:11:41.631Z] [ERROR] POST /auth/login → Please verify your email before logging in {"statusCode":403,"stack":"Error: Please verify your email before logging in\n    at exports.login (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:195:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T14:11:41.634Z] [WARN] POST /auth/login 403 47ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:11:44.834Z] [HTTP] OPTIONS /auth/resend-verification-email 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:11:48.834Z] [HTTP] POST /auth/resend-verification-email 200 3994ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:15:10.610Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:15:10.909Z] [INFO] New user registered, awaiting email verification {"userId":"6a04876e2c0a232ae9e2218d","email":"akshaydemo12345@gmail.com"}
+[2026-05-13T14:15:11.807Z] [HTTP] POST /auth/signup 201 1191ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:16:50.223Z] [HTTP] OPTIONS /auth/login 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:16:50.229Z] [WARN] POST /auth/login 400 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:20.346Z] [HTTP] OPTIONS /auth/firebase 204 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:23.310Z] [HTTP] POST /auth/firebase 200 2960ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:23.370Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:23.392Z] [HTTP] GET /projects 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:26.221Z] [HTTP] OPTIONS /auth/logout 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:17:26.247Z] [HTTP] POST /auth/logout 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:04.849Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:04.859Z] [WARN] POST /auth/signup 400 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:09.343Z] [HTTP] OPTIONS /auth/signup 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:09.364Z] [ERROR] POST /auth/signup → Email already in use {"statusCode":400,"stack":"Error: Email already in use\n    at exports.signup (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:28:35)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T14:18:09.367Z] [WARN] POST /auth/signup 400 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:13.991Z] [HTTP] OPTIONS /auth/login 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:14.265Z] [INFO] User logged in {"userId":"6a04876e2c0a232ae9e2218d"}
+[2026-05-13T14:18:14.266Z] [HTTP] POST /auth/login 200 268ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:14.289Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:14.303Z] [HTTP] GET /projects 200 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:25.591Z] [HTTP] OPTIONS /auth/logout 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:25.602Z] [WARN] POST /auth/logout 401 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:25.611Z] [HTTP] OPTIONS /auth/refresh-token 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:25.623Z] [ERROR] POST /auth/refresh-token → User no longer exists {"statusCode":401,"stack":"Error: User no longer exists\n    at exports.refreshToken (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/authController.js:249:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+[2026-05-13T14:18:25.624Z] [WARN] POST /auth/refresh-token 401 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:45.336Z] [HTTP] OPTIONS /auth/signup 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:18:45.634Z] [INFO] New user registered, awaiting email verification {"userId":"6a0488452c0a232ae9e2219e","email":"akshaydemo12345@gmail.com"}
+[2026-05-13T14:18:46.400Z] [HTTP] POST /auth/signup 201 1061ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:21:20.653Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:21:20.805Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:21:20.815Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:21:20.816Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:23:47.225Z] [HTTP] OPTIONS /auth/firebase 204 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:23:50.094Z] [INFO] Created new user from Firebase auth {"userId":"6a04897670a11ac35df9c83e","email":"akshaybob20@gmail.com"}
+[2026-05-13T14:23:50.097Z] [HTTP] POST /auth/firebase 200 2868ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:23:50.118Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:23:50.136Z] [HTTP] GET /projects 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.900Z] [HTTP] OPTIONS /projects 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.902Z] [HTTP] OPTIONS /api/leads/get-filters 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.906Z] [HTTP] OPTIONS /api/leads?page=1&limit=5&sortBy=newest 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.929Z] [HTTP] GET /projects 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.941Z] [HTTP] GET /api/leads/get-filters 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:28.947Z] [HTTP] GET /api/leads?page=1&limit=5&sortBy=newest 200 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:29.814Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:29.831Z] [HTTP] GET /projects 200 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:32.746Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:32.777Z] [HTTP] GET /projects 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:24:58.644Z] [HTTP] OPTIONS /ai/extract-project 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:25:07.115Z] [INFO] Extracting colors from logo: https://www.ebrandz.com/wp-content/themes/ebrandz-child/images/ebrandz.png
+[2026-05-13T14:25:07.355Z] [INFO] Logo colors extracted: ["#f02028","#f82028","#f02020"]
+[2026-05-13T14:25:07.356Z] [INFO] Final colors - Primary: #f02028, Secondary: #f82028, Confidence: high
+[2026-05-13T14:25:07.459Z] [HTTP] POST /ai/extract-project 200 8811ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:52.315Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:52.348Z] [HTTP] POST /projects 201 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:52.374Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:52.399Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:57.414Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:35:57.424Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:02.431Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:02.454Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:07.403Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:10.377Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:10.402Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:15.416Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:15.437Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:18.250Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:18.282Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T14:36:18.299Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 48ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:21.821Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011Cazjf2duvZb9rUrcN8bK8"}
+[2026-05-13T14:36:21.823Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011Cazjf2duvZb9rUrcN8bK8"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011Cazjf2duvZb9rUrcN8bK8\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T14:36:21.824Z] [ERROR] POST /ai/project-suggestions 500 3568ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:21.832Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:36:21.855Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:41:08.503Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:41:08.675Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:41:08.686Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:41:08.687Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:42:47.141Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:42:47.325Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:42:47.339Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:42:47.340Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:43:01.509Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:43:01.691Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:43:01.707Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:43:01.708Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:46:26.583Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:46:26.755Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:46:26.768Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:46:26.769Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:46:30.621Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.625Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.650Z] [WARN] GET /projects/6a048c4870a11ac35df9c857 401 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.660Z] [WARN] POST /ai/project-suggestions 401 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.661Z] [HTTP] OPTIONS /auth/refresh-token 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.679Z] [HTTP] POST /auth/refresh-token 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.683Z] [HTTP] POST /auth/refresh-token 200 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:30.705Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T14:46:30.717Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:32.902Z] [HTTP] OPTIONS /projects 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:32.934Z] [HTTP] GET /projects 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:34.105Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazkSAaQeJqZQtLQWMeGy"}
+[2026-05-13T14:46:34.107Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazkSAaQeJqZQtLQWMeGy"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazkSAaQeJqZQtLQWMeGy\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T14:46:34.110Z] [ERROR] POST /ai/project-suggestions 500 3419ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:46:34.130Z] [HTTP] GET /projects/6a048c4870a11ac35df9c857 304 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:47:19.054Z] [HTTP] OPTIONS /projects/6a048c4870a11ac35df9c857 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:47:19.107Z] [HTTP] DELETE /projects/6a048c4870a11ac35df9c857 200 46ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:47:19.117Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:47:19.134Z] [HTTP] GET /projects 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:47:58.775Z] [HTTP] OPTIONS /ai/extract-project 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:48:04.356Z] [INFO] Extracting colors from logo: https://www.ebrandz.com/wp-content/themes/ebrandz-child/images/ebrandz.png
+[2026-05-13T14:48:04.605Z] [INFO] Logo colors extracted: ["#f02028","#f82028","#f02020"]
+[2026-05-13T14:48:04.605Z] [INFO] Final colors - Primary: #f02028, Secondary: #f82028, Confidence: high
+[2026-05-13T14:48:04.711Z] [HTTP] POST /ai/extract-project 200 5935ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:48:24.343Z] [HTTP] OPTIONS /ai/extract-project 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:48:25.024Z] [INFO] Extracting colors from logo: https://images.mamaearth.in/wysiwyg/mamaearth-logo.png?format=auto&fit=scale
+[2026-05-13T14:48:27.886Z] [INFO] Logo colors extracted: ["#000008","#080000","#00a8e8"]
+[2026-05-13T14:48:27.886Z] [INFO] Final colors - Primary: #000008, Secondary: #080000, Confidence: high
+[2026-05-13T14:48:28.118Z] [HTTP] POST /ai/extract-project 200 3773ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:48:56.665Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T14:48:56.869Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T14:48:56.889Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T14:48:56.890Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T14:59:40.259Z] [HTTP] OPTIONS /projects 204 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:40.263Z] [HTTP] OPTIONS /api/leads/get-filters 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:40.267Z] [HTTP] OPTIONS /api/leads?page=1&limit=5&sortBy=newest 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:40.299Z] [HTTP] GET /projects 304 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:40.318Z] [HTTP] GET /api/leads/get-filters 304 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:40.319Z] [HTTP] GET /api/leads?page=1&limit=5&sortBy=newest 304 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:47.828Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T14:59:47.851Z] [HTTP] GET /projects 304 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:37.245Z] [HTTP] OPTIONS /projects 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:37.260Z] [WARN] GET /projects 401 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:37.271Z] [HTTP] OPTIONS /auth/refresh-token 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:37.301Z] [HTTP] POST /auth/refresh-token 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:37.316Z] [HTTP] GET /projects 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:43.709Z] [HTTP] OPTIONS /projects 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:43.721Z] [HTTP] GET /projects 304 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:54.469Z] [HTTP] OPTIONS /projects 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:54.478Z] [HTTP] GET /projects 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:01:55.332Z] [HTTP] GET /projects 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:03:34.443Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:03:34.633Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:03:34.649Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:03:34.651Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:03:45.624Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:03:45.832Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:03:45.844Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:03:45.846Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:04:42.298Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:04:42.494Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:04:42.508Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:04:42.510Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:04:48.738Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:04:48.926Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:04:48.953Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:04:48.955Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:05:32.557Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:05:32.737Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:05:32.752Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:05:32.753Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:05:50.885Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:05:51.069Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:05:51.094Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:05:51.096Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:06:35.600Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:06:35.820Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:06:35.838Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:06:35.840Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:07:24.999Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:07:25.169Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:07:25.182Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:07:25.184Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:07:40.491Z] [HTTP] OPTIONS /ai/extract-project 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:07:50.119Z] [INFO] Brand colors detected: primary=#f28046, secondary=#ffffff
+[2026-05-13T15:07:50.355Z] [HTTP] POST /ai/extract-project 200 9863ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:09:29.135Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:09:29.331Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:09:29.346Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:09:29.348Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:09:48.046Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:09:48.246Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:09:48.258Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:09:48.259Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:09:51.952Z] [HTTP] OPTIONS /ai/extract-project 204 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:09:52.736Z] [INFO] Extracting theme colors - Logo: https://images.mamaearth.in/wysiwyg/mamaearth-logo.png?format=auto&fit=scale, BaseUrl: https://mamaearth.in/?utm_source=google&utm_medium=cpc&utm_campaign=6808792776&utm_agid=83390950687&utm_content=653697410602&utm_matchtype=e&gad_source=1&gad_campaignid=6808792776&gbraid=0AAAAADPLvZrcHIv3mJ0ge70BEZRlqytUF&gclid=CjwKCAjwwpDQBhAuEiwAa-4Wo0glfwcA4Yn0BzdZaMzZ0i1i_wNOfoCdUv49RXccPG3oqykVXHZ6pBoCGUEQAvD_BwE
+[2026-05-13T15:09:52.773Z] [INFO] Logo palette extracted: ["#000008","#080000","#00a8e8"]
+[2026-05-13T15:09:52.785Z] [INFO] Final theme colors - Primary: #00a8e8, Secondary: #000008, Confidence: high
+[2026-05-13T15:09:52.785Z] [INFO] Brand colors detected: primary=#00a8e8, secondary=#000008
+[2026-05-13T15:09:53.105Z] [HTTP] POST /ai/extract-project 200 1149ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:10:19.748Z] [HTTP] OPTIONS /ai/extract-project 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:10:23.777Z] [INFO] Extracting theme colors - Logo: https://www.ebrandz.com/wp-content/themes/ebrandz-child/images/ebrandz.png, BaseUrl: https://www.ebrandz.com/
+[2026-05-13T15:10:24.008Z] [INFO] Logo palette extracted: ["#f02028","#f82028","#f02020"]
+[2026-05-13T15:10:24.045Z] [INFO] Final theme colors - Primary: #f02028, Secondary: #f82028, Confidence: high
+[2026-05-13T15:10:24.045Z] [INFO] Brand colors detected: primary=#f02028, secondary=#f82028
+[2026-05-13T15:10:24.098Z] [HTTP] POST /ai/extract-project 200 4348ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:12:05.200Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:12:05.408Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:12:05.419Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:12:05.420Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:13:32.897Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:13:33.091Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:13:33.105Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:13:33.107Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:14:40.436Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:14:40.612Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:14:40.627Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:14:40.628Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:14:50.633Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:14:50.839Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:14:50.852Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:14:50.854Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:14:58.262Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:14:58.441Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:14:58.453Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:14:58.454Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:15:58.400Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:15:58.628Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:15:58.656Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:15:58.658Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:16:03.523Z] [HTTP] OPTIONS /ai/extract-project 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:16:05.285Z] [INFO] Extracting theme colors - Logo: https://www.ebrandz.com/wp-content/themes/ebrandz-child/images/ebrandz.png, BaseUrl: https://www.ebrandz.com/
+[2026-05-13T15:16:05.522Z] [INFO] Logo palette extracted: ["#f02028","#f82028","#f02020"]
+[2026-05-13T15:16:09.893Z] [INFO] Final theme colors - Primary: #f02028, Secondary: #555555, Accent: #555555, Text: #1f2937, Background: #ffffff, Confidence: high
+[2026-05-13T15:16:09.893Z] [INFO] Brand colors detected: primary=#f02028, secondary=#555555
+[2026-05-13T15:16:09.960Z] [HTTP] POST /ai/extract-project 200 6436ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:16:30.288Z] [HTTP] OPTIONS /ai/extract-project 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:16:36.113Z] [INFO] Extracting theme colors - Logo: https://images.mamaearth.in/wysiwyg/mamaearth-logo.png?format=auto&fit=scale, BaseUrl: https://mamaearth.in/?utm_source=google&utm_medium=cpc&utm_campaign=6808792776&utm_agid=83390950687&utm_content=653697410605&utm_matchtype=e&gad_source=1&gad_campaignid=6808792776&gbraid=0AAAAADPLvZrcHIv3mJ0ge70BEZRlqytUF&gclid=CjwKCAjwwpDQBhAuEiwAa-4Wow8aAIKEpJ5IRoSLB39rBCMnXGZTdJPhtuFMRvceR85KJOYNUA7asBoCO5MQAvD_BwE
+[2026-05-13T15:16:36.148Z] [INFO] Logo palette extracted: ["#000008","#080000","#00a8e8"]
+[2026-05-13T15:16:36.188Z] [INFO] Final theme colors - Primary: #00a8e8, Secondary: #000008, Accent: #f28046, Text: #1f2937, Background: #ffffff, Confidence: high
+[2026-05-13T15:16:36.188Z] [INFO] Brand colors detected: primary=#00a8e8, secondary=#000008
+[2026-05-13T15:16:36.417Z] [HTTP] POST /ai/extract-project 200 6128ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:18:19.638Z] [HTTP] OPTIONS /ai/extract-project 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:18:19.651Z] [WARN] POST /ai/extract-project 401 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:18:19.660Z] [HTTP] OPTIONS /auth/refresh-token 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:18:19.676Z] [HTTP] POST /auth/refresh-token 200 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:18:24.879Z] [INFO] Extracting theme colors - Logo: https://goliveindia.in/assets/images/brandLogoLanding.svg, BaseUrl: https://goliveindia.in/
+[2026-05-13T15:18:25.495Z] [INFO] Logo palette extracted: ["#10000f8","#f8f8f8","#9858100"]
+[2026-05-13T15:18:29.823Z] [WARN] Failed to fetch stylesheet https://goliveindia.in/assets/css/owl.carousel.min.css: Request failed with status code 503
+[2026-05-13T15:18:30.163Z] [WARN] Failed to fetch stylesheet https://goliveindia.in/assets/css/custom_style.min.css: Request failed with status code 503
+[2026-05-13T15:18:30.396Z] [WARN] Failed to fetch stylesheet https://goliveindia.in/assets/css/custom_style.css: Request failed with status code 503
+[2026-05-13T15:18:30.661Z] [WARN] Failed to fetch stylesheet https://goliveindia.in/assets/css/responsive.css: Request failed with status code 503
+[2026-05-13T15:18:30.932Z] [WARN] Failed to fetch stylesheet https://goliveindia.in/css/jquery-confirm.min.css: Request failed with status code 503
+[2026-05-13T15:18:30.959Z] [INFO] Final theme colors - Primary: #9858100, Secondary: #10000f8, Accent: #6c757d, Text: #1f2937, Background: #ffffff, Confidence: high
+[2026-05-13T15:18:30.959Z] [INFO] Brand colors detected: primary=#9858100, secondary=#10000f8
+[2026-05-13T15:18:30.985Z] [HTTP] POST /ai/extract-project 200 11301ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:20:14.035Z] [HTTP] OPTIONS /ai/extract-project 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:20:17.172Z] [INFO] Extracting theme colors - Logo: https://ferrite.in/wp-content/uploads/2024/05/logo-sm.png, BaseUrl: https://ferrite.in/
+[2026-05-13T15:20:17.185Z] [INFO] Logo palette extracted: ["#e07820","#e07818","#e88020"]
+[2026-05-13T15:20:17.658Z] [INFO] Final theme colors - Primary: #e07820, Secondary: #54595f, Accent: #54595f, Text: #25d366, Background: #ffffff, Confidence: high
+[2026-05-13T15:20:17.658Z] [INFO] Brand colors detected: primary=#e07820, secondary=#54595f
+[2026-05-13T15:20:17.694Z] [HTTP] POST /ai/extract-project 200 3656ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:14.823Z] [HTTP] OPTIONS /projects 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:14.859Z] [HTTP] POST /projects 201 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:14.885Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:14.926Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 200 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:19.940Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:19.961Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:24.970Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:24.996Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:30.007Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:30.037Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:35.044Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:35.051Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:40.058Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:40.085Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:45.097Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:45.124Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:50.134Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:50.156Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:55.162Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:21:55.177Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:00.184Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:00.209Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:05.217Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:05.242Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:10.249Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:10.263Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:15.270Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:15.297Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:16.224Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:16.244Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:22:16.261Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:16.734Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoA7MajAvsp4aRzoEai"}
+[2026-05-13T15:22:16.735Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoA7MajAvsp4aRzoEai"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoA7MajAvsp4aRzoEai\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T15:22:16.735Z] [ERROR] POST /ai/project-suggestions 500 507ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:16.748Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:27.374Z] [HTTP] OPTIONS /ai/generate-description 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:22:27.393Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:22:30.863Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoB9kEBzVUNX7Jx82yV"}
+[2026-05-13T15:22:30.864Z] [ERROR] POST /ai/generate-description → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoB9kEBzVUNX7Jx82yV"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoB9kEBzVUNX7Jx82yV\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateDescriptionSuggestion (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:521:18)\n    at async exports.generateDescription (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:447:24)"}
+[2026-05-13T15:22:30.864Z] [ERROR] POST /ai/generate-description 500 3484ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:12.246Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:12.248Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:12.284Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:23:12.307Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:12.736Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoEEqQ6i3h1Z98CoouD"}
+[2026-05-13T15:23:12.737Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoEEqQ6i3h1Z98CoouD"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoEEqQ6i3h1Z98CoouD\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T15:23:12.738Z] [ERROR] POST /ai/project-suggestions 500 480ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:12.772Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:14.083Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:14.093Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:23:14.431Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoEN4j9WgrckPk7p6xd"}
+[2026-05-13T15:23:14.432Z] [ERROR] POST /ai/generate-description → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoEN4j9WgrckPk7p6xd"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoEN4j9WgrckPk7p6xd\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateDescriptionSuggestion (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:521:18)\n    at async exports.generateDescription (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:447:24)"}
+[2026-05-13T15:23:14.433Z] [ERROR] POST /ai/generate-description 500 345ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:20.892Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:23:21.048Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:23:21.059Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:23:21.061Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:23:24.257Z] [HTTP] OPTIONS /ai/generate-description 204 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:23:24.281Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:23:25.113Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoF8MFUn4Zj1ZUUdvma"}
+[2026-05-13T15:23:25.115Z] [ERROR] POST /ai/generate-description → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoF8MFUn4Zj1ZUUdvma"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoF8MFUn4Zj1ZUUdvma\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateDescriptionSuggestion (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:521:18)\n    at async exports.generateDescription (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:447:24)"}
+[2026-05-13T15:23:25.117Z] [ERROR] POST /ai/generate-description 500 859ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:13.967Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:13.969Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:14.014Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:25:14.028Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:15.560Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:15.569Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:25:17.451Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoPRphRLx3JqKgdScfg"}
+[2026-05-13T15:25:17.452Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoPRphRLx3JqKgdScfg"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoPRphRLx3JqKgdScfg\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T15:25:17.453Z] [ERROR] POST /ai/project-suggestions 500 3471ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:17.454Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoPRrS5D1DxCZy9PAPr"}
+[2026-05-13T15:25:17.454Z] [ERROR] POST /ai/generate-description → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoPRrS5D1DxCZy9PAPr"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoPRrS5D1DxCZy9PAPr\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateDescriptionSuggestion (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:521:18)\n    at async exports.generateDescription (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:447:24)"}
+[2026-05-13T15:25:17.456Z] [ERROR] POST /ai/generate-description 500 1894ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:25:17.483Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:07.807Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-13T15:27:07.976Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T15:27:07.996Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T15:27:07.997Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T15:27:11.303Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:11.308Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:11.371Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:27:11.383Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 67ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:11.890Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoXs8BuYQqbJSiMNf1X"}
+[2026-05-13T15:27:11.893Z] [ERROR] POST /ai/project-suggestions → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoXs8BuYQqbJSiMNf1X"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoXs8BuYQqbJSiMNf1X\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:470:18)\n    at async exports.getProjectSuggestions (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:487:25)"}
+[2026-05-13T15:27:11.895Z] [ERROR] POST /ai/project-suggestions 500 552ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:11.921Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:13.579Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:13.596Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-6
+[2026-05-13T15:27:13.946Z] [ERROR] [AI] Claude model failed (claude-sonnet-4-6): 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoY22iotmncahpfFxmw"}
+[2026-05-13T15:27:13.947Z] [ERROR] POST /ai/generate-description → AI generation failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CazoY22iotmncahpfFxmw"} {"statusCode":500,"stack":"Error: AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CazoY22iotmncahpfFxmw\"}\n    at callAI (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:316:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async generateDescriptionSuggestion (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/services/aiService.js:521:18)\n    at async exports.generateDescription (/var/www/html/circle-animation/updated-ai-landing-page/ai-projects/backend/src/controllers/aiController.js:447:24)"}
+[2026-05-13T15:27:13.949Z] [ERROR] POST /ai/generate-description 500 366ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:26.324Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4/pages 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:26.347Z] [INFO] Creating page for project 6a0496eabf2472869f9b22d4 {"userId":"6a04897670a11ac35df9c83e"}
+[2026-05-13T15:27:26.413Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a04985e6670431b59474d08
+[2026-05-13T15:27:26.413Z] [INFO] 📝 [SCHEMA] Syncing 4 fields for page 6a04985e6670431b59474d08 (test)
+[2026-05-13T15:27:26.423Z] [HTTP] POST /projects/6a0496eabf2472869f9b22d4/pages 201 94ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:26.428Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:26.447Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.014Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.058Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.062Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 46ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.076Z] [HTTP] OPTIONS /api/thank-you/config/6a04985e6670431b59474d08 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.078Z] [HTTP] OPTIONS /api/thank-you/layouts 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.088Z] [HTTP] GET /api/thank-you/config/6a04985e6670431b59474d08 200 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:29.090Z] [HTTP] GET /api/thank-you/layouts 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:57.634Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:57.636Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:57.673Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 304 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:27:57.692Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 304 44ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:28:04.610Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:28:04.659Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a04985e6670431b59474d08
+[2026-05-13T15:28:04.659Z] [INFO] 📝 [SCHEMA] Syncing 4 fields for page 6a04985e6670431b59474d08 (test)
+[2026-05-13T15:28:04.662Z] [HTTP] PUT /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 200 49ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:28:04.668Z] [HTTP] OPTIONS /projects/6a0496eabf2472869f9b22d4 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:28:04.676Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4/pages/6a04985e6670431b59474d08 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+[2026-05-13T15:28:04.692Z] [HTTP] GET /projects/6a0496eabf2472869f9b22d4 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}

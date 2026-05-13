@@ -46,6 +46,13 @@ const config = {
     model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
   },
 
+  // Email Configuration
+  email: {
+    brevoApiKey: process.env.BREVO_API_KEY || '',
+    fromName: process.env.FROM_NAME || 'AI Landing Page Builder',
+    fromEmail: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+  },
+
   // Proxy Configuration
   proxy: {
     whitelist: (process.env.PROXY_WHITELIST || '').split(',').map(d => d.trim()).filter(Boolean),
@@ -61,6 +68,10 @@ if (config.isProduction && config.jwt.secret === 'your-super-secret-jwt-key-chan
 
 if (config.isProduction && config.database.uri === 'mongodb://localhost:27017/ai-landing-page') {
   console.warn('⚠️  WARNING: Using default MongoDB URI in production. Set MONGODB_URI in environment variables.');
+}
+
+if (!config.email.brevoApiKey) {
+  console.warn('⚠️  WARNING: BREVO_API_KEY is not set. Email delivery will fail.');
 }
 
 module.exports = config;

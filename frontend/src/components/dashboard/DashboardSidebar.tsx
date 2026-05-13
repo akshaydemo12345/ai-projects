@@ -26,8 +26,8 @@ const DashboardSidebar = () => {
     return location.pathname.startsWith(href);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 

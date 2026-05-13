@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { authApi } from "@/services/api";
+import { signOutUser } from "@/services/firebaseClient";
 
 interface User {
   id: string;
@@ -14,7 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (token: string, userData: any) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +47,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem("pagecraft_user", JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.warn('Logout request failed:', error);
+    }
+
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.warn('Firebase sign-out failed:', error);
+    }
+
     setToken(null);
     setUser(null);
     localStorage.removeItem("pagecraft_token");

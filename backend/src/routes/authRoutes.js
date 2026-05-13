@@ -13,6 +13,9 @@ const {
   resetPassword,
   getProfile,
   googleCallback,
+  firebaseLogin,
+  verifyEmail,
+  resendVerificationEmail,
 } = require('../controllers/authController');
 
 const { signupSchema, loginSchema, validate } = require('../utils/validation');
@@ -45,6 +48,16 @@ router.post(
   resetPassword
 );
 
+/** POST /auth/verify-email/:token */
+router.post('/verify-email/:token', verifyEmail);
+
+/** POST /auth/resend-verification-email */
+router.post(
+  '/resend-verification-email',
+  validate(z.object({ email: z.string().email('Invalid email') })),
+  resendVerificationEmail
+);
+
 // ─── Google OAuth ──────────────────────────────────────────────────────────────
 
 /** GET /auth/google */
@@ -61,6 +74,13 @@ router.get(
 router.get('/google/failed', (req, res) => {
   res.status(401).json({ status: 'fail', message: 'Google authentication failed' });
 });
+
+/** POST /auth/firebase */
+router.post(
+  '/firebase',
+  validate(z.object({ idToken: z.string().min(10, 'Firebase ID token is required') })),
+  firebaseLogin
+);
 
 // ─── Protected Routes ──────────────────────────────────────────────────────────
 
