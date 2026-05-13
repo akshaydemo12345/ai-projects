@@ -145,7 +145,11 @@ export const travel02Html = `
           </div>
           <div class="input-group" style="grid-column: span 2;">
             <label>Full Name</label>
-            <input type="text" name="full_name" placeholder="2 Adults">
+            <input type="text" name="full_name" placeholder="John Doe">
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label>Email Address</label>
+            <input type="email" name="email_address" placeholder="you@email.com">
           </div>
           <button type="submit" class="btn-submit">Plan My Journey →</button>
         </div>
