@@ -878,7 +878,7 @@ const LeadsPage = () => {
               </section>
 
               {/* UTM Details */}
-              {((selectedLead as any).utm_source || (selectedLead as any).utm_medium || (selectedLead as any).utm_campaign || (selectedLead as any).utm_content || (selectedLead as any).utm_term) && (
+              {hasUTMs && (
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -889,24 +889,34 @@ const LeadsPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_source || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_source || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Medium</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_medium || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_medium || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_campaign || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_content || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_content || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_term || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{utm_term || "—"}</p>
                     </div>
+                    {(gclid || fbclid || msclkid) && (
+                      <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Click IDs</p>
+                        <div className="text-sm font-bold text-slate-900 dark:text-white break-all space-y-0.5">
+                          {gclid && <p className="text-xs"><span className="text-slate-400">gclid:</span> {gclid}</p>}
+                          {fbclid && <p className="text-xs"><span className="text-slate-400">fbclid:</span> {fbclid}</p>}
+                          {msclkid && <p className="text-xs"><span className="text-slate-400">msclkid:</span> {msclkid}</p>}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </section>
               )}
