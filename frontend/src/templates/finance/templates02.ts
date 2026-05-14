@@ -124,7 +124,7 @@ h1, h2, h3 {
   position: relative;
   z-index: 20;
   box-shadow: 0 40px 100px rgba(0,0,0,0.1);
-  border-top: 4px solid var(--primary);
+  border-top: 5px solid var(--primary);
 }
 
 .form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: center; }
@@ -153,7 +153,7 @@ h1, h2, h3 {
 
 .btn-form {
   grid-column: span 2;
-  background: var(--secondary);
+  background: var(--primary);
   color: #fff;
   padding: 1.2rem;
   border: none;
@@ -166,13 +166,13 @@ h1, h2, h3 {
 
 /* TRUST SECTION */
 .trust-logos { padding: 4rem 0; border-bottom: 1px solid var(--border); }
-.logo-flex { display: flex; justify-content: space-between; align-items: center; opacity: 0.4; filter: grayscale(1); }
+.logo-flex { display: flex; justify-content: space-between; align-items: center; opacity: 1; filter: grayscale(0); color: #000; }
 .logo-flex img { height: 30px; }
 
 /* SERVICES GRID */
 .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem; }
-.service-item { border-left: 1px solid var(--border); padding-left: 2rem; }
-.service-item:hover { border-left-color: var(--primary); }
+.service-item { border-left: 2px solid #000; padding-left: 2rem; }
+.service-item:hover { border-left-color: var(--primary); transform: translateX(10px); }
 .service-item span { color: var(--primary); font-weight: 700; font-size: 0.9rem; }
 .service-item h3 { font-size: 1.5rem; margin: 1rem 0; }
 .service-item p { color: var(--slate); font-size: 0.95rem; }
@@ -205,7 +205,7 @@ h1, h2, h3 {
 .global-item p { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 0.8rem; color: var(--slate); }
 
 /* CORE VALUES */
-.values-section { background: var(--secondary) !important; color: #fff; text-align: center; }
+.values-section { background: var(--primary) !important; color: #fff; text-align: center; }
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
 .value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
 .value-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
@@ -303,11 +303,11 @@ export const finance02Html = `
 
 <div class="container">
   <div class="trust-logos">
-    <div class="logo-flex">
-      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">GOLDMAN SACHS</span>
-      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">JP MORGAN</span>
-      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">MORGAN STANLEY</span>
-      <span style="font-weight:800;font-size:0.9rem;opacity:0.5;letter-spacing:2px">UBS</span>
+    <div class="logo-flex" style="color: #000;">
+      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">GOLDMAN SACHS</span>
+      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">JP MORGAN</span>
+      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">MORGAN STANLEY</span>
+      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">UBS</span>
     </div>
   </div>
 </div>
