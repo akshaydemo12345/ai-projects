@@ -95,8 +95,6 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
-      // 🚀 FLATTENED UTMs for easier filtering and dashboard display
-      ...utm,
       formData,
       trackingDetails: {
         referral_url: referralUrl,

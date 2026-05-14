@@ -66,6 +66,62 @@ class DomainMapper_Form_Interceptor
     var RELAY_PREFIX  = '{$rp}';
     var RELAY_DOMAINS = {$rds};
 
+    // ── UTM Persistence: Capture on page load ─────────────────────────────
+    function captureUTMs() {
+        var q = new URLSearchParams(window.location.search);
+        // Also try parent frame (if embedded in iframe)
+        try {
+            if (window.top !== window && window.top.location.search) {
+                var pq = new URLSearchParams(window.top.location.search);
+                pq.forEach(function(v, k) { if (!q.has(k)) q.append(k, v); });
+            }
+        } catch(e) {}
+        // Also parse hash params (some redirectors put UTMs there)
+        if (window.location.hash && window.location.hash.indexOf('?') !== -1) {
+            var hq = new URLSearchParams(window.location.hash.split('?')[1]);
+            hq.forEach(function(v, k) { if (!q.has(k)) q.append(k, v); });
+        }
+        var keys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid'];
+        keys.forEach(function(k) {
+            var v = q.get(k);
+            if (v) {
+                try { sessionStorage.setItem('dm_' + k, v); } catch(e) {}
+                try { localStorage.setItem('dm_' + k, v); } catch(e) {}
+            }
+        });
+        // Persist referrer on first load
+        if (document.referrer) {
+            try {
+                if (!sessionStorage.getItem('dm_referrer')) {
+                    sessionStorage.setItem('dm_referrer', document.referrer);
+                }
+            } catch(e) {}
+            try {
+                if (!localStorage.getItem('dm_referrer')) {
+                    localStorage.setItem('dm_referrer', document.referrer);
+                }
+            } catch(e) {}
+        }
+    }
+    captureUTMs();
+
+    function getUTM(k) {
+        var v = null;
+        try { v = sessionStorage.getItem('dm_' + k) || localStorage.getItem('dm_' + k); } catch(e) {}
+        if (!v) {
+            var q = new URLSearchParams(window.location.search);
+            v = q.get(k);
+        }
+        return v || '';
+    }
+
+    function getReferrer() {
+        var ref = '';
+        try { ref = sessionStorage.getItem('dm_referrer') || localStorage.getItem('dm_referrer') || ''; } catch(e) {}
+        if (!ref) ref = document.referrer || '';
+        return ref;
+    }
+
     function rewriteUrl(url) {
         if (!url || typeof url !== 'string') return url;
         url = url.replace(/([^:])\/\//g, '\$1/');
@@ -237,29 +293,6 @@ class DomainMapper_Form_Interceptor
         }
     }
 
-    // ── UTM Persistence: Capture on page load, store in sessionStorage ────────
-    // This ensures UTMs survive multi-page navigation before form submission
-    (function persistUTMs() {
-        try {
-            var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-            var params = new URLSearchParams(window.location.search);
-            utmKeys.forEach(function(k) {
-                var val = params.get(k);
-                if (val) {
-                    try { sessionStorage.setItem('dm_' + k, val); } catch(e) {}
-                }
-            });
-            // Persist referrer on first landing
-            if (document.referrer) {
-                try {
-                    if (!sessionStorage.getItem('dm_referrer')) {
-                        sessionStorage.setItem('dm_referrer', document.referrer);
-                    }
-                } catch(e) {}
-            }
-        } catch(e) {}
-    })();
-
     // High-priority interceptor for natural form submissions
     document.addEventListener('submit', function(e) {
         var form = e.target;
@@ -267,7 +300,10 @@ class DomainMapper_Form_Interceptor
             form.method = 'POST';
             form.action = rewriteUrl(form.action);
 
-            // Intercept ALL forms that have at least one user-fillable input
+            // FIX: Previously only intercepted forms with email or name inputs.
+            // This silently skipped travel/booking/service forms (date, phone,
+            // destination, etc.) — leads were never captured.
+            // Now intercept ALL forms that have at least one user-fillable input.
             var hasInputs = form.querySelector(
                 'input:not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="button"]), select, textarea'
             );
@@ -293,75 +329,21 @@ class DomainMapper_Form_Interceptor
                 var pathParts = window.location.pathname.split('/').filter(Boolean);
                 var resolvedSlug = pathParts.join('/'); 
                 
-                // ── UTM Extraction: URL first, then sessionStorage fallback ──────
-                var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-                var params = new URLSearchParams(window.location.search);
-                var utmDetails = {};
-                utmKeys.forEach(function(k) {
-                    var val = params.get(k);
-                    if (!val) {
-                        try { val = sessionStorage.getItem('dm_' + k); } catch(e) {}
-                    }
-                    if (val) utmDetails[k] = val;
-                });
-
-                // ── Referral Source: Safe extraction with try-catch ───────────────
-                var rawReferrer = document.referrer || '';
-                try {
-                    if (!rawReferrer) rawReferrer = sessionStorage.getItem('dm_referrer') || '';
-                } catch(e) {}
-                var referralSource = 'Direct';
-                if (rawReferrer) {
-                    try { referralSource = new URL(rawReferrer).hostname; } catch(e) { referralSource = rawReferrer; }
-                }
-
-                // ── Build formData array for schema detection (matches tracker.js) ─
-                var formDataArr = [];
-                form.querySelectorAll('input, select, textarea').forEach(function(el, idx) {
-                    var elName = el.name || el.id || el.getAttribute('data-name') || '';
-                    var elLabel = el.getAttribute('data-label') || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '';
-                    if (!elName) {
-                        var labelEl = el.id ? document.querySelector('label[for="' + el.id + '"]') : null;
-                        if (!labelEl) labelEl = el.closest ? el.closest('label') : null;
-                        var source = (labelEl ? labelEl.innerText : '') || elLabel || '';
-                        if (source) {
-                            elName = source.toLowerCase().trim().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-                            elLabel = source.trim();
-                        }
-                    }
-                    if (!elName) elName = 'field_' + idx;
-                    if (!elLabel) elLabel = elName;
-
-                    var elValue = '';
-                    if (el.type === 'checkbox') {
-                        elValue = el.checked ? (el.value || 'Yes') : '';
-                    } else if (el.type === 'radio') {
-                        if (el.checked) elValue = el.value;
-                        else return; // skip unchecked radios
-                    } else {
-                        elValue = el.value || '';
-                    }
-                    formDataArr.push({ name: elName, label: elLabel, value: elValue, type: el.type || el.tagName.toLowerCase() });
-                });
-
                 var data = {
                     pageId: pageId,
                     projectId: projectId,
                     pageSlug: resolvedSlug,
+                    // FIX: Include url + domain so backend can resolve the correct
+                    // page even when pageId/projectId meta tags are not injected.
                     url: window.location.href,
-                    pageUrl: window.location.href,
                     domain: window.location.hostname,
+                    referrer: getReferrer(),
                     timestamp: new Date().getTime(),
-                    referer: rawReferrer,
                     trackingDetails: {
                         referral_url: window.location.href,
-                        referral_source: referralSource
-                    },
-                    formData: formDataArr
+                        referral_source: getReferrer() || 'Direct'
+                    }
                 };
-
-                // Merge UTMs into root for backend processing
-                Object.assign(data, utmDetails);
 
                 // Capture every named field individually (handles checkboxes, radios, selects)
                 form.querySelectorAll('input, select, textarea').forEach(function(el) {
@@ -379,7 +361,14 @@ class DomainMapper_Form_Interceptor
                     if (k && v && String(v).trim() !== '' && !data[k]) data[k] = v;
                 });
 
-                console.log('📡 [DM-Interceptor] Lead Payload:', JSON.stringify({utms: utmDetails, referral: referralSource, slug: resolvedSlug}));
+                // UTM capture from URL query string (persisted via sessionStorage)
+                var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid'];
+                utmKeys.forEach(function(k) {
+                    var val = getUTM(k);
+                    if (val) data[k] = val;
+                });
+
+                console.log('📡 [DM-Interceptor] Final Lead Data:', data);
                 submitLead(data, form, btn, originalText);
             }
         }
