@@ -31,10 +31,6 @@ const FeaturesSection = () => {
         <div className="mb-32 grid gap-12 lg:grid-cols-2 items-stretch">
           {/* Problem Column */}
           <div className="relative">
-            <div className="flex items-center gap-2 mb-6">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <span className="text-xs font-bold uppercase tracking-widest text-red-600">The Problem</span>
-            </div>
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl leading-tight mb-8">
               Most Landing Page Builders Force You to Use Their Platform
             </h2>
