@@ -153,7 +153,7 @@ export const travel02Html = `
             <label>Travelers</label>
             <input type="number" name="travelers" placeholder="2 Adults">
           </div>
-          <div class="input-group">
+          <div class="input-group" style="grid-column: span 2;">
             <label>Duration</label>
             <select name="duration"><option>7-10 Days</option><option>14+ Days</option></select>
           </div>
@@ -224,7 +224,7 @@ export const travel02Html = `
           </div>
         </div>
         <div class="journey-card">
-          <img src="https://images.unsplash.com/photo-1551232864-3f0890e1777d?auto=format&fit=crop&q=80&w=400" alt="Sunset">
+          <img src="https://images.unsplash.com/photo-1637090620932-7efea467edde?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Sunset">
           <div class="journey-info">
             <span class="tag">AERIAL</span>
             <h3>Infinite Skies Safari</h3>
@@ -242,7 +242,8 @@ export const travel02Html = `
           </div>
         </div>
         <div class="journey-card">
-          <img src="https://images.unsplash.com/photo-1589825743636-17e3d3a2e4fb?auto=format&fit=crop&q=80&w=400" alt="Zebra">
+          <img src="https://plus.unsplash.com/premium_photo-1664302719391-9653797f0898?q=80&w=873&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D
+          " alt="Zebra">
           <div class="journey-info">
             <span class="tag">WATER</span>
             <h3>Delta Dream</h3>
@@ -321,7 +322,7 @@ export const travel02Html = `
       <div class="lens-grid">
         <div class="lens-item tall"><img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=600" alt="Landscape"></div>
         <div class="lens-item"><img src="https://images.unsplash.com/photo-1547970810-dc1eac37d174?auto=format&fit=crop&q=80&w=400" alt="Lion"></div>
-        <div class="lens-item"><img src="https://images.unsplash.com/photo-1589825743636-17e3d3a2e4fb?auto=format&fit=crop&q=80&w=400" alt="Zebra"></div>
+        <div class="lens-item"><img src="https://plus.unsplash.com/premium_photo-1664302719391-9653797f0898?q=80&w=873&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Zebra"></div>
       </div>
     </div>
   </section>

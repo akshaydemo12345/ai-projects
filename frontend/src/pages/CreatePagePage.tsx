@@ -301,7 +301,7 @@ const CreatePagePage = () => {
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -856,15 +856,13 @@ const CreatePagePage = () => {
                     />
                   </div>
 
-                  {visibleCount < LANDING_TEMPLATES.filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase()))).length && (
-                    <button
-                      onClick={() => setVisibleCount(prev => prev + 20)}
-                      className="whitespace-nowrap px-6 py-3.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-right-2"
-                    >
-                      <LayoutTemplate className="h-3.5 w-3.5" />
-                      View All
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setVisibleCount(visibleCount === 4 ? LANDING_TEMPLATES.length : 4)}
+                    className="whitespace-nowrap px-6 py-3.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-right-2"
+                  >
+                    <LayoutTemplate className="h-3.5 w-3.5" />
+                    {visibleCount === 4 ? "View More" : "View Less"}
+                  </button>
                 </div>
 
                 <div className="flex flex-wrap gap-2">

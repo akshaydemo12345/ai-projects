@@ -50,7 +50,7 @@ const LoginPage = () => {
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(260,80%,55%)] p-12 text-white relative overflow-hidden">
         <div>
           <div className="mb-16">
-            <img src="/assets/Buildify-logo.png" alt="Buildify" className="h-20 w-auto brightness-0 invert" />
+            <img src="/assets/Buildify-logo.png" alt="Buildify" className="h-10 w-auto brightness-0 invert" />
           </div>
 
           <h1 className="text-4xl font-bold leading-tight mb-4">

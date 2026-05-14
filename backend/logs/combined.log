@@ -30784,3 +30784,20 @@ Require stack:
 [2026-05-13T06:12:57.241Z] [INFO] 🚀 Server running on port 5000
 [2026-05-13T06:12:57.924Z] [HTTP] GET /projects/6a040ec23f050bd93ac056e0 304 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-13T06:13:02.951Z] [HTTP] GET /projects/6a040ec23f050bd93ac056e0 304 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:26:24.291Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T09:26:24.327Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-13T09:27:25.668Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-13T09:27:25.682Z] [INFO] 🚀 Server running on port 5000
+[2026-05-13T09:33:06.097Z] [HTTP] GET /api/public/page/sqsqsq?cb=1778664785969 200 66ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:33:07.476Z] [HTTP] GET /projects/6a0424623f76197369246875 200 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:33:07.700Z] [HTTP] GET /api/public/page/sqsqsq?cb=1778664787678 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:33:07.820Z] [HTTP] GET /projects/6a0424623f76197369246875 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:33:09.046Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-13T09:33:09.081Z] [HTTP] GET /projects/6a0424623f76197369246875 304 45ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:33:21.871Z] [HTTP] POST /ai/project-suggestions 200 12844ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:35:45.643Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-13T09:35:45.654Z] [HTTP] GET /projects/6a0424623f76197369246875 304 56ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:36:00.888Z] [HTTP] POST /ai/project-suggestions 200 15267ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:36:02.166Z] [INFO] [AI] Attempting Claude model: claude-sonnet-4-20250514
+[2026-05-13T09:36:02.187Z] [HTTP] GET /projects/6a0424623f76197369246875 304 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-13T09:36:15.418Z] [HTTP] POST /ai/project-suggestions 200 13271ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}

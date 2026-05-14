@@ -148,7 +148,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 }
 
 .booking-label {
-  background: var(--secondary) !important;
+  background: var(--primary) !important;
   width: 30%;
   display: flex;
   align-items: center;
@@ -218,6 +218,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin-top: 26px;
 }
 .btn-booking-now:hover { background: #1e293b !important; color: #fff !important; }
 
@@ -278,7 +279,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 
 /* INNOVATION SECTION */
 .innovation-section { 
-  background: var(--bg-dark); 
+  background: var(--secondary); 
   color: #fff; 
   overflow: hidden; 
   position: relative;
@@ -407,7 +408,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 
 /* FOOTER 03 */
 .footer-03 { 
-  background: var(--bg-dark); 
+  background: var(--secondary); 
   color: #fff; 
   padding: 8rem 0 3rem; 
   position: relative;
