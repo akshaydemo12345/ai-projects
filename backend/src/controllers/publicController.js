@@ -1399,19 +1399,91 @@ exports.handleFormSubmission = async (req, res, next) => {
         // 1. Admin Notification
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
+          const pColor = project.primaryColor || '#7c3aed';
+          const customMessage = project.adminNotification.message || "Great news! A new lead has just expressed interest through your landing page. Here are the captured details:";
 
-          // Use a clean default template for admin notifications
           const adminMsg = `
-            <h2>New Lead Captured!</h2>
-            <p>A new form was submitted on your landing page.</p>
-            <hr />
-            <p><strong>Name:</strong> ${leadData.name || 'Unknown'}</p>
-            <p><strong>Email:</strong> ${leadData.email || 'Not provided'}</p>
-            <p><strong>Phone:</strong> ${leadData.phone || 'Not provided'}</p>
-            <p><strong>Message:</strong> ${leadData.message || 'No message'}</p>
-            <hr />
-            <p><strong>Page:</strong> ${pageSlug || schema.page_slug || ''}</p>
-            <p><strong>Time:</strong> ${now}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #f8fafc; }
+                .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+                .header { background-color: ${pColor}; padding: 40px 20px; text-align: center; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; }
+                .header p { margin: 10px 0 0; opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+                .content { padding: 40px; }
+                .intro { font-size: 14px; color: #64748b; margin-bottom: 30px; text-align: center; white-space: pre-line; }
+                .data-card { background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+                .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+                .data-row:last-child { border-bottom: none; }
+                .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                .value { font-size: 14px; font-weight: 600; color: #1e293b; }
+                .footer { padding: 30px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
+                .footer p { margin: 5px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>New Lead Captured</h1>
+                  <p>${project.fromName || 'System Notification'}</p>
+                </div>
+                <div class="content">
+                  <p class="intro">${customMessage}</p>
+                  
+                  <div class="data-card">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Full Name</div>
+                          <div class="value">${leadData.name || leadData.full_name || leadData.Name || leadData.FullName || 'Not provided'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Email Address</div>
+                          <div class="value">${leadData.email || leadData.email_address || leadData.Email || leadData.Mail || 'Not provided'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Phone Number</div>
+                          <div class="value">${leadData.phone || leadData.tel || leadData.Phone || leadData.Contact || 'Not provided'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Message</div>
+                          <div class="value">${leadData.message || leadData.comment || leadData.Message || leadData.Comments || leadData.note || 'No message provided'}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Page</div>
+                          <div class="value">${pageSlug || ''}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">Referral URL</div>
+                          <div class="value" style="word-break: break-all; font-size: 13px;">
+                            ${rawData.url || rawData.pageUrl || 'Direct'}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>Powered by AI Landing Page Builder</p>
+                  <p>&copy; ${new Date().getFullYear()} ${project.fromName || 'All Rights Reserved'}</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `;
 
           emailService.sendEmail({
@@ -1419,25 +1491,65 @@ exports.handleFormSubmission = async (req, res, next) => {
             subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
             htmlContent: adminMsg,
             fromName: project.fromName,
-            fromEmail: project.fromEmail
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey
           }).catch(err => console.error('Admin Email Error:', err));
         }
 
         // 2. User Auto-Reply
-        if (project.userNotification?.enabled && leadData.email) {
-          // Use a clean default template for user auto-replies
+        const userEmail = leadData.email || leadData.email_address;
+        if (project.userNotification?.enabled && userEmail) {
+          const pColor = project.primaryColor || '#7c3aed';
+          const userName = leadData.name || leadData.full_name || 'there';
+          const customUserMessage = project.userNotification.message || "Thank you for reaching out to us! We have received your inquiry and our team is already looking into it. We will get back to you as soon as possible.";
+
           const userMsg = `
-            <h3>Hello ${leadData.name || 'there'},</h3>
-            <p>Thank you for reaching out to us! We have received your inquiry and our team will get back to you as soon as possible.</p>
-            <p>Best regards,<br/>The Team</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #f8fafc; }
+                .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+                .header { background-color: ${pColor}; padding: 40px 20px; text-align: center; color: #ffffff; }
+                .header .logo { width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+                .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+                .content { padding: 40px; text-align: center; }
+                .content h2 { color: #1e293b; margin-top: 0; }
+                .content p { color: #64748b; font-size: 15px; margin-bottom: 30px; white-space: pre-line; }
+                .footer { padding: 30px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="logo">${(project.fromName || 'L')[0]}</div>
+                  <h1>Message Received</h1>
+                </div>
+                <div class="content">
+                  <h2>Hello ${userName},</h2>
+                  <p>${customUserMessage}</p>
+                  <div style="margin: 30px 0;">
+                    <span style="padding: 12px 24px; border-radius: 50px; background-color: ${pColor}; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">We'll talk soon!</span>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>This is an automated confirmation from ${project.fromName || 'our team'}.</p>
+                  <p>&copy; ${new Date().getFullYear()} ${project.fromName || 'All Rights Reserved'}</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `;
 
           emailService.sendEmail({
-            to: leadData.email,
+            to: userEmail,
             subject: project.userNotification.subject || "Thank you for contacting us!",
             htmlContent: userMsg,
             fromName: project.fromName,
-            fromEmail: project.fromEmail
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey
           }).catch(err => console.error('User Email Error:', err));
         }
       }

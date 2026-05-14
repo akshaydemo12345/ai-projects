@@ -52,11 +52,23 @@ class EmailService {
           'Content-Type': 'application/json'
         }
       });
-      console.log('📧 Email sent successfully via Brevo API');
+      console.log(`📧 Email sent successfully via Brevo API (Status: ${response.status})`);
       return response.data;
     } catch (error) {
-      const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
-      console.error('❌ Brevo API Error:', errorMsg);
+      const status = error.response ? error.response.status : 'No Status';
+      const errorData = error.response ? error.response.data : {};
+      const errorMsg = JSON.stringify(errorData) || error.message;
+      
+      console.error(`❌ Brevo API Error [${status}]:`, errorMsg);
+      
+      if (status === 401) {
+        console.error('   👉 Possible cause: Invalid API Key');
+      } else if (status === 403) {
+        console.error('   👉 Possible cause: Sender email not authorized or account suspended');
+      } else if (status === 400) {
+        console.error('   👉 Possible cause: Invalid recipient email or malformed request body');
+      }
+      
       throw new Error(`Brevo Email Error: ${errorMsg}`);
     }
   }
