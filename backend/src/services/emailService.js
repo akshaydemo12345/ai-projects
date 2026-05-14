@@ -22,8 +22,8 @@ class EmailService {
       throw new Error(missingKeyError);
     }
 
-    const finalFromName = fromName && fromName.trim() ? fromName : (process.env.FROM_NAME || 'AI Landing Page Builder');
-    const finalFromEmail = fromEmail && fromEmail.trim() ? fromEmail : (process.env.FROM_EMAIL || 'noreply@yourdomain.com');
+    const finalFromName = fromName && fromName.trim() ? fromName : config.email.fromName;
+    const finalFromEmail = fromEmail && fromEmail.trim() ? fromEmail : config.email.fromEmail;
 
     const data = {
       sender: {
