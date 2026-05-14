@@ -618,7 +618,7 @@ export const thankYouApi = {
     return res.data.config;
   },
 
-  preview: async (previewConfig: { layout: string; content?: any; branding?: any }): Promise<string> => {
+  preview: async (previewConfig: { layout: string; content?: any; branding?: any; pageId?: string }): Promise<string> => {
     const token = localStorage.getItem('pagecraft_token');
     
     // Use consistent API base URL
