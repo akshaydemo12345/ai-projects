@@ -754,6 +754,7 @@ router.use(protect);
 
 router.get('/', exports.getLeads);
 router.get('/filters', exports.getLeadFilters);
+router.get('/get-filters', exports.getLeadFilters); // Alias for frontend compatibility
 router.get('/export', exports.exportLeads);
 router.delete('/:id', exports.deleteLead);
 
