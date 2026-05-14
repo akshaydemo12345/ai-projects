@@ -1,500 +1,877 @@
 #!/usr/bin/env node
+
 /**
- * HTML to Template Converter v2.0 (IMPROVED & DEBUGGED)
- * Usage: node html-to-template-v2.js <input_folder_or_file> [category] [templateNumber] [--no-delete]
+ * 🏥 ADVANCED HTML to Healthcare Template Converter PRO v4.0
  * 
- * Features:
- * - ✅ Flexible path handling
- * - ✅ Better error handling & logging
- * - ✅ Works with any project structure
- * - ✅ Option to keep source files
- * - ✅ Better regex patterns
+ * ✨ Features:
+ * - किसी भी HTML/CSS को healthcare format में convert करे
+ * - सभी animations preserve करे
+ * - सभी styles maintain करे
+ * - Images + Assets को copy करे
+ * - Google Fonts/CDN links रखे
+ * - Color detection + replacement
+ * - Brand detection + replacement
+ * 
+ * Usage:
+ * node converter-pro.js /home/user/Downloads/education-03 education 03
+ * node converter-pro.js ./my-site
+ * node converter-pro.js /full/path/to/folder category number
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// ─── CONFIGURATION ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔧 CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
 const CONFIG = {
-  outputRoot: 'frontend/src/templates',  // App templates folder
-  publicRoot: 'frontend/public/assets/templates', // App public assets folder
-  keepSource: true,                     // Set to true to keep source files
-  verbose: true                          // Detailed logging
+  outputRoot: path.join(__dirname, '../frontend/src/templates'),
+  publicRoot: path.join(__dirname, '../frontend/public/assets/templates'),
+  backendPublicRoot: path.join(__dirname, '../backend/public/assets/templates'),
+  keepSource: true,
+  verbose: true,
+  preserveAnimations: true,
+  preserveInteractions: true,
+  deepCopy: true // Recursively copy all assets
 };
 
-// ─── UTILS ────────────────────────────────────────────────────────────────
-const log = {
-  info: (msg) => console.log(`ℹ️  ${msg}`),
-  success: (msg) => console.log(`✅ ${msg}`),
-  error: (msg) => console.error(`❌ ${msg}`),
-  warn: (msg) => console.warn(`⚠️  ${msg}`),
-  debug: (msg) => CONFIG.verbose && console.log(`🔧 ${msg}`),
-};
+// ═══════════════════════════════════════════════════════════════════════════
+// 📝 LOGGER
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ─── ARGS PARSING ────────────────────────────────────────────────────────
-const args = process.argv.slice(2);
-const inputFile = args[0];
-const category = args[1] || 'travel';
-const userTemplateNum = args[2];
-const noDelete = args.includes('--no-delete');
-
-if (!inputFile) {
-  console.log(`
-╔════════════════════════════════════════════════════════════╗
-║   HTML to Template Converter v2.0                          ║
-╚════════════════════════════════════════════════════════════╝
-
-Usage:
-  node html-to-template-v2.js <input> [category] [number] [--no-delete]
-
-Examples:
-  node html-to-template-v2.js ./template-folder
-  node html-to-template-v2.js ./index.html travel 01
-  node html-to-template-v2.js ./template travel 02 --no-delete
-
-Options:
-  --no-delete    Keep source files (don't delete after conversion)
-  `);
-  process.exit(1);
-}
-
-// ─── VALIDATE INPUT ──────────────────────────────────────────────────────
-if (!fs.existsSync(inputFile)) {
-  log.error(`File or folder not found: ${inputFile}`);
-  process.exit(1);
-}
-
-const stats = fs.statSync(inputFile);
-let mainHtmlPath = inputFile;
-let baseDir = path.dirname(inputFile);
-
-// Handle directory input
-if (stats.isDirectory()) {
-  baseDir = inputFile;
-  const files = fs.readdirSync(inputFile);
-  const htmlFile = files.find(f => f.toLowerCase() === 'index.html') ||
-    files.find(f => f.toLowerCase().endsWith('.html'));
-
-  if (!htmlFile) {
-    log.error(`No HTML file found in: ${inputFile}`);
-    log.info(`Files found: ${files.join(', ')}`);
-    process.exit(1);
+class Logger {
+  constructor(verbose = true) {
+    this.verbose = verbose;
   }
-  mainHtmlPath = path.join(inputFile, htmlFile);
-  log.debug(`Found HTML: ${htmlFile}`);
-}
 
-log.info(`Starting conversion for: ${mainHtmlPath}`);
-log.debug(`Base directory: ${baseDir}`);
-log.debug(`Category: ${category}`);
-
-// ─── AUTO-NUMBERING ──────────────────────────────────────────────────────
-let templateNum = userTemplateNum;
-const outputDir = path.join(CONFIG.outputRoot, category);
-
-if (!templateNum) {
-  log.info(`No template number provided. Auto-detecting...`);
-  if (fs.existsSync(outputDir)) {
-    const existingFiles = fs.readdirSync(outputDir).filter(f => f.match(/templates\d+\.ts$/));
-
-    if (existingFiles.length > 0) {
-      const numbers = existingFiles.map(f => {
-        const match = f.match(/templates(\d+)\.ts/);
-        return match ? parseInt(match[1]) : 0;
-      });
-      const maxNum = Math.max(...numbers);
-      templateNum = maxNum + 1;
-      log.debug(`Found existing templates: ${existingFiles.join(', ')}`);
-    } else {
-      templateNum = 1;
-    }
-  } else {
-    templateNum = 1;
-    log.debug(`New category, starting with 1`);
+  info(msg) {
+    console.log(`\x1b[36mℹ️  ${msg}\x1b[0m`);
   }
-  log.success(`Auto-detected template number: ${templateNum}`);
+
+  success(msg) {
+    console.log(`\x1b[32m✅ ${msg}\x1b[0m`);
+  }
+
+  error(msg) {
+    console.error(`\x1b[31m❌ ${msg}\x1b[0m`);
+  }
+
+  warn(msg) {
+    console.warn(`\x1b[33m⚠️  ${msg}\x1b[0m`);
+  }
+
+  debug(msg) {
+    if (this.verbose) console.log(`\x1b[90m🔧 ${msg}\x1b[0m`);
+  }
+
+  header(msg) {
+    console.log(`\x1b[35m\n╔════════════════════════════════════════╗\x1b[0m`);
+    console.log(`\x1b[35m║ ${msg.padEnd(38)} ║\x1b[0m`);
+    console.log(`\x1b[35m╚════════════════════════════════════════╝\x1b[0m\n`);
+  }
 }
 
-const paddedNum = templateNum.toString().padStart(2, '0');
+const log = new Logger(CONFIG.verbose);
 
-// ─── READ FILES ───────────────────────────────────────────────────────────
-log.info(`Reading HTML file...`);
-let rawHtml = fs.readFileSync(mainHtmlPath, 'utf-8');
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 FILE FINDER - सभी files को recursively ढूंडे
+// ═══════════════════════════════════════════════════════════════════════════
 
-let css = '';
-let headElements = '';
+class FileFinder {
+  static findAllFiles(dir, extensions = null) {
+    let results = [];
 
-// Try to read external CSS file first
-const cssFiles = fs.readdirSync(baseDir).filter(f => f.endsWith('.css'));
-if (cssFiles.length > 0) {
-  log.debug(`Found CSS files: ${cssFiles.join(', ')}`);
-  cssFiles.forEach(cssFile => {
-    const cssPath = path.join(baseDir, cssFile);
     try {
-      css += fs.readFileSync(cssPath, 'utf-8') + '\n';
-      log.debug(`Loaded: ${cssFile}`);
-    } catch (e) {
-      log.warn(`Could not read ${cssFile}: ${e.message}`);
-    }
-  });
-}
+      const items = fs.readdirSync(dir);
 
-// ─── EXTRACT HEAD ELEMENTS ────────────────────────────────────────────────
-log.info(`Extracting head elements...`);
+      items.forEach((item) => {
+        const fullPath = path.join(dir, item);
+        const stat = fs.statSync(fullPath);
 
-// Auto-detect icon fonts
-if (rawHtml.includes('material-symbols-outlined')) {
-  headElements += '<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />\n';
-  log.debug(`Auto-detected Material Symbols`);
-}
-if (rawHtml.includes('material-icons')) {
-  headElements += '<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />\n';
-  log.debug(`Auto-detected Material Icons`);
-}
-if (rawHtml.includes('fa-') || rawHtml.includes('fontawesome')) {
-  headElements += '<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />\n';
-  log.debug(`Auto-detected FontAwesome`);
-}
-
-// Extract inline styles
-const styleMatches = [...rawHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)];
-if (styleMatches.length > 0) {
-  log.debug(`Found ${styleMatches.length} inline style tags`);
-  styleMatches.forEach(match => {
-    css += match[1] + '\n';
-  });
-  // Remove from HTML
-  rawHtml = rawHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-}
-
-// Extract external links
-const headLinks = rawHtml.match(/<link[^>]*>/gi) || [];
-log.debug(`Processing ${headLinks.length} link tags...`);
-
-headLinks.forEach(link => {
-  // External CDN links
-  if (link.includes('fonts.googleapis.com') || link.includes('cdnjs.cloudflare.com') ||
-    link.includes('unpkg.com') || link.includes('fonts.gstatic.com')) {
-    if (!headElements.includes(link.substring(0, 50))) {
-      headElements += link + '\n';
-      log.debug(`Added CDN link: ${link.substring(0, 50)}...`);
-    }
-  }
-  // Local CSS files
-  else if (link.includes('stylesheet')) {
-    const hrefMatch = link.match(/href=["']([^"']+)["']/i);
-    if (hrefMatch) {
-      const href = hrefMatch[1];
-      if (!href.startsWith('http') && !href.startsWith('//')) {
-        const cssPath = path.join(baseDir, href);
-        try {
-          if (fs.existsSync(cssPath)) {
-            const localCss = fs.readFileSync(cssPath, 'utf-8');
-            css += localCss + '\n';
-            log.success(`Loaded local CSS: ${href}`);
+        if (stat.isDirectory()) {
+          // Ignore node_modules, .git, etc.
+          if (!['node_modules', '.git', '.next', 'dist', 'build', '__pycache__'].includes(item)) {
+            results = results.concat(FileFinder.findAllFiles(fullPath, extensions));
           }
-        } catch (e) {
-          log.warn(`Could not load CSS: ${href} - ${e.message}`);
+        } else if (stat.isFile()) {
+          if (!extensions || extensions.includes(path.extname(fullPath).toLowerCase())) {
+            results.push(fullPath);
+          }
         }
-      }
+      });
+    } catch (e) {
+      log.warn(`Could not read directory: ${dir}`);
     }
+
+    return results;
   }
-});
 
-// ─── EXTRACT BODY ─────────────────────────────────────────────────────────
-log.info(`Extracting body content...`);
-const bodyMatch = rawHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-let bodyHtml = bodyMatch ? bodyMatch[1].trim() : rawHtml.trim();
-
-// Remove local scripts
-const removedScripts = (bodyHtml.match(/<script[^>]*src=["'](?!https?:\/\/|data:)([^"']+)["'][^>]*><\/script>/gi) || []).length;
-bodyHtml = bodyHtml.replace(/<script[^>]*src=["'](?!https?:\/\/|data:)([^"']+)["'][^>]*><\/script>/gi, '');
-if (removedScripts > 0) {
-  log.debug(`Removed ${removedScripts} local script tags`);
+  static findMainHtml(dir) {
+    const files = fs.readdirSync(dir);
+    return (
+      files.find((f) => f.toLowerCase() === 'index.html') ||
+      files.find((f) => f.toLowerCase().endsWith('.html'))
+    );
+  }
 }
 
-// ─── HANDLE IMAGES ────────────────────────────────────────────────────────
-log.info(`Processing images...`);
-const publicImgDir = path.join(CONFIG.publicRoot, category, `templates${paddedNum}`);
-const imgBaseUrl = `/assets/templates/${category}/templates${paddedNum}`;
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎨 CSS COLLECTOR - सभी CSS को collect करे
+// ═══════════════════════════════════════════════════════════════════════════
 
-try {
-  fs.mkdirSync(publicImgDir, { recursive: true });
-} catch (e) {
-  log.warn(`Could not create image directory: ${e.message}`);
-}
+class CSSCollector {
+  static collectCSS(htmlContent, baseDir) {
+    let css = '';
+    let sources = [];
 
-// Copy images recursively
-let copiedCount = 0;
-function copyImagesRecursively(dir) {
-  if (!fs.existsSync(dir)) return;
-  try {
-    const items = fs.readdirSync(dir);
-    items.forEach(item => {
-      const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
+    log.info('Collecting CSS from multiple sources...');
 
-      if (stat.isDirectory()) {
-        copyImagesRecursively(fullPath);
-      } else if (/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item)) {
-        try {
-          fs.copyFileSync(fullPath, path.join(publicImgDir, item));
-          copiedCount++;
-          log.debug(`Copied: ${item}`);
-        } catch (e) {
-          log.warn(`Could not copy ${item}: ${e.message}`);
-        }
+    // 1️⃣ External CSS files से
+    const cssFiles = FileFinder.findAllFiles(baseDir, ['.css']);
+    log.debug(`Found ${cssFiles.length} CSS files`);
+
+    cssFiles.forEach((file) => {
+      try {
+        const content = fs.readFileSync(file, 'utf-8');
+        css += `/* ════════════════════════════════════════ */\n`;
+        css += `/* Source: ${path.relative(baseDir, file)} */\n`;
+        css += `/* ════════════════════════════════════════ */\n`;
+        css += content + '\n\n';
+        sources.push(path.relative(baseDir, file));
+        log.debug(`✓ Loaded: ${path.relative(baseDir, file)}`);
+      } catch (e) {
+        log.warn(`Could not read: ${file}`);
       }
     });
-  } catch (e) {
-    log.warn(`Error reading directory ${dir}: ${e.message}`);
+
+    // 2️⃣ Inline <style> tags से
+    const styleMatches = [...htmlContent.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)];
+    if (styleMatches.length > 0) {
+      log.debug(`Found ${styleMatches.length} inline <style> tags`);
+      styleMatches.forEach((match, idx) => {
+        css += `/* ════════════════════════════════════════ */\n`;
+        css += `/* Inline Style Block #${idx + 1} */\n`;
+        css += `/* ════════════════════════════════════════ */\n`;
+        css += match[1] + '\n\n';
+      });
+    }
+
+    // 3️⃣ @import statements से
+    const importMatches = [...htmlContent.matchAll(/@import\s+url\(['"]([^'"]+)['"]\)/gi)];
+    if (importMatches.length > 0) {
+      log.debug(`Found ${importMatches.length} @import statements`);
+    }
+
+    log.success(`Collected CSS from ${sources.length} files + ${styleMatches.length} inline blocks`);
+    return { css, sources };
   }
 }
 
-copyImagesRecursively(baseDir);
-log.success(`Copied ${copiedCount} images`);
+// ═══════════════════════════════════════════════════════════════════════════
+// 🖼️ ASSET HANDLER - सभी images/assets को handle करे
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ─── UPDATE IMAGE PATHS ───────────────────────────────────────────────────
-log.info(`Updating image paths in HTML and CSS...`);
+class AssetHandler {
+  static copyAllAssets(baseDir, targetDir) {
+    const extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'];
+    let copied = 0;
+    let failed = 0;
 
-const imgRegex = /src=["'](?!https?:\/\/|data:)([^"']+\.(?:png|jpg|jpeg|gif|webp|svg))["']/gi;
-let srcReplacements = 0;
-bodyHtml = bodyHtml.replace(imgRegex, (match, src) => {
-  srcReplacements++;
-  const filename = path.basename(src);
-  return `src="${imgBaseUrl}/${filename}"`;
-});
-log.debug(`Updated ${srcReplacements} src attributes`);
+    log.info('Deep copying all assets...');
 
-const urlRegex = /url\(["']?(?!https?:\/\/|data:)([^"'\)]+\.(?:png|jpg|jpeg|gif|webp|svg))["']?\)/gi;
-let urlReplacements = 0;
-css = css.replace(urlRegex, (match, src) => {
-  urlReplacements++;
-  const filename = path.basename(src);
-  return `url("${imgBaseUrl}/${filename}")`;
-});
-log.debug(`Updated ${urlReplacements} url() references`);
+    const assetFiles = FileFinder.findAllFiles(baseDir, extensions);
+    log.debug(`Found ${assetFiles.length} asset files`);
 
-// ─── AUTO-REPLACE PATTERNS ────────────────────────────────────────────────
-log.info(`Auto-replacing brand patterns...`);
+    fs.mkdirSync(targetDir, { recursive: true });
 
-// Logo/Brand replacement
-const brandKeywords = ['site-name', 'navbar-brand', 'footer-logo', 'company-name'];
-let brandReplacements = 0;
+    assetFiles.forEach((file) => {
+      try {
+        const relative = path.relative(baseDir, file);
+        const targetPath = path.join(targetDir, path.basename(file));
 
-brandKeywords.forEach(kw => {
-  const kwRegex = new RegExp(`(<[^>]*?(?:class|id)="[^"]*?${kw}[^"]*?"[^>]*?>)([\\s\\S]*?)(<\\/[^>]+?>)`, 'gi');
-  const before = bodyHtml.length;
-  bodyHtml = bodyHtml.replace(kwRegex, (match, open, content, close) => {
-    if (content.includes('<img') || content.includes('src=')) return match;
-    brandReplacements++;
-    return `${open}LOGO_PLACEHOLDER${close}`;
-  });
-});
+        fs.copyFileSync(file, targetPath);
+        copied++;
+        log.debug(`✓ Copied: ${relative}`);
+      } catch (e) {
+        failed++;
+        log.warn(`✗ Failed: ${path.basename(file)}`);
+      }
+    });
 
-// Title-based brand detection
-const titleMatch = rawHtml.match(/<title>([\s\S]*?)<\/title>/i);
-if (titleMatch) {
-  const title = titleMatch[1].split('—')[0].split('|')[0].split('-')[0].trim();
-  if (title && title.length > 2 && !title.includes('http')) {
-    log.success(`Found brand in title: "${title}"`);
-    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const brandRegex = new RegExp(`>\\s*${escapedTitle}\\s*<`, 'gi');
-    bodyHtml = bodyHtml.replace(brandRegex, '>LOGO_PLACEHOLDER<');
-    brandReplacements++;
-  }
-}
-log.debug(`Made ${brandReplacements} brand replacements`);
-
-// ─── COLOR DETECTION & REPLACEMENT ────────────────────────────────────────
-log.info(`Detecting primary colors...`);
-
-const neutralColors = new Set([
-  'ffffff', 'fff', '000000', '000',
-  'f8f8f8', 'fafafa', 'eeeeee', 'eee', 'cccccc', 'ccc',
-  '333333', '333', '666666', '666', '999999', '999',
-  '1a1a1a', '212529', 'f5f5f5', '111827', '1f2937',
-  '374151', '4b5563', '6b7280', '9ca3af', 'd1d5db',
-  'e5e7eb', 'f3f4f6', 'f9fafb', '141d23', '0b0f12',
-  '121212', '222222', '444444', '555555', '777777',
-  '888888', 'aaaaaa', 'bbbbbb', 'dddddd'
-]);
-
-const colorRegex = /#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g;
-const colorCounts = {};
-
-[...css.matchAll(colorRegex)].forEach(m => {
-  const c = m[1].toLowerCase();
-  if (!neutralColors.has(c)) {
-    colorCounts[c] = (colorCounts[c] || 0) + 1;
-  }
-});
-
-const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-
-if (sortedColors.length > 0) {
-  const topColor = sortedColors[0];
-  const primaryHex = '#' + topColor[0];
-  log.success(`Primary color: ${primaryHex} (used ${topColor[1]} times)`);
-
-  // Replace primary color
-  let colorReplacements = 0;
-
-  // Hex replacement
-  const hexRegex = new RegExp(primaryHex.replace(/#/, '\\#'), 'gi');
-  colorReplacements += (css.match(hexRegex) || []).length;
-  css = css.replace(hexRegex, 'PRIMARY_COLOR_PLACEHOLDER');
-
-  colorReplacements += (bodyHtml.match(hexRegex) || []).length;
-  bodyHtml = bodyHtml.replace(hexRegex, 'PRIMARY_COLOR_PLACEHOLDER');
-
-  // RGB replacement (if hex is 7 chars)
-  if (primaryHex.length === 7) {
-    const r = parseInt(primaryHex.substring(1, 3), 16);
-    const g = parseInt(primaryHex.substring(3, 5), 16);
-    const b = parseInt(primaryHex.substring(5, 7), 16);
-    const rgbRegex = new RegExp(`rgba?\\(\\s*${r},\\s*${g},\\s*${b}[^\\)]*\\)`, 'gi');
-
-    colorReplacements += (css.match(rgbRegex) || []).length;
-    css = css.replace(rgbRegex, 'PRIMARY_COLOR_PLACEHOLDER');
-
-    colorReplacements += (bodyHtml.match(rgbRegex) || []).length;
-    bodyHtml = bodyHtml.replace(rgbRegex, 'PRIMARY_COLOR_PLACEHOLDER');
+    log.success(`Copied ${copied} assets (${failed} failed)`);
+    return { copied, failed };
   }
 
-  log.debug(`Made ${colorReplacements} color replacements`);
-} else {
-  log.warn(`No primary color detected`);
+  static updateAssetPaths(content, baseUrl) {
+    log.info('Updating asset paths in CSS and HTML...');
+
+    let updated = 0;
+
+    // src attributes में
+    const srcRegex = /src=["'](?!https?:\/\/|data:|\/[^\/])([^"']+?)["']/gi;
+    content.html = content.html.replace(srcRegex, (match, src) => {
+      const filename = path.basename(src);
+      updated++;
+      return `src="${baseUrl}/${filename}"`;
+    });
+
+    // data-src attributes में
+    const dataSrcRegex = /data-src=["'](?!https?:\/\/|data:)([^"']+?)["']/gi;
+    content.html = content.html.replace(dataSrcRegex, (match, src) => {
+      const filename = path.basename(src);
+      updated++;
+      return `data-src="${baseUrl}/${filename}"`;
+    });
+
+    // CSS url() में
+    const urlRegex = /url\(["']?(?!https?:\/\/|data:)([^"'\)]+?)["']?\)/gi;
+    content.css = content.css.replace(urlRegex, (match, src) => {
+      const filename = path.basename(src);
+      updated++;
+      return `url("${baseUrl}/${filename}")`;
+    });
+
+    // background-image में
+    const bgRegex = /background-image\s*:\s*url\(["']?(?!https?:\/\/)([^"'\)]+)["']?\)/gi;
+    content.css = content.css.replace(bgRegex, (match, src) => {
+      const filename = path.basename(src);
+      updated++;
+      return `background-image: url("${baseUrl}/${filename}")`;
+    });
+
+    log.success(`Updated ${updated} asset paths`);
+    return content;
+  }
 }
 
-// ─── PROJECT NAME REPLACEMENT ─────────────────────────────────────────────
-const projectMatch = bodyHtml.match(/(©\s*\d{4}\s*)([A-Za-z][^<.]{2,40})([\.<])/);
-if (projectMatch) {
-  log.success(`Found project/company: "${projectMatch[2]}"`);
-  bodyHtml = bodyHtml.replace(
-    /(©\s*\d{4}\s*)([A-Za-z][^<.]{2,40})([\.<])/g,
-    (match, copy, name, end) => `${copy}PROJECT_NAME_PLACEHOLDER${end}`
-  );
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 PLACEHOLDER REPLACER
+// ═══════════════════════════════════════════════════════════════════════════
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
 }
 
-// ─── ADD RESPONSIVE CSS ───────────────────────────────────────────────────
-log.info(`Adding responsive CSS...`);
+class PlaceholderReplacer {
+  static replaceBrand(content, baseDir) {
+    log.info('Detecting and replacing brand names...');
 
-css += `
-/* UNIVERSAL RESPONSIVE CSS - Added by converter */
-.material-symbols-outlined, .material-icons {
-  font-display: swap;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
+    let replacements = 0;
+
+    // Title से detect करो
+    const titleMatch = content.rawHtml.match(/<title>([\s\S]*?)<\/title>/i);
+    if (titleMatch) {
+      const title = titleMatch[1]
+        .split('—')[0]
+        .split('|')[0]
+        .split('-')[0]
+        .trim()
+        .substring(0, 50);
+
+      if (title && title.length > 2) {
+        const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`>\\s*${escaped}\\s*<`, 'gi');
+
+        const beforeCount = (content.html.match(regex) || []).length;
+        content.html = content.html.replace(regex, '>LOGO_PLACEHOLDER<');
+        if (beforeCount > 0) {
+          replacements++;
+          log.success(`Found brand: "${title}"`);
+        }
+      }
+    }
+
+    // Package.json से detect करो
+    const packagePath = path.join(baseDir, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
+        if (pkg.name) {
+          const name = pkg.name.replace(/-/g, ' ').toUpperCase();
+          const regex = new RegExp(`\\b${name}\\b`, 'gi');
+          content.html = content.html.replace(regex, 'LOGO_PLACEHOLDER');
+          replacements++;
+          log.debug(`Found from package.json: ${name}`);
+        }
+      } catch (e) {
+        log.debug(`Could not parse package.json`);
+      }
+    }
+
+    // Copyright से detect करो
+    content.html = content.html.replace(
+      /(©\s*(?:\d{4}[-–])?(?:\d{4}|\d{1,3})?\s*)([A-Za-z][^<.]{2,40})([\.<])/g,
+      '$1PROJECT_NAME_PLACEHOLDER$3'
+    );
+    replacements++;
+
+    log.success(`Made ${replacements} brand replacements`);
+    return content;
+  }
+
+  static addEditorAttributes(html) {
+    log.info('Adding data-editable attributes for editor support...');
+    
+    // Elements to make editable
+    const tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'button', 'a', 'strong', 'li', 'td'];
+    
+    let updatedHtml = html;
+    
+    // Inject data-editable into tags
+    tags.forEach(tag => {
+      const regex = new RegExp(`<${tag}\\b(?![^>]*data-editable)([^>]*)>`, 'gi');
+      updatedHtml = updatedHtml.replace(regex, `<${tag} data-editable="true"$1>`);
+    });
+    
+    // Inject data-editable-img into images
+    updatedHtml = updatedHtml.replace(/<img(?![^>]*data-editable-img)([^>]*)>/gi, '<img data-editable-img="true"$1>');
+    
+    // Inject data-editable-bg into elements with background images in style
+    updatedHtml = updatedHtml.replace(/<([a-z0-9]+)(?![^>]*data-editable-bg)([^>]*style=[^>]*background-image[^>]*)>/gi, '<$1 data-editable-bg="true"$2>');
+
+    return updatedHtml;
+  }
+
+  static replaceColors(content) {
+    log.info('Detecting and replacing brand colors...');
+
+    const neutralColors = new Set([
+      // Greyscale / Neutrals
+      'ffffff', 'fff', '000000', '000', 'f8f8f8', 'fafafa', 'eeeeee', 'eee',
+      'cccccc', 'ccc', '333333', '333', '666666', '666', '999999', '999',
+      '1a1a1a', '212529', 'f5f5f5', '111827', '1f2937', '374151', '4b5563',
+      '6b7280', '9ca3af', 'd1d5db', 'e5e7eb', 'f3f4f6', 'f9fafb', '141d23',
+      '0b0f12', '121212', '222222', '444444', '555555', '777777', '888888',
+      'aaaaaa', 'bbbbbb', 'dddddd', 'ffffff80', 'ffffffcc', 'ffffff99',
+      // Common Slate/Gray shades
+      'f8fafc', 'f1f5f9', 'e2e8f0', 'cbd5e1', '94a3b8', '64748b', '475569', '334155', '1e293b', '0f172a', '020617',
+      'fafafa', 'f5f5f5', 'e5e5e5', 'd4d4d4', 'a3a3a3', '737373', '525252', '404040', '262626', '171717', '0a0a0a',
+      'fafaf9', 'f5f5f4', 'e7e5e4', 'd6d3d1', 'a8a29e', '78716c', '57534e', '44403c', '292524', '1c1917', '0c0a09'
+    ]);
+
+    const colorCounts = {};
+    const cssText = content.css + content.html;
+
+    const hexRegex = /#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g;
+    const matches = [...cssText.matchAll(hexRegex)];
+
+    matches.forEach((m) => {
+      const c = m[1].toLowerCase();
+      if (!neutralColors.has(c)) {
+        colorCounts[c] = (colorCounts[c] || 0) + 1;
+      }
+    });
+
+    const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+
+    const isBrandColor = (hex) => {
+      const h = hex.length === 4 ? hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3] : hex.substring(1);
+      const r = parseInt(h.substring(0, 2), 16);
+      const g = parseInt(h.substring(2, 4), 16);
+      const b = parseInt(h.substring(4, 6), 16);
+      
+      const max = Math.max(r, g, b) / 255;
+      const min = Math.min(r, g, b) / 255;
+      const delta = max - min;
+      const saturation = max === 0 ? 0 : delta / max;
+      const brightness = max;
+
+      if (brightness < 0.25) return false; 
+      if (brightness > 0.95 && saturation < 0.1) return false; 
+      if (saturation < 0.20) return false; 
+      
+      return true;
+    };
+
+    if (sorted.length > 0) {
+      let replacedCount = 0;
+      const maxReplace = 20;
+      
+      // We will only replace colors in the :root section or similar token definitions
+      // But since we want to be thorough, we replace them everywhere with var()
+      
+      for (let i = 0; i < sorted.length && replacedCount < maxReplace; i++) {
+        const hex = '#' + sorted[i][0];
+        
+        // Relax brand color check slightly to include dark accents
+        const h = sorted[i][0].length === 3 ? sorted[i][0][0]+sorted[i][0][0]+sorted[i][0][1]+sorted[i][0][1]+sorted[i][0][2]+sorted[i][0][2] : sorted[i][0];
+        const r = parseInt(h.substring(0, 2), 16);
+        const g = parseInt(h.substring(2, 4), 16);
+        const b = parseInt(h.substring(4, 6), 16);
+        const max = Math.max(r, g, b) / 255;
+        const min = Math.min(r, g, b) / 255;
+        const delta = max - min;
+        const brightness = max;
+        
+        if (delta < 0.15) continue; // Skip neutral/near-neutral grays
+        if (brightness < 0.3) continue; // Skip very dark colors (likely text/headers)
+
+        const varName = (replacedCount % 2 === 0) ? '--tp-primary' : '--tp-secondary';
+        const placeholder = (replacedCount % 2 === 0) ? 'PRIMARY_COLOR_PLACEHOLDER' : 'SECONDARY_COLOR_PLACEHOLDER';
+        const rgbPlaceholder = (replacedCount % 2 === 0) ? 'PRIMARY_RGB_PLACEHOLDER' : 'SECONDARY_RGB_PLACEHOLDER';
+        
+        replacedCount++;
+        
+        log.success(`Mapping ${hex} to ${varName}`);
+        
+        const rRegex = new RegExp(hex.replace('#', '\\#'), 'gi');
+        content.css = content.css.replace(rRegex, placeholder);
+        content.html = content.html.replace(rRegex, placeholder);
+
+        // 3. Handle RGB/RGBA versions
+        const rgb = hexToRgb(hex);
+        if (rgb) {
+          // Match variations like "11, 51, 36" or "11,51,36"
+          const rgbPattern = `${rgb.r},\\s*${rgb.g},\\s*${rgb.b}`;
+          const rgbRegex = new RegExp(rgbPattern, 'gi');
+          content.css = content.css.replace(rgbRegex, rgbPlaceholder);
+          content.html = content.html.replace(rgbRegex, rgbPlaceholder);
+        }
+      }
+
+      return content;
+    } else {
+      log.warn(`No non-neutral colors detected`);
+      return content;
+    }
+  }
 }
 
-@media (max-width: 900px) {
-  .container { max-width: 100%; padding: 0 1.5rem; }
-  [class*="grid"], .grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
-  [class*="flex"]:not(nav), .flex:not(nav) { flex-wrap: wrap; }
-  form { width: 100%; }
+// ═══════════════════════════════════════════════════════════════════════════
+// 📱 HEAD EXTRACTOR - सभी head links को preserve करे
+// ═══════════════════════════════════════════════════════════════════════════
+
+class HeadExtractor {
+  static extractHeadContent(htmlContent) {
+    log.info('Extracting head content...');
+
+    let headContent = '';
+
+    // Meta tags
+    const metaTags = htmlContent.match(/<meta[^>]*>/gi) || [];
+    metaTags.forEach((tag) => {
+      if (!tag.includes('http-equiv="refresh"')) {
+        headContent += tag + '\n';
+      }
+    });
+
+    // Link tags (fonts, icons, etc.)
+    const linkTags = htmlContent.match(/<link[^>]*>/gi) || [];
+    linkTags.forEach((tag) => {
+      // Skip stylesheets जो बाद में add करेंगे
+      if (!tag.includes('stylesheet') || tag.includes('fonts.googleapis') || tag.includes('google.com/css')) {
+        headContent += tag + '\n';
+      }
+    });
+
+    // Font imports
+    if (htmlContent.includes('fonts.googleapis.com')) {
+      headContent += `<link rel="preconnect" href="https://fonts.googleapis.com">\n`;
+      headContent += `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`;
+    }
+
+    // Auto-detect font services
+    const fontServices = {
+      'material-symbols-outlined': '<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />',
+      'material-icons': '<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />',
+      'fa-': '<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />',
+      'fontawesome': '<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />'
+    };
+
+    Object.entries(fontServices).forEach(([key, tag]) => {
+      if (htmlContent.includes(key) && !headContent.includes(tag)) {
+        headContent += tag + '\n';
+        log.debug(`Added: ${key}`);
+      }
+    });
+
+    log.success(`Extracted ${metaTags.length} meta + ${linkTags.length} link tags`);
+    return headContent;
+  }
 }
 
-@media (max-width: 600px) {
-  [class*="grid"], .grid { grid-template-columns: 1fr !important; }
-  h1 { font-size: 2.5rem !important; line-height: 1.1 !important; }
-  h2 { font-size: 2rem !important; }
-  .nav nav, .links { display: none !important; }
+// ═══════════════════════════════════════════════════════════════════════════
+// 🏗️ HTML CLEANER - HTML को proper format में करे
+// ═══════════════════════════════════════════════════════════════════════════
+
+class HTMLCleaner {
+  static clean(htmlContent) {
+    log.info('Cleaning and optimizing HTML...');
+
+    let cleaned = htmlContent;
+
+    // 1️⃣ Remove <html>, <head>, <body> tags
+    cleaned = cleaned.replace(/<\/?html[^>]*>/gi, '');
+    cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+    cleaned = cleaned.replace(/<body[^>]*>/gi, '');
+    cleaned = cleaned.replace(/<\/body>/gi, '');
+
+    // 2️⃣ Remove DOCTYPE और xml declarations
+    cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
+    cleaned = cleaned.replace(/<\?xml[^>]*>/gi, '');
+
+    // 3️⃣ Remove <style> tags (पहले से collect कर चुके हैं)
+    cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+    // 4️⃣ Remove local script tags (CDN scripts रखो)
+    const localScripts = cleaned.match(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi) || [];
+    log.debug(`Removing ${localScripts.length} local scripts`);
+    cleaned = cleaned.replace(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi, '');
+
+    // 5️⃣ Keep CDN scripts
+    const cdnScripts = cleaned.match(/<script[^>]*src=["']https?:\/\/[^"']+["'][^>]*><\/script>/gi) || [];
+    log.debug(`Keeping ${cdnScripts.length} CDN scripts`);
+
+    // 6️⃣ Normalize whitespace
+    cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+    cleaned = cleaned.trim();
+
+    log.success(`Cleaned HTML (removed ${localScripts.length} local scripts)`);
+    return cleaned;
+  }
 }
-`;
 
-// ─── ESCAPE BACKTICKS ─────────────────────────────────────────────────────
-css = css.replace(/`/g, '\\`');
-bodyHtml = bodyHtml.replace(/`/g, '\\`');
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎬 ANIMATION PRESERVER - सभी animations को preserve करे
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ─── CREATE TYPESCRIPT OUTPUT ──────────────────────────────────────────────
-const catCamel = category.replace(/-([a-z])/g, g => g[1].toUpperCase());
-const stylesVar = `${catCamel}${paddedNum}Styles`;
-const htmlVar = `${catCamel}${paddedNum}Html`;
+class AnimationPreserver {
+  static preserveAnimations(css) {
+    log.info('Analyzing animations and transitions...');
 
-const tsOutput = `// Auto-generated ULTRA-DYNAMIC template — ${category} templates${paddedNum}
+    let animations = {
+      keyframes: [],
+      transitions: [],
+      transforms: [],
+      count: 0
+    };
+
+    // @keyframes खोजो
+    const keyframesRegex = /@keyframes\s+[\w-]+\s*\{[\s\S]*?\}/gi;
+    const keyframesMatches = css.match(keyframesRegex) || [];
+    animations.keyframes = keyframesMatches.length;
+    log.debug(`Found ${keyframesMatches.length} @keyframes`);
+
+    // transition खोजो
+    const transitionRegex = /transition\s*:\s*[^;]+;/gi;
+    const transitionMatches = css.match(transitionRegex) || [];
+    animations.transitions = transitionMatches.length;
+    log.debug(`Found ${transitionMatches.length} transitions`);
+
+    // transform खोजो
+    const transformRegex = /transform\s*:\s*[^;]+;/gi;
+    const transformMatches = css.match(transformRegex) || [];
+    animations.transforms = transformMatches.length;
+    log.debug(`Found ${transformMatches.length} transforms`);
+
+    animations.count = keyframesMatches.length + transitionMatches.length + transformMatches.length;
+    log.success(`Preserved ${animations.count} animation properties`);
+
+    return animations;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🚀 MAIN CONVERTER
+// ═══════════════════════════════════════════════════════════════════════════
+
+class HealthcareTemplateConverter {
+  constructor(inputPath, category = 'healthcare', templateNum = null) {
+    this.inputPath = path.resolve(inputPath);
+    this.category = category;
+    this.templateNum = templateNum;
+    this.stats = {
+      cssFiles: 0,
+      imagesCopied: 0,
+      animationsPreserved: 0,
+      placeholdersAdded: 0
+    };
+  }
+
+  async convert() {
+    try {
+      log.header(`🏥 Healthcare Template Converter v4.0`);
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 1: Input validation
+      // ───────────────────────────────────────────────────────────────
+      log.info(`Input path: ${this.inputPath}`);
+
+      if (!fs.existsSync(this.inputPath)) {
+        log.error(`Path not found: ${this.inputPath}`);
+        process.exit(1);
+      }
+
+      const stats = fs.statSync(this.inputPath);
+      let baseDir = this.inputPath;
+      let htmlPath = this.inputPath;
+
+      if (stats.isDirectory()) {
+        baseDir = this.inputPath;
+        const mainHtml = FileFinder.findMainHtml(baseDir);
+
+        if (!mainHtml) {
+          log.error(`No HTML file found in: ${baseDir}`);
+          const files = fs.readdirSync(baseDir).slice(0, 10);
+          log.info(`Files found: ${files.join(', ')}`);
+          process.exit(1);
+        }
+
+        htmlPath = path.join(baseDir, mainHtml);
+        log.success(`Found HTML: ${mainHtml}`);
+      }
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 2: Auto-numbering
+      // ───────────────────────────────────────────────────────────────
+      if (!this.templateNum) {
+        this.autoNumber();
+      }
+
+      const paddedNum = String(this.templateNum).padStart(2, '0');
+      const catCamel = this.category.charAt(0).toUpperCase() +
+        this.category.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 3: Read main HTML
+      // ───────────────────────────────────────────────────────────────
+      log.info(`Reading HTML from: ${htmlPath}`);
+      const rawHtml = fs.readFileSync(htmlPath, 'utf-8');
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 4: Collect CSS
+      // ───────────────────────────────────────────────────────────────
+      const { css: collectedCss, sources } = CSSCollector.collectCSS(rawHtml, baseDir);
+      this.stats.cssFiles = sources.length;
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 5: Extract head content
+      // ───────────────────────────────────────────────────────────────
+      const headContent = HeadExtractor.extractHeadContent(rawHtml);
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 6: Clean HTML
+      // ───────────────────────────────────────────────────────────────
+      let cleanedHtml = HTMLCleaner.clean(rawHtml);
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 7: Copy assets
+      // ───────────────────────────────────────────────────────────────
+      const imgBaseUrl = `/assets/templates/${this.category}/templates${paddedNum}`;
+      const publicImgDir = path.join(CONFIG.publicRoot, this.category, `templates${paddedNum}`);
+      const backendImgDir = path.join(CONFIG.backendPublicRoot, this.category, `templates${paddedNum}`);
+
+      const assetStats = AssetHandler.copyAllAssets(baseDir, publicImgDir);
+      
+      // Also copy to backend
+      try {
+        AssetHandler.copyAllAssets(baseDir, backendImgDir);
+      } catch (e) {
+        log.warn('Could not copy assets to backend public folder. Skip.');
+      }
+
+      this.stats.imagesCopied = assetStats.copied;
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 8: Update asset paths
+      // ───────────────────────────────────────────────────────────────
+      let content = {
+        css: collectedCss,
+        html: cleanedHtml,
+        rawHtml: rawHtml
+      };
+
+      content = AssetHandler.updateAssetPaths(content, imgBaseUrl);
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 9: Replace placeholders
+      // ───────────────────────────────────────────────────────────────
+      content = PlaceholderReplacer.replaceBrand(content, baseDir);
+      content = PlaceholderReplacer.replaceColors(content);
+      
+      // Step 9.5: Add Editor Attributes
+      content.html = PlaceholderReplacer.addEditorAttributes(content.html);
+      
+      this.stats.placeholdersAdded = 3; // LOGO, COLOR, PROJECT_NAME
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 10: Preserve animations
+      // ───────────────────────────────────────────────────────────────
+      const animations = AnimationPreserver.preserveAnimations(content.css);
+      this.stats.animationsPreserved = animations.count;
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 11: Escape backticks
+      // ───────────────────────────────────────────────────────────────
+      content.css = content.css.replace(/`/g, '\\`');
+      content.html = content.html.replace(/`/g, '\\`');
+
+      // ───────────────────────────────────────────────────────────────
+      // Step 12: Generate TypeScript
+      // ───────────────────────────────────────────────────────────────
+      const stylesVar = `${catCamel}${paddedNum}Styles`;
+      const htmlVar = `${catCamel}${paddedNum}Html`;
+
+      const tsOutput = `// Auto-generated ULTRA-DYNAMIC template — ${this.category} templates${paddedNum}
 // Generated: ${new Date().toISOString()}
+// ════════════════════════════════════════════════════════════════════════════
+// This template was auto-converted with full preservation of:
+// ✓ Animations & Keyframes
+// ✓ Transitions & Transforms
+// ✓ All original styling
+// ✓ Google Fonts & CDN resources
+// ✓ Images & Assets
+// ════════════════════════════════════════════════════════════════════════════
 
 export const ${stylesVar} = \`
-${css.trim()}
+${content.css.trim()}
 \`;
 
 export const ${htmlVar} = \`
-${headElements.trim()}
-${bodyHtml.trim()}
+${headContent.trim()}
+${content.html.trim()}
 \`;
 `;
 
-// ─── WRITE OUTPUT ──────────────────────────────────────────────────────────
-log.info(`Creating output directory...`);
-try {
-  fs.mkdirSync(outputDir, { recursive: true });
-} catch (e) {
-  log.error(`Could not create output directory: ${e.message}`);
-  process.exit(1);
-}
+      // ───────────────────────────────────────────────────────────────
+      // Step 13: Write output
+      // ───────────────────────────────────────────────────────────────
+      const outputDir = path.join(CONFIG.outputRoot, this.category);
+      fs.mkdirSync(outputDir, { recursive: true });
 
-const outputFile = path.join(outputDir, `templates${paddedNum}.ts`);
-log.info(`Writing template file...`);
+      const outputFile = path.join(outputDir, `templates${paddedNum}.ts`);
+      fs.writeFileSync(outputFile, tsOutput, 'utf-8');
+      log.success(`Template saved: ${outputFile}`);
 
-try {
-  fs.writeFileSync(outputFile, tsOutput, 'utf-8');
-  log.success(`Template saved: ${outputFile}`);
-} catch (e) {
-  log.error(`Could not write template: ${e.message}`);
-  process.exit(1);
-}
+      // ───────────────────────────────────────────────────────────────
+      // Summary
+      // ───────────────────────────────────────────────────────────────
+      this.printSummary(catCamel, paddedNum, outputFile, publicImgDir, tsOutput);
 
-// ─── DELETE SOURCE (OPTIONAL) ──────────────────────────────────────────────
-if (!noDelete && !CONFIG.keepSource) {
-  log.info(`Cleaning up source files...`);
-  try {
-    if (stats.isDirectory()) {
-      fs.rmSync(inputFile, { recursive: true, force: true });
-      log.success(`Deleted source folder: ${inputFile}`);
-    } else {
-      fs.unlinkSync(inputFile);
-      log.success(`Deleted source file: ${inputFile}`);
+      return {
+        success: true,
+        outputFile,
+        imageDir: publicImgDir,
+        stats: this.stats,
+        vars: { stylesVar, htmlVar }
+      };
+    } catch (error) {
+      log.error(`Conversion failed: ${error.message}`);
+      console.error(error);
+      process.exit(1);
     }
-  } catch (err) {
-    log.warn(`Could not delete source: ${err.message}`);
   }
-} else if (CONFIG.keepSource) {
-  log.info(`Source files preserved (CONFIG.keepSource = true)`);
-} else {
-  log.info(`Source files preserved (--no-delete flag used)`);
-}
 
-// ─── SUMMARY ───────────────────────────────────────────────────────────────
-console.log(`
-╔════════════════════════════════════════════════════════════╗
-║           ✅ CONVERSION SUCCESSFUL!                        ║
-╚════════════════════════════════════════════════════════════╝
+  autoNumber() {
+    const outputDir = path.join(CONFIG.outputRoot, this.category);
 
-📦 Template Package Created:
-   ├─ Category: ${category}
+    if (fs.existsSync(outputDir)) {
+      const existing = fs.readdirSync(outputDir)
+        .filter((f) => f.match(/templates\d+\.ts$/))
+        .map((f) => parseInt(f.match(/\d+/)[0]) || 0);
+
+      this.templateNum = existing.length > 0 ? Math.max(...existing) + 1 : 1;
+    } else {
+      this.templateNum = 1;
+    }
+
+    log.success(`Auto-detected template number: ${this.templateNum}`);
+  }
+
+  printSummary(catCamel, paddedNum, outputFile, imageDir, tsOutput) {
+    console.log(`
+╔════════════════════════════════════════════════════════════════╗
+║              ✅ CONVERSION SUCCESSFUL!                        ║
+╚════════════════════════════════════════════════════════════════╝
+
+📦 Template Created:
+   ├─ Category: ${this.category}
    ├─ Template: templates${paddedNum}
-   ├─ Output: ${outputDir}
-   └─ Images: ${publicImgDir}
+   ├─ Output: ${outputFile}
+   └─ Images: ${imageDir}
 
 📊 Statistics:
-   ├─ Images copied: ${copiedCount}
-   ├─ Image paths updated: ${srcReplacements + urlReplacements}
-   ├─ Brand replacements: ${brandReplacements}
-   └─ File size: ${(tsOutput.length / 1024).toFixed(2)} KB
+   ├─ CSS Files: ${this.stats.cssFiles}
+   ├─ Images Copied: ${this.stats.imagesCopied}
+   ├─ Animation Properties: ${this.stats.animationsPreserved}
+   ├─ Placeholders Added: ${this.stats.placeholdersAdded}
+   └─ File Size: ${(tsOutput.length / 1024).toFixed(2)} KB
 
-🎨 Placeholders Added:
-   ├─ LOGO_PLACEHOLDER (brand name)
-   ├─ PRIMARY_COLOR_PLACEHOLDER (primary color)
-   └─ PROJECT_NAME_PLACEHOLDER (company name)
+🎨 TypeScript Exports:
+   ├─ export const ${catCamel}${paddedNum}Styles
+   └─ export const ${catCamel}${paddedNum}Html
 
-📝 TypeScript Exports:
-   ├─ export const ${stylesVar}
-   └─ export const ${htmlVar}
+🔄 Replaceable Placeholders:
+   ├─ PRIMARY_COLOR_PLACEHOLDER (main brand color)
+   ├─ LOGO_PLACEHOLDER (company/brand name)
+   └─ PROJECT_NAME_PLACEHOLDER (project name)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 Ready to use! Import and customize in your project.
-`);
+    `);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 📋 CLI
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    console.log(`
+╔════════════════════════════════════════════════════════════════╗
+║  🏥 HTML to Healthcare Template Converter PRO v4.0             ║
+║  Full preservation of animations, styles, and all assets      ║
+╚════════════════════════════════════════════════════════════════╝
+
+Usage:
+  node converter-pro.js <input_path> [category] [template_number]
+
+Examples:
+  node converter-pro.js /home/user/Downloads/education-03
+  node converter-pro.js ./my-website healthcare
+  node converter-pro.js /full/path/to/site education 03
+  node converter-pro.js ./lovable-export travel 01
+
+Supported Input:
+  ✓ Folder paths: /home/user/Downloads/my-site
+  ✓ Relative paths: ./website
+  ✓ Absolute paths: /usr/local/projects/site
+  ✓ Single HTML: ./index.html
+
+Auto-Detection:
+  ✓ Finds index.html automatically
+  ✓ Collects all CSS files (external + inline)
+  ✓ Copies all images/assets recursively
+  ✓ Detects primary colors
+  ✓ Finds brand names
+  ✓ Preserves all animations & transitions
+
+Output Location:
+  Templates: frontend/src/templates/{category}/templates{number}.ts
+  Images: frontend/public/assets/templates/{category}/templates{number}/
+
+    `);
+    process.exit(0);
+  }
+
+  const inputPath = args[0];
+  const category = args[1] || 'healthcare';
+  const templateNum = args[2] ? parseInt(args[2]) : null;
+
+  const converter = new HealthcareTemplateConverter(inputPath, category, templateNum);
+  await converter.convert();
+}
+
+main().catch((error) => {
+  log.error(`Fatal error: ${error.message}`);
+  process.exit(1);
+});
