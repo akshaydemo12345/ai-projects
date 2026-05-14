@@ -92,8 +92,6 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || schema.page_slug,
       data: leadData,
       utm,
-      // 🚀 FLATTENED UTMs for easier filtering and dashboard display
-      ...utm,
       formData,
       trackingDetails: {
         referral_url: referralUrl,
@@ -156,93 +154,35 @@ exports.createLead = async (req, res) => {
                   
                   <div class="data-card">
                     <table width="100%" cellpadding="0" cellspacing="0">
+                      ${Object.entries(leadData).map(([key, value]) => {
+                        if (!value) return '';
+                        const formattedLabel = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        return `
+                        <tr>
+                          <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <div class="label">${formattedLabel}</div>
+                            <div class="value">${value}</div>
+                          </td>
+                        </tr>`;
+                      }).join('')}
                       <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Full Name</div>
-                          <div class="value">${leadData.name || leadData.full_name || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Email Address</div>
-                          <div class="value">${leadData.email || leadData.email_address || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Phone Number</div>
-                          <div class="value">${leadData.phone || leadData.tel || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Message</div>
-                          <div class="value">${leadData.message || leadData.comment || 'No message provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; ${(utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content)) ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
+                        <td style="padding: 12px 0; ${(utm && Object.keys(utm).length > 0) ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
                           <div class="label">Referral URL</div>
                           <div class="value" style="word-break: break-all; font-size: 13px;">
                             ${referralUrl ? `<a href="${referralUrl}" style="color: ${pColor};">${referralUrl}</a>` : 'Direct'}
                           </div>
                         </td>
                       </tr>
-                      ${utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content) ? `
+                      ${utm && Object.keys(utm).length > 0 ? `
                       <tr>
                         <td style="padding: 12px 0;">
                           <div class="label">UTM Details</div>
                           <div class="value" style="font-size: 13px;">
-                            ${utm.utm_source ? `<strong>Source:</strong> ${utm.utm_source}<br>` : ''}
-                            ${utm.utm_medium ? `<strong>Medium:</strong> ${utm.utm_medium}<br>` : ''}
-                            ${utm.utm_campaign ? `<strong>Campaign:</strong> ${utm.utm_campaign}<br>` : ''}
-                            ${utm.utm_content ? `<strong>Content:</strong> ${utm.utm_content}<br>` : ''}
-                            ${utm.utm_term ? `<strong>Term:</strong> ${utm.utm_term}` : ''}
+                            ${Object.entries(utm).filter(([k, v]) => v).map(([k, v]) => `<strong>${k.replace('utm_', '').replace(/\b\w/g, c => c.toUpperCase())}:</strong> ${v}<br>`).join('')}
                           </div>
                         </td>
                       </tr>
                       ` : ''}
-                    </table>
-                  </div>
-
-                  <div class="data-card">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Source</div>
-                          <div class="value">${utm.utm_source || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Medium</div>
-                          <div class="value">${utm.utm_medium || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Campaign</div>
-                          <div class="value">${utm.utm_campaign || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Term</div>
-                          <div class="value">${utm.utm_term || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">UTM Content</div>
-                          <div class="value">${utm.utm_content || '—'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0;">
-                          <div class="label">Referral URL</div>
-                          <div class="value">${lead.meta?.referer || '—'}</div>
-                        </td>
-                      </tr>
                     </table>
                   </div>
 
