@@ -1,5 +1,5 @@
 const axios = require('axios');
-
+const config = require('../config');
 /**
  * Brevo Email Service
  * Handles sending transactional emails using direct API calls
@@ -14,11 +14,12 @@ class EmailService {
    * @param {Object} options
    */
   async sendEmail({ to, subject, htmlContent, fromName, fromEmail, brevoKey }) {
-    const finalApiKey = brevoKey || process.env.BREVO_API_KEY;
+        const finalApiKey = brevoKey || config.email.brevoApiKey;
 
     if (!finalApiKey) {
-      console.warn('⚠️ Brevo API Key missing. Skipping email.');
-      return;
+      const missingKeyError = 'Brevo API Key missing. Cannot send email.';
+      console.error(`❌ ${missingKeyError}`);
+      throw new Error(missingKeyError);
     }
 
     const finalFromName = fromName && fromName.trim() ? fromName : (process.env.FROM_NAME || 'AI Landing Page Builder');

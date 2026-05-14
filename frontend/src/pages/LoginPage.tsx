@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, CheckCircle2, Star } from "lucide-react";
+import { Zap, CheckCircle2, Star, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/services/api";
+import { signInWithGooglePopup } from "@/services/firebaseClient";
 import { toast } from "sonner";
 
 const LoginPage = () => {
@@ -15,11 +16,17 @@ const LoginPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+    const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [showResendPrompt, setShowResendPrompt] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; name?: string }>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+        setShowResendPrompt(false);
+    setFieldErrors({});
     try {
       let response;
       if (isSignUp) {
@@ -27,22 +34,110 @@ const LoginPage = () => {
         toast.success("Account created successfully!", {
           description: "Welcome to Buildify! Let's start building your first project.",
         });
+                 setIsSignUp(false);
+        setPassword("");
+        setName("");
       } else {
         response = await authApi.login({ email, password });
         toast.success("Welcome back!", {
           description: "Successfully logged into your account.",
         });
+        const { accessToken, data } = response;
+        login(accessToken, data.user);
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      const backendErrors = Array.isArray(error?.errors) ? error.errors : [];
+      const nextFieldErrors = backendErrors.reduce(
+        (acc: { email?: string; password?: string; name?: string }, fieldError: any) => {
+          if (fieldError?.field) {
+            acc[fieldError.field] = fieldError.message;
+          }
+          return acc;
+        },
+        {}
+      );
+
+      if (Object.keys(nextFieldErrors).length) {
+        setFieldErrors(nextFieldErrors);
       }
 
-      const { accessToken, data } = response;
-      login(accessToken, data.user);
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      const errorMsg =
+        error?.message ||
+        (backendErrors.length > 0 ? backendErrors.map((e: any) => e.message).join(', ') : 'Authentication failed');
+
+      if (backendErrors.length > 0) {
+        toast.error("Please fix the highlighted fields.", {
+          description: errorMsg,
+        });
+      } else if (errorMsg.toLowerCase().includes("verify your email") || errorMsg.toLowerCase().includes("email address not verified")) {
+        setUnverifiedEmail(email);
+        setShowResendPrompt(true);
+        toast.error("Email Not Verified", {
+          description: "Please verify your email before logging in.",
+        });
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleResendVerificationEmail = async () => {
+    try {
+      await authApi.resendVerificationEmail({ email: unverifiedEmail });
+      toast.success("Email sent!", {
+        description: "Please check your inbox for the verification link.",
+      });
+      setShowResendPrompt(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to resend verification email");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithGooglePopup();
+      const idToken = await result.user.getIdToken();
+      const response = await authApi.firebaseSignIn({ idToken });
+
+      const { accessToken, data } = response;
+      login(accessToken, data.user);
+      toast.success("Signed in with Google!", {
+        description: "Welcome back to Buildify.",
+      });
+      navigate("/dashboard");
+    } catch (error: any) {
+       const errorMsg = error.message || "Google sign-in failed";
+
+      // Check if it's an email verification error
+      if (errorMsg.includes("not verified") || errorMsg.includes("email is not verified")) {
+        toast.error("Email Not Verified", {
+          description: "Please verify your email in your Google Account settings and try again.",
+        });
+      } else {
+        toast.error(errorMsg);
+      }
+      
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const urlToken = new URLSearchParams(window.location.search).get('token');
+    if (urlToken) {
+      const storedUser = localStorage.getItem('pagecraft_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        login(urlToken, userData);
+        navigate('/dashboard');
+      }
+    }
+  }, [login, navigate]);
+
 
   return (
     <div className="flex min-h-screen">
@@ -138,7 +233,11 @@ const LoginPage = () => {
               : "Sign in to continue building"}
           </p>
 
-          <button className="w-full flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors mb-6">
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors mb-6"
+            disabled={isLoading}
+          >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -172,6 +271,9 @@ const LoginPage = () => {
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1.5 h-11"
                 />
+                  {fieldErrors.name && (
+                  <p className="mt-2 text-sm text-destructive">{fieldErrors.name}</p>
+                )}
               </div>
             )}
             <div>
@@ -183,6 +285,9 @@ const LoginPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1.5 h-11"
               />
+              {fieldErrors.email && (
+                <p className="mt-2 text-sm text-destructive">{fieldErrors.email}</p>
+              )}
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -198,13 +303,26 @@ const LoginPage = () => {
                   </button>
                 )}
               </div>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 h-11"
-              />
+              <div className="relative mt-1.5">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="mt-2 text-sm text-destructive">{fieldErrors.password}</p>
+              )}
             </div>
             <Button
               type="submit"
@@ -214,7 +332,27 @@ const LoginPage = () => {
               {isLoading ? "Processing..." : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
-
+ {showResendPrompt && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-900">Email not verified</p>
+                  <p className="text-sm text-amber-800 mt-1">
+                    We sent a verification email to <strong>{unverifiedEmail}</strong>. 
+                    Didn't receive it?
+                  </p>
+                  <Button
+                    onClick={handleResendVerificationEmail}
+                    variant="link"
+                    className="text-sm text-amber-700 hover:text-amber-900 p-0 h-auto mt-2"
+                  >
+                    Resend verification email
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           <p className="text-center text-sm text-muted-foreground mt-6">
             {isSignUp ? (
               <>

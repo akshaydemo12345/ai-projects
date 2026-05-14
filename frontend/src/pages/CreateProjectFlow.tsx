@@ -12,10 +12,41 @@ import { copyToClipboard } from "@/lib/utils";
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script";
 
-const categories = [
+const industries = [
+  "SaaS",
+  "Agency",
+  "E-commerce",
+  "Healthcare",
+  "Real Estate",
+  "Finance",
+  "Education",
+  "Technology",
+  "Consulting",
+  "Construction",
+  "Hospitality",
+  "Legal",
+  "Beauty & Wellness",
   "General",
   "Other",
 ];
+
+const subIndustryOptions: Record<string, string[]> = {
+  SaaS: ["Marketing SaaS", "HR SaaS", "Fintech", "Analytics", "Security", "E-commerce SaaS", "Productivity", "Customer Support"],
+  Agency: ["Digital Marketing", "Creative", "Branding", "SEO", "PPC", "Web Design", "Social Media", "PR", "Content Strategy"],
+  "E-commerce": ["Fashion", "Electronics", "Health & Beauty", "Furniture", "Food & Beverage", "Subscription", "Home Goods", "Sports"],
+  Healthcare: ["Dentistry", "Medical Clinic", "Wellness Spa", "Fitness Studio", "Telehealth", "Physical Therapy", "Cosmetic Surgery"],
+  "Real Estate": ["Residential", "Commercial", "Property Management", "Agent/Brokerage", "Vacation Rentals", "Land Development"],
+  Finance: ["Accounting", "Investment", "Insurance", "Lending", "Crypto", "Wealth Management"],
+  Education: ["Online Courses", "Tutoring", "Academy", "Corporate Training", "Test Prep", "School"],
+  Technology: ["AI", "IoT", "Cybersecurity", "Cloud", "Mobility", "Hardware"],
+  Consulting: ["Management", "HR", "IT", "Strategy", "Financial", "Legal"],
+  Construction: ["Contractors", "Home Renovation", "Architecture", "Builders", "Remodeling", "Interior Design"],
+  Hospitality: ["Hotels", "Restaurants", "Events", "Travel Agency", "Catering", "Resorts"],
+  Legal: ["Law Firm", "Immigration", "Corporate Law", "Personal Injury", "Family Law", "Patent Law"],
+  "Beauty & Wellness": ["Salon", "Spa", "Nutrition", "Yoga Studio", "Cosmetics", "Personal Care"],
+  General: ["Professional Services", "Local Business", "Startup", "Nonprofit"],
+};
+
 
 const CreateProjectFlow = () => {
   const navigate = useNavigate();
@@ -33,7 +64,10 @@ const CreateProjectFlow = () => {
   const [preSlug, setPreSlug] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("https://");
   const [category, setCategory] = useState("Agency");
-  const [availableCategories, setAvailableCategories] = useState(categories);
+  const [availableCategories, setAvailableCategories] = useState(industries);
+  const [subIndustry, setSubIndustry] = useState("");
+  const [customIndustry, setCustomIndustry] = useState("");
+  const [customSubIndustry, setCustomSubIndustry] = useState("");
   const [description, setDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedServices, setExtractedServices] = useState<string[]>([]);
@@ -114,11 +148,13 @@ const CreateProjectFlow = () => {
     }
 
     setIsSubmitting(true);
+        const selectedCategory = category === "Other" ? (customIndustry.trim() || "Other") : category;
+    const selectedSubIndustry = subIndustry === "Other" ? customSubIndustry.trim() : subIndustry;
     createMutation.mutate({
       name: name.trim(),
       preSlug: preSlug.trim(),
       websiteUrl: websiteUrl.trim(),
-      category,
+          category: selectedCategory,
       description: description.trim(),
       logoUrl: logoBase64 || undefined,
       themeColor: themeColor || undefined,
@@ -128,7 +164,10 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
-      scrapedData: scrapedData,
+            scrapedData: {
+        ...scrapedData,
+        subIndustry: selectedSubIndustry || undefined,
+      },
     });
   };
 
@@ -146,8 +185,8 @@ const CreateProjectFlow = () => {
       if (meta.projectName) {
         setName(meta.projectName);
       }
-      if (meta.projectDesc) {
-        setDescription(meta.projectDesc);
+      if (meta.projectDesc !== undefined) {
+        setDescription(meta.projectDesc || '');
       }
       if (meta.projectLogo) {
         setLogoPreview(meta.projectLogo);
@@ -177,7 +216,9 @@ const CreateProjectFlow = () => {
       if (meta.scrapedData) {
         setScrapedData(meta.scrapedData);
       }
+       let detectedCategory = category;
       if (meta.industry) {
+                detectedCategory = meta.industry;
         setCategory(meta.industry);
         // Add detected industry to available categories if not already present
         setAvailableCategories(prev => {
@@ -186,6 +227,13 @@ const CreateProjectFlow = () => {
           }
           return prev;
         });
+      }
+           if (meta.scrapedData?.subIndustry) {
+        setSubIndustry(meta.scrapedData.subIndustry);
+      } else if (meta.subIndustry) {
+        setSubIndustry(meta.subIndustry);
+      } else if (detectedCategory && detectedCategory !== "Other") {
+        setSubIndustry("Other");
       }
       if (meta.scrapedImages) {
         setScrapedImages(meta.scrapedImages);
@@ -357,15 +405,87 @@ const CreateProjectFlow = () => {
                 </label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                     onChange={(e) => {
+                    setCategory(e.target.value);
+                    setSubIndustry("");
+                    setCustomIndustry("");
+                    setCustomSubIndustry("");
+                  }}
                   className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
-                  Auto-detected from services. You can manually select if needed.
-                </p>
+                  Select the industry that best matches your project. If your industry is not listed, choose Other.                </p>
               </div>
+
+                {category === "Other" && (
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Industry (custom)
+                  </label>
+                  <Input
+                    value={customIndustry}
+                    onChange={(e) => setCustomIndustry(e.target.value)}
+                    placeholder="e.g. Sustainable Packaging"
+                    className="h-11"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1.5">
+                    Enter a custom industry name when the default options do not match.
+                  </p>
+                </div>
+              )}
+
+              {category && category !== "" && category !== "Other" && (
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Sub-Industry
+                  </label>
+                  {subIndustryOptions[category]?.length > 0 ? (
+                    <>
+                      <select
+                        value={subIndustry}
+                        onChange={(e) => {
+                          setSubIndustry(e.target.value);
+                          if (e.target.value !== "Other") {
+                            setCustomSubIndustry("");
+                          }
+                        }}
+                        className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="">Select a sub-industry</option>
+                        {subIndustryOptions[category].map((sub) => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                        <option value="Other">Other</option>
+                      </select>
+                      {subIndustry === "Other" && (
+                        <Input
+                          value={customSubIndustry}
+                          onChange={(e) => setCustomSubIndustry(e.target.value)}
+                          placeholder="e.g. Renewable Energy SaaS"
+                          className="h-11 mt-2"
+                        />
+                      )}
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        Choose a more specific sub-industry to help the system generate better page content.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Input
+                        value={customSubIndustry}
+                        onChange={(e) => setCustomSubIndustry(e.target.value)}
+                        placeholder="e.g. Renewable Energy SaaS"
+                        className="h-11"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        Enter a custom sub-industry for this industry.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Branding Colors */}
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
