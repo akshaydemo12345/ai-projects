@@ -1,54 +1,50 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
-const faqs = [
-  {
-    question: "Can I publish directly on my own website?",
-    answer: "Yes. Buildify’s core feature is direct publishing to your existing website and domain."
-  },
-  {
-    question: "Does Buildify support WordPress?",
-    answer: "Yes. You can connect WordPress websites and publish instantly."
-  },
-  {
-    question: "Do I need coding skills?",
-    answer: "No. Buildify includes a full visual editor with no coding required."
-  },
-  {
-    question: "Is it optimized for PPC campaigns?",
-    answer: "Yes. Every generated page is designed for conversion-focused advertising campaigns."
-  },
-  {
-    question: "Can I customize the generated pages?",
-    answer: "Absolutely. Every page is fully editable visually."
-  },
-  {
-    question: "Does Buildify host the pages?",
-    answer: "No. Your pages are published directly on your own website infrastructure."
-  }
-];
+import { useState } from "react";
 
 const FAQSection = () => {
+  const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: "Can I publish directly on my own website?",
+      a: "Yes. Buildify’s core feature is direct publishing to your existing website and domain."
+    },
+    {
+      q: "Does Buildify support WordPress?",
+      a: "Yes. You can connect WordPress websites and publish instantly."
+    },
+    {
+      q: "Do I need coding skills?",
+      a: "No. Buildify includes a full visual editor with no coding required."
+    },
+    {
+      q: "Is it optimized for PPC campaigns?",
+      a: "Yes. Every generated page is designed for conversion-focused advertising campaigns."
+    }
+  ];
+
   return (
-    <section id="faq" className="py-24 bg-background">
-      <div className="container mx-auto px-4 max-w-3xl">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-foreground md:text-4xl">Frequently Asked Questions</h2>
-        </div>
-        <Accordion type="single" collapsible className="w-full">
+    <section id="faq" className="py-24 bg-white">
+      <div className="container mx-auto px-4 max-w-2xl">
+        <h2 className="text-4xl font-bold text-center text-black mb-16">Frequently Asked Questions</h2>
+
+        <div className="space-y-0">
           {faqs.map((faq, i) => (
-            <AccordionItem key={i} value={`item-${i}`}>
-              <AccordionTrigger className="text-left font-semibold">{faq.question}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
+            <div key={i} className="border-b border-black/5 last:border-0">
+              <button
+                onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}
+                className="w-full py-6 flex items-center justify-between text-left group"
+              >
+                <span className="text-lg font-semibold text-black/80 group-hover:text-black transition-colors">{faq.q}</span>
+                <span className={`text-2xl font-light text-black/40 transition-transform duration-300 ${activeFAQ === i ? "rotate-45" : ""}`}>+</span>
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 ${activeFAQ === i ? "max-h-40 pb-6" : "max-h-0"}`}>
+                <p className="text-black/60 leading-relaxed">
+                  {faq.a}
+                </p>
+              </div>
+            </div>
           ))}
-        </Accordion>
+        </div>
       </div>
     </section>
   );

@@ -11,17 +11,20 @@ import ComparisonSection from "@/components/landing/ComparisonSection";
 import FAQSection from "@/components/landing/FAQSection";
 import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
+import AIFeaturesSection from "@/components/landing/AIFeaturesSection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#f7f4ef]">
       <Navbar />
       <HeroSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <AIFeaturesSection />
+      <PerformanceMarketingSection />
       <TemplatesSection />
       <LeadManagementSection />
-      <PerformanceMarketingSection />
+
       <ComparisonSection />
       <TestimonialsSection />
       <PricingSection />
