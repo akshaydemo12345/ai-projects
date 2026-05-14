@@ -126,7 +126,7 @@ h1, h2, h3, h4, h5, h6, p {
 /* Elevations & Gradients */
 .low-elevation { box-shadow: 0 4px 15px 0 rgba(20, 29, 35, 0.1); }
 .high-elevation { box-shadow: 0 10px 30px 0 rgba(20, 29, 35, 0.15); }
-.primary-gradient { background: linear-gradient(to bottom, PRIMARY_COLOR_PLACEHOLDER, #93000d); }
+.primary-gradient { background: linear-gradient(135deg, SECONDARY_COLOR_PLACEHOLDER 0%, SECONDARY_COLOR_PLACEHOLDER 100%); }
 
 /* Layout Utilities */
 .container {
@@ -284,7 +284,8 @@ h1, h2, h3, h4, h5, h6, p {
 .form-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 1px var(--primary); }
 .btn-submit {
   width: 100%;
-  color: var(--on-primary);
+  background-color: var(--secondary);
+  color: #ffffff;
   padding: 1rem;
   border-radius: 0.75rem;
   font-weight: 600;
@@ -443,7 +444,7 @@ h1, h2, h3, h4, h5, h6, p {
 .cta-content p { max-width: 42rem; margin: 0 auto; color: rgba(255,255,255,0.9); }
 .cta-actions { display: flex; flex-direction: column; justify-content: center; gap: 1rem; padding-top: 1rem; }
 .btn-primary {
-  background: var(--primary);
+  background: var(--secondary);
   color: #fff;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -839,7 +840,7 @@ export const healthcare01Html = `
 <!-- CTA Banner -->
 <section class="py-xl">
 <div class="container">
-<div class="cta-banner primary-gradient">
+<div class="cta-banner" style="background: var(--secondary);">
 <div class="cta-bg-icon">
 <span class="material-symbols-outlined">dentistry</span>
 </div>
