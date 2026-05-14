@@ -5,6 +5,373 @@ const cheerio = require('cheerio');
 const sharp = require('sharp');
 const logger = require('../utils/logger');
 
+const normalizeImageUrl = (src, baseUrl) => {
+  if (!src) return '';
+  let normalized = src.trim();
+  if (/^(data|blob|javascript|chrome-extension):/i.test(normalized)) return '';
+  if (normalized.startsWith('//')) {
+    normalized = `https:${normalized}`;
+  }
+  if (!/^https?:\/\//i.test(normalized)) {
+    try {
+      normalized = new URL(normalized, baseUrl).href;
+    } catch (e) {
+      return '';
+    }
+  }
+  return normalized;
+};
+
+const isLogoUrlCandidate = (url) => {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  const invalid = [
+    'favicon', 'icon', 'pixel', 'sprite', 'tracking', 'badge', 'share', 'social', 'og-image', 'logo-preview', 'logo-mask', 'marker', 'loading', 'placeholder', 'button', 'avatar', 'profile', 'thumb', 'thumbnail', 'partner', 'premier', 'award', 'certified', 'sponsor'
+  ];
+  return !invalid.some((pattern) => lower.includes(pattern));
+};
+
+const scoreLogoCandidate = ($, el, src, origin) => {
+  let score = 0;
+  const lowerSrc = src.toLowerCase();
+  const alt = ($(el).attr('alt') || '').trim().toLowerCase();
+  const cls = ($(el).attr('class') || '').trim().toLowerCase();
+  const parentClasses = ($(el).parent().attr('class') || '').trim().toLowerCase();
+  const linkHref = ($(el).closest('a').attr('href') || '').trim();
+
+  if (lowerSrc.includes('logo')) score += 20;
+  if (alt.includes('logo')) score += 35;
+  if (cls.includes('logo') || parentClasses.includes('logo')) score += 40;
+  if (cls.includes('brand') || parentClasses.includes('brand') || lowerSrc.includes('brand')) score += 15;
+  if (alt && !alt.includes('logo') && !alt.includes('icon')) score += 10;
+
+  if (linkHref) {
+    const normalizedLink = linkHref.startsWith('/') ? `${origin}${linkHref}` : normalizeImageUrl(linkHref, origin);
+    if (normalizedLink && (normalizedLink === origin || normalizedLink === `${origin}/` || normalizedLink.includes(origin))) {
+      score += 25;
+    }
+    if (/home|index|welcome/i.test(linkHref)) score += 10;
+  }
+
+  const rejectPatterns = [/banner/i, /hero/i, /promo/i, /slider/i, /carousel/i, /gallery/i, /product/i, /service/i, /feature/i, /about/i, /contact/i];
+  if (rejectPatterns.some((pattern) => pattern.test(lowerSrc) || pattern.test(cls) || pattern.test(alt))) {
+    score -= 25;
+  }
+
+  if (/partner|premier|award|certified|sponsor|badge|bing|google/i.test(lowerSrc + ' ' + alt + ' ' + cls)) {
+    score -= 100;
+  }
+
+  const width = parseInt($(el).attr('width') || '0', 10) || 0;
+  const height = parseInt($(el).attr('height') || '0', 10) || 0;
+  const area = width * height;
+  if (area >= 2500) score += 15;
+  if (area > 0 && area < 500) score -= 10;
+
+  if ($(el).closest('header, .header, nav, .navbar, .site-branding, .logo').length) score += 20;
+  if (/social|icon|avatar|menu|button/.test(cls + ' ' + alt)) score -= 20;
+
+  return score;
+};
+
+const findBestLogo = ($, baseUrl) => {
+  const logoSelectors = [
+    'img[id*="logo" i]',
+    'img[class*="logo" i]',
+    'img[src*="logo" i]',
+    'img[alt*="logo" i]',
+    'img[data-src*="logo" i]',
+    '.logo img',
+    '.logo a img',
+    'header .logo img',
+    'header .logo a img',
+    'nav .logo img',
+    'nav .logo a img',
+    'a[class*="logo" i] img',
+    'div[class*="logo" i] img',
+    'div[class*="logo" i] a img',
+    '.site-branding img',
+    '.site-branding a img',
+    '.brand img',
+    '.brand a img',
+    '.header img',
+    'header img',
+    '.navbar img',
+    '.navbar a img',
+    '.nav img',
+    '.nav a img',
+    '.navigation .logo img',
+    '.navigation .logo a img',
+    '.menu-header-menu-container .logo img',
+    '.menu-header-menu-container .logo a img',
+    'img[src*="brand" i]',
+    'img[src*="identity" i]',
+    'img[alt*="brand" i]',
+    'img[alt*="identity" i]'
+  ];
+
+  const origin = new URL(baseUrl).origin;
+  const candidates = [];
+  const seen = new Set();
+
+  logoSelectors.forEach((selector) => {
+    $(selector).each((i, el) => {
+      const rawSrc = ($(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original') || '').trim();
+      const src = normalizeImageUrl(rawSrc, baseUrl);
+      if (!src || seen.has(src) || !isLogoUrlCandidate(src)) return;
+      seen.add(src);
+      const score = scoreLogoCandidate($, el, src, origin);
+      candidates.push({ src, score, order: candidates.length, area: (parseInt($(el).attr('width') || '0', 10) || 0) * (parseInt($(el).attr('height') || '0', 10) || 0) });
+    });
+  });
+
+  if (candidates.length === 0) return '';
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (b.area !== a.area) return b.area - a.area;
+    return a.order - b.order;
+  });
+  return candidates[0].src;
+};
+
+const CSS_VAR_COLOR_REGEX = /--([\w-]*?(?:primary|secondary|accent|brand|theme|main)[\w-]*)\s*:\s*(#[A-Fa-f0-9]{3,6}|rgba?\([^)]+\))/gi;
+const CSS_COLOR_PROP_REGEX = /(background(?:-color)?|color|border(?:-color)?|fill|stroke)\s*:\s*(#[A-Fa-fA-F0-9]{3,6}|rgba?\([^)]+\))/gi;
+const STYLESHEET_LINK_SELECTOR = 'link[rel="stylesheet"][href], link[rel="preload"][as="style"][href], link[rel="stylesheet"][type="text/css"][href]';
+
+const normalizeColorValue = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  const normalized = rgbToHex(value.trim());
+  return normalized ? normalized : '';
+};
+
+const parseCssVariables = (cssText) => {
+  const variables = {};
+  let match;
+  CSS_VAR_COLOR_REGEX.lastIndex = 0;
+  while ((match = CSS_VAR_COLOR_REGEX.exec(cssText)) !== null) {
+    const name = match[1].toLowerCase();
+    const value = normalizeColorValue(match[2]);
+    if (value) {
+      variables[name] = value;
+    }
+  }
+  return variables;
+};
+
+const parseCssColorDeclarations = (cssText) => {
+  const colors = [];
+  let match;
+  CSS_COLOR_PROP_REGEX.lastIndex = 0;
+  while ((match = CSS_COLOR_PROP_REGEX.exec(cssText)) !== null) {
+    const value = normalizeColorValue(match[2]);
+    if (value) {
+      colors.push(value);
+    }
+  }
+  return colors;
+};
+
+const collectExternalCssTexts = async ($, baseUrl) => {
+  const content = [];
+  $('style').each((i, el) => {
+    const styleContent = $(el).html();
+    if (styleContent) content.push(styleContent);
+  });
+
+  const hrefs = new Set();
+  $(STYLESHEET_LINK_SELECTOR).each((i, el) => {
+    const href = ($(el).attr('href') || '').trim();
+    const resolved = normalizeImageUrl(href, baseUrl);
+    if (resolved) hrefs.add(resolved);
+  });
+
+  for (const href of hrefs) {
+    try {
+      const response = await axios.get(href, {
+        timeout: 12000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+          'Accept': 'text/css,*/*;q=0.1'
+        }
+      });
+      if (response.data && typeof response.data === 'string') {
+        content.push(response.data);
+      }
+    } catch (err) {
+      logger.warn(`Failed to fetch stylesheet ${href}: ${err.message}`);
+    }
+  }
+
+  return content;
+};
+
+const collectInlineStyleColors = ($, selectors = ['*']) => {
+  const collected = [];
+  selectors.forEach((selector) => {
+    $(selector).each((i, el) => {
+      const style = ($(el).attr('style') || '').trim();
+      let match;
+      CSS_COLOR_PROP_REGEX.lastIndex = 0;
+      while ((match = CSS_COLOR_PROP_REGEX.exec(style)) !== null) {
+        const value = normalizeColorValue(match[2]);
+        if (value) collected.push(value);
+      }
+    });
+  });
+  return collected;
+};
+
+const uniqueHexColors = (colors = []) => Array.from(new Set((colors || []).filter(Boolean).map((c) => c.toLowerCase())));
+
+const getDistinctColor = (baseColor, candidates, minDistance = 45) => {
+  if (!baseColor || !candidates || candidates.length === 0) return '';
+  return candidates.find((color) => {
+    if (!color || color.toLowerCase() === baseColor.toLowerCase()) return false;
+    return getColorDistance(baseColor, color) >= minDistance;
+  }) || '';
+};
+
+const selectFirstNonNeutral = (colors) => {
+  if (!colors || colors.length === 0) return '';
+  return colors.find((color) => !isNeutralColor(color)) || '';
+};
+
+const selectDistinctColor = (baseColor, candidates) => {
+  if (!baseColor || !candidates || candidates.length === 0) return '';
+  return candidates.find((color) => {
+    if (!color) return false;
+    const normalized = color.toLowerCase();
+    if (normalized === baseColor.toLowerCase()) return false;
+    return getColorDistance(baseColor, normalized) >= 35;
+  }) || '';
+};
+
+const collectMetaColors = ($) => {
+  const colors = [];
+  const themeColor = normalizeColorValue($('meta[name="theme-color"]').attr('content') || '');
+  const tileColor = normalizeColorValue($('meta[name="msapplication-TileColor"]').attr('content') || '');
+  const msapplicationTileColor = normalizeColorValue($('meta[name="msapplication-TileColor"]').attr('content') || '');
+  if (themeColor) colors.push(themeColor);
+  if (tileColor) colors.push(tileColor);
+  if (msapplicationTileColor) colors.push(msapplicationTileColor);
+  return colors;
+};
+
+const extractThemeColors = async ($, baseUrl, logoUrl) => {
+  logger.info(`Extracting theme colors - Logo: ${logoUrl}, BaseUrl: ${baseUrl}`);
+
+  const logoPalette = logoUrl ? (await extractBrandColorsFromLogo(logoUrl)) || [] : [];
+  logger.info(`Logo palette extracted: ${JSON.stringify(logoPalette)}`);
+
+  // Strong preference for logo palette
+  let primaryColor = selectFirstNonNeutral(logoPalette) || '';
+  let secondaryColor = primaryColor ? selectDistinctColor(primaryColor, logoPalette) : '';
+
+  const cssTexts = await collectExternalCssTexts($, baseUrl);
+  const cssVariables = {};
+  const cssColorValues = [];
+  cssTexts.forEach((cssText) => {
+    Object.assign(cssVariables, parseCssVariables(cssText));
+    cssColorValues.push(...parseCssColorDeclarations(cssText));
+  });
+
+  const variableColorEntries = Object.entries(cssVariables).map(([name, color]) => ({ name, color }));
+  const explicitPrimaryColors = variableColorEntries
+    .filter((entry) => /primary|brand|main|theme/i.test(entry.name))
+    .map((entry) => entry.color);
+  const explicitSecondaryColors = variableColorEntries
+    .filter((entry) => /secondary|accent/i.test(entry.name))
+    .map((entry) => entry.color);
+
+  const buttonBgColors = collectInlineStyleColors($, ['button', 'a.btn', 'a.button', '[class*=\"btn\"]', '[class*=\"button\"]', '[class*=\"cta\"]']);
+  const buttonTextColors = collectInlineStyleColors($, ['button', 'a.btn', 'a.button', '[class*=\"btn\"]', '[class*=\"button\"]', '[class*=\"cta\"]']);
+  const heroBgColors = collectInlineStyleColors($, ['header', '.hero', '.site-header', '.masthead', '.topbar', '.navbar', '.site-banner', '.hero-section', '.page-header', '.branding']);
+  const textColors = collectInlineStyleColors($, ['p', 'span', 'a', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+  const metaColors = collectMetaColors($);
+
+  const allColors = uniqueHexColors([
+    ...logoPalette,
+    ...Object.values(cssVariables),
+    ...cssColorValues,
+    ...buttonBgColors,
+    ...buttonTextColors,
+    ...heroBgColors,
+    ...textColors,
+    ...metaColors
+  ]);
+
+  if (!primaryColor) {
+    primaryColor = selectFirstNonNeutral(explicitPrimaryColors)
+      || selectFirstNonNeutral(buttonBgColors)
+      || selectFirstNonNeutral(heroBgColors)
+      || selectFirstNonNeutral(cssColorValues)
+      || selectFirstNonNeutral(metaColors)
+      || selectFirstNonNeutral(allColors) || '';
+  }
+
+  if (!secondaryColor) {
+    secondaryColor = selectDistinctColor(primaryColor, explicitSecondaryColors)
+      || selectDistinctColor(primaryColor, buttonBgColors)
+      || selectDistinctColor(primaryColor, heroBgColors)
+      || selectDistinctColor(primaryColor, metaColors)
+      || selectDistinctColor(primaryColor, cssColorValues)
+      || selectDistinctColor(primaryColor, logoPalette)
+      || selectDistinctColor(primaryColor, allColors) || '';
+  }
+
+  const accentColor = selectDistinctColor(primaryColor, explicitSecondaryColors)
+    || selectDistinctColor(primaryColor, buttonBgColors)
+    || selectDistinctColor(primaryColor, cssColorValues)
+    || selectDistinctColor(primaryColor, allColors)
+    || secondaryColor || '#f59e0b';
+
+  const backgroundColor = selectFirstNonNeutral([].concat(
+    collectInlineStyleColors($, ['body', 'section', '.hero', '.site-header', '.site-banner', '.page-header']),
+    [normalizeColorValue($('body').css('background-color') || '')]
+  )) || '#ffffff';
+
+  const textColor = selectFirstNonNeutral(textColors)
+    || selectDistinctColor(backgroundColor, textColors)
+    || '#1f2937';
+
+  const buttonColorPrimaryBg = selectFirstNonNeutral(buttonBgColors);
+  const buttonColorSecondaryBg = buttonBgColors.find((color) => color !== buttonColorPrimaryBg) || '';
+  const buttonColorPrimaryText = selectFirstNonNeutral(buttonTextColors) || textColor;
+
+  const buttonColors = {
+    primaryBg: buttonColorPrimaryBg || primaryColor,
+    primaryText: buttonColorPrimaryText,
+    primaryHover: buttonColorPrimaryBg ? generateHoverColor(buttonColorPrimaryBg) : generateHoverColor(primaryColor),
+    secondaryBg: buttonColorSecondaryBg || secondaryColor,
+    secondaryText: buttonColorPrimaryText
+  };
+
+  if (!primaryColor) {
+    primaryColor = '#7c3aed';
+  }
+  if (!secondaryColor) {
+    secondaryColor = getDistinctColor(primaryColor, allColors) || '#6366f1';
+  }
+  if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
+    secondaryColor = getDistinctColor(primaryColor, allColors) || '#1e293b';
+  }
+
+  const confidence = logoPalette.length > 0 ? 'high' : 'medium';
+
+  logger.info(`Final theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Accent: ${accentColor}, Text: ${textColor}, Background: ${backgroundColor}, Confidence: ${confidence}`);
+
+  return {
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    backgroundColor,
+    textColor,
+    confidence,
+    buttonColors,
+    colors: allColors
+  };
+};
+
 /**
  * Fetches and extracts metadata from a website URL.
  * Used for "Quick Inspect" before generating a page.
@@ -36,41 +403,18 @@ const inspectWebsite = async (url) => {
       favicon = `${urlObj.origin}/favicon.ico`;
     }
 
-    // 3. Logo Detection Refined
-    const logoSelectors = [
-      'img[id*="logo" i]', 'img[class*="logo" i]', 'img[src*="logo" i]', 'img[alt*="logo" i]',
-      '.header img', 'header img', '.navbar img'
-    ];
-
-    for (const selector of logoSelectors) {
-      const found = $(selector).first();
-      if (found.length) {
-        const src = found.attr('src')?.trim();
-        if (src && !src.includes('banner') && !src.includes('hero')) {
-          logo = src;
-          break;
-        }
-      }
-    }
-
-    if (!logo) {
-      logo = $('meta[property="og:image"]').attr('content') || '';
-    }
+    let logo = findBestLogo($, url) || $('meta[property="og:image"]').attr('content') || $('link[rel="image_src"]').attr('href') || '';
     if (logo && !logo.startsWith('http')) {
       logo = new URL(logo, url).href;
     }
 
     // 4. Color Extraction (Heuristic)
-    const suggestedColors = [];
-    const themeColor = $('meta[name="theme-color"]').attr('content');
-    if (themeColor) suggestedColors.push(themeColor);
-
-    // Look for background colors in inline styles of main elements
-    $('[style*="background-color"]').slice(0, 5).each((i, el) => {
-      const style = $(el).attr('style');
-      const match = style.match(/background-color:\s*(#[a-fA-F0-0]{3,6}|rgb\([^)]+\))/);
-      if (match && !suggestedColors.includes(match[1])) suggestedColors.push(match[1]);
-    });
+    const theme = await extractThemeColors($, url, logo);
+    const suggestedColors = uniqueHexColors([
+      ...(theme.colors || []),
+      theme.primaryColor,
+      theme.secondaryColor
+    ]);
 
     // 5. Fonts
     const fonts = [];
@@ -102,7 +446,13 @@ const inspectWebsite = async (url) => {
       favicon,
       logo,
       fonts: [...new Set(fonts)],
-      suggestedColors: [...new Set(suggestedColors)],
+      primaryColor: theme.primaryColor,
+      secondaryColor: theme.secondaryColor,
+      accentColor: theme.accentColor,
+      backgroundColor: theme.backgroundColor,
+      textColor: theme.textColor,
+      colors: theme.colors,
+      suggestedColors,
       socialLinks,
       rawContent: cleanText
     };
@@ -113,13 +463,23 @@ const inspectWebsite = async (url) => {
 };
 
 function rgbToHex(color) {
-  if (!color) return '';
-  if (color.startsWith('#')) return color;
-  const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (match) {
-    const r = parseInt(match[1]).toString(16).padStart(2, '0');
-    const g = parseInt(match[2]).toString(16).padStart(2, '0');
-    const b = parseInt(match[3]).toString(16).padStart(2, '0');
+if (!color || typeof color !== 'string') return '';
+  const normalized = color.trim().toLowerCase();
+
+  const hexMatch = normalized.match(/^#([a-f0-9]{3}|[a-f0-9]{6})$/i);
+  if (hexMatch) {
+    let hex = hexMatch[1].toLowerCase();
+    if (hex.length === 3) {
+      hex = hex.split('').map((ch) => ch + ch).join('');
+    }
+    return `#${hex}`;
+  }
+
+  const rgbMatch = normalized.match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1], 10).toString(16).padStart(2, '0');
+    const g = parseInt(rgbMatch[2], 10).toString(16).padStart(2, '0');
+    const b = parseInt(rgbMatch[3], 10).toString(16).padStart(2, '0');
     return `#${r}${g}${b}`;
   }
   return color;
@@ -217,201 +577,207 @@ const analyzeWebsite = async (websiteUrl) => {
  * Deterministic brand color analysis
  * Prioritizes logo colors and CSS file colors as requested
  */
-const analyzeBrandColors = async ($, logoUrl) => {
-  let primaryColor = '';
-  let secondaryColor = '';
-  let confidence = 'low';
-  const buttonColors = { primaryBg: '', primaryText: '', primaryHover: '', secondaryBg: '', secondaryText: '' };
+// const analyzeBrandColors = async ($, logoUrl) => {
+//   let primaryColor = '';
+//   let secondaryColor = '';
+//   let confidence = 'low';
+//   const buttonColors = { primaryBg: '', primaryText: '', primaryHover: '', secondaryBg: '', secondaryText: '' };
 
-  // PRIORITY 1: Logo colors (as requested - primary source)
-  if (logoUrl) {
-    try {
-      logger.info(`Extracting colors from logo: ${logoUrl}`);
-      const logoColors = await extractBrandColorsFromLogo(logoUrl);
-      logger.info(`Logo colors extracted: ${JSON.stringify(logoColors)}`);
-      if (logoColors && logoColors.length > 0) {
-        primaryColor = logoColors[0];
-        if (logoColors.length > 1) {
-          secondaryColor = logoColors[1];
-        }
-        confidence = 'high';
-      }
-    } catch (e) {
-      logger.warn(`Logo color extraction failed: ${e.message}`);
-    }
-  } else {
-    logger.warn('No logo URL provided for color extraction');
-  }
+//   // PRIORITY 1: Logo colors (as requested - primary source)
+//   if (logoUrl) {
+//     try {
+//       logger.info(`Extracting colors from logo: ${logoUrl}`);
+//       const logoColors = await extractBrandColorsFromLogo(logoUrl);
+//       logger.info(`Logo colors extracted: ${JSON.stringify(logoColors)}`);
+//       if (logoColors && logoColors.length > 0) {
+//         primaryColor = logoColors[0];
+//         if (logoColors.length > 1) {
+//           secondaryColor = logoColors[1];
+//         }
+//         confidence = 'high';
+//       }
+//     } catch (e) {
+//       logger.warn(`Logo color extraction failed: ${e.message}`);
+//     }
+//   } else {
+//     logger.warn('No logo URL provided for color extraction');
+//   }
 
-  // PRIORITY 2: CSS variables (--primary, --secondary, --brand, --main)
-  if (!primaryColor) {
-    let cssColorsFound = [];
-    $('style').each((i, el) => {
-      const styleContent = $(el).html();
+//   // PRIORITY 2: CSS variables (--primary, --secondary, --brand, --main)
+//   if (!primaryColor) {
+//     let cssColorsFound = [];
+//     $('style').each((i, el) => {
+//       const styleContent = $(el).html();
 
-      // Common brand variables
-      const patterns = [
-        /--(?:primary|brand|main|accent|theme|theme-primary|primary-color)[^:]*:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/gi,
-        /--(?:secondary|theme-secondary|secondary-color)[^:]*:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/gi
-      ];
+//       // Common brand variables
+//       const patterns = [
+//         /--(?:primary|brand|main|accent|theme|theme-primary|primary-color)[^:]*:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/gi,
+//         /--(?:secondary|theme-secondary|secondary-color)[^:]*:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/gi
+//       ];
 
-      patterns.forEach((pattern, pIdx) => {
-        let match;
-        while ((match = pattern.exec(styleContent)) !== null) {
-          const color = rgbToHex(match[1].trim());
-          if (!isNeutralColor(color)) {
-            if (pIdx === 0 && !primaryColor) {
-              primaryColor = color;
-              confidence = 'high';
-            } else if (pIdx === 1 && !secondaryColor) {
-              secondaryColor = color;
-            }
-            cssColorsFound.push(color);
-          }
-        }
-      });
-    });
-    logger.info(`CSS variables found: ${JSON.stringify(cssColorsFound)}`);
-  }
+//       patterns.forEach((pattern, pIdx) => {
+//         let match;
+//         while ((match = pattern.exec(styleContent)) !== null) {
+//           const color = rgbToHex(match[1].trim());
+//           if (!isNeutralColor(color)) {
+//             if (pIdx === 0 && !primaryColor) {
+//               primaryColor = color;
+//               confidence = 'high';
+//             } else if (pIdx === 1 && !secondaryColor) {
+//               secondaryColor = color;
+//             }
+//             cssColorsFound.push(color);
+//           }
+//         }
+//       });
+//     });
+//     logger.info(`CSS variables found: ${JSON.stringify(cssColorsFound)}`);
+//   }
 
-  // PRIORITY 3: Button classes
-  if (!primaryColor) {
-    const primarySelectors = [
-      '.btn-primary', '.button-primary', '.btn_red', '.btn_blue', '.btn_green',
-      '.button_red', '.button_blue', '.button_green', '.btn-main', '.btn-theme'
-    ];
-    for (const selector of primarySelectors) {
-      const el = $(selector).first();
-      if (el.length) {
-        // Since cheerio doesn't compute styles, look for inline style or common classes
-        const style = el.attr('style') || '';
-        const bgMatch = style.match(/background(?:-color)?:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
-        if (bgMatch) {
-          const color = rgbToHex(bgMatch[1].trim());
-          if (!isNeutralColor(color)) {
-            primaryColor = color;
-            confidence = 'high';
-            break;
-          }
-        }
-      }
-    }
-  }
+//   // PRIORITY 3: Button classes
+//   if (!primaryColor) {
+//     const primarySelectors = [
+//       '.btn-primary', '.button-primary', '.btn_red', '.btn_blue', '.btn_green',
+//       '.button_red', '.button_blue', '.button_green', '.btn-main', '.btn-theme'
+//     ];
+//     for (const selector of primarySelectors) {
+//       const el = $(selector).first();
+//       if (el.length) {
+//         // Since cheerio doesn't compute styles, look for inline style or common classes
+//         const style = el.attr('style') || '';
+//         const bgMatch = style.match(/background(?:-color)?:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
+//         if (bgMatch) {
+//           const color = rgbToHex(bgMatch[1].trim());
+//           if (!isNeutralColor(color)) {
+//             primaryColor = color;
+//             confidence = 'high';
+//             break;
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  if (!secondaryColor) {
-    const secondaryBtnColor = $('.btn-secondary, .button-secondary').first().css('background-color');
-    logger.info(`Secondary button color: ${secondaryBtnColor}`);
-    if (secondaryBtnColor && secondaryBtnColor !== 'rgba(0, 0, 0, 0)' && secondaryBtnColor !== 'transparent') {
-      const hexColor = rgbToHex(secondaryBtnColor);
-      if (!isNeutralColor(hexColor)) {
-        secondaryColor = hexColor;
-      }
-    }
-  }
+//   if (!secondaryColor) {
+//     const secondaryBtnColor = $('.btn-secondary, .button-secondary').first().css('background-color');
+//     logger.info(`Secondary button color: ${secondaryBtnColor}`);
+//     if (secondaryBtnColor && secondaryBtnColor !== 'rgba(0, 0, 0, 0)' && secondaryBtnColor !== 'transparent') {
+//       const hexColor = rgbToHex(secondaryBtnColor);
+//       if (!isNeutralColor(hexColor)) {
+//         secondaryColor = hexColor;
+//       }
+//     }
+//   }
 
-  // PRIORITY 4: Meta theme-color
-  if (!primaryColor) {
-    const metaColor = $('meta[name="theme-color"]').attr('content')?.trim() || '';
-    if (metaColor && !isNeutralColor(metaColor)) {
-      primaryColor = rgbToHex(metaColor);
-      confidence = 'medium';
-    }
-  }
+//   // PRIORITY 4: Meta theme-color
+//   if (!primaryColor) {
+//     const metaColor = $('meta[name="theme-color"]').attr('content')?.trim() || '';
+//     if (metaColor && !isNeutralColor(metaColor)) {
+//       primaryColor = rgbToHex(metaColor);
+//       confidence = 'medium';
+//     }
+//   }
 
-  // PRIORITY 5: CTA/Button colors from inline styles
-  if (!primaryColor) {
-    const ctaSelectors = ['button', 'a.btn', 'a.button', '[class*="cta"]'];
-    const buttonBgColors = [];
-    const buttonTextColors = [];
+//   // PRIORITY 5: CTA/Button colors from inline styles
+//   if (!primaryColor) {
+//     const ctaSelectors = ['button', 'a.btn', 'a.button', '[class*="cta"]'];
+//     const buttonBgColors = [];
+//     const buttonTextColors = [];
 
-    ctaSelectors.forEach(selector => {
-      $(selector).each((i, el) => {
-        if (i >= 10) return false;
-        const style = $(el).attr('style') || '';
+//     ctaSelectors.forEach(selector => {
+//       $(selector).each((i, el) => {
+//         if (i >= 10) return false;
+//         const style = $(el).attr('style') || '';
 
-        const bgMatch = style.match(/background(?:-color)?:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
-        if (bgMatch) {
-          const color = rgbToHex(bgMatch[1].trim());
-          if (!isNeutralColor(color)) {
-            buttonBgColors.push(color);
-          }
-        }
+//         const bgMatch = style.match(/background(?:-color)?:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
+//         if (bgMatch) {
+//           const color = rgbToHex(bgMatch[1].trim());
+//           if (!isNeutralColor(color)) {
+//             buttonBgColors.push(color);
+//           }
+//         }
 
-        const textMatch = style.match(/color:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
-        if (textMatch) {
-          const color = rgbToHex(textMatch[1].trim());
-          if (!isNeutralColor(color)) {
-            buttonTextColors.push(color);
-          }
-        }
-      });
-    });
+//         const textMatch = style.match(/color:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\))/i);
+//         if (textMatch) {
+//           const color = rgbToHex(textMatch[1].trim());
+//           if (!isNeutralColor(color)) {
+//             buttonTextColors.push(color);
+//           }
+//         }
+//       });
+//     });
 
-    if (buttonBgColors.length > 0) {
-      const colorCounts = {};
-      buttonBgColors.forEach(color => {
-        colorCounts[color] = (colorCounts[color] || 0) + 1;
-      });
-      const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      if (sorted.length > 0) {
-        primaryColor = sorted[0][0];
-        confidence = 'high';
-      }
-      if (sorted.length > 1) {
-        secondaryColor = sorted[1][0];
-      }
-    }
+//     if (buttonBgColors.length > 0) {
+//       const colorCounts = {};
+//       buttonBgColors.forEach(color => {
+//         colorCounts[color] = (colorCounts[color] || 0) + 1;
+//       });
+//       const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+//       if (sorted.length > 0) {
+//         primaryColor = sorted[0][0];
+//         confidence = 'high';
+//       }
+//       if (sorted.length > 1) {
+//         secondaryColor = sorted[1][0];
+//       }
+//     }
 
-    // Store button colors for theme system
-    if (buttonBgColors.length > 0) {
-      const colorCounts = {};
-      buttonBgColors.forEach(color => {
-        colorCounts[color] = (colorCounts[color] || 0) + 1;
-      });
-      const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      if (sorted.length > 0) {
-        buttonColors.primaryBg = sorted[0][0];
-        buttonColors.primaryHover = generateHoverColor(sorted[0][0]);
-      }
-      if (sorted.length > 1) {
-        buttonColors.secondaryBg = sorted[1][0];
-      }
-    }
-    if (buttonTextColors.length > 0) {
-      const colorCounts = {};
-      buttonTextColors.forEach(color => {
-        colorCounts[color] = (colorCounts[color] || 0) + 1;
-      });
-      const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      if (sorted.length > 0) {
-        buttonColors.primaryText = sorted[0][0];
-      }
-    }
-  }
+//     // Store button colors for theme system
+//     if (buttonBgColors.length > 0) {
+//       const colorCounts = {};
+//       buttonBgColors.forEach(color => {
+//         colorCounts[color] = (colorCounts[color] || 0) + 1;
+//       });
+//       const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+//       if (sorted.length > 0) {
+//         buttonColors.primaryBg = sorted[0][0];
+//         buttonColors.primaryHover = generateHoverColor(sorted[0][0]);
+//       }
+//       if (sorted.length > 1) {
+//         buttonColors.secondaryBg = sorted[1][0];
+//       }
+//     }
+//     if (buttonTextColors.length > 0) {
+//       const colorCounts = {};
+//       buttonTextColors.forEach(color => {
+//         colorCounts[color] = (colorCounts[color] || 0) + 1;
+//       });
+//       const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+//       if (sorted.length > 0) {
+//         buttonColors.primaryText = sorted[0][0];
+//       }
+//     }
+//   }
 
-  // Fallback: if still no secondary color, use button text color
-  if (!secondaryColor && buttonColors.primaryText) {
-    secondaryColor = buttonColors.primaryText;
-  }
+//   // Fallback: if still no secondary color, use button text color
+//   if (!secondaryColor && buttonColors.primaryText) {
+//     secondaryColor = buttonColors.primaryText;
+//   }
 
-  // Ultimate fallback: if still no colors, use common brand colors
-  if (!primaryColor) {
-    primaryColor = '#7c3aed'; // Default purple
-    confidence = 'low';
-  }
-  if (!secondaryColor) {
-    secondaryColor = '#6366f1'; // Default indigo
-  }
+//   // Ultimate fallback: if still no colors, use common brand colors
+//   if (!primaryColor) {
+//     primaryColor = '#7c3aed'; // Default purple
+//     confidence = 'low';
+//   }
+//   if (!secondaryColor) {
+//     secondaryColor = '#6366f1'; // Default indigo
+//   }
 
-  logger.info(`Final colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Confidence: ${confidence}`);
+//   logger.info(`Final colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Confidence: ${confidence}`);
 
-  return {
-    primaryColor,
-    secondaryColor,
-    confidence,
-    buttonColors
-  };
-};
+//   return {
+//     primaryColor,
+//     secondaryColor,
+//     confidence,
+//     buttonColors
+//   };
+// };
+
+const analyzeBrandColors = async ($, logoUrl, baseUrl) => {
+  const theme = await extractThemeColors($, baseUrl, logoUrl);
+  logger.info(`Brand colors detected: primary=${theme.primaryColor}, secondary=${theme.secondaryColor}`);
+  return theme;
+}
 
 /**
  * Universal website analysis and landing page generation system
@@ -541,30 +907,9 @@ const extractProjectData = async (url) => {
         $('meta[property="og:description"]').attr('content')?.trim() || '';
 
       // LOGO EXTRACTION REFINEMENT: Prioritize actual logo elements over OG:Image (which is often a banner)
-      const logoSelectors = [
-        'img[id*="logo" i]', 'img[class*="logo" i]', 'img[src*="logo" i]', 'img[alt*="logo" i]',
-        '.header img', 'header img', '.navbar img', '.nav img'
-      ];
-
-      for (const selector of logoSelectors) {
-        const found = $(selector).first();
-        if (found.length) {
-          const src = found.attr('src')?.trim();
-          // Filter out obvious banners/heros from logo candidates
-          if (src && !src.includes('banner') && !src.includes('hero') && !src.includes('og-image')) {
-            projectLogo = src;
-            break;
-          }
-        }
-      }
-
-      // Fallback to og:image ONLY if no specific logo found
-      if (!projectLogo) {
-        projectLogo = $('meta[property="og:image"]').attr('content')?.trim() || '';
-      }
-
-      if (projectLogo && !projectLogo.startsWith('http')) {
-        projectLogo = new URL(projectLogo, normalizedUrl).href;
+      const extractedLogo = findBestLogo($, normalizedUrl) || $('meta[property="og:image"]').attr('content')?.trim() || $('link[rel="image_src"]').attr('href')?.trim() || '';
+      if (extractedLogo) {
+        projectLogo = normalizeImageUrl(extractedLogo, normalizedUrl);
       }
     } catch (e) {
       logger.warn(`SEO/Logo extraction failed: ${e.message}`);
@@ -578,91 +923,20 @@ const extractProjectData = async (url) => {
     let colors = [];
 
     try {
-      const brandColors = await analyzeBrandColors($, projectLogo);
+      const brandColors = await analyzeBrandColors($, projectLogo, normalizedUrl);
       primaryColor = brandColors.primaryColor;
       secondaryColor = brandColors.secondaryColor;
       buttonColors = brandColors.buttonColors;
 
       // Extract colors from CSS and inline styles
       // From inline styles
-      $('[style*="color"]').each((i, el) => {
-        const style = $(el).attr('style') || '';
-        const colorMatch = style.match(/color:\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\)|rgba\([^)]+\))/gi);
-        if (colorMatch) {
-          colorMatch.forEach(color => {
-            const cleanColor = color.replace(/color:\s*/i, '').trim();
-            if (cleanColor.startsWith('#') || cleanColor.startsWith('rgb')) {
-              colorSet.add(cleanColor);
-            }
-          });
-        }
-      });
-
-      // From CSS classes that commonly contain colors
-      const colorClasses = ['primary', 'secondary', 'accent', 'main', 'brand', 'theme'];
-      colorClasses.forEach(className => {
-        $(`[class*="${className}"]`).each((i, el) => {
-          const style = $(el).attr('style') || '';
-          const colorMatch = style.match(/(?:color|background|background-color):\s*([#]?[a-fA-F0-9]{3,6}|rgb\([^)]+\)|rgba\([^)]+\))/gi);
-          if (colorMatch) {
-            colorMatch.forEach(color => {
-              const cleanColor = color.replace(/(?:color|background|background-color):\s*/i, '').trim();
-              if (cleanColor.startsWith('#') || cleanColor.startsWith('rgb')) {
-                colorSet.add(cleanColor);
-              }
-            });
-          }
-        });
-      });
-
-      // Convert RGB to hex and filter neutrals
-      colors = Array.from(colorSet || [])
-        .map(rgbToHex)
-        .filter(c => c && c.startsWith('#'))
-        .sort((a, b) => getSaturation(b) - getSaturation(a)); // Sort by saturation descending
-
-      const vibrantColors = colors.filter(c => !isNeutralColor(c));
-
-      // Set primary color from vibrant list
-      if (!primaryColor && vibrantColors.length > 0) {
-        primaryColor = vibrantColors[0];
-      }
-
-      // If primary is still empty, take best from any colors
-      if (!primaryColor && colors.length > 0) {
-        primaryColor = colors[0];
-      }
-
-      // Set secondary color (must be distinct)
-      if (!secondaryColor) {
-        // First try to find another vibrant color that is distinct
-        secondaryColor = vibrantColors.find(c => getColorDistance(primaryColor, c) > 60) || '';
-
-        // If not found, try ANY distinct color (including darker/lighter neutrals)
-        if (!secondaryColor) {
-          secondaryColor = colors.find(c => getColorDistance(primaryColor, c) > 80) || '';
-        }
-      }
-
-      // Final "emergency" color generation if they are still too similar
-      if (primaryColor && (!secondaryColor || getColorDistance(primaryColor, secondaryColor) < 50)) {
-        // Generate a distinct version of primary (darker/lighter or shifted)
-        const r = parseInt(primaryColor.slice(1, 3), 16);
-        const g = parseInt(primaryColor.slice(3, 5), 16);
-        const b = parseInt(primaryColor.slice(5, 7), 16);
-
-        // If it's a light color, make it much darker; if dark, make it lighter
-        const brightness = (r + g + b) / 3;
-        if (brightness > 128) {
-          // Make it a dark contrast
-          secondaryColor = `#${Math.max(0, r - 100).toString(16).padStart(2, '0')}${Math.max(0, g - 100).toString(16).padStart(2, '0')}${Math.max(0, b - 100).toString(16).padStart(2, '0')}`;
-        } else {
-          // Make it a light accent
-          secondaryColor = `#${Math.min(255, r + 100).toString(16).padStart(2, '0')}${Math.min(255, g + 100).toString(16).padStart(2, '0')}${Math.min(255, b + 100).toString(16).padStart(2, '0')}`;
-        }
-      }
+      colors = brandColors.colors || [];
     } catch (e) {
       logger.warn(`Color extraction failed: ${e.message}`);
+    }
+
+      if (!colors || colors.length === 0) {
+      colors = [primaryColor, secondaryColor].filter(Boolean).map((value) => rgbToHex(value)).filter(Boolean);
     }
 
     // Hard defaults if everything failed
@@ -671,7 +945,7 @@ const extractProjectData = async (url) => {
 
     // Ensure they are NEVER the same color in the final output
     if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
-      secondaryColor = '#1e293b'; // Default dark slate secondary
+            secondaryColor = getDistinctColor(primaryColor, colors) || '#1e293b';
     }
 
     // ============ STEP 3: SMART SERVICE EXTRACTION ============
@@ -811,6 +1085,9 @@ const extractProjectData = async (url) => {
     // Detect industry from services
     const detectedIndustry = detectIndustryFromServices(cleanedServices);
 
+        // Detect sub-industry from services and industry
+    const detectedSubIndustry = detectSubIndustryFromServices(cleanedServices, detectedIndustry);
+
     // Detect brand personality from content
     const brandPersonality = detectBrandPersonality(projectDesc, $('body').text());
 
@@ -855,10 +1132,14 @@ const extractProjectData = async (url) => {
       theme: primaryColor, // Keep theme for backward compatibility
       primaryColor,
       secondaryColor,
+      accentColor: themeSystem.colors.accent,
+      backgroundColor: themeSystem.colors.background,
+      textColor: themeSystem.colors.text,
       colors: allColors, // All extracted colors for database storage
       services: cleanedServices,
       keywords,
       industry: detectedIndustry,
+      subIndustry: detectedSubIndustry,
       themeSystem, // Complete theme system for design
       scrapedData: {
         images: bulkMedia.images,
@@ -1287,13 +1568,24 @@ const detectIndustryFromServices = (services) => {
   // Dynamic industry detection with context-aware logic
   const industryPatterns = {
     // Home Services - context-based detection
-    'Home Services': ['roofing', 'plumbing', 'electrical', 'hvac', 'landscaping', 'cleaning', 'pest control', 'handyman', 'painting', 'carpentry', 'moving', 'storage'],
+        // Agency - marketing and creative services
+    'Agency': ['marketing', 'seo', 'ppc', 'advertising', 'social media', 'content', 'branding', 'lead generation', 'campaign', 'design', 'creative', 'logo', 'graphic', 'photography', 'video production', 'web design', 'agency'],
 
     // SaaS / Software - technology and platform indicators
-    'SaaS / Software': ['software', 'platform', 'dashboard', 'analytics', 'automation', 'cloud', 'saas', 'subscription', 'api', 'integration', 'workflow'],
+        'SaaS': ['software', 'platform', 'dashboard', 'analytics', 'automation', 'cloud', 'saas', 'subscription', 'api', 'integration', 'workflow', 'productivity', 'collaboration'],
 
     // Digital Marketing - marketing and advertising
-    'Digital Marketing': ['marketing', 'seo', 'ppc', 'advertising', 'social media', 'content', 'branding', 'lead generation', 'campaign'],
+     // Finance - financial services
+    'Finance': ['finance', 'accounting', 'investment', 'insurance', 'lending', 'crypto', 'wealth management', 'financial', 'banking'],
+
+    // Education - learning and training
+    'Education': ['training', 'course', 'learning', 'education', 'certification', 'teaching', 'tutorial', 'online courses', 'tutoring'],
+
+    // Technology - tech services
+    'Technology': ['technology', 'ai', 'iot', 'cybersecurity', 'cloud', 'mobile', 'hardware', 'development', 'software'],
+
+    // Consulting - professional advisory
+    'Consulting': ['consulting', 'advisory', 'strategy', 'management', 'professional services'],
 
     // Healthcare - medical and wellness
     'Healthcare': ['medical', 'healthcare', 'doctor', 'clinic', 'hospital', 'wellness', 'therapy', 'pharmacy', 'health'],
@@ -1330,14 +1622,29 @@ const detectIndustryFromServices = (services) => {
 
   // Fallback to basic keyword matching
   const basicIndustryMap = {
-    'web design': 'Web Design',
-    'development': 'Software Development',
-    'agency': 'Digital Agency',
-    'fitness': 'Health & Fitness',
-    'gym': 'Health & Fitness',
-    'insurance': 'Insurance',
+ 'web design': 'Agency',
+    'development': 'Technology',
+    'agency': 'Agency',
+    'fitness': 'Healthcare',
+    'gym': 'Healthcare',
+    'insurance': 'Finance',
     'finance': 'Finance',
-    'restaurant': 'Food & Restaurant'
+    'restaurant': 'Hospitality',
+    'food': 'Hospitality',
+    'legal': 'Legal',
+    'law': 'Legal',
+    'consulting': 'Consulting',
+    'accounting': 'Finance',
+    'real estate': 'Real Estate',
+    'healthcare': 'Healthcare',
+    'education': 'Education',
+    'technology': 'Technology',
+    'construction': 'Construction',
+    'beauty': 'Beauty & Wellness',
+    'wellness': 'Beauty & Wellness',
+    'ecommerce': 'E-commerce',
+    'software': 'SaaS',
+    'marketing': 'Agency'
   };
 
   for (const [keyword, industry] of Object.entries(basicIndustryMap)) {
@@ -1348,6 +1655,155 @@ const detectIndustryFromServices = (services) => {
 
   return 'General';
 };
+
+const detectSubIndustryFromServices = (services, industry) => {
+  if (!services || services.length === 0) return '';
+
+  const serviceText = services.join(' ').toLowerCase();
+
+  // Sub-industry patterns based on industry
+  const subIndustryPatterns = {
+    'SaaS': {
+      'Marketing SaaS': ['marketing', 'campaign', 'lead generation', 'crm', 'email marketing'],
+      'HR SaaS': ['hr', 'human resources', 'recruiting', 'talent', 'payroll', 'employee'],
+      'Fintech': ['finance', 'payment', 'banking', 'investment', 'crypto', 'lending'],
+      'Analytics': ['analytics', 'data', 'reporting', 'dashboard', 'insights', 'metrics'],
+      'Security': ['security', 'cybersecurity', 'protection', 'encryption', 'compliance'],
+      'E-commerce SaaS': ['ecommerce', 'shopping', 'store', 'inventory', 'pos'],
+      'Productivity': ['productivity', 'collaboration', 'workflow', 'task', 'project management'],
+      'Customer Support': ['support', 'helpdesk', 'ticketing', 'customer service', 'chat']
+    },
+    'Agency': {
+      'Digital Marketing': ['digital marketing', 'marketing', 'campaign', 'advertising'],
+      'Creative': ['creative', 'design', 'graphic', 'art', 'visual'],
+      'Branding': ['branding', 'brand', 'identity', 'logo'],
+      'SEO': ['seo', 'search engine', 'optimization', 'ranking'],
+      'PPC': ['ppc', 'pay per click', 'google ads', 'advertising'],
+      'Web Design': ['web design', 'website', 'ui/ux', 'frontend'],
+      'Social Media': ['social media', 'social', 'facebook', 'instagram', 'twitter'],
+      'PR': ['pr', 'public relations', 'media', 'press'],
+      'Content Strategy': ['content', 'blog', 'writing', 'strategy']
+    },
+    'E-commerce': {
+      'Fashion': ['fashion', 'clothing', 'apparel', 'style'],
+      'Electronics': ['electronics', 'gadgets', 'tech', 'devices'],
+      'Health & Beauty': ['health', 'beauty', 'cosmetics', 'wellness'],
+      'Furniture': ['furniture', 'home', 'decor', 'interior'],
+      'Food & Beverage': ['food', 'beverage', 'restaurant', 'catering'],
+      'Subscription': ['subscription', 'monthly', 'recurring', 'box'],
+      'Home Goods': ['home goods', 'household', 'kitchen', 'bathroom'],
+      'Sports': ['sports', 'fitness', 'outdoor', 'equipment']
+    },
+    'Healthcare': {
+      'Dentistry': ['dentistry', 'dental', 'teeth', 'oral'],
+      'Medical Clinic': ['clinic', 'medical', 'doctor', 'healthcare'],
+      'Wellness Spa': ['spa', 'wellness', 'relaxation', 'massage'],
+      'Fitness Studio': ['fitness', 'gym', 'workout', 'exercise'],
+      'Telehealth': ['telehealth', 'telemedicine', 'remote', 'virtual'],
+      'Physical Therapy': ['physical therapy', 'rehab', 'therapy'],
+      'Cosmetic Surgery': ['cosmetic', 'surgery', 'aesthetic', 'beauty']
+    },
+    'Real Estate': {
+      'Residential': ['residential', 'home', 'house', 'apartment'],
+      'Commercial': ['commercial', 'office', 'business', 'property'],
+      'Property Management': ['property management', 'leasing', 'tenant'],
+      'Agent/Brokerage': ['agent', 'brokerage', 'real estate agent', 'broker'],
+      'Vacation Rentals': ['vacation', 'rental', 'vacation rental', 'airbnb'],
+      'Land Development': ['development', 'land', 'construction', 'building']
+    },
+    'Finance': {
+      'Accounting': ['accounting', 'bookkeeping', 'tax', 'financial'],
+      'Investment': ['investment', 'portfolio', 'wealth', 'stocks'],
+      'Insurance': ['insurance', 'coverage', 'policy', 'risk'],
+      'Lending': ['lending', 'loan', 'mortgage', 'credit'],
+      'Crypto': ['crypto', 'cryptocurrency', 'bitcoin', 'blockchain'],
+      'Wealth Management': ['wealth management', 'financial planning', 'advisor']
+    },
+    'Education': {
+      'Online Courses': ['online courses', 'elearning', 'course', 'education'],
+      'Tutoring': ['tutoring', 'private lessons', 'teaching'],
+      'Academy': ['academy', 'school', 'training institute'],
+      'Corporate Training': ['corporate training', 'professional development'],
+      'Test Prep': ['test prep', 'exam preparation', 'tutoring'],
+      'School': ['school', 'education', 'learning', 'students']
+    },
+    'Technology': {
+      'AI': ['ai', 'artificial intelligence', 'machine learning', 'automation'],
+      'IoT': ['iot', 'internet of things', 'smart devices', 'connected'],
+      'Cybersecurity': ['cybersecurity', 'security', 'protection', 'threat'],
+      'Cloud': ['cloud', 'cloud computing', 'aws', 'azure'],
+      'Mobility': ['mobile', 'app development', 'ios', 'android'],
+      'Hardware': ['hardware', 'devices', 'electronics', 'gadgets']
+    },
+    'Consulting': {
+      'Management': ['management consulting', 'business strategy', 'operations'],
+      'HR': ['hr consulting', 'human resources', 'talent management'],
+      'IT': ['it consulting', 'technology consulting', 'systems'],
+      'Strategy': ['strategy consulting', 'business strategy', 'planning'],
+      'Financial': ['financial consulting', 'finance', 'accounting'],
+      'Legal': ['legal consulting', 'law', 'compliance']
+    },
+    'Construction': {
+      'Contractors': ['contractors', 'construction', 'building'],
+      'Home Renovation': ['renovation', 'remodeling', 'home improvement'],
+      'Architecture': ['architecture', 'design', 'planning'],
+      'Builders': ['builders', 'construction', 'development'],
+      'Remodeling': ['remodeling', 'renovation', 'upgrade'],
+      'Interior Design': ['interior design', 'decor', 'interior']
+    },
+    'Hospitality': {
+      'Hotels': ['hotels', 'lodging', 'accommodation'],
+      'Restaurants': ['restaurants', 'food', 'dining'],
+      'Events': ['events', 'event planning', 'weddings'],
+      'Travel Agency': ['travel agency', 'travel', 'tourism'],
+      'Catering': ['catering', 'food service', 'events'],
+      'Resorts': ['resorts', 'vacation', 'luxury']
+    },
+    'Legal': {
+      'Law Firm': ['law firm', 'legal services', 'attorney'],
+      'Immigration': ['immigration', 'visa', 'citizenship'],
+      'Corporate Law': ['corporate law', 'business law', 'contracts'],
+      'Personal Injury': ['personal injury', 'accident', 'liability'],
+      'Family Law': ['family law', 'divorce', 'custody'],
+      'Patent Law': ['patent law', 'intellectual property', 'trademark']
+    },
+    'Beauty & Wellness': {
+      'Salon': ['salon', 'hair', 'beauty', 'styling'],
+      'Spa': ['spa', 'wellness', 'relaxation', 'treatment'],
+      'Nutrition': ['nutrition', 'diet', 'health', 'wellness'],
+      'Yoga Studio': ['yoga', 'meditation', 'mindfulness'],
+      'Cosmetics': ['cosmetics', 'makeup', 'beauty products'],
+      'Personal Care': ['personal care', 'skincare', 'grooming']
+    },
+    'General': {
+      'Professional Services': ['professional services', 'consulting', 'expertise'],
+      'Local Business': ['local business', 'community', 'neighborhood'],
+      'Startup': ['startup', 'entrepreneur', 'innovation'],
+      'Nonprofit': ['nonprofit', 'charity', 'community service']
+    }
+  };
+
+  // Get sub-industry patterns for the detected industry
+  const industrySubs = subIndustryPatterns[industry];
+  if (!industrySubs) return '';
+
+  // Score each sub-industry
+  let scores = {};
+  for (const [subIndustry, keywords] of Object.entries(industrySubs)) {
+    scores[subIndustry] = keywords.reduce((count, keyword) => {
+      return count + (serviceText.includes(keyword) ? 1 : 0);
+    }, 0);
+  }
+
+  // Find highest scoring sub-industry
+  const maxScore = Math.max(...Object.values(scores));
+  if (maxScore > 0) {
+    return Object.entries(scores).find(([_, score]) => score === maxScore)[0];
+  }
+
+  return '';
+};
+
 
 const generateServicesFromProjectName = (projectName) => {
   const name = projectName.toLowerCase();
