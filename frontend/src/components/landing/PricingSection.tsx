@@ -1,89 +1,96 @@
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-
-const plans = [
-  {
-    name: "Starter",
-    desc: "Perfect for freelancers and small businesses launching campaigns.",
-    price: "$0",
-    period: "Free forever",
-    cta: "Start Free Trial",
-    ctaVariant: "outline" as const,
-    popular: false,
-    features: ["1 landing page", "Buildify subdomain", "Basic analytics", "100 leads/month", "Community support"],
-  },
-  {
-    name: "Pro",
-    desc: "Unlimited landing pages, AI generation, advanced integrations, and analytics.",
-    price: "$29",
-    period: "/month",
-    cta: "Start Free Trial",
-    ctaVariant: "default" as const,
-    popular: true,
-    features: ["Unlimited pages", "Custom domain + SSL", "Advanced analytics", "Unlimited leads", "Priority support", "A/B testing", "Remove branding"],
-  },
-  {
-    name: "Agency",
-    desc: "Multi-client workspaces, white-label features, and team collaboration tools.",
-    price: "$70",
-    period: "/month",
-    cta: "Start Free Trial",
-    ctaVariant: "outline" as const,
-    popular: false,
-    features: ["Everything in Pro", "Team collaboration", "API access", "White-label", "Dedicated account manager", "Custom integrations", "SLA guarantee"],
-  },
-];
-
 const PricingSection = () => {
-  const [yearly, setYearly] = useState(false);
-
   return (
-    <section id="pricing" className="py-24 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Pricing</p>
-          <h2 className="mt-3 text-3xl font-bold text-foreground md:text-4xl">Simple, transparent pricing</h2>
-          <p className="mt-4 text-muted-foreground">Choose the plan that's right for you. All plans include a 14-day free trial.</p>
-        </div>
+    <section id="pricing" className="py-24 bg-white">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <h2 className="text-4xl md:text-5xl font-bold text-center text-black mb-20">
+          Simple Pricing for Growing Teams
+        </h2>
 
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <button onClick={() => setYearly(false)} className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${!yearly ? "bg-foreground text-background" : "text-muted-foreground"}`}>
-            Monthly
-          </button>
-          <button onClick={() => setYearly(true)} className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${yearly ? "bg-foreground text-background" : "text-muted-foreground"}`}>
-            Yearly <span className="rounded-full bg-success px-2 py-0.5 text-xs text-success-foreground">Save 20%</span>
-          </button>
-        </div>
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <div key={plan.name} className={`relative rounded-xl border p-8 ${plan.popular ? "border-primary shadow-lg ring-2 ring-primary" : "border-border"}`}>
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
-                  Most Popular
-                </div>
-              )}
-              <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{plan.desc}</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-foreground">
-                  {yearly && plan.price !== "$0" ? `$${Math.round(parseInt(plan.price.slice(1)) * 0.8)}` : plan.price}
-                </span>
-                <span className="text-sm text-muted-foreground">{plan.period}</span>
-              </div>
-              <button className="mt-6 w-full inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
-                {plan.cta}
-              </button>
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="h-4 w-4 text-primary" /> {f}
-                  </li>
-                ))}
-              </ul>
+        <div className="grid gap-8 md:grid-cols-3 items-center">
+          {/* Starter */}
+          <div className="bg-white rounded-[2rem] border border-black/5 p-10 shadow-sm flex flex-col h-full">
+            <h3 className="text-xl font-bold text-black mb-2">Starter</h3>
+            <p className="text-black/60 text-sm mb-8">Perfect for freelancers launching their first campaigns.</p>
+            <div className="mb-8">
+              <span className="text-5xl font-bold text-black">$49</span>
+              <span className="text-black/60">/mo</span>
             </div>
-          ))}
+            <ul className="space-y-4 mb-10 flex-grow">
+              {[
+                "5 Landing Pages",
+                "AI Generation",
+                "Basic Analytics"
+              ].map((f, i) => (
+                <li key={i} className="flex items-center gap-3 text-black/80 text-sm">
+                  <div className="h-5 w-5 rounded-full border border-purple-200 flex items-center justify-center">
+                    <span className="text-purple-600 text-[10px]">✓</span>
+                  </div>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button className="w-full py-4 rounded-full border border-black font-bold text-black hover:bg-black/5 transition-colors">
+              Start Free Trial
+            </button>
+          </div>
+
+          {/* Pro */}
+          <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl flex flex-col h-full relative transform md:scale-110 z-10">
+            <div className="absolute top-6 right-6 bg-[#ff3b6b] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+              MOST POPULAR
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Pro</h3>
+            <p className="text-white/60 text-sm mb-8">For performance teams that need unlimited scale.</p>
+            <div className="mb-8">
+              <span className="text-5xl font-bold text-white">$99</span>
+              <span className="text-white/60">/mo</span>
+            </div>
+            <ul className="space-y-4 mb-10 flex-grow">
+              {[
+                "Unlimited Pages",
+                "Advanced AI Modes",
+                "Custom CRM Sync",
+                "A/B Testing"
+              ].map((f, i) => (
+                <li key={i} className="flex items-center gap-3 text-white/80 text-sm">
+                  <div className="h-5 w-5 rounded-full border border-white/20 flex items-center justify-center">
+                    <span className="text-white text-[10px]">✓</span>
+                  </div>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button className="w-full py-4 rounded-full bg-white font-bold text-black hover:bg-white/90 transition-colors">
+              Start Free Trial
+            </button>
+          </div>
+
+          {/* Agency */}
+          <div className="bg-white rounded-[2rem] border border-black/5 p-10 shadow-sm flex flex-col h-full">
+            <h3 className="text-xl font-bold text-black mb-2">Agency</h3>
+            <p className="text-black/60 text-sm mb-8">For agencies managing multiple client websites.</p>
+            <div className="mb-8">
+              <span className="text-5xl font-bold text-black">$249</span>
+              <span className="text-black/60">/mo</span>
+            </div>
+            <ul className="space-y-4 mb-10 flex-grow">
+              {[
+                "Multi-client Workspaces",
+                "White-label Features",
+                "Priority Support"
+              ].map((f, i) => (
+                <li key={i} className="flex items-center gap-3 text-black/80 text-sm">
+                  <div className="h-5 w-5 rounded-full border border-purple-200 flex items-center justify-center">
+                    <span className="text-purple-600 text-[10px]">✓</span>
+                  </div>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button className="w-full py-4 rounded-full border border-black font-bold text-black hover:bg-black/5 transition-colors">
+              Contact Sales
+            </button>
+          </div>
         </div>
       </div>
     </section>
