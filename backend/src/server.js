@@ -58,8 +58,8 @@ app.use(cors({
 const helmetOptions = {
   contentSecurityPolicy: false, // For development and dynamic AI content
   crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: process.env.NODE_ENV === 'production' ? { policy: 'same-origin' } : false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Allow OAuth popups to communicate and close
   hsts: process.env.NODE_ENV === 'production' ? { maxAge: 15552000, includeSubDomains: true } : false,
 };
 app.use(helmet(helmetOptions));
