@@ -11,8 +11,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -33,8 +34,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -55,8 +57,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -77,8 +80,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -99,8 +103,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -121,8 +126,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -143,8 +149,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
@@ -165,8 +172,9 @@
         "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
         "ctaText": "RETURN TO WEBSITE",
         "ctaUrl": "/",
+        "email": "demo@divi.express",
         "phoneNumber": "0850 458 9665",
-        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
+        "offerText": "For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.",
         "customMessage": ""
       },
       "theme": {
