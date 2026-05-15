@@ -19,10 +19,10 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
 
           const isEmailVerified = emails[0].verified || false;
 
-          // Google requires email verification before allowing signup
-          if (!isEmailVerified) {
-            return done(new Error('Google account email is not verified. Please verify your email in Google Account settings.'), null);
-          }
+          // Email verification disabled - allow signup regardless of verification status
+          // if (!isEmailVerified) {
+          //   return done(new Error('Google account email is not verified. Please verify your email in Google Account settings.'), null);
+          // }
 
           // 1. Check if user exists
           let user = await User.findOne({ googleId: id });
