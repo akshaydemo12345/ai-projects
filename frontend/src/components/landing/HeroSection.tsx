@@ -1,87 +1,61 @@
-import { ArrowRight, Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
-    <section className="relative overflow-hidden gradient-hero py-24 md:py-32">
-      <div className="container mx-auto px-4 text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground">
-          <span>🚀</span>
-          <span>AI-Powered Landing Page Builder</span>
+    <section className="relative overflow-hidden pt-24">
+      {/* Blur backgrounds */}
+      <div className="absolute left-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-pink-300/40 blur-3xl" />
+      <div className="absolute right-[-120px] top-[-80px] h-[300px] w-[300px] rounded-full bg-violet-300/40 blur-3xl" />
+
+      <div className="container relative mx-auto px-4">
+        {/* Badge */}
+        <div className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-black/5 bg-white px-4 py-2 text-sm shadow-sm">
+          <Sparkles className="h-4 w-4 text-[#7c3bed]" />
+          AI-Powered Landing Page Builder
         </div>
 
-        <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-tight text-primary-foreground md:text-6xl">
-          AI-Generated Landing Pages.{" "}
-          <span className="text-primary-foreground/70">Instantly Live on Your Domain.</span>
+        {/* Title */}
+        <h1 className="mx-auto max-w-4xl text-center text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
+          AI-Generated Landing
+          <br />
+          Pages.
+          <span className="block bg-gradient-to-r from-[#7c3bed] to-[#1a27e4] bg-clip-text text-transparent">
+            Instantly Live
+          </span>
+          on Your Domain.
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-primary-foreground/70">
-          Buildify creates high-converting PPC landing pages with AI and publishes them directly on your website — no external hosting, no developers, no complicated setup.
+        {/* Subtitle */}
+        <p className="mx-auto mt-6 max-w-xl text-center text-[15px] leading-7 text-black/60">
+          Buildify creates high-converting PPC landing pages with AI and
+          publishes them directly on your website.
         </p>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-6">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link to="/login">
-              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
-                Start Free <ArrowRight className="h-4 w-4" />
-              </button>
-            </Link>
-            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3">
-              <Eye className="h-4 w-4" /> Watch Demo
+        {/* Buttons */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <Link to="/login">
+            <button className="flex items-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:scale-105">
+              Start Free
+              <ArrowRight className="h-4 w-4" />
             </button>
-          </div>
-          <p className="text-sm text-primary-foreground/50 italic">
-            Built for marketers, agencies, and businesses running high-performance ad campaigns.
+          </Link>
+          <button className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-medium text-black hover:bg-black/5">
+            <Play className="h-4 w-4" />
+            Watch Demo
+          </button>
+        </div>
+
+        {/* Companies */}
+        <div className="mt-20 border-t border-black/10 pt-20 pb-24">
+          <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-black/60">
+            Built for performance marketers at
           </p>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
-          {[
-            { value: "12K+", label: "Active Users" },
-            { value: "2.4M", label: "Pages Created" },
-            { value: "99.9%", label: "Uptime" },
-            { value: "4.2%", label: "Avg Conversion" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <div className="text-3xl font-bold text-primary-foreground">{stat.value}</div>
-              <div className="mt-1 text-sm text-primary-foreground/60">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Dashboard Preview */}
-        <div className="mx-auto mt-16 max-w-4xl overflow-hidden rounded-xl border border-border/20 bg-muted shadow-2xl">
-          <div className="flex items-center gap-2 bg-card p-3">
-            <div className="h-3 w-3 rounded-full bg-destructive" />
-            <div className="h-3 w-3 rounded-full bg-warning" />
-            <div className="h-3 w-3 rounded-full bg-success" />
-            <div className="mx-auto rounded-md bg-muted px-4 py-1 text-xs text-muted-foreground">
-              app.buildify.ai/dashboard
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-4 p-6">
-            <div className="col-span-1 space-y-3 text-left">
-              <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded bg-primary" />
-                <span className="text-xs font-semibold text-foreground">Buildify</span>
-              </div>
-              <p className="text-xs text-muted-foreground">All Sites</p>
-              <p className="text-xs text-muted-foreground">Create Page</p>
-              <p className="text-xs text-muted-foreground">Leads</p>
-            </div>
-            <div className="col-span-1 rounded-lg bg-primary/20 p-4" />
-            <div className="col-span-2 grid grid-cols-3 gap-3">
-              {["Total Sites", "Total Leads", "Conversion"].map((label) => (
-                <div key={label} className="rounded-lg border border-border bg-card p-3">
-                  <p className="text-[10px] text-muted-foreground">{label}</p>
-                  <p className="text-sm font-bold text-foreground">
-                    {label === "Total Sites" ? "3" : label === "Total Leads" ? "1,847" : "4.2%"}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-12 grayscale opacity-40">
+            <span className="text-2xl font-bold">Google</span>
+            <span className="text-2xl font-bold">Meta</span>
+            <span className="text-2xl font-bold">Shopify</span>
+            <span className="text-2xl font-bold">Stripe</span>
           </div>
         </div>
       </div>
