@@ -31,8 +31,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedUser = localStorage.getItem("pagecraft_user");
 
       if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        if (storedUser === "undefined") {
+          localStorage.removeItem("pagecraft_user");
+          localStorage.removeItem("pagecraft_token");
+        } else {
+          try {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+          } catch (e) {
+            console.error("Failed to parse stored user", e);
+            localStorage.removeItem("pagecraft_user");
+            localStorage.removeItem("pagecraft_token");
+          }
+        }
       }
       setIsLoading(false);
     };

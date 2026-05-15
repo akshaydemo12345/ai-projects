@@ -61,8 +61,12 @@ export const signInWithGooglePopup = async () => {
   } catch (error: any) {
     if (error.code === 'auth/popup-closed-by-user') {
       console.log('Google Sign-In cancelled by user');
-    } else if (error.code === 'auth/popup-blocked') {
-      console.error('Google Sign-In popup was blocked');
+    } else if (error.code === 'auth/popup-blocked' || error.message?.includes('Cross-Origin-Opener-Policy')) {
+      console.warn('Google Sign-In popup was blocked or blocked by COOP. Falling back to redirect...');
+      // Fallback to redirect method
+      const { signInWithRedirect } = await import('firebase/auth');
+      await signInWithRedirect(auth, googleProvider);
+      return null;
     }
     throw error;
   }
