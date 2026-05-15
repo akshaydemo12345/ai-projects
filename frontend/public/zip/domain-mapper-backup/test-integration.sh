@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Domain Mapper Integration Test Script
+# Buildify AI Integration Test Script
 # ─────────────────────────────────────────────────────────────────────────────
 # 
-# This script verifies that the AI Backend and WordPress Domain Mapper
+# This script verifies that the AI Backend and WordPress Buildify AI
 # plugin are properly configured and communicating.
 #
 # USAGE:
@@ -28,7 +28,7 @@ API_TOKEN="your-unique-plugin-token-here"
 TEST_SLUG="my-page"
 
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}Domain Mapper + AI Backend Integration Test${NC}"
+echo -e "${BLUE}Buildify AI + AI Backend Integration Test${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}\n"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -157,27 +157,27 @@ fi
 echo ""
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Test 5: WordPress Domain Mapper Plugin Check
+# Test 5: WordPress Buildify AI Plugin Check
 # ─────────────────────────────────────────────────────────────────────────────
 
-echo -e "${YELLOW}Test 5: WordPress Domain Mapper Plugin Check${NC}"
+echo -e "${YELLOW}Test 5: WordPress Buildify AI Plugin Check${NC}"
 echo "File: /var/www/html/Wordpress\\ Projects/wp-content/plugins/domain-mapper/domain-mapper.php"
 
 WP_PLUGIN_FILE="/var/www/html/Wordpress Projects/wp-content/plugins/domain-mapper/domain-mapper.php"
 
 if [ -f "$WP_PLUGIN_FILE" ]; then
-    echo -e "${GREEN}✓ Domain Mapper plugin file exists${NC}"
+    echo -e "${GREEN}✓ Buildify AI plugin file exists${NC}"
     
     # Check if plugin admin settings page exists
     SETTINGS_FILE="/var/www/html/Wordpress Projects/wp-content/plugins/domain-mapper/admin/settings-page.php"
     if [ -f "$SETTINGS_FILE" ]; then
         echo -e "${GREEN}✓ Plugin settings page exists${NC}"
-        echo "  Go to: WordPress Admin → Settings → Domain Mapper SaaS"
+        echo "  Go to: WordPress Admin → Settings → Buildify AI"
     else
         echo -e "${RED}✗ Settings page not found${NC}"
     fi
 else
-    echo -e "${RED}✗ Domain Mapper plugin file not found${NC}"
+    echo -e "${RED}✗ Buildify AI plugin file not found${NC}"
     echo "  Expected at: $WP_PLUGIN_FILE"
 fi
 
@@ -199,7 +199,7 @@ echo "   - Create a new page with slug: '$TEST_SLUG'"
 echo "   - Publish with domain: 'my-wordpress-site.test'"
 echo ""
 echo "2. Configure WordPress Plugin:"
-echo "   - Go to WordPress Admin → Settings → Domain Mapper SaaS"
+echo "   - Go to WordPress Admin → Settings → Buildify AI"
 echo "   - Enter API Key: http://127.0.0.1:5000@@$API_TOKEN"
 echo "   - Enter Source Domain: my-wordpress-site.test"
 echo "   - Enter Target Domain: 127.0.0.1:5000"

@@ -117,6 +117,27 @@ const LeadsPage = () => {
   const totalCount = data?.total || 0;
   const formSchema = data?.formSchema;
 
+  const dynamicColumns = useMemo(() => {
+    const skipKeys = ['name', 'full name', 'email', 'phone', 'tel', 'message', 'comment', 'date', 'action', '_id', 'createdat', 'updatedat', '__v'];
+    
+    if (formSchema && formSchema.fields) {
+      return formSchema.fields
+        .filter((f: any) => !skipKeys.some(sk => (f.label || f.field_name || '').toLowerCase().includes(sk)))
+        .map((f: any) => ({ key: f.field_name || f.label, label: f.label || f.field_name }))
+        .slice(0, 3);
+    }
+    
+    const cols = new Set<string>();
+    leads.forEach((l: any) => {
+      if (l.data) {
+        Object.keys(l.data).forEach(k => {
+          if (!skipKeys.some(sk => k.toLowerCase().includes(sk))) cols.add(k);
+        });
+      }
+    });
+    return Array.from(cols).slice(0, 3).map(k => ({ key: k, label: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) }));
+  }, [formSchema, leads]);
+
 
   // ── Delete mutation ───────────────────────────────────────────────────────
   const deleteMutation = useMutation({
@@ -584,6 +605,9 @@ const LeadsPage = () => {
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Full Name</th>
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phone</th>
+                      {dynamicColumns.map(col => (
+                        <th key={col.key} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{col.label}</th>
+                      ))}
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
                     </tr>
@@ -633,6 +657,13 @@ const LeadsPage = () => {
                             )}
                           </div>
                         </td>
+                        {dynamicColumns.map(col => (
+                          <td key={col.key} className="px-6 py-5">
+                            <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]" title={String(lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value) || '—')}>
+                              {lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value) || '—'}
+                            </p>
+                          </td>
+                        ))}
                         <td className="px-6 py-5">
                           <p className="text-xs text-slate-500 font-medium">
                             {format(new Date(lead.createdAt), "MMM d, h:mm a")}
@@ -727,6 +758,21 @@ const LeadsPage = () => {
                           )}
                         </div>
                       </div>
+                      
+                      {dynamicColumns.length > 0 && (
+                        <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 col-span-1 sm:col-span-2">
+                          {dynamicColumns.map(col => {
+                            const val = lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value);
+                            if (!val) return null;
+                            return (
+                              <div key={col.key} className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
+                                <p className="text-[10px] text-slate-400 uppercase font-bold mb-1 truncate">{col.label}</p>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate" title={String(val)}>{val}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -856,24 +902,49 @@ const LeadsPage = () => {
                       )}
                     </div>
                   </div>
-                  
-                  {selectedLead.formData?.filter(field => {
-                    const lower = (field.name || '').toLowerCase();
-                    return !lower.includes('name') && 
-                           !lower.includes('email') && 
-                           !lower.includes('phone') && 
-                           !lower.includes('tel') && 
-                           !lower.includes('message') && 
-                           !lower.includes('comment');
-                  }).map((field, idx) => (
-                    <div key={`extra-${idx}`} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">{field.label || field.name}</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white break-all flex items-center gap-2">
-                        <Clipboard className="h-3.5 w-3.5 text-primary/60" />
-                        {String(field.value || '—')}
-                      </p>
-                    </div>
-                  ))}
+                  {(() => {
+                    const extraFields: { label: string, value: any }[] = [];
+                    const skipKeys = ['name', 'fullname', 'email', 'phone', 'tel', 'message', 'comment'];
+                    
+                    if (selectedLead.data) {
+                      Object.entries(selectedLead.data).forEach(([key, value]) => {
+                        const lower = key.toLowerCase();
+                        if (!skipKeys.some(sk => lower.includes(sk)) && value && typeof value !== 'object') {
+                          extraFields.push({ label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), value });
+                        }
+                      });
+                    }
+                    
+                    if (selectedLead.formData && Array.isArray(selectedLead.formData)) {
+                      selectedLead.formData.forEach(field => {
+                        const lower = (field.name || field.label || '').toLowerCase();
+                        if (!skipKeys.some(sk => lower.includes(sk)) && field.value) {
+                          const existing = extraFields.find(f => f.label.toLowerCase() === lower || f.label === field.label);
+                          if (!existing) {
+                            extraFields.push({ label: field.label || field.name, value: field.value });
+                          }
+                        }
+                      });
+                    }
+
+                    // Also check top level properties if they match dynamic columns
+                    dynamicColumns.forEach(col => {
+                      const val = (selectedLead as any)[col.key];
+                      if (val && typeof val !== 'object' && !extraFields.find(f => f.label === col.label)) {
+                        extraFields.push({ label: col.label, value: val });
+                      }
+                    });
+
+                    return extraFields.map((field, idx) => (
+                      <div key={`extra-${idx}`} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-2 truncate">{field.label}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white break-all flex items-center gap-2">
+                          <Clipboard className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                          <span className="line-clamp-3">{String(field.value || '—')}</span>
+                        </p>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </section>
 

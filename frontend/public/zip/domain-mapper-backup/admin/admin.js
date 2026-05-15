@@ -129,7 +129,7 @@
         var $container = $('#dm-js-notices');
         $container.empty(); // Clear old ones
 
-        var html = '<div class="notice notice-' + type + ' is-dismissible"><p><strong>Domain Mapper:</strong> ' + message + '</p></div>';
+        var html = '<div class="notice notice-' + type + ' is-dismissible"><p><strong>Buildify AI:</strong> ' + message + '</p></div>';
         var $notice = $(html);
         
         $container.append($notice);

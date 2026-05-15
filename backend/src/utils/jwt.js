@@ -30,6 +30,18 @@ const createPasswordResetToken = () => {
 const hashResetToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
 
+  // ─── Email Verification Token (crypto, not JWT) ────────────────────────────────
+  const createEmailVerificationToken = () => {
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    return { verificationToken, hashedToken, expiresAt };
+  };
+
+  const hashEmailVerificationToken = (token) =>
+    crypto.createHash('sha256').update(token).digest('hex');
+
+
 // ─── Send Access + Refresh Token Response ────────────────────────────────────
 const sendToken = (user, statusCode, res) => {
   const accessToken  = signToken(user._id);
@@ -58,5 +70,7 @@ module.exports = {
   verifyRefreshToken,
   createPasswordResetToken,
   hashResetToken,
+  createEmailVerificationToken,
+  hashEmailVerificationToken,
   sendToken,
 };

@@ -1,5 +1,5 @@
 const axios = require('axios');
-
+const config = require('../config');
 /**
  * Brevo Email Service
  * Handles sending transactional emails using direct API calls
@@ -14,15 +14,16 @@ class EmailService {
    * @param {Object} options
    */
   async sendEmail({ to, subject, htmlContent, fromName, fromEmail, brevoKey }) {
-    const finalApiKey = brevoKey || process.env.BREVO_API_KEY;
+        const finalApiKey = brevoKey || config.email.brevoApiKey;
 
     if (!finalApiKey) {
-      console.warn('⚠️ Brevo API Key missing. Skipping email.');
-      return;
+      const missingKeyError = 'Brevo API Key missing. Cannot send email.';
+      console.error(`❌ ${missingKeyError}`);
+      throw new Error(missingKeyError);
     }
 
-    const finalFromName = fromName && fromName.trim() ? fromName : (process.env.FROM_NAME || 'AI Landing Page Builder');
-    const finalFromEmail = fromEmail && fromEmail.trim() ? fromEmail : (process.env.FROM_EMAIL || 'noreply@yourdomain.com');
+    const finalFromName = fromName && fromName.trim() ? fromName : config.email.fromName;
+    const finalFromEmail = fromEmail && fromEmail.trim() ? fromEmail : config.email.fromEmail;
 
     const data = {
       sender: {
@@ -52,11 +53,23 @@ class EmailService {
           'Content-Type': 'application/json'
         }
       });
-      console.log('📧 Email sent successfully via Brevo API');
+      console.log(`📧 Email sent successfully via Brevo API (Status: ${response.status})`);
       return response.data;
     } catch (error) {
-      const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
-      console.error('❌ Brevo API Error:', errorMsg);
+      const status = error.response ? error.response.status : 'No Status';
+      const errorData = error.response ? error.response.data : {};
+      const errorMsg = JSON.stringify(errorData) || error.message;
+      
+      console.error(`❌ Brevo API Error [${status}]:`, errorMsg);
+      
+      if (status === 401) {
+        console.error('   👉 Possible cause: Invalid API Key');
+      } else if (status === 403) {
+        console.error('   👉 Possible cause: Sender email not authorized or account suspended');
+      } else if (status === 400) {
+        console.error('   👉 Possible cause: Invalid recipient email or malformed request body');
+      }
+      
       throw new Error(`Brevo Email Error: ${errorMsg}`);
     }
   }
