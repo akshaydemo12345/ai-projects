@@ -55,11 +55,14 @@ app.use(cors({
 }));
 
 // Adjusted Helmet to allow iframes and cross-site content
-app.use(helmet({
+const helmetOptions = {
   contentSecurityPolicy: false, // For development and dynamic AI content
   crossOriginResourcePolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Allow OAuth popups to communicate and close
+  hsts: process.env.NODE_ENV === 'production' ? { maxAge: 15552000, includeSubDomains: true } : false,
+};
+app.use(helmet(helmetOptions));
 // Custom HTTP Logger is used instead of Morgan to support better filtering
 // app.use(morgan('dev'));
 

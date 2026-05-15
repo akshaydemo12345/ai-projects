@@ -5,7 +5,7 @@ const https = require('https');
 const logger = require('../utils/logger');
 
 /**
- * Service to synchronize with remote WordPress sites using the Domain Mapper plugin.
+ * Service to synchronize with remote WordPress sites using the Buildify AI plugin.
  */
 class SyncService {
   /**

@@ -1,4 +1,4 @@
-# Domain Mapper SaaS – WordPress Plugin
+# Buildify AI – WordPress Plugin
 
 **Version:** 1.0.0  
 **Requires WordPress:** 5.8+  
@@ -34,7 +34,7 @@ domain-mapper/
 
 1. Upload the `domain-mapper/` folder to `/wp-content/plugins/`.
 2. Activate via **Plugins → Installed Plugins**.
-3. Navigate to **Settings → Domain Mapper**.
+3. Navigate to **Settings → Buildify AI**.
 4. Enter your **API Key**, **Source Domain (DomainA)**, and **Target Domain (DomainB)**.
 5. Click **Verify Now** – the badge turns green on success.
 6. Save Settings.

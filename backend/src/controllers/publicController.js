@@ -728,7 +728,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
           .replace(/PRIMARY_COLOR_PLACEHOLDER/g, pColor)
           .replace(/SECONDARY_COLOR_PLACEHOLDER/g, sColor)
           .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
-          
+
         if (!html.includes('id="ai-generated-styles"')) {
           html = html.replace(/<\/head>/i, `  <style id="ai-generated-styles">${processedCss}</style>\n</head>`);
         }
@@ -878,9 +878,12 @@ exports.getPublicPageHTML = async (req, res, next) => {
     let page = null;
 
     // 1. Resolve via ID or Preview Token
-    if (requestedPageId) {
-      if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
-        page = await Page.findOne({ _id: requestedPageId, isDeleted: { $ne: true } });
+    const idFromSlug = (req.params.slug && /^[0-9a-fA-F]{24}$/.test(req.params.slug)) ? req.params.slug : null;
+    const lookupId = requestedPageId || idFromSlug;
+
+    if (lookupId) {
+      if (/^[0-9a-fA-F]{24}$/.test(lookupId)) {
+        page = await Page.findOne({ _id: lookupId, isDeleted: { $ne: true } });
       }
       if (!page) {
         page = await Page.findOne({ previewToken: requestedPageId, isDeleted: { $ne: true } });
@@ -1148,7 +1151,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
       return require('./thankYouController').renderThankYouPage(req, res, next);
     }
 
-    res.status(200).send(renderFullHTML(page, canonicalUrl));
+    res.status(200).send(renderFullHTML(page, canonicalUrl, isThankYou));
   } catch (err) {
     console.error('❌ Public Page Error:', err);
     next(err);
@@ -1166,19 +1169,23 @@ exports.handleFormSubmission = async (req, res, next) => {
     let { pageId, pageSlug, projectId } = rawData;
 
     // --- SMART CONTEXT RESOLUTION ---
-    // If slug is missing (relay) or ends with 'proxy-form', resolve it
-    if (!pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form') {
+    // Resolve pageSlug from URL params or referer if missing or a generic relay path
+    const isRelayPath = !pageSlug || pageSlug.endsWith('/proxy-form') || pageSlug === 'proxy-form';
+    if (isRelayPath) {
       const referer = req.get('referer') || '';
-      const urlSlug = (req.params.slug || '').replace(/^api\/v1\/proxy\//i, '');
+      const urlParamSlug = String(req.params.slug || req.params[0] || '').trim().replace(/^api\/v1\/proxy\//i, '');
+      
+      let detectedSlug = urlParamSlug;
 
-      // Try to get slug from URL param (stripping proxy-form)
-      let detectedSlug = urlSlug.replace(/\/proxy-form$/i, '');
-
-      // If still no slug, try parsing referer
+      // If URL param is empty, try parsing referer
       if (!detectedSlug && referer) {
         try {
-          const refPath = new URL(referer).pathname.replace(/^\/+|\/+$/g, '');
-          detectedSlug = refPath;
+          const refUrl = new URL(referer);
+          detectedSlug = refUrl.pathname.replace(/^\/+|\/+$/g, '');
+          // If it's on a custom domain or mapped path, the first part might be the slug
+          if (!detectedSlug && refUrl.searchParams.has('page')) {
+             // Fallback to query param if present
+          }
         } catch (e) { }
       }
 
@@ -1220,6 +1227,21 @@ exports.handleFormSubmission = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Form schema not found. Please ensure page is published and form is configured.' });
     }
 
+    // ── FIX: Resolve pageSlug from the Page document BEFORE Lead.create ──────
+    // The WP proxy form only posts raw fields (name, phone, etc.) — no metadata.
+    // schema.page_slug does NOT exist in FormSchema, so it is always undefined.
+    // We must look up the real slug now, while we have schema.page_id guaranteed.
+    if (!pageSlug || !projectId) {
+      try {
+        const _pg = await Page.findById(schema.page_id).select('slug projectId').lean();
+        if (_pg) {
+          if (!pageSlug) pageSlug = _pg.slug;
+          if (!projectId) projectId = String(_pg.projectId || '');
+        }
+      } catch (_e) { /* non-fatal */ }
+    }
+    if (!pageSlug) pageSlug = String(schema.page_id); // absolute last-resort
+
     // 2. Helpers for Dynamic Matching
     const normalizeKey = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
     const slugify = (str = "") => String(str || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -1255,7 +1277,16 @@ exports.handleFormSubmission = async (req, res, next) => {
         if (label.includes("subject") || label.includes("title")) candidates.push("subject", "title", "topic");
       }
       if (field.type === "number") candidates.push("amount", "quantity", "count", "age", "price");
-      if (field.type === "date" || field.type === "time") candidates.push("date", "time", "appointment", "schedule", "on_date");
+      if (field.type === "date" || field.type === "time") candidates.push(
+        "date", "time", "appointment", "schedule", "on_date",
+        "travel_date", "traveldate", "departure_date", "departuredate",
+        "checkin", "check_in", "check_in_date", "checkout", "check_out",
+        "booking_date", "bookingdate", "arrival_date", "arrivaldate",
+        "visit_date", "visitdate", "preferred_date", "preferreddate",
+        "start_date", "startdate", "end_date", "enddate",
+        "from_date", "fromdate", "to_date", "todate",
+        "service_date", "servicedate", "event_date", "eventdate"
+      );
       if (field.type === "select" || field.type === "radio") candidates.push("service", "category", "type", "option", "selection", "plan");
       if (field.type === "checkbox") candidates.push("agree", "accept", "consent", "newsletter", "terms");
 
@@ -1282,15 +1313,37 @@ exports.handleFormSubmission = async (req, res, next) => {
         missingFields.push(field.label || field.field_name);
       }
 
-      // Store using ONE persistent key (prioritize semantic name)
       const storageKey = field.name || field.field_name;
       if (value !== undefined) {
         leadData[storageKey] = value;
       }
     }
 
+    // Passthrough: also capture any submitted key NOT matched by the schema.
+    // Handles field-name drift (HTML name="travel_date" vs schema label "date").
+    const _sysKeys = new Set(['pageId', 'pageSlug', 'projectId', 'timestamp', 'url', 'domain',
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'gclid', 'fbclid', 'msclkid', 'redirect', 'pageUrl', 'referer']);
+    const _schemaKeys = new Set(schema.fields.map(f => normalizeKey(f.name || f.field_name)));
+    Object.entries(rawData).forEach(([k, v]) => {
+      if (!_sysKeys.has(k) && v !== undefined && v !== null && String(v).trim() !== '') {
+        const nk = normalizeKey(k);
+        if (!_schemaKeys.has(nk) && !Object.keys(leadData).some(lk => normalizeKey(lk) === nk)) {
+          leadData[k] = typeof v === 'string' ? v.trim() : v;
+        }
+      }
+    });
+
+    // FIX: Soft-warn — NEVER hard-fail on missing required fields.
+    // Previously this returned 400 and the lead was lost entirely.
+    // Now we log the warning and save with whatever data was received.
+    // Only hard-fail when the post is completely empty (bot protection).
     if (missingFields.length > 0) {
-      return res.status(400).json({ status: 'fail', message: 'Required fields missing', fields: missingFields });
+      logger.warn(`[FORM] Missing required fields [${missingFields.join(', ')}] on "${pageSlug}" — saving with available data`);
+    }
+    const _allEmpty = Object.values(leadData).every(v => !v || String(v).trim() === '');
+    if (_allEmpty && schema.fields.length > 0) {
+      return res.status(400).json({ status: 'fail', message: 'No form data received', fields: missingFields });
     }
 
     // 4. UTMs Extraction
@@ -1317,9 +1370,9 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     // 5. Create Lead
     const lead = await Lead.create({
-      projectId: schema.project_id,
-      pageId: schema.page_id,
-      pageSlug: pageSlug || schema.page_slug,
+      projectId: schema.project_id || projectId,
+      pageId: schema.page_id || pageId,
+      pageSlug: pageSlug,          // FIX: always resolved above — never undefined
       data: leadData,
       utm,
       // Spread UTM fields to top level for insurance
@@ -1346,19 +1399,79 @@ exports.handleFormSubmission = async (req, res, next) => {
         // 1. Admin Notification
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
+          const pColor = project.primaryColor || '#7c3aed';
+          // Intro message removed per user request
 
-          // Use a clean default template for admin notifications
           const adminMsg = `
-            <h2>New Lead Captured!</h2>
-            <p>A new form was submitted on your landing page.</p>
-            <hr />
-            <p><strong>Name:</strong> ${leadData.name || 'Unknown'}</p>
-            <p><strong>Email:</strong> ${leadData.email || 'Not provided'}</p>
-            <p><strong>Phone:</strong> ${leadData.phone || 'Not provided'}</p>
-            <p><strong>Message:</strong> ${leadData.message || 'No message'}</p>
-            <hr />
-            <p><strong>Page:</strong> ${pageSlug || schema.page_slug || ''}</p>
-            <p><strong>Time:</strong> ${now}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #f8fafc; }
+                .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+                .header { background-color: ${pColor}; padding: 40px 20px; text-align: center; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; }
+                .header p { margin: 10px 0 0; opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+                .content { padding: 40px; }
+                .intro { font-size: 14px; color: #64748b; margin-bottom: 30px; text-align: center; white-space: pre-line; }
+                .data-card { background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+                .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+                .data-row:last-child { border-bottom: none; }
+                .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                .value { font-size: 14px; font-weight: 600; color: #1e293b; }
+                .footer { padding: 30px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
+                .footer p { margin: 5px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>New Lead Captured</h1>
+                  <p>${project.fromName || 'System Notification'}</p>
+                </div>
+                <div class="content">
+                  <div class="data-card">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${Object.entries(leadData).map(([key, value]) => `
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">${key.replace(/_/g, ' ')}</div>
+                          <div class="value">${value || 'Not provided'}</div>
+                        </td>
+                      </tr>`).join('')}
+                      ${Object.entries(utm).map(([key, value]) => value ? `
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">${key.replace(/_/g, ' ')}</div>
+                          <div class="value">${value}</div>
+                        </td>
+                      </tr>` : '').join('')}
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                          <div class="label">Page</div>
+                          <div class="value">${pageSlug || ''}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <div class="label">Referral URL</div>
+                          <div class="value" style="word-break: break-all; font-size: 13px;">
+                            ${rawData.url || rawData.pageUrl || 'Direct'}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>Powered by AI Landing Page Builder</p>
+                  <p>&copy; ${new Date().getFullYear()} ${project.fromName || 'All Rights Reserved'}</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `;
 
           emailService.sendEmail({
@@ -1366,25 +1479,65 @@ exports.handleFormSubmission = async (req, res, next) => {
             subject: project.adminNotification.subject?.replace(/{{page_slug}}/g, pageSlug || '') || `New Lead from ${pageSlug}`,
             htmlContent: adminMsg,
             fromName: project.fromName,
-            fromEmail: project.fromEmail
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey
           }).catch(err => console.error('Admin Email Error:', err));
         }
 
         // 2. User Auto-Reply
-        if (project.userNotification?.enabled && leadData.email) {
-          // Use a clean default template for user auto-replies
+        const userEmail = leadData.email || leadData.email_address;
+        if (project.userNotification?.enabled && userEmail) {
+          const pColor = project.primaryColor || '#7c3aed';
+          const userName = leadData.name || leadData.full_name || 'there';
+          const customUserMessage = project.userNotification.message || "Thank you for reaching out to us! We have received your inquiry and our team is already looking into it. We will get back to you as soon as possible.";
+
           const userMsg = `
-            <h3>Hello ${leadData.name || 'there'},</h3>
-            <p>Thank you for reaching out to us! We have received your inquiry and our team will get back to you as soon as possible.</p>
-            <p>Best regards,<br/>The Team</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #f8fafc; }
+                .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+                .header { background-color: ${pColor}; padding: 40px 20px; text-align: center; color: #ffffff; }
+                .header .logo { width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+                .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+                .content { padding: 40px; text-align: center; }
+                .content h2 { color: #1e293b; margin-top: 0; }
+                .content p { color: #64748b; font-size: 15px; margin-bottom: 30px; white-space: pre-line; }
+                .footer { padding: 30px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="logo">${(project.fromName || 'L')[0]}</div>
+                  <h1>Message Received</h1>
+                </div>
+                <div class="content">
+                  <h2>Hello ${userName},</h2>
+                  <p>${customUserMessage}</p>
+                  <div style="margin: 30px 0;">
+                    <span style="padding: 12px 24px; border-radius: 50px; background-color: ${pColor}; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">We'll talk soon!</span>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>This is an automated confirmation from ${project.fromName || 'our team'}.</p>
+                  <p>&copy; ${new Date().getFullYear()} ${project.fromName || 'All Rights Reserved'}</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `;
 
           emailService.sendEmail({
-            to: leadData.email,
+            to: userEmail,
             subject: project.userNotification.subject || "Thank you for contacting us!",
             htmlContent: userMsg,
             fromName: project.fromName,
-            fromEmail: project.fromEmail
+            fromEmail: project.fromEmail,
+            brevoKey: project.brevoKey
           }).catch(err => console.error('User Email Error:', err));
         }
       }
@@ -1399,7 +1552,7 @@ exports.handleFormSubmission = async (req, res, next) => {
         thankYouUrl = pageDoc.thankYouUrl;
       } else {
         // Build default redirect path (retaining path context)
-        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}/thank-you`;
+        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}?status=thank-you`;
       }
     }
 
@@ -1607,7 +1760,7 @@ exports.downloadPlugin = async (req, res, next) => {
     // Try multiple locations in order of preference
     const possiblePaths = [
       // Backend public/zip directory
-      path.resolve(__dirname, '../../public/zip/domain-mapper.zip'),
+      path.resolve(__dirname, '../../public/zip/buildify-ai.zip'),
       path.resolve(__dirname, '../../public/zip/domain-mapper-test.zip'),
       path.resolve(__dirname, '../../public/zip/ai-landing-page-publisher.zip'),
       // Frontend public/zip directory
@@ -1630,7 +1783,7 @@ exports.downloadPlugin = async (req, res, next) => {
 
     // Set correct headers for forcing a ZIP download
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="domain-mapper.zip"');
+    res.setHeader('Content-Disposition', 'attachment; filename="buildify-ai.zip"');
 
     // Stream the file for efficiency
     const fileStream = fs.createReadStream(zipPath);
@@ -1806,7 +1959,7 @@ exports.getDynamicPage = async (req, res, next) => {
       }
     }
 
-    const html = renderFullHTML(page, `http://${domain}/${cleanSlug}`);
+    const html = renderFullHTML(page, `https://${domain}/${cleanSlug}`);
 
     res.status(200).json({
       status: 'success',
@@ -1820,4 +1973,3 @@ exports.getDynamicPage = async (req, res, next) => {
 };
 
 // End of file
-
