@@ -93,6 +93,7 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
         subheading: config.content.subheading || selectedLayout.defaultContent.subheading,
         ctaText: config.content.ctaText || selectedLayout.defaultContent.ctaText,
         ctaUrl: config.content.ctaUrl || selectedLayout.defaultContent.ctaUrl,
+        email: config.content.email || selectedLayout.defaultContent.email,
         phoneNumber: config.content.phoneNumber || selectedLayout.defaultContent.phoneNumber,
         offerText: config.content.offerText || selectedLayout.defaultContent.offerText,
         customMessage: config.content.customMessage || selectedLayout.defaultContent.customMessage,
@@ -132,6 +133,7 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
         layout: config.layout,
         content: config.content,
         branding: config.branding,
+        pageId: pageId,
       });
       setPreviewHtml(html);
       setShowPreview(true);
@@ -271,6 +273,21 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
                     })
                   }
                   placeholder="https://yourwebsite.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Contact Email (Optional)</Label>
+                <Input
+                  id="email"
+                  value={config.content.email || ''}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      content: { ...config.content, email: e.target.value },
+                    })
+                  }
+                  placeholder="demo@divi.express"
                 />
               </div>
 

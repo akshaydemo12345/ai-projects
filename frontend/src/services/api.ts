@@ -629,6 +629,7 @@ export interface ThankYouLayout {
     subheading: string;
     ctaText: string;
     ctaUrl: string;
+    email?: string;
     phoneNumber?: string;
     offerText?: string;
     customMessage?: string;
@@ -648,6 +649,7 @@ export interface ThankYouConfig {
     subheading?: string;
     ctaText?: string;
     ctaUrl?: string;
+    email?: string;
     phoneNumber?: string;
     offerText?: string;
     customMessage?: string;
@@ -730,13 +732,17 @@ export const thankYouApi = {
     html = html.replace(/\{\{#offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, content.offerText ? '$1' : '');
     html = html.replace(/\{\{\^offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, !content.offerText ? '$1' : '');
 
+    html = html.replace(/\{\{#email\}\}([\s\S]*?)\{\{\/email\}\}/g, content.email ? '$1' : '');
+    html = html.replace(/\{\{\^email\}\}([\s\S]*?)\{\{\/email\}\}/g, !content.email ? '$1' : '');
+
     html = html
       .replace(/\{\{heading\}\}/g, escapeHtml(content.heading || ''))
       .replace(/\{\{subheading\}\}/g, escapeHtml(content.subheading || ''))
       .replace(/\{\{ctaText\}\}/g, escapeHtml(content.ctaText || ''))
       .replace(/\{\{ctaUrl\}\}/g, content.ctaUrl || '#')
-      .replace(/\{\{phoneNumber\}\}/g, escapeHtml(content.phoneNumber || ''))
       .replace(/\{\{offerText\}\}/g, escapeHtml(content.offerText || ''))
+      .replace(/\{\{email\}\}/g, escapeHtml(content.email || ''))
+      .replace(/\{\{phoneNumber\}\}/g, escapeHtml(content.phoneNumber || ''))
       .replace(/\{\{customMessage\}\}/g, escapeHtml(content.customMessage || ''))
       .replace(/\{\{primaryColor\}\}/g, escapeHtml(branding.primaryColor || '#7c3aed'))
       .replace(/\{\{secondaryColor\}\}/g, escapeHtml(branding.secondaryColor || '#a855f7'))
