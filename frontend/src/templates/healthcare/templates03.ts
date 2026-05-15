@@ -12,7 +12,7 @@ export const healthcare03Styles = `
   --text-light: #64748b;
   --white: #ffffff;
   --bg-soft: #f8fafc;
-  --bg-dark: SECONDARY_COLOR_PLACEHOLDER;
+  --bg-dark: #0b1a2d;
   --border-color: #f1f5f9;
 }
 
@@ -107,10 +107,21 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 .hero-bg-image {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600');
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
   background-size: cover;
   background-position: center;
   animation: slowZoom 20s infinite alternate linear;
+  overflow: hidden;
+}
+.hero-bg-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  border-radius: 0;
+  filter: brightness(0.5);
 }
 
 .hero-content {
@@ -145,6 +156,7 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
   display: flex;
   height: 120px;
   z-index: 100;
+    background: var(--primary) !important;
 }
 
 .booking-label {
@@ -241,7 +253,8 @@ img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
 
 .feature-card-03:hover {
   transform: translateY(-15px);
-  box-shadow: 0 30px 60px rgba(PRIMARY_COLOR_PLACEHOLDER, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--primary);
 }
 
 .feature-card-03 .material-symbols-outlined {
