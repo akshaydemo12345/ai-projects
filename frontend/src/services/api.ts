@@ -640,6 +640,40 @@ export const thankYouApi = {
         throw new Error('Failed to generate preview');
     }
     
-    return res.text(); // Return raw HTML text
+    let html = await res.text();
+    
+    // 🎨 DUMMY UI SIMULATION: Frontend-only template rendering
+    // Fallback to process mustache tags on the frontend if the backend fails to process them
+    const { content = {}, branding = {} } = previewConfig;
+    const businessName = 'Preview Business';
+    
+    const escapeHtml = (text: string) => {
+      if (!text) return '';
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
+
+    html = html.replace(/\{\{#phoneNumber\}\}([\s\S]*?)\{\{\/phoneNumber\}\}/g, content.phoneNumber ? '$1' : '');
+    html = html.replace(/\{\{\^phoneNumber\}\}([\s\S]*?)\{\{\/phoneNumber\}\}/g, !content.phoneNumber ? '$1' : '');
+    html = html.replace(/\{\{#logoUrl\}\}([\s\S]*?)\{\{\/logoUrl\}\}/g, branding.logoUrl ? '$1' : '');
+    html = html.replace(/\{\{\^logoUrl\}\}([\s\S]*?)\{\{\/logoUrl\}\}/g, !branding.logoUrl ? '$1' : '');
+    html = html.replace(/\{\{#offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, content.offerText ? '$1' : '');
+    html = html.replace(/\{\{\^offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, !content.offerText ? '$1' : '');
+
+    html = html
+      .replace(/\{\{heading\}\}/g, escapeHtml(content.heading || ''))
+      .replace(/\{\{subheading\}\}/g, escapeHtml(content.subheading || ''))
+      .replace(/\{\{ctaText\}\}/g, escapeHtml(content.ctaText || ''))
+      .replace(/\{\{ctaUrl\}\}/g, content.ctaUrl || '#')
+      .replace(/\{\{phoneNumber\}\}/g, escapeHtml(content.phoneNumber || ''))
+      .replace(/\{\{offerText\}\}/g, escapeHtml(content.offerText || ''))
+      .replace(/\{\{customMessage\}\}/g, escapeHtml(content.customMessage || ''))
+      .replace(/\{\{primaryColor\}\}/g, escapeHtml(branding.primaryColor || '#7c3aed'))
+      .replace(/\{\{secondaryColor\}\}/g, escapeHtml(branding.secondaryColor || '#a855f7'))
+      .replace(/PRIMARY_COLOR_PLACEHOLDER/g, escapeHtml(branding.primaryColor || '#7c3aed'))
+      .replace(/SECONDARY_COLOR_PLACEHOLDER/g, escapeHtml(branding.secondaryColor || '#a855f7'))
+      .replace(/\{\{logoUrl\}\}/g, escapeHtml(branding.logoUrl || ''))
+      .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
+    
+    return html;
   },
 };
