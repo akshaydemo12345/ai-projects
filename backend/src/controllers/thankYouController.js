@@ -178,6 +178,26 @@ exports.renderThankYouPage = async (req, res, next) => {
     if (page.thankYouConversionScript) finalFooterScript += '\n' + normalizeScriptLocal(page.thankYouConversionScript);
 
     if (finalHeaderScript.trim()) html = html.replace('</head>', '\n' + finalHeaderScript + '\n</head>');
+    const returnUrlScript = `
+<script>
+  (function() {
+    try {
+      var currentUrl = new URL(window.location.href);
+      var search = currentUrl.search.replace(/[?&]status=thank-you/, '').replace(/&&/g, '&').replace(/\\?$/, '');
+      var newHref = currentUrl.pathname + search;
+      if (currentUrl.hash && currentUrl.hash.includes('status=thank-you')) {
+          newHref = currentUrl.pathname + currentUrl.search + currentUrl.hash.replace('?status=thank-you', '').replace('&status=thank-you', '');
+      }
+      var ctaUrl = "${content.ctaUrl}";
+      if (ctaUrl && (ctaUrl.startsWith('/') || ctaUrl === '#')) {
+        var links = document.querySelectorAll('a[href="' + ctaUrl + '"]');
+        links.forEach(function(link) { link.href = newHref; });
+      }
+    } catch(e) {}
+  })();
+</script>`;
+    finalFooterScript += '\n' + returnUrlScript;
+
     if (finalFooterScript.trim()) {
       if (/<\/body>/i.test(html)) html = html.replace(/<\/body>/i, '\n' + finalFooterScript + '\n</body>');
       else html += '\n' + finalFooterScript;
