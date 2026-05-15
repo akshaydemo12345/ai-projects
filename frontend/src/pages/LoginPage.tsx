@@ -31,12 +31,22 @@ const LoginPage = () => {
       let response;
       if (isSignUp) {
         response = await authApi.signup({ name, email, password });
-        toast.success("Account created successfully!", {
-          description: "Welcome to Buildify! Let's start building your first project.",
-        });
-                 setIsSignUp(false);
-        setPassword("");
-        setName("");
+        
+        // If the backend auto-logs in the user and returns an accessToken, use it.
+        if (response.accessToken && response.data && response.data.user) {
+          toast.success("Account created successfully!", {
+            description: "Welcome to Buildify! Let's start building your first project.",
+          });
+          login(response.accessToken, response.data.user);
+          navigate("/dashboard");
+        } else {
+          toast.success("Account created successfully!", {
+            description: "Please check your email to verify your account.",
+          });
+          setIsSignUp(false);
+          setPassword("");
+          setName("");
+        }
       } else {
         response = await authApi.login({ email, password });
         toast.success("Welcome back!", {
