@@ -484,6 +484,10 @@ const GrapesEditor = () => {
         ],
       },
       panels: { defaults: [] },
+      selectorManager: {
+        componentFirst: true,
+        appendTo: '#selectors-container',
+      },
       styleManager: {
         appendTo: '#styles-container',
         sectors: [
