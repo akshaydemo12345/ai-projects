@@ -7,12 +7,12 @@
       "preview": "/layouts/roofing/preview.png",
       "industry": "roofing",
       "defaultContent": {
-        "heading": "Thank You for Contacting Us!",
-        "subheading": "Our roofing experts will review your request and contact you within 24 hours to schedule your free inspection.",
-        "ctaText": "Schedule Free Inspection",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "Get 10% off your first roof inspection",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -29,12 +29,12 @@
       "preview": "/layouts/real_estate/preview.png",
       "industry": "real_estate",
       "defaultContent": {
-        "heading": "Thank You for Your Interest!",
-        "subheading": "Our real estate team will contact you shortly to help you find your perfect property.",
-        "ctaText": "View Available Properties",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "Free property valuation included",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -51,12 +51,12 @@
       "preview": "/layouts/healthcare/preview.png",
       "industry": "healthcare",
       "defaultContent": {
-        "heading": "Thank You for Reaching Out!",
-        "subheading": "Our healthcare team will review your information and contact you within 24 hours to schedule your appointment.",
-        "ctaText": "Book Your Appointment",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "New patient special: 20% off first visit",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -73,12 +73,12 @@
       "preview": "/layouts/legal/preview.png",
       "industry": "legal",
       "defaultContent": {
-        "heading": "Thank You for Contacting Our Firm",
-        "subheading": "Our legal team will review your case and contact you within 24 hours for a free consultation.",
-        "ctaText": "Schedule Free Consultation",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "Free initial consultation",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -95,12 +95,12 @@
       "preview": "/layouts/education/preview.png",
       "industry": "education",
       "defaultContent": {
-        "heading": "Thank You for Your Interest!",
-        "subheading": "Our admissions team will contact you shortly with more information about our programs.",
-        "ctaText": "Explore Our Programs",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "Apply now and get $500 scholarship",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -117,12 +117,12 @@
       "preview": "/layouts/home_services/preview.png",
       "industry": "home_services",
       "defaultContent": {
-        "heading": "Thank You for Choosing Us!",
-        "subheading": "Our service team will contact you within 24 hours to schedule your appointment.",
-        "ctaText": "Book Your Service",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "First service at 15% off",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -139,12 +139,12 @@
       "preview": "/layouts/finance/preview.png",
       "industry": "finance",
       "defaultContent": {
-        "heading": "Thank You for Your Inquiry!",
-        "subheading": "Our financial advisors will contact you within 24 hours to discuss your needs.",
-        "ctaText": "Schedule Free Consultation",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "Free financial assessment included",
+        "heading": "Thank You!",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {
@@ -162,11 +162,11 @@
       "industry": "general",
       "defaultContent": {
         "heading": "Thank You!",
-        "subheading": "We have received your request and will contact you soon.",
-        "ctaText": "Return to Website",
-        "ctaUrl": "#",
-        "phoneNumber": "",
-        "offerText": "",
+        "subheading": "WE HAVE RECEIVED YOUR REQUEST AND WILL CONTACT YOU SOON.",
+        "ctaText": "RETURN TO WEBSITE",
+        "ctaUrl": "/",
+        "phoneNumber": "0850 458 9665",
+        "offerText": "For more information you can connect with us at demo@divi.express or contact us at 0850 458 9665.",
         "customMessage": ""
       },
       "theme": {

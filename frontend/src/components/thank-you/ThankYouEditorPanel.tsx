@@ -37,7 +37,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
 
     const timer = setTimeout(async () => {
       try {
-        const html = await thankYouApi.preview(config);
+        const html = await thankYouApi.preview({ ...config, pageId });
         onSelect?.(html);
       } catch (error) {
         console.error('Error syncing preview:', error);
@@ -92,7 +92,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
 
       const previewPromise = (async () => {
         await thankYouApi.updateConfig(pageId, newConfig);
-        const html = await thankYouApi.preview(newConfig);
+        const html = await thankYouApi.preview({ ...newConfig, pageId });
         onSelect?.(html);
         return html;
       })();
