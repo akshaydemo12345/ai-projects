@@ -22,6 +22,11 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ status: 'fail', message: 'User no longer exists' });
     }
 
+    // Email verification disabled per user request
+    // if (!currentUser.isEmailVerified) {
+    //   return res.status(403).json({ status: 'fail', message: 'Email address not verified' });
+    // }
+
     // Grant access to protected route
     req.user = currentUser;
     next();

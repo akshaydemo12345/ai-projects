@@ -1,6 +1,6 @@
-# Domain Mapper + AI Backend Integration Setup
+# Buildify AI + AI Backend Integration Setup
 
-This guide shows how to set up the WordPress Domain Mapper plugin to proxy requests from `http://my-wordpress-site.test/{slug}` to the AI backend at `http://127.0.0.1:5000/p/{slug}`.
+This guide shows how to set up the WordPress Buildify AI plugin to proxy requests from `http://my-wordpress-site.test/{slug}` to the AI backend at `http://127.0.0.1:5000/p/{slug}`.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ User Request
     ↓
 http://my-wordpress-site.test/{slug}
     ↓
-WordPress Domain Mapper Plugin (verifies API token)
+WordPress Buildify AI Plugin (verifies API token)
     ↓
 Backend Verification: POST http://127.0.0.1:5000/plugin/verify
     ↓
@@ -53,7 +53,7 @@ npm start
 ### 2a. Access Plugin Settings
 
 1. Go to **WordPress Admin Dashboard**
-2. Navigate to **Settings → Domain Mapper SaaS**
+2. Navigate to **Settings → Buildify AI**
 
 ### 2b. Configure Plugin Settings
 
@@ -265,7 +265,7 @@ Either can be base64-encoded for additional obfuscation.
 
 1. **User visits**: `http://my-wordpress-site.test/p/my-page`
 2. **WordPress rewrite rule** catches `/p/*` requests
-3. **Domain Mapper plugin** intercepts before WordPress processes request
+3. **Buildify AI plugin** intercepts before WordPress processes request
 4. **Plugin calls**: `POST http://127.0.0.1:5000/plugin/verify` with API token
 5. **Backend verifies** token and checks page exists and is published
 6. **If valid**: Plugin proxies request to `http://127.0.0.1:5000/p/my-page`
@@ -299,4 +299,4 @@ Status:          Active
 
 ---
 
-For more details, see the Domain Mapper plugin README.md
+For more details, see the Buildify AI plugin README.md

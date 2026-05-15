@@ -37,7 +37,7 @@ curl http://127.0.0.1:5000/
 
 ### Step 3: Configure WordPress Plugin
 
-Go to **WordPress Admin → Settings → Domain Mapper SaaS**
+Go to **WordPress Admin → Settings → Buildify AI**
 
 **Enter these values:**
 
@@ -144,7 +144,7 @@ This runs comprehensive tests of all components.
                    ↓
 2. Apache/WordPress catches /p/* pattern
                    ↓
-3. Domain Mapper plugin intercepts request
+3. Buildify AI plugin intercepts request
                    ↓
 4. Plugin calls:   POST http://127.0.0.1:5000/plugin/verify
                    with api_key & domain

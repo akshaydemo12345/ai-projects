@@ -4,7 +4,7 @@
 # served by WordPress normally — no side-effects on the live site.
 #
 # IMPORTANT: This block is injected by the "Apply .htaccess Rules" button
-# in the Domain Mapper settings page.  It is NOT written on plugin activation.
+# in the Buildify AI settings page.  It is NOT written on plugin activation.
 # The proxy works at the PHP level ('init' hook) and does NOT require these
 # rules for basic operation.  Apply them only if direct-file assets (CSS/JS
 # images) from the proxied path are being served incorrectly.
