@@ -121,7 +121,7 @@ exports.createLead = async (req, res) => {
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
           const pColor = project.primaryColor || '#7c3aed';
-          const customMessage = project.adminNotification.message || "Great news! A new lead has just expressed interest through your landing page. Here are the captured details:";
+          // Intro message removed per user request
 
           const adminMsg = `
             <!DOCTYPE html>
@@ -153,8 +153,6 @@ exports.createLead = async (req, res) => {
                   <p>${project.fromName || 'System Notification'}</p>
                 </div>
                 <div class="content">
-                  <p class="intro">${customMessage}</p>
-                  
                   <div class="data-card">
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>

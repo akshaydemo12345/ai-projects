@@ -1400,7 +1400,7 @@ exports.handleFormSubmission = async (req, res, next) => {
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
           const pColor = project.primaryColor || '#7c3aed';
-          const customMessage = project.adminNotification.message || "Great news! A new lead has just expressed interest through your landing page. Here are the captured details:";
+          // Intro message removed per user request
 
           const adminMsg = `
             <!DOCTYPE html>
@@ -1432,34 +1432,22 @@ exports.handleFormSubmission = async (req, res, next) => {
                   <p>${project.fromName || 'System Notification'}</p>
                 </div>
                 <div class="content">
-                  <p class="intro">${customMessage}</p>
-                  
                   <div class="data-card">
                     <table width="100%" cellpadding="0" cellspacing="0">
+                      ${Object.entries(leadData).map(([key, value]) => `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Full Name</div>
-                          <div class="value">${leadData.name || leadData.full_name || leadData.Name || leadData.FullName || 'Not provided'}</div>
+                          <div class="label">${key.replace(/_/g, ' ')}</div>
+                          <div class="value">${value || 'Not provided'}</div>
                         </td>
-                      </tr>
+                      </tr>`).join('')}
+                      ${Object.entries(utm).map(([key, value]) => value ? `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Email Address</div>
-                          <div class="value">${leadData.email || leadData.email_address || leadData.Email || leadData.Mail || 'Not provided'}</div>
+                          <div class="label">${key.replace(/_/g, ' ')}</div>
+                          <div class="value">${value}</div>
                         </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Phone Number</div>
-                          <div class="value">${leadData.phone || leadData.tel || leadData.Phone || leadData.Contact || 'Not provided'}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Message</div>
-                          <div class="value">${leadData.message || leadData.comment || leadData.Message || leadData.Comments || leadData.note || 'No message provided'}</div>
-                        </td>
-                      </tr>
+                      </tr>` : '').join('')}
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                           <div class="label">Page</div>

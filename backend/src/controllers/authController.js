@@ -15,7 +15,7 @@ const {
 } = require('../utils/jwt');
 const logger = require('../utils/logger');
 const firebaseAdmin = require('../services/firebaseAdmin');
-const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === 'true';
+const skipEmailVerification = true; // Hardcoded to skip verification as requested
 
 // ─── POST /auth/signup ────────────────────────────────────────────────────────
 exports.signup = async (req, res, next) => {
@@ -60,19 +60,25 @@ exports.signup = async (req, res, next) => {
         console.error('❌ Failed to send verification email during signup:', emailError.message);
         return next(new AppError('Unable to send verification email. Please try again later.', 502));
       }
+      
+      return res.status(201).json({
+        status: 'success',
+        message: 'Account created. Please check your email to verify your address.',
+        data: {
+          user: { id: user._id, email: user.email, name: user.name },
+        },
+      });
     } else {
-      logger.info('Email verification skipped due to SKIP_EMAIL_VERIFICATION=true', { userId: user._id, email });
+      logger.info('Email verification skipped due to SKIP_EMAIL_VERIFICATION=true. Auto logging in.', { userId: user._id, email });
+      // Automatically verify email if skipped
+      user.isEmailVerified = true;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationExpiresAt = undefined;
+      await user.save();
+      
+      // Send token will automatically respond with 200/201 and user data
+      return sendToken(user, 201, res);
     }
-
-    res.status(201).json({
-      status: 'success',
-      message: skipEmailVerification
-        ? 'Account created successfully. Email verification is currently disabled.'
-        : 'Account created. Please check your email to verify your address.',
-      data: {
-        user: { id: user._id, email: user.email, name: user.name },
-      },
-    });
   } catch (err) {
     next(err);
   }
@@ -189,10 +195,11 @@ exports.login = async (req, res, next) => {
       return next(new AppError('Invalid email or password', 401));
     }
 
-       if (!user.isEmailVerified && !skipEmailVerification) {
-      console.log('Email not verified for user:', email);
-      return next(new AppError('Please verify your email before logging in', 403));
-    }
+    // Email verification disabled per user request
+    // if (!user.isEmailVerified && !skipEmailVerification) {
+    //  console.log('Email not verified for user:', email);
+    //  return next(new AppError('Please verify your email before logging in', 403));
+    // }
     
     console.log('Comparing password...');
     const passwordMatch = await user.comparePassword(password);
@@ -246,9 +253,10 @@ exports.refreshToken = async (req, res, next) => {
 
     const user = await User.findById(decoded.id);
     if (!user) return next(new AppError('User no longer exists', 401));
- if (!user.isEmailVerified) {
-      return next(new AppError('Email address not verified', 403));
-    }
+    // Email verification disabled per user request
+    // if (!user.isEmailVerified) {
+    //  return next(new AppError('Email address not verified', 403));
+    // }
     const newAccessToken = signToken(user._id);
 
     res.status(200).json({
