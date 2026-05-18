@@ -178,14 +178,42 @@ const PublicLandingPage = () => {
         form { width: 100%; max-width: 100%; }
         ${aiCss}
       </style>
+      <script>
+        !function() {
+          function reveal() {
+            var reveals = document.querySelectorAll(".reveal-on-scroll");
+            for (var i = 0; i < reveals.length; i++) {
+              var windowHeight = window.innerHeight;
+              var elementTop = reveals[i].getBoundingClientRect().top;
+              var elementVisible = 50;
+              if (elementTop < windowHeight - elementVisible || elementTop < 100) {
+                reveals[i].classList.add("revealed");
+              }
+            }
+          }
+          window.addEventListener("scroll", reveal);
+          window.addEventListener("resize", reveal);
+          document.addEventListener("DOMContentLoaded", reveal);
+          // Run repeatedly on load to prevent any race condition
+          var intervals = [50, 100, 300, 500, 1000, 1500];
+          intervals.forEach(function(t) { setTimeout(reveal, t); });
+          // Failsafe: reveal everything after 2 seconds so page is NEVER blank
+          setTimeout(function() {
+            document.querySelectorAll(".reveal-on-scroll").forEach(function(el) {
+              el.classList.add("revealed");
+            });
+          }, 2000);
+        }();
+      </script>
     `;
 
     const leadScript = buildLeadScript(res);
     let cleanHtml = aiHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
     if (!cleanHtml) return '';
 
-    cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
-    cleanHtml = cleanHtml.replace(/\s*on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, '');
+    // Keep AI-generated scripts and events fully intact so interactive elements (FAQ accordions, menus, sliders) work natively!
+    // cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
+    // cleanHtml = cleanHtml.replace(/\s*on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, '');
 
     if (cleanHtml.toLowerCase().includes('<html')) {
       let doc = cleanHtml;
