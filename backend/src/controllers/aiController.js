@@ -62,6 +62,17 @@ exports.generateContent = async (req, res, next) => {
       return res.status(402).json({ status: 'fail', message: 'Insufficient credits' });
     }
 
+    // ─── Plan-based feature restrictions ─────────────────────────────────────────
+    // Figma import = Pro/Enterprise only
+    if (input.figmaUrl && user.plan === 'free') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Figma import is a Pro feature. Please upgrade your plan.',
+        upgradeRequired: true,
+        requiredPlan: 'pro',
+      });
+    }
+
     // Fetch project scraped images if pageId is provided
     let scrapedImages = input.scrapedImages || [];
     if (input.pageId) {
@@ -132,56 +143,56 @@ exports.generateContent = async (req, res, next) => {
           figmaData
         });
 
-    // D. Deduct 1 credit on success
-    await User.findByIdAndUpdate(req.user._id, { $inc: { credits: -1 } });
-    
-    // E. Add default SEO metadata if not present
-    const finalContent = { ...aiContent };
-    if (!finalContent.seo) {
-      finalContent.seo = {
-        title: `${input.businessName} - Professional ${input.industry} Services`,
-        description: input.businessDescription.substring(0, 160),
-        keywords: input.keywords || []
-      };
-    }
+        // D. Deduct 1 credit on success
+        await User.findByIdAndUpdate(req.user._id, { $inc: { credits: -1 } });
 
-    // F. Update Page with AI content and set status back to 'draft'
-    if (input.pageId) {
-        const page = await Page.findOne({ _id: input.pageId, userId: req.user._id });
-        if (page) {
-          page.content = finalContent;
-          page.seo = finalContent.seo;
-          
-          const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
-          
-          page.aiUsage = {
-            promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
-            completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
-            totalTokens: (currentUsage.totalTokens || 0) + aiContent.aiUsage.totalTokens,
-            cost: (currentUsage.cost || 0) + aiContent.aiUsage.cost,
-            model: aiContent.aiUsage.model,
-            currency: 'USD',
-            lastUsageAt: Date.now()
+        // E. Add default SEO metadata if not present
+        const finalContent = { ...aiContent };
+        if (!finalContent.seo) {
+          finalContent.seo = {
+            title: `${input.businessName} - Professional ${input.industry} Services`,
+            description: input.businessDescription.substring(0, 160),
+            keywords: input.keywords || []
           };
-          
-          page.aiUsageHistory.push({
-            action: input.figmaUrl ? 'Figma to Page' : 'Regeneration',
-            ...aiContent.aiUsage,
-            createdAt: Date.now()
-          });
-          page.status = 'draft';
-          page.updatedAt = Date.now();
-          if (input.figmaUrl) page.designUrl = input.figmaUrl;
-          
-          await page.save();
         }
-    }
-        
+
+        // F. Update Page with AI content and set status back to 'draft'
+        if (input.pageId) {
+          const page = await Page.findOne({ _id: input.pageId, userId: req.user._id });
+          if (page) {
+            page.content = finalContent;
+            page.seo = finalContent.seo;
+
+            const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+
+            page.aiUsage = {
+              promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
+              completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
+              totalTokens: (currentUsage.totalTokens || 0) + aiContent.aiUsage.totalTokens,
+              cost: (currentUsage.cost || 0) + aiContent.aiUsage.cost,
+              model: aiContent.aiUsage.model,
+              currency: 'USD',
+              lastUsageAt: Date.now()
+            };
+
+            page.aiUsageHistory.push({
+              action: input.figmaUrl ? 'Figma to Page' : 'Regeneration',
+              ...aiContent.aiUsage,
+              createdAt: Date.now()
+            });
+            page.status = 'draft';
+            page.updatedAt = Date.now();
+            if (input.figmaUrl) page.designUrl = input.figmaUrl;
+
+            await page.save();
+          }
+        }
+
         console.log(`AI Page Generation successful for user ${req.user._id}`);
 
       } catch (err) {
         console.error('Background AI generation failed:', err.message);
-        
+
         // E. Revert status on failure so user can retry
         if (input.pageId) {
           await Page.findByIdAndUpdate(input.pageId, { status: 'draft' });
@@ -251,16 +262,17 @@ exports.analyzeWebsite = async (req, res, next) => {
     user.credits = Math.max(0, user.credits - 1);
     await user.save({ validateBeforeSave: false });
 
+    let updatedPage;
     if (pageId) {
       const page = await Page.findOne({ _id: pageId, userId: req.user._id });
       if (page) {
         page.content = aiContent;
         page.seo = aiContent.seo || {};
-    
+
         // 8. Update Page with AI Results and History
         if (aiContent.aiUsage) {
           const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
-          
+
           page.aiUsage = {
             promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
             completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
@@ -270,7 +282,7 @@ exports.analyzeWebsite = async (req, res, next) => {
             currency: 'USD',
             lastUsageAt: Date.now()
           };
-          
+
           page.aiUsageHistory.push({
             action: 'Website Analysis',
             ...aiContent.aiUsage,
@@ -278,7 +290,7 @@ exports.analyzeWebsite = async (req, res, next) => {
           });
         }
         page.updatedAt = Date.now();
-        
+
         updatedPage = await page.save();
       }
     }
@@ -395,8 +407,8 @@ exports.improveSection = async (req, res, next) => {
 
     return res.status(200).json({
       status: 'success',
-      data: { 
-        improvedContent: improved.suggestion || improved, 
+      data: {
+        improvedContent: improved.suggestion || improved,
         creditsRemaining: user.credits,
         aiUsage: improved.aiUsage
       }
@@ -510,9 +522,9 @@ exports.getStrategicPlan = async (req, res, next) => {
     const { businessName, industry, businessDescription, services, websiteContent } = req.body;
 
     if (!businessName || !industry || !businessDescription) {
-      return res.status(400).json({ 
-        status: 'fail', 
-        message: 'businessName, industry, and businessDescription are required' 
+      return res.status(400).json({
+        status: 'fail',
+        message: 'businessName, industry, and businessDescription are required'
       });
     }
 
@@ -527,7 +539,7 @@ exports.getStrategicPlan = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { 
+      data: {
         plan: plan.plan,
         aiUsage: plan.aiUsage
       }
