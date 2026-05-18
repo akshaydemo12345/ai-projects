@@ -33033,3 +33033,552 @@ Require stack:
 [2026-05-15T12:27:23.093Z] [HTTP] GET /api/public/page/demo12?cb=1778848043053 200 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-15T12:27:24.996Z] [HTTP] GET /api/public/page/demo12?cb=1778848044964 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-05-15T12:40:35.632Z] [HTTP] GET /api/public/page/new-test?cb=1778848835591 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T11:50:11.361Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T11:50:11.687Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T11:50:11.717Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T11:50:11.719Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T11:52:23.192Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T11:52:23.439Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T11:52:23.457Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T11:52:23.458Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:12:46.362Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:12:46.552Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:12:46.573Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:12:46.574Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:15:19.162Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:15:19.471Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:15:19.487Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:15:19.488Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:15:29.851Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:15:30.060Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:15:30.071Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:15:30.072Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:17:45.302Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:17:45.514Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:17:45.536Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:17:45.538Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:18:40.438Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:40.494Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 45ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:41.631Z] [HTTP] OPTIONS /ai/project-suggestions 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:41.701Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 69ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:43.852Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:48.734Z] [HTTP] POST /ai/project-suggestions 200 7087ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:51.956Z] [HTTP] POST /ai/generate-description 200 8100ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:52.879Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:18:52.885Z] [INFO] Creating page for project 6a0ae10b9ba8d07e77b9e6c3 {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:18:52.914Z] [INFO] Starting AI generation for page 6a0b03ac8a12b4def9e27029 (Template: false)
+[2026-05-18T12:18:52.914Z] [INFO] [AI] Generating page | Business: eBrandz | Token: 1779106732914-itgb3rre8wg-tamw2d-ZDNARB
+[2026-05-18T12:18:52.915Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:19:15.282Z] [HTTP] GET /api/public/page/sxs?cb=1779106755210 200 57ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:18.968Z] [HTTP] GET /api/public/page/xsax?cb=1779106758926 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:19.793Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:19.796Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:19.840Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:26.467Z] [HTTP] POST /ai/project-suggestions 200 6665ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:36.843Z] [HTTP] GET /api/public/page/sxs?cb=1779106776809 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:37.797Z] [HTTP] GET /api/public/page/xsax?cb=1779106777749 200 40ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:38.339Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:38.344Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:38.392Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 45ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:45.968Z] [HTTP] POST /ai/project-suggestions 200 7610ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:49.380Z] [HTTP] GET /api/public/page/sxs?cb=1779106789342 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:49.770Z] [HTTP] GET /api/public/page/xsax?cb=1779106789742 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:50.393Z] [HTTP] GET /api/public/page/sxs?cb=1779106790366 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:50.794Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:50.796Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:50.841Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:51.311Z] [HTTP] GET /api/public/page/sxs?cb=1779106791271 200 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:51.739Z] [HTTP] GET /api/public/page/xsax?cb=1779106791711 200 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:52.106Z] [HTTP] GET /api/public/page/sxs?cb=1779106792072 200 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:52.477Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:53.245Z] [HTTP] GET /api/public/page/sxs?cb=1779106793215 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:53.575Z] [HTTP] GET /api/public/page/xsax?cb=1779106793535 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:53.946Z] [HTTP] GET /api/public/page/sxs?cb=1779106793912 200 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:54.249Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:58.902Z] [HTTP] POST /ai/project-suggestions 200 8101ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:59.521Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b03ac8a12b4def9e27029
+[2026-05-18T12:19:59.521Z] [INFO] 📝 [SCHEMA] Syncing 6 fields for page 6a0b03ac8a12b4def9e27029 (swqswq)
+[2026-05-18T12:19:59.526Z] [HTTP] POST /projects/6a0ae10b9ba8d07e77b9e6c3/pages 201 66646ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:59.529Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:19:59.544Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.259Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.274Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.309Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 45ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.327Z] [HTTP] OPTIONS /api/thank-you/config/6a0b03ac8a12b4def9e27029 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.331Z] [HTTP] OPTIONS /api/thank-you/layouts 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.343Z] [HTTP] GET /api/thank-you/config/6a0b03ac8a12b4def9e27029 200 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:01.345Z] [HTTP] GET /api/thank-you/layouts 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:04.604Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:04.614Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:04.633Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:21.154Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:21.182Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b03ac8a12b4def9e27029
+[2026-05-18T12:20:21.182Z] [INFO] 📝 [SCHEMA] Syncing 6 fields for page 6a0b03ac8a12b4def9e27029 (swqswq)
+[2026-05-18T12:20:21.186Z] [HTTP] PUT /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 200 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:21.193Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:21.203Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 200 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:21.219Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:23.261Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779106823240 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:51.702Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:51.705Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:51.731Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b03ac8a12b4def9e27029 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:51.753Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 47ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:53.157Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:58.167Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:20:58.195Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:03.202Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:03.232Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:08.237Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:08.251Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:13.258Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:13.295Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:18.302Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:18.332Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:22.426Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779106882369 200 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:21:33.935Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:21:34.203Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:21:34.218Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:21:34.219Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:22:06.316Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:22:06.575Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:22:06.593Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:22:06.595Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:22:33.240Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:33.281Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:35.003Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:35.839Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:35.903Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:37.849Z] [HTTP] OPTIONS /ai/generate-description 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:42.706Z] [HTTP] POST /ai/generate-description 200 4855ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:43.852Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:43.856Z] [INFO] Creating page for project 6a0ae10b9ba8d07e77b9e6c3 {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:22:43.879Z] [INFO] Starting AI generation for page 6a0b049386ee083e06ebfd67 (Template: false)
+[2026-05-18T12:22:43.879Z] [INFO] [AI] Generating page | Business: eBrandz | Token: 1779106963879-nhox9wpm0r-hjcijk-ZDNARB
+[2026-05-18T12:22:43.880Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:22:44.224Z] [ERROR] [AI] Claude failed (claude-sonnet-4-20250514): 400 {"type":"error","error":{"type":"invalid_request_error","message":"headers: Extra inputs are not permitted"},"request_id":"req_011CbA2WbYqFJ4BaZVgp6oWW"}
+[2026-05-18T12:22:44.224Z] [ERROR] AI Generation Failed during page creation: {"error":"AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"headers: Extra inputs are not permitted\"},\"request_id\":\"req_011CbA2WbYqFJ4BaZVgp6oWW\"}","pageId":"6a0b049386ee083e06ebfd67"}
+[2026-05-18T12:22:44.270Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b049386ee083e06ebfd67
+[2026-05-18T12:22:44.270Z] [INFO] 📝 [SCHEMA] Syncing 3 fields for page 6a0b049386ee083e06ebfd67 (swswsw)
+[2026-05-18T12:22:44.276Z] [HTTP] POST /projects/6a0ae10b9ba8d07e77b9e6c3/pages 201 423ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:44.282Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:44.304Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:45.620Z] [HTTP] POST /ai/project-suggestions 200 9778ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.886Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b049386ee083e06ebfd67 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.906Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b049386ee083e06ebfd67 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.923Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 41ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.932Z] [HTTP] OPTIONS /api/thank-you/config/6a0b049386ee083e06ebfd67 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.933Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.945Z] [HTTP] GET /api/thank-you/layouts 304 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:46.949Z] [HTTP] GET /api/thank-you/config/6a0b049386ee083e06ebfd67 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:53.355Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:53.373Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:56.221Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b049386ee083e06ebfd67 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:56.244Z] [HTTP] DELETE /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b049386ee083e06ebfd67 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:56.268Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:57.155Z] [HTTP] OPTIONS /ai/project-suggestions 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:57.181Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:58.388Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:22:58.422Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:00.369Z] [HTTP] OPTIONS /ai/generate-description 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:05.108Z] [HTTP] POST /ai/generate-description 200 4737ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:10.350Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:10.361Z] [INFO] Creating page for project 6a0ae10b9ba8d07e77b9e6c3 {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:23:10.385Z] [INFO] Starting AI generation for page 6a0b04ae86ee083e06ebfe43 (Template: false)
+[2026-05-18T12:23:10.386Z] [INFO] [AI] Generating page | Business: eBrandz | Token: 1779106990386-c1o9n5y5fw8-wpvu8o-ZDNARB
+[2026-05-18T12:23:10.386Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:23:10.550Z] [HTTP] POST /ai/project-suggestions 200 12162ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:13.752Z] [ERROR] [AI] Claude failed (claude-sonnet-4-20250514): 400 {"type":"error","error":{"type":"invalid_request_error","message":"headers: Extra inputs are not permitted"},"request_id":"req_011CbA2YmUSVyv6RQufzu4Um"}
+[2026-05-18T12:23:13.752Z] [ERROR] AI Generation Failed during page creation: {"error":"AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"headers: Extra inputs are not permitted\"},\"request_id\":\"req_011CbA2YmUSVyv6RQufzu4Um\"}","pageId":"6a0b04ae86ee083e06ebfe43"}
+[2026-05-18T12:23:13.773Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b04ae86ee083e06ebfe43
+[2026-05-18T12:23:13.773Z] [INFO] 📝 [SCHEMA] Syncing 3 fields for page 6a0b04ae86ee083e06ebfe43 (waswsw)
+[2026-05-18T12:23:13.777Z] [HTTP] POST /projects/6a0ae10b9ba8d07e77b9e6c3/pages 201 3424ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:13.787Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:13.809Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.150Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04ae86ee083e06ebfe43 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.183Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04ae86ee083e06ebfe43 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.199Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 61ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.215Z] [HTTP] OPTIONS /api/thank-you/config/6a0b04ae86ee083e06ebfe43 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.217Z] [HTTP] OPTIONS /api/thank-you/layouts 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.229Z] [HTTP] GET /api/thank-you/layouts 304 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:16.232Z] [HTTP] GET /api/thank-you/config/6a0b04ae86ee083e06ebfe43 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:21.832Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:21.846Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:24.670Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04ae86ee083e06ebfe43 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:24.685Z] [HTTP] DELETE /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04ae86ee083e06ebfe43 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:24.709Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:26.433Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:27.744Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:27.748Z] [HTTP] OPTIONS /ai/project-suggestions 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:27.758Z] [WARN] POST /ai/project-suggestions 429 6ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:27.768Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:27.786Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:34.768Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:34.782Z] [WARN] POST /ai/generate-description 429 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:41.423Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:49.734Z] [HTTP] POST /ai/generate-description 200 8310ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:51.601Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:51.607Z] [INFO] Creating page for project 6a0ae10b9ba8d07e77b9e6c3 {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:23:51.615Z] [INFO] Starting AI generation for page 6a0b04d786ee083e06ebff1b (Template: false)
+[2026-05-18T12:23:51.615Z] [INFO] [AI] Generating page | Business: eBrandz | Token: 1779107031615-xtl9pcx0k3g-181tmb-ZDNARB
+[2026-05-18T12:23:51.616Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:23:51.952Z] [ERROR] [AI] Claude failed (claude-sonnet-4-20250514): 400 {"type":"error","error":{"type":"invalid_request_error","message":"headers: Extra inputs are not permitted"},"request_id":"req_011CbA2bbAuPtckUJhYdvDtz"}
+[2026-05-18T12:23:51.952Z] [ERROR] AI Generation Failed during page creation: {"error":"AI generation failed: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"headers: Extra inputs are not permitted\"},\"request_id\":\"req_011CbA2bbAuPtckUJhYdvDtz\"}","pageId":"6a0b04d786ee083e06ebff1b"}
+[2026-05-18T12:23:51.973Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b04d786ee083e06ebff1b
+[2026-05-18T12:23:51.973Z] [INFO] 📝 [SCHEMA] Syncing 3 fields for page 6a0b04d786ee083e06ebff1b (newpage)
+[2026-05-18T12:23:51.976Z] [HTTP] POST /projects/6a0ae10b9ba8d07e77b9e6c3/pages 201 373ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:51.982Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:51.998Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.534Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04d786ee083e06ebff1b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.562Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04d786ee083e06ebff1b 200 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.573Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 47ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.588Z] [HTTP] OPTIONS /api/thank-you/config/6a0b04d786ee083e06ebff1b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.589Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.599Z] [HTTP] GET /api/thank-you/layouts 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:23:54.600Z] [HTTP] GET /api/thank-you/config/6a0b04d786ee083e06ebff1b 200 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:19.646Z] [HTTP] GET /api/public/page/newpage?token=268956c80c708d6d7f98579133cae748&cb=1779107059618 200 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:21.187Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:24:21.484Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:24:21.527Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:24:21.531Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:24:24.462Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:24.473Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04d786ee083e06ebff1b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:24.506Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04d786ee083e06ebff1b 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:24.521Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 55ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:25.667Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:28.973Z] [HTTP] DELETE /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b04d786ee083e06ebff1b 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:28.996Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:34.006Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:24:34.041Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:08.184Z] [HTTP] GET /api/public/page/xsax?cb=1779107108147 200 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:08.578Z] [HTTP] GET /api/public/page/sxs?cb=1779107108541 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:08.962Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779107108916 200 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:09.285Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:09.323Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:10.221Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:10.274Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 53ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:12.387Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:17.003Z] [HTTP] POST /ai/generate-description 200 4611ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:17.875Z] [HTTP] POST /ai/project-suggestions 200 7651ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:18.829Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:18.845Z] [INFO] Creating page for project 6a0ae10b9ba8d07e77b9e6c3 {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:25:18.904Z] [INFO] Starting AI generation for page 6a0b052e3b4ec6c5181d67ed (Template: false)
+[2026-05-18T12:25:18.905Z] [INFO] [AI] Generating page | Business: eBrandz | Token: 1779107118905-opf9x0k5jo9-1l0u8z-ZDNARB
+[2026-05-18T12:25:18.907Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:25:37.663Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779107137620 200 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:43.011Z] [HTTP] GET /api/public/page/sxs?cb=1779107142971 200 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:45.590Z] [HTTP] GET /api/public/page/xsax?cb=1779107145548 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:50.479Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779107150445 200 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:51.175Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:51.176Z] [HTTP] OPTIONS /ai/project-suggestions 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:51.216Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:25:57.867Z] [HTTP] POST /ai/project-suggestions 200 6689ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:27.908Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779107187854 200 41ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:30.520Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b052e3b4ec6c5181d67ed
+[2026-05-18T12:26:30.520Z] [INFO] 📝 [SCHEMA] Syncing 4 fields for page 6a0b052e3b4ec6c5181d67ed (swsw)
+[2026-05-18T12:26:30.524Z] [HTTP] POST /projects/6a0ae10b9ba8d07e77b9e6c3/pages 201 71691ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:30.527Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:30.542Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.264Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.290Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.300Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.305Z] [HTTP] OPTIONS /api/thank-you/config/6a0b052e3b4ec6c5181d67ed 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.306Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.314Z] [HTTP] GET /api/thank-you/config/6a0b052e3b4ec6c5181d67ed 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:33.315Z] [HTTP] GET /api/thank-you/layouts 304 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:38.670Z] [HTTP] OPTIONS /api/leads 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:38.679Z] [INFO] [LEAD] New Submission: swqswq (6a0b03ac8a12b4def9e27029)
+[2026-05-18T12:26:38.714Z] [HTTP] POST /api/leads 201 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:38.754Z] [HTTP] GET /api/public/page/swqswq?cb=1779107198724 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:39.011Z] [HTTP] GET /api/thank-you/render/swqswq 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:39.012Z] [HTTP] GET /api/public/page/swqswq?cb=1779107198990 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:39.062Z] [HTTP] GET /api/thank-you/render/swqswq 304 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:42.490Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:42.491Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:42.506Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:42.521Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:43.039Z] [HTTP] GET /api/public/page/swqswq?cb=1779107203021 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:44.347Z] [HTTP] GET /api/public/page/swqswq?cb=1779107204332 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:44.371Z] [HTTP] GET /api/thank-you/render/swqswq 304 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:45.908Z] [HTTP] GET /api/thank-you/render/swqswq 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:45.914Z] [HTTP] GET /api/public/page/swqswq?token=22a7d7b5378a89b50f451074f4e90ccc&cb=1779107205892 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:45.929Z] [HTTP] GET /api/thank-you/render/swqswq 304 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:50.861Z] [HTTP] GET /api/public/page/swqswq?cb=1779107210845 200 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:52.457Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:52.460Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:52.473Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 304 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:26:52.488Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:27:08.920Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107228904 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:27:52.180Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:27:52.182Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:27:52.221Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:27:52.252Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 61ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:37.064Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:37.086Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:42.119Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:42.154Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:44.900Z] [HTTP] GET /api/public/page/swsw?cb=1779107324892 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:28:59.298Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107339255 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:02.446Z] [HTTP] GET /api/public/page/swqswq?cb=1779107342406 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:09.258Z] [HTTP] GET /api/public/page/sxs?cb=1779107349215 200 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:12.932Z] [HTTP] GET /api/public/page/xsax?cb=1779107352885 200 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:14.496Z] [HTTP] GET /api/public/page/swqswq?cb=1779107354478 200 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:15.631Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107355592 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:16.902Z] [HTTP] GET /api/public/page/swsw?cb=1779107356863 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:17.273Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:17.320Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 200 41ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.617Z] [HTTP] OPTIONS /api/thank-you/config/6a0b052e3b4ec6c5181d67ed 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.622Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.623Z] [HTTP] OPTIONS /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.643Z] [HTTP] GET /api/thank-you/config/6a0b052e3b4ec6c5181d67ed 304 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.647Z] [HTTP] GET /api/thank-you/layouts 304 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.655Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3/pages/6a0b052e3b4ec6c5181d67ed 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:18.664Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 40ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:20.393Z] [HTTP] GET /projects/6a0ae10b9ba8d07e77b9e6c3 304 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:21.427Z] [HTTP] OPTIONS /projects 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:21.444Z] [HTTP] GET /projects 200 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:23.674Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:23.706Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:24.652Z] [HTTP] OPTIONS /ai/project-suggestions 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:24.685Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:26.661Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:31.403Z] [HTTP] POST /ai/project-suggestions 200 6749ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:33.856Z] [HTTP] POST /ai/generate-description 200 7191ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:34.847Z] [HTTP] OPTIONS /ai/generate 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:34.852Z] [INFO] [AI] Generating page | Business: AgencyPlatform | Token: 1779107374852-cts5j6dzjrb-vti4tz-MROFTA
+[2026-05-18T12:29:34.852Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:29:38.903Z] [HTTP] GET /api/public/page/swsw?cb=1779107378871 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:41.956Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107381875 200 57ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:51.157Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:51.159Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:51.207Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:54.324Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:29:57.505Z] [HTTP] POST /ai/project-suggestions 200 6337ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:28.479Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107428469 200 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:28.988Z] [HTTP] GET /api/public/page/swsw?cb=1779107428980 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:29.493Z] [HTTP] GET /api/public/page/swqswq?cb=1779107429483 200 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:30.641Z] [HTTP] GET /api/public/page/swsw?cb=1779107430621 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:31.585Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:31.586Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:31.614Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:33.405Z] [HTTP] GET /api/public/page/swsw?cb=1779107433389 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:37.867Z] [HTTP] POST /ai/project-suggestions 200 6278ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:51.191Z] [HTTP] GET /api/public/page/swqswq?cb=1779107451154 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:51.935Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107451898 200 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:53.489Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:53.491Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:53.521Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:55.996Z] [HTTP] GET /api/public/page/swsw?cb=1779107455962 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:56.343Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107456314 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:56.717Z] [HTTP] GET /api/public/page/swqswq?cb=1779107456690 200 18ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:57.838Z] [HTTP] POST /ai/generate 200 82990ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:57.854Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:57.858Z] [INFO] Creating page for project 6a0ae61086bb3e4bc01e614b {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:30:57.867Z] [INFO] Starting AI generation for page 6a0b06813b4ec6c5181d6ad8 (Template: false)
+[2026-05-18T12:30:57.867Z] [INFO] [AI] Generating page | Business: AgencyPlatform | Token: 1779107457867-8rh8jtmgp39-ghhiy4-MROFTA
+[2026-05-18T12:30:57.868Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:30:58.429Z] [HTTP] GET /api/public/page/swqswq?cb=1779107458379 200 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:58.742Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107458721 200 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:59.095Z] [HTTP] GET /api/public/page/swsw?cb=1779107459069 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:59.469Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:30:59.507Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:01.552Z] [HTTP] POST /ai/project-suggestions 200 8053ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:11.176Z] [HTTP] GET /api/public/page/swsw?cb=1779107471139 200 27ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:20.364Z] [HTTP] GET /api/public/page/swsw?token=0ccdc030d3eaf92a721b37da722db732&cb=1779107480330 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:21.604Z] [HTTP] GET /api/public/page/swqswq?cb=1779107481563 200 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:25.776Z] [HTTP] GET /api/public/page/swsw?cb=1779107485754 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:26.205Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:26.210Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:26.252Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 40ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:32.809Z] [HTTP] POST /ai/project-suggestions 200 6591ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:31:59.919Z] [HTTP] GET /api/public/page/swqswq?cb=1779107519878 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:00.543Z] [HTTP] GET /api/public/page/swsw?cb=1779107520508 200 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:01.166Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:01.173Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:01.216Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 42ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:02.077Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b06813b4ec6c5181d6ad8
+[2026-05-18T12:32:02.077Z] [INFO] 📝 [SCHEMA] Syncing 2 fields for page 6a0b06813b4ec6c5181d6ad8 (wswsws)
+[2026-05-18T12:32:02.080Z] [HTTP] POST /projects/6a0ae61086bb3e4bc01e614b/pages 201 64224ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:02.102Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:02.367Z] [HTTP] GET /api/public/page/swsw?cb=1779107522333 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.161Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.166Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.174Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 200 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.187Z] [HTTP] OPTIONS /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.187Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.192Z] [HTTP] GET /api/thank-you/layouts 304 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:03.194Z] [HTTP] GET /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 200 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:11.390Z] [HTTP] POST /ai/project-suggestions 200 10206ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:32:28.119Z] [HTTP] GET /api/public/page/wswsws?token=4583740a0662d2290fbe6eecddd74493&cb=1779107548106 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:35:22.131Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:35:22.400Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:35:22.418Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:35:22.420Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:35:36.411Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:35:36.635Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:35:36.649Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:35:36.650Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:37:53.286Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 3ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:53.290Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:53.347Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:53.360Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 64ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:55.276Z] [HTTP] OPTIONS /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:55.281Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:55.313Z] [HTTP] GET /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 304 29ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:55.324Z] [HTTP] GET /api/thank-you/layouts 304 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:56.583Z] [HTTP] PUT /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:56.587Z] [HTTP] OPTIONS /api/thank-you/preview 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:56.598Z] [HTTP] POST /api/thank-you/preview 200 10ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:57.393Z] [HTTP] POST /api/thank-you/preview 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:59.962Z] [HTTP] PUT /api/thank-you/config/6a0b06813b4ec6c5181d6ad8 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:37:59.988Z] [HTTP] POST /api/thank-you/preview 200 16ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:00.759Z] [HTTP] POST /api/thank-you/preview 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:06.296Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:06.332Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b06813b4ec6c5181d6ad8
+[2026-05-18T12:38:06.332Z] [INFO] 📝 [SCHEMA] Syncing 2 fields for page 6a0b06813b4ec6c5181d6ad8 (wswsws)
+[2026-05-18T12:38:06.337Z] [HTTP] PUT /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 200 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:06.340Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:06.345Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b06813b4ec6c5181d6ad8 200 4ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:06.366Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 23ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:08.232Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:38:08.518Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:38:08.545Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:38:08.548Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:38:09.147Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:10.686Z] [HTTP] GET /api/public/page/wswsws?cb=1779107890660 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:22.702Z] [HTTP] OPTIONS /api/leads 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:22.727Z] [INFO] [LEAD] New Submission: wswsws (6a0b06813b4ec6c5181d6ad8)
+[2026-05-18T12:38:22.756Z] [HTTP] POST /api/leads 201 50ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:23.013Z] [HTTP] GET /api/thank-you/render/wswsws 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:23.014Z] [HTTP] GET /api/public/page/wswsws?cb=1779107902991 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:38:23.033Z] [HTTP] GET /api/thank-you/render/wswsws 304 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:17.443Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:17.497Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 52ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:19.571Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:19.639Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 66ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:21.774Z] [HTTP] OPTIONS /ai/generate-description 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:24.733Z] [HTTP] GET /api/public/page/wswsws?cb=1779107964680 200 44ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:25.345Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:25.382Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 32ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:26.018Z] [HTTP] POST /ai/generate-description 200 4240ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:26.973Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:26.989Z] [INFO] Creating page for project 6a0ae61086bb3e4bc01e614b {"userId":"6a06a0ba10001e7fd03be0e6"}
+[2026-05-18T12:39:27.022Z] [INFO] Starting AI generation for page 6a0b087fff9e5e984966f457 (Template: false)
+[2026-05-18T12:39:27.022Z] [INFO] [AI] Generating page | Business: AgencyPlatform | Token: 1779107967022-sa54iskww7a-bx7ucl-MROFTA
+[2026-05-18T12:39:27.024Z] [INFO] [AI] Claude: claude-sonnet-4-20250514
+[2026-05-18T12:39:28.426Z] [HTTP] GET /api/public/page/wswsws?cb=1779107968376 200 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:29.143Z] [HTTP] POST /ai/project-suggestions 200 9564ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:29.553Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:29.599Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 42ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:29.966Z] [HTTP] GET /api/public/page/wswsws?token=4583740a0662d2290fbe6eecddd74493&cb=1779107969921 200 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:30.584Z] [HTTP] GET /api/public/page/swsw?cb=1779107970541 200 26ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:31.292Z] [HTTP] GET /api/public/page/swqswq?cb=1779107971239 200 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:33.042Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:33.097Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 51ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:39:37.281Z] [HTTP] POST /ai/project-suggestions 200 7717ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:08.454Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:08.457Z] [HTTP] OPTIONS /ai/project-suggestions 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:08.499Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:11.427Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:13.148Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 41ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:18.785Z] [HTTP] POST /ai/project-suggestions 200 10323ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:50.303Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b087fff9e5e984966f457
+[2026-05-18T12:40:50.303Z] [INFO] ℹ️ [SCHEMA] No form fields detected on page 6a0b087fff9e5e984966f457.
+[2026-05-18T12:40:50.305Z] [HTTP] POST /projects/6a0ae61086bb3e4bc01e614b/pages 201 83328ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:50.313Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:50.351Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.000Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.048Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 200 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.064Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 73ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.067Z] [HTTP] OPTIONS /api/thank-you/config/6a0b087fff9e5e984966f457 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.067Z] [HTTP] OPTIONS /api/thank-you/layouts 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.077Z] [HTTP] GET /api/thank-you/layouts 304 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:40:51.080Z] [HTTP] GET /api/thank-you/config/6a0b087fff9e5e984966f457 200 11ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:05.819Z] [HTTP] OPTIONS /api/thank-you/config/6a0b087fff9e5e984966f457 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:05.828Z] [HTTP] OPTIONS /api/thank-you/layouts 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:05.836Z] [HTTP] GET /api/thank-you/config/6a0b087fff9e5e984966f457 304 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:05.844Z] [HTTP] GET /api/thank-you/layouts 304 7ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:07.177Z] [HTTP] PUT /api/thank-you/config/6a0b087fff9e5e984966f457 200 24ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:07.184Z] [HTTP] OPTIONS /api/thank-you/preview 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:07.202Z] [HTTP] POST /api/thank-you/preview 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:07.979Z] [HTTP] POST /api/thank-you/preview 200 21ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:08.879Z] [HTTP] PUT /api/thank-you/config/6a0b087fff9e5e984966f457 200 22ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:08.906Z] [HTTP] POST /api/thank-you/preview 200 8ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:09.681Z] [HTTP] POST /api/thank-you/preview 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:10.440Z] [HTTP] PUT /api/thank-you/config/6a0b087fff9e5e984966f457 200 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:10.480Z] [HTTP] POST /api/thank-you/preview 200 13ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:11.231Z] [HTTP] POST /api/thank-you/preview 200 20ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:14.127Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:14.156Z] [INFO] ✨ [SCHEMA] Updated HTML with injected names/ids for page 6a0b087fff9e5e984966f457
+[2026-05-18T12:41:14.156Z] [INFO] ℹ️ [SCHEMA] No form fields detected on page 6a0b087fff9e5e984966f457.
+[2026-05-18T12:41:14.157Z] [HTTP] PUT /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 200 28ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:14.167Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:14.181Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 200 17ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:14.202Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:41:18.932Z] [HTTP] GET /api/public/page/qsqsqsq?token=1012a7edb8fcf162ef8daccfcc5f1ec4&cb=1779108078919 200 12ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:44.959Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:44.975Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:45.015Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b/pages/6a0b087fff9e5e984966f457 200 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:45.035Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 71ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:48.206Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:53.250Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:42:53.298Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 44ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:43:38.243Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:43:38.297Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 48ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:43:40.758Z] [HTTP] GET /api/public/page/qsqsqsq?token=1012a7edb8fcf162ef8daccfcc5f1ec4&cb=1779108220735 200 19ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:44:10.789Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:44:11.053Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:44:11.073Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:44:11.074Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:46:02.916Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 9ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:02.990Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 62ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:07.998Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:08.049Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 47ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:13.057Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:13.113Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 52ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:18.125Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:18.163Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:23.173Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:23.208Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 31ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:28.215Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:28.272Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 51ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:33.283Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:33.302Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 15ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:38.309Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 0ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:38.342Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:43.350Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:43.367Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 14ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:48.376Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:48.431Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 51ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:46:49.656Z] [HTTP] GET /api/public/page/qsqsqsq?token=1012a7edb8fcf162ef8daccfcc5f1ec4&cb=1779108409583 200 57ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:47:57.191Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:47:57.250Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 200 54ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:01.248Z] [INFO] Firebase Admin SDK initialized successfully
+[2026-05-18T12:48:01.553Z] [INFO] ✅ MongoDB Connected Successfully
+[2026-05-18T12:48:01.563Z] [INFO] 🛠️ Dropped unique domain index for multi-page support
+[2026-05-18T12:48:01.565Z] [INFO] 🚀 Server running on port 5000
+[2026-05-18T12:48:02.270Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 5ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:02.315Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 39ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:07.321Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:07.349Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 25ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:12.358Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:12.396Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 34ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:17.403Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:17.465Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 58ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:22.474Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:22.529Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 49ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:27.536Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:27.571Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 30ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:32.581Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:32.618Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:37.627Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 2ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:37.663Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 33ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:42.670Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:42.710Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 36ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:47.718Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:47.760Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 38ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:52.767Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:52.806Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 35ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:57.814Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:48:57.868Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 50ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:49:02.879Z] [HTTP] OPTIONS /projects/6a0ae61086bb3e4bc01e614b 204 1ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-05-18T12:49:02.920Z] [HTTP] GET /projects/6a0ae61086bb3e4bc01e614b 304 37ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}

@@ -109,6 +109,8 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
           model, max_tokens: 8000, temperature: 0.95,
           system: finalSystemPrompt,
           messages: Array.isArray(userPrompt) ? userPrompt : [{ role: 'user', content: userPrompt }],
+        }, {
+          headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15" }
         });
         const usage = response.usage;
         return {
@@ -215,50 +217,40 @@ EVERY design decision must feel influenced by this unique seed.
   * "Modern Organic": Earthy Ochre (\`#b87a3d\`), Terracotta Rust (\`#b84c2d\`), Warm Linen (\`#fafaf9\`), Midnight Forest (\`#112211\`).
 - Apply these colors cleanly, using subtle border highlights, glassmorphism overlays, and elegant background tones.
 
-5. CINEMATIC HERO SPLIT & OVERLAPPING METRICS:
-- Structure a dynamic 2-column hero split:
-  * Left Column: Rich background color (e.g. Deep Forest or Charcoal), a glowing luxury subtitle badge with a custom symbol (e.g., "✦ EXPERTISE"), a massive bold title using elegant font styling (with italicized accent words: \`em { font-style: italic; color: var(--gold); }\`), and customized CTA buttons.
-  * Right Column: Light textured background displaying a massive, low-contrast, stylized background experience/client number (e.g., "32" or "10" using clamp font sizing and light text color) to act as a background element. Place a grid of actual metrics (with vertical border highlights) and a beautiful floating premium contact/lead card overlapping it.
+5. ABSOLUTE STRUCTURAL FREEDOM (CRITICAL):
+- DO NOT use ANY standard web layouts (no 3-columns, no 4-columns, no basic left-right splits). 
+- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch.
+- You decide how many columns, where elements overlap, and where they are placed. 
+- You must create a completely new, bespoke layout for every generation. Never rely on a template or a predefined structure.
+- DO NOT use crazy abstract shapes, clip-paths, or blobs. Keep the structural elements clean, modern, and professional (rectangles, rounded corners, clean grids).
+- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images) or use high-quality Unsplash image URLs if you know them. Do NOT leave image placeholders empty. Every page must have beautiful, large photos.
 
-6. CONTINUOUS BRAND TICKER / MARQUEE:
-- Include a sleek, seamless loop brand marquee ticker block with a slow linear scroll animation, dividing the Hero from the content. It must slide continuously with logos/names and stars.
-
-7. DYNAMIC STAGGERED NODE TIMELINE:
-- For process or services sections, build a responsive staggered vertical timeline.
-- Draw a central vertical highlight line, and alternate rows left/right. Place custom interactive node dots in the center that expand and transform on hover (\`group-hover:scale-110 group-hover:bg-gold\`). On mobile, cleanly collapse this into a left-aligned vertical layout.
-
-8. STACKED MAGAZINE TESTIMONIALS:
-- Design an asymmetric layout with one massive featured testimonial block (featuring large absolute-positioned quote marks \`content: '"'; font-size: 180px;\` and outcome tags) alongside a grid of smaller author review cards.
-
-9. SIDE-STICKY FAQ & SMOOTH ACCORDIONS:
-- Split the FAQ section: a left sticky panel displaying a large dramatic title and a direct CTA link, and a right panel containing clean, interactive accordions with custom rotation triggers on toggle.
-
-10. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
+9. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
 - Do NOT hardcode the same font pair for every website. Select a pairing that perfectly matches the brand style:
   * For Luxury, Editorial, or High-End brands: Pair a Display Serif (\`Fraunces\`, \`Playfair Display\`, or \`Cormorant Garamond\`) with a clean Sans (\`DM Sans\` or \`Plus Jakarta Sans\`).
   * For Modern, Tech, Creative, or Brutalist brands: Pair a dramatic Sans (\`Syne\`, \`Clash Display\`, or \`Cabinet Grotesk\`) with a highly legible Sans (\`Satoshi\`, \`Inter\`, or \`Space Grotesk\`).
   * For Clinical, Trustworthy, or Corporate brands: Pair a precise Serif (\`Lora\` or \`Merriweather\`) with a clean Sans (\`Inter\` or \`Outfit\`).
 - You MUST load the selected Google Fonts stylesheet in the \`<head>\` of your page.
 
-11. RICH HIGH-END DYNAMIC ICONS:
+10. RICH HIGH-END DYNAMIC ICONS:
 - DO NOT use basic, generic icons. Always use highly descriptive, modern FontAwesome 6 icons (e.g., \`fa-solid fa-compass-drafting\`, \`fa-solid fa-vault\`, \`fa-solid fa-chart-line-up\`, \`fa-solid fa-shield-halved\`) or elegant SVG custom paths.
 - Choose icons that are highly relevant to the industry niche to make the page feel professional, custom-made, and expensive.
 
-12. INTERACTIVE JAVASCRIPT FOR ACCORDIONS & INTERACTION:
-- You MUST write a simple, elegant, lightweight, vanilla \`<script>\` block at the bottom of the HTML page (before \`</body>\`) to handle the FAQ accordion click events and any other interactive elements.
+11. INTERACTIVE JAVASCRIPT FOR ACCORDIONS & INTERACTION:
+- You MUST write a simple, elegant, lightweight, vanilla \`<script>\` block at the bottom of the HTML page (before \`</body>\`) to handle any interactive elements you create (like custom tabs, accordions, or mobile menus).
 - Example accordion script:
   \`\`\`html
   <script>
-    document.querySelectorAll('.faq-accordion-header').forEach(header => {
+    document.querySelectorAll('.accordion-header').forEach(header => {
       header.addEventListener('click', () => {
         const item = header.parentElement;
-        const content = item.querySelector('.faq-accordion-content');
-        const icon = header.querySelector('.faq-icon');
+        const content = item.querySelector('.accordion-content');
+        const icon = header.querySelector('.accordion-icon');
         const isOpen = !content.classList.contains('hidden');
         
         // Close all other items first
-        document.querySelectorAll('.faq-accordion-content').forEach(c => c.classList.add('hidden'));
-        document.querySelectorAll('.faq-icon').forEach(i => i.classList.remove('rotate-180'));
+        document.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('rotate-180'));
         
         if (!isOpen) {
           content.classList.remove('hidden');
@@ -268,7 +260,15 @@ EVERY design decision must feel influenced by this unique seed.
     });
   </script>
   \`\`\`
-- Ensure the classes match your HTML perfectly so the accordions expand and collapse beautifully when clicked!
+- Ensure the classes match your HTML perfectly so the interactive elements work beautifully when clicked!
+- If you build an FAQ section, YOU MUST USE THESE EXACT CLASSES: \`accordion-header\`, \`accordion-content\` (with \`hidden\` by default), and \`accordion-icon\`. The script above will only work if your HTML classes match exactly!
+
+12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY):
+- WHITESPACE: Use massive, luxurious padding (e.g. \`py-24\`, \`py-32\`) between sections. Premium design breathes. Do not cramp elements.
+- TYPOGRAPHY: Treat text like art. Use tight letter-spacing for massive headings (\`tracking-tighter\`), and wide spacing for small uppercase sub-labels (\`tracking-widest uppercase text-xs\`).
+- SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)]\`) instead of standard tailwind shadows.
+- MICRO-INTERACTIONS: Every button and card MUST have a premium hover state. Use \`transition-all duration-500 ease-out\`, add \`hover:-translate-y-2\`, \`hover:shadow-xl\`, or use \`group-hover\` effects to scale images slightly on card hover.
+- CONTRAST: Ensure stunning contrast. If using a dark section, use \`text-white/80\` for paragraphs and \`text-white\` for headings to create subtle typographic hierarchy.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ TECHNICAL REQUIREMENTS:
@@ -294,21 +294,11 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 const buildUserPrompt = (input) => {
   // Random visual style nudge — pushes AI toward different aesthetics each time
   const styleNudges = [
-    'Make the hero dark and dramatic with a bold full-bleed visual.',
-    'Use a magazine-editorial layout with large imagery and strong typography.',
-    'Design around whitespace — minimal, precise, every element intentional.',
-    'Use a split-screen layout with strong color contrast between panels.',
-    'Make it feel like a premium luxury brand — dark palette, gold accents, refined.',
-    'Use bold oversized typography as the main visual element in the hero.',
-    'Create a diagonal/angled design — clip-paths and skewed sections throughout.',
-    'Go glassmorphism — deep gradient background with frosted glass cards.',
-    'Make it feel like a tech startup — dark mode, neon accents, monospace details.',
-    'Use an organic/warm design — earthy tones, rounded shapes, human imagery.',
-    'Make the hero a full-viewport image with overlay text and dramatic gradient.',
-    'Use a horizontal timeline for the process section — unexpected and engaging.',
-    'Design with a retro/brutalist feel — bold outlines, flat colors, strong grid.',
-    'Use floating cards layered over each other for a 3D depth effect.',
-    'Make it feel trustworthy and clinical — clean white, precise layout, authority.',
+    'Invent a totally custom modern layout utilizing extreme asymmetry and bold whitespace. Do not use standard rows.',
+    'Create a completely new visual flow with overlapping high-quality image elements and unexpected alignments.',
+    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries (but no weird shapes).',
+    'Design an experimental interface. Abandon traditional columns entirely in favor of a unique structural arrangement featuring massive photography.',
+    'Invent a new way to display content. Do not use generic cards or standard split screens. Think outside the box and use rich imagery.'
   ];
   const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
 
@@ -334,16 +324,16 @@ const buildUserPrompt = (input) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW BUILD — FOLLOW THESE FINAL RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. INVENT the layout — do NOT copy any known template pattern
-2. Your hero MUST follow the STYLE DIRECTION above
-3. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
-4. Every section must look visually different from the one before it
-5. Write REAL, industry-specific copy — not generic filler text
-6. Form fields must match this industry's actual customer needs
-7. Include hover animations, scroll reveals, at least one premium effect
-8. Complete every section — NEVER truncate or leave a placeholder
-9. You MUST generate exactly these 7 components in this order: Floating Header → Cinematic Hero Split → Brand Marquee Ticker → Staggered Node Timeline → Stacked Testimonials → Side-Sticky FAQ with Accordions → Premium Minimalist Footer. 
-10. The Premium Minimalist Footer must be the absolute bottom-most visual element of the page, followed by your accordion interaction script and the closing \`</html>\` tag. Do NOT stop writing before finishing the footer and closing all HTML tags.
+1. 🚫 ABSOLUTE RULE: DO NOT REUSE LAYOUTS. Every single time you generate a page, you MUST invent completely new HTML structures.
+2. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
+3. Your hero MUST follow the STYLE DIRECTION above. Give it a radically different design than a standard hero.
+4. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
+5. Every section must look visually different from the one before it and from standard templates. Randomize column counts, padding, overlap, and alignment.
+5. Write REAL, industry-specific copy — not generic filler text.
+6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
+7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
+8. ⚠️ AVOID TRUNCATION: Because you are generating 8+ sections, you MUST be extremely concise and efficient with your HTML/Tailwind code to stay under the output token limit. Compress your code where possible, avoid repetitive bloated classes if not needed, but keep the design stunning.
+9. The page must end with a beautiful custom Footer (containing the logo, contact info, and copyright), followed by your interaction script and the closing \`</html>\` tag. The footer layout must also be uniquely designed each time. Do NOT stop writing before finishing the footer and closing all HTML tags!
 `);
 
   return lines.join('\n');
