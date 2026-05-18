@@ -512,8 +512,8 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     });
   }
 
-  // Clean placeholders
-  finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
+  // Clean placeholders (Disabled to allow real Picsum images to render beautifully)
+  // finalHtml = finalHtml.replace(/https:\/\/(fastly\.)?picsum\.photos\/[^\s"'>]+/g, 'https://via.placeholder.com/1200x800?text=Brand+Image');
 
   const leadScript = buildLeadCaptureScript(page);
   const mainHeaderScript = normalizeScript(page.mainHeader);
