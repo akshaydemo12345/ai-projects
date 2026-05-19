@@ -18,7 +18,6 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
-import { Education01Html, Education01Styles } from "../templates/education/templates01";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -255,18 +254,11 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
     prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   },
-  {
-    id: "education-01",
-    name: "Eduverse Academy",
-    tag: "Education",
-    img: "/assets/templates/education/templates01/screenshot.png",
-    gradient: "linear-gradient(135deg, #0b3324 0%, #1a5f3f 100%)",
-    prompt: "A premium online education landing page with a hero section, course category highlights, 'About Us' section with stats, featured courses grid, process steps, testimonials, and a lead capture form. Clean forest green and amber theme.",
-  }
+
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "Education"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -442,7 +434,6 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
-      else if (promptLower.includes("education") || promptLower.includes("school") || promptLower.includes("learn") || projectCat.includes("education")) detectedCategory = "Education";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -472,7 +463,6 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
-        case "education-01": enrichedContent = Education01Html; enrichedStyles = Education01Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -1044,7 +1034,6 @@ const CreatePagePage = () => {
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
-                case "education-01": tpHtml = Education01Html; tpStyles = Education01Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 

@@ -233,7 +233,7 @@ const GrapesEditor = () => {
         // Extract Links and Scripts for Canvas Injection
         const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
         const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.outerHTML);
-        
+
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           links.forEach(linkHtml => {
@@ -330,14 +330,32 @@ const GrapesEditor = () => {
         });
       }
 
-      // Safe-guard body styles from being purged by GrapesJS
       // ─── Placeholder Replacement (Dynamic) ───
+      const primaryColor = currentPage.primaryColor || '#7c3aed';
+      const secondaryColor = currentPage.secondaryColor || '#6366f1';
+
       const finalStyles = (dbStyles || '')
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '');
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, primaryColor)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, secondaryColor)
+        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
+        .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
+        .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
-      editor.setStyle(finalStyles);
+      // ─── Inject CSS into canvas <iframe> directly (fixes setStyle not rendering) ───
+      if (canvasDoc) {
+        let templateStyleTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
+        if (!templateStyleTag) {
+          templateStyleTag = canvasDoc.createElement('style');
+          templateStyleTag.id = 'template-styles';
+          canvasDoc.head.appendChild(templateStyleTag);
+        }
+        templateStyleTag.innerHTML = finalStyles;
+      }
+
+      // Also call setStyle so GrapesJS CSS composer is aware
+      try { editor.setStyle(finalStyles); } catch (e) { console.warn('setStyle warn:', e); }
 
 
 
@@ -376,6 +394,15 @@ const GrapesEditor = () => {
 
       dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
       dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
+
+      // ─── Replace all script-generated placeholders in HTML content ───
+      dbContent = dbContent
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, primaryColor)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, secondaryColor)
+        .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
+        .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
       const configHTML = `
       <script>
@@ -1722,7 +1749,8 @@ const GrapesEditor = () => {
     const canvasDoc = editorRef.current.Canvas.getDocument();
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+    const templateStyleTag = canvasDoc.getElementById('template-styles');
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (templateStyleTag?.innerHTML || '');
 
     const styleData = globalCss + '\n' + css;
 
