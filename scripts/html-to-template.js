@@ -317,21 +317,21 @@ class PlaceholderReplacer {
 
   static addEditorAttributes(html) {
     log.info('Adding data-editable attributes for editor support...');
-    
+
     // Elements to make editable
     const tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'button', 'a', 'strong', 'li', 'td'];
-    
+
     let updatedHtml = html;
-    
+
     // Inject data-editable into tags
     tags.forEach(tag => {
       const regex = new RegExp(`<${tag}\\b(?![^>]*data-editable)([^>]*)>`, 'gi');
       updatedHtml = updatedHtml.replace(regex, `<${tag} data-editable="true"$1>`);
     });
-    
+
     // Inject data-editable-img into images
     updatedHtml = updatedHtml.replace(/<img(?![^>]*data-editable-img)([^>]*)>/gi, '<img data-editable-img="true"$1>');
-    
+
     // Inject data-editable-bg into elements with background images in style
     updatedHtml = updatedHtml.replace(/<([a-z0-9]+)(?![^>]*data-editable-bg)([^>]*style=[^>]*background-image[^>]*)>/gi, '<$1 data-editable-bg="true"$2>');
 
@@ -371,36 +371,33 @@ class PlaceholderReplacer {
     const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
 
     const isBrandColor = (hex) => {
-      const h = hex.length === 4 ? hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3] : hex.substring(1);
+      const h = hex.length === 4 ? hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3] : hex.substring(1);
       const r = parseInt(h.substring(0, 2), 16);
       const g = parseInt(h.substring(2, 4), 16);
       const b = parseInt(h.substring(4, 6), 16);
-      
+
       const max = Math.max(r, g, b) / 255;
       const min = Math.min(r, g, b) / 255;
       const delta = max - min;
       const saturation = max === 0 ? 0 : delta / max;
       const brightness = max;
 
-      if (brightness < 0.25) return false; 
-      if (brightness > 0.95 && saturation < 0.1) return false; 
-      if (saturation < 0.20) return false; 
-      
+      if (brightness < 0.25) return false;
+      if (brightness > 0.95 && saturation < 0.1) return false;
+      if (saturation < 0.20) return false;
+
       return true;
     };
 
     if (sorted.length > 0) {
-      let replacedCount = 0;
-      const maxReplace = 20;
-      
-      // We will only replace colors in the :root section or similar token definitions
-      // But since we want to be thorough, we replace them everywhere with var()
-      
-      for (let i = 0; i < sorted.length && replacedCount < maxReplace; i++) {
+      let primaryAssigned = false;
+      let secondaryAssigned = false;
+
+      for (let i = 0; i < sorted.length && (!primaryAssigned || !secondaryAssigned); i++) {
         const hex = '#' + sorted[i][0];
-        
+
         // Relax brand color check slightly to include dark accents
-        const h = sorted[i][0].length === 3 ? sorted[i][0][0]+sorted[i][0][0]+sorted[i][0][1]+sorted[i][0][1]+sorted[i][0][2]+sorted[i][0][2] : sorted[i][0];
+        const h = sorted[i][0].length === 3 ? sorted[i][0][0] + sorted[i][0][0] + sorted[i][0][1] + sorted[i][0][1] + sorted[i][0][2] + sorted[i][0][2] : sorted[i][0];
         const r = parseInt(h.substring(0, 2), 16);
         const g = parseInt(h.substring(2, 4), 16);
         const b = parseInt(h.substring(4, 6), 16);
@@ -408,26 +405,34 @@ class PlaceholderReplacer {
         const min = Math.min(r, g, b) / 255;
         const delta = max - min;
         const brightness = max;
-        
+
         if (delta < 0.15) continue; // Skip neutral/near-neutral grays
         if (brightness < 0.3) continue; // Skip very dark colors (likely text/headers)
 
-        const varName = (replacedCount % 2 === 0) ? '--tp-primary' : '--tp-secondary';
-        const placeholder = (replacedCount % 2 === 0) ? 'PRIMARY_COLOR_PLACEHOLDER' : 'SECONDARY_COLOR_PLACEHOLDER';
-        const rgbPlaceholder = (replacedCount % 2 === 0) ? 'PRIMARY_RGB_PLACEHOLDER' : 'SECONDARY_RGB_PLACEHOLDER';
-        
-        replacedCount++;
-        
+        let varName, placeholder, rgbPlaceholder;
+        if (!primaryAssigned) {
+          varName = '--tp-primary';
+          placeholder = 'PRIMARY_COLOR_PLACEHOLDER';
+          rgbPlaceholder = 'PRIMARY_RGB_PLACEHOLDER';
+          primaryAssigned = true;
+        } else if (!secondaryAssigned) {
+          varName = '--tp-secondary';
+          placeholder = 'SECONDARY_COLOR_PLACEHOLDER';
+          rgbPlaceholder = 'SECONDARY_RGB_PLACEHOLDER';
+          secondaryAssigned = true;
+        } else {
+          break;
+        }
+
         log.success(`Mapping ${hex} to ${varName}`);
-        
+
         const rRegex = new RegExp(hex.replace('#', '\\#'), 'gi');
         content.css = content.css.replace(rRegex, placeholder);
         content.html = content.html.replace(rRegex, placeholder);
 
-        // 3. Handle RGB/RGBA versions
+        // Handle RGB/RGBA versions like "11, 51, 36" or "11,51,36"
         const rgb = hexToRgb(hex);
         if (rgb) {
-          // Match variations like "11, 51, 36" or "11,51,36"
           const rgbPattern = `${rgb.r},\\s*${rgb.g},\\s*${rgb.b}`;
           const rgbRegex = new RegExp(rgbPattern, 'gi');
           content.css = content.css.replace(rgbRegex, rgbPlaceholder);
@@ -668,7 +673,7 @@ class HealthcareTemplateConverter {
       const backendImgDir = path.join(CONFIG.backendPublicRoot, this.category, `templates${paddedNum}`);
 
       const assetStats = AssetHandler.copyAllAssets(baseDir, publicImgDir);
-      
+
       // Also copy to backend
       try {
         AssetHandler.copyAllAssets(baseDir, backendImgDir);
@@ -694,10 +699,10 @@ class HealthcareTemplateConverter {
       // ───────────────────────────────────────────────────────────────
       content = PlaceholderReplacer.replaceBrand(content, baseDir);
       content = PlaceholderReplacer.replaceColors(content);
-      
+
       // Step 9.5: Add Editor Attributes
       content.html = PlaceholderReplacer.addEditorAttributes(content.html);
-      
+
       this.stats.placeholdersAdded = 3; // LOGO, COLOR, PROJECT_NAME
 
       // ───────────────────────────────────────────────────────────────

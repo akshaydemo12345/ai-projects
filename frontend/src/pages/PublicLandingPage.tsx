@@ -10,7 +10,7 @@ const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const token = searchParams.get('token') || searchParams.get('previewToken');
   const pgParam = searchParams.get('pg');
   const pageId = searchParams.get('page') || searchParams.get('pageId');
@@ -154,12 +154,28 @@ const PublicLandingPage = () => {
     const meta = res.meta || {};
     let aiHtml = res.landingPageContent || res.data || (typeof res.content === 'string' ? res.content : res.content?.fullHtml) || '';
     let aiCss = res.landingPageStyles || res.styles || (typeof res.content === 'object' ? res.content?.fullCss : '') || '';
-    const BRAND_COLOR = res.primaryColor || meta?.primaryColor || '#7c3aed';
+    const BRAND_PRIMARY = res.primaryColor || meta?.primaryColor || '#7c3aed';
+    const BRAND_SECONDARY = res.secondaryColor || meta?.secondaryColor || '#6366f1';
+
+    // ─── Replace ALL placeholders in both HTML and CSS ───
+    const applyPlaceholders = (str: string) => str
+      .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_PRIMARY)
+      .replace(/SECONDARY_COLOR_PLACEHOLDER/g, BRAND_SECONDARY)
+      .replace(/PRIMARY_RGB_PLACEHOLDER/g, BRAND_PRIMARY)
+      .replace(/SECONDARY_RGB_PLACEHOLDER/g, BRAND_SECONDARY)
+      .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
+      .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
+
+    aiHtml = applyPlaceholders(aiHtml);
+    aiCss = applyPlaceholders(aiCss);
+
+    // ─── Also replace any remaining var(--primary) references with real color fallback ───
+    const BRAND_COLOR = BRAND_PRIMARY;
 
     const coreDependencies = `
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_COLOR}' } } } };
+        tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_PRIMARY}', secondary: '${BRAND_SECONDARY}' } } } };
       </script>
       <!-- All possible icon libraries -->
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -170,7 +186,15 @@ const PublicLandingPage = () => {
       
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&family=Inter:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
       <style>
-        :root { --primary: ${BRAND_COLOR}; }
+        :root {
+          --primary: ${BRAND_PRIMARY};
+          --secondary: ${BRAND_SECONDARY};
+          --accent: ${BRAND_SECONDARY};
+          --gold: ${BRAND_PRIMARY};
+          --btn-bg: ${BRAND_PRIMARY};
+          --btn-text: #ffffff;
+          --button-gradient: linear-gradient(135deg, ${BRAND_PRIMARY}, ${BRAND_SECONDARY});
+        }
         html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; }
         input, select, textarea { border: 1px solid #cbd5e1 !important; border-radius: 10px !important; padding: 14px 18px !important; width: 100%; margin-bottom: 20px; display: block; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
         input:focus { border-color: ${BRAND_COLOR} !important; outline: none !important; box-shadow: 0 0 0 4px ${BRAND_COLOR}15; }
