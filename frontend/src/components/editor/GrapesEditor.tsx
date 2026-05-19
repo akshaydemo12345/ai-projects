@@ -17,6 +17,15 @@ import { copyToClipboard } from '@/lib/utils';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
+
+const hexToRgbStr = (hex: string) => {
+  const c = hex.replace('#', '');
+  if (c.length === 3) {
+    return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
+  }
+  return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+};
+
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
   const queryClient = useQueryClient();
@@ -285,65 +294,33 @@ const GrapesEditor = () => {
 
       // Inject :root CSS variables
       const canvasDoc = editor.Canvas.getDocument();
-      if (canvasDoc) {
-        let brandingTag = canvasDoc.getElementById('branding-vars') as HTMLStyleElement | null;
-        if (!brandingTag) {
-          brandingTag = canvasDoc.createElement('style');
-          brandingTag.id = 'branding-vars';
-          canvasDoc.head.appendChild(brandingTag);
-        }
-        brandingTag.innerHTML = `
-        :root { 
-          --primary: ${currentPage.primaryColor || '#7c3aed'}; 
-          --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
-          --accent: ${currentPage.secondaryColor || '#6366f1'};
-          --gold: ${currentPage.primaryColor || '#7c3aed'};
-          --btn-bg: ${currentPage.secondaryColor || '#6366f1'};
-          --btn-text: #ffffff;
-          --body-bg: #ffffff;
-          --body-text: #0f172a;
-          --heading-color: #0f172a;
-          --subheading-color: #475569;
-          --midnight: #0a1128;
-          --ivory: #f8f9fa;
-          --ink: #0c4a6e;
-          --soft: #ffffff;
-          --bg: #1a0f08;
-          --cream: #f4ead5;
-          --muted: #a89580;
-          --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
-        }
-        
-        input, textarea, select {
-          color: #0f172a !important;
-          background-color: #ffffff !important;
-        }
-        input::placeholder, textarea::placeholder {
-          color: #94a3b8 !important;
-        }
-        `;
-        const allButtons = canvasDoc.querySelectorAll('form button');
-        allButtons.forEach(btn => {
-          if (btn.getAttribute('type') === 'button') {
-            btn.setAttribute('type', 'submit');
-          }
-        });
-      }
 
       // ─── Placeholder Replacement (Dynamic) ───
       const primaryColor = currentPage.primaryColor || '#7c3aed';
       const secondaryColor = currentPage.secondaryColor || '#6366f1';
 
+      let pRgb = "124, 58, 237";
+      let sRgb = "99, 102, 241";
+      try {
+        pRgb = hexToRgbStr(primaryColor);
+        sRgb = hexToRgbStr(secondaryColor);
+      } catch (e) { }
+
+      // Replace placeholders with ACTUAL color values (not var()) to avoid circular CSS variable references
       const finalStyles = (dbStyles || '')
-        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
-        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, primaryColor)
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, secondaryColor)
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor)
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        // Also clean up any previously saved var(--primary) circular references
+        .replace(/:\s*var\(--primary\)/g, `: ${primaryColor}`)
+        .replace(/:\s*var\(--secondary\)/g, `: ${secondaryColor}`)
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
-      // ─── Inject CSS into canvas <iframe> directly (fixes setStyle not rendering) ───
+      // ─── Inject template CSS FIRST into canvas <iframe> ───
+      // (branding-vars must come AFTER template-styles so it wins the cascade)
       if (canvasDoc) {
         let templateStyleTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
         if (!templateStyleTag) {
@@ -356,6 +333,54 @@ const GrapesEditor = () => {
 
       // Also call setStyle so GrapesJS CSS composer is aware
       try { editor.setStyle(finalStyles); } catch (e) { console.warn('setStyle warn:', e); }
+
+      // ─── Inject branding-vars AFTER template-styles so it wins the cascade ───
+      if (canvasDoc) {
+        // Remove existing branding-vars if present so we re-insert at end
+        const existingBranding = canvasDoc.getElementById('branding-vars');
+        if (existingBranding) existingBranding.remove();
+
+        const brandingTag = canvasDoc.createElement('style');
+        brandingTag.id = 'branding-vars';
+        canvasDoc.head.appendChild(brandingTag); // append at END so it wins cascade
+        brandingTag.innerHTML = `
+        :root { 
+          --primary: ${primaryColor}; 
+          --secondary: ${secondaryColor}; 
+          --accent: ${secondaryColor};
+          --gold: ${primaryColor};
+          --forest: ${primaryColor};
+          --btn-bg: ${primaryColor};
+          --btn-text: #ffffff;
+          --body-bg: #ffffff;
+          --body-text: #0f172a;
+          --heading-color: #0f172a;
+          --subheading-color: #475569;
+          --midnight: #0a1128;
+          --ivory: #f8f9fa;
+          --ink: #0c4a6e;
+          --soft: #ffffff;
+          --bg: #1a0f08;
+          --cream: #f4ead5;
+          --muted: #a89580;
+          --button-gradient: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+        }
+        
+        input, textarea, select {
+          color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        input::placeholder, textarea::placeholder {
+          color: #94a3b8 !important;
+        }
+        `;
+        const allButtons = canvasDoc.querySelectorAll('form button');
+        allButtons.forEach((btn: Element) => {
+          if (btn.getAttribute('type') === 'button') {
+            btn.setAttribute('type', 'submit');
+          }
+        });
+      }
 
 
 
@@ -399,8 +424,8 @@ const GrapesEditor = () => {
       dbContent = dbContent
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, primaryColor)
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, secondaryColor)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
@@ -1750,9 +1775,43 @@ const GrapesEditor = () => {
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
     const templateStyleTag = canvasDoc.getElementById('template-styles');
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (templateStyleTag?.innerHTML || '');
+
+    // Replace var(--primary/secondary) with actual hex values before saving.
+    // This prevents circular CSS variable references (e.g. --primary: var(--primary)) on reload.
+    const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
+      .replace(/var\(--primary\)/g, themePrimary)
+      .replace(/var\(--secondary\)/g, themeSecondary);
+
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
 
     const styleData = globalCss + '\n' + css;
+
+    // Extract all custom script tags from the canvas document to prevent GrapesJS from stripping them
+    let customScripts = '';
+    try {
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      if (canvasDoc) {
+        const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
+        const uniqueScripts = new Map<string, string>();
+
+        scriptTags.forEach(s => {
+          const src = s.getAttribute('src');
+          if (src && src.includes('cdn.tailwindcss.com')) return;
+          if (s.innerHTML.includes('tailwind.config')) return;
+
+          const key = src || s.innerHTML.trim();
+          if (key && !uniqueScripts.has(key)) {
+            uniqueScripts.set(key, s.outerHTML);
+          }
+        });
+
+        customScripts = Array.from(uniqueScripts.values()).join('\n');
+      }
+    } catch (e) {
+      console.warn('Failed to extract scripts from canvas:', e);
+    }
+
+    const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
     const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
@@ -1760,14 +1819,14 @@ const GrapesEditor = () => {
       primaryColor: themePrimary,
       secondaryColor: themeSecondary,
       accentColor: themeSecondary,
-      landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+      landingPageContent: mode === 'landing' ? htmlWithScripts : page?.landingPageContent,
       landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
-      thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+      thankYouPageContent: mode === 'thank-you' ? htmlWithScripts : page?.thankYouPageContent,
       thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
     };
 
     if (mode === 'landing') {
-      updateData.content = html;
+      updateData.content = htmlWithScripts;
       updateData.styles = styleData;
     } else {
       updateData.content = page?.landingPageContent;
@@ -1878,12 +1937,43 @@ const GrapesEditor = () => {
       return;
     }
 
+    // Extract all custom script tags from the canvas document
+    let customScripts = '';
+    try {
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      if (canvasDoc) {
+        const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
+        const uniqueScripts = new Map<string, string>();
+
+        scriptTags.forEach(s => {
+          const src = s.getAttribute('src');
+          if (src && src.includes('cdn.tailwindcss.com')) return;
+          if (s.innerHTML.includes('tailwind.config')) return;
+
+          const key = src || s.innerHTML.trim();
+          if (key && !uniqueScripts.has(key)) {
+            uniqueScripts.set(key, s.outerHTML);
+          }
+        });
+
+        customScripts = Array.from(uniqueScripts.values()).join('\n');
+      }
+    } catch (e) {
+      console.warn('Failed to extract scripts from canvas for download:', e);
+    }
+
     // 1. Get raw content directly from editor to ensure latest state
     let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
     let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
 
     let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
     let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
+
+    if (mode === 'landing' && customScripts) {
+      landingHtml = landingHtml + '\n' + customScripts;
+    } else if (mode === 'thank-you' && customScripts) {
+      thankYouHtml = thankYouHtml + '\n' + customScripts;
+    }
 
     let formattedLandingHtml = formatHtmlPretty(landingHtml);
     let formattedLandingCss = formatCssPretty(landingCss);
@@ -2022,9 +2112,44 @@ const GrapesEditor = () => {
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const templateStyleTag = canvasDoc.getElementById('template-styles');
+
+      // Replace var(--primary/secondary) with actual hex values before saving.
+      // This prevents circular CSS variable references on reload/publish.
+      const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
+        .replace(/var\(--primary\)/g, themePrimary)
+        .replace(/var\(--secondary\)/g, themeSecondary);
+
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
 
       const styleData = globalCss + '\n' + css;
+
+      // Extract all custom script tags from the canvas document
+      let customScripts = '';
+      try {
+        const canvasDoc = editorRef.current.Canvas.getDocument();
+        if (canvasDoc) {
+          const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
+          const uniqueScripts = new Map<string, string>();
+
+          scriptTags.forEach(s => {
+            const src = s.getAttribute('src');
+            if (src && src.includes('cdn.tailwindcss.com')) return;
+            if (s.innerHTML.includes('tailwind.config')) return;
+
+            const key = src || s.innerHTML.trim();
+            if (key && !uniqueScripts.has(key)) {
+              uniqueScripts.set(key, s.outerHTML);
+            }
+          });
+
+          customScripts = Array.from(uniqueScripts.values()).join('\n');
+        }
+      } catch (e) {
+        console.warn('Failed to extract scripts from canvas:', e);
+      }
+
+      const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
       const updateData: Partial<LandingPage> = {
         status: 'published',
@@ -2033,14 +2158,14 @@ const GrapesEditor = () => {
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
         accentColor: themeSecondary,
-        landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+        landingPageContent: mode === 'landing' ? htmlWithScripts : page?.landingPageContent,
         landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
-        thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+        thankYouPageContent: mode === 'thank-you' ? htmlWithScripts : page?.thankYouPageContent,
         thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
       };
 
       if (mode === 'landing') {
-        updateData.content = html;
+        updateData.content = htmlWithScripts;
         updateData.styles = styleData;
       } else {
         updateData.content = page?.landingPageContent;

@@ -511,33 +511,42 @@ class HTMLCleaner {
 
     let cleaned = htmlContent;
 
-    // 1️⃣ Remove <html>, <head>, <body> tags
+    // 1⃣ Remove <html>, <head>, <body> tags
     cleaned = cleaned.replace(/<\/?html[^>]*>/gi, '');
     cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
     cleaned = cleaned.replace(/<body[^>]*>/gi, '');
     cleaned = cleaned.replace(/<\/body>/gi, '');
 
-    // 2️⃣ Remove DOCTYPE और xml declarations
+    // 2⃣ Remove DOCTYPE and xml declarations
     cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
     cleaned = cleaned.replace(/<\?xml[^>]*>/gi, '');
 
-    // 3️⃣ Remove <style> tags (पहले से collect कर चुके हैं)
+    // 3⃣ Remove <style> tags (CSS already collected by CSSCollector)
     cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
-    // 4️⃣ Remove local script tags (CDN scripts रखो)
-    const localScripts = cleaned.match(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi) || [];
-    log.debug(`Removing ${localScripts.length} local scripts`);
-    cleaned = cleaned.replace(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi, '');
+    // 4⃣ ONLY remove scripts that point to LOCAL relative file paths
+    //    e.g. <script src="js/app.js"> — these files don't exist in the template system
+    //    We detect these by: src= exists AND does NOT start with http/https/// or /
+    const localScripts = cleaned.match(/<script[^>]*\bsrc=["'](?!https?:\/\/|\/\/|\/)([^"']+)["'][^>]*><\/script>/gi) || [];
+    log.debug(`Removing ${localScripts.length} local file scripts (e.g. src="./app.js")`);
+    cleaned = cleaned.replace(/<script[^>]*\bsrc=["'](?!https?:\/\/|\/\/|\/)([^"']+)["'][^>]*><\/script>/gi, '');
 
-    // 5️⃣ Keep CDN scripts
+    // 5⃣ Keep CDN scripts (https://cdn.tailwindcss.com, etc.)
     const cdnScripts = cleaned.match(/<script[^>]*src=["']https?:\/\/[^"']+["'][^>]*><\/script>/gi) || [];
     log.debug(`Keeping ${cdnScripts.length} CDN scripts`);
 
-    // 6️⃣ Normalize whitespace
+    // ✅ 6⃣ CRITICAL: Preserve ALL inline <script>...</script> blocks (no src attribute)
+    //    These include: FAQ accordion, counter animations, marquee/ticker,
+    //    nav toggle, sticky bar, scroll reveal, form validation, modal close, etc.
+    //    Removing these BREAKS all interactivity on the published page!
+    const inlineScripts = cleaned.match(/<script(?![^>]*\bsrc\b)[^>]*>[\s\S]*?<\/script>/gi) || [];
+    log.info(`Preserving ${inlineScripts.length} inline scripts (FAQ, counters, nav, animations, etc.)`);
+
+    // 7⃣ Normalize whitespace
     cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
     cleaned = cleaned.trim();
 
-    log.success(`Cleaned HTML (removed ${localScripts.length} local scripts)`);
+    log.success(`Cleaned HTML: removed ${localScripts.length} local file scripts | kept ${inlineScripts.length} inline + ${cdnScripts.length} CDN scripts`);
     return cleaned;
   }
 }

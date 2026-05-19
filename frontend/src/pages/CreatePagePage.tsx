@@ -11,6 +11,7 @@ import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
+import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -18,6 +19,7 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -197,6 +199,14 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
   {
+    id: "healthcare-04",
+    name: "Lumina Medical Center",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates03/screnshort8.png",
+    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  },
+  {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
@@ -258,7 +268,7 @@ const LANDING_TEMPLATES: any[] = [
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance",];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -456,6 +466,7 @@ const CreatePagePage = () => {
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+        case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
         case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
         case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
         case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
@@ -1027,6 +1038,7 @@ const CreatePagePage = () => {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
+                case "healthcare-04": tpHtml = healthcare04Html; tpStyles = healthcare04Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
                 case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
                 case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
@@ -1037,31 +1049,49 @@ const CreatePagePage = () => {
                 default: tpHtml = ""; tpStyles = "";
               }
 
-              // Apply branding to preview via :root injection
+              // ── Use actual project branding in preview ──
+              const previewPrimary = primaryColor || "#6366f1";
+              const previewSecondary = secondaryColor || "#4f46e5";
+              const previewName = project?.name || "Your Brand";
+              const previewLogo = logoUrl || project?.logoUrl;
+
               const brandingVars = `
                 :root {
-                  --primary: #6366f1;
-                  --secondary: #4f46e5;
-                  --primary-rgb: ${hexToRgbStr("#6366f1")};
-                  --secondary-rgb: ${hexToRgbStr("#4f46e5")};
+                  --primary: ${previewPrimary};
+                  --secondary: ${previewSecondary};
+                  --accent: ${previewSecondary};
+                  --gold: ${previewPrimary};
+                  --btn-bg: ${previewPrimary};
+                  --btn-text: #ffffff;
+                  --button-gradient: linear-gradient(135deg, ${previewPrimary}, ${previewSecondary});
+                  --primary-rgb: ${hexToRgbStr(previewPrimary)};
+                  --secondary-rgb: ${hexToRgbStr(previewSecondary)};
                 }
-                `;
+              `;
               tpStyles = brandingVars + "\n" + tpStyles;
 
-              const logoHtml = `<span style="font-weight: 800; font-size: 1.5rem; color: #6366f1;">BRAND</span>`;
-
-              tpHtml = tpHtml
-                .replace(/PROJECT_NAME_PLACEHOLDER/g, "Business Name")
-                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/CONTACT_PLACEHOLDER/g, "Contact Us");
-
-              // Clean up any stray placeholders
-              tpHtml = tpHtml
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5");
-
+              // Replace ALL placeholders in CSS
               tpStyles = tpStyles
-                .replace(/LOGO_URL_PLACEHOLDER/g, "");
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
+                .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))
+                .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewSecondary))
+                .replace(/LOGO_URL_PLACEHOLDER/g, previewLogo || "");
+
+              // Build logo HTML using project logo/name
+              const logoHtml = previewLogo
+                ? `<img src="${previewLogo}" alt="${previewName}" style="height:40px;width:auto;object-fit:contain;">`
+                : `<span style="font-weight:800;font-size:1.4rem;color:${previewPrimary};">${previewName}</span>`;
+
+              // Replace ALL placeholders in HTML
+              tpHtml = tpHtml
+                .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
+                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
+                .replace(/CONTACT_PLACEHOLDER/g, project?.contactEmail || project?.phone || "Contact Us")
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
+                .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))
+                .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewSecondary));
 
               return (
                 <iframe
@@ -1070,13 +1100,19 @@ const CreatePagePage = () => {
                     <html>
                       <head>
                         <meta charset="utf-8">
-                        <title>Preview</title>
-                        <script src="https://cdn.tailwindcss.com"></script>
-                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Preview — ${previewTemplate.name}</title>
+                        <script src="https://cdn.tailwindcss.com"><\/script>
+                        <script>
+                          tailwind.config = { theme: { extend: { colors: { primary: '${previewPrimary}', secondary: '${previewSecondary}' } } } };
+                        <\/script>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+                        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+                        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
                         <style>
-                          ${tpStyles}
-                          /* Helper styles for preview */
                           body { margin: 0; padding: 0; overflow-x: hidden; }
+                          ${tpStyles}
                         </style>
                       </head>
                       <body>

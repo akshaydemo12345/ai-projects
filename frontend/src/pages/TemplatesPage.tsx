@@ -1,8 +1,17 @@
-import { Search, Eye, ArrowLeft } from "lucide-react";
+import { Search, Eye, ArrowLeft, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
+import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
+import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
+import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
+import { travel01Html, travel01Styles } from "../templates/travel/templates01";
+import { travel02Html, travel02Styles } from "../templates/travel/templates02";
+import { travel03Html, travel03Styles } from "../templates/travel/templates03";
+import { finance01Html, finance01Styles } from "../templates/finance/templates01";
+import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 
 const LANDING_TEMPLATES = [
   {
@@ -65,9 +74,25 @@ const LANDING_TEMPLATES = [
 
 const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
 
+const getTemplateContent = (id: string) => {
+  switch (id) {
+    case "healthcare-01": return { html: healthcare01Html, css: healthcare01Styles };
+    case "healthcare-02": return { html: healthcare02Html, css: healthcare02Styles };
+    case "healthcare-03": return { html: healthcare03Html, css: healthcare03Styles };
+    case "healthcare-04": return { html: healthcare04Html, css: healthcare04Styles };
+    case "travel-01": return { html: travel01Html, css: travel01Styles };
+    case "travel-02": return { html: travel02Html, css: travel02Styles };
+    case "travel-03": return { html: travel03Html, css: travel03Styles };
+    case "finance-01": return { html: finance01Html, css: finance01Styles };
+    case "finance-02": return { html: finance02Html, css: finance02Styles };
+    default: return { html: "", css: "" };
+  }
+};
+
 const TemplatesPage = () => {
   const [templateCategory, setTemplateCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [previewTpl, setPreviewTpl] = useState<typeof LANDING_TEMPLATES[0] | null>(null);
 
   const filtered = LANDING_TEMPLATES.filter(t =>
     (templateCategory === "All" || t.tag === templateCategory) &&
@@ -77,7 +102,7 @@ const TemplatesPage = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
-      
+
       <div className="p-8 md:p-16">
         <style>{`
           .custom-scrollbar::-webkit-scrollbar {
@@ -169,7 +194,7 @@ const TemplatesPage = () => {
                 <div className="bg-white px-8 pb-6 pt-1 flex items-center justify-between">
                   <h3 className="text-lg font-black text-[#0f172a] tracking-tight truncate pr-3 group-hover:text-violet-600 transition-colors duration-300">{tpl.name}</h3>
                   <button
-                    onClick={() => window.open(tpl.img, '_blank')}
+                    onClick={(e) => { e.stopPropagation(); setPreviewTpl(tpl); }}
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3"
                     title="View Preview"
                   >
@@ -189,6 +214,84 @@ const TemplatesPage = () => {
       </div>
 
       <Footer />
+
+      {/* ── Preview Modal ── */}
+      {previewTpl && (() => {
+        const { html, css } = getTemplateContent(previewTpl.id);
+        const PRIMARY = '#6366f1';
+        const SECONDARY = '#4f46e5';
+
+        const brandingVars = `
+          :root {
+            --primary: ${PRIMARY};
+            --secondary: ${SECONDARY};
+            --accent: ${SECONDARY};
+            --gold: ${PRIMARY};
+            --btn-bg: ${PRIMARY};
+            --button-gradient: linear-gradient(135deg, ${PRIMARY}, ${SECONDARY});
+          }
+        `;
+
+        let styledCss = brandingVars + '\n' + css
+          .replace(/PRIMARY_COLOR_PLACEHOLDER/g, PRIMARY)
+          .replace(/SECONDARY_COLOR_PLACEHOLDER/g, SECONDARY)
+          .replace(/PRIMARY_RGB_PLACEHOLDER/g, '99, 102, 241')
+          .replace(/SECONDARY_RGB_PLACEHOLDER/g, '79, 70, 229')
+          .replace(/LOGO_URL_PLACEHOLDER/g, '');
+
+        const logoHtml = `<span style="font-weight:800;font-size:1.4rem;color:${PRIMARY};">Your Brand</span>`;
+        let styledHtml = html
+          .replace(/PROJECT_NAME_PLACEHOLDER/g, 'Your Business')
+          .replace(/LOGO_PLACEHOLDER/g, logoHtml)
+          .replace(/CONTACT_PLACEHOLDER/g, 'Contact Us')
+          .replace(/PRIMARY_COLOR_PLACEHOLDER/g, PRIMARY)
+          .replace(/SECONDARY_COLOR_PLACEHOLDER/g, SECONDARY)
+          .replace(/PRIMARY_RGB_PLACEHOLDER/g, '99, 102, 241')
+          .replace(/SECONDARY_RGB_PLACEHOLDER/g, '79, 70, 229');
+
+        return (
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
+              <div>
+                <h3 className="text-white font-bold text-lg">{previewTpl.name}</h3>
+                <p className="text-white/50 text-xs uppercase tracking-widest font-black">{previewTpl.tag} Template</p>
+              </div>
+              <button onClick={() => setPreviewTpl(null)} className="p-2 h-10 w-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 w-full bg-white relative overflow-hidden">
+              <iframe
+                srcDoc={`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      <title>Preview — ${previewTpl.name}</title>
+                      <script src="https://cdn.tailwindcss.com"><\/script>
+                      <script>tailwind.config={theme:{extend:{colors:{primary:'${PRIMARY}',secondary:'${SECONDARY}'}}}}<\/script>
+                      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+                      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+                      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+                      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+                      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+                      <style>
+                        body { margin: 0; padding: 0; overflow-x: hidden; }
+                        ${styledCss}
+                      </style>
+                    </head>
+                    <body>
+                      ${styledHtml}
+                    </body>
+                  </html>
+                `}
+                className="absolute inset-0 w-full h-full border-none"
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
