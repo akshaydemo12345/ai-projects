@@ -146,6 +146,8 @@ const GrapesEditor = () => {
   const cpObserverRef = useRef<MutationObserver | null>(null);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
+  const [extractedTemplateScripts, setExtractedTemplateScripts] = useState<string>('');
+
   useEffect(() => {
     if (page) {
       setPageTitle(page.metaTitle || page.name || 'Landing Page');
@@ -155,6 +157,34 @@ const GrapesEditor = () => {
       setThemePrimary(page.primaryColor || '#7c3aed');
       setThemeSecondary(page.secondaryColor || '#6366f1');
       setSiteStatus(page.status || 'draft');
+
+      // Extract and backup ALL template scripts from raw db page content so they are never lost on save/publish
+      try {
+        let rawHtml = '';
+        if (page.landingPageContent) {
+          rawHtml = page.landingPageContent;
+        } else if (typeof page.content === 'object' && page.content !== null) {
+          rawHtml = page.content.fullHtml || page.content.html || '';
+        } else if (typeof page.content === 'string') {
+          rawHtml = page.content;
+        }
+
+        if (rawHtml) {
+          // Match ALL script tags (both inline and src-based)
+          const allScriptMatches = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+          // Filter out only tailwind CDN + tailwind config scripts (they are re-added on publish)
+          const filteredScripts = allScriptMatches.filter(s => {
+            if (s.includes('cdn.tailwindcss.com')) return false;
+            if (s.includes('tailwind.config')) return false;
+            return true;
+          });
+          if (filteredScripts.length > 0) {
+            setExtractedTemplateScripts(filteredScripts.join('\n'));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to backup template scripts:', e);
+      }
     }
   }, [page]);
 
@@ -1786,30 +1816,17 @@ const GrapesEditor = () => {
 
     const styleData = globalCss + '\n' + css;
 
-    // Extract all custom script tags from the canvas document to prevent GrapesJS from stripping them
-    let customScripts = '';
+    // Extract all custom script tags from the canvas document using the unified helper
+    let canvasScripts = '';
     try {
       const canvasDoc = editorRef.current.Canvas.getDocument();
-      if (canvasDoc) {
-        const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
-        const uniqueScripts = new Map<string, string>();
-
-        scriptTags.forEach(s => {
-          const src = s.getAttribute('src');
-          if (src && src.includes('cdn.tailwindcss.com')) return;
-          if (s.innerHTML.includes('tailwind.config')) return;
-
-          const key = src || s.innerHTML.trim();
-          if (key && !uniqueScripts.has(key)) {
-            uniqueScripts.set(key, s.outerHTML);
-          }
-        });
-
-        customScripts = Array.from(uniqueScripts.values()).join('\n');
-      }
+      if (canvasDoc) canvasScripts = extractCanvasScripts(canvasDoc);
     } catch (e) {
       console.warn('Failed to extract scripts from canvas:', e);
     }
+
+    // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
+    const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
 
     const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
@@ -1937,30 +1954,17 @@ const GrapesEditor = () => {
       return;
     }
 
-    // Extract all custom script tags from the canvas document
-    let customScripts = '';
+    // Extract all custom script tags from the canvas document using the unified helper
+    let canvasScriptsForDownload = '';
     try {
       const canvasDoc = editorRef.current.Canvas.getDocument();
-      if (canvasDoc) {
-        const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
-        const uniqueScripts = new Map<string, string>();
-
-        scriptTags.forEach(s => {
-          const src = s.getAttribute('src');
-          if (src && src.includes('cdn.tailwindcss.com')) return;
-          if (s.innerHTML.includes('tailwind.config')) return;
-
-          const key = src || s.innerHTML.trim();
-          if (key && !uniqueScripts.has(key)) {
-            uniqueScripts.set(key, s.outerHTML);
-          }
-        });
-
-        customScripts = Array.from(uniqueScripts.values()).join('\n');
-      }
+      if (canvasDoc) canvasScriptsForDownload = extractCanvasScripts(canvasDoc);
     } catch (e) {
       console.warn('Failed to extract scripts from canvas for download:', e);
     }
+
+    // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
+    const customScripts = mergeScripts(canvasScriptsForDownload, extractedTemplateScripts);
 
     // 1. Get raw content directly from editor to ensure latest state
     let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
@@ -2121,34 +2125,27 @@ const GrapesEditor = () => {
         .replace(/var\(--secondary\)/g, themeSecondary);
 
       const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
-
       const styleData = globalCss + '\n' + css;
 
-      // Extract all custom script tags from the canvas document
-      let customScripts = '';
+      // Extract scripts from canvas using unified helper, then merge with backup
+      let canvasScriptsPub = '';
       try {
-        const canvasDoc = editorRef.current.Canvas.getDocument();
-        if (canvasDoc) {
-          const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
-          const uniqueScripts = new Map<string, string>();
-
-          scriptTags.forEach(s => {
-            const src = s.getAttribute('src');
-            if (src && src.includes('cdn.tailwindcss.com')) return;
-            if (s.innerHTML.includes('tailwind.config')) return;
-
-            const key = src || s.innerHTML.trim();
-            if (key && !uniqueScripts.has(key)) {
-              uniqueScripts.set(key, s.outerHTML);
-            }
-          });
-
-          customScripts = Array.from(uniqueScripts.values()).join('\n');
-        }
+        if (canvasDoc) canvasScriptsPub = extractCanvasScripts(canvasDoc);
       } catch (e) {
         console.warn('Failed to extract scripts from canvas:', e);
       }
+      const customScripts = mergeScripts(canvasScriptsPub, extractedTemplateScripts);
 
+      // Build a FULL self-contained HTML document for publish.
+      // This is the key fix: published page has all CSS + JS inline so it works standalone.
+      const fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
+        title: pageTitle,
+        desc: metaDesc,
+        primaryColor: themePrimary,
+        secondaryColor: themeSecondary,
+      });
+
+      // Also keep the raw body HTML for editor reload
       const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
       const updateData: Partial<LandingPage> = {
@@ -2158,14 +2155,16 @@ const GrapesEditor = () => {
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
         accentColor: themeSecondary,
-        landingPageContent: mode === 'landing' ? htmlWithScripts : page?.landingPageContent,
+        // landingPageContent stores the full standalone HTML so the public page works correctly
+        landingPageContent: mode === 'landing' ? fullPublishHtml : page?.landingPageContent,
         landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
-        thankYouPageContent: mode === 'thank-you' ? htmlWithScripts : page?.thankYouPageContent,
+        thankYouPageContent: mode === 'thank-you' ? fullPublishHtml : page?.thankYouPageContent,
         thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
       };
 
       if (mode === 'landing') {
-        updateData.content = htmlWithScripts;
+        // content.fullHtml = complete standalone HTML; content.html = body only for editor reload
+        updateData.content = { fullHtml: fullPublishHtml, html: htmlWithScripts };
         updateData.styles = styleData;
       } else {
         updateData.content = page?.landingPageContent;
@@ -2869,10 +2868,37 @@ const GrapesEditor = () => {
                         const doc = parser.parseFromString(html, 'text/html');
                         const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
                         if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+
+                        // ✅ KEY FIX: Extract and backup ALL scripts from the new template
+                        // so they survive GrapesJS stripping on save/publish
+                        const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
+                        const newBackupScripts = allTemplateScripts
+                          .filter(s => {
+                            const src = s.getAttribute('src') || '';
+                            if (src.includes('cdn.tailwindcss.com')) return false;
+                            if (s.innerHTML.includes('tailwind.config')) return false;
+                            return true;
+                          })
+                          .map(s => s.outerHTML)
+                          .join('\n');
+                        if (newBackupScripts) {
+                          setExtractedTemplateScripts(newBackupScripts);
+                          console.log(`📦 Backed up ${allTemplateScripts.length} scripts from new template`);
+                        }
+
                         finalHtml = doc.body.innerHTML;
                         console.log('✅ Parsed full HTML body content.');
                       } catch (e) {
                         console.error('Error parsing Thank You HTML:', e);
+                      }
+                    } else {
+                      // Even for body-only templates, extract any inline scripts
+                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+                      const filteredScripts = scriptMatches.filter(s =>
+                        !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
+                      );
+                      if (filteredScripts.length > 0) {
+                        setExtractedTemplateScripts(filteredScripts.join('\n'));
                       }
                     }
 
@@ -3472,6 +3498,122 @@ const SpinnerIcon = () => (
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
 );
+
+/**
+ * mergeScripts — Intelligently merge two sets of <script> tag strings.
+ * Uses `src` attribute as key for external scripts and inner content as key
+ * for inline scripts so that duplicates are never included.
+ * Tailwind CDN and tailwind.config scripts are always filtered out here
+ * since they are injected separately by PublicLandingPage.
+ */
+function mergeScripts(canvasScripts: string, backupScripts: string): string {
+  const unique = new Map<string, string>();
+
+  const addScripts = (html: string) => {
+    if (!html) return;
+    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+    matches.forEach(tag => {
+      // Skip tailwind — added by renderer
+      if (tag.includes('cdn.tailwindcss.com')) return;
+      if (tag.includes('tailwind.config')) return;
+
+      // Determine dedup key: src for external, trimmed body for inline
+      const srcMatch = tag.match(/src=["']([^"']+)["']/i);
+      if (srcMatch) {
+        const src = srcMatch[1].trim();
+        if (!unique.has(src)) unique.set(src, tag);
+      } else {
+        const body = tag.replace(/<script\b[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+        if (body && !unique.has(body)) unique.set(body, tag);
+      }
+    });
+  };
+
+  addScripts(canvasScripts);
+  addScripts(backupScripts);
+  return Array.from(unique.values()).join('\n');
+}
+
+/**
+ * extractCanvasScripts — Pull all <script> tags from a GrapesJS canvas document.
+ * Skips Tailwind CDN (re-injected by renderer) and tailwind.config blocks.
+ */
+function extractCanvasScripts(canvasDoc: Document): string {
+  const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
+  const unique = new Map<string, string>();
+  scriptTags.forEach(s => {
+    const src = s.getAttribute('src');
+    if (src && src.includes('cdn.tailwindcss.com')) return;
+    if (s.innerHTML.includes('tailwind.config')) return;
+    const key = src ? src : s.innerHTML.trim();
+    if (key && !unique.has(key)) unique.set(key, s.outerHTML);
+  });
+  return Array.from(unique.values()).join('\n');
+}
+
+/**
+ * buildPublishHtml — Build a complete, self-contained HTML document
+ * that works correctly when served standalone (via WordPress plugin or direct URL).
+ * This ensures CSS, JS, and all interactive features work after publish.
+ */
+function buildPublishHtml(
+  bodyHtml: string,
+  css: string,
+  scripts: string,
+  opts: { title?: string; desc?: string; primaryColor?: string; secondaryColor?: string }
+): string {
+  const primary = opts.primaryColor || '#7c3aed';
+  const secondary = opts.secondaryColor || '#6366f1';
+  const title = (opts.title || 'Landing Page').replace(/"/g, '&quot;');
+  const desc = (opts.desc || '').replace(/"/g, '&quot;');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${title}</title>
+  ${desc ? `<meta name="description" content="${desc}"/>` : ''}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '${primary}',
+            secondary: '${secondary}'
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: ${primary};
+      --secondary: ${secondary};
+      --accent: ${secondary};
+      --gold: ${primary};
+      --forest: ${primary};
+      --btn-bg: ${primary};
+      --btn-text: #ffffff;
+      --button-gradient: linear-gradient(135deg, ${primary}, ${secondary});
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100vh; }
+    ${css}
+  </style>
+</head>
+<body>
+${bodyHtml}
+${scripts}
+</body>
+</html>`;
+}
 
 function parseInlineStyle(styleStr: string): Record<string, string> {
   const styleObj: Record<string, string> = {};

@@ -535,18 +535,27 @@ class HTMLCleaner {
     const cdnScripts = cleaned.match(/<script[^>]*src=["']https?:\/\/[^"']+["'][^>]*><\/script>/gi) || [];
     log.debug(`Keeping ${cdnScripts.length} CDN scripts`);
 
-    // ✅ 6⃣ CRITICAL: Preserve ALL inline <script>...</script> blocks (no src attribute)
+    // ✅ 6⃣ CRITICAL: Extract and preserve ALL inline <script>...</script> blocks (no src attribute)
     //    These include: FAQ accordion, counter animations, marquee/ticker,
     //    nav toggle, sticky bar, scroll reveal, form validation, modal close, etc.
-    //    Removing these BREAKS all interactivity on the published page!
-    const inlineScripts = cleaned.match(/<script(?![^>]*\bsrc\b)[^>]*>[\s\S]*?<\/script>/gi) || [];
-    log.info(`Preserving ${inlineScripts.length} inline scripts (FAQ, counters, nav, animations, etc.)`);
+    //    We extract them from their original spots and append them to the bottom (under the footer).
+    const inlineScripts = [];
+    cleaned = cleaned.replace(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
+      inlineScripts.push(match.trim());
+      return ''; // Remove from original position
+    });
+    log.info(`Extracted ${inlineScripts.length} inline scripts`);
 
     // 7⃣ Normalize whitespace
     cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
     cleaned = cleaned.trim();
 
-    log.success(`Cleaned HTML: removed ${localScripts.length} local file scripts | kept ${inlineScripts.length} inline + ${cdnScripts.length} CDN scripts`);
+    // 8⃣ Append all extracted inline scripts at the very bottom (under the footer)
+    if (inlineScripts.length > 0) {
+      cleaned += '\n\n' + inlineScripts.join('\n\n') + '\n';
+    }
+
+    log.success(`Cleaned HTML: removed ${localScripts.length} local file scripts | kept & moved ${inlineScripts.length} inline scripts under footer`);
     return cleaned;
   }
 }
@@ -721,16 +730,20 @@ class HealthcareTemplateConverter {
       this.stats.animationsPreserved = animations.count;
 
       // ───────────────────────────────────────────────────────────────
-      // Step 11: Escape backticks
+      // Step 11: Escape backticks and template string syntax (${})
       // ───────────────────────────────────────────────────────────────
-      content.css = content.css.replace(/`/g, '\\`');
-      content.html = content.html.replace(/`/g, '\\`');
+      content.css = content.css.replace(/`/g, '\\`').replace(/\${/g, '\\${');
+      content.html = content.html.replace(/`/g, '\\`').replace(/\${/g, '\\${');
 
       // ───────────────────────────────────────────────────────────────
       // Step 12: Generate TypeScript
       // ───────────────────────────────────────────────────────────────
       const stylesVar = `${catCamel}${paddedNum}Styles`;
       const htmlVar = `${catCamel}${paddedNum}Html`;
+
+      const lowerCatCamel = catCamel.charAt(0).toLowerCase() + catCamel.slice(1);
+      const lowerStylesVar = `${lowerCatCamel}${paddedNum}Styles`;
+      const lowerHtmlVar = `${lowerCatCamel}${paddedNum}Html`;
 
       const tsOutput = `// Auto-generated ULTRA-DYNAMIC template — ${this.category} templates${paddedNum}
 // Generated: ${new Date().toISOString()}
@@ -751,6 +764,9 @@ export const ${htmlVar} = \`
 ${headContent.trim()}
 ${content.html.trim()}
 \`;
+
+export const ${lowerStylesVar} = ${stylesVar};
+export const ${lowerHtmlVar} = ${htmlVar};
 `;
 
       // ───────────────────────────────────────────────────────────────

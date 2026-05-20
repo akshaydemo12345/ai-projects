@@ -563,14 +563,47 @@ const CreatePagePage = () => {
       const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
       const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
 
+      // Build a complete standalone HTML document for the template.
+      // This ensures CSS, JS, and interactive features (FAQ accordion, etc.) work after publish.
+      const primaryCol = primaryColor || "#6366f1";
+      const secondaryCol = secondaryColor || "#4f46e5";
+      const fullTemplateHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${pageName.trim() || project.name}</title>
+  <meta name="description" content="${project.description || ''}"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--primary:${primaryCol};--secondary:${secondaryCol};--accent:${secondaryCol};--gold:${primaryCol};--forest:${primaryCol};--btn-bg:${primaryCol};--btn-text:#ffffff;--button-gradient:linear-gradient(135deg,${primaryCol},${secondaryCol});}
+    *,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;min-height:100vh;}
+    ${enrichedStyles}
+  </style>
+</head>
+<body>
+${enrichedContent}
+</body>
+</html>`;
+
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
         generationMethod: isAiTemplatePath ? "ai" : "template",
-        content: enrichedContent,
+        // Store as object with fullHtml so editor and publisher both work correctly
+        content: { fullHtml: fullTemplateHtml, html: enrichedContent, fullCss: enrichedStyles },
         styles: enrichedStyles,
+        // Also store as landingPageContent for the public page renderer
+        landingPageContent: fullTemplateHtml,
+        landingPageStyles: enrichedStyles,
         templateId: finalTemplateId,
         template: tName,
         aiPrompt: aiPrompt
