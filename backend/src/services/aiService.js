@@ -385,7 +385,7 @@ Return ONLY the complete improved HTML code. No explanation. No comments. Start 
   const styles = [
     'Apply a dark glassmorphic design with deep background gradients and subtle light borders.',
     'Design a clean, asymmetric editorial layout with large bold typography and rich whitespace.',
-    'Use diagonal clip-path boundaries and dynamic overlapping card containers.',
+    'Use  boundaries and dynamic overlapping card containers.',
     'Incorporate interactive-feeling stats or lists with glowing shadows and high visual hierarchy.',
     'Create an immersive full-bleed grid with dramatic typography and background shapes.',
   ];
