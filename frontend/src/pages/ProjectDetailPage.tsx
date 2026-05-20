@@ -223,7 +223,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
         currentPrompt: aiPrompt.trim() || undefined
       });
       setAiPrompt(res.data.suggestion);
-      toast.success("Magic prompt generated!");
+      toast.success("AI prompt generated successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to generate prompt");
     } finally {
@@ -312,7 +312,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
         setPageSlug(autoSlug(cleanName));
       }
 
-      toast.success("Website analysis complete!");
+      toast.success("Website analysis completed successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to analyze website");
     } finally {
@@ -781,7 +781,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
     const success = await copyToClipboard(publishUrl);
     if (success) {
       setUrlCopied(true);
-      toast.success("URL copied!");
+      toast.success("URL copied successfully.");
       setTimeout(() => setUrlCopied(false), 2000);
     }
   };
@@ -933,7 +933,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                           onClick={() => {
                             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
                             window.open(`${apiBaseUrl}/plugin/download`, '_blank');
-                            toast.success("Downloading plugin...");
+                            toast.success("Plugin download started successfully.");
                           }}
                         >
                           <Download className="h-3 w-3" /> Download Plugin
@@ -945,7 +945,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                             const success = await copyToClipboard(project.apiToken);
                             if (success) {
                               setTokenCopiedLocal(true);
-                              toast.success("Token copied!");
+                              toast.success("Token copied successfully.");
                               setTimeout(() => setTokenCopiedLocal(false), 2000);
                             }
                           }}>
@@ -969,7 +969,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
                       const success = await copyToClipboard(scriptCode);
                       if (success) {
                         setScriptCopied(true);
-                        toast.success("Code copied!");
+                        toast.success("Code copied successfully.");
                         setTimeout(() => setScriptCopied(false), 2000);
                       }
                     }}
@@ -1369,7 +1369,7 @@ const ProjectDetailPage = () => {
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreateOpen(false);
-      toast.success("Page created!");
+      toast.success("Page created successfully.");
       // Handle navigation to editor or similar
       navigate(`/editor/${id}/${newPage._id}`);
     },
@@ -1381,7 +1381,7 @@ const ProjectDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setDeletePageId(null);
-      toast.success("Page deleted");
+      toast.success("Page deleted successfully.");
     },
     onError: () => toast.error("Failed to delete page"),
   });
@@ -1391,7 +1391,7 @@ const ProjectDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setPublishingPage(null);
-      toast.success("Page updated");
+      toast.success("Page updated successfully.");
     },
     onError: () => toast.error("Failed to update page"),
   });
@@ -1401,7 +1401,7 @@ const ProjectDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setEditProjectOpen(false);
-      toast.success("Project updated");
+      toast.success("Project updated successfully.");
     },
     onError: () => toast.error("Failed to update project"),
   });
@@ -1457,7 +1457,7 @@ const ProjectDetailPage = () => {
       const success = await copyToClipboard(project.apiToken);
       if (success) {
         setIntegTokenCopied(true);
-        toast.success("Token copied!");
+        toast.success("Token copied successfully.");
         setTimeout(() => setIntegTokenCopied(false), 2000);
       }
     }
@@ -1468,7 +1468,7 @@ const ProjectDetailPage = () => {
       const success = await copyToClipboard(scriptCode);
       if (success) {
         setIntegScriptCopied(true);
-        toast.success("Script copied!");
+        toast.success("Script copied successfully.");
         setTimeout(() => setIntegScriptCopied(false), 2000);
       }
     }
@@ -1866,7 +1866,7 @@ const ProjectDetailPage = () => {
                             onClick={() => {
                               const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
                               window.open(`${apiBaseUrl}/plugin/download`, '_blank');
-                              toast.success("Downloading plugin...");
+                              toast.success("Plugin download started successfully.");
                             }}
                           >
                             <Download className="h-3 w-3" /> Download

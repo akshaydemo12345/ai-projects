@@ -34,24 +34,18 @@ const LoginPage = () => {
         
         // If the backend auto-logs in the user and returns an accessToken, use it.
         if (response.accessToken && response.data && response.data.user) {
-          toast.success("Account created successfully!", {
-            description: "Welcome to Buildify! Let's start building your first project.",
-          });
+          toast.success("Account created successfully.");
           login(response.accessToken, response.data.user);
           navigate("/dashboard");
         } else {
-          toast.success("Account created successfully!", {
-            description: "Please check your email to verify your account.",
-          });
+          toast.success("Account created successfully.");
           setIsSignUp(false);
           setPassword("");
           setName("");
         }
       } else {
         response = await authApi.login({ email, password });
-        toast.success("Welcome back!", {
-          description: "Successfully logged into your account.",
-        });
+        toast.success("Welcome back! You have signed in successfully.");
         const { accessToken, data } = response;
         login(accessToken, data.user);
         navigate("/dashboard");
@@ -61,7 +55,11 @@ const LoginPage = () => {
       const nextFieldErrors = backendErrors.reduce(
         (acc: { email?: string; password?: string; name?: string }, fieldError: any) => {
           if (fieldError?.field) {
-            acc[fieldError.field] = fieldError.message;
+            let friendlyFieldMsg = fieldError.message;
+            if (fieldError.field === 'email') friendlyFieldMsg = 'Please enter a valid email address.';
+            if (fieldError.field === 'password') friendlyFieldMsg = 'Password must be at least 8 characters long.';
+            if (fieldError.field === 'name') friendlyFieldMsg = 'Please enter your full name.';
+            acc[fieldError.field] = friendlyFieldMsg;
           }
           return acc;
         },
@@ -72,20 +70,20 @@ const LoginPage = () => {
         setFieldErrors(nextFieldErrors);
       }
 
-      const errorMsg =
-        error?.message ||
-        (backendErrors.length > 0 ? backendErrors.map((e: any) => e.message).join(', ') : 'Authentication failed');
+      const errorMsg = error?.message || 'Authentication failed';
 
       if (backendErrors.length > 0) {
-        toast.error("Please fix the highlighted fields.", {
-          description: errorMsg,
-        });
-      } else if (errorMsg.toLowerCase().includes("verify your email") || errorMsg.toLowerCase().includes("email address not verified")) {
+        // Show the first validation error message directly in the toast heading
+        const firstErr = backendErrors[0];
+        let friendlyFirstMsg = firstErr.message;
+        if (firstErr.field === 'email') friendlyFirstMsg = 'Please enter a valid email address.';
+        else if (firstErr.field === 'password') friendlyFirstMsg = 'Password must be at least 8 characters long.';
+        else if (firstErr.field === 'name') friendlyFirstMsg = 'Please enter your full name.';
+        toast.error(friendlyFirstMsg || "Please fix the highlighted fields.");
+      } else if (errorMsg.toLowerCase().includes("verify") || errorMsg.toLowerCase().includes("verification")) {
         setUnverifiedEmail(email);
         setShowResendPrompt(true);
-        toast.error("Email Not Verified", {
-          description: "Please verify your email before logging in.",
-        });
+        toast.error("Please verify your email address to continue.");
       } else {
         toast.error(errorMsg);
       }
@@ -97,9 +95,7 @@ const LoginPage = () => {
   const handleResendVerificationEmail = async () => {
     try {
       await authApi.resendVerificationEmail({ email: unverifiedEmail });
-      toast.success("Email sent!", {
-        description: "Please check your inbox for the verification link.",
-      });
+      toast.success("Verification email sent.");
       setShowResendPrompt(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to resend verification email");
@@ -115,18 +111,14 @@ const LoginPage = () => {
 
       const { accessToken, data } = response;
       login(accessToken, data.user);
-      toast.success("Signed in with Google!", {
-        description: "Welcome back to Buildify.",
-      });
+      toast.success("Welcome back! You have signed in successfully.");
       navigate("/dashboard");
     } catch (error: any) {
-       const errorMsg = error.message || "Google sign-in failed";
+      const errorMsg = error.message || "Google sign-in failed";
 
       // Check if it's an email verification error
-      if (errorMsg.includes("not verified") || errorMsg.includes("email is not verified")) {
-        toast.error("Email Not Verified", {
-          description: "Please verify your email in your Google Account settings and try again.",
-        });
+      if (errorMsg.toLowerCase().includes("verify") || errorMsg.toLowerCase().includes("verification")) {
+        toast.error("Please verify your email address to continue.");
       } else {
         toast.error(errorMsg);
       }

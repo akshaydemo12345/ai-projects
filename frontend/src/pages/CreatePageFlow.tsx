@@ -134,9 +134,7 @@ const CreatePageFlow = () => {
       };
 
       const res = await pagesApi.create(projectId!, payload);
-      toast.success("Page creation started!", {
-        description: "AI is now crafting your landing page. This will only take a moment.",
-      });
+      toast.success("Page creation started successfully.");
       navigate(`/dashboard/projects/${projectId}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to create page");
@@ -162,6 +160,7 @@ const CreatePageFlow = () => {
           });
         }, 120);
 
+        let errorMsg = "AI generation failed. Please check your connection or try again.";
         try {
           const res = await aiApi.generate({
             businessName,
@@ -183,16 +182,15 @@ const CreatePageFlow = () => {
           } else {
             throw new Error("AI response missing HTML.");
           }
-        } catch {
+        } catch (err: any) {
           hasError = true;
+          errorMsg = err.message || errorMsg;
         } finally {
           done = true;
           if (hasError) {
             setProgress(0);
             setStep("create-ai");
-            toast.error("Generation failed", {
-              description: "AI generation failed. Please check your connection or try again.",
-            });
+            toast.error(errorMsg);
           } else {
             setProgress(100);
             setTimeout(() => navigate("/editor"), 350);
@@ -205,6 +203,7 @@ const CreatePageFlow = () => {
         setProgress(0);
         let done = false;
         let hasError = false;
+        let errorMsg = "AI analysis failed. Please check the URL and your connection.";
         const interval = setInterval(() => {
           setProgress((prev) => {
             if (done) {
@@ -224,16 +223,15 @@ const CreatePageFlow = () => {
           } else {
             throw new Error("AI response missing HTML.");
           }
-        } catch {
+        } catch (err: any) {
           hasError = true;
+          errorMsg = err.message || errorMsg;
         } finally {
           done = true;
           if (hasError) {
             setProgress(0);
             setStep("analyze");
-            toast.error("Analysis failed", {
-              description: "AI analysis failed. Please check the URL and your connection.",
-            });
+            toast.error(errorMsg);
           } else {
             setProgress(100);
             setTimeout(() => navigate("/editor"), 350);
