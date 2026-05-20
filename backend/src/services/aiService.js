@@ -402,6 +402,17 @@ ${sectionVisualMap.map(line => `   - ${line}`).join('\n')}
 ${designDNA.mustInclude.map((m, i) => `   ${i + 1}. ${m}`).join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+🚨 NO NAVIGATION MENU IN HEADER/NAVBAR HARD RULE:
+- The header/navbar MUST NOT contain a navigation menu or links (Do NOT generate list items, hamburger dropdown lists, or anchors for 'Home', 'About', 'Services', 'Pricing', etc.). 
+- The header/navbar should ONLY contain the brand logo on the left, and a single prominent high-converting Call-to-Action (CTA) Button on the right (e.g. "Get Started" or "Book a Call"). 
+- This keeps the layout ultra-clean, modern, distraction-free, and dramatically improves conversions!
+
+🚨 TOKEN OPTIMIZATION & INLINE ICONS STRATEGY (PREVENT TRUNCATION):
+- To ensure the entire landing page generates fully from the Hero all the way down to the Footer without getting cut off early:
+- You are STRONGLY FORBIDDEN from generating custom inline SVG <path> codes for decorative graphics or icons. Large SVG vector blocks consume massive amounts of output tokens and cause early truncation.
+- Instead, you MUST use standard FontAwesome icons (e.g., <i class="fa-solid fa-check text-xl"></i>, <i class="fa-solid fa-rocket"></i>, <i class="fa-solid fa-phone"></i>, <i class="fa-solid fa-chevron-down"></i>) which are already fully loaded and supported in the environment.
+- Keep the page HTML clean, lightweight, punchy, and highly conversion-optimized.
+
 🚨 SECTION UNIQUE STYLING HARD RULE:
 - You are FORBIDDEN from repeating any layout style, structure, or card grid design between sections. Every single section MUST have a totally unique layout, visual density, and alignment as specified in the SECTION-BY-SECTION VISUAL MAP.
 - For example, if Section 3 uses a 3-column card grid, Section 4 must NOT use a 3-column card grid; it must use an asymmetric split row, bento grid, timeline, or horizontal strip. Every section must have a unique layout signature!
@@ -510,6 +521,7 @@ const buildUserPrompt = (input, designDNA, sectionVisualMap) => {
 
   lines.push(`
 DESIGN EXECUTION REMINDER:
+- Header / Navigation Bar MUST NOT have any menu links or hamburger lists. Logo on left, one single CTA button on right. No navigation list anchors allowed.
 - Hero MUST be: ${designDNA.heroStyle}
 - Color mood MUST be: ${designDNA.colorMood}
 - Grid MUST be: ${designDNA.layoutGrid}
@@ -523,7 +535,7 @@ DESIGN EXECUTION REMINDER:
 NOW BUILD THE PAGE:
 Execute the Design DNA and the Section-by-Section styling with surgical precision for this exact business.
 Write real, specific copy — not placeholders. Sound like a human expert, not a robot.
-Every section moves the visitor closer to converting.
+Every section moves the visitor closer to converting. Make sure the output generation completes fully down to the footer!
 `);
 
   return lines.join('\n');
@@ -541,7 +553,7 @@ const generateLandingPageContent = async (input) => {
   const selectedSequence = designDNA.sectionSequence;
   const sectionVisualMap = selectedSequence.map((section, idx) => {
     if (idx === 0) {
-      return `Section 1 (${section}): Must use Hero Style [${designDNA.heroStyle}] and Color Mood [${designDNA.colorMood}]. Ensure it is a visually stunning entrance.`;
+      return `Section 1 (${section}): Must use Hero Style [${designDNA.heroStyle}] and Color Mood [${designDNA.colorMood}]. Ensure it is a visually stunning entrance with NO navigation links inside the header (logo left, CTA button right only).`;
     }
     if (section === 'FORM-SECTION') {
       return `Section ${idx + 1} (${section}): Lead Capture Form. Must use Form Placement [${designDNA.formPlacement}] and Form Style [${designDNA.formStyle}]. Ensure the lead capture fields are highly specific to this industry.`;
