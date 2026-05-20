@@ -317,21 +317,21 @@ class PlaceholderReplacer {
 
   static addEditorAttributes(html) {
     log.info('Adding data-editable attributes for editor support...');
-    
+
     // Elements to make editable
     const tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'button', 'a', 'strong', 'li', 'td'];
-    
+
     let updatedHtml = html;
-    
+
     // Inject data-editable into tags
     tags.forEach(tag => {
       const regex = new RegExp(`<${tag}\\b(?![^>]*data-editable)([^>]*)>`, 'gi');
       updatedHtml = updatedHtml.replace(regex, `<${tag} data-editable="true"$1>`);
     });
-    
+
     // Inject data-editable-img into images
     updatedHtml = updatedHtml.replace(/<img(?![^>]*data-editable-img)([^>]*)>/gi, '<img data-editable-img="true"$1>');
-    
+
     // Inject data-editable-bg into elements with background images in style
     updatedHtml = updatedHtml.replace(/<([a-z0-9]+)(?![^>]*data-editable-bg)([^>]*style=[^>]*background-image[^>]*)>/gi, '<$1 data-editable-bg="true"$2>');
 
@@ -371,36 +371,33 @@ class PlaceholderReplacer {
     const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
 
     const isBrandColor = (hex) => {
-      const h = hex.length === 4 ? hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3] : hex.substring(1);
+      const h = hex.length === 4 ? hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3] : hex.substring(1);
       const r = parseInt(h.substring(0, 2), 16);
       const g = parseInt(h.substring(2, 4), 16);
       const b = parseInt(h.substring(4, 6), 16);
-      
+
       const max = Math.max(r, g, b) / 255;
       const min = Math.min(r, g, b) / 255;
       const delta = max - min;
       const saturation = max === 0 ? 0 : delta / max;
       const brightness = max;
 
-      if (brightness < 0.25) return false; 
-      if (brightness > 0.95 && saturation < 0.1) return false; 
-      if (saturation < 0.20) return false; 
-      
+      if (brightness < 0.25) return false;
+      if (brightness > 0.95 && saturation < 0.1) return false;
+      if (saturation < 0.20) return false;
+
       return true;
     };
 
     if (sorted.length > 0) {
-      let replacedCount = 0;
-      const maxReplace = 20;
-      
-      // We will only replace colors in the :root section or similar token definitions
-      // But since we want to be thorough, we replace them everywhere with var()
-      
-      for (let i = 0; i < sorted.length && replacedCount < maxReplace; i++) {
+      let primaryAssigned = false;
+      let secondaryAssigned = false;
+
+      for (let i = 0; i < sorted.length && (!primaryAssigned || !secondaryAssigned); i++) {
         const hex = '#' + sorted[i][0];
-        
+
         // Relax brand color check slightly to include dark accents
-        const h = sorted[i][0].length === 3 ? sorted[i][0][0]+sorted[i][0][0]+sorted[i][0][1]+sorted[i][0][1]+sorted[i][0][2]+sorted[i][0][2] : sorted[i][0];
+        const h = sorted[i][0].length === 3 ? sorted[i][0][0] + sorted[i][0][0] + sorted[i][0][1] + sorted[i][0][1] + sorted[i][0][2] + sorted[i][0][2] : sorted[i][0];
         const r = parseInt(h.substring(0, 2), 16);
         const g = parseInt(h.substring(2, 4), 16);
         const b = parseInt(h.substring(4, 6), 16);
@@ -408,26 +405,34 @@ class PlaceholderReplacer {
         const min = Math.min(r, g, b) / 255;
         const delta = max - min;
         const brightness = max;
-        
+
         if (delta < 0.15) continue; // Skip neutral/near-neutral grays
         if (brightness < 0.3) continue; // Skip very dark colors (likely text/headers)
 
-        const varName = (replacedCount % 2 === 0) ? '--tp-primary' : '--tp-secondary';
-        const placeholder = (replacedCount % 2 === 0) ? 'PRIMARY_COLOR_PLACEHOLDER' : 'SECONDARY_COLOR_PLACEHOLDER';
-        const rgbPlaceholder = (replacedCount % 2 === 0) ? 'PRIMARY_RGB_PLACEHOLDER' : 'SECONDARY_RGB_PLACEHOLDER';
-        
-        replacedCount++;
-        
+        let varName, placeholder, rgbPlaceholder;
+        if (!primaryAssigned) {
+          varName = '--tp-primary';
+          placeholder = 'PRIMARY_COLOR_PLACEHOLDER';
+          rgbPlaceholder = 'PRIMARY_RGB_PLACEHOLDER';
+          primaryAssigned = true;
+        } else if (!secondaryAssigned) {
+          varName = '--tp-secondary';
+          placeholder = 'SECONDARY_COLOR_PLACEHOLDER';
+          rgbPlaceholder = 'SECONDARY_RGB_PLACEHOLDER';
+          secondaryAssigned = true;
+        } else {
+          break;
+        }
+
         log.success(`Mapping ${hex} to ${varName}`);
-        
+
         const rRegex = new RegExp(hex.replace('#', '\\#'), 'gi');
         content.css = content.css.replace(rRegex, placeholder);
         content.html = content.html.replace(rRegex, placeholder);
 
-        // 3. Handle RGB/RGBA versions
+        // Handle RGB/RGBA versions like "11, 51, 36" or "11,51,36"
         const rgb = hexToRgb(hex);
         if (rgb) {
-          // Match variations like "11, 51, 36" or "11,51,36"
           const rgbPattern = `${rgb.r},\\s*${rgb.g},\\s*${rgb.b}`;
           const rgbRegex = new RegExp(rgbPattern, 'gi');
           content.css = content.css.replace(rgbRegex, rgbPlaceholder);
@@ -506,33 +511,51 @@ class HTMLCleaner {
 
     let cleaned = htmlContent;
 
-    // 1️⃣ Remove <html>, <head>, <body> tags
+    // 1⃣ Remove <html>, <head>, <body> tags
     cleaned = cleaned.replace(/<\/?html[^>]*>/gi, '');
     cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
     cleaned = cleaned.replace(/<body[^>]*>/gi, '');
     cleaned = cleaned.replace(/<\/body>/gi, '');
 
-    // 2️⃣ Remove DOCTYPE और xml declarations
+    // 2⃣ Remove DOCTYPE and xml declarations
     cleaned = cleaned.replace(/<!DOCTYPE[^>]*>/gi, '');
     cleaned = cleaned.replace(/<\?xml[^>]*>/gi, '');
 
-    // 3️⃣ Remove <style> tags (पहले से collect कर चुके हैं)
+    // 3⃣ Remove <style> tags (CSS already collected by CSSCollector)
     cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
-    // 4️⃣ Remove local script tags (CDN scripts रखो)
-    const localScripts = cleaned.match(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi) || [];
-    log.debug(`Removing ${localScripts.length} local scripts`);
-    cleaned = cleaned.replace(/<script[^>]*src=["'](?!https?:\/\/|\/\/|data:)([^"']+)["'][^>]*><\/script>/gi, '');
+    // 4⃣ ONLY remove scripts that point to LOCAL relative file paths
+    //    e.g. <script src="js/app.js"> — these files don't exist in the template system
+    //    We detect these by: src= exists AND does NOT start with http/https/// or /
+    const localScripts = cleaned.match(/<script[^>]*\bsrc=["'](?!https?:\/\/|\/\/|\/)([^"']+)["'][^>]*><\/script>/gi) || [];
+    log.debug(`Removing ${localScripts.length} local file scripts (e.g. src="./app.js")`);
+    cleaned = cleaned.replace(/<script[^>]*\bsrc=["'](?!https?:\/\/|\/\/|\/)([^"']+)["'][^>]*><\/script>/gi, '');
 
-    // 5️⃣ Keep CDN scripts
+    // 5⃣ Keep CDN scripts (https://cdn.tailwindcss.com, etc.)
     const cdnScripts = cleaned.match(/<script[^>]*src=["']https?:\/\/[^"']+["'][^>]*><\/script>/gi) || [];
     log.debug(`Keeping ${cdnScripts.length} CDN scripts`);
 
-    // 6️⃣ Normalize whitespace
+    // ✅ 6⃣ CRITICAL: Extract and preserve ALL inline <script>...</script> blocks (no src attribute)
+    //    These include: FAQ accordion, counter animations, marquee/ticker,
+    //    nav toggle, sticky bar, scroll reveal, form validation, modal close, etc.
+    //    We extract them from their original spots and append them to the bottom (under the footer).
+    const inlineScripts = [];
+    cleaned = cleaned.replace(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
+      inlineScripts.push(match.trim());
+      return ''; // Remove from original position
+    });
+    log.info(`Extracted ${inlineScripts.length} inline scripts`);
+
+    // 7⃣ Normalize whitespace
     cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
     cleaned = cleaned.trim();
 
-    log.success(`Cleaned HTML (removed ${localScripts.length} local scripts)`);
+    // 8⃣ Append all extracted inline scripts at the very bottom (under the footer)
+    if (inlineScripts.length > 0) {
+      cleaned += '\n\n' + inlineScripts.join('\n\n') + '\n';
+    }
+
+    log.success(`Cleaned HTML: removed ${localScripts.length} local file scripts | kept & moved ${inlineScripts.length} inline scripts under footer`);
     return cleaned;
   }
 }
@@ -668,7 +691,7 @@ class HealthcareTemplateConverter {
       const backendImgDir = path.join(CONFIG.backendPublicRoot, this.category, `templates${paddedNum}`);
 
       const assetStats = AssetHandler.copyAllAssets(baseDir, publicImgDir);
-      
+
       // Also copy to backend
       try {
         AssetHandler.copyAllAssets(baseDir, backendImgDir);
@@ -694,10 +717,10 @@ class HealthcareTemplateConverter {
       // ───────────────────────────────────────────────────────────────
       content = PlaceholderReplacer.replaceBrand(content, baseDir);
       content = PlaceholderReplacer.replaceColors(content);
-      
+
       // Step 9.5: Add Editor Attributes
       content.html = PlaceholderReplacer.addEditorAttributes(content.html);
-      
+
       this.stats.placeholdersAdded = 3; // LOGO, COLOR, PROJECT_NAME
 
       // ───────────────────────────────────────────────────────────────
@@ -707,16 +730,20 @@ class HealthcareTemplateConverter {
       this.stats.animationsPreserved = animations.count;
 
       // ───────────────────────────────────────────────────────────────
-      // Step 11: Escape backticks
+      // Step 11: Escape backticks and template string syntax (${})
       // ───────────────────────────────────────────────────────────────
-      content.css = content.css.replace(/`/g, '\\`');
-      content.html = content.html.replace(/`/g, '\\`');
+      content.css = content.css.replace(/`/g, '\\`').replace(/\${/g, '\\${');
+      content.html = content.html.replace(/`/g, '\\`').replace(/\${/g, '\\${');
 
       // ───────────────────────────────────────────────────────────────
       // Step 12: Generate TypeScript
       // ───────────────────────────────────────────────────────────────
       const stylesVar = `${catCamel}${paddedNum}Styles`;
       const htmlVar = `${catCamel}${paddedNum}Html`;
+
+      const lowerCatCamel = catCamel.charAt(0).toLowerCase() + catCamel.slice(1);
+      const lowerStylesVar = `${lowerCatCamel}${paddedNum}Styles`;
+      const lowerHtmlVar = `${lowerCatCamel}${paddedNum}Html`;
 
       const tsOutput = `// Auto-generated ULTRA-DYNAMIC template — ${this.category} templates${paddedNum}
 // Generated: ${new Date().toISOString()}
@@ -737,6 +764,9 @@ export const ${htmlVar} = \`
 ${headContent.trim()}
 ${content.html.trim()}
 \`;
+
+export const ${lowerStylesVar} = ${stylesVar};
+export const ${lowerHtmlVar} = ${htmlVar};
 `;
 
       // ───────────────────────────────────────────────────────────────

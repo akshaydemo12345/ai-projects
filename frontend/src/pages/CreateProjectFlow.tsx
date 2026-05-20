@@ -19,7 +19,6 @@ const industries = [
   "Healthcare",
   "Real Estate",
   "Finance",
-  "Education",
   "Technology",
   "Consulting",
   "Construction",
@@ -37,7 +36,6 @@ const subIndustryOptions: Record<string, string[]> = {
   Healthcare: ["Dentistry", "Medical Clinic", "Wellness Spa", "Fitness Studio", "Telehealth", "Physical Therapy", "Cosmetic Surgery"],
   "Real Estate": ["Residential", "Commercial", "Property Management", "Agent/Brokerage", "Vacation Rentals", "Land Development"],
   Finance: ["Accounting", "Investment", "Insurance", "Lending", "Crypto", "Wealth Management"],
-  Education: ["Online Courses", "Tutoring", "Academy", "Corporate Training", "Test Prep", "School"],
   Technology: ["AI", "IoT", "Cybersecurity", "Cloud", "Mobility", "Hardware"],
   Consulting: ["Management", "HR", "IT", "Strategy", "Financial", "Legal"],
   Construction: ["Contractors", "Home Renovation", "Architecture", "Builders", "Remodeling", "Interior Design"],
@@ -146,13 +144,13 @@ const CreateProjectFlow = () => {
     }
 
     setIsSubmitting(true);
-        const selectedCategory = category === "Other" ? (customIndustry.trim() || "Other") : category;
+    const selectedCategory = category === "Other" ? (customIndustry.trim() || "Other") : category;
     const selectedSubIndustry = subIndustry === "Other" ? customSubIndustry.trim() : subIndustry;
     createMutation.mutate({
       name: name.trim(),
       preSlug: preSlug.trim(),
       websiteUrl: websiteUrl.trim(),
-          category: selectedCategory,
+      category: selectedCategory,
       description: description.trim(),
       logoUrl: logoBase64 || undefined,
       themeColor: themeColor || undefined,
@@ -162,7 +160,7 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
-            scrapedData: {
+      scrapedData: {
         ...scrapedData,
         subIndustry: selectedSubIndustry || undefined,
       },
@@ -214,9 +212,9 @@ const CreateProjectFlow = () => {
       if (meta.scrapedData) {
         setScrapedData(meta.scrapedData);
       }
-       let detectedCategory = category;
+      let detectedCategory = category;
       if (meta.industry) {
-                detectedCategory = meta.industry;
+        detectedCategory = meta.industry;
         setCategory(meta.industry);
         // Add detected industry to available categories if not already present
         setAvailableCategories(prev => {
@@ -226,7 +224,7 @@ const CreateProjectFlow = () => {
           return prev;
         });
       }
-           if (meta.scrapedData?.subIndustry) {
+      if (meta.scrapedData?.subIndustry) {
         setSubIndustry(meta.scrapedData.subIndustry);
       } else if (meta.subIndustry) {
         setSubIndustry(meta.subIndustry);
@@ -403,7 +401,7 @@ const CreateProjectFlow = () => {
                 </label>
                 <select
                   value={category}
-                     onChange={(e) => {
+                  onChange={(e) => {
                     setCategory(e.target.value);
                     setSubIndustry("");
                     setCustomIndustry("");
@@ -417,7 +415,7 @@ const CreateProjectFlow = () => {
                   Select the industry that best matches your project. If your industry is not listed, choose Other.                </p>
               </div>
 
-                {category === "Other" && (
+              {category === "Other" && (
                 <div>
                   <label className="text-sm font-semibold text-foreground mb-1.5 block">
                     Industry (custom)

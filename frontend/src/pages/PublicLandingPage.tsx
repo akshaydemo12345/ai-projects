@@ -6,11 +6,20 @@ import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+// Helper: convert hex color to "R, G, B" string for use in rgba()
+const hexToRgbStr = (hex: string): string => {
+  const c = hex.replace('#', '');
+  if (c.length === 3) {
+    return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
+  }
+  return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+};
+
 const PublicLandingPage = () => {
   const { "*": splat } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const token = searchParams.get('token') || searchParams.get('previewToken');
   const pgParam = searchParams.get('pg');
   const pageId = searchParams.get('page') || searchParams.get('pageId');
@@ -154,12 +163,38 @@ const PublicLandingPage = () => {
     const meta = res.meta || {};
     let aiHtml = res.landingPageContent || res.data || (typeof res.content === 'string' ? res.content : res.content?.fullHtml) || '';
     let aiCss = res.landingPageStyles || res.styles || (typeof res.content === 'object' ? res.content?.fullCss : '') || '';
-    const BRAND_COLOR = res.primaryColor || meta?.primaryColor || '#7c3aed';
+    const BRAND_PRIMARY = res.primaryColor || meta?.primaryColor || '#7c3aed';
+    const BRAND_SECONDARY = res.secondaryColor || meta?.secondaryColor || '#6366f1';
+
+    // ─── Replace ALL placeholders in both HTML and CSS ───
+    // IMPORTANT: RGB placeholders must use actual "R, G, B" strings, not hex!
+    // Otherwise rgba(SECONDARY_RGB_PLACEHOLDER, 0.2) breaks with rgba(#1a3a2e, 0.2)
+    let pRgb = '124, 58, 237';
+    let sRgb = '99, 102, 241';
+    try { pRgb = hexToRgbStr(BRAND_PRIMARY); } catch (e) {}
+    try { sRgb = hexToRgbStr(BRAND_SECONDARY); } catch (e) {}
+
+    const applyPlaceholders = (str: string) => str
+      .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_PRIMARY)
+      .replace(/SECONDARY_COLOR_PLACEHOLDER/g, BRAND_SECONDARY)
+      .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+      .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+      // Also clean up any circular var() references that may have been saved
+      .replace(/:\s*var\(--primary\)/g, `: ${BRAND_PRIMARY}`)
+      .replace(/:\s*var\(--secondary\)/g, `: ${BRAND_SECONDARY}`)
+      .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
+      .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
+
+    aiHtml = applyPlaceholders(aiHtml);
+    aiCss = applyPlaceholders(aiCss);
+
+    // ─── Also replace any remaining var(--primary) references with real color fallback ───
+    const BRAND_COLOR = BRAND_PRIMARY;
 
     const coreDependencies = `
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_COLOR}' } } } };
+        tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_PRIMARY}', secondary: '${BRAND_SECONDARY}' } } } };
       </script>
       <!-- All possible icon libraries -->
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -168,24 +203,65 @@ const PublicLandingPage = () => {
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
       
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&family=Inter:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;700&family=Fraunces:ital,wght@0,100..900;1,100..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <style>
-        :root { --primary: ${BRAND_COLOR}; }
+        :root {
+          --primary: ${BRAND_PRIMARY};
+          --secondary: ${BRAND_SECONDARY};
+          --accent: ${BRAND_SECONDARY};
+          --gold: ${BRAND_PRIMARY};
+          --forest: ${BRAND_PRIMARY};
+          --btn-bg: ${BRAND_PRIMARY};
+          --btn-text: #ffffff;
+          --paper: #f7f4ef;
+          --mist: #e8e4dc;
+          --ink: #0a0a0a;
+          --white: #ffffff;
+          --button-gradient: linear-gradient(135deg, ${BRAND_PRIMARY}, ${BRAND_SECONDARY});
+        }
         html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; }
         input, select, textarea { border: 1px solid #cbd5e1 !important; border-radius: 10px !important; padding: 14px 18px !important; width: 100%; margin-bottom: 20px; display: block; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
-        input:focus { border-color: ${BRAND_COLOR} !important; outline: none !important; box-shadow: 0 0 0 4px ${BRAND_COLOR}15; }
+        input:focus { border-color: ${BRAND_PRIMARY} !important; outline: none !important; box-shadow: 0 0 0 4px ${BRAND_PRIMARY}15; }
         label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #475569; }
         form { width: 100%; max-width: 100%; }
         ${aiCss}
       </style>
+      <script>
+        !function() {
+          function reveal() {
+            var reveals = document.querySelectorAll(".reveal-on-scroll");
+            for (var i = 0; i < reveals.length; i++) {
+              var windowHeight = window.innerHeight;
+              var elementTop = reveals[i].getBoundingClientRect().top;
+              var elementVisible = 50;
+              if (elementTop < windowHeight - elementVisible || elementTop < 100) {
+                reveals[i].classList.add("revealed");
+              }
+            }
+          }
+          window.addEventListener("scroll", reveal);
+          window.addEventListener("resize", reveal);
+          document.addEventListener("DOMContentLoaded", reveal);
+          // Run repeatedly on load to prevent any race condition
+          var intervals = [50, 100, 300, 500, 1000, 1500];
+          intervals.forEach(function(t) { setTimeout(reveal, t); });
+          // Failsafe: reveal everything after 2 seconds so page is NEVER blank
+          setTimeout(function() {
+            document.querySelectorAll(".reveal-on-scroll").forEach(function(el) {
+              el.classList.add("revealed");
+            });
+          }, 2000);
+        }();
+      </script>
     `;
 
     const leadScript = buildLeadScript(res);
     let cleanHtml = aiHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
     if (!cleanHtml) return '';
 
-    cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
-    cleanHtml = cleanHtml.replace(/\s*on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, '');
+    // Keep AI-generated scripts and events fully intact so interactive elements (FAQ accordions, menus, sliders) work natively!
+    // cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
+    // cleanHtml = cleanHtml.replace(/\s*on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, '');
 
     if (cleanHtml.toLowerCase().includes('<html')) {
       let doc = cleanHtml;

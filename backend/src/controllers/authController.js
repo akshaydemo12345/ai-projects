@@ -360,10 +360,10 @@ exports.firebaseLogin = async (req, res, next) => {
       return next(new AppError('Firebase user email is required', 400));
     }
 
-    // Enforce Google email verification
-    if (!decodedToken.email_verified) {
-      return next(new AppError('Google account email is not verified. Please verify your email in Google Account settings and try again.', 403));
-    }
+    // Email verification disabled per user request
+    // if (!decodedToken.email_verified) {
+    //   return next(new AppError('Google account email is not verified. Please verify your email in Google Account settings and try again.', 403));
+    // }
 
     let user = await User.findOne({ email });
     if (!user) {

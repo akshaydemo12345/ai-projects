@@ -18,6 +18,15 @@ import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
+
+const hexToRgbStr = (hex: string) => {
+  const c = hex.replace('#', '');
+  if (c.length === 3) {
+    return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
+  }
+  return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+};
+
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
   const queryClient = useQueryClient();
@@ -138,6 +147,8 @@ const GrapesEditor = () => {
   const cpObserverRef = useRef<MutationObserver | null>(null);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
+  const [extractedTemplateScripts, setExtractedTemplateScripts] = useState<string>('');
+
   useEffect(() => {
     if (page) {
       setPageTitle(page.metaTitle || page.name || 'Landing Page');
@@ -147,6 +158,34 @@ const GrapesEditor = () => {
       setThemePrimary(page.primaryColor || '#7c3aed');
       setThemeSecondary(page.secondaryColor || '#6366f1');
       setSiteStatus(page.status || 'draft');
+
+      // Extract and backup ALL template scripts from raw db page content so they are never lost on save/publish
+      try {
+        let rawHtml = '';
+        if (page.landingPageContent) {
+          rawHtml = page.landingPageContent;
+        } else if (typeof page.content === 'object' && page.content !== null) {
+          rawHtml = page.content.fullHtml || page.content.html || '';
+        } else if (typeof page.content === 'string') {
+          rawHtml = page.content;
+        }
+
+        if (rawHtml) {
+          // Match ALL script tags (both inline and src-based)
+          const allScriptMatches = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+          // Filter out only tailwind CDN + tailwind config scripts (they are re-added on publish)
+          const filteredScripts = allScriptMatches.filter(s => {
+            if (s.includes('cdn.tailwindcss.com')) return false;
+            if (s.includes('tailwind.config')) return false;
+            return true;
+          });
+          if (filteredScripts.length > 0) {
+            setExtractedTemplateScripts(filteredScripts.join('\n'));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to backup template scripts:', e);
+      }
     }
   }, [page]);
 
@@ -234,7 +273,7 @@ const GrapesEditor = () => {
         // Extract Links and Scripts for Canvas Injection
         const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
         const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.outerHTML);
-        
+
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           links.forEach(linkHtml => {
@@ -286,20 +325,63 @@ const GrapesEditor = () => {
 
       // Inject :root CSS variables
       const canvasDoc = editor.Canvas.getDocument();
+
+      // ─── Placeholder Replacement (Dynamic) ───
+      const primaryColor = currentPage.primaryColor || '#7c3aed';
+      const secondaryColor = currentPage.secondaryColor || '#6366f1';
+
+      let pRgb = "124, 58, 237";
+      let sRgb = "99, 102, 241";
+      try {
+        pRgb = hexToRgbStr(primaryColor);
+        sRgb = hexToRgbStr(secondaryColor);
+      } catch (e) { }
+
+      // Replace placeholders with ACTUAL color values (not var()) to avoid circular CSS variable references
+      const finalStyles = (dbStyles || '')
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor)
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        // Also clean up any previously saved var(--primary) circular references
+        .replace(/:\s*var\(--primary\)/g, `: ${primaryColor}`)
+        .replace(/:\s*var\(--secondary\)/g, `: ${secondaryColor}`)
+        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
+        .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
+        .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
+
+      // ─── Inject template CSS FIRST into canvas <iframe> ───
+      // (branding-vars must come AFTER template-styles so it wins the cascade)
       if (canvasDoc) {
-        let brandingTag = canvasDoc.getElementById('branding-vars') as HTMLStyleElement | null;
-        if (!brandingTag) {
-          brandingTag = canvasDoc.createElement('style');
-          brandingTag.id = 'branding-vars';
-          canvasDoc.head.appendChild(brandingTag);
+        let templateStyleTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
+        if (!templateStyleTag) {
+          templateStyleTag = canvasDoc.createElement('style');
+          templateStyleTag.id = 'template-styles';
+          canvasDoc.head.appendChild(templateStyleTag);
         }
+        templateStyleTag.innerHTML = finalStyles;
+      }
+
+      // Also call setStyle so GrapesJS CSS composer is aware
+      try { editor.setStyle(finalStyles); } catch (e) { console.warn('setStyle warn:', e); }
+
+      // ─── Inject branding-vars AFTER template-styles so it wins the cascade ───
+      if (canvasDoc) {
+        // Remove existing branding-vars if present so we re-insert at end
+        const existingBranding = canvasDoc.getElementById('branding-vars');
+        if (existingBranding) existingBranding.remove();
+
+        const brandingTag = canvasDoc.createElement('style');
+        brandingTag.id = 'branding-vars';
+        canvasDoc.head.appendChild(brandingTag); // append at END so it wins cascade
         brandingTag.innerHTML = `
         :root { 
-          --primary: ${currentPage.primaryColor || '#7c3aed'}; 
-          --secondary: ${currentPage.secondaryColor || '#6366f1'}; 
-          --accent: ${currentPage.secondaryColor || '#6366f1'};
-          --gold: ${currentPage.primaryColor || '#7c3aed'};
-          --btn-bg: ${currentPage.secondaryColor || '#6366f1'};
+          --primary: ${primaryColor}; 
+          --secondary: ${secondaryColor}; 
+          --accent: ${secondaryColor};
+          --gold: ${primaryColor};
+          --forest: ${primaryColor};
+          --btn-bg: ${primaryColor};
           --btn-text: #ffffff;
           --body-bg: #ffffff;
           --body-text: #0f172a;
@@ -312,7 +394,7 @@ const GrapesEditor = () => {
           --bg: #1a0f08;
           --cream: #f4ead5;
           --muted: #a89580;
-          --button-gradient: linear-gradient(135deg, ${currentPage.primaryColor || '#7c3aed'}, ${currentPage.secondaryColor || '#6366f1'});
+          --button-gradient: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
         }
         
         input, textarea, select {
@@ -324,21 +406,12 @@ const GrapesEditor = () => {
         }
         `;
         const allButtons = canvasDoc.querySelectorAll('form button');
-        allButtons.forEach(btn => {
+        allButtons.forEach((btn: Element) => {
           if (btn.getAttribute('type') === 'button') {
             btn.setAttribute('type', 'submit');
           }
         });
       }
-
-      // Safe-guard body styles from being purged by GrapesJS
-      // ─── Placeholder Replacement (Dynamic) ───
-      const finalStyles = (dbStyles || '')
-        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
-        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '');
-
-      editor.setStyle(finalStyles);
 
 
 
@@ -377,6 +450,15 @@ const GrapesEditor = () => {
 
       dbContent = dbContent.replace(/\[var\(--primary\)\]/g, '[var(--primary)]');
       dbContent = dbContent.replace(/\[var\(--secondary\)\]/g, '[var(--secondary)]');
+
+      // ─── Replace all script-generated placeholders in HTML content ───
+      dbContent = dbContent
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
+        .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
       const configHTML = `
       <script>
@@ -1722,9 +1804,31 @@ const GrapesEditor = () => {
     const canvasDoc = editorRef.current.Canvas.getDocument();
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+    const templateStyleTag = canvasDoc.getElementById('template-styles');
+
+    // Replace var(--primary/secondary) with actual hex values before saving.
+    // This prevents circular CSS variable references (e.g. --primary: var(--primary)) on reload.
+    const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
+      .replace(/var\(--primary\)/g, themePrimary)
+      .replace(/var\(--secondary\)/g, themeSecondary);
+
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
 
     const styleData = globalCss + '\n' + css;
+
+    // Extract all custom script tags from the canvas document using the unified helper
+    let canvasScripts = '';
+    try {
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      if (canvasDoc) canvasScripts = extractCanvasScripts(canvasDoc);
+    } catch (e) {
+      console.warn('Failed to extract scripts from canvas:', e);
+    }
+
+    // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
+    const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
+
+    const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
     const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
@@ -1732,14 +1836,14 @@ const GrapesEditor = () => {
       primaryColor: themePrimary,
       secondaryColor: themeSecondary,
       accentColor: themeSecondary,
-      landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+      landingPageContent: mode === 'landing' ? htmlWithScripts : page?.landingPageContent,
       landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
-      thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+      thankYouPageContent: mode === 'thank-you' ? htmlWithScripts : page?.thankYouPageContent,
       thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
     };
 
     if (mode === 'landing') {
-      updateData.content = html;
+      updateData.content = htmlWithScripts;
       updateData.styles = styleData;
     } else {
       updateData.content = page?.landingPageContent;
@@ -1850,12 +1954,30 @@ const GrapesEditor = () => {
       return;
     }
 
+    // Extract all custom script tags from the canvas document using the unified helper
+    let canvasScriptsForDownload = '';
+    try {
+      const canvasDoc = editorRef.current.Canvas.getDocument();
+      if (canvasDoc) canvasScriptsForDownload = extractCanvasScripts(canvasDoc);
+    } catch (e) {
+      console.warn('Failed to extract scripts from canvas for download:', e);
+    }
+
+    // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
+    const customScripts = mergeScripts(canvasScriptsForDownload, extractedTemplateScripts);
+
     // 1. Get raw content directly from editor to ensure latest state
     let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
     let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
 
     let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
     let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
+
+    if (mode === 'landing' && customScripts) {
+      landingHtml = landingHtml + '\n' + customScripts;
+    } else if (mode === 'thank-you' && customScripts) {
+      thankYouHtml = thankYouHtml + '\n' + customScripts;
+    }
 
     let formattedLandingHtml = formatHtmlPretty(landingHtml);
     let formattedLandingCss = formatCssPretty(landingCss);
@@ -1994,9 +2116,37 @@ const GrapesEditor = () => {
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const templateStyleTag = canvasDoc.getElementById('template-styles');
 
+      // Replace var(--primary/secondary) with actual hex values before saving.
+      // This prevents circular CSS variable references on reload/publish.
+      const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
+        .replace(/var\(--primary\)/g, themePrimary)
+        .replace(/var\(--secondary\)/g, themeSecondary);
+
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
       const styleData = globalCss + '\n' + css;
+
+      // Extract scripts from canvas using unified helper, then merge with backup
+      let canvasScriptsPub = '';
+      try {
+        if (canvasDoc) canvasScriptsPub = extractCanvasScripts(canvasDoc);
+      } catch (e) {
+        console.warn('Failed to extract scripts from canvas:', e);
+      }
+      const customScripts = mergeScripts(canvasScriptsPub, extractedTemplateScripts);
+
+      // Build a FULL self-contained HTML document for publish.
+      // This is the key fix: published page has all CSS + JS inline so it works standalone.
+      const fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
+        title: pageTitle,
+        desc: metaDesc,
+        primaryColor: themePrimary,
+        secondaryColor: themeSecondary,
+      });
+
+      // Also keep the raw body HTML for editor reload
+      const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
       const updateData: Partial<LandingPage> = {
         status: 'published',
@@ -2005,14 +2155,16 @@ const GrapesEditor = () => {
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
         accentColor: themeSecondary,
-        landingPageContent: mode === 'landing' ? html : page?.landingPageContent,
+        // landingPageContent stores the full standalone HTML so the public page works correctly
+        landingPageContent: mode === 'landing' ? fullPublishHtml : page?.landingPageContent,
         landingPageStyles: mode === 'landing' ? styleData : page?.landingPageStyles,
-        thankYouPageContent: mode === 'thank-you' ? html : page?.thankYouPageContent,
+        thankYouPageContent: mode === 'thank-you' ? fullPublishHtml : page?.thankYouPageContent,
         thankYouPageStyles: mode === 'thank-you' ? styleData : page?.thankYouPageStyles,
       };
 
       if (mode === 'landing') {
-        updateData.content = html;
+        // content.fullHtml = complete standalone HTML; content.html = body only for editor reload
+        updateData.content = { fullHtml: fullPublishHtml, html: htmlWithScripts };
         updateData.styles = styleData;
       } else {
         updateData.content = page?.landingPageContent;
@@ -2716,10 +2868,37 @@ const GrapesEditor = () => {
                         const doc = parser.parseFromString(html, 'text/html');
                         const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
                         if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+
+                        // ✅ KEY FIX: Extract and backup ALL scripts from the new template
+                        // so they survive GrapesJS stripping on save/publish
+                        const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
+                        const newBackupScripts = allTemplateScripts
+                          .filter(s => {
+                            const src = s.getAttribute('src') || '';
+                            if (src.includes('cdn.tailwindcss.com')) return false;
+                            if (s.innerHTML.includes('tailwind.config')) return false;
+                            return true;
+                          })
+                          .map(s => s.outerHTML)
+                          .join('\n');
+                        if (newBackupScripts) {
+                          setExtractedTemplateScripts(newBackupScripts);
+                          console.log(`📦 Backed up ${allTemplateScripts.length} scripts from new template`);
+                        }
+
                         finalHtml = doc.body.innerHTML;
                         console.log('✅ Parsed full HTML body content.');
                       } catch (e) {
                         console.error('Error parsing Thank You HTML:', e);
+                      }
+                    } else {
+                      // Even for body-only templates, extract any inline scripts
+                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+                      const filteredScripts = scriptMatches.filter(s =>
+                        !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
+                      );
+                      if (filteredScripts.length > 0) {
+                        setExtractedTemplateScripts(filteredScripts.join('\n'));
                       }
                     }
 
@@ -3319,6 +3498,122 @@ const SpinnerIcon = () => (
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
 );
+
+/**
+ * mergeScripts — Intelligently merge two sets of <script> tag strings.
+ * Uses `src` attribute as key for external scripts and inner content as key
+ * for inline scripts so that duplicates are never included.
+ * Tailwind CDN and tailwind.config scripts are always filtered out here
+ * since they are injected separately by PublicLandingPage.
+ */
+function mergeScripts(canvasScripts: string, backupScripts: string): string {
+  const unique = new Map<string, string>();
+
+  const addScripts = (html: string) => {
+    if (!html) return;
+    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+    matches.forEach(tag => {
+      // Skip tailwind — added by renderer
+      if (tag.includes('cdn.tailwindcss.com')) return;
+      if (tag.includes('tailwind.config')) return;
+
+      // Determine dedup key: src for external, trimmed body for inline
+      const srcMatch = tag.match(/src=["']([^"']+)["']/i);
+      if (srcMatch) {
+        const src = srcMatch[1].trim();
+        if (!unique.has(src)) unique.set(src, tag);
+      } else {
+        const body = tag.replace(/<script\b[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+        if (body && !unique.has(body)) unique.set(body, tag);
+      }
+    });
+  };
+
+  addScripts(canvasScripts);
+  addScripts(backupScripts);
+  return Array.from(unique.values()).join('\n');
+}
+
+/**
+ * extractCanvasScripts — Pull all <script> tags from a GrapesJS canvas document.
+ * Skips Tailwind CDN (re-injected by renderer) and tailwind.config blocks.
+ */
+function extractCanvasScripts(canvasDoc: Document): string {
+  const scriptTags = Array.from(canvasDoc.querySelectorAll('script'));
+  const unique = new Map<string, string>();
+  scriptTags.forEach(s => {
+    const src = s.getAttribute('src');
+    if (src && src.includes('cdn.tailwindcss.com')) return;
+    if (s.innerHTML.includes('tailwind.config')) return;
+    const key = src ? src : s.innerHTML.trim();
+    if (key && !unique.has(key)) unique.set(key, s.outerHTML);
+  });
+  return Array.from(unique.values()).join('\n');
+}
+
+/**
+ * buildPublishHtml — Build a complete, self-contained HTML document
+ * that works correctly when served standalone (via WordPress plugin or direct URL).
+ * This ensures CSS, JS, and all interactive features work after publish.
+ */
+function buildPublishHtml(
+  bodyHtml: string,
+  css: string,
+  scripts: string,
+  opts: { title?: string; desc?: string; primaryColor?: string; secondaryColor?: string }
+): string {
+  const primary = opts.primaryColor || '#7c3aed';
+  const secondary = opts.secondaryColor || '#6366f1';
+  const title = (opts.title || 'Landing Page').replace(/"/g, '&quot;');
+  const desc = (opts.desc || '').replace(/"/g, '&quot;');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${title}</title>
+  ${desc ? `<meta name="description" content="${desc}"/>` : ''}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '${primary}',
+            secondary: '${secondary}'
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: ${primary};
+      --secondary: ${secondary};
+      --accent: ${secondary};
+      --gold: ${primary};
+      --forest: ${primary};
+      --btn-bg: ${primary};
+      --btn-text: #ffffff;
+      --button-gradient: linear-gradient(135deg, ${primary}, ${secondary});
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100vh; }
+    ${css}
+  </style>
+</head>
+<body>
+${bodyHtml}
+${scripts}
+</body>
+</html>`;
+}
 
 function parseInlineStyle(styleStr: string): Record<string, string> {
   const styleObj: Record<string, string> = {};

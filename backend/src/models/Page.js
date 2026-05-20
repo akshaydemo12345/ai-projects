@@ -194,6 +194,7 @@ const pageSchema = new mongoose.Schema({
       subheading: { type: String, default: 'We have received your request and will contact you soon.' },
       ctaText: { type: String, default: 'Return to Website' },
       ctaUrl: { type: String, default: '#' },
+      email: String,
       phoneNumber: String,
       offerText: String,
       customMessage: String
