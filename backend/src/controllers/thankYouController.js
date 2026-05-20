@@ -165,6 +165,31 @@ exports.renderThankYouPage = async (req, res, next) => {
     if (visualHeader) html = html.replace(/<header[\s\S]*?<\/header>/i, visualHeader);
     if (visualFooter) html = html.replace(/<footer[\s\S]*?<\/footer>/i, visualFooter);
 
+    // Extract dynamic contact info if missing
+    let extractedEmail = '';
+    let extractedPhone = '';
+    const sourceHtml = visualFooter || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
+    
+    const emailMatch = sourceHtml.match(/mailto:([^"'>?]+)/i) || sourceHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (emailMatch) extractedEmail = emailMatch[1] || emailMatch[0];
+    
+    const phoneMatch = sourceHtml.match(/tel:([^"'>?]+)/i) || sourceHtml.match(/(?:\+?\d{1,3}[\s.-]?)?\(?\d{3,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{4}/);
+    if (phoneMatch) extractedPhone = phoneMatch[1] || phoneMatch[0];
+
+    if (!content.email || content.email === 'demo@divi.express') content.email = extractedEmail;
+    if (!content.phoneNumber || content.phoneNumber === '0850 458 9665') content.phoneNumber = extractedPhone;
+
+    // Conditionally adjust default offerText based on extracted info
+    if (!content.offerText || content.offerText === 'For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.') {
+        if (!content.email && !content.phoneNumber) {
+            content.offerText = '';
+        } else if (content.email && !content.phoneNumber) {
+            content.offerText = 'For more information you can connect with us at {{email}}.';
+        } else if (!content.email && content.phoneNumber) {
+            content.offerText = 'For more information you can contact us at {{phoneNumber}}.';
+        }
+    }
+
     html = processConditionalBlocks(content, branding, businessName, html);
 
     const trackingScripts = generateTrackingScripts(page.thankYouConfig?.tracking || {}, page._id, page.industry);
@@ -287,6 +312,31 @@ exports.previewThankYouPage = async (req, res, next) => {
 
       if (visualHeader) html = html.replace(/<header[\s\S]*?<\/header>/i, visualHeader);
       if (visualFooter) html = html.replace(/<footer[\s\S]*?<\/footer>/i, visualFooter);
+
+      // Extract dynamic contact info if missing
+      let extractedEmail = '';
+      let extractedPhone = '';
+      const sourceHtml = visualFooter || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
+      
+      const emailMatch = sourceHtml.match(/mailto:([^"'>?]+)/i) || sourceHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) extractedEmail = emailMatch[1] || emailMatch[0];
+      
+      const phoneMatch = sourceHtml.match(/tel:([^"'>?]+)/i) || sourceHtml.match(/(?:\+?\d{1,3}[\s.-]?)?\(?\d{3,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{4}/);
+      if (phoneMatch) extractedPhone = phoneMatch[1] || phoneMatch[0];
+
+      if (!mergedContent.email || mergedContent.email === 'demo@divi.express') mergedContent.email = extractedEmail;
+      if (!mergedContent.phoneNumber || mergedContent.phoneNumber === '0850 458 9665') mergedContent.phoneNumber = extractedPhone;
+
+      // Conditionally adjust default offerText based on extracted info
+      if (!mergedContent.offerText || mergedContent.offerText === 'For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.') {
+          if (!mergedContent.email && !mergedContent.phoneNumber) {
+              mergedContent.offerText = '';
+          } else if (mergedContent.email && !mergedContent.phoneNumber) {
+              mergedContent.offerText = 'For more information you can connect with us at {{email}}.';
+          } else if (!mergedContent.email && mergedContent.phoneNumber) {
+              mergedContent.offerText = 'For more information you can contact us at {{phoneNumber}}.';
+          }
+      }
     }
 
     html = processConditionalBlocks(mergedContent, mergedBranding, businessName, html);
@@ -322,10 +372,10 @@ function processConditionalBlocks(content, branding, businessName, html) {
   let processedHtml = html;
   processedHtml = processedHtml.replace(/\{\{#phoneNumber\}\}([\s\S]*?)\{\{\/phoneNumber\}\}/g, content.phoneNumber ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{\^phoneNumber\}\}([\s\S]*?)\{\{\/phoneNumber\}\}/g, !content.phoneNumber ? '$1' : '');
+  processedHtml = processedHtml.replace(/\{\{#email\}\}([\s\S]*?)\{\{\/email\}\}/g, content.email ? '$1' : '');
+  processedHtml = processedHtml.replace(/\{\{\^email\}\}([\s\S]*?)\{\{\/email\}\}/g, !content.email ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{#logoUrl\}\}([\s\S]*?)\{\{\/logoUrl\}\}/g, branding.logoUrl ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{\^logoUrl\}\}([\s\S]*?)\{\{\/logoUrl\}\}/g, !branding.logoUrl ? '$1' : '');
-  processedHtml = processedHtml.replace(/\{\{#offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, content.offerText ? '$1' : '');
-  processedHtml = processedHtml.replace(/\{\{\^offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, !content.offerText ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{#offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, content.offerText ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{\^offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, !content.offerText ? '$1' : '');
 
@@ -334,8 +384,9 @@ function processConditionalBlocks(content, branding, businessName, html) {
     .replace(/\{\{subheading\}\}/g, escapeHtml(content.subheading))
     .replace(/\{\{ctaText\}\}/g, escapeHtml(content.ctaText))
     .replace(/\{\{ctaUrl\}\}/g, content.ctaUrl) // Note: No escape for URL to allow full paths
-    .replace(/\{\{phoneNumber\}\}/g, escapeHtml(content.phoneNumber || ''))
     .replace(/\{\{offerText\}\}/g, escapeHtml(content.offerText || ''))
+    .replace(/\{\{email\}\}/g, escapeHtml(content.email || ''))
+    .replace(/\{\{phoneNumber\}\}/g, escapeHtml(content.phoneNumber || ''))
     .replace(/\{\{customMessage\}\}/g, escapeHtml(content.customMessage || ''))
     .replace(/\{\{primaryColor\}\}/g, escapeHtml(branding.primaryColor))
     .replace(/\{\{secondaryColor\}\}/g, escapeHtml(branding.secondaryColor))

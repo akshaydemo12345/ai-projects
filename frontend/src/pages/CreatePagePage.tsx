@@ -11,6 +11,7 @@ import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
+import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -18,7 +19,7 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
-import { Education01Html, Education01Styles } from "../templates/education/templates01";
+
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -197,6 +198,14 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
+  // {
+  //   id: "healthcare-04",
+  //   name: "Lumina Medical Center",
+  //   tag: "Healthcare",
+  //   img: "/assets/templates/healthcare/templates03/screnshort8.png",
+  //   gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+  //   prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  // },
   {
     id: "travel-01",
     name: "Azure Luxury Escapes",
@@ -255,18 +264,11 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
     prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   },
-  {
-    id: "education-01",
-    name: "Eduverse Academy",
-    tag: "Education",
-    img: "/assets/templates/education/templates01/screenshot.png",
-    gradient: "linear-gradient(135deg, #0b3324 0%, #1a5f3f 100%)",
-    prompt: "A premium online education landing page with a hero section, course category highlights, 'About Us' section with stats, featured courses grid, process steps, testimonials, and a lead capture form. Clean forest green and amber theme.",
-  }
+
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "Education"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance",];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -442,7 +444,6 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
-      else if (promptLower.includes("education") || promptLower.includes("school") || promptLower.includes("learn") || projectCat.includes("education")) detectedCategory = "Education";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -465,6 +466,7 @@ const CreatePagePage = () => {
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+        case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
         case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
         case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
         case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
@@ -472,7 +474,6 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
-        case "education-01": enrichedContent = Education01Html; enrichedStyles = Education01Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -562,14 +563,47 @@ const CreatePagePage = () => {
       const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
       const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
 
+      // Build a complete standalone HTML document for the template.
+      // This ensures CSS, JS, and interactive features (FAQ accordion, etc.) work after publish.
+      const primaryCol = primaryColor || "#6366f1";
+      const secondaryCol = secondaryColor || "#4f46e5";
+      const fullTemplateHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${pageName.trim() || project.name}</title>
+  <meta name="description" content="${project.description || ''}"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--primary:${primaryCol};--secondary:${secondaryCol};--accent:${secondaryCol};--gold:${primaryCol};--forest:${primaryCol};--btn-bg:${primaryCol};--btn-text:#ffffff;--button-gradient:linear-gradient(135deg,${primaryCol},${secondaryCol});}
+    *,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;min-height:100vh;}
+    ${enrichedStyles}
+  </style>
+</head>
+<body>
+${enrichedContent}
+</body>
+</html>`;
+
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
         generationMethod: isAiTemplatePath ? "ai" : "template",
-        content: enrichedContent,
+        // Store as object with fullHtml so editor and publisher both work correctly
+        content: { fullHtml: fullTemplateHtml, html: enrichedContent, fullCss: enrichedStyles },
         styles: enrichedStyles,
+        // Also store as landingPageContent for the public page renderer
+        landingPageContent: fullTemplateHtml,
+        landingPageStyles: enrichedStyles,
         templateId: finalTemplateId,
         template: tName,
         aiPrompt: aiPrompt
@@ -1037,6 +1071,7 @@ const CreatePagePage = () => {
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
+                case "healthcare-04": tpHtml = healthcare04Html; tpStyles = healthcare04Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
                 case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
                 case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
@@ -1044,35 +1079,52 @@ const CreatePagePage = () => {
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
-                case "education-01": tpHtml = Education01Html; tpStyles = Education01Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
-              // Apply branding to preview via :root injection
+              // ── Use actual project branding in preview ──
+              const previewPrimary = primaryColor || "#6366f1";
+              const previewSecondary = secondaryColor || "#4f46e5";
+              const previewName = project?.name || "Your Brand";
+              const previewLogo = logoUrl || project?.logoUrl;
+
               const brandingVars = `
                 :root {
-                  --primary: #6366f1;
-                  --secondary: #4f46e5;
-                  --primary-rgb: ${hexToRgbStr("#6366f1")};
-                  --secondary-rgb: ${hexToRgbStr("#4f46e5")};
+                  --primary: ${previewPrimary};
+                  --secondary: ${previewSecondary};
+                  --accent: ${previewSecondary};
+                  --gold: ${previewPrimary};
+                  --btn-bg: ${previewPrimary};
+                  --btn-text: #ffffff;
+                  --button-gradient: linear-gradient(135deg, ${previewPrimary}, ${previewSecondary});
+                  --primary-rgb: ${hexToRgbStr(previewPrimary)};
+                  --secondary-rgb: ${hexToRgbStr(previewSecondary)};
                 }
-                `;
+              `;
               tpStyles = brandingVars + "\n" + tpStyles;
 
-              const logoHtml = `<span style="font-weight: 800; font-size: 1.5rem; color: #6366f1;">BRAND</span>`;
-
-              tpHtml = tpHtml
-                .replace(/PROJECT_NAME_PLACEHOLDER/g, "Business Name")
-                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/CONTACT_PLACEHOLDER/g, "Contact Us");
-
-              // Clean up any stray placeholders
-              tpHtml = tpHtml
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5");
-
+              // Replace ALL placeholders in CSS
               tpStyles = tpStyles
-                .replace(/LOGO_URL_PLACEHOLDER/g, "");
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
+                .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))
+                .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewSecondary))
+                .replace(/LOGO_URL_PLACEHOLDER/g, previewLogo || "");
+
+              // Build logo HTML using project logo/name
+              const logoHtml = previewLogo
+                ? `<img src="${previewLogo}" alt="${previewName}" style="height:40px;width:auto;object-fit:contain;">`
+                : `<span style="font-weight:800;font-size:1.4rem;color:${previewPrimary};">${previewName}</span>`;
+
+              // Replace ALL placeholders in HTML
+              tpHtml = tpHtml
+                .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
+                .replace(/LOGO_PLACEHOLDER/g, logoHtml)
+                .replace(/CONTACT_PLACEHOLDER/g, project?.contactEmail || project?.phone || "Contact Us")
+                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
+                .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))
+                .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewSecondary));
 
               return (
                 <iframe
@@ -1081,13 +1133,19 @@ const CreatePagePage = () => {
                     <html>
                       <head>
                         <meta charset="utf-8">
-                        <title>Preview</title>
-                        <script src="https://cdn.tailwindcss.com"></script>
-                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Preview — ${previewTemplate.name}</title>
+                        <script src="https://cdn.tailwindcss.com"><\/script>
+                        <script>
+                          tailwind.config = { theme: { extend: { colors: { primary: '${previewPrimary}', secondary: '${previewSecondary}' } } } };
+                        <\/script>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+                        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+                        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
                         <style>
-                          ${tpStyles}
-                          /* Helper styles for preview */
                           body { margin: 0; padding: 0; overflow-x: hidden; }
+                          ${tpStyles}
                         </style>
                       </head>
                       <body>
