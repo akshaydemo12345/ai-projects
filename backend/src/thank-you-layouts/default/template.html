@@ -68,15 +68,15 @@
     .check-circle {
       width: 90px;
       height: 90px;
-      border: 3px solid {{primaryColor}};
+      border: 3px solid var(--primary, #7c3aed);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 50px auto !important;
-      color: {{primaryColor}};
+      color: var(--primary, #7c3aed);
       position: relative;
-      background: rgba(255,255,255,0.03);
+      background: rgba(var(--primary-rgb, 124, 58, 237), 0.03);
     }
 
     .check-circle svg {
@@ -92,7 +92,7 @@
     }
 
     .cta-button {
-      background-color: {{primaryColor}};
+      background-color: var(--primary, #7c3aed);
       color: white;
       padding: 16px 44px;
       border-radius: 9999px;
@@ -105,14 +105,14 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      box-shadow: 0 10px 25px {{primaryColor}}40;
+      box-shadow: 0 10px 25px rgba(var(--primary-rgb, 124, 58, 237), 0.3);
       margin-top: 20px;
     }
 
     .cta-button:hover {
-      background-color: {{secondaryColor}};
+      background-color: var(--secondary, #6366f1);
       transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 35px {{primaryColor}}60;
+      box-shadow: 0 15px 35px rgba(var(--primary-rgb, 124, 58, 237), 0.4);
     }
 
     .cta-button svg {
@@ -133,7 +133,7 @@
     }
 
     .nav-link:hover {
-      color: {{primaryColor}};
+      color: var(--primary, #7c3aed);
     }
     
     .offer-text {

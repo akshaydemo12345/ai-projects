@@ -129,8 +129,8 @@ exports.renderThankYouPage = async (req, res, next) => {
     };
 
     const branding = {
-      primaryColor: page.thankYouConfig?.branding?.primaryColor || layoutConfig.theme.primaryColor,
-      secondaryColor: page.thankYouConfig?.branding?.secondaryColor || layoutConfig.theme.secondaryColor,
+      primaryColor: page.thankYouConfig?.branding?.primaryColor || page.primaryColor || layoutConfig.theme.primaryColor,
+      secondaryColor: page.thankYouConfig?.branding?.secondaryColor || page.secondaryColor || layoutConfig.theme.secondaryColor,
       logoUrl: page.thankYouConfig?.branding?.logoUrl || page.logoUrl || ''
     };
 
@@ -143,6 +143,8 @@ exports.renderThankYouPage = async (req, res, next) => {
       html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
     }
 
+    const pRgb = hexToRgbStr(branding.primaryColor);
+    const sRgb = hexToRgbStr(branding.secondaryColor);
     const brandingVars = `
       <style id="branding-vars">
         :root {
@@ -153,6 +155,8 @@ exports.renderThankYouPage = async (req, res, next) => {
           --forest: ${branding.primaryColor};
           --btn-bg: ${branding.primaryColor};
           --btn-text: #ffffff;
+          --primary-rgb: ${pRgb};
+          --secondary-rgb: ${sRgb};
         }
       </style>
     `;
@@ -306,8 +310,8 @@ exports.previewThankYouPage = async (req, res, next) => {
     };
 
     const mergedBranding = {
-      primaryColor: branding?.primaryColor || layoutConfig.theme.primaryColor,
-      secondaryColor: branding?.secondaryColor || layoutConfig.theme.secondaryColor,
+      primaryColor: branding?.primaryColor || (page ? page.primaryColor : null) || layoutConfig.theme.primaryColor,
+      secondaryColor: branding?.secondaryColor || (page ? page.secondaryColor : null) || layoutConfig.theme.secondaryColor,
       logoUrl: branding?.logoUrl || (page ? page.logoUrl : '') || ''
     };
 
@@ -321,6 +325,8 @@ exports.previewThankYouPage = async (req, res, next) => {
         html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
       }
 
+      const pRgb = hexToRgbStr(mergedBranding.primaryColor);
+      const sRgb = hexToRgbStr(mergedBranding.secondaryColor);
       const brandingVars = `
         <style id="branding-vars">
           :root {
@@ -331,6 +337,8 @@ exports.previewThankYouPage = async (req, res, next) => {
             --forest: ${mergedBranding.primaryColor};
             --btn-bg: ${mergedBranding.primaryColor};
             --btn-text: #ffffff;
+            --primary-rgb: ${pRgb};
+            --secondary-rgb: ${sRgb};
           }
         </style>
       `;
@@ -463,8 +471,6 @@ function processConditionalBlocks(content, branding, businessName, html) {
     .replace(/SECONDARY_COLOR_PLACEHOLDER/g, branding.secondaryColor)
     .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
     .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
-    .replace(/:\s*var\(--primary\)/g, `: ${branding.primaryColor}`)
-    .replace(/:\s*var\(--secondary\)/g, `: ${branding.secondaryColor}`)
     .replace(/\{\{logoUrl\}\}/g, escapeHtml(branding.logoUrl))
     .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
   return processedHtml;
