@@ -20,7 +20,7 @@ const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: s
     const success = await copyToClipboard(token);
     if (success) {
       setCopiedToken(true);
-      toast.success("Token copied!");
+      toast.success("Token copied successfully.");
       setTimeout(() => setCopiedToken(false), 2000);
     }
   };
@@ -29,7 +29,7 @@ const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: s
     const success = await copyToClipboard(script);
     if (success) {
       setCopiedScript(true);
-      toast.success("Script copied!");
+      toast.success("Script copied successfully.");
       setTimeout(() => setCopiedScript(false), 2000);
     }
   };
@@ -115,7 +115,7 @@ const ScriptIntegration = ({ project, pageId }: { project: Project, pageId: stri
     const success = await copyToClipboard(snippet);
     if (success) {
       setCopied(true);
-      toast.success("Script snippet copied!");
+      toast.success("Script snippet copied successfully.");
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -170,7 +170,7 @@ const PublishedPage = () => {
     const success = await copyToClipboard(liveUrl);
     if (success) {
       setUrlCopied(true);
-      toast.success("Page URL copied!");
+      toast.success("Page URL copied successfully.");
       setTimeout(() => setUrlCopied(false), 2000);
     }
   };

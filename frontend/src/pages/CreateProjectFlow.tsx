@@ -125,9 +125,7 @@ const CreateProjectFlow = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       const project = res.data.project;
-      toast.success("Project created successfully!", {
-        description: `${project.name} is now ready for page generation.`,
-      });
+      toast.success("Project created successfully.");
       // Skip integration step — go directly to project detail page
       navigate(`/dashboard/projects/${project._id}`);
     },
@@ -237,7 +235,7 @@ const CreateProjectFlow = () => {
         setScrapedImages(meta.scrapedImages);
       }
 
-      toast.success("Website analyzed! Project details populated.");
+      toast.success("Website analyzed successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to analyze website");
     } finally {
@@ -250,7 +248,7 @@ const CreateProjectFlow = () => {
     const success = await copyToClipboard(createdProject.apiToken);
     if (success) {
       setTokenCopied(true);
-      toast.success("Token copied!");
+      toast.success("Token copied successfully.");
       setTimeout(() => setTokenCopied(false), 2500);
     } else {
       toast.error("Failed to copy token");
@@ -743,7 +741,7 @@ const CreateProjectFlow = () => {
                     const success = await copyToClipboard(scriptCode);
                     if (success) {
                       setScriptCopied(true);
-                      toast.success("Code copied!");
+                      toast.success("Code copied successfully.");
                       setTimeout(() => setScriptCopied(false), 2000);
                     } else {
                       toast.error("Failed to copy code");

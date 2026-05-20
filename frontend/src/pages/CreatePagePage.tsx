@@ -964,12 +964,12 @@ ${enrichedContent}
                     .filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase())))
                     .slice(0, visibleCount)
                     .map((tpl, idx) => (
-                      <button
+                      <div
                         key={tpl.id}
                         onClick={() => {
                           handleTemplateSelect(tpl);
                         }}
-                        className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
+                        className={`cursor-pointer relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
                           ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
                           : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
                           }`}
@@ -1033,7 +1033,7 @@ ${enrichedContent}
                             <Eye className="h-4 w-4" />
                           </button>
                         </div>
-                      </button>
+                      </div>
                     ))}
 
                 </div>
