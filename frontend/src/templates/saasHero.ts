@@ -16,7 +16,7 @@ export const saasHeroStyles = `
   .hero-form h3 { font-size: 24px; font-weight: 800; margin-bottom: 20px; text-align: center; }
   .hero-form input { width: 100%; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px; outline: none; }
   .btn-primary { width: 100%; padding: 16px; background: #6366f1; color: #fff; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; }
-  .btn-primary:hover { background: #4f46e5; }
+  .btn-primary:hover { background: PRIMARY_COLOR_PLACEHOLDER; }
 
   .features { padding: 100px 8%; text-align: center; }
   .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 60px; }
