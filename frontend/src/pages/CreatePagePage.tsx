@@ -198,14 +198,14 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
-  {
-    id: "healthcare-04",
-    name: "Lumina Medical Center",
-    tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates03/screnshort8.png",
-    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
-    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
-  },
+  // {
+  //   id: "healthcare-04",
+  //   name: "Lumina Medical Center",
+  //   tag: "Healthcare",
+  //   img: "/assets/templates/healthcare/templates03/screnshort8.png",
+  //   gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+  //   prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  // },
   {
     id: "travel-01",
     name: "Azure Luxury Escapes",
