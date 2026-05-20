@@ -17,6 +17,7 @@ import { copyToClipboard } from '@/lib/utils';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
+import { BLOCK_DEFS } from './blockDefs';
 const GrapesEditor = () => {
   const { projectId: projId, pageId } = useParams<{ projectId: string, pageId: string }>();
   const queryClient = useQueryClient();
@@ -1447,7 +1448,6 @@ const GrapesEditor = () => {
       });
 
       // 5. REGISTER ALL BLOCKS FROM BLOCK_DEFS
-      const { BLOCK_DEFS } = require('./blockDefs');
       BLOCK_DEFS.forEach((b: any) => {
         if (!bm.get(b.type)) {
           bm.add(b.type, {
