@@ -175,322 +175,133 @@ const callAIText = async (systemPrompt, userPrompt) => {
   throw new Error('No AI provider configured');
 };
 
-// ─── DESIGN DNA ENGINE ───────────────────────────────────────────────────────────
-// Generates a completely unique design blueprint on EVERY call.
-// No two generations will share the same layout, mood, or visual style.
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const pickN = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
-
-const layoutPools = {
-  'TRUST-BAR': [
-    'Marquee continuous scroll with 5-6 sleek brand logo badges with grayscale hover-to-color transition.',
-    'Asymmetric horizontal strip featuring 4 clean minimal typography badges separated by vertical glowing lines.',
-    'Frosted translucent strip overlapping the Hero background with clean vector trust icons.'
-  ],
-  'PROBLEM-STATEMENT': [
-    'Asymmetric split-row: Left side has a massive italic bold statement, right side has 3 clean bullet cards detailing friction points.',
-    'Minimal brutalist design: Large oversized block letters for the main struggle, single highlighted line, and generous whitespace.',
-    'Bento layout: 3 cards showing "Friction, Stagnation, Loss" with custom dark border glows.'
-  ],
-  'SOLUTION-GRID': [
-    '3-Column staggered masonry: Each card has varying height, custom hover transform lift, and electric border outlines.',
-    'Asymmetrical 2-column list: Left column is sticky with value proposition text, right column flows 4 detailed premium feature cards.',
-    'Interactive circular glow circles containing feature lists with glassmorphism backgrounds.'
-  ],
-  'SOCIAL-PROOF': [
-    'Staggered grid of 3 testimonials with floating circular author avatars, translucent cards, and a subtle glowing backdrop.',
-    'Oversized clean single-quote layout: 1 main highly compelling quote in Instrument Serif, italic, 3.5rem size, with founder signature.',
-    'Bento box array containing review scores, trust pilot rating widget, and user stories.'
-  ],
-  'PRICING': [
-    'Asymmetric pricing cards: 3 cards where the center "Popular" card has a huge floating badge, negative margins, and glowing gradient border.',
-    'Ultra-clean list-based pricing tier: Simple minimal rows with pricing on the right, list of features on the left, separated by dotted leader lines.',
-    'Horizontal split banner: High-contrast single custom package pricing.'
-  ],
-  'HOW-IT-WORKS': [
-    'Staggered timeline step flow: Custom dotted vertical line down the center with alternating left/right step card blocks.',
-    'Horizontal process track: 3 large numbered circles (01, 02, 03) in bold serif typography connected by elegant gradient progress arrows.',
-    'Asymmetric grid layout: 3 unequal cards representing steps, each with custom abstract vector background details.'
-  ],
-  'CASE-STUDY': [
-    'Splitscreen layout: Left side contains a large client outcome metric (e.g., +147% ROI) in clamp font size, right side explains the method.',
-    'Sleek mockup display: Floating browser mock-up card overlapping a background grid with dynamic shadow and outline lines.',
-    'Grid of 2 asymmetrical highlight panels detailing the challenge, strategy, and result.'
-  ],
-  'TRANSFORMATION': [
-    'Before/After split layout: Left card (Before) in muted grayscale styling, right card (After) in vibrant primary color gradients.',
-    'Timeline process card: Asymmetrical timeline showing the shift from pain to positive outcome with smooth border transitions.',
-    'Sleek progress bar visualization showcasing dynamic percentage metric growth.'
-  ],
-  'SERVICES-BENTO': [
-    'Asymmetric Bento Grid: 5 premium cards of distinct dimensions displaying specific services, using glassmorphic blurs.',
-    'Minimal list strip: 4 massive horizontal service rows that expand on hover with thin dividers.',
-    'Grid of staggered border-radius cards with glowing electric vector outlines.'
-  ],
-  'FAQ-ACCORDION': [
-    'Clean left-split column: Left column contains the heading "Got Questions?", right column lists 4-5 native <details> accordion rows.',
-    'Centered layout: 5 stacked translucent <details> accordion containers with custom shadow hover and rotating chevron indicators.',
-    'Grid layout: 2 columns of beautiful native <details> accordion boxes styled with minimalist bottom borders.'
-  ],
-  'STATS-STRIP': [
-    'Bold horizontal metrics row: 4 large numbers in giant bold font with minimal text captions below, separated by micro vertical border lines.',
-    'Floating stats cards: 3 distinct asymmetric cards with dark backgrounds, neon numeric labels, and colorful blur effects.',
-    'Minimal editorial stats: Oversized percentage metrics set in clean grids with extremely generous whitespace.'
-  ],
-  'TESTIMONIALS': [
-    'Sleek user review cards: 3 beautiful glassmorphic blocks with circular user faces, company tags, and deep premium drop-shadows.',
-    'Oversized single testimonial: 1 main highly compelling customer quote in italic serif display font with bold founder branding.',
-    'Asymmetric layout: Staggered row of glowing testimonial cards with individual star ratings.'
-  ],
-  'TESTIMONIALS-GRID': [
-    'Masonry grid of 6 diverse user review cards with different heights and translucent white borders.',
-    'Asymmetric cards array: 4 glass blocks staggered with colorful overlay glow points.',
-    'Horizontal scroll block: A slider look containing 5 testimonials with hover glow scale animations.'
-  ],
-  'TRUST-SIGNALS': [
-    'Minimal grid featuring 4 certification badges, security labels, and guarantee marks with beautiful neon glow outlines.',
-    'Horizontal trust bar: Sleek continuous list of badges with custom borders.',
-    'Asymmetric list showing industry achievements, ratings, and active trust metrics.'
-  ],
-  'CTA-BANNER': [
-    'Cinematic pre-footer panel: High-contrast centered heading with a massive outline call-to-action button, background glow blurs, and glass layers.',
-    'Splitscreen CTA banner: Left side value proposition, right side sleek single-field email opt-in input.',
-    'Asymmetrical curved block with high-end neon outline accents.'
-  ],
-  'URGENCY-STRIP': [
-    'Minimal banner with active limited offer tag, custom static count-down numbers block, and a glowing CTA.',
-    'Horizontal floating ticker with real-time text announcements and micro-button.',
-    'Vibrant primary colored high-contrast strip with sliding action text.'
-  ],
-  'PAIN-POINTS': [
-    'Clean list format: 4 stark problem statements in giant serif typography, each with an icon marker and clean divider.',
-    'Asymmetrical grids showing 3 critical industry problems with custom colored bullet details.',
-    'Editorial dark row detailing current market failures with minimalist structural alignment.'
-  ],
-  'MANIFESTO-HERO': [
-    'Oversized statement grid: Giant, bold uppercase text detailing the company mission with custom accent background shadows.',
-    'Minimal editorial page entry with a single striking image block and huge headline.',
-    'Splitscreen manifesto with left bold values list and right large graphic element.'
-  ],
-  'CINEMATIC-HERO': [
-    'Edge-to-edge dark backdrop video-style canvas with oversized typography and glassmorphic floating CTA.',
-    'Diagonal sliced hero layout with a high-fidelity image composition.',
-    'Atmospheric neon glow hero with a centered focus card.'
-  ],
-  'METHODOLOGY': [
-    'Step-by-step progress cards: 3 clean vertical panels showing phases of work with thin horizontal connector lines.',
-    'Asymmetrical process flow with staggered details and glowing labels.',
-    'Editorial bento layout detailing the approach in 4 rich text tiles.'
-  ]
-};
-
-const generateDesignDNA = () => {
-  const heroStyles = [
-    'SPLIT-SCREEN: left text + right full-bleed image (60/40 split)',
-    'FULL-BLEED CINEMATIC: edge-to-edge background image with dark overlay, headline centered',
-    'ASYMMETRIC OFFSET: headline top-left, CTA bottom-right, image floats in middle breaking the grid',
-    'DIAGONAL CUT: background sliced at 8deg angle, text left, abstract shape right',
-    'MAGAZINE EDITORIAL: large oversized serif headline, small image top-right, subtext at bottom',
-    'MINIMAL TYPOGRAPHIC: no image, giant bold statement, single accent line, brutal whitespace',
-    'STACKED LAYERS: headline above fold, image below bleeding into next section',
-    'SIDEBAR HERO: fixed left sidebar nav + massive scrollable right content area',
-    'GLASSMORPHISM CARD: blurred glass panel floating over gradient mesh background',
-    'BENTO GRID HERO: 4-6 asymmetric cards forming the hero, each with micro-content',
-    'VIDEO LOOP STYLE: dark background with autoplay-style static frame + pulsing glow effects',
-    'FLOATING ISLAND: content on elevated card with deep shadow, background is solid bold color',
-  ];
-
-  const colorMoods = [
-    'DARK MODE LUXE: near-black backgrounds (#0a0a0f), neon accent highlights, white text',
-    'LIGHT AIRY: white and pale backgrounds, soft pastels, minimal color, clean space',
-    'BOLD CONTRAST: pitch black sections alternating with pure white, striking color pops',
-    'EARTH TONES: warm creams, terracotta, deep olive, feels organic and premium',
-    'NEON CYBER: dark purple/navy base with electric green or cyan accents',
-    'MONOCHROME GRADIENT: single hue from light to dark across the page',
-    'WARM SUNSET: amber, deep orange, coral, feels energetic and human',
-    'CORPORATE ELEVATED: deep navy, sharp white, subtle gold/silver accents, trustworthy',
-    'FROSTED GLASS: translucent panels, muted backgrounds, light refractions',
-    'DEEP JEWEL: emerald, sapphire, amethyst tones — rich and opulent',
-  ];
-
-  const layoutGrids = [
-    'ASYMMETRIC: most sections break grid — content intentionally misaligned for dynamic feel',
-    'MASONRY: image and text blocks cascade in uneven column layout',
-    'FULL-WIDTH ALTERNATING: each section flips — image left/text right, then text left/image right',
-    'CARD GRID: 2-col on desktop, flowing cards with varied heights and hover states',
-    'TIMELINE VERTICAL: content flows down a center line with alternating left/right items',
-    'MAGAZINE LAYOUT: some sections occupy 70% width, others 100%, creates editorial rhythm',
-    'BENTO BOXES: sections divided into asymmetric grid boxes of varying sizes',
-    'COLUMN SPLIT: persistent 2-column layout where left is sticky and right scrolls',
-    'DIAGONAL BANDS: sections have clipped diagonal edges between them',
-    'OVERLAPPING ELEMENTS: images and text elements overlap section boundaries for depth',
-  ];
-
-  const typographyMoods = [
-    'BRUTALIST: massive font sizes (clamp 4rem-10rem), tight line-height, uppercase weight',
-    'ELEGANT SERIF: mix of serif display font for headings + clean sans for body',
-    'GEOMETRIC SANS: ultra-clean, uniform weight, generous tracking on headings',
-    'EDITORIAL: large italic headlines, small caps for labels, varied font weights',
-    'HUMANIST: warm rounded fonts, conversational sizing, approachable feel',
-    'TECH MONO: monospace accents for data/numbers, sans-serif for prose',
-  ];
-
-  const formPlacements = [
-    'CONTACT-SECTION: Do NOT put any form in the Hero. Place a beautiful high-converting button in Hero linking to `#lead-form`. Put the lead capture form in a dedicated visual contact section near the bottom of the page.',
-    'SPLIT-HERO-RIGHT: Place the form in the Hero section, on the right side of the screen as a floating card.',
-    'MID-SECTION-BENTO: Place the form in the middle of the page (Section 4 or 5) inside a Bento Grid box with glowing border shadows.',
-    'PRE-FOOTER-CTA: Place the form inside a cinematic full-width pre-footer banner section with a dark premium gradient background.',
-    'ASYMMETRIC-FLOATING: Place the form as a floating offset section overlapping the services and testimonials grid.'
-  ];
-
-  const formStyles = [
-    'GLASSMORPHIC CARD: Glassmorphic form (backdrop-blur-md, border border-white/10, subtle white/5 background) with sleek input outlines.',
-    'MINIMALIST BORDERS: Form with transparent background, pure bottom-borders (border-b-2) on inputs, and glowing neon submit button.',
-    'DARK CONTRAST: High-contrast form with solid deep background, bright inputs, and custom colored labels.',
-    'EDITORIAL BOX: Clean grid form with heavy borders (border-2 border-black/80), serif labels, and a solid block shadow button.',
-    'NEON GLOW: Dark futuristic card with subtle neon border glow, rounded inputs, and electric color gradients.'
-  ];
-
-  const sectionSequences = [
-    ['TRUST-BAR', 'HERO', 'PROBLEM-STATEMENT', 'SOLUTION-GRID', 'SOCIAL-PROOF', 'FORM-SECTION', 'PRICING', 'MINIMALIST-FOOTER'],
-    ['HERO', 'STATS-STRIP', 'HOW-IT-WORKS', 'CASE-STUDY', 'FORM-SECTION', 'TESTIMONIALS', 'FAQ-ACCORDION', 'MINIMALIST-FOOTER'],
-    ['HERO', 'VIDEO-PROOF', 'FEATURE-DEEP-DIVE', 'COMPARISON-TABLE', 'FORM-SECTION', 'GUARANTEE', 'TRUST-SIGNALS', 'MINIMALIST-FOOTER'],
-    ['HERO', 'PAIN-POINTS', 'TRANSFORMATION', 'SERVICES-BENTO', 'FORM-SECTION', 'REVIEWS', 'FAQ-ACCORDION', 'MINIMALIST-FOOTER'],
-    ['MANIFESTO-HERO', 'WHO-WE-SERVE', 'METHODOLOGY', 'RESULTS', 'FORM-SECTION', 'PRESS-LOGOS', 'BADGES-ROW', 'MINIMALIST-FOOTER'],
-    ['SPLIT-HERO', 'QUICK-WINS', 'PROCESS-STEPS', 'FORM-SECTION', 'TESTIMONIALS-GRID', 'CTA-BANNER', 'FAQ-ACCORDION', 'MINIMALIST-FOOTER'],
-    ['CINEMATIC-HERO', 'NUMBERS', 'SERVICES-CAROUSEL', 'FOUNDER-STORY', 'FORM-SECTION', 'TRUST-SIGNALS', 'FAQ-ACCORDION', 'MINIMALIST-FOOTER'],
-    ['HERO', 'INTERACTIVE-TABS', 'BEFORE-AFTER', 'BADGES', 'FORM-SECTION', 'URGENCY-STRIP', 'FAQ-ACCORDION', 'MINIMALIST-FOOTER'],
-  ];
-
-  const selectedSequence = pick(sectionSequences);
-
-  return {
-    heroStyle: pick(heroStyles),
-    colorMood: pick(colorMoods),
-    layoutGrid: pick(layoutGrids),
-    typographyMood: pick(typographyMoods),
-    formPlacement: pick(formPlacements),
-    formStyle: pick(formStyles),
-    sectionSequence: selectedSequence,
-    sectionCount: selectedSequence.length,
-    mustInclude: pickN(['a bold stat strip with 3-4 metrics', 'a quote-style testimonial with photo', 'a 3-step process visualization', 'a comparison or before/after block', 'a guarantee or trust badge row', 'a founder or team mini-bio', 'an FAQ accordion', 'a pricing or package display', 'a case study or result highlight'], 3),
-  };
-};
-
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
-const buildSystemPrompt = (chaosToken, designDNA, sectionVisualMap) => `
-You are a world-class UI/UX Design Director, Conversion Architect, and Senior Frontend Developer specializing in Vercel/Linear/Apple-level premium interfaces.
+// ZERO templates. ZERO hardcoded layouts. AI invents EVERYTHING from scratch.
+const buildSystemPrompt = (chaosToken) => `
+You are a Principal UI Engineer and Creative Director with over 21 years of experience designing world-class, award-winning editorial and startup websites.
+Your goal is to build a bespoke, ultra-premium, high-converting landing page that completely breaks out of standard website boxes and feels like a bespoke boutique masterpiece (inspired by high-end design showcases on Awwwards).
 
-RANDOMNESS SEED: ${chaosToken}
+Every page must be generated from scratch, utilizing sophisticated layouts, custom typography, rich natural color harmony, and micro-animations.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎨 DESIGN DNA — MANDATORY BLUEPRINT FOR THIS GENERATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-These are NOT suggestions. You MUST implement every single one of these exactly.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHAOS SEED: ${chaosToken}
+This seed is your creative DNA for this generation.
+EVERY design decision must feel influenced by this unique seed.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🦸 HERO STYLE: ${designDNA.heroStyle}
-🎨 COLOR MOOD: ${designDNA.colorMood}
-📐 LAYOUT GRID: ${designDNA.layoutGrid}
-✍️  TYPOGRAPHY: ${designDNA.typographyMood}
-🔘 FORM PLACEMENT: ${designDNA.formPlacement}
-🎨 FORM STYLE: ${designDNA.formStyle}
+🚫 FORBIDDEN COMMON TEMPLATES (NEVER USE):
+- Boring centered hero grid with a standard CTA button
+- Generic 3-column "Why Choose Us" cards with basic icons
+- Simple alternating left-image / right-text feature rows
+- Bland black text on plain white background with standard rounded-md buttons
+- Flat headers and simple columns of links in footers
 
-📋 MANDATORY SECTION-BY-SECTION VISUAL MAP:
-${sectionVisualMap.map(line => `   - ${line}`).join('\n')}
+🏆 21-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
-🔒 YOU MUST ALSO INCLUDE THESE 3 UNIQUE ELEMENTS:
-${designDNA.mustInclude.map((m, i) => `   ${i + 1}. ${m}`).join('\n')}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. NO NAVBAR NAVIGATION LINKS (LOGO & CTA ONLY):
+- The header/navigation bar MUST NOT contain any menu link navigation items (e.g. do NOT include links like "Services", "Process", "Results", "FAQ", "Contact"). 
+- It should only contain the brand logo on the left, and optionally a single Call / Contact CTA button on the right. Keep it extremely clean, minimal, and premium!
 
-🚨 SYNTAX SAFETY & NO TRUNCATION MANDATE (MUST REACH THE FOOTER!):
-- Every single HTML tag you open MUST be cleanly closed immediately in its respective section.
-- You are FORBIDDEN from nesting <section> tags within each other. Each section MUST be an independent, self-contained peer block (e.g. <section id="...">...</section> followed directly by <section id="...">...</section>).
-- If sections are nested, the GrapesJS parser will fail, causing the layout to look broken or cut off!
-- Keep marketing copy extremely short, sharp, and punchy. Avoid long paragraphs. Short, premium copy saves immense token space and guarantees the page is successfully rendered all the way down to the footer!
+2. MANDATORY BRAND LOGO TAG:
+- You MUST place the brand logo in the header and footer using exactly this image tag: \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`.
+- DO NOT use text-only logos like \`BrandName\` or plain text divs. Always use the \`{{LOGO_URL}}\` template tag for the image source so GrapesJS can swap in the real logo!
 
-🚨 ULTRA-PREMIUM "WOW-FACTOR" STYLING & AESTHETIC ENGINE:
-- Standard colored plain boxes look cheap and amateur. You MUST implement the following high-end design assets:
-1. ATMOSPHERIC BACKDROPS:
-   - Use deep premium gradient backgrounds (e.g., bg-gradient-to-br from-[#07080a] via-[#10121a] to-[#0c0d12] for dark base, or clean airy creams for light).
-   - Inject glowing colored background mesh blobs: <div class="absolute w-[400px] h-[400px] rounded-full filter blur-[150px] opacity-15 pointer-events-none bg-gradient-to-tr from-primary to-secondary"></div>
-2. SLEEK GLASSMORPHISM & SHADOWS:
-   - Make all cards and panels use sophisticated glassmorphism: backdrop-blur-xl bg-white/[0.02] border border-white/5 for dark layouts, or backdrop-blur-xl bg-black/[0.01] border border-black/5 for light.
-   - Use dynamic high-fidelity shadows: shadow-[0_20px_50px_rgba(0,0,0,0.3)]
-3. ASYMMETRICAL SPACING & BREATHING ROOM:
-   - Give elements luxurious padding (use py-24 or py-32 for sections, px-8 or px-12 for inner boxes).
-   - Use negative margin overlaps (e.g., -mt-16 or -mt-24) to float custom elements across section boundaries.
-4. HEADLINE TYPOGRAPHY:
-   - Headlines must be massive, elegant, and tight: tracking-tight font-extrabold leading-[1.05] (using clamp for responsiveness).
+3. PREMIUM MINIMALIST FOOTER AT THE BOTTOM:
+- Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section.
+- The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a premium copyright notice (e.g. "© \${new Date().getFullYear()} Brand. All rights reserved.").
 
-🚨 NO NAVIGATION MENU IN HEADER/NAVBAR HARD RULE:
-- The header/navbar MUST NOT contain a navigation menu or links (Do NOT generate list items, hamburger dropdown lists, or anchors for 'Home', 'About', 'Services', 'Pricing', etc.). 
-- The header/navbar should ONLY contain the brand logo on the left, and a single prominent high-converting Call-to-Action (CTA) Button on the right (e.g. "Get Started" or "Book a Call"). 
+4. SOPHISTICATED COLOR PALETTES (Earthy, Rich, Organic & Luxury):
+- Choose one bespoke color theme that feels premium and matches the brand story:
+  * "Editorial Luxury": Deep Forest Green (\`#1a3a2e\`), Warm Textured Cream Paper (\`#f7f4ef\`), Rich Charcoal Ink (\`#0a0a0a\`), Muted Gold accents (\`#c9a84c\`).
+  * "Midnight Tech": Dark Indigo (\`#0b0b1a\`), Muted Cyan/Teal (\`#0d9488\`), Deep Platinum (\`#f3f4f6\`), Ice Blue (\`#e0f2fe\`).
+  * "Modern Organic": Earthy Ochre (\`#b87a3d\`), Terracotta Rust (\`#b84c2d\`), Warm Linen (\`#fafaf9\`), Midnight Forest (\`#112211\`).
+- Apply these colors cleanly, using subtle border highlights, glassmorphism overlays, and elegant background tones.
 
-🚨 TOKEN OPTIMIZATION & INLINE ICONS STRATEGY (PREVENT TRUNCATION):
-- To ensure the entire landing page generates fully from the Hero all the way down to the Footer without getting cut off early:
-- You are STRONGLY FORBIDDEN from generating custom inline SVG <path> codes for decorative graphics or icons. Large SVG vector blocks consume massive amounts of output tokens and cause early truncation.
-- Instead, you MUST use standard FontAwesome icons (e.g., <i class="fa-solid fa-check text-xl"></i>, <i class="fa-solid fa-rocket"></i>, <i class="fa-solid fa-phone"></i>, <i class="fa-solid fa-chevron-down"></i>) which are already fully loaded and supported in the environment.
+5. ABSOLUTE STRUCTURAL FREEDOM (CRITICAL):
+- DO NOT use ANY standard web layouts (no 3-columns, no 4-columns, no basic left-right splits). 
+- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch.
+- You decide how many columns, where elements overlap, and where they are placed. 
+- You must create a completely new, bespoke layout for every generation. Never rely on a template or a predefined structure.
+- DO NOT use crazy abstract shapes, clip-paths, or blobs. Keep the structural elements clean, modern, and professional (rectangles, rounded corners, clean grids).
+- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images) or use high-quality Unsplash image URLs if you know them. Do NOT leave image placeholders empty. Every page must have beautiful, large photos.
 
-🚨 SECTION UNIQUE STYLING HARD RULE:
-- You are FORBIDDEN from repeating any layout style, structure, or card grid design between sections. Every single section MUST have a totally unique layout, visual density, and alignment as specified in the SECTION-BY-SECTION VISUAL MAP.
-- For example, if Section 3 uses a 3-column card grid, Section 4 must NOT use a 3-column card grid; it must use an asymmetric split row, bento grid, timeline, or horizontal strip. Every section must have a unique layout signature!
+9. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
+- Do NOT hardcode the same font pair for every website. Select a pairing that perfectly matches the brand style:
+  * For Luxury, Editorial, or High-End brands: Pair a Display Serif (\`Fraunces\`, \`Playfair Display\`, or \`Cormorant Garamond\`) with a clean Sans (\`DM Sans\` or \`Plus Jakarta Sans\`).
+  * For Modern, Tech, Creative, or Brutalist brands: Pair a dramatic Sans (\`Syne\`, \`Clash Display\`, or \`Cabinet Grotesk\`) with a highly legible Sans (\`Satoshi\`, \`Inter\`, or \`Space Grotesk\`).
+  * For Clinical, Trustworthy, or Corporate brands: Pair a precise Serif (\`Lora\` or \`Merriweather\`) with a clean Sans (\`Inter\` or \`Outfit\`).
+- You MUST load the selected Google Fonts stylesheet in the \`<head>\` of your page.
 
-🚨 CRITICAL RULES FOR FORM PLACEMENT & STYLING (WOW FACTOR):
-1. FORM PLACEMENT HARD RULE:
-   - If FORM PLACEMENT is "CONTACT-SECTION", you are FORBIDDEN from putting a form in the Hero. The Hero MUST contain a stunning CTA button linking to "#lead-form" and the form MUST be in the bottom "FORM-SECTION".
-   - If FORM PLACEMENT is "SPLIT-HERO-RIGHT", you MUST place the form inside a floating card layout in the Hero section on the right side.
-   - If FORM PLACEMENT is "MID-SECTION-BENTO", the Hero section has NO form; instead place the form in the middle of the page (Section 5 or 6) inside a beautiful asymmetric grid box.
-2. FORM DESIGN DIVERSITY:
-   - Never write the same form style. You must implement the "${designDNA.formStyle}" style perfectly with beautiful, custom styled input elements.
-   - Include relevant fields (e.g. name, email, phone, custom message/dropdown specific to this industry).
-   - Submit buttons must have smooth transitions and active hover glows.
+10. RICH HIGH-END DYNAMIC ICONS:
+- DO NOT use basic, generic icons. Always use highly descriptive, modern FontAwesome 6 icons (e.g., \`fa-solid fa-compass-drafting\`, \`fa-solid fa-vault\`, \`fa-solid fa-chart-line-up\`, \`fa-solid fa-shield-halved\`) or elegant SVG custom paths.
+- Choose icons that are highly relevant to the industry niche to make the page feel professional, custom-made, and expensive.
 
-🚨 NO-SCRIPT ACCORDION & FAQ RULE:
-- For accordions, FAQ grids, or toggle tabs, you are FORBIDDEN from writing custom Javascript click handlers (like document.querySelectorAll). GrapesJS sandboxes block custom scripts from executing.
-- Instead, you MUST use native HTML5 <details> and <summary> elements styled beautifully with Tailwind!
-- Using details/summary makes accordions 100% interactive instantly in both editor preview and live site without a single line of JS!
+11. INTERACTIVE JAVASCRIPT FOR ACCORDIONS & INTERACTION:
+- You MUST write a simple, elegant, lightweight, vanilla \`<script>\` block at the bottom of the HTML page (before \`</body>\`) to handle any interactive elements you create (like custom tabs, accordions, or mobile menus).
+- Example accordion script:
+  \`\`\`html
+  <script>
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.parentElement;
+        const content = item.querySelector('.accordion-content');
+        const icon = header.querySelector('.accordion-icon');
+        const isOpen = !content.classList.contains('hidden');
+        
+        // Close all other items first
+        document.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('rotate-180'));
+        
+        if (!isOpen) {
+          content.classList.remove('hidden');
+          if (icon) icon.classList.add('rotate-180');
+        }
+      });
+    });
+  </script>
+  \`\`\`
+- Ensure the classes match your HTML perfectly so the interactive elements work beautifully when clicked!
+- If you build an FAQ section, YOU MUST USE THESE EXACT CLASSES: \`accordion-header\`, \`accordion-content\` (with \`hidden\` by default), and \`accordion-icon\`. The script above will only work if your HTML classes match exactly!
 
-YOUR JOB:
-Read the business. Understand the audience. Execute the Design DNA and premium rules above with surgical precision.
+12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY):
+- WHITESPACE: Use massive, luxurious padding (e.g. \`py-24\`, \`py-32\`) between sections. Premium design breathes. Do not cramp elements.
+- TYPOGRAPHY: Treat text like art. Use tight letter-spacing for massive headings (\`tracking-tighter\`), and wide spacing for small uppercase sub-labels (\`tracking-widest uppercase text-xs\`).
+- SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)]\`) instead of standard tailwind shadows.
+- MICRO-INTERACTIONS: Every button and card MUST have a premium hover state. Use \`transition-all duration-500 ease-out\`, add \`hover:-translate-y-2\`, \`hover:shadow-xl\`, or use \`group-hover\` effects to scale images slightly on card hover.
+- CONTRAST: Ensure stunning contrast. If using a dark section, use \`text-white/80\` for paragraphs and \`text-white\` for headings to create subtle typographic hierarchy.
 
-STRICT ANTI-TEMPLATE RULES:
-- BANNED: hero → 3 feature cards → testimonials → CTA (generic template, never use)
-- BANNED: stock phrases like "We provide excellent services", "Your success is our priority"
-- BANNED: identical section structure to any previous generation
-- BANNED: using grid-based layouts when the DNA says asymmetric (and vice versa)
-- Every section must earn its place — no filler, no padding sections
-
-QUALITY STANDARDS:
-- Hero: visitor understands the value within 3 seconds
-- Copy: hyper-specific to this business and audience — sounds like a human expert, not a robot
-- Form: fields exactly right for this industry (dental ≠ SaaS ≠ legal ≠ fitness)
-- Trust signals: what THIS industry's buyers actually care about
-- Visual rhythm: density alternates (heavy → light → heavy) to keep eyes moving
-- Minimum 7 distinct sections — no section repeats its visual pattern
-
-TECHNICAL REQUIREMENTS:
-- CSS variables at :root level: --primary: [PRIMARY_HEX]; --secondary: [SECONDARY_HEX];
-- Use var(--primary) and var(--secondary) for ALL brand color references
-- Logo: <img src="{{LOGO_URL}}" alt="Logo" style="height:48px;width:auto;object-fit:contain;">
-- Images: https://picsum.photos/seed/[unique-descriptive-keyword]/[width]/[height]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ TECHNICAL REQUIREMENTS:
 - Tailwind CDN: <script src="https://cdn.tailwindcss.com"></script>
-- Custom CSS in <style> tag for animations, textures, and anything Tailwind can't do
-- Fully mobile responsive — hamburger menu on mobile, stacked layout
-- Include a lead capture form with fields specific to this industry
+- Google Fonts: Dynamically load the selected font pairing stylesheet in <head>
+- Brand colors via CSS variables: --primary and --secondary ONLY
+- Custom CSS in <style> tag for smooth continuous marquees, custom font styling, clip-paths, and line transitions.
+- Fully responsive, complete, and stunning HTML output.
 
-OUTPUT FORMAT:
-Return ONLY the complete HTML inside one code block:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📤 OUTPUT FORMAT:
+Return ONLY a complete HTML file inside one code block.
+No explanation before or after. No comments. Start with the HTML tag directly.
 \`\`\`html
 <!DOCTYPE html>
-...full page...
+<html lang="en">
+...complete premium page, every section, nothing truncated...
 </html>
 \`\`\`
-
-No explanation. No commentary. No notes. Just the complete HTML.
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input, designDNA, sectionVisualMap) => {
+const buildUserPrompt = (input) => {
+  // Random visual style nudge — pushes AI toward different aesthetics each time
+  const styleNudges = [
+    'Invent a totally custom modern layout utilizing extreme asymmetry and bold whitespace. Do not use standard rows.',
+    'Create a completely new visual flow with overlapping high-quality image elements and unexpected alignments.',
+    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries (but no weird shapes).',
+    'Design an experimental interface. Abandon traditional columns entirely in favor of a unique structural arrangement featuring massive photography.',
+    'Invent a new way to display content. Do not use generic cards or standard split screens. Think outside the box and use rich imagery.'
+  ];
+  const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
+
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
     `INDUSTRY: ${input.industry}`,
@@ -498,6 +309,7 @@ const buildUserPrompt = (input, designDNA, sectionVisualMap) => {
     `PRIMARY COLOR: ${input.primaryColor || '#7c3aed'}`,
     `SECONDARY COLOR: ${input.secondaryColor || '#6366f1'}`,
     `LOGO: {{LOGO_URL}}`,
+    `\n🎨 STYLE DIRECTION FOR THIS GENERATION: ${randomNudge}`,
   ];
 
   if (input.businessDescription) lines.push(`\nABOUT THE BUSINESS:\n${input.businessDescription}`);
@@ -505,26 +317,23 @@ const buildUserPrompt = (input, designDNA, sectionVisualMap) => {
   if (input.ctaText) lines.push(`\nMAIN CTA BUTTON TEXT: ${input.ctaText}`);
   if (input.tone) lines.push(`\nBRAND VOICE / TONE: ${input.tone}`);
   if (input.services?.length) lines.push(`\nSERVICES OFFERED:\n${input.services.map(s => `• ${s}`).join('\n')}`);
-  if (input.websiteContent) lines.push(`\nEXISTING WEBSITE CONTENT (use to extract real copy and understand the business deeply):\n${input.websiteContent.substring(0, 4000)}`);
+  if (input.websiteContent) lines.push(`\nEXISTING WEBSITE CONTENT (extract real facts, names, copy — understand deeply):\n${input.websiteContent.substring(0, 4000)}`);
   if (input.aiPrompt) lines.push(`\nSPECIAL REQUEST FROM USER:\n${input.aiPrompt}`);
 
   lines.push(`
-DESIGN EXECUTION REMINDER:
-- Header / Navigation Bar MUST NOT have any menu links or hamburger lists. Logo on left, one single CTA button on right. No navigation list anchors allowed.
-- Hero MUST be: ${designDNA.heroStyle}
-- Color mood MUST be: ${designDNA.colorMood}
-- Grid MUST be: ${designDNA.layoutGrid}
-- FORM PLACEMENT MUST BE: ${designDNA.formPlacement}
-- FORM STYLE MUST BE: ${designDNA.formStyle}
-- Follow the section sequence EXACTLY as given in system prompt (at least 7 distinct premium sections)
-- Refer to the MANDATORY SECTION-BY-SECTION VISUAL MAP and style each section with its unique target layout. No two sections can share the same design style!
-- Use native HTML5 <details> and <summary> for FAQs/accordions to guarantee zero-JS flawless interactivity.
-- This design must look NOTHING like a standard template
-
-NOW BUILD THE PAGE:
-Execute the Design DNA and the Section-by-Section styling with surgical precision for this exact business.
-Write real, specific copy — not placeholders. Sound like a human expert, not a robot.
-Every section moves the visitor closer to converting. Make sure the output generation completes fully down to the footer! Ensure every single section is closed perfectly!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOW BUILD — FOLLOW THESE FINAL RULES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 🚫 ABSOLUTE RULE: DO NOT REUSE LAYOUTS. Every single time you generate a page, you MUST invent completely new HTML structures.
+2. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
+3. Your hero MUST follow the STYLE DIRECTION above. Give it a radically different design than a standard hero.
+4. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
+5. Every section must look visually different from the one before it and from standard templates. Randomize column counts, padding, overlap, and alignment.
+5. Write REAL, industry-specific copy — not generic filler text.
+6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
+7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
+8. ⚠️ AVOID TRUNCATION: Because you are generating 8+ sections, you MUST be extremely concise and efficient with your HTML/Tailwind code to stay under the output token limit. Compress your code where possible, avoid repetitive bloated classes if not needed, but keep the design stunning.
+9. The page must end with a beautiful custom Footer (containing the logo, contact info, and copyright), followed by your interaction script and the closing \`</html>\` tag. The footer layout must also be uniquely designed each time. Do NOT stop writing before finishing the footer and closing all HTML tags!
 `);
 
   return lines.join('\n');
@@ -532,41 +341,16 @@ Every section moves the visitor closer to converting. Make sure the output gener
 
 // ─── GENERATE LANDING PAGE ───────────────────────────────────────────────────────
 const generateLandingPageContent = async (input) => {
-  // Generate a unique chaos token
-  const chaosToken = `${Date.now()}-${Math.random().toString(36).substring(2, 12)}-${(input.businessName || '').split('').reverse().join('').substring(0, 6)}-${Math.random().toString(36).substring(2, 8)}`;
-
-  // Generate a completely random Design DNA blueprint
-  const designDNA = generateDesignDNA();
-
-  // Dynamically map each section in the sequence to a totally randomized visual pool layout
-  const selectedSequence = designDNA.sequenceOverride || designDNA.sectionSequence;
-  const sectionVisualMap = selectedSequence.map((section, idx) => {
-    if (idx === 0) {
-      return `Section 1 (${section}): Must use Hero Style [${designDNA.heroStyle}] and Color Mood [${designDNA.colorMood}]. Ensure it is a visually stunning entrance with NO navigation links inside the header (logo left, CTA button right only).`;
-    }
-    if (section === 'FORM-SECTION') {
-      return `Section ${idx + 1} (${section}): Lead Capture Form. Must use Form Placement [${designDNA.formPlacement}] and Form Style [${designDNA.formStyle}]. Ensure the lead capture fields are highly specific to this industry.`;
-    }
-    if (section === 'MINIMALIST-FOOTER') {
-      return `Section ${idx + 1} (${section}): A sleek minimalist footer with a clean brand logo on the left, legal links in the center, and a copyright text on the right.`;
-    }
-
-    const pool = layoutPools[section] || [
-      'Asymmetric layout with stunning typography, rich details, and high-fidelity custom spacing.',
-      'Sleek glassmorphic card block with glowing elements and electric borders.',
-      'Editorial minimalist grid with bold serif subheadings and plenty of breathing room.'
-    ];
-    return `Section ${idx + 1} (${section}): Styled as: "${pick(pool)}". Must be visually distinct from all other sections on the page.`;
-  });
+  // chaosToken = timestamp + random + reversed business name → guarantees uniqueness per call
+  const chaosToken = `${Date.now()}-${Math.random().toString(36).substring(2, 14)}-${Math.random().toString(36).substring(2, 8)}-${(input.businessName || 'biz').split('').reverse().join('').substring(0, 6).toUpperCase()}`;
 
   logger.info(`[AI] Generating page | Business: ${input.businessName} | Token: ${chaosToken}`);
-  logger.info(`[AI] Design DNA | Hero: ${designDNA.heroStyle.split(':')[0]} | Mood: ${designDNA.colorMood.split(':')[0]} | Form Placement: ${designDNA.formPlacement.split(':')[0]}`);
 
-  const systemPrompt = buildSystemPrompt(chaosToken, designDNA, sectionVisualMap);
-  let userPrompt = buildUserPrompt(input, designDNA, sectionVisualMap);
+  const systemPrompt = buildSystemPrompt(chaosToken);
+  let userPrompt = buildUserPrompt(input);
 
   if (input.templateHtml) {
-    userPrompt += `\n\nPREVIOUS DESIGN FOR REFERENCE ONLY (do NOT copy its structure or layout — the new design must look completely different):\n${input.templateHtml}`;
+    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different):\n${input.templateHtml.substring(0, 3000)}`;
   }
 
   return await callAI(userPrompt, input.logoUrl, systemPrompt);
@@ -575,15 +359,49 @@ const generateLandingPageContent = async (input) => {
 // ─── IMPROVE SECTION ─────────────────────────────────────────────────────────────
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
   const systemPrompt = `
-You are a Senior UI Developer and Conversion Copywriter.
-Improve this landing page section — make it more visually compelling and persuasive.
-Return ONLY the improved HTML inside a code block. No explanation.
+You are a Senior UI Developer, Conversion Copywriter, and Creative Director at a world-class digital agency.
+Your job: Transform the given landing page section into something visually STUNNING, unique, and highly optimized for conversions.
+
+🚫 ZERO TEMPLATE POLICY:
+You are FORBIDDEN from using standard, boring layouts:
+- Centered header with 3 equal feature cards (e.g. "Why Choose Us" with 3 icons)
+- Alternating left-image / right-text rows (boring and lazy)
+- Plain white backgrounds with simple black text and a solid blue/purple button
+- Generic stats rows with equal boxes (e.g., 500+ Clients, 99% ROI)
+- Generic placeholder testimonials
+
+✅ CREATIVE REQUIREMENTS:
+- Invent a layout structure custom-tailored to the industry and goal.
+- Use Tailwind CSS utility classes + custom inline/style overrides for advanced details (clip-path, custom drop shadows, animated gradients).
+- Introduce strong asymmetry, unique structural framing, or interesting card dynamics.
+- Write REAL, highly detailed, industry-specific marketing copy. Do not use generic placeholders.
+- Add micro-interactions, subtle hover scale transformations (e.g. group-hover), and elegant visual division.
+
+OUTPUT FORMAT:
+Return ONLY the complete improved HTML code. No explanation. No comments. Start directly with an HTML tag (e.g. <section> or <div>).
 `;
+
+  // Visual style nudges for section generation
+  const styles = [
+    'Apply a dark glassmorphic design with deep background gradients and subtle light borders.',
+    'Design a clean, asymmetric editorial layout with large bold typography and rich whitespace.',
+    'Use  boundaries and dynamic overlapping card containers.',
+    'Incorporate interactive-feeling stats or lists with glowing shadows and high visual hierarchy.',
+    'Create an immersive full-bleed grid with dramatic typography and background shapes.',
+  ];
+  const selectedStyle = styles[Math.floor(Math.random() * styles.length)];
+
   const userPrompt = `
 SECTION TYPE: ${sectionType}
-CURRENT HTML/CONTENT: ${JSON.stringify(currentContent)}
-IMPROVEMENT INSTRUCTION: ${aiPrompt || 'Make this section more compelling, visually stronger, and conversion-focused.'}
+CREATIVE STYLE DIRECTIVE: ${selectedStyle}
+CURRENT HTML:
+${typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent)}
+
+SPECIFIC IMPROVEMENT REQUEST: ${aiPrompt || 'Make this section absolutely stunning, visually unique, and premium in feel.'}
+
+Return ONLY the raw HTML. Do not wrap in markdown or backticks. Start with the HTML tag directly.
 `;
+
   return await callAI(userPrompt, '', systemPrompt);
 };
 
@@ -635,6 +453,7 @@ const editorChatModify = async ({ elementTag, elementHtml, elementCss, instructi
 };
 
 // ─── MAGIC WRITE: DESCRIPTION SUGGESTION ─────────────────────────────────────────
+// Uses callAIText → returns plain string (not HTML)
 const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt }) => {
   const systemPrompt = `
 You are a Landing Page Conversion Copywriter.
