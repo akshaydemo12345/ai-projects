@@ -777,18 +777,6 @@ ${enrichedContent}
                   placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners..."
                   className="w-full min-h-[130px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all resize-none"
                 />
-                <div className="flex flex-wrap gap-2">
-                  {dynamicSuggestions.slice(0, 6).map((item: any, idx: number) => {
-                    const suggestion = typeof item === 'string' ? item : item.suggestion;
-                    return (
-                      <button key={idx} onClick={() => { setAiPrompt(suggestion); setTimeout(handleGenerateMagicPrompt, 100); }}
-                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
-                      >
-                        {suggestion}
-                      </button>
-                    );
-                  })}
-                </div>
               </section>
             )}
 

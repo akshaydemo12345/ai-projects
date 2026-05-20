@@ -379,7 +379,7 @@ const GrapesEditor = () => {
         if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
           canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
         }
-        
+
         let coreIconStyles = canvasDoc.getElementById('core-icon-styles');
         if (!coreIconStyles) {
           coreIconStyles = canvasDoc.createElement('style');
@@ -2519,9 +2519,11 @@ const GrapesEditor = () => {
                 updatePageMutation.mutate({ status: val });
 
                 if (val === 'unpublished') {
-                  toast.error('Site is now Unpublished and hidden from public view.');
-                } else {
-                  toast.success(`Status changed to ${val}`);
+                  toast.success('Page has been unpublished.');
+                } else if (val === 'draft') {
+                  toast.success('Page status changed to Draft.');
+                } else if (val === 'published') {
+                  toast.success('Page has been published successfully.');
                 }
               }}
               style={{
@@ -2533,7 +2535,6 @@ const GrapesEditor = () => {
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
-              <option value="republished">Republished</option>
               <option value="unpublished">Unpublished</option>
             </select>
           </div>
