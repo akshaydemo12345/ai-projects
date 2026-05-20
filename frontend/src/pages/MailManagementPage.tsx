@@ -192,7 +192,7 @@ const MailManagementPage = () => {
       localStorage.setItem(`pb_admin_ui_${selectedProject}`, JSON.stringify(admin));
       
       setSavedAdmin(true);
-      toast.success(`Admin settings saved for project!`);
+      toast.success("Admin email settings saved successfully.");
       setTimeout(() => setSavedAdmin(false), 3000);
     } catch (err) {
       toast.error("Failed to save admin settings.");
@@ -221,7 +221,7 @@ const MailManagementPage = () => {
       localStorage.setItem(`pb_user_ui_${selectedProject}`, JSON.stringify(user));
       
       setSavedUser(true);
-      toast.success(`User auto-reply settings saved!`);
+      toast.success("User auto-reply settings saved successfully.");
       setTimeout(() => setSavedUser(false), 3000);
     } catch (err) {
       toast.error("Failed to save user settings.");
@@ -243,7 +243,7 @@ const MailManagementPage = () => {
       localStorage.setItem(`pb_fromName_${selectedProject}`, admin.fromName);
       localStorage.setItem(`pb_fromEmail_${selectedProject}`, admin.fromEmail);
       
-      toast.success(`${provider.toUpperCase()} configuration updated!`);
+      toast.success(`${provider.toUpperCase()} email configuration updated successfully.`);
     } catch (err) {
       toast.error("Failed to update provider.");
     }

@@ -63,7 +63,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
       });
 
       setSubmitted(true);
-      toast.success("Enquiry submitted successfully!");
+      toast.success("Form submitted successfully.");
       if (onSuccess) onSuccess();
       
       // Auto-reset after some time
@@ -73,7 +73,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
       }, 5000);
 
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit enquiry. Please try again.");
+      toast.error(error.message || "Failed to submit form. Please try again.");
     } finally {
       setLoading(false);
     }

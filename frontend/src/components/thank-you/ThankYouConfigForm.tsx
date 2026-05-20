@@ -70,15 +70,11 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
     setSaving(true);
     try {
       await thankYouApi.updateConfig(pageId, config);
-      toast.success("Settings Saved!", {
-        description: "Your Thank You page configuration has been updated successfully.",
-      });
+      toast.success("Changes saved successfully.");
       onSave?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving config:', error);
-      toast.error("Failed to save settings", {
-        description: "An error occurred while saving your configuration.",
-      });
+      toast.error(error.message || "Failed to save settings. Please try again.");
     } finally {
       setSaving(false);
     }
