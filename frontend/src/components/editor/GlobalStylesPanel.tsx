@@ -75,7 +75,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
 
   const [selectedVars, setSelectedVars] = useState<string[]>([]);
   
-  // Track previous colors to find and replace hardcoded inline styles
+  // Track previous valid colors that are actually in the CSS
   const prevColorsRef = React.useRef({
     primary: INIT_STYLES.Colors.primary.value,
     secondary: INIT_STYLES.Colors.secondary.value,
@@ -232,7 +232,22 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (cat === 'Colors' && (key === 'primary' || key === 'secondary')) {
         const oldVal = prevColorsRef.current[key];
         
-        // Find and replace hardcoded colors in all components
+        // Only run the heavy CSS replacement if the new value is a valid 7-character hex code.
+        // This prevents intermediate typing states (like "#" or "#ff") from corrupting the stylesheet.
+        if (!val || val.length !== 7 || !val.startsWith('#')) {
+          return;
+        }
+
+        const hexToRgbStr = (hex: string) => {
+          const c = hex.replace('#', '');
+          if (c.length === 3) return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
+          return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+        };
+
+        const oldRgb = hexToRgbStr(oldVal);
+        const newRgb = hexToRgbStr(val);
+
+        // Find and replace hardcoded colors in all components (Inline styles)
         const wrapper = editor.getWrapper();
         if (wrapper) {
           const updateRecursive = (comp: any) => {
@@ -240,11 +255,16 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
             const updates: any = {};
             let changed = false;
             
-            ['color', 'background-color', 'border-color'].forEach(prop => {
-              // Check if the component has the exact old hardcoded color
-              if (compStyle[prop] && compStyle[prop].toLowerCase() === oldVal.toLowerCase()) {
-                updates[prop] = val;
-                changed = true;
+            Object.keys(compStyle).forEach(prop => {
+              if (typeof compStyle[prop] === 'string') {
+                if (compStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
+                  updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                  changed = true;
+                }
+                if (compStyle[prop].includes(oldRgb)) {
+                  updates[prop] = compStyle[prop].replace(new RegExp(oldRgb, 'g'), newRgb);
+                  changed = true;
+                }
               }
             });
             
@@ -256,6 +276,43 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
           };
           updateRecursive(wrapper);
         }
+
+        // Find and replace in global template-styles
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc) {
+          const templateStyles = canvasDoc.getElementById('template-styles');
+          if (templateStyles) {
+             let html = templateStyles.innerHTML;
+             html = html.replace(new RegExp(oldVal, 'gi'), val);
+             html = html.replace(new RegExp(oldRgb, 'gi'), newRgb);
+             templateStyles.innerHTML = html;
+          }
+        }
+
+        // Find and replace in GrapesJS CSS rules
+        const rules = editor.Css.getRules();
+        rules.forEach((rule: any) => {
+          const style = rule.getStyle();
+          let changedRule = false;
+          const newStyle = { ...style };
+          
+          Object.keys(newStyle).forEach(prop => {
+            if (typeof newStyle[prop] === 'string') {
+              if (newStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
+                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                 changedRule = true;
+              }
+              if (newStyle[prop].includes(oldRgb)) {
+                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
+                 changedRule = true;
+              }
+            }
+          });
+          
+          if (changedRule) {
+             rule.setStyle(newStyle);
+          }
+        });
         
         prevColorsRef.current[key] = val;
       } else {
@@ -282,9 +339,9 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     
     css += `
 button, .btn, [class*="btn-"] {
-  background-color: var(--btn-bg) !important;
-  color: var(--btn-text) !important;
-  border-radius: var(--btn-radius) !important;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: var(--btn-radius);
 }
 `;
     return css;
