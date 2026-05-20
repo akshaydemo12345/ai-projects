@@ -212,15 +212,26 @@ exports.renderThankYouPage = async (req, res, next) => {
     if (!content.email || content.email === 'demo@divi.express') content.email = extractedEmail;
     if (!content.phoneNumber || content.phoneNumber === '0850 458 9665') content.phoneNumber = extractedPhone;
 
-    // Conditionally adjust default offerText based on extracted info
-    if (!content.offerText || content.offerText === 'For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.') {
-        if (!content.email && !content.phoneNumber) {
-            content.offerText = '';
-        } else if (content.email && !content.phoneNumber) {
-            content.offerText = 'For more information you can connect with us at {{email}}.';
-        } else if (!content.email && content.phoneNumber) {
-            content.offerText = 'For more information you can contact us at {{phoneNumber}}.';
-        }
+    const hasEmail = !!content.email && content.email.trim() !== '' && content.email !== 'demo@divi.express';
+    const hasPhone = !!content.phoneNumber && content.phoneNumber.trim() !== '' && content.phoneNumber !== '0850 458 9665';
+
+    // If it's the default string, empty, or missing, replace it with the dynamic clean text
+    const isDefaultText = !content.offerText || 
+                          content.offerText.trim() === '' || 
+                          content.offerText.includes('For more information') ||
+                          content.offerText.includes('connect with us') ||
+                          content.offerText.includes('contact us at');
+
+    if (isDefaultText) {
+      if (hasEmail && hasPhone) {
+        content.offerText = `For more information, contact us at ${content.email} or ${content.phoneNumber}.`;
+      } else if (hasEmail) {
+        content.offerText = `For more information, contact us at ${content.email}.`;
+      } else if (hasPhone) {
+        content.offerText = `For more information, call us at ${content.phoneNumber}.`;
+      } else {
+        content.offerText = `Thank you for your submission.`;
+      }
     }
 
     html = processConditionalBlocks(content, branding, businessName, html);
@@ -393,15 +404,26 @@ exports.previewThankYouPage = async (req, res, next) => {
       if (!mergedContent.email || mergedContent.email === 'demo@divi.express') mergedContent.email = extractedEmail;
       if (!mergedContent.phoneNumber || mergedContent.phoneNumber === '0850 458 9665') mergedContent.phoneNumber = extractedPhone;
 
-      // Conditionally adjust default offerText based on extracted info
-      if (!mergedContent.offerText || mergedContent.offerText === 'For more information you can connect with us at {{email}} or contact us at {{phoneNumber}}.') {
-          if (!mergedContent.email && !mergedContent.phoneNumber) {
-              mergedContent.offerText = '';
-          } else if (mergedContent.email && !mergedContent.phoneNumber) {
-              mergedContent.offerText = 'For more information you can connect with us at {{email}}.';
-          } else if (!mergedContent.email && mergedContent.phoneNumber) {
-              mergedContent.offerText = 'For more information you can contact us at {{phoneNumber}}.';
-          }
+      const hasEmail = !!mergedContent.email && mergedContent.email.trim() !== '' && mergedContent.email !== 'demo@divi.express';
+      const hasPhone = !!mergedContent.phoneNumber && mergedContent.phoneNumber.trim() !== '' && mergedContent.phoneNumber !== '0850 458 9665';
+
+      // If it's the default string, empty, or missing, replace it with the dynamic clean text
+      const isDefaultText = !mergedContent.offerText || 
+                            mergedContent.offerText.trim() === '' || 
+                            mergedContent.offerText.includes('For more information') ||
+                            mergedContent.offerText.includes('connect with us') ||
+                            mergedContent.offerText.includes('contact us at');
+
+      if (isDefaultText) {
+        if (hasEmail && hasPhone) {
+          mergedContent.offerText = `For more information, contact us at ${mergedContent.email} or ${mergedContent.phoneNumber}.`;
+        } else if (hasEmail) {
+          mergedContent.offerText = `For more information, contact us at ${mergedContent.email}.`;
+        } else if (hasPhone) {
+          mergedContent.offerText = `For more information, call us at ${mergedContent.phoneNumber}.`;
+        } else {
+          mergedContent.offerText = `Thank you for your submission.`;
+        }
       }
     }
 
