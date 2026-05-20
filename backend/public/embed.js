@@ -61,43 +61,62 @@
   const landingUrl = buildLandingUrl();
   const previousReferrer = document.referrer;
 
-  function cacheUtmParameters() {
-    try {
-      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-      const params = new URLSearchParams(window.location.search);
-      utmKeys.forEach(key => {
-        const value = params.get(key);
-        if (value) {
-          sessionStorage.setItem('dm_' + key, value);
-        }
-      });
-    } catch (e) { }
-  }
-
-  function cacheReferer() {
-    try {
-      const ref = document.referrer;
-      if (ref) sessionStorage.setItem('dm_referer', ref);
-    } catch (e) { }
-  }
-
+  /**
+   * Captures UTM parameters strictly from the current browser URL.
+   * If a parameter is absent from the URL, its value resolves to null.
+   * SessionStorage and LocalStorage are avoided to satisfy no-caching constraints.
+   */
   function getUTMParameters() {
     const utms = {};
     try {
       const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-      const params = new URLSearchParams(window.location.search);
+      
+      // Parse main URL search params
+      let params = new URLSearchParams(window.location.search);
+      
+      // Fallback/Merge with hash-based query parameters (useful in SPAs)
+      if (window.location.hash && window.location.hash.includes('?')) {
+        const hashQuery = window.location.hash.split('?')[1];
+        const hashParams = new URLSearchParams(hashQuery);
+        hashParams.forEach((v, k) => {
+          if (!params.has(k)) {
+            params.append(k, v);
+          }
+        });
+      }
+      
+      let hasUtm = false;
+      for (let i = 0; i < utmKeys.length; i++) {
+        if (params.get(utmKeys[i])) { hasUtm = true; break; }
+      }
+
       utmKeys.forEach(key => {
-        const stored = sessionStorage.getItem('dm_' + key);
-        const query = params.get(key);
-        const value = query || stored;
-        if (value) utms[key] = value;
+        let val = params.get(key);
+        if (hasUtm) {
+          if (val) {
+            try { sessionStorage.setItem('dm_' + key, val); localStorage.setItem('dm_' + key, val); } catch(e){}
+          } else {
+            try { sessionStorage.removeItem('dm_' + key); localStorage.removeItem('dm_' + key); } catch(e){}
+          }
+        } else {
+          try { sessionStorage.removeItem('dm_' + key); localStorage.removeItem('dm_' + key); } catch(e){}
+        }
+
+        // Read from storage if we didn't just clear it and URL lacked it
+        if (!val) {
+          try { val = sessionStorage.getItem('dm_' + key) || localStorage.getItem('dm_' + key); } catch(e){}
+        }
+
+        utms[key.toLowerCase()] = val || null;
       });
-    } catch (e) { }
+    } catch (e) {
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
+      utmKeys.forEach(key => {
+        utms[key.toLowerCase()] = null;
+      });
+    }
     return utms;
   }
-
-  cacheUtmParameters();
-  cacheReferer();
 
   console.log('🚀 PageCraft AI: Initializing...', {
     detectedPage: page,

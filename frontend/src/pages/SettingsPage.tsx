@@ -67,7 +67,7 @@ const SettingsPage = () => {
                     const success = await copyToClipboard(url);
                     if (success) {
                       setUrlCopied(true);
-                      toast.success("API URL copied!");
+                      toast.success("API URL copied successfully.");
                       setTimeout(() => setUrlCopied(false), 2000);
                     }
                   }}

@@ -144,7 +144,7 @@ const LeadsPage = () => {
     mutationFn: (id: string) => leadsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success("Lead removed successfully");
+      toast.success("Lead removed successfully.");
     },
   });
 
@@ -251,7 +251,7 @@ const LeadsPage = () => {
         utmCampaign: filterUtmCampaign || undefined,
       });
       triggerDownload(blob, `leads_filtered_${format(new Date(), "yyyy-MM-dd")}.csv`);
-      toast.success("Filtered leads exported successfully");
+      toast.success("Filtered leads exported successfully.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to generate CSV export");
@@ -266,7 +266,7 @@ const LeadsPage = () => {
       setExportMenuOpen(false);
       const blob = await leadsApi.export({});   // no filters → all leads
       triggerDownload(blob, `leads_all_${format(new Date(), "yyyy-MM-dd")}.csv`);
-      toast.success("All leads exported successfully");
+      toast.success("All leads exported successfully.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to generate CSV export");
