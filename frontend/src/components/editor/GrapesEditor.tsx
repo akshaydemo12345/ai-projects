@@ -239,6 +239,10 @@ const GrapesEditor = () => {
     if (activeMode === 'thank-you') {
       dbContent = currentPage.thankYouPageContent || '';
       dbStyles = currentPage.thankYouPageStyles || '';
+      // Inject base template styles so components dragged into the Thank You page retain their design
+      if (currentPage.styles) {
+        dbStyles = currentPage.styles + '\n' + dbStyles;
+      }
     } else {
       // Landing Page Mode (Legacy Support)
       if (currentPage.landingPageContent) {
@@ -367,6 +371,30 @@ const GrapesEditor = () => {
 
       // ─── Inject branding-vars AFTER template-styles so it wins the cascade ───
       if (canvasDoc) {
+        // Ensure icon fonts and classes are always present for both Landing and Thank You pages
+        const fontLinks = `
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        `;
+        if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
+          canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
+        }
+        
+        let coreIconStyles = canvasDoc.getElementById('core-icon-styles');
+        if (!coreIconStyles) {
+          coreIconStyles = canvasDoc.createElement('style');
+          coreIconStyles.id = 'core-icon-styles';
+          canvasDoc.head.appendChild(coreIconStyles);
+        }
+        coreIconStyles.innerHTML = `
+          .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined' !important;
+            font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+            letter-spacing: normal; text-transform: none; display: inline-block;
+            white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased;
+          }
+        `;
+
         // Remove existing branding-vars if present so we re-insert at end
         const existingBranding = canvasDoc.getElementById('branding-vars');
         if (existingBranding) existingBranding.remove();
@@ -482,9 +510,27 @@ const GrapesEditor = () => {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
       if (mode === 'thank-you') {
         editor.setComponents(`
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+          <style>
+            .material-symbols-outlined {
+              font-family: 'Material Symbols Outlined' !important;
+              font-weight: normal;
+              font-style: normal;
+              font-size: 24px;
+              line-height: 1;
+              letter-spacing: normal;
+              text-transform: none;
+              display: inline-block;
+              white-space: nowrap;
+              word-wrap: normal;
+              direction: ltr;
+              -webkit-font-smoothing: antialiased;
+            }
+          </style>
           <section style="display: flex; min-height: 80vh; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; padding: 40px 20px; text-align: center; font-family: sans-serif;">
             <div style="background: white; padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
-              <div style="width: 80px; height: 80px; background-color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+              <div style="width: 80px; height: 80px; background-color: var(--primary, #22c55e); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
               <h1 style="font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Thank You!</h1>
@@ -1861,10 +1907,10 @@ const GrapesEditor = () => {
     }
   };
 
-  const switchMode = (newMode: 'landing' | 'thank-you') => {
+  const switchMode = async (newMode: 'landing' | 'thank-you') => {
     if (newMode === mode) return;
 
-    // 1. Save current editor state into memory/local page state
+    // 1. Save current editor state into memory/local page state and persist to DB
     if (editorRef.current) {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
@@ -1881,6 +1927,11 @@ const GrapesEditor = () => {
           page.thankYouPageContent = html;
           page.thankYouPageStyles = globalCss + '\n' + css;
         }
+      }
+      try {
+        await handleSave();
+      } catch (e) {
+        console.error('Auto-save failed on switchMode:', e);
       }
     }
 
