@@ -11,9 +11,9 @@ const navItems = [
 ];
 
 const settingsItems = [
-  { icon: Settings, label: "General", href: "/dashboard/settings" },
-  { icon: CreditCard, label: "Plans", href: "/dashboard/plans" },
-  { icon: Receipt, label: "Billing", href: "/dashboard/billing" },
+  { icon: Settings, label: "Profile", href: "/dashboard/settings" },
+  // { icon: CreditCard, label: "Plans", href: "/dashboard/plans" },
+  // { icon: Receipt, label: "Billing", href: "/dashboard/billing" },
 ];
 
 const DashboardSidebar = () => {
@@ -68,40 +68,32 @@ const DashboardSidebar = () => {
         ))}
       </nav>
 
-      {/* Settings */}
-      <div className="mt-6 px-3" style={{ display: "none" }}>
-        <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Settings</p>
-        <nav className="space-y-0.5">
-          {settingsItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive(item.href)
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      {/* Settings section removed to allow clean access solely via clicking the bottom user profile card */}
 
       {/* Bottom - Theme & User */}
       <div className="mt-auto p-4 space-y-3 border-t border-border">
         <div className="flex items-center gap-2 px-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-            {userInitials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">{user?.name || "User"}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{user?.email || "user@email.com"}</p>
-          </div>
+          <Link
+            to="/dashboard/settings?tab=profile"
+            title="Edit Profile"
+            className="flex items-center gap-2 flex-1 min-w-0 hover:bg-muted/50 p-1 rounded-lg transition-colors"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex-shrink-0 overflow-hidden">
+              {user?.avatar ? (
+                <img src={user.avatar} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                userInitials
+              )}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-medium text-foreground truncate">{user?.name || "User"}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user?.email || "user@email.com"}</p>
+            </div>
+          </Link>
           <button
             onClick={handleLogout}
             title="Log out"
-            className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
+            className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors animate-pulse-subtle"
           >
             <LogOut className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </button>
