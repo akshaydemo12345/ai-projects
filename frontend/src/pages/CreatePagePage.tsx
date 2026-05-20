@@ -198,14 +198,14 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
-  {
-    id: "healthcare-04",
-    name: "Lumina Medical Center",
-    tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates03/screnshort8.png",
-    gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
-    prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
-  },
+  // {
+  //   id: "healthcare-04",
+  //   name: "Lumina Medical Center",
+  //   tag: "Healthcare",
+  //   img: "/assets/templates/healthcare/templates03/screnshort8.png",
+  //   gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
+  //   prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
+  // },
   {
     id: "travel-01",
     name: "Azure Luxury Escapes",
@@ -964,12 +964,12 @@ ${enrichedContent}
                     .filter(t => (templateCategory === "All" || t.tag === templateCategory) && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.tag.toLowerCase().includes(searchQuery.toLowerCase())))
                     .slice(0, visibleCount)
                     .map((tpl, idx) => (
-                      <button
+                      <div
                         key={tpl.id}
                         onClick={() => {
                           handleTemplateSelect(tpl);
                         }}
-                        className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
+                        className={`cursor-pointer relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left ${selectedTemplate === tpl.id
                           ? "border-violet-500 shadow-lg shadow-violet-100 scale-[1.02]"
                           : "border-transparent hover:border-gray-300 hover:shadow-md hover:scale-[1.01]"
                           }`}
@@ -1033,7 +1033,7 @@ ${enrichedContent}
                             <Eye className="h-4 w-4" />
                           </button>
                         </div>
-                      </button>
+                      </div>
                     ))}
 
                 </div>

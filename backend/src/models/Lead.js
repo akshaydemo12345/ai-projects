@@ -54,6 +54,19 @@ const leadSchema = new mongoose.Schema({
   gclid: String,
   fbclid: String,
   msclkid: String,
+
+  // 🚀 EXPLICIT FLATTENED META FIELDS FOR ANALYTICS AND REGULATION COMPLIANCE
+  landing_page: { type: String, index: true },
+  referrer: String,
+  user_agent: String,
+  ip_address: String,
+  submitted_at: { type: Date, default: Date.now, index: true },
+
+  formData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: []
+  },
+
   isDeleted: {
     type: Boolean,
     default: false
