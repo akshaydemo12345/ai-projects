@@ -183,7 +183,7 @@ h1, h2, h3 {
 
 /* FOOTER */
 .footer {
-  background: var(--secondary) !important;
+  background: var(--secondary);
   color: #fff;
   padding: 6rem 0 3rem;
 }
