@@ -105,7 +105,7 @@ const ProjectsPage = () => {
     mutationFn: projectsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Project deleted successfully");
+      toast.success("Project deleted successfully.");
       setMenuOpen(null);
     },
     onError: (error: any) => {
@@ -117,7 +117,7 @@ const ProjectsPage = () => {
     mutationFn: (data: any) => projectsApi.update(editingProject?._id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Project updated successfully");
+      toast.success("Project updated successfully.");
       setEditingProject(null);
       setMenuOpen(null);
     },
