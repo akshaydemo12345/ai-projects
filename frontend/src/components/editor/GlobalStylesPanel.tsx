@@ -74,6 +74,12 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   });
 
   const [selectedVars, setSelectedVars] = useState<string[]>([]);
+  
+  // Track previous colors to find and replace hardcoded inline styles
+  const prevColorsRef = React.useRef({
+    primary: INIT_STYLES.Colors.primary.value,
+    secondary: INIT_STYLES.Colors.secondary.value,
+  });
 
   // 1. Listen for component selection and detect used variables
   useEffect(() => {
@@ -185,10 +191,13 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (initialPrimary && newStyles.Colors.primary.value !== initialPrimary) {
         newStyles.Colors.primary = { ...newStyles.Colors.primary, value: initialPrimary };
         newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialPrimary };
+        prevColorsRef.current.primary = initialPrimary;
         changed = true;
       }
       if (initialSecondary && newStyles.Colors.secondary.value !== initialSecondary) {
         newStyles.Colors.secondary = { ...newStyles.Colors.secondary, value: initialSecondary };
+        newStyles.Subheading.color = { ...newStyles.Subheading.color, value: initialSecondary };
+        prevColorsRef.current.secondary = initialSecondary;
         changed = true;
       }
       return changed ? newStyles : prev;
@@ -200,20 +209,84 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const handleUpdate = (cat: string, key: string, val: string) => {
-    setStyles(prev => ({
-      ...prev,
-      [cat]: {
-        ...prev[cat],
-        [key]: { ...prev[cat][key], value: val }
+    setStyles(prev => {
+      const next = {
+        ...prev,
+        [cat]: {
+          ...prev[cat],
+          [key]: { ...prev[cat][key], value: val }
+        }
+      };
+
+      if (cat === 'Colors' && key === 'primary') {
+        next.Buttons = { ...next.Buttons, bg: { ...next.Buttons.bg, value: val } };
       }
-    }));
+      if (cat === 'Colors' && key === 'secondary') {
+        next.Subheading = { ...next.Subheading, color: { ...next.Subheading.color, value: val } };
+      }
+
+      return next;
+    });
+
+    if (editor) {
+      if (cat === 'Colors' && (key === 'primary' || key === 'secondary')) {
+        const oldVal = prevColorsRef.current[key];
+        
+        // Find and replace hardcoded colors in all components
+        const wrapper = editor.getWrapper();
+        if (wrapper) {
+          const updateRecursive = (comp: any) => {
+            const compStyle = comp.getStyle() || {};
+            const updates: any = {};
+            let changed = false;
+            
+            ['color', 'background-color', 'border-color'].forEach(prop => {
+              // Check if the component has the exact old hardcoded color
+              if (compStyle[prop] && compStyle[prop].toLowerCase() === oldVal.toLowerCase()) {
+                updates[prop] = val;
+                changed = true;
+              }
+            });
+            
+            if (changed) {
+              comp.addStyle(updates);
+            }
+            
+            comp.components().forEach(updateRecursive);
+          };
+          updateRecursive(wrapper);
+        }
+        
+        prevColorsRef.current[key] = val;
+      } else {
+        // Apply directly to selected component if not a sweeping color change
+        const selected = editor.getSelected();
+        const varName = INIT_STYLES[cat]?.[key]?.varName;
+        if (selected && varName) {
+           // Direct updates for specific properties
+        }
+      }
+    }
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
-    let css = '';
+    let css = ':root {\n';
+    Object.values(currentStyles).forEach(category => {
+      Object.values(category).forEach(prop => {
+        css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
+      });
+    });
+    css += '}\n\n';
 
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
-
+    
+    css += `
+button, .btn, [class*="btn-"] {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  border-radius: var(--btn-radius) !important;
+}
+`;
     return css;
   };
 
@@ -229,9 +302,10 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (!styleTag) {
         styleTag = canvasDoc.createElement('style');
         styleTag.id = 'global-theme-styles';
-        canvasDoc.head.appendChild(styleTag);
       }
       styleTag.innerHTML = css;
+      // Always append to end of head to ensure it overrides GrapesEditor branding-vars
+      canvasDoc.head.appendChild(styleTag);
     }
 
     // 2. Also patch GrapesJS internal CSS so it doesn't override our variables
