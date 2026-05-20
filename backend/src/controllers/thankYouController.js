@@ -129,8 +129,8 @@ exports.renderThankYouPage = async (req, res, next) => {
     };
 
     const branding = {
-      primaryColor: page.thankYouConfig?.branding?.primaryColor || layoutConfig.theme.primaryColor,
-      secondaryColor: page.thankYouConfig?.branding?.secondaryColor || layoutConfig.theme.secondaryColor,
+      primaryColor: page.thankYouConfig?.branding?.primaryColor || page.primaryColor || layoutConfig.theme.primaryColor,
+      secondaryColor: page.thankYouConfig?.branding?.secondaryColor || page.secondaryColor || layoutConfig.theme.secondaryColor,
       logoUrl: page.thankYouConfig?.branding?.logoUrl || page.logoUrl || ''
     };
 
@@ -142,6 +142,39 @@ exports.renderThankYouPage = async (req, res, next) => {
     if (landingStyles) {
       html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
     }
+
+    const pRgb = hexToRgbStr(branding.primaryColor);
+    const sRgb = hexToRgbStr(branding.secondaryColor);
+    const brandingVars = `
+      <style id="branding-vars">
+        :root {
+          --primary: ${branding.primaryColor};
+          --secondary: ${branding.secondaryColor};
+          --accent: ${branding.secondaryColor};
+          --gold: ${branding.primaryColor};
+          --forest: ${branding.primaryColor};
+          --btn-bg: ${branding.primaryColor};
+          --btn-text: #ffffff;
+          --primary-rgb: ${pRgb};
+          --secondary-rgb: ${sRgb};
+        }
+      </style>
+    `;
+    html = html.replace('</head>', brandingVars + '</head>');
+
+    const coreIconStyles = `
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+      <style>
+        .material-symbols-outlined {
+          font-family: 'Material Symbols Outlined' !important;
+          font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+          letter-spacing: normal; text-transform: none; display: inline-block;
+          white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased;
+        }
+      </style>
+    `;
+    html = html.replace('</head>', coreIconStyles + '</head>');
 
     // Visual Component Injection
     let visualHeader = normalizeVisualComponent(page.thankYouHeader || page.mainHeader);
@@ -277,8 +310,8 @@ exports.previewThankYouPage = async (req, res, next) => {
     };
 
     const mergedBranding = {
-      primaryColor: branding?.primaryColor || layoutConfig.theme.primaryColor,
-      secondaryColor: branding?.secondaryColor || layoutConfig.theme.secondaryColor,
+      primaryColor: branding?.primaryColor || (page ? page.primaryColor : null) || layoutConfig.theme.primaryColor,
+      secondaryColor: branding?.secondaryColor || (page ? page.secondaryColor : null) || layoutConfig.theme.secondaryColor,
       logoUrl: branding?.logoUrl || (page ? page.logoUrl : '') || ''
     };
 
@@ -291,6 +324,39 @@ exports.previewThankYouPage = async (req, res, next) => {
       if (landingStyles) {
         html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
       }
+
+      const pRgb = hexToRgbStr(mergedBranding.primaryColor);
+      const sRgb = hexToRgbStr(mergedBranding.secondaryColor);
+      const brandingVars = `
+        <style id="branding-vars">
+          :root {
+            --primary: ${mergedBranding.primaryColor};
+            --secondary: ${mergedBranding.secondaryColor};
+            --accent: ${mergedBranding.secondaryColor};
+            --gold: ${mergedBranding.primaryColor};
+            --forest: ${mergedBranding.primaryColor};
+            --btn-bg: ${mergedBranding.primaryColor};
+            --btn-text: #ffffff;
+            --primary-rgb: ${pRgb};
+            --secondary-rgb: ${sRgb};
+          }
+        </style>
+      `;
+      html = html.replace('</head>', brandingVars + '</head>');
+
+      const coreIconStyles = `
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <style>
+          .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined' !important;
+            font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+            letter-spacing: normal; text-transform: none; display: inline-block;
+            white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased;
+          }
+        </style>
+      `;
+      html = html.replace('</head>', coreIconStyles + '</head>');
 
       let visualHeader = normalizeVisualComponent(page.thankYouHeader || page.mainHeader);
       let visualFooter = normalizeVisualComponent(page.thankYouFooter || page.mainFooter);
@@ -349,6 +415,14 @@ exports.previewThankYouPage = async (req, res, next) => {
 
 // --- HELPER FUNCTIONS ---
 
+function hexToRgbStr(hex) {
+  if (!hex) return '124, 58, 237';
+  const c = hex.replace('#', '');
+  if (c.length === 3) return parseInt(c[0] + c[0], 16) + ', ' + parseInt(c[1] + c[1], 16) + ', ' + parseInt(c[2] + c[2], 16);
+  if (c.length === 6) return parseInt(c.substring(0, 2), 16) + ', ' + parseInt(c.substring(2, 4), 16) + ', ' + parseInt(c.substring(4, 6), 16);
+  return '124, 58, 237';
+}
+
 function escapeHtml(text) {
   if (!text) return '';
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -379,6 +453,9 @@ function processConditionalBlocks(content, branding, businessName, html) {
   processedHtml = processedHtml.replace(/\{\{#offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, content.offerText ? '$1' : '');
   processedHtml = processedHtml.replace(/\{\{\^offerText\}\}([\s\S]*?)\{\{\/offerText\}\}/g, !content.offerText ? '$1' : '');
 
+  const pRgb = hexToRgbStr(branding.primaryColor);
+  const sRgb = hexToRgbStr(branding.secondaryColor);
+
   processedHtml = processedHtml
     .replace(/\{\{heading\}\}/g, escapeHtml(content.heading))
     .replace(/\{\{subheading\}\}/g, escapeHtml(content.subheading))
@@ -392,6 +469,8 @@ function processConditionalBlocks(content, branding, businessName, html) {
     .replace(/\{\{secondaryColor\}\}/g, escapeHtml(branding.secondaryColor))
     .replace(/PRIMARY_COLOR_PLACEHOLDER/g, branding.primaryColor)
     .replace(/SECONDARY_COLOR_PLACEHOLDER/g, branding.secondaryColor)
+    .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+    .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
     .replace(/\{\{logoUrl\}\}/g, escapeHtml(branding.logoUrl))
     .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
   return processedHtml;
