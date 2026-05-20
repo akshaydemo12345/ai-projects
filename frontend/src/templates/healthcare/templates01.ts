@@ -19,21 +19,21 @@ export const healthcare01Styles = `
   --outline: #936e6a;
   --surface-container-high: #e0e9f2;
 
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
+  
+  
+  
   --gray-400: #9ca3af;
   --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --primary-temp: PRIMARY_COLOR_PLACEHOLDER;
+  
+  
   --gray-950: #030712;
   
   --red-500: #ef4444;
-  --red-600: #dc2626;
+  --primary-temp: PRIMARY_COLOR_PLACEHOLDER;
   
-  --green-100: #dcfce3;
-  --green-600: #16a34a;
+  
+  --primary-temp: PRIMARY_COLOR_PLACEHOLDER;
 
   --font-h1: 'Manrope', sans-serif;
   --font-h2: 'Manrope', sans-serif;
@@ -149,7 +149,7 @@ h1, h2, h3, h4, h5, h6, p {
   position: sticky;
   top: 0;
   z-index: 50;
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white);
   box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
 }
 .header-wrapper {
@@ -172,7 +172,7 @@ h1, h2, h3, h4, h5, h6, p {
   gap: 2rem;
 }
 .nav-menu a {
-  color: var(--gray-600);
+  color: PRIMARY_COLOR_PLACEHOLDER;
   font-weight: 500;
   transition: color 200ms;
 }
@@ -188,7 +188,7 @@ h1, h2, h3, h4, h5, h6, p {
   display: none;
   align-items: center;
   gap: 0.5rem;
-  color: var(--gray-600);
+  color: PRIMARY_COLOR_PLACEHOLDER;
   transition: color 200ms;
 }
 .action-call:hover { color: var(--primary); }
@@ -268,7 +268,7 @@ h1, h2, h3, h4, h5, h6, p {
   background-color: #ffffff;
   padding: 2rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--gray-100);
+  border: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white);
 }
 .booking-form { display: flex; flex-direction: column; gap: 1rem; }
 .form-group { display: block; margin-bottom: 0.5rem;}
@@ -278,7 +278,7 @@ h1, h2, h3, h4, h5, h6, p {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid var(--gray-200);
+  border: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 30%, white);
   transition: all 200ms;
 }
 .form-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 1px var(--primary); }
@@ -367,7 +367,7 @@ h1, h2, h3, h4, h5, h6, p {
   max-width: 20rem;
 }
 .badge-top { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;}
-.badge-icon { padding: 0.5rem; background-color: var(--green-100); border-radius: 9999px; line-height: 0; }
+.badge-icon { padding: 0.5rem; background-color: color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white); border-radius: 9999px; line-height: 0; }
 .about-text { display: flex; flex-direction: column; gap: 2.5rem; }
 .about-points { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 @media (max-width: 639px) { .about-points { grid-template-columns: 1fr; } }
@@ -385,7 +385,7 @@ h1, h2, h3, h4, h5, h6, p {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: var(--gray-100);
+  background-color: color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white);
   z-index: 0;
 }
 .process-grid {
@@ -419,7 +419,7 @@ h1, h2, h3, h4, h5, h6, p {
   gap: 1.5rem;
   color: var(--on-surface);
 }
-.testimonial-quote { font-style: italic; color: var(--gray-600); }
+.testimonial-quote { font-style: italic; color: PRIMARY_COLOR_PLACEHOLDER; }
 .testimonial-author { display: flex; align-items: center; gap: 1rem; }
 .testimonial-img { width: 3rem; height: 3rem; border-radius: 9999px; object-fit: cover; }
 .testimonial-name { font-weight: 700; }
@@ -431,6 +431,7 @@ h1, h2, h3, h4, h5, h6, p {
   text-align: center;
   position: relative;
   overflow: hidden;
+  background-color: var(--secondary);
 }
 .cta-bg-icon {
   position: absolute;
@@ -462,7 +463,7 @@ h1, h2, h3, h4, h5, h6, p {
   font-weight: 700;
   transition: background-color 200ms;
 }
-.btn-cta-1:hover { background-color: var(--gray-100); }
+.btn-cta-1:hover { background-color: color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white); }
 .btn-cta-2 {
   background-color: transparent;
   border: 2px solid #ffffff;
@@ -481,7 +482,7 @@ h1, h2, h3, h4, h5, h6, p {
   background-color: var(--surface);
   border-radius: 0.75rem;
   padding: 1.5rem;
-  border: 1px solid var(--gray-100);
+  border: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white);
 }
 .faq-summary {
   display: flex;
@@ -498,8 +499,8 @@ h1, h2, h3, h4, h5, h6, p {
 
 /* Footer */
 .site-footer {
-  background-color: var(--gray-50);
-  border-top: 1px solid var(--gray-200);
+  background-color: color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 5%, white);
+  border-top: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 30%, white);
   font-family: inherit; /* font-manrope set usually, defaulting to body via var */
 }
 .footer-grid {
@@ -511,11 +512,11 @@ h1, h2, h3, h4, h5, h6, p {
   margin: 0 auto;
 }
 .footer-col { display: flex; flex-direction: column; gap: 1.5rem; }
-.footer-brand { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
+.footer-brand { font-size: 1.25rem; font-weight: 700; color: color-mix(in srgb, SECONDARY_COLOR_PLACEHOLDER 90%, black); }
 .footer-socials { display: flex; gap: 1rem; }
 .footer-socials a { color: var(--gray-400); transition: color 200ms; }
 .footer-socials a:hover { color: var(--primary); }
-.footer-title { font-weight: 700; color: var(--gray-900); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+.footer-title { font-weight: 700; color: color-mix(in srgb, SECONDARY_COLOR_PLACEHOLDER 90%, black); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
 .footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
 .footer-links a { color: var(--gray-500); transition: color 200ms; }
 .footer-links a:hover { color: var(--primary); }
@@ -525,7 +526,7 @@ h1, h2, h3, h4, h5, h6, p {
   max-width: 1280px;
   margin: 0 auto;
   padding: 1.5rem 2rem;
-  border-top: 1px solid var(--gray-100);
+  border-top: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 15%, white);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -717,7 +718,7 @@ export const healthcare01Html = `
 </div>
 <div class="about-badge high-elevation">
 <div class="badge-top">
-<div class="badge-icon"><span class="material-symbols-outlined" style="color: var(--green-600);">verified</span></div>
+<div class="badge-icon"><span class="material-symbols-outlined" style="color: PRIMARY_COLOR_PLACEHOLDER;">verified</span></div>
 <span class="font-h3 text-primary">15+ Years</span>
 </div>
 <p class="font-caption font-label-bold text-secondary text-on-surface">Of combined dental excellence and surgical experience.</p>
@@ -840,7 +841,7 @@ export const healthcare01Html = `
 <!-- CTA Banner -->
 <section class="py-xl">
 <div class="container">
-<div class="cta-banner" style="background: var(--secondary);">
+<div class="cta-banner">
 <div class="cta-bg-icon">
 <span class="material-symbols-outlined">dentistry</span>
 </div>
