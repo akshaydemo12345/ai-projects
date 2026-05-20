@@ -834,3 +834,25 @@ export const thankYouApi = {
     return html;
   },
 };
+
+// --- User API ---
+export const userApi = {
+  updateProfile: async (data: { name?: string; avatar?: string }) => {
+    return apiFetch('/user/update-profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+  changePassword: async (data: any) => {
+    return apiFetch('/user/change-password', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+  deleteAccount: async (data: { password?: string }) => {
+    return apiFetch('/user/account', {
+      method: 'DELETE',
+      body: JSON.stringify(data),
+    });
+  },
+};

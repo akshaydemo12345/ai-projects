@@ -21,7 +21,7 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const schema = z.object({
       name: z.string().min(2).optional(),
-      avatar: z.string().url('Invalid avatar URL').optional(),
+      avatar: z.string().optional(),
     });
 
     const parsed = schema.safeParse(req.body);
