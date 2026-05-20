@@ -75,7 +75,7 @@ const PageSettingsPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["page", pageId] });
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
-      toast.success("Page settings saved successfully!");
+      toast.success("Page settings saved successfully.");
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to save settings");

@@ -116,6 +116,80 @@ export interface LandingPage {
   updatedAt: string;
 }
 
+// Maps technical/backend errors to clear, concise, user-friendly messages for non-technical users.
+export function getFriendlyErrorMessage(message: string, status?: number, errors?: any[]): string {
+  const msg = (message || '').toLowerCase();
+
+  // 1. If there are field/validation errors (like from Zod), prioritize the first one
+  if (Array.isArray(errors) && errors.length > 0) {
+    const firstErr = errors[0];
+    const field = (firstErr.field || '').toLowerCase();
+    const fieldMsg = (firstErr.message || '').toLowerCase();
+
+    if (field === 'email' || fieldMsg.includes('email')) {
+      return 'Please enter a valid email address.';
+    }
+    if (field === 'password' || fieldMsg.includes('password')) {
+      return 'Password must be at least 8 characters long.';
+    }
+    if (field === 'name' || fieldMsg.includes('name')) {
+      return 'Please enter your full name.';
+    }
+    if (fieldMsg.includes('already exists') || fieldMsg.includes('duplicate')) {
+      return 'This web address is already in use. Please try a different one.';
+    }
+    return firstErr.message || 'Please check the highlighted fields.';
+  }
+
+  // 2. Handle HTTP status codes
+  if (status === 401) {
+    if (msg.includes('verify') || msg.includes('verification')) {
+      return 'Please verify your email address to continue.';
+    }
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (status === 403) {
+    return 'You do not have permission to perform this action.';
+  }
+  if (status === 404) {
+    return 'The requested page or project could not be found.';
+  }
+  if (status && status >= 500) {
+    return 'Unable to connect to the server. Please check your connection and try again.';
+  }
+
+  // 3. String content checking
+  if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('network error') || msg.includes('load failed')) {
+    return 'Unable to connect to the server. Please check your internet connection and try again.';
+  }
+  if (msg.includes('duplicate key') || msg.includes('already exists') || msg.includes('e11000') || msg.includes('unique constraint')) {
+    return 'This web address is already in use. Please try a different one.';
+  }
+  if (msg.includes('invalid email') || msg.includes('email must be') || msg.includes('enter a valid email')) {
+    return 'Please enter a valid email address.';
+  }
+  if (msg.includes('password') && (msg.includes('short') || msg.includes('characters') || msg.includes('length') || msg.includes('least 8'))) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (msg.includes('incorrect password') || msg.includes('invalid credentials') || msg.includes('user not found') || msg.includes('wrong password') || msg.includes('invalid password')) {
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (msg.includes('session expired') || msg.includes('please log in again') || msg.includes('token expired') || msg.includes('unauthorized') || msg.includes('jwt')) {
+    return 'Your session has expired. Please log in again.';
+  }
+  if (msg.includes('verify your email') || msg.includes('email address not verified') || msg.includes('not verified')) {
+    return 'Please verify your email address to continue.';
+  }
+  if (msg.includes('limit') || msg.includes('quota') || msg.includes('exceeded') || msg.includes('upgrade') || msg.includes('payment')) {
+    return 'You have reached your account limit. Please upgrade your plan to continue.';
+  }
+  if (msg.includes('ai') || msg.includes('generation') || msg.includes('openai') || msg.includes('gemini') || msg.includes('failed to generate') || msg.includes('content') || msg.includes('missing html')) {
+    return 'AI generation failed. Please try a simpler prompt or try again later.';
+  }
+
+  return message || 'An unexpected error occurred. Please try again.';
+}
+
 // Helper for refreshing the access token using the refresh token cookie.
 async function refreshAuthToken() {
   const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
@@ -167,7 +241,15 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   clearTimeout(timeoutId);
-   if (response.status === 401 && !hasRetried) {
+
+  const isPublicAuthRequest = endpoint.includes('/auth/login') || 
+                              endpoint.includes('/auth/signup') || 
+                              endpoint.includes('/auth/firebase') || 
+                              endpoint.includes('/auth/forgot-password') || 
+                              endpoint.includes('/auth/reset-password') || 
+                              endpoint.includes('/auth/resend-verification-email');
+
+   if (response.status === 401 && !hasRetried && !isPublicAuthRequest) {
     try {
       const newToken = await refreshAuthToken();
       const retryOptions = {
@@ -184,8 +266,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     }
   }
 
-
-  if (response.status === 401) {
+  if (response.status === 401 && !isPublicAuthRequest) {
     // Unauthorized - clear token and potentially redirect
     localStorage.removeItem('pagecraft_token');
     localStorage.removeItem('pagecraft_user');
@@ -201,9 +282,10 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-     const errorMessage =
+    const rawErrorMessage =
       result?.message ||
       (Array.isArray(result?.errors) ? result.errors.map((e: any) => e.message).join(', ') : response.statusText || 'Something went wrong');
+    const errorMessage = getFriendlyErrorMessage(rawErrorMessage, response.status, result?.errors);
     const error = new Error(errorMessage);
     (error as any).status = response.status;
     (error as any).errors = result?.errors;
@@ -629,7 +711,6 @@ export interface ThankYouLayout {
     subheading: string;
     ctaText: string;
     ctaUrl: string;
-    email?: string;
     phoneNumber?: string;
     offerText?: string;
     customMessage?: string;
@@ -649,7 +730,6 @@ export interface ThankYouConfig {
     subheading?: string;
     ctaText?: string;
     ctaUrl?: string;
-    email?: string;
     phoneNumber?: string;
     offerText?: string;
     customMessage?: string;
