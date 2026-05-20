@@ -181,6 +181,109 @@ const callAIText = async (systemPrompt, userPrompt) => {
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const pickN = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
 
+const layoutPools = {
+  'TRUST-BAR': [
+    'Marquee continuous scroll with 5-6 sleek brand logo badges with grayscale hover-to-color transition.',
+    'Asymmetric horizontal strip featuring 4 clean minimal typography badges separated by vertical glowing lines.',
+    'Frosted translucent strip overlapping the Hero background with clean vector trust icons.'
+  ],
+  'PROBLEM-STATEMENT': [
+    'Asymmetric split-row: Left side has a massive italic bold statement, right side has 3 clean bullet cards detailing friction points.',
+    'Minimal brutalist design: Large oversized block letters for the main struggle, single highlighted line, and generous whitespace.',
+    'Bento layout: 3 cards showing "Friction, Stagnation, Loss" with custom dark border glows.'
+  ],
+  'SOLUTION-GRID': [
+    '3-Column staggered masonry: Each card has varying height, custom hover transform lift, and electric border outlines.',
+    'Asymmetrical 2-column list: Left column is sticky with value proposition text, right column flows 4 detailed premium feature cards.',
+    'Interactive circular glow circles containing feature lists with glassmorphism backgrounds.'
+  ],
+  'SOCIAL-PROOF': [
+    'Staggered grid of 3 testimonials with floating circular author avatars, translucent cards, and a subtle glowing backdrop.',
+    'Oversized clean single-quote layout: 1 main highly compelling quote in Instrument Serif, italic, 3.5rem size, with founder signature.',
+    'Bento box array containing review scores, trust pilot rating widget, and user stories.'
+  ],
+  'PRICING': [
+    'Asymmetric pricing cards: 3 cards where the center "Popular" card has a huge floating badge, negative margins, and glowing gradient border.',
+    'Ultra-clean list-based pricing tier: Simple minimal rows with pricing on the right, list of features on the left, separated by dotted leader lines.',
+    'Horizontal split banner: High-contrast single custom package pricing.'
+  ],
+  'HOW-IT-WORKS': [
+    'Staggered timeline step flow: Custom dotted vertical line down the center with alternating left/right step card blocks.',
+    'Horizontal process track: 3 large numbered circles (01, 02, 03) in bold serif typography connected by elegant gradient progress arrows.',
+    'Asymmetric grid layout: 3 unequal cards representing steps, each with custom abstract vector background details.'
+  ],
+  'CASE-STUDY': [
+    'Splitscreen layout: Left side contains a large client outcome metric (e.g., +147% ROI) in clamp font size, right side explains the method.',
+    'Sleek mock-up display: Floating browser mock-up card overlapping a background grid with dynamic shadow and outline lines.',
+    'Grid of 2 asymmetrical highlight panels detailing the challenge, strategy, and result.'
+  ],
+  'TRANSFORMATION': [
+    'Before/After split layout: Left card (Before) in muted grayscale styling, right card (After) in vibrant primary color gradients.',
+    'Timeline process card: Asymmetrical timeline showing the shift from pain to positive outcome with smooth border transitions.',
+    'Sleek progress bar visualization showcasing dynamic percentage metric growth.'
+  ],
+  'SERVICES-BENTO': [
+    'Asymmetric Bento Grid: 5 premium cards of distinct dimensions displaying specific services, using glassmorphic blurs.',
+    'Minimal list strip: 4 massive horizontal service rows that expand on hover with thin dividers.',
+    'Grid of staggered border-radius cards with glowing electric vector outlines.'
+  ],
+  'FAQ-ACCORDION': [
+    'Clean left-split column: Left column contains the heading "Got Questions?", right column lists 4-5 native <details> accordion rows.',
+    'Centered layout: 5 stacked translucent <details> accordion containers with custom shadow hover and rotating chevron indicators.',
+    'Grid layout: 2 columns of beautiful native <details> accordion boxes styled with minimalist bottom borders.'
+  ],
+  'STATS-STRIP': [
+    'Bold horizontal metrics row: 4 large numbers in giant bold font with minimal text captions below, separated by micro vertical border lines.',
+    'Floating stats cards: 3 distinct asymmetric cards with dark backgrounds, neon numeric labels, and colorful blur effects.',
+    'Minimal editorial stats: Oversized percentage metrics set in clean grids with extremely generous whitespace.'
+  ],
+  'TESTIMONIALS': [
+    'Sleek user review cards: 3 beautiful glassmorphic blocks with circular user faces, company tags, and deep premium drop-shadows.',
+    'Oversized single testimonial: 1 main highly compelling customer quote in italic serif display font with bold founder branding.',
+    'Asymmetric layout: Staggered row of glowing testimonial cards with individual star ratings.'
+  ],
+  'TESTIMONIALS-GRID': [
+    'Masonry grid of 6 diverse user review cards with different heights and translucent white borders.',
+    'Asymmetric cards array: 4 glass blocks staggered with colorful overlay glow points.',
+    'Horizontal scroll block: A slider look containing 5 testimonials with hover glow scale animations.'
+  ],
+  'TRUST-SIGNALS': [
+    'Minimal grid featuring 4 certification badges, security labels, and guarantee marks with beautiful neon glow outlines.',
+    'Horizontal trust bar: Sleek continuous list of badges with custom borders.',
+    'Asymmetric list showing industry achievements, ratings, and active trust metrics.'
+  ],
+  'CTA-BANNER': [
+    'Cinematic pre-footer panel: High-contrast centered heading with a massive outline call-to-action button, background glow blurs, and glass layers.',
+    'Splitscreen CTA banner: Left side value proposition, right side sleek single-field email opt-in input.',
+    'Asymmetrical curved block with high-end neon outline accents.'
+  ],
+  'URGENCY-STRIP': [
+    'Minimal banner with active limited offer tag, custom static count-down numbers block, and a glowing CTA.',
+    'Horizontal floating ticker with real-time text announcements and micro-button.',
+    'Vibrant primary colored high-contrast strip with sliding action text.'
+  ],
+  'PAIN-POINTS': [
+    'Clean list format: 4 stark problem statements in giant serif typography, each with an icon marker and clean divider.',
+    'Asymmetrical grids showing 3 critical industry problems with custom colored bullet details.',
+    'Editorial dark row detailing current market failures with minimalist structural alignment.'
+  ],
+  'MANIFESTO-HERO': [
+    'Oversized statement grid: Giant, bold uppercase text detailing the company mission with custom accent background shadows.',
+    'Minimal editorial page entry with a single striking image block and huge headline.',
+    'Splitscreen manifesto with left bold values list and right large graphic element.'
+  ],
+  'CINEMATIC-HERO': [
+    'Edge-to-edge dark backdrop video-style canvas with oversized typography and glassmorphic floating CTA.',
+    'Diagonal sliced hero layout with a high-fidelity image composition.',
+    'Atmospheric neon glow hero with a centered focus card.'
+  ],
+  'METHODOLOGY': [
+    'Step-by-step progress cards: 3 clean vertical panels showing phases of work with thin horizontal connector lines.',
+    'Asymmetrical process flow with staggered details and glowing labels.',
+    'Editorial bento layout detailing the approach in 4 rich text tiles.'
+  ]
+};
+
 const generateDesignDNA = () => {
   const heroStyles = [
     'SPLIT-SCREEN: left text + right full-bleed image (60/40 split)',
@@ -275,7 +378,7 @@ const generateDesignDNA = () => {
 };
 
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
-const buildSystemPrompt = (chaosToken, designDNA) => `
+const buildSystemPrompt = (chaosToken, designDNA, sectionVisualMap) => `
 You are a world-class UI/UX Design Director, Conversion Architect, and Senior Frontend Developer.
 
 RANDOMNESS SEED: ${chaosToken}
@@ -292,12 +395,16 @@ These are NOT suggestions. You MUST implement every single one of these exactly.
 🔘 FORM PLACEMENT: ${designDNA.formPlacement}
 🎨 FORM STYLE: ${designDNA.formStyle}
 
-📋 SECTION SEQUENCE (build in THIS exact order - MINIMUM 7 SECTIONS):
-${designDNA.sectionSequence.map((s, i) => `   ${i + 1}. ${s}`).join('\n')}
+📋 MANDATORY SECTION-BY-SECTION VISUAL MAP:
+${sectionVisualMap.map(line => `   - ${line}`).join('\n')}
 
 🔒 YOU MUST ALSO INCLUDE THESE 3 UNIQUE ELEMENTS:
 ${designDNA.mustInclude.map((m, i) => `   ${i + 1}. ${m}`).join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 SECTION UNIQUE STYLING HARD RULE:
+- You are FORBIDDEN from repeating any layout style, structure, or card grid design between sections. Every single section MUST have a totally unique layout, visual density, and alignment as specified in the SECTION-BY-SECTION VISUAL MAP.
+- For example, if Section 3 uses a 3-column card grid, Section 4 must NOT use a 3-column card grid; it must use an asymmetric split row, bento grid, timeline, or horizontal strip. Every section must have a unique layout signature!
 
 🚨 CRITICAL RULES FOR FORM PLACEMENT & STYLING (WOW FACTOR):
 1. FORM PLACEMENT HARD RULE:
@@ -355,7 +462,7 @@ STRICT ANTI-TEMPLATE RULES:
 
 QUALITY STANDARDS:
 - Hero: visitor understands the value within 3 seconds
-- Copy: hyper-specific to this business and audience — sounds like a human wrote it
+- Copy: hyper-specific to this business and audience — sounds like a human expert, not a robot
 - Form: fields exactly right for this industry (dental ≠ SaaS ≠ legal ≠ fitness)
 - Trust signals: what THIS industry's buyers actually care about
 - Visual rhythm: density alternates (heavy → light → heavy) to keep eyes moving
@@ -383,7 +490,7 @@ No explanation. No commentary. No notes. Just the complete HTML.
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input, designDNA) => {
+const buildUserPrompt = (input, designDNA, sectionVisualMap) => {
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
     `INDUSTRY: ${input.industry}`,
@@ -409,11 +516,12 @@ DESIGN EXECUTION REMINDER:
 - FORM PLACEMENT MUST BE: ${designDNA.formPlacement}
 - FORM STYLE MUST BE: ${designDNA.formStyle}
 - Follow the section sequence EXACTLY as given in system prompt (at least 7 distinct premium sections)
+- Refer to the MANDATORY SECTION-BY-SECTION VISUAL MAP and style each section with its unique target layout. No two sections can share the same design style!
 - Use native HTML5 <details> and <summary> for FAQs/accordions to guarantee zero-JS flawless interactivity.
 - This design must look NOTHING like a standard template
 
 NOW BUILD THE PAGE:
-Execute the Design DNA with surgical precision for this exact business.
+Execute the Design DNA and the Section-by-Section styling with surgical precision for this exact business.
 Write real, specific copy — not placeholders. Sound like a human expert, not a robot.
 Every section moves the visitor closer to converting.
 `);
@@ -423,17 +531,38 @@ Every section moves the visitor closer to converting.
 
 // ─── GENERATE LANDING PAGE ───────────────────────────────────────────────────────
 const generateLandingPageContent = async (input) => {
-  // Generate a unique chaos token (timestamp + random + reversed business name fragment)
+  // Generate a unique chaos token
   const chaosToken = `${Date.now()}-${Math.random().toString(36).substring(2, 12)}-${(input.businessName || '').split('').reverse().join('').substring(0, 6)}-${Math.random().toString(36).substring(2, 8)}`;
 
-  // Generate a completely random Design DNA blueprint — unique on EVERY call
+  // Generate a completely random Design DNA blueprint
   const designDNA = generateDesignDNA();
+
+  // Dynamically map each section in the sequence to a totally randomized visual pool layout
+  const selectedSequence = designDNA.sectionSequence;
+  const sectionVisualMap = selectedSequence.map((section, idx) => {
+    if (idx === 0) {
+      return `Section 1 (${section}): Must use Hero Style [${designDNA.heroStyle}] and Color Mood [${designDNA.colorMood}]. Ensure it is a visually stunning entrance.`;
+    }
+    if (section === 'FORM-SECTION') {
+      return `Section ${idx + 1} (${section}): Lead Capture Form. Must use Form Placement [${designDNA.formPlacement}] and Form Style [${designDNA.formStyle}]. Ensure the lead capture fields are highly specific to this industry.`;
+    }
+    if (section === 'MINIMALIST-FOOTER') {
+      return `Section ${idx + 1} (${section}): A sleek minimalist footer with a clean brand logo on the left, legal links in the center, and a copyright text on the right.`;
+    }
+
+    const pool = layoutPools[section] || [
+      'Asymmetric layout with stunning typography, rich details, and high-fidelity custom spacing.',
+      'Sleek glassmorphic card block with glowing elements and electric borders.',
+      'Editorial minimalist grid with bold serif subheadings and plenty of breathing room.'
+    ];
+    return `Section ${idx + 1} (${section}): Styled as: "${pick(pool)}". Must be visually distinct from all other sections on the page.`;
+  });
 
   logger.info(`[AI] Generating page | Business: ${input.businessName} | Token: ${chaosToken}`);
   logger.info(`[AI] Design DNA | Hero: ${designDNA.heroStyle.split(':')[0]} | Mood: ${designDNA.colorMood.split(':')[0]} | Form Placement: ${designDNA.formPlacement.split(':')[0]}`);
 
-  const systemPrompt = buildSystemPrompt(chaosToken, designDNA);
-  let userPrompt = buildUserPrompt(input, designDNA);
+  const systemPrompt = buildSystemPrompt(chaosToken, designDNA, sectionVisualMap);
+  let userPrompt = buildUserPrompt(input, designDNA, sectionVisualMap);
 
   if (input.templateHtml) {
     userPrompt += `\n\nPREVIOUS DESIGN FOR REFERENCE ONLY (do NOT copy its structure or layout — the new design must look completely different):\n${input.templateHtml}`;
