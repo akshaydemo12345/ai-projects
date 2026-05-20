@@ -214,7 +214,7 @@ const layoutPools = {
   ],
   'CASE-STUDY': [
     'Splitscreen layout: Left side contains a large client outcome metric (e.g., +147% ROI) in clamp font size, right side explains the method.',
-    'Sleek mock-up display: Floating browser mock-up card overlapping a background grid with dynamic shadow and outline lines.',
+    'Sleek mockup display: Floating browser mock-up card overlapping a background grid with dynamic shadow and outline lines.',
     'Grid of 2 asymmetrical highlight panels detailing the challenge, strategy, and result.'
   ],
   'TRANSFORMATION': [
@@ -379,7 +379,7 @@ const generateDesignDNA = () => {
 
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
 const buildSystemPrompt = (chaosToken, designDNA, sectionVisualMap) => `
-You are a world-class UI/UX Design Director, Conversion Architect, and Senior Frontend Developer.
+You are a world-class UI/UX Design Director, Conversion Architect, and Senior Frontend Developer specializing in Vercel/Linear/Apple-level premium interfaces.
 
 RANDOMNESS SEED: ${chaosToken}
 
@@ -402,16 +402,34 @@ ${sectionVisualMap.map(line => `   - ${line}`).join('\n')}
 ${designDNA.mustInclude.map((m, i) => `   ${i + 1}. ${m}`).join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+🚨 SYNTAX SAFETY & NO TRUNCATION MANDATE (MUST REACH THE FOOTER!):
+- Every single HTML tag you open MUST be cleanly closed immediately in its respective section.
+- You are FORBIDDEN from nesting <section> tags within each other. Each section MUST be an independent, self-contained peer block (e.g. <section id="...">...</section> followed directly by <section id="...">...</section>).
+- If sections are nested, the GrapesJS parser will fail, causing the layout to look broken or cut off!
+- Keep marketing copy extremely short, sharp, and punchy. Avoid long paragraphs. Short, premium copy saves immense token space and guarantees the page is successfully rendered all the way down to the footer!
+
+🚨 ULTRA-PREMIUM "WOW-FACTOR" STYLING & AESTHETIC ENGINE:
+- Standard colored plain boxes look cheap and amateur. You MUST implement the following high-end design assets:
+1. ATMOSPHERIC BACKDROPS:
+   - Use deep premium gradient backgrounds (e.g., bg-gradient-to-br from-[#07080a] via-[#10121a] to-[#0c0d12] for dark base, or clean airy creams for light).
+   - Inject glowing colored background mesh blobs: <div class="absolute w-[400px] h-[400px] rounded-full filter blur-[150px] opacity-15 pointer-events-none bg-gradient-to-tr from-primary to-secondary"></div>
+2. SLEEK GLASSMORPHISM & SHADOWS:
+   - Make all cards and panels use sophisticated glassmorphism: backdrop-blur-xl bg-white/[0.02] border border-white/5 for dark layouts, or backdrop-blur-xl bg-black/[0.01] border border-black/5 for light.
+   - Use dynamic high-fidelity shadows: shadow-[0_20px_50px_rgba(0,0,0,0.3)]
+3. ASYMMETRICAL SPACING & BREATHING ROOM:
+   - Give elements luxurious padding (use py-24 or py-32 for sections, px-8 or px-12 for inner boxes).
+   - Use negative margin overlaps (e.g., -mt-16 or -mt-24) to float custom elements across section boundaries.
+4. HEADLINE TYPOGRAPHY:
+   - Headlines must be massive, elegant, and tight: tracking-tight font-extrabold leading-[1.05] (using clamp for responsiveness).
+
 🚨 NO NAVIGATION MENU IN HEADER/NAVBAR HARD RULE:
 - The header/navbar MUST NOT contain a navigation menu or links (Do NOT generate list items, hamburger dropdown lists, or anchors for 'Home', 'About', 'Services', 'Pricing', etc.). 
 - The header/navbar should ONLY contain the brand logo on the left, and a single prominent high-converting Call-to-Action (CTA) Button on the right (e.g. "Get Started" or "Book a Call"). 
-- This keeps the layout ultra-clean, modern, distraction-free, and dramatically improves conversions!
 
 🚨 TOKEN OPTIMIZATION & INLINE ICONS STRATEGY (PREVENT TRUNCATION):
 - To ensure the entire landing page generates fully from the Hero all the way down to the Footer without getting cut off early:
 - You are STRONGLY FORBIDDEN from generating custom inline SVG <path> codes for decorative graphics or icons. Large SVG vector blocks consume massive amounts of output tokens and cause early truncation.
 - Instead, you MUST use standard FontAwesome icons (e.g., <i class="fa-solid fa-check text-xl"></i>, <i class="fa-solid fa-rocket"></i>, <i class="fa-solid fa-phone"></i>, <i class="fa-solid fa-chevron-down"></i>) which are already fully loaded and supported in the environment.
-- Keep the page HTML clean, lightweight, punchy, and highly conversion-optimized.
 
 🚨 SECTION UNIQUE STYLING HARD RULE:
 - You are FORBIDDEN from repeating any layout style, structure, or card grid design between sections. Every single section MUST have a totally unique layout, visual density, and alignment as specified in the SECTION-BY-SECTION VISUAL MAP.
@@ -430,36 +448,7 @@ ${designDNA.mustInclude.map((m, i) => `   ${i + 1}. ${m}`).join('\n')}
 🚨 NO-SCRIPT ACCORDION & FAQ RULE:
 - For accordions, FAQ grids, or toggle tabs, you are FORBIDDEN from writing custom Javascript click handlers (like document.querySelectorAll). GrapesJS sandboxes block custom scripts from executing.
 - Instead, you MUST use native HTML5 <details> and <summary> elements styled beautifully with Tailwind!
-- Example FAQ accordion pattern:
-  <details class="group border-b border-black/10 py-6 cursor-pointer">
-    <summary class="flex justify-between items-center font-semibold text-lg list-none">
-      <span>Question text goes here?</span>
-      <span class="transition-transform duration-300 group-open:rotate-180"><i class="fa-solid fa-chevron-down text-sm"></i></span>
-    </summary>
-    <div class="mt-4 text-black/60 leading-relaxed">
-      Detailed answer text goes here.
-    </div>
-  </details>
 - Using details/summary makes accordions 100% interactive instantly in both editor preview and live site without a single line of JS!
-
-🚨 ULTRA-PREMIUM & "WOW-FACTOR" STYLING RULES:
-1. TYPOGRAPHY PAIRINGS (Import these Google Fonts in your <style> tag):
-   - If BRUTALIST: Import 'Syne' & 'Space Grotesk'
-   - If ELEGANT SERIF: Import 'Instrument Serif' & 'Plus Jakarta Sans'
-   - If GEOMETRIC SANS: Import 'Outfit' & 'Inter'
-   - If EDITORIAL: Import 'Cormorant Garamond' & 'DM Sans'
-   - If HUMANIST: Import 'Schibsted Grotesk' & 'Albert Sans'
-   - If TECH MONO: Import 'JetBrains Mono' & 'Space Mono'
-2. VISUAL DEPTH & ATMOSPHERE:
-   - Always add 2-3 dynamic glowing background blur blobs (<div class="absolute rounded-full filter blur-[120px] opacity-20 pointer-events-none ...">) to create depth.
-   - Never use standard borders; instead use semi-transparent borders with backdrop filters (backdrop-filter: blur(16px)) for high-end glassmorphism.
-   - Ensure all cards have extremely refined shadows (e.g., shadow-[0_8px_30px_rgb(0,0,0,0.04)]).
-3. MICRO-ANIMATIONS & HOVER STATES:
-   - Every single interactive element (buttons, links, cards, icons) must have high-fidelity hover animations (e.g., transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-lg).
-4. HIGH-END LAYOUT BLOCKS:
-   - Use Bento grids with asymmetrical heights and rich imagery.
-   - Use dynamic overlapping margins (e.g., -mt-20) to make elements float over boundaries seamlessly.
-   - Use custom decorative SVG dividers or minimal vector lines instead of boring horizontal rules.
 
 YOUR JOB:
 Read the business. Understand the audience. Execute the Design DNA and premium rules above with surgical precision.
@@ -535,7 +524,7 @@ DESIGN EXECUTION REMINDER:
 NOW BUILD THE PAGE:
 Execute the Design DNA and the Section-by-Section styling with surgical precision for this exact business.
 Write real, specific copy — not placeholders. Sound like a human expert, not a robot.
-Every section moves the visitor closer to converting. Make sure the output generation completes fully down to the footer!
+Every section moves the visitor closer to converting. Make sure the output generation completes fully down to the footer! Ensure every single section is closed perfectly!
 `);
 
   return lines.join('\n');
@@ -550,7 +539,7 @@ const generateLandingPageContent = async (input) => {
   const designDNA = generateDesignDNA();
 
   // Dynamically map each section in the sequence to a totally randomized visual pool layout
-  const selectedSequence = designDNA.sectionSequence;
+  const selectedSequence = designDNA.sequenceOverride || designDNA.sectionSequence;
   const sectionVisualMap = selectedSequence.map((section, idx) => {
     if (idx === 0) {
       return `Section 1 (${section}): Must use Hero Style [${designDNA.heroStyle}] and Color Mood [${designDNA.colorMood}]. Ensure it is a visually stunning entrance with NO navigation links inside the header (logo left, CTA button right only).`;
