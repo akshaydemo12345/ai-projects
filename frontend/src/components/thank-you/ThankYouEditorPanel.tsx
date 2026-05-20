@@ -10,7 +10,12 @@ interface ThankYouEditorPanelProps {
   onSelect?: (html: string, css?: string) => void;
 }
 
-export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: ThankYouEditorPanelProps) => {
+export const ThankYouEditorPanel = ({
+  pageId,
+  industry,
+  onSave,
+  onSelect
+}: ThankYouEditorPanelProps) => {
   const [config, setConfig] = useState<ThankYouConfig>({
     layout: 'default',
     content: {},
@@ -84,7 +89,7 @@ export const ThankYouEditorPanel = ({ pageId, industry, onSave, onSelect }: Than
         branding: {
           primaryColor: selectedLayout.theme.primaryColor,
           secondaryColor: selectedLayout.theme.secondaryColor,
-          logoUrl: config.branding.logoUrl,
+          logoUrl: config.branding.logoUrl || '',
         },
       };
 

@@ -1907,10 +1907,10 @@ const GrapesEditor = () => {
     }
   };
 
-  const switchMode = (newMode: 'landing' | 'thank-you') => {
+  const switchMode = async (newMode: 'landing' | 'thank-you') => {
     if (newMode === mode) return;
 
-    // 1. Save current editor state into memory/local page state
+    // 1. Save current editor state into memory/local page state and persist to DB
     if (editorRef.current) {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
@@ -1927,6 +1927,11 @@ const GrapesEditor = () => {
           page.thankYouPageContent = html;
           page.thankYouPageStyles = globalCss + '\n' + css;
         }
+      }
+      try {
+        await handleSave();
+      } catch (e) {
+        console.error('Auto-save failed on switchMode:', e);
       }
     }
 
