@@ -218,8 +218,8 @@ const GrapesEditor = () => {
     }
 
     // 2. Intelligent Extraction
-    if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head')) {
-      console.log('📄 Full HTML detected. Extracting body and styles...');
+    if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
+      console.log('📄 Full HTML structure detected. Extracting components...');
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
@@ -231,9 +231,27 @@ const GrapesEditor = () => {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
 
+        // Extract Links and Scripts for Canvas Injection
+        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
+        const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.outerHTML);
+        
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc) {
+          links.forEach(linkHtml => {
+            if (!canvasDoc.head.innerHTML.includes(linkHtml)) {
+              canvasDoc.head.insertAdjacentHTML('beforeend', linkHtml);
+            }
+          });
+          scripts.forEach(scriptHtml => {
+            if (!canvasDoc.body.innerHTML.includes(scriptHtml)) {
+              canvasDoc.body.insertAdjacentHTML('beforeend', scriptHtml);
+            }
+          });
+        }
+
         // Take body content or fallback to full text if body is somehow empty
         let bodyHtml = doc.body.innerHTML.trim();
-        if (!bodyHtml || bodyHtml.length < 20) {
+        if (!bodyHtml || bodyHtml.length < 10) {
           console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
           bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
         }

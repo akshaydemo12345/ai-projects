@@ -19,7 +19,9 @@
   // Support both #lp/test-script and #page=lp/test-script, while stripping query params
   const hashPage = (hashRaw.includes('page=') ? hashRaw.split('page=')[1] : hashRaw).split('?')[0].replace(/\/+$/, '');
   const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  const pathPage = pathParts.length > 0 && pathParts[0] !== '' ? pathParts.join('/') : null;
+  const rawPathPage = pathParts.length > 0 && pathParts[0] !== '' ? pathParts.join('/') : null;
+  // Strip trailing /thank-you so slug resolves correctly on direct access to the thank-you URL
+  const pathPage = rawPathPage ? rawPathPage.replace(/\/thank-you\/?$/, '') : null;
 
   // PRIORITY: URL (Query > Hash) > Script Attributes > URL Path
   // This enables dynamic routing via URL even if a data-page is set on the script tag.
@@ -184,7 +186,7 @@
                 <div style="font-size: 64px; margin-bottom: 24px;">✅</div>
                 <h1 style="font-size: 32px; color: #111827; margin-bottom: 16px;">Thank You for your submission!</h1>
                 <p style="font-size: 18px; color: #4b5563; max-width: 500px; line-height: 1.6;">We have received your details and our team will get back to you shortly.</p>
-                <a href="${window.location.pathname}${window.location.search.replace('status=thank-you', '').replace('&&', '&').replace(/\?$/, '')}" style="margin-top: 32px; background: ${result.primaryColor || '#7c3aed'}; color: white; padding: 12px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;">Return to Home</a>
+                <a href="${window.location.pathname.replace(/\/thank-you\/?$/, '')}${window.location.search}" style="margin-top: 32px; background: ${result.primaryColor || '#7c3aed'}; color: white; padding: 12px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;">Return to Home</a>
             </div>
            `;
         }
@@ -463,18 +465,14 @@
             return;
           }
 
-          // Priority 2: Redirect via embed system
-          console.log('PageCraft AI: Redirecting to embedded thank you page');
+          // Priority 2: Path-based thank-you redirect — no query string, no flash
           const currentUrl = new URL(window.location.href);
-
-          // Use hash routing as requested (#slug?status=thank-you)
-          const redirectHash = (slug || '') + '?status=thank-you';
-
-          // Clear query params that might conflict
-          currentUrl.searchParams.delete('pg');
-          currentUrl.searchParams.delete('status');
-
-          window.location.href = currentUrl.origin + currentUrl.pathname + currentUrl.search + '#' + redirectHash;
+          const thankYouPath = currentUrl.pathname.replace(/\/+$/, '') + '/thank-you';
+          // Silently update the browser URL without triggering a page reload
+          history.pushState({}, '', currentUrl.origin + thankYouPath + currentUrl.search);
+          // Re-render page content in place — loader stays visible, no visible flash
+          loadPage();
+          return;
 
         } else {
           console.error('PageCraft AI: Server returned error', result);
@@ -484,8 +482,9 @@
       } catch (err) {
         console.error('Lead submission error:', err);
         const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('status', 'thank-you');
-        window.location.href = currentUrl.toString().split('#')[0];
+        const thankYouPath = currentUrl.pathname.replace(/\/+$/, '') + '/thank-you';
+        history.pushState({}, '', currentUrl.origin + thankYouPath + currentUrl.search);
+        loadPage();
       } finally {
         form.removeAttribute('data-submitting');
         if (submitBtn) {
