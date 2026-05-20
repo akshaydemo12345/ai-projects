@@ -74,6 +74,12 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   });
 
   const [selectedVars, setSelectedVars] = useState<string[]>([]);
+  
+  // Track previous valid colors that are actually in the CSS
+  const prevColorsRef = React.useRef({
+    primary: INIT_STYLES.Colors.primary.value,
+    secondary: INIT_STYLES.Colors.secondary.value,
+  });
 
   // 1. Listen for component selection and detect used variables
   useEffect(() => {
@@ -185,10 +191,13 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (initialPrimary && newStyles.Colors.primary.value !== initialPrimary) {
         newStyles.Colors.primary = { ...newStyles.Colors.primary, value: initialPrimary };
         newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialPrimary };
+        prevColorsRef.current.primary = initialPrimary;
         changed = true;
       }
       if (initialSecondary && newStyles.Colors.secondary.value !== initialSecondary) {
         newStyles.Colors.secondary = { ...newStyles.Colors.secondary, value: initialSecondary };
+        newStyles.Subheading.color = { ...newStyles.Subheading.color, value: initialSecondary };
+        prevColorsRef.current.secondary = initialSecondary;
         changed = true;
       }
       return changed ? newStyles : prev;
@@ -200,20 +209,141 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const handleUpdate = (cat: string, key: string, val: string) => {
-    setStyles(prev => ({
-      ...prev,
-      [cat]: {
-        ...prev[cat],
-        [key]: { ...prev[cat][key], value: val }
+    setStyles(prev => {
+      const next = {
+        ...prev,
+        [cat]: {
+          ...prev[cat],
+          [key]: { ...prev[cat][key], value: val }
+        }
+      };
+
+      if (cat === 'Colors' && key === 'primary') {
+        next.Buttons = { ...next.Buttons, bg: { ...next.Buttons.bg, value: val } };
       }
-    }));
+      if (cat === 'Colors' && key === 'secondary') {
+        next.Subheading = { ...next.Subheading, color: { ...next.Subheading.color, value: val } };
+      }
+
+      return next;
+    });
+
+    if (editor) {
+      if (cat === 'Colors' && (key === 'primary' || key === 'secondary')) {
+        const oldVal = prevColorsRef.current[key];
+        
+        // Only run the heavy CSS replacement if the new value is a valid 7-character hex code.
+        // This prevents intermediate typing states (like "#" or "#ff") from corrupting the stylesheet.
+        if (!val || val.length !== 7 || !val.startsWith('#')) {
+          return;
+        }
+
+        const hexToRgbStr = (hex: string) => {
+          const c = hex.replace('#', '');
+          if (c.length === 3) return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
+          return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+        };
+
+        const oldRgb = hexToRgbStr(oldVal);
+        const newRgb = hexToRgbStr(val);
+
+        // Find and replace hardcoded colors in all components (Inline styles)
+        const wrapper = editor.getWrapper();
+        if (wrapper) {
+          const updateRecursive = (comp: any) => {
+            const compStyle = comp.getStyle() || {};
+            const updates: any = {};
+            let changed = false;
+            
+            Object.keys(compStyle).forEach(prop => {
+              if (typeof compStyle[prop] === 'string') {
+                if (compStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
+                  updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                  changed = true;
+                }
+                if (compStyle[prop].includes(oldRgb)) {
+                  updates[prop] = compStyle[prop].replace(new RegExp(oldRgb, 'g'), newRgb);
+                  changed = true;
+                }
+              }
+            });
+            
+            if (changed) {
+              comp.addStyle(updates);
+            }
+            
+            comp.components().forEach(updateRecursive);
+          };
+          updateRecursive(wrapper);
+        }
+
+        // Find and replace in global template-styles
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc) {
+          const templateStyles = canvasDoc.getElementById('template-styles');
+          if (templateStyles) {
+             let html = templateStyles.innerHTML;
+             html = html.replace(new RegExp(oldVal, 'gi'), val);
+             html = html.replace(new RegExp(oldRgb, 'gi'), newRgb);
+             templateStyles.innerHTML = html;
+          }
+        }
+
+        // Find and replace in GrapesJS CSS rules
+        const rules = editor.Css.getRules();
+        rules.forEach((rule: any) => {
+          const style = rule.getStyle();
+          let changedRule = false;
+          const newStyle = { ...style };
+          
+          Object.keys(newStyle).forEach(prop => {
+            if (typeof newStyle[prop] === 'string') {
+              if (newStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
+                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                 changedRule = true;
+              }
+              if (newStyle[prop].includes(oldRgb)) {
+                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
+                 changedRule = true;
+              }
+            }
+          });
+          
+          if (changedRule) {
+             rule.setStyle(newStyle);
+          }
+        });
+        
+        prevColorsRef.current[key] = val;
+      } else {
+        // Apply directly to selected component if not a sweeping color change
+        const selected = editor.getSelected();
+        const varName = INIT_STYLES[cat]?.[key]?.varName;
+        if (selected && varName) {
+           // Direct updates for specific properties
+        }
+      }
+    }
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
-    let css = '';
+    let css = ':root {\n';
+    Object.values(currentStyles).forEach(category => {
+      Object.values(category).forEach(prop => {
+        css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
+      });
+    });
+    css += '}\n\n';
 
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
-
+    
+    css += `
+button, .btn, [class*="btn-"] {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: var(--btn-radius);
+}
+`;
     return css;
   };
 
@@ -229,9 +359,10 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (!styleTag) {
         styleTag = canvasDoc.createElement('style');
         styleTag.id = 'global-theme-styles';
-        canvasDoc.head.appendChild(styleTag);
       }
       styleTag.innerHTML = css;
+      // Always append to end of head to ensure it overrides GrapesEditor branding-vars
+      canvasDoc.head.appendChild(styleTag);
     }
 
     // 2. Also patch GrapesJS internal CSS so it doesn't override our variables

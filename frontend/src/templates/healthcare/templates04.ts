@@ -3,7 +3,7 @@
 //
 // Color Detection Result:
 //   Primary   → was --gold (#c9a84c) → SECONDARY_COLOR_PLACEHOLDER / var(--primary)
-//   Secondary → was --forest (#1a3a2e) → PRIMARY_COLOR_PLACEHOLDER / var(--secondary)
+//   Secondary → was --forest (PRIMARY_COLOR_PLACEHOLDER) → PRIMARY_COLOR_PLACEHOLDER / var(--secondary)
 //
 // In GrapesEditor these are replaced with the page's primaryColor/secondaryColor.
 
@@ -15,7 +15,7 @@ export const healthcare04Styles = `
             --paper: #f7f4ef;
             --gold: SECONDARY_COLOR_PLACEHOLDER;
             --gold-light: #e8d5a3;
-            --rust: #b84c2d;
+            --rust: PRIMARY_COLOR_PLACEHOLDER;
             --forest: PRIMARY_COLOR_PLACEHOLDER;
             --mist: #e8e4dc;
             --white: #ffffff;
@@ -4430,7 +4430,7 @@ export const healthcare04Html = `
                 <div class="testi-stars">★★★★★</div>
                 <p class="testi-quote">"Data-driven, disciplined, and relentless. We increased revenue by 280% in 8 months. Their execution excellence is unlike anything I've seen."</p>
                 <div class="testi-author">
-                    <div class="testi-av" style="background:#b84c2d;color:white">MJ</div>
+                    <div class="testi-av" style="background:PRIMARY_COLOR_PLACEHOLDER;color:white">MJ</div>
                     <div>
                         <div class="testi-name">Marcus Johnson</div>
                         <div class="testi-role">Founder, GrowthCo</div>
