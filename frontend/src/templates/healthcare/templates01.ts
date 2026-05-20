@@ -431,6 +431,7 @@ h1, h2, h3, h4, h5, h6, p {
   text-align: center;
   position: relative;
   overflow: hidden;
+  background-color: var(--secondary);
 }
 .cta-bg-icon {
   position: absolute;
@@ -840,7 +841,7 @@ export const healthcare01Html = `
 <!-- CTA Banner -->
 <section class="py-xl">
 <div class="container">
-<div class="cta-banner" style="background: var(--secondary);">
+<div class="cta-banner">
 <div class="cta-bg-icon">
 <span class="material-symbols-outlined">dentistry</span>
 </div>
