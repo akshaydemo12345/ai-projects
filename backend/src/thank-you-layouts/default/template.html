@@ -73,7 +73,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
+      margin: 50px auto !important;
       color: {{primaryColor}};
       position: relative;
       background: rgba(255,255,255,0.03);
@@ -103,6 +103,7 @@
       text-decoration: none;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
       box-shadow: 0 10px 25px {{primaryColor}}40;
       margin-top: 20px;
@@ -112,6 +113,10 @@
       background-color: {{secondaryColor}};
       transform: translateY(-4px) scale(1.05);
       box-shadow: 0 15px 35px {{primaryColor}}60;
+    }
+
+    .cta-button svg {
+      width: 25px !important;
     }
 
     .footer-dark {
@@ -186,7 +191,7 @@
 
       <div>
         <a href="{{ctaUrl}}" class="cta-button">
-          <svg class="h-5 w-5 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-4 w-4 flex-shrink-0 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
           </svg>
           {{ctaText}}

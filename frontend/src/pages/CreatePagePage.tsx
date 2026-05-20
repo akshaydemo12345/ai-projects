@@ -18,11 +18,17 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { Education01Html, Education01Styles } from "../templates/education/templates01";
 // Templates removed as per user request
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
   v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+const hexToRgbStr = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "0, 0, 0";
+};
 
 const generateAiPage = (
   prompt: string,
@@ -31,6 +37,14 @@ const generateAiPage = (
 ): Partial<LandingPage> => {
   const dummyHtml = `
     <div style="font-family: 'Inter', sans-serif; color: #333;">
+      <style>
+        :root {
+          --primary: ${branding.primary};
+          --secondary: ${branding.secondary};
+          --primary-rgb: ${hexToRgbStr(branding.primary)};
+          --secondary-rgb: ${hexToRgbStr(branding.secondary)};
+        }
+      </style>
       <!-- Section 1: Hero -->
       <section style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 100px 20px; text-align: center; color: white;">
         <h1 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">Welcome to ${project.name || "Our Business"}</h1>
@@ -240,11 +254,19 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/finance/templates03/screenshot1.png",
     gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
     prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
+  },
+  {
+    id: "education-01",
+    name: "Eduverse Academy",
+    tag: "Education",
+    img: "/assets/templates/education/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #0b3324 0%, #1a5f3f 100%)",
+    prompt: "A premium online education landing page with a hero section, course category highlights, 'About Us' section with stats, featured courses grid, process steps, testimonials, and a lead capture form. Clean forest green and amber theme.",
   }
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
+const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance", "Education"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -420,6 +442,7 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+      else if (promptLower.includes("education") || promptLower.includes("school") || promptLower.includes("learn") || projectCat.includes("education")) detectedCategory = "Education";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -449,6 +472,7 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        case "education-01": enrichedContent = Education01Html; enrichedStyles = Education01Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -485,14 +509,32 @@ const CreatePagePage = () => {
         ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
         : `<span style="color: ${primaryColor}">${project.name}</span>`;
 
+      // ─── FINAL BRANDING INJECTION ───
+      const brandingCss = `
+:root {
+  --primary: ${primaryColor || "#6366f1"};
+  --secondary: ${secondaryColor || "#4f46e5"};
+  --primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")};
+  --secondary-rgb: ${hexToRgbStr(secondaryColor || "#4f46e5")};
+}
+`;
+      enrichedStyles = brandingCss + "\n" + enrichedStyles;
+
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
-      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
       enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
 
+      // Replace any remaining placeholders in content (just in case)
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedContent = enrichedContent.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
+      enrichedContent = enrichedContent.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
+
+      // Clean up placeholders in styles
       enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
       enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      enrichedStyles = enrichedStyles.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
+      enrichedStyles = enrichedStyles.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       if (project.scrapedData?.images?.length > 0) {
@@ -1002,22 +1044,34 @@ const CreatePagePage = () => {
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
+                case "education-01": tpHtml = Education01Html; tpStyles = Education01Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
-              // Apply STATIC branding to preview
+              // Apply branding to preview via :root injection
+              const brandingVars = `
+                :root {
+                  --primary: #6366f1;
+                  --secondary: #4f46e5;
+                  --primary-rgb: ${hexToRgbStr("#6366f1")};
+                  --secondary-rgb: ${hexToRgbStr("#4f46e5")};
+                }
+                `;
+              tpStyles = brandingVars + "\n" + tpStyles;
+
               const logoHtml = `<span style="font-weight: 800; font-size: 1.5rem; color: #6366f1;">BRAND</span>`;
 
               tpHtml = tpHtml
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, "Business Name")
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
                 .replace(/CONTACT_PLACEHOLDER/g, "Contact Us");
 
-              tpStyles = tpStyles
+              // Clean up any stray placeholders
+              tpHtml = tpHtml
                 .replace(/PRIMARY_COLOR_PLACEHOLDER/g, "#6366f1")
-                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5")
+                .replace(/SECONDARY_COLOR_PLACEHOLDER/g, "#4f46e5");
+
+              tpStyles = tpStyles
                 .replace(/LOGO_URL_PLACEHOLDER/g, "");
 
               return (
