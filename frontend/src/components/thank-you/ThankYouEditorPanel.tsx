@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { thankYouApi, ThankYouLayout, ThankYouConfig } from '@/services/api';
 import { toast } from 'sonner';
 import { Search, CheckCircle2, Loader2 } from 'lucide-react';
@@ -25,32 +25,18 @@ export const ThankYouEditorPanel = ({
   const [layouts, setLayouts] = useState<ThankYouLayout[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [applyingId, setApplyingId] = useState<string | null>(null);
 
   const isInitialMount = useRef(true);
+  // Track selected layout id separately so UI updates instantly on click
+  const [selectedId, setSelectedId] = useState<string>('default');
 
   useEffect(() => {
     loadData();
   }, [pageId]);
 
-  // Sync canvas with config changes (debounced)
-  useEffect(() => {
-    if (loading) return;
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const html = await thankYouApi.preview({ ...config, pageId });
-        onSelect?.(html);
-      } catch (error) {
-        console.error('Error syncing preview:', error);
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [config, loading]);
+  // NOTE: Auto-sync on config change removed — handleLayoutChange directly calls onSelect
+  // to avoid double canvas updates and race conditions.
 
   const loadData = async () => {
     try {
@@ -58,16 +44,18 @@ export const ThankYouEditorPanel = ({
         thankYouApi.getConfig(pageId),
         thankYouApi.getLayouts()
       ]);
-      setConfig(configData.config || {
+      const savedConfig = configData.config || {
         layout: 'default',
         content: {},
         tracking: {},
         branding: {},
-      });
+      };
+      setConfig(savedConfig);
+      setSelectedId(savedConfig.layout || 'default');
       setLayouts(layoutsData);
 
-      if (industry && (!configData.config?.layout || configData.config.layout === 'default')) {
-        const industryLayout = layoutsData.find(l => l.industry === industry);
+      if (industry && (!savedConfig?.layout || savedConfig.layout === 'default')) {
+        const industryLayout = layoutsData.find((l: ThankYouLayout) => l.industry === industry);
         if (industryLayout) {
           handleLayoutChange(industryLayout.id, layoutsData);
         }
@@ -80,8 +68,12 @@ export const ThankYouEditorPanel = ({
   };
 
   const handleLayoutChange = async (layoutId: string, layoutsList = layouts) => {
-    const selectedLayout = layoutsList.find(l => l.id === layoutId);
+    const selectedLayout = layoutsList.find((l: ThankYouLayout) => l.id === layoutId);
     if (selectedLayout) {
+      // ✅ Update UI selection instantly — don't wait for API
+      setSelectedId(layoutId);
+      setApplyingId(layoutId);
+
       const newConfig = {
         ...config,
         layout: layoutId,
@@ -95,23 +87,22 @@ export const ThankYouEditorPanel = ({
 
       setConfig(newConfig);
 
-      const previewPromise = (async () => {
+      try {
         await thankYouApi.updateConfig(pageId, newConfig);
         const html = await thankYouApi.preview({ ...newConfig, pageId });
         onSelect?.(html);
-        return html;
-      })();
-
-      toast.promise(previewPromise, {
-        loading: `Applying ${selectedLayout.name}...`,
-        success: `${selectedLayout.name} ready!`,
-        error: 'Failed to load preview',
-      });
+        toast.success(`${selectedLayout.name} applied!`);
+      } catch (error) {
+        console.error('Error applying layout:', error);
+        toast.error('Failed to load template');
+      } finally {
+        setApplyingId(null);
+      }
     }
   };
 
-  const filteredLayouts = layouts.filter(l => 
-    l.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredLayouts = layouts.filter((l: ThankYouLayout) =>
+    l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.industry.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -142,40 +133,44 @@ export const ThankYouEditorPanel = ({
 
       {/* Template List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-        {filteredLayouts.map((layout) => (
-          <div
-            key={layout.id}
-            onClick={() => handleLayoutChange(layout.id)}
-            className={`group relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-              config.layout === layout.id 
-                ? 'border-violet-500 bg-violet-500/5' 
-                : 'border-white/5 bg-[#12121e] hover:border-white/10'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                config.layout === layout.id ? 'bg-violet-500 text-white' : 'bg-[#1a1a2e] text-slate-500'
-              }`}>
-                {config.layout === layout.id ? (
-                  <CheckCircle2 className="h-5 w-5" />
-                ) : (
-                  <div className="h-5 w-5 opacity-50 uppercase font-black text-[10px]">TY</div>
-                )}
+        {filteredLayouts.map((layout: ThankYouLayout) => {
+          const isSelected = selectedId === layout.id;
+          const isApplying = applyingId === layout.id;
+          return (
+            <div
+              key={layout.id}
+              onClick={() => !isApplying && handleLayoutChange(layout.id)}
+              className={`group relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected
+                  ? 'border-violet-500 bg-violet-500/5'
+                  : 'border-white/5 bg-[#12121e] hover:border-white/10'
+                }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isSelected ? 'bg-violet-500 text-white' : 'bg-[#1a1a2e] text-slate-500'
+                  }`}>
+                  {isApplying ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isSelected ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <div className="h-5 w-5 opacity-50 uppercase font-black text-[10px]">TY</div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-white mb-0.5">{layout.name}</h4>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{layout.industry}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-white mb-0.5">{layout.name}</h4>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{layout.industry}</p>
-              </div>
+
+              {/* Hover Indicator */}
+              {!isSelected && !isApplying && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-[10px] font-black text-violet-500 uppercase tracking-widest">Select</div>
+                </div>
+              )}
             </div>
-            
-            {/* Hover Indicator */}
-            {config.layout !== layout.id && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="text-[10px] font-black text-violet-500 uppercase tracking-widest">Select</div>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
 
         {filteredLayouts.length === 0 && (
           <div className="text-center py-10">

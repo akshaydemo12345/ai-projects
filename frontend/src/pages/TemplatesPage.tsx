@@ -249,6 +249,13 @@ const TemplatesPage = () => {
           .replace(/PRIMARY_RGB_PLACEHOLDER/g, '99, 102, 241')
           .replace(/SECONDARY_RGB_PLACEHOLDER/g, '79, 70, 229');
 
+        // Extract inline <script> tags from the template HTML so they execute inside the iframe
+        // (GrapesJS strips them, but the preview modal can safely run them)
+        const scriptMatches = styledHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+        const inlineScripts = scriptMatches
+          .filter(s => !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config'))
+          .join('\n');
+
         return (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
@@ -283,6 +290,7 @@ const TemplatesPage = () => {
                     </head>
                     <body>
                       ${styledHtml}
+                      ${inlineScripts}
                     </body>
                   </html>
                 `}
