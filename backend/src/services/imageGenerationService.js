@@ -115,6 +115,13 @@ function getPromptForIndustry(industry, subIndustry, context) {
   
   promptText += `. Scene: ${sceneType}. RAW photo, highly detailed, photorealistic, 8k resolution, (masterpiece, best quality, ultra-detailed, highly detailed:1.2), natural cinematic lighting, sharp focus, award-winning photography, DSLR.`;
 
+  // Contrast hint for overlaid text visibility
+  if (context?.isLightText || isHero) {
+    promptText += ` Ensure the image has a dark, moody, or slightly underexposed composition so that overlaid white text will be highly legible.`;
+  } else if (context?.isDarkText) {
+    promptText += ` Ensure the image is very bright, well-lit, and airy so that overlaid dark text will be highly legible.`;
+  }
+
   return promptText;
 }
 
@@ -156,6 +163,10 @@ async function replacePlaceholdersInHtml(htmlContent, industry, subIndustry) {
         const sectionId = $(element).closest('section, div[id], div[class*="section"]').attr('id') || '';
         const sectionClass = $(element).closest('section, div[class*="section"]').attr('class') || '';
 
+        // Check if there are explicit light/dark text classes within this section
+        const isLightText = parentClass.includes('text-white') || parentClass.includes('text-light') || classAttr.includes('text-white');
+        const isDarkText = parentClass.includes('text-dark') || parentClass.includes('text-black');
+
         const context = {
           altText,
           idAttr,
@@ -165,10 +176,13 @@ async function replacePlaceholdersInHtml(htmlContent, industry, subIndustry) {
           sectionId,
           sectionClass,
           isHero,
+          isLightText,
+          isDarkText,
           index
         };
 
         imagesToReplace.push({
+          type: 'img',
           element,
           src,
           context
@@ -176,11 +190,66 @@ async function replacePlaceholdersInHtml(htmlContent, industry, subIndustry) {
       }
     });
 
+    // Find all elements with inline style containing url(...)
+    $('[style*="url("]').each((index, element) => {
+      const styleAttr = $(element).attr('style');
+      if (!styleAttr) return;
+
+      const match = styleAttr.match(/url\(['"]?(https?:\/\/[^'")\s]+)['"]?\)/i);
+      if (match) {
+        const src = match[1];
+        if (src && (
+          src.includes('unsplash.com') || 
+          src.includes('picsum.photos') || 
+          src.includes('freepik.com') ||
+          src.includes('placehold.co')
+        )) {
+          const idAttr = $(element).attr('id') || '';
+          const classAttr = $(element).attr('class') || '';
+          const parentId = $(element).parent().attr('id') || '';
+          const parentClass = $(element).parent().attr('class') || '';
+          
+          const isHero = idAttr.includes('hero') || classAttr.includes('hero') || 
+                         parentId.includes('hero') || parentClass.includes('hero') ||
+                         $(element).is('section.hero') || $(element).hasClass('hero');
+
+          const sectionId = $(element).closest('section, div[id], div[class*="section"]').attr('id') || '';
+          const sectionClass = $(element).closest('section, div[class*="section"]').attr('class') || '';
+
+          // Look for text elements inside the background container to determine contrast needs
+          const innerHtml = $(element).html() || '';
+          const isLightText = innerHtml.includes('text-white') || innerHtml.includes('color: #fff') || innerHtml.includes('color: white');
+          const isDarkText = innerHtml.includes('text-dark') || innerHtml.includes('text-black');
+
+          const context = {
+            altText: 'background image',
+            idAttr,
+            classAttr,
+            parentId,
+            parentClass,
+            sectionId,
+            sectionClass,
+            isHero,
+            isLightText,
+            isDarkText,
+            index: index + 100
+          };
+
+          imagesToReplace.push({
+            type: 'style',
+            element,
+            src,
+            context
+          });
+        }
+      }
+    });
+
     if (imagesToReplace.length === 0) {
       return htmlContent;
     }
 
-    logger.info(`[ImageGenerationService] Found ${imagesToReplace.length} placeholder images to replace for industry: "${industry}", sub-industry: "${subIndustry}"`);
+    logger.info(`[ImageGenerationService] Found ${imagesToReplace.length} placeholder images (including background-images) to replace for industry: "${industry}", sub-industry: "${subIndustry}"`);
 
     // Call getimg.ai API in parallel
     const generationPromises = imagesToReplace.map(async (img) => {
@@ -192,6 +261,7 @@ async function replacePlaceholdersInHtml(htmlContent, industry, subIndustry) {
 
       const newUrl = await generateGetImgUrl(prompt, width, height);
       return {
+        type: img.type,
         element: img.element,
         originalSrc: img.src,
         newUrl
@@ -203,7 +273,13 @@ async function replacePlaceholdersInHtml(htmlContent, industry, subIndustry) {
     // Apply the new URLs
     results.forEach((res) => {
       if (res.newUrl) {
-        $(res.element).attr('src', res.newUrl);
+        if (res.type === 'style') {
+          const oldStyle = $(res.element).attr('style') || '';
+          const updatedStyle = oldStyle.replace(res.originalSrc, res.newUrl);
+          $(res.element).attr('style', updatedStyle);
+        } else {
+          $(res.element).attr('src', res.newUrl);
+        }
         logger.info(`[ImageGenerationService] Replaced image: ${res.originalSrc} -> ${res.newUrl}`);
       } else {
         logger.warn(`[ImageGenerationService] Failed to generate replacement image for ${res.originalSrc}. Keeping original.`);
