@@ -295,6 +295,35 @@ exports.createPage = async (req, res, next) => {
     // 5. Slug Generation (use finalSlug if provided)
     const uniqueSlug = finalSlug ? await generateUniqueSlug(finalSlug, projectId) : await generateUniqueSlug(slug || title, projectId);
 
+    // 5.5 Check if page already exists on the external website
+    if (project.websiteUrl) {
+      let baseUrl = project.websiteUrl;
+      if (!baseUrl.startsWith('http')) {
+        baseUrl = 'https://' + baseUrl;
+      }
+      baseUrl = baseUrl.replace(/\/+$/, '');
+      const checkUrl = `${baseUrl}/${uniqueSlug}`;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const checkResponse = await fetch(checkUrl, {
+          method: 'GET',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (checkResponse.status === 200) {
+          return res.status(400).json({
+            success: false,
+            message: `Page already exists on website`,
+            data: {}
+          });
+        }
+      } catch (err) {
+        logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
+      }
+    }
+
     // 6. Initial Page Creation
     const page = await Page.create({
       projectId,
@@ -549,6 +578,31 @@ exports.updatePage = async (req, res, next) => {
 
     if (parsed.data.slug && parsed.data.slug !== currentPage.slug) {
       const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
+
+      const project = await Project.findById(currentPage.projectId);
+      if (project && project.websiteUrl) {
+        let baseUrl = project.websiteUrl;
+        if (!baseUrl.startsWith('http')) {
+          baseUrl = 'https://' + baseUrl;
+        }
+        baseUrl = baseUrl.replace(/\/+$/, '');
+        const checkUrl = `${baseUrl}/${uniqueSlug}`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const checkResponse = await fetch(checkUrl, { method: 'GET', signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (checkResponse.status === 200) {
+            return res.status(400).json({
+              status: 'fail',
+              message: `Page already exists on website`
+            });
+          }
+        } catch (err) {
+          logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
+        }
+      }
+
       updateData.slug = uniqueSlug;
 
       const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
@@ -657,7 +711,7 @@ exports.publishPage = async (req, res, next) => {
     const oldStatus = page.status;
     page.status = 'published';
     page.publishedAt = Date.now();
-    page.updatedAt = Date.now();
+    page.updatedAt = Date.now(); parsed.data.domain
 
     if (!page.apiToken) {
       page.apiToken = crypto.randomBytes(32).toString('hex');

@@ -335,26 +335,14 @@ const buildLeadCaptureScript = (page) => {
       hq.forEach(function(v,k){if(!q.has(k))q.append(k,v)});
     }
     var keys=["utm_source","utm_medium","utm_campaign","utm_term","utm_content","gclid","fbclid","msclkid"];
-    var hasUtm = false;
-    for (var i = 0; i < keys.length; i++) {
-      if (q.get(keys[i])) { hasUtm = true; break; }
-    }
     keys.forEach(function(k){
-      try {
-        if (hasUtm) {
-          var v = q.get(k);
-          if (v) {
-            sessionStorage.setItem("dm_"+k,v);
-            localStorage.setItem("dm_"+k,v);
-          } else {
-            sessionStorage.removeItem("dm_"+k);
-            localStorage.removeItem("dm_"+k);
-          }
-        } else {
-          sessionStorage.removeItem("dm_"+k);
-          localStorage.removeItem("dm_"+k);
-        }
-      } catch(e) {}
+      var v=q.get(k);
+      if(v){
+        try{
+          sessionStorage.setItem("dm_"+k,v);
+          localStorage.setItem("dm_"+k,v);
+        }catch(e){}
+      }
     });
     console.log("💎 [TRACKER] UTM Captured on load:", {
       source: sessionStorage.getItem("dm_utm_source"),
@@ -1186,7 +1174,7 @@ exports.handleFormSubmission = async (req, res, next) => {
     if (isRelayPath) {
       const referer = req.get('referer') || '';
       const urlParamSlug = String(req.params.slug || req.params[0] || '').trim().replace(/^api\/v1\/proxy\//i, '');
-      
+
       let detectedSlug = urlParamSlug;
 
       // If URL param is empty, try parsing referer
@@ -1196,7 +1184,7 @@ exports.handleFormSubmission = async (req, res, next) => {
           detectedSlug = refUrl.pathname.replace(/^\/+|\/+$/g, '');
           // If it's on a custom domain or mapped path, the first part might be the slug
           if (!detectedSlug && refUrl.searchParams.has('page')) {
-             // Fallback to query param if present
+            // Fallback to query param if present
           }
         } catch (e) { }
       }
@@ -1524,7 +1512,6 @@ exports.handleFormSubmission = async (req, res, next) => {
             <body>
               <div class="container">
                 <div class="header">
-                  <div class="logo">${(project.fromName || 'L')[0]}</div>
                   <h1>Message Received</h1>
                 </div>
                 <div class="content">
