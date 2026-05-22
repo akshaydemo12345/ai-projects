@@ -77,7 +77,10 @@ export const signInWithGooglePopup = async () => {
  */
 export const signOutUser = async () => {
   if (!auth) {
-    throw new Error('Firebase auth is not initialized');
+    // Firebase is not configured — skip Firebase sign-out silently.
+    // JWT-based logout in useAuth handles the actual session cleanup.
+    console.warn('Firebase auth not initialized — skipping Firebase sign-out.');
+    return;
   }
 
   try {

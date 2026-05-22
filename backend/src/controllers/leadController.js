@@ -102,9 +102,9 @@ exports.createLead = async (req, res) => {
     }
 
     // 3. Robust Real IP Detection
-    let ip_address = req.headers['x-forwarded-for'] 
-      || req.ip 
-      || (req.socket && req.socket.remoteAddress) 
+    let ip_address = req.headers['x-forwarded-for']
+      || req.ip
+      || (req.socket && req.socket.remoteAddress)
       || '';
     if (typeof ip_address === 'string' && ip_address.includes(',')) {
       ip_address = ip_address.split(',')[0].trim();
@@ -120,7 +120,7 @@ exports.createLead = async (req, res) => {
     // 5. UTM strictly from URL / current payload (no localStorage)
     const utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
     const utm = {};
-    
+
     // Initialize all to null
     utmFields.forEach(k => {
       utm[k] = null;
@@ -187,7 +187,7 @@ exports.createLead = async (req, res) => {
       pageSlug: pageSlug || (schema ? schema.page_slug : undefined) || (page ? page.slug : 'unknown'),
       data: leadData,
       utm, // Nested UTM object
-      
+
       // Flattened UTM fields at root
       utm_source: utm.utm_source,
       utm_medium: utm.utm_medium,
@@ -197,7 +197,7 @@ exports.createLead = async (req, res) => {
       gclid: utm.gclid,
       fbclid: utm.fbclid,
       msclkid: utm.msclkid,
-      
+
       formData: finalFormData,
       trackingDetails: {
         referral_url: referralUrl,
@@ -434,7 +434,6 @@ exports.createLead = async (req, res) => {
               <body>
                 <div class="container">
                   <div class="header">
-                    <div class="logo">${(project.fromName || 'L')[0]}</div>
                     <h1>Message Received</h1>
                   </div>
                   <div class="content">
@@ -493,10 +492,10 @@ exports.getLeads = async (req, res) => {
 
     // 1. Build Query
     const query = { isDeleted: isDeleted === 'true' };
-    
+
     // Filter by user's projects
     query.projectId = { $in: userProjectIds };
-    
+
     // If specific projectId requested, ensure it belongs to user
     if (projectId) {
       if (!userProjectIds.some(id => id.toString() === projectId)) {
@@ -504,7 +503,7 @@ exports.getLeads = async (req, res) => {
       }
       query.projectId = projectId; // Override to specific project
     }
-    
+
     if (pageId) query.pageId = pageId;
 
     if (utmSource) query.utm_source = utmSource;
@@ -683,10 +682,10 @@ exports.exportLeads = async (req, res) => {
 
     // 1. Reuse query logic
     const query = { isDeleted: false };
-    
+
     // Filter by user's projects
     query.projectId = { $in: userProjectIds };
-    
+
     // If specific projectId requested, ensure it belongs to user
     if (projectId) {
       if (!userProjectIds.some(id => id.toString() === projectId)) {
@@ -694,7 +693,7 @@ exports.exportLeads = async (req, res) => {
       }
       query.projectId = projectId; // Override to specific project
     }
-    
+
     if (pageId) query.pageId = pageId;
 
     if (utmSource) query.utm_source = utmSource;
@@ -855,13 +854,13 @@ exports.deleteLead = async (req, res) => {
     if (!lead) {
       return res.status(404).json({ status: 'fail', message: 'Lead not found' });
     }
-    
+
     // Check if the lead's project belongs to the user
     const project = await Project.findById(lead.projectId);
     if (!project || project.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ status: 'fail', message: 'Access denied to this lead' });
     }
-    
+
     await Lead.findByIdAndUpdate(req.params.id, { isDeleted: true });
     Project.findByIdAndUpdate(lead.projectId, { $inc: { leadCount: -1 } }).catch(() => { });
     res.status(200).json({ status: 'success', message: 'Lead soft-deleted' });
@@ -876,11 +875,11 @@ exports.deleteLead = async (req, res) => {
 exports.getLeadFilters = async (req, res) => {
   try {
     const { projectId } = req.query;
-    
+
     // Get user's projects
     const userProjects = await Project.find({ userId: req.user._id, isDeleted: false }).select('_id');
     const userProjectIds = userProjects.map(p => p._id);
-    
+
     const match = { isDeleted: false, projectId: { $in: userProjectIds } };
     if (projectId && mongoose.Types.ObjectId.isValid(projectId)) {
       if (!userProjectIds.some(id => id.toString() === projectId)) {
