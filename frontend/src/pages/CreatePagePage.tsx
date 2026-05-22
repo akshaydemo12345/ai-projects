@@ -538,25 +538,109 @@ const CreatePagePage = () => {
       enrichedStyles = enrichedStyles.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
-      if (project.scrapedData?.images?.length > 0) {
-        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner' || img.width > 1000);
-        let hasReplacedHero = false;
-        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
-          if (!hasReplacedHero && bannerImages.length > 0) {
-            hasReplacedHero = true;
-            return bannerImages[0].url || match;
-          }
-          return match;
-        });
+      // 1. Extract proper valid keywords for title and text
+      const industryText = project.category || "Business";
+      const subIndustryText = project.subIndustry || project.scrapedData?.subIndustry || "Services";
+      const pageTitle = project.name ? `${project.name} - ${industryText}` : `${industryText} ${subIndustryText} Services`;
+      
+      // Combine all available text from scraped data to create a large pool of content
+      let allText = [];
+      if (project.description) allText.push(project.description);
+      if (project.scrapedData?.summary) allText.push(project.scrapedData.summary);
+      if (project.scrapedData?.description) allText.push(project.scrapedData.description);
+      if (project.scrapedData?.about) allText.push(project.scrapedData.about);
+      if (Array.isArray(project.scrapedData?.services)) {
+        allText.push(...project.scrapedData.services.map((s: any) => typeof s === 'string' ? s : (s.description || s.title || '')));
       }
+      
+      const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions. We are dedicated to delivering top-tier services tailored to your specific needs. Our expert team ensures quality and excellence in everything we do. Partner with us for a brighter future and unparalleled success in your industry.`;
+      const combinedText = allText.filter(Boolean).join(" ") || fallbackText;
+      const scrapedWords = combinedText.split(/\s+/).filter(Boolean);
+      const totalWords = scrapedWords.length;
+      
+      // 2. IMPORTANT: Leave Unsplash image placeholders intact!
+      // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
 
-      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
-      if (project.description) {
-        enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
-        if (!enrichedContent.includes(project.description)) {
-          enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
-        }
-      }
+      // 3. Remove static pageName from banner and use proper valid keywords (title)
+      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1" style="z-index: 10; position: relative;">${pageTitle}</h1>`);
+      
+      // 4. Inject valid scraped data into all sections (paragraphs) safely without repetition
+      let currentWordIndex = 0;
+      enrichedContent = enrichedContent.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, content) => {
+         // Only replace non-empty paragraphs that don't contain inner HTML tags
+         if (content.length > 20 && !content.includes('<') && !content.includes('>')) {
+           // Calculate how many words we need to keep the design structure intact (~6 chars per word)
+           const targetWordCount = Math.max(8, Math.floor(content.length / 6));
+           
+           let snippetWords = [];
+           for (let i = 0; i < targetWordCount; i++) {
+             snippetWords.push(scrapedWords[(currentWordIndex + i) % totalWords]);
+           }
+           currentWordIndex = (currentWordIndex + targetWordCount) % totalWords;
+           
+           // Capitalize first letter and add a period at the end for proper formatting
+           let snippet = snippetWords.join(" ");
+           snippet = snippet.charAt(0).toUpperCase() + snippet.slice(1);
+           if (!snippet.endsWith('.')) snippet += '.';
+           
+           return match.replace(content, () => snippet.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+         }
+         return match;
+      });
+
+      // 5. Light/Dark Text Contrast adjustment script (auto-adapts text color based on background image brightness)
+      const colorScript = `
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const checkBrightnessAndAdjust = () => {
+            const sections = document.querySelectorAll('section, div, header');
+            sections.forEach(sec => {
+              const bgImg = window.getComputedStyle(sec).backgroundImage;
+              if (bgImg && bgImg !== 'none' && bgImg.includes('url')) {
+                const urlMatch = bgImg.match(/url\\(['"]?(.*?)['"]?\\)/);
+                if (urlMatch && urlMatch[1]) {
+                  const img = new Image();
+                  img.crossOrigin = 'Anonymous';
+                  img.src = urlMatch[1];
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if(!ctx) return;
+                    ctx.drawImage(img, 0, 0);
+                    try {
+                      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                      let r=0, g=0, b=0;
+                      const step = 4 * 10;
+                      let count = 0;
+                      for (let i = 0; i < data.length; i += step) {
+                        r += data[i]; g += data[i+1]; b += data[i+2]; count++;
+                      }
+                      if (count > 0) {
+                        r = Math.floor(r / count);
+                        g = Math.floor(g / count);
+                        b = Math.floor(b / count);
+                        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                        const textColor = brightness < 128 ? '#ffffff' : '#000000';
+                        sec.style.color = textColor;
+                        const texts = sec.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, a');
+                        texts.forEach(t => t.style.color = textColor);
+                      }
+                    } catch(e) { }
+                  };
+                }
+              }
+            });
+          };
+          checkBrightnessAndAdjust();
+          setTimeout(checkBrightnessAndAdjust, 1000);
+        });
+      <\/script>
+      `.replace('<\\/script>', '</script>');
+      
+      // Inject script
+      enrichedContent += colorScript;
 
       // We only send the aiPrompt for template enrichment if the user has modified it from the default.
       // Otherwise, we clear it to avoid triggering the backend AI service.

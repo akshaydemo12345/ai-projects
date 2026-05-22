@@ -31,7 +31,7 @@ async function generateGetImgUrl(promptText, width = 512, height = 512) {
         width,
         height,
         steps: 30,
-        response_format: 'url'
+        response_format: 'b64'  // Use base64 so image is embedded permanently (signed URLs expire in 1h)
       })
     });
 
@@ -42,13 +42,21 @@ async function generateGetImgUrl(promptText, width = 512, height = 512) {
     }
 
     const data = await response.json();
-    if (data && data.url) {
-      logger.info(`[getimg.ai] Image generated successfully: ${data.url}`);
-      return data.url;
-    } else {
-      logger.warn(`[getimg.ai] API response missing url field: ${JSON.stringify(data)}`);
-      return null;
+    
+    // b64 format returns data.image as base64 string
+    if (data && data.image) {
+      const dataUri = `data:image/jpeg;base64,${data.image}`;
+      logger.info(`[getimg.ai] Image generated successfully (base64, ${data.image.length} chars)`);
+      return dataUri;
     }
+    // Fallback: if url is returned for any reason
+    if (data && data.url) {
+      logger.info(`[getimg.ai] Image generated (url fallback): ${data.url}`);
+      return data.url;
+    }
+    
+    logger.warn(`[getimg.ai] API response missing image/url field: ${JSON.stringify(data).slice(0, 200)}`);
+    return null;
   } catch (error) {
     logger.error(`[getimg.ai] Exception during API call: ${error.message}`);
     return null;
