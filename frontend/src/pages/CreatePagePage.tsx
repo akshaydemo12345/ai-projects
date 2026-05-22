@@ -210,7 +210,7 @@ const LANDING_TEMPLATES: any[] = [
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
-    img: "/assets/templates/travel/templates01/backrund-img.png",
+    img: "/assets/templates/travel/templates01/newpd.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
   },
