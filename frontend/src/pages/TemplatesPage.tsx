@@ -39,7 +39,7 @@ const LANDING_TEMPLATES = [
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
-    img: "/assets/templates/travel/templates01/heronew.png",
+    img: "/assets/templates/travel/templates01/backrund-img.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
   },
   {

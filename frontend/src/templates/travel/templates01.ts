@@ -416,13 +416,9 @@ header {
   transition: all 0.3s ease;
 }
 .ft-item.light-bg {
-  background-image: url('light_bg_placeholder.jpg');
-  background-size: cover;
   color: var(--dark);
 }
 .ft-item.dark-bg {
-  background-image: url('dark_bg_placeholder.jpg');
-  background-size: cover;
   color: #fff;
 }
 .ft-header { display: flex; align-items: center; gap: 1rem; padding: 1.2rem; cursor: pointer; user-select: none; }
@@ -582,7 +578,7 @@ export const travel01Html = `
         </div>
 
         <div class="tour-item">
-          <img src="https://media.istockphoto.com/id/1212840960/photo/tour-agent-sitting-at-table-in-office-holding-passports-and-tickets-looking-camera-cheerful.webp?a=1&b=1&s=612x612&w=0&k=20&c=ZeOxR9c6NIoYpj0kE04FWkHn0Ss83_ngpDp232xXNLU=" alt="US Explorer adventure" class="tour-img">
+          <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80" alt="US Explorer adventure" class="tour-img">
           <div class="tour-content">
             <div class="tour-rating"><i class="fa-solid fa-star"></i> 4.9</div>
             <h3>US Explorer adventure</h3>
@@ -783,7 +779,7 @@ export const travel01Html = `
         <span class="section-subtitle">Why Choose Us</span>
         <h2>Experience the World with our Travelon Co</h2>
         <div class="ft-list">
-        <div class="ft-item">
+        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
           <div class="ft-header">
             <h3 class="ft-title">Experience the World with our Travelon Co</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
@@ -793,7 +789,7 @@ export const travel01Html = `
           </div>
         </div>
         
-        <div class="ft-item">
+        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
           <div class="ft-header">
             <h3 class="ft-title">Where Do You Want To Go?</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
@@ -803,7 +799,7 @@ export const travel01Html = `
           </div>
         </div>
         
-        <div class="ft-item">
+        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
           <div class="ft-header">
             <h3 class="ft-title">What Are Your Expectations?</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
