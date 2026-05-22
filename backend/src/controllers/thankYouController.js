@@ -128,9 +128,16 @@ exports.renderThankYouPage = async (req, res, next) => {
       customMessage: page.thankYouConfig?.content?.customMessage || layoutConfig.defaultContent.customMessage
     };
 
+    // For 'default' layout: page.primaryColor wins so button/check-circle match the landing page header.
+    // All other layouts keep their own saved branding color as first priority.
+    const isDefaultLayout = layoutId === 'default';
     const branding = {
-      primaryColor: page.thankYouConfig?.branding?.primaryColor || page.primaryColor || layoutConfig.theme.primaryColor,
-      secondaryColor: page.thankYouConfig?.branding?.secondaryColor || page.secondaryColor || layoutConfig.theme.secondaryColor,
+      primaryColor: isDefaultLayout
+        ? (page.primaryColor || page.thankYouConfig?.branding?.primaryColor || layoutConfig.theme.primaryColor)
+        : (page.thankYouConfig?.branding?.primaryColor || page.primaryColor || layoutConfig.theme.primaryColor),
+      secondaryColor: isDefaultLayout
+        ? (page.secondaryColor || page.thankYouConfig?.branding?.secondaryColor || layoutConfig.theme.secondaryColor)
+        : (page.thankYouConfig?.branding?.secondaryColor || page.secondaryColor || layoutConfig.theme.secondaryColor),
       logoUrl: page.thankYouConfig?.branding?.logoUrl || page.logoUrl || ''
     };
 
@@ -320,9 +327,16 @@ exports.previewThankYouPage = async (req, res, next) => {
       customMessage: content?.customMessage || layoutConfig.defaultContent.customMessage
     };
 
+    // For 'default' layout: page.primaryColor wins so button/check-circle match the landing page header.
+    // All other layouts keep their own saved branding color as first priority.
+    const isDefaultLayoutPreview = layout === 'default';
     const mergedBranding = {
-      primaryColor: branding?.primaryColor || (page ? page.primaryColor : null) || layoutConfig.theme.primaryColor,
-      secondaryColor: branding?.secondaryColor || (page ? page.secondaryColor : null) || layoutConfig.theme.secondaryColor,
+      primaryColor: isDefaultLayoutPreview
+        ? ((page ? page.primaryColor : null) || branding?.primaryColor || layoutConfig.theme.primaryColor)
+        : (branding?.primaryColor || (page ? page.primaryColor : null) || layoutConfig.theme.primaryColor),
+      secondaryColor: isDefaultLayoutPreview
+        ? ((page ? page.secondaryColor : null) || branding?.secondaryColor || layoutConfig.theme.secondaryColor)
+        : (branding?.secondaryColor || (page ? page.secondaryColor : null) || layoutConfig.theme.secondaryColor),
       logoUrl: branding?.logoUrl || (page ? page.logoUrl : '') || ''
     };
 

@@ -462,7 +462,7 @@ exports.createPage = async (req, res, next) => {
     // 8.1 Replace Unsplash/Picsum/Freepik/Placeholder images with getimg.ai API generated images
     try {
       const ImageGenerationService = require('../services/imageGenerationService');
-      
+
       const subIndustryToUse = project.scrapedData?.subIndustry || page.industry || 'General';
       const industryToUse = page.industry || project.industry || 'General';
 
@@ -475,7 +475,7 @@ exports.createPage = async (req, res, next) => {
           industryToUse,
           subIndustryToUse
         );
-      } 
+      }
       // 2. Process page.content if it is an object (template generation data)
       else if (page.content && typeof page.content === 'object') {
         if (page.content.fullHtml) {
