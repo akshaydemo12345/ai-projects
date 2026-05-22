@@ -210,7 +210,7 @@ const LANDING_TEMPLATES: any[] = [
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
-    img: "/assets/templates/travel/templates01/heronew.png",
+    img: "/assets/templates/travel/templates01/backrund-img.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
   },
@@ -542,7 +542,7 @@ const CreatePagePage = () => {
       const industryText = project.category || "Business";
       const subIndustryText = project.subIndustry || project.scrapedData?.subIndustry || "Services";
       const pageTitle = project.name ? `${project.name} - ${industryText}` : `${industryText} ${subIndustryText} Services`;
-      
+
       // Combine all available text from scraped data to create a large pool of content
       let allText = [];
       if (project.description) allText.push(project.description);
@@ -552,40 +552,40 @@ const CreatePagePage = () => {
       if (Array.isArray(project.scrapedData?.services)) {
         allText.push(...project.scrapedData.services.map((s: any) => typeof s === 'string' ? s : (s.description || s.title || '')));
       }
-      
+
       const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions. We are dedicated to delivering top-tier services tailored to your specific needs. Our expert team ensures quality and excellence in everything we do. Partner with us for a brighter future and unparalleled success in your industry.`;
       const combinedText = allText.filter(Boolean).join(" ") || fallbackText;
       const scrapedWords = combinedText.split(/\s+/).filter(Boolean);
       const totalWords = scrapedWords.length;
-      
+
       // 2. IMPORTANT: Leave Unsplash image placeholders intact!
       // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
 
       // 3. Remove static pageName from banner and use proper valid keywords (title)
       enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1" style="z-index: 10; position: relative;">${pageTitle}</h1>`);
-      
+
       // 4. Inject valid scraped data into all sections (paragraphs) safely without repetition
       let currentWordIndex = 0;
       enrichedContent = enrichedContent.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, content) => {
-         // Only replace non-empty paragraphs that don't contain inner HTML tags
-         if (content.length > 20 && !content.includes('<') && !content.includes('>')) {
-           // Calculate how many words we need to keep the design structure intact (~6 chars per word)
-           const targetWordCount = Math.max(8, Math.floor(content.length / 6));
-           
-           let snippetWords = [];
-           for (let i = 0; i < targetWordCount; i++) {
-             snippetWords.push(scrapedWords[(currentWordIndex + i) % totalWords]);
-           }
-           currentWordIndex = (currentWordIndex + targetWordCount) % totalWords;
-           
-           // Capitalize first letter and add a period at the end for proper formatting
-           let snippet = snippetWords.join(" ");
-           snippet = snippet.charAt(0).toUpperCase() + snippet.slice(1);
-           if (!snippet.endsWith('.')) snippet += '.';
-           
-           return match.replace(content, () => snippet.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
-         }
-         return match;
+        // Only replace non-empty paragraphs that don't contain inner HTML tags
+        if (content.length > 20 && !content.includes('<') && !content.includes('>')) {
+          // Calculate how many words we need to keep the design structure intact (~6 chars per word)
+          const targetWordCount = Math.max(8, Math.floor(content.length / 6));
+
+          let snippetWords = [];
+          for (let i = 0; i < targetWordCount; i++) {
+            snippetWords.push(scrapedWords[(currentWordIndex + i) % totalWords]);
+          }
+          currentWordIndex = (currentWordIndex + targetWordCount) % totalWords;
+
+          // Capitalize first letter and add a period at the end for proper formatting
+          let snippet = snippetWords.join(" ");
+          snippet = snippet.charAt(0).toUpperCase() + snippet.slice(1);
+          if (!snippet.endsWith('.')) snippet += '.';
+
+          return match.replace(content, () => snippet.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+        }
+        return match;
       });
 
       // 5. Light/Dark Text Contrast adjustment script (auto-adapts text color based on background image brightness)
@@ -638,7 +638,7 @@ const CreatePagePage = () => {
         });
       <\/script>
       `.replace('<\\/script>', '</script>');
-      
+
       // Inject script
       enrichedContent += colorScript;
 
@@ -682,6 +682,8 @@ ${enrichedContent}
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
         generationMethod: isAiTemplatePath ? "ai" : "template",
+        // Pass industry so backend imageGenerationService generates relevant AI images
+        industry: project.category || project.industry || project.subIndustry || "Service",
         // Store as object with fullHtml so editor and publisher both work correctly
         content: { fullHtml: fullTemplateHtml, html: enrichedContent, fullCss: enrichedStyles },
         styles: enrichedStyles,
@@ -704,6 +706,8 @@ ${enrichedContent}
       primaryColor,
       secondaryColor,
       logoUrl,
+      // Explicitly pass industry so imageGenerationService receives it for AI image prompts
+      industry: project?.category || project?.industry || "Service",
       aiPrompt: activeMethod === "ai" ? aiPrompt : "",
       generationMethod: activeMethod === "ai" ? "ai" : "template",
       accentColor: "#6366f1",
