@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
@@ -19,6 +18,7 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { useState, useEffect } from "react";
 
 // Templates removed as per user request
 
@@ -324,6 +324,67 @@ const CreatePagePage = () => {
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+
+// Helper to get an image URL for a given industry (static dummy URLs – random selection)
+const industryImages: Record<string, string[]> = {
+  Travel: [
+    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800",
+  ],
+  Finance: [
+    "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500",
+  ],
+  Healthcare: [
+    "https://images.unsplash.com/photo-1511174511562-5f7f18b8742e?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500",
+  ],
+  default: [
+    "https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=800&q=80",
+  ],
+};
+
+const getImageForIndustry = (industry: string): string => {
+  const candidates = industryImages[industry] ?? industryImages.default;
+  // Pick a random image from the list each time the function is called
+  const idx = Math.floor(Math.random() * candidates.length);
+  return candidates[idx];
+};
+
+// Simulated AI image generation button (frontend‑only)
+const AiGenerateButton: React.FC<{ industry: string }> = ({ industry }) => {
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = () => {
+    setGenerating(true);
+    // Fake delay to mimic AI processing
+    setTimeout(() => {
+      if (previewTemplate && previewTemplate.html) {
+        let newHtml = previewTemplate.html;
+        
+        // Replace all common hardcoded placeholders in the preview with dynamic industry images
+        const urlRegex = /(https:\/\/images\.unsplash\.com\/[^"'\s\)]+|\/assets\/templates\/[^"'\s\)]+)/gi;
+        newHtml = newHtml.replace(urlRegex, () => getImageForIndustry(industry));
+        newHtml = newHtml.replace(/{{IMG}}/g, () => getImageForIndustry(industry));
+
+        setPreviewTemplate({ ...previewTemplate, html: newHtml });
+      }
+      setGenerating(false);
+      toast.success("AI images preview generated!");
+    }, 800);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleGenerate}
+      disabled={generating}
+      className="mt-4 btn-primary flex items-center gap-2"
+    >
+      {generating ? "Generating…" : "Generate AI Images"}
+    </button>
+  );
+};
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(4);
 
@@ -558,7 +619,7 @@ const CreatePagePage = () => {
       const scrapedWords = combinedText.split(/\s+/).filter(Boolean);
       const totalWords = scrapedWords.length;
 
-      // 2. IMPORTANT: Leave Unsplash image placeholders intact!
+      // 2. IMPORTANT: Leave Unsplash and template asset image placeholders intact!
       // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
 
       // 3. Remove static pageName from banner and use proper valid keywords (title)
@@ -676,16 +737,16 @@ ${enrichedContent}
 </body>
 </html>`;
 
+      // Use injected HTML from preview if available; otherwise fall back to enrichedContent
+      const finalHtml = previewTemplate?.html || enrichedContent;
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
-        generationMethod: isAiTemplatePath ? "ai" : "template",
-        // Pass industry so backend imageGenerationService generates relevant AI images
-        industry: project.category || project.industry || project.subIndustry || "Service",
+        generationMethod: "template",
         // Store as object with fullHtml so editor and publisher both work correctly
-        content: { fullHtml: fullTemplateHtml, html: enrichedContent, fullCss: enrichedStyles },
+        content: { fullHtml: fullTemplateHtml, html: finalHtml, fullCss: enrichedStyles },
         styles: enrichedStyles,
         // Also store as landingPageContent for the public page renderer
         landingPageContent: fullTemplateHtml,
@@ -708,8 +769,10 @@ ${enrichedContent}
       logoUrl,
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
       industry: project?.category || project?.industry || "Service",
+      subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
       aiPrompt: activeMethod === "ai" ? aiPrompt : "",
-      generationMethod: activeMethod === "ai" ? "ai" : "template",
+      // Always use template generation on the frontend
+      generationMethod: "template",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -878,6 +941,7 @@ ${enrichedContent}
                       <p className="text-sm font-semibold text-emerald-700">
                         Template: {LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name}
                       </p>
+                      {project?.category && <AiGenerateButton industry={project.category} />}
                       <button onClick={() => { setSelectedTemplate(null); setAiPrompt(""); }} className="ml-auto text-emerald-500 hover:text-emerald-700">
                         <X className="h-4 w-4" />
                       </button>

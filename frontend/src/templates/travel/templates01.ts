@@ -410,6 +410,7 @@ header {
 .ft-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
 .ft-item {
   background: #f8fafc;
+  background-image: none !important;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
@@ -425,6 +426,7 @@ header {
 .ft-title { font-size: clamp(1rem, 1.5vw, 1.1rem); font-weight: 700; margin: 0; flex: 1; color: var(--dark); }
 .ft-item.dark-bg .ft-title { color: #fff; }
 .ft-icon-toggle { font-size: 1.2rem; color: var(--primary); transition: transform 0.3s ease; flex-shrink: 0; }
+.ft-item.active .ft-icon-toggle { transform: rotate(180deg); }
 .ft-body { max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), padding 0.3s ease; padding: 0 1.2rem; }
 .ft-item.active .ft-body { padding: 0 1.2rem 1.2rem 1.2rem; max-height: 1000px; }
 .ft-body p { color: var(--gray); font-size: 0.95rem; line-height: 1.5; margin: 0; }
@@ -505,7 +507,8 @@ export const travel01Html = `
 </header>
 
 <main>
-  <section class="hero" style="background-image: url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=2000');">
+  <section class="hero" style="position: relative; overflow: hidden;">
+    <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=2000" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;" alt="Hero Background">
     <div class="container hero-content">
       <div class="hero-text">
         <h4>Let's Travel The World</h4>
@@ -641,7 +644,8 @@ export const travel01Html = `
 
   <section class="banner">
     <div class="container">
-      <div class="banner-inner" style="background-image: url('https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&q=80&w=2000');">
+      <div class="banner-inner" style="position: relative; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&q=80&w=2000" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;" alt="Banner Background">
         <div class="banner-content">
           <span style="color: #fff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 1rem;">Special Offer For You</span>
           <h2>Grab Up to 50% Off<br>on Your Favorites<br>Destination</h2>
@@ -779,8 +783,8 @@ export const travel01Html = `
         <span class="section-subtitle">Why Choose Us</span>
         <h2>Experience the World with our Travelon Co</h2>
         <div class="ft-list">
-        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
-          <div class="ft-header">
+        <div class="ft-item">
+          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
             <h3 class="ft-title">Experience the World with our Travelon Co</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
           </div>
@@ -789,8 +793,8 @@ export const travel01Html = `
           </div>
         </div>
         
-        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
-          <div class="ft-header">
+        <div class="ft-item">
+          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
             <h3 class="ft-title">Where Do You Want To Go?</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
           </div>
@@ -799,8 +803,8 @@ export const travel01Html = `
           </div>
         </div>
         
-        <div class="ft-item" style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80'); background-size: cover;">
-          <div class="ft-header">
+        <div class="ft-item">
+          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
             <h3 class="ft-title">What Are Your Expectations?</h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
           </div>
@@ -862,6 +866,22 @@ export const travel01Html = `
   </div>
 	<script>
 	(function() {
+	  window.toggleFtAccordion = function(header) {
+	    const item = header.closest('.ft-item');
+	    if (!item) return;
+	    const items = document.querySelectorAll('.ft-item');
+	    items.forEach(i => {
+	      if (i !== item) {
+	        i.classList.remove('active');
+	        const ic = i.querySelector('.ft-icon-toggle');
+	        if (ic) ic.style.transform = 'rotate(0deg)';
+	      }
+	    });
+	    item.classList.toggle('active');
+	    const icon = item.querySelector('.ft-icon-toggle');
+	    if (icon) icon.style.transform = item.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+	  };
+
 	  function initAccordion() {
 	    const items = document.querySelectorAll('.ft-item');
 	    items.forEach(item => {
