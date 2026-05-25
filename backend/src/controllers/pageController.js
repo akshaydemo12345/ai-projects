@@ -26,6 +26,8 @@ const createPageSchema = z.object({
   prefix: z.string().optional(),
   template: z.string().optional(),
   content: z.any().optional(),
+  landingPageContent: z.any().optional(),
+  landingPageStyles: z.string().optional(),
   business_name: z.string().optional(),
   businessDescription: z.string().optional(),
   business_description: z.string().optional(),
@@ -252,6 +254,8 @@ exports.createPage = async (req, res, next) => {
       finalSlug,
       template,
       content: initialContent,
+      landingPageContent: initialLandingPageContent,
+      landingPageStyles: initialLandingPageStyles,
       business_name,
       businessDescription,
       business_description,
@@ -335,6 +339,8 @@ exports.createPage = async (req, res, next) => {
       aiPrompt: ai_prompt || camelAiPrompt,
       content: initialContent || {},
       styles: initialStyles || '',
+      landingPageContent: initialLandingPageContent || '',
+      landingPageStyles: initialLandingPageStyles || '',
       primaryColor: primaryColor || project.primaryColor || '#7c3aed',
       secondaryColor: secondaryColor || project.secondaryColor || '#6366f1',
       accentColor: accentColor || project.secondaryColor || '#6366f1',
@@ -460,6 +466,11 @@ exports.createPage = async (req, res, next) => {
       } else {
         page.styles = brandingStyles + (aiResponse.fullCss || '');
       }
+
+      // Set landingPageContent and landingPageStyles
+      page.landingPageContent = processedHtml;
+      page.landingPageStyles = page.styles;
+
     } else {
       // AI generation essentially failed or skipped, keep initial content/styles
       console.log('⚠️ AI response too short or empty, or generation skipped. Preserving initial content');
@@ -472,11 +483,61 @@ exports.createPage = async (req, res, next) => {
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
+      // Set landingPageContent and landingPageStyles
+      page.landingPageContent = initialLandingPageContent || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
+      page.landingPageStyles = initialLandingPageStyles || page.styles;
+    }
+
+    // 8.1 Replace Unsplash/Picsum/Freepik/Placeholder images with getimg.ai API generated images
+    try {
+      const ImageGenerationService = require('../services/imageGenerationService');
+
+      const subIndustryToUse = project.scrapedData?.subIndustry || page.industry || 'General';
+      const industryToUse = page.industry || project.industry || 'General';
+
+      logger.info(`[ImageGenerationService] Processing page images for project industry: "${industryToUse}", sub-industry: "${subIndustryToUse}"`);
+
+      // 1. Process page.content if it is a string (AI generation HTML)
+      if (typeof page.content === 'string') {
+        page.content = await ImageGenerationService.replacePlaceholdersInHtml(
+          page.content,
+          industryToUse,
+          subIndustryToUse
+        );
+      }
+      // 2. Process page.content if it is an object (template generation data)
+      else if (page.content && typeof page.content === 'object') {
+        if (page.content.fullHtml) {
+          page.content.fullHtml = await ImageGenerationService.replacePlaceholdersInHtml(
+            page.content.fullHtml,
+            industryToUse,
+            subIndustryToUse
+          );
+        }
+        if (page.content.html) {
+          page.content.html = await ImageGenerationService.replacePlaceholdersInHtml(
+            page.content.html,
+            industryToUse,
+            subIndustryToUse
+          );
+        }
+      }
+
+      // 3. Process page.landingPageContent (full HTML page stored for preview/publish)
+      if (page.landingPageContent && typeof page.landingPageContent === 'string') {
+        page.landingPageContent = await ImageGenerationService.replacePlaceholdersInHtml(
+          page.landingPageContent,
+          industryToUse,
+          subIndustryToUse
+        );
+      }
+    } catch (imgErr) {
+      logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
     }
 
     page.seo = aiResponse.seo || {};
 
-    // 8. Update Page with Cumulative AI Usage and History
+    // 8.2 Update Page with Cumulative AI Usage and History
     if (aiResponse.aiUsage) {
       const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
 

@@ -86,6 +86,8 @@ export interface LandingPage {
   noFollow?: boolean;
   noIndexNoFollow?: boolean;
   generationMethod?: "ai" | "analyze" | "manual" | "template";
+  industry?: string;
+  subIndustry?: string;
   aiPrompt?: string;
   apiToken?: string;
   previewToken?: string;
@@ -832,5 +834,27 @@ export const thankYouApi = {
       .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
     
     return html;
+  },
+};
+
+// --- User API ---
+export const userApi = {
+  updateProfile: async (data: { name?: string; avatar?: string }) => {
+    return apiFetch('/user/update-profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+  changePassword: async (data: any) => {
+    return apiFetch('/user/change-password', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+  deleteAccount: async (data: { password?: string }) => {
+    return apiFetch('/user/account', {
+      method: 'DELETE',
+      body: JSON.stringify(data),
+    });
   },
 };
