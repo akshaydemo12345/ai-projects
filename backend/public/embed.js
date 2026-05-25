@@ -180,15 +180,49 @@
           css = result.thankYouPageStyles || css;
           title = title + ' - Thank You';
         } else {
-          // Default thank you message if no custom page is built
-          content = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; padding: 20px;">
-                <div style="font-size: 64px; margin-bottom: 24px;">✅</div>
-                <h1 style="font-size: 32px; color: #111827; margin-bottom: 16px;">Thank You for your submission!</h1>
-                <p style="font-size: 18px; color: #4b5563; max-width: 500px; line-height: 1.6;">We have received your details and our team will get back to you shortly.</p>
-                <a href="${window.location.pathname.replace(/\/thank-you\/?$/, '')}${window.location.search}" style="margin-top: 32px; background: ${result.primaryColor || '#7c3aed'}; color: white; padding: 12px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;">Return to Home</a>
-            </div>
-           `;
+          // Fetch dynamic thank-you layout from the thank-you render endpoint
+          let fetchedDynamicThankYou = false;
+          try {
+            const pageSlugForThankYou = (result.meta && result.meta.slug) || page || '';
+            console.log('🙏 [SDK] Attempting to fetch thank-you layout for slug:', pageSlugForThankYou);
+            if (pageSlugForThankYou) {
+              const tyUrl = `${apiBase}/api/thank-you/render/${encodeURIComponent(pageSlugForThankYou)}`;
+              console.log('🙏 [SDK] Thank-you fetch URL:', tyUrl);
+              const tyResponse = await fetch(tyUrl, {
+                headers: { 'bypass-tunnel-reminder': 'true' }
+              });
+              console.log('🙏 [SDK] Thank-you response status:', tyResponse.status);
+              if (tyResponse.ok) {
+                const dynamicThankYouHtml = await tyResponse.text();
+                console.log('🙏 [SDK] Thank-you HTML length:', dynamicThankYouHtml.length);
+                if (dynamicThankYouHtml && dynamicThankYouHtml.length > 100) {
+                  content = dynamicThankYouHtml;
+                  fetchedDynamicThankYou = true;
+                  title = title + ' - Thank You';
+                  css = '';  // Let the dynamic layout handle its own styles
+                  console.log('🙏 [SDK] ✅ Successfully loaded dynamic thank-you layout');
+                }
+              } else {
+                console.log('🙏 [SDK] ❌ Thank-you response not ok');
+              }
+            } else {
+              console.log('🙏 [SDK] ❌ No slug available for thank-you fetch');
+            }
+          } catch (e) {
+            console.log('🙏 [SDK] ❌ Error fetching dynamic thank-you layout:', e);
+          }
+          
+          // Fallback: Default thank you message if no custom page is built and fetch fails
+          if (!fetchedDynamicThankYou) {
+            content = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; padding: 20px;">
+                  <div style="font-size: 64px; margin-bottom: 24px;">✅</div>
+                  <h1 style="font-size: 32px; color: #111827; margin-bottom: 16px;">Thank You for your submission!</h1>
+                  <p style="font-size: 18px; color: #4b5563; max-width: 500px; line-height: 1.6;">We have received your details and our team will get back to you shortly.</p>
+                  <a href="${window.location.pathname.replace(/\/thank-you\/?$/, '')}${window.location.search}" style="margin-top: 32px; background: ${result.primaryColor || '#7c3aed'}; color: white; padding: 12px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;">Return to Home</a>
+              </div>
+             `;
+          }
         }
       }
 
