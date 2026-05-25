@@ -87,6 +87,7 @@ export interface LandingPage {
   noIndexNoFollow?: boolean;
   generationMethod?: "ai" | "analyze" | "manual" | "template";
   industry?: string;
+  subIndustry?: string;
   aiPrompt?: string;
   apiToken?: string;
   previewToken?: string;
