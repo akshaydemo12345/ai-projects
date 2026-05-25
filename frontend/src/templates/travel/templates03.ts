@@ -180,14 +180,6 @@ export const travel03Html = `
         <input type="text" name="full_name" placeholder="Jane Doe" required>
       </div>
       <div class="form-field">
-        <label>Destination</label>
-        <select name="destination">
-          <option>Bali Serenity</option>
-          <option>Patagonian Silence</option>
-          <option>Nordic Stillness</option>
-        </select>
-      </div>
-      <div class="form-field">
         <label>Travel Date</label>
         <input type="date" name="travel_date" required>
       </div>
@@ -223,7 +215,7 @@ export const travel03Html = `
     </div>
     <div class="dest-grid">
       <div class="dest-card">
-        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=600" alt="Bali">
+        <img src="https://images.unsplash.com/photo-1532236204992-f5e85c024202?auto=format&fit=crop&q=80&w=800" alt="Bali">
         <div class="dest-card-overlay">
           <span>INDONESIA</span>
           <h3>Ubud Serenity</h3>

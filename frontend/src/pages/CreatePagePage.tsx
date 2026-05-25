@@ -198,6 +198,14 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
+  {
+    id: "healthcare-04",
+    name: "Medlio Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates04/H1.png",
+    gradient: "linear-gradient(135deg, #1750A8 0%, #e6f2ff 100%)",
+    prompt: "A professional medical healthcare landing page featuring a topbar, hero section with badges, 6-grid services, meet our specialists, and an appointment form.",
+  },
 
   {
     id: "travel-01",
