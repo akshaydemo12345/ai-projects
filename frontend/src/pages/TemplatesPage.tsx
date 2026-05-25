@@ -25,21 +25,21 @@ const LANDING_TEMPLATES = [
     id: "healthcare-02",
     name: "Elite Healthcare",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    img: "/assets/templates/healthcare/templates02/screnshort81.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
   },
   {
     id: "healthcare-03",
     name: "Lumina Medical Center",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates03/hero.png",
+    img: "/assets/templates/healthcare/templates03/screnshort82.png",
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
   },
   {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
-    img: "/assets/templates/travel/templates01/heronew.png",
+    img: "/assets/templates/travel/templates01/newpd.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
   },
   {
@@ -249,6 +249,13 @@ const TemplatesPage = () => {
           .replace(/PRIMARY_RGB_PLACEHOLDER/g, '99, 102, 241')
           .replace(/SECONDARY_RGB_PLACEHOLDER/g, '79, 70, 229');
 
+        // Extract inline <script> tags from the template HTML so they execute inside the iframe
+        // (GrapesJS strips them, but the preview modal can safely run them)
+        const scriptMatches = styledHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+        const inlineScripts = scriptMatches
+          .filter(s => !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config'))
+          .join('\n');
+
         return (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
@@ -283,6 +290,7 @@ const TemplatesPage = () => {
                     </head>
                     <body>
                       ${styledHtml}
+                      ${inlineScripts}
                     </body>
                   </html>
                 `}

@@ -951,8 +951,8 @@ Absolutely. We reserve specific slots daily for emergency cases. If you're exper
 <div class="footer-bottom font-body-md">
 <p>© 2024 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
 <div class="footer-badges">
-<img class="footer-badge" data-alt="logo placeholder for a health certification board" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKRJt8oBcseuSBGNndrrxoYVHunBUy5Dd1k93WnWZoHSHWyHpK8ODwNZhPX_lVIz2Yb2QiJ1B2vtSw7zthGFrsbmqrOoPy3azGCuqgaNmisJUZJa3sI_gK-tFV0AdZDG8vBjKzy2fanPFDokTJSGUX6rNkYcRU9nMXtdBa1eQEvL21OCs_Nx3JqpLMHGD-FgXUS2Kyi9BYou75JnSlnlCwfKh45NcTV4Tsv2CJXnfjn88WxNbVS6wP0Ygq13HiHk80DelkWwNkNyNt"/>
-<img class="footer-badge" data-alt="logo placeholder for a dental association badge" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUZ-bvybxaFEFV24fQb7cSrlMjN5cn0oxj4Kuo8oR8g0FRK5MGl5OeqlrfozU9NoLhZrP87woA4slmOg3urJ7V4tsCLpNc-06Pwmq8aFFWf2oRdIDSLttCtNWnqMeZX5hN_y1BAAX6xyv-eiYiGQcM72SQPmmKvOCwuT6t-y16AjLQu4-QiJ2qWCLlo2tmKZ996nIAovc5nZ6hvcctjhK2WLJV-0p64-KNzbGawRn5Z8JNxXMzhDsoSmzjrgDcepooxbQRoFD8DUyF"/>
+<img class="footer-badge" data-alt="logo placeholder for a health certification board" src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=200&q=80"/>
+<img class="footer-badge" data-alt="logo placeholder for a dental association badge" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=200&q=80"/>
 </div>
 </div>
 </footer>

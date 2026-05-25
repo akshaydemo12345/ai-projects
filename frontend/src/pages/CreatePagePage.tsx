@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
@@ -19,6 +18,7 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { useState, useEffect } from "react";
 
 // Templates removed as per user request
 
@@ -186,7 +186,7 @@ const LANDING_TEMPLATES: any[] = [
     id: "healthcare-02",
     name: "Elite Healthcare",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    img: "/assets/templates/healthcare/templates02/screnshort81.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
     prompt: "A professional healthcare landing page with a hero background, 3 feature cards, about section with image grid, and a comprehensive services list.",
   },
@@ -194,23 +194,16 @@ const LANDING_TEMPLATES: any[] = [
     id: "healthcare-03",
     name: "Lumina Medical Center",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates03/screnshort8.png",
+    img: "/assets/templates/healthcare/templates03/screnshort82.png",
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
     prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
   },
-  // {
-  //   id: "healthcare-04",
-  //   name: "Lumina Medical Center",
-  //   tag: "Healthcare",
-  //   img: "/assets/templates/healthcare/templates03/screnshort8.png",
-  //   gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
-  //   prompt: "A comprehensive healthcare landing page with circular hero image, overlapping about sections, pricing plans, consultation form, and high-tech FAQ.",
-  // },
+
   {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
-    img: "/assets/templates/travel/templates01/heronew.png",
+    img: "/assets/templates/travel/templates01/newpd.png",
     gradient: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
     prompt: "A luxury travel landing page for Azure Luxury Escapes. High-end feel, teal and aqua color palette, focus on secluded island resorts and private experiences.",
   },
@@ -324,6 +317,67 @@ const CreatePagePage = () => {
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+
+  // Helper to get an image URL for a given industry (static dummy URLs – random selection)
+  const industryImages: Record<string, string[]> = {
+    Travel: [
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800",
+    ],
+    Finance: [
+      "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500",
+    ],
+    Healthcare: [
+      "https://images.unsplash.com/photo-1511174511562-5f7f18b8742e?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500",
+    ],
+    default: [
+      "https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=800&q=80",
+    ],
+  };
+
+  const getImageForIndustry = (industry: string): string => {
+    const candidates = industryImages[industry] ?? industryImages.default;
+    // Pick a random image from the list each time the function is called
+    const idx = Math.floor(Math.random() * candidates.length);
+    return candidates[idx];
+  };
+
+  // Simulated AI image generation button (frontend‑only)
+  const AiGenerateButton: React.FC<{ industry: string }> = ({ industry }) => {
+    const [generating, setGenerating] = useState(false);
+
+    const handleGenerate = () => {
+      setGenerating(true);
+      // Fake delay to mimic AI processing
+      setTimeout(() => {
+        if (previewTemplate && previewTemplate.html) {
+          let newHtml = previewTemplate.html;
+
+          // Replace all common hardcoded placeholders in the preview with dynamic industry images
+          const urlRegex = /(https:\/\/images\.unsplash\.com\/[^"'\s\)]+|\/assets\/templates\/[^"'\s\)]+)/gi;
+          newHtml = newHtml.replace(urlRegex, () => getImageForIndustry(industry));
+          newHtml = newHtml.replace(/{{IMG}}/g, () => getImageForIndustry(industry));
+
+          setPreviewTemplate({ ...previewTemplate, html: newHtml });
+        }
+        setGenerating(false);
+        toast.success("AI images preview generated!");
+      }, 800);
+    };
+
+    return (
+      <button
+        type="button"
+        onClick={handleGenerate}
+        disabled={generating}
+        className="mt-4 btn-primary flex items-center gap-2"
+      >
+        {generating ? "Generating…" : "Generate AI Images"}
+      </button>
+    );
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(4);
 
@@ -538,25 +592,109 @@ const CreatePagePage = () => {
       enrichedStyles = enrichedStyles.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
       enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
-      if (project.scrapedData?.images?.length > 0) {
-        const bannerImages = project.scrapedData.images.filter((img: any) => img.type === 'banner' || img.width > 1000);
-        let hasReplacedHero = false;
-        enrichedContent = enrichedContent.replace(/https:\/\/images\.unsplash\.com\/photo-[^'"]*/g, (match) => {
-          if (!hasReplacedHero && bannerImages.length > 0) {
-            hasReplacedHero = true;
-            return bannerImages[0].url || match;
-          }
-          return match;
-        });
+      // 1. Extract proper valid keywords for title and text
+      const industryText = project.category || "Business";
+      const subIndustryText = project.subIndustry || project.scrapedData?.subIndustry || "Services";
+      const pageTitle = project.name ? `${project.name} - ${industryText}` : `${industryText} ${subIndustryText} Services`;
+
+      // Combine all available text from scraped data to create a large pool of content
+      let allText = [];
+      if (project.description) allText.push(project.description);
+      if (project.scrapedData?.summary) allText.push(project.scrapedData.summary);
+      if (project.scrapedData?.description) allText.push(project.scrapedData.description);
+      if (project.scrapedData?.about) allText.push(project.scrapedData.about);
+      if (Array.isArray(project.scrapedData?.services)) {
+        allText.push(...project.scrapedData.services.map((s: any) => typeof s === 'string' ? s : (s.description || s.title || '')));
       }
 
-      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1">${pageName.trim() || "Welcome to " + project.name}</h1>`);
-      if (project.description) {
-        enrichedContent = enrichedContent.replace(/(<p[^>]*class="[^"]*(?:hero-desc|hero-p|hero-text)[^"]*"[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
-        if (!enrichedContent.includes(project.description)) {
-          enrichedContent = enrichedContent.replace(/(<h1[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${project.description}$3`);
+      const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions. We are dedicated to delivering top-tier services tailored to your specific needs. Our expert team ensures quality and excellence in everything we do. Partner with us for a brighter future and unparalleled success in your industry.`;
+      const combinedText = allText.filter(Boolean).join(" ") || fallbackText;
+      const scrapedWords = combinedText.split(/\s+/).filter(Boolean);
+      const totalWords = scrapedWords.length;
+
+      // 2. IMPORTANT: Leave Unsplash and template asset image placeholders intact!
+      // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
+
+      // 3. Remove static pageName from banner and use proper valid keywords (title)
+      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1" style="z-index: 10; position: relative;">${pageTitle}</h1>`);
+
+      // 4. Inject valid scraped data into all sections (paragraphs) safely without repetition
+      let currentWordIndex = 0;
+      enrichedContent = enrichedContent.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, content) => {
+        // Only replace non-empty paragraphs that don't contain inner HTML tags
+        if (content.length > 20 && !content.includes('<') && !content.includes('>')) {
+          // Calculate how many words we need to keep the design structure intact (~6 chars per word)
+          const targetWordCount = Math.max(8, Math.floor(content.length / 6));
+
+          let snippetWords = [];
+          for (let i = 0; i < targetWordCount; i++) {
+            snippetWords.push(scrapedWords[(currentWordIndex + i) % totalWords]);
+          }
+          currentWordIndex = (currentWordIndex + targetWordCount) % totalWords;
+
+          // Capitalize first letter and add a period at the end for proper formatting
+          let snippet = snippetWords.join(" ");
+          snippet = snippet.charAt(0).toUpperCase() + snippet.slice(1);
+          if (!snippet.endsWith('.')) snippet += '.';
+
+          return match.replace(content, () => snippet.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
         }
-      }
+        return match;
+      });
+
+      // 5. Light/Dark Text Contrast adjustment script (auto-adapts text color based on background image brightness)
+      const colorScript = `
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const checkBrightnessAndAdjust = () => {
+            const sections = document.querySelectorAll('section, div, header');
+            sections.forEach(sec => {
+              const bgImg = window.getComputedStyle(sec).backgroundImage;
+              if (bgImg && bgImg !== 'none' && bgImg.includes('url')) {
+                const urlMatch = bgImg.match(/url\\(['"]?(.*?)['"]?\\)/);
+                if (urlMatch && urlMatch[1]) {
+                  const img = new Image();
+                  img.crossOrigin = 'Anonymous';
+                  img.src = urlMatch[1];
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if(!ctx) return;
+                    ctx.drawImage(img, 0, 0);
+                    try {
+                      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                      let r=0, g=0, b=0;
+                      const step = 4 * 10;
+                      let count = 0;
+                      for (let i = 0; i < data.length; i += step) {
+                        r += data[i]; g += data[i+1]; b += data[i+2]; count++;
+                      }
+                      if (count > 0) {
+                        r = Math.floor(r / count);
+                        g = Math.floor(g / count);
+                        b = Math.floor(b / count);
+                        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                        const textColor = brightness < 128 ? '#ffffff' : '#000000';
+                        sec.style.color = textColor;
+                        const texts = sec.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, a');
+                        texts.forEach(t => t.style.color = textColor);
+                      }
+                    } catch(e) { }
+                  };
+                }
+              }
+            });
+          };
+          checkBrightnessAndAdjust();
+          setTimeout(checkBrightnessAndAdjust, 1000);
+        });
+      <\/script>
+      `.replace('<\\/script>', '</script>');
+
+      // Inject script
+      enrichedContent += colorScript;
 
       // We only send the aiPrompt for template enrichment if the user has modified it from the default.
       // Otherwise, we clear it to avoid triggering the backend AI service.
@@ -592,14 +730,16 @@ ${enrichedContent}
 </body>
 </html>`;
 
+      // Use injected HTML from preview if available; otherwise fall back to enrichedContent
+      const finalHtml = previewTemplate?.html || enrichedContent;
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
         metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
-        generationMethod: isAiTemplatePath ? "ai" : "template",
+        generationMethod: "template",
         // Store as object with fullHtml so editor and publisher both work correctly
-        content: { fullHtml: fullTemplateHtml, html: enrichedContent, fullCss: enrichedStyles },
+        content: { fullHtml: fullTemplateHtml, html: finalHtml, fullCss: enrichedStyles },
         styles: enrichedStyles,
         // Also store as landingPageContent for the public page renderer
         landingPageContent: fullTemplateHtml,
@@ -620,8 +760,12 @@ ${enrichedContent}
       primaryColor,
       secondaryColor,
       logoUrl,
+      // Explicitly pass industry so imageGenerationService receives it for AI image prompts
+      industry: project?.category || project?.industry || "Service",
+      subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
       aiPrompt: activeMethod === "ai" ? aiPrompt : "",
-      generationMethod: activeMethod === "ai" ? "ai" : "template",
+      // Always use template generation on the frontend
+      generationMethod: "template",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
@@ -777,18 +921,6 @@ ${enrichedContent}
                   placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners..."
                   className="w-full min-h-[130px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all resize-none"
                 />
-                <div className="flex flex-wrap gap-2">
-                  {dynamicSuggestions.slice(0, 6).map((item: any, idx: number) => {
-                    const suggestion = typeof item === 'string' ? item : item.suggestion;
-                    return (
-                      <button key={idx} onClick={() => { setAiPrompt(suggestion); setTimeout(handleGenerateMagicPrompt, 100); }}
-                        className="text-[11px] text-gray-500 hover:text-violet-700 bg-gray-100 hover:bg-violet-50 border border-gray-200 hover:border-violet-300 rounded-lg px-2.5 py-1.5 transition-all text-left max-w-[250px] truncate"
-                      >
-                        {suggestion}
-                      </button>
-                    );
-                  })}
-                </div>
               </section>
             )}
 
@@ -802,6 +934,7 @@ ${enrichedContent}
                       <p className="text-sm font-semibold text-emerald-700">
                         Template: {LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name}
                       </p>
+                      {project?.category && <AiGenerateButton industry={project.category} />}
                       <button onClick={() => { setSelectedTemplate(null); setAiPrompt(""); }} className="ml-auto text-emerald-500 hover:text-emerald-700">
                         <X className="h-4 w-4" />
                       </button>

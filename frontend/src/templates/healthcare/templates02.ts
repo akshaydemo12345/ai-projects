@@ -1,760 +1,887 @@
-// Premium Healthcare Template 02 — High-Fidelity, Modern & Global Branding Ready
-// Optimized for GrapesJS Editor and Dynamic Branding Registry
+// Auto-generated ULTRA-DYNAMIC template — healthcare templates02
+// Generated: 2026-05-25T00:00:00.000Z
+// Theme: VitaCare Wellness — Teal / Mint — Clean Premium
 
 export const healthcare02Styles = `
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@400;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 :root {
-  /* Global Branding Placeholders */
   --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --primary-dark: PRIMARY_COLOR_PLACEHOLDER;
+  --primary-light: #f8fafc;
+  --primary-xlight: #ffffff;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
-  
-  /* Neutral Colors */
-  --text-dark: #0f172a;
-  --text-light: #64748b;
-  --white: #ffffff;
-  --bg-soft: #f8fafc;
-  --border-color: #f1f5f9;
+  --accent: SECONDARY_COLOR_PLACEHOLDER;
+  --on-primary: #ffffff;
+  --on-surface: #0f172a;
+  --surface: #ffffff;
+  --surface-card: #ffffff;
+  --surface-muted: #f8fafc;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border: #868686ff;
+  --border-mid: SECONDARY_COLOR_PLACEHOLDER;
+  --error: #ef4444;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.16);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-
-html {
-  scroll-behavior: smooth;
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+  letter-spacing: normal; text-transform: none; display: inline-block;
+  white-space: nowrap; word-wrap: normal; direction: ltr;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
 }
-
-body { 
-  font-family: 'Inter', sans-serif; 
-  color: var(--text-dark); 
-  line-height: 1.6; 
-  background: var(--white); 
-  overflow-x: hidden; 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
-
-h1, h2, h3, h4 { 
-  font-family: 'Manrope', sans-serif; 
-  font-weight: 800; 
-  color: var(--text-dark); 
-  line-height: 1.2;
-}
-
-.container { 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  padding: 0 1.5rem; 
-}
-
-.section-padding { padding: 8rem 0; }
-
-img { max-width: 100%; display: block; border-radius: 8px; object-fit: cover; }
-
-/* Global Color Utility Classes */
-.text-primary { color: var(--primary) !important; }
-.bg-primary { background-color: var(--primary) !important; }
-.text-secondary { color: var(--secondary) !important; }
-.bg-secondary { background-color: var(--secondary) !important; }
-
-/* Navbar */
-.navbar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 1.5rem 0;
-}
-
-.nav-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo { font-size: 1.25rem; font-weight: 800; color: #fff; }
-
-.btn-register {
-  background-color: var(--secondary) !important;
-  color: #ffffff !important;
-  padding: 0.8rem 1.8rem;
-  border-radius: 6px;
-  font-weight: 700;
-  text-decoration: none;
-  font-size: 0.8rem;
-  display: inline-block;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* PREMIUM HERO SECTION */
-.hero {
-  position: relative;
-  height: 90vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #fff;
-  overflow: hidden;
-}
-
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-}
-
-.hero-bg img { 
-  width: 100%; 
-  height: 100%; 
-  filter: brightness(0.3); 
-  border-radius: 0; 
-  animation: slowZoom 20s infinite alternate;
-}
-
-@keyframes slowZoom {
-  from { transform: scale(1); }
-  to { transform: scale(1.15); }
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(11, 26, 45, 0.6), rgba(11, 26, 45, 0.8));
-  z-index: 0;
-}
-
-.hero-content { 
-  position: relative; 
-  z-index: 10; 
-  max-width: 850px;
-  animation: heroFloat 3s ease-in-out infinite;
-}
-
-@keyframes heroFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
-}
-
-.hero span { 
-  color: var(--primary); 
-  font-weight: 800; 
-  font-size: 0.85rem; 
-  text-transform: uppercase; 
-  letter-spacing: 3px; 
-  display: inline-block;
-  margin-bottom: 1.5rem;
-}
-
-.hero h1 { font-size: clamp(2.5rem, 6vw, 4.2rem); color: #ffffff; margin-bottom: 2.5rem; line-height: 1.1; }
-
-.hero h1 span { color: var(--primary); text-transform: none; font-size: inherit; }
-
-.btn-join {
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  padding: 1.2rem 3rem;
-  border-radius: 50px;
-  font-weight: 800;
-  font-size: 1rem;
-  text-decoration: none;
-  display: inline-block;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-  border: none;
-}
-.btn-join:hover { transform: scale(1.05); opacity: 0.9; }
-
-/* Feature Bar */
-.features-bar {
-  margin-top: -5rem;
-  position: relative;
-  z-index: 20;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  background: #ffffff;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.feature-card {
-  padding: 3rem 2rem;
-  text-align: center;
-  border-right: 1px solid var(--border-color);
-  background: #ffffff;
-}
-
-.feature-card:last-child { border-right: none; }
-
-.feature-card.active { 
-  background-color: var(--primary) !important; 
-  color: #ffffff !important; 
-  transform: scale(1.05); 
-  z-index: 2; 
-}
-
-.feature-card .material-symbols-outlined { font-size: 2.5rem; color: var(--primary); margin-bottom: 1.5rem; }
-
-.feature-card.active .material-symbols-outlined { color: #ffffff !important; }
-
-.feature-card h3 { font-size: 1.2rem; margin-bottom: 1rem; }
-
-.feature-card.active h3, .feature-card.active p { color: #ffffff !important; }
-
-.feature-card p { font-size: 0.85rem; color: var(--text-light); }
-
-/* ABOUT US SECTION */
-.about { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-
-.about-bento {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 1rem;
-  height: 500px;
-}
-
-.bento-item-1 { grid-row: span 2; }
-.bento-item-2 { grid-column: span 1; }
-.bento-item-3 { grid-column: span 1; }
-
-.about-bento img { width: 100%; height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-
-.about-text span { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
-
-.about-text h2 { font-size: 2.5rem; margin: 1rem 0 1.5rem; }
-
-.about-text p { color: var(--text-light); font-size: 0.95rem; margin-bottom: 2rem; }
-
-.check-list { list-style: none; margin-bottom: 2.5rem; }
-
-.check-list li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.check-list li .material-symbols-outlined { color: var(--primary); font-size: 1.2rem; }
-
-.btn-about {
-  background-color: var(--secondary) !important;
-  color: #ffffff !important;
-  padding: 0.8rem 2.2rem;
-  border-radius: 6px;
-  font-weight: 700;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 0.85rem;
-}
-
-/* SERVICES SECTION */
-.services-section { background: var(--bg-soft); }
-
-.services-header { text-align: center; margin-bottom: 5rem; }
-
-.services-header span { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
-
-.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-
-.service-card {
-  text-align: center;
-  padding: 3.5rem 2rem;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-}
-
-.service-card:hover { transform: translateY(-10px); border-color: var(--primary); }
-
-.service-icon-box {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-soft);
-  border-radius: 12px;
-  color: var(--primary);
-}
-.service-card:hover .service-icon-box { background-color: var(--primary) !important; color: #ffffff !important; }
-
-.service-card h3 { font-size: 1.2rem; margin-bottom: 1rem; }
-
-.service-card p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem; }
-
-.btn-service-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: var(--text-dark);
-  font-weight: 700;
-  font-size: 0.8rem;
-  text-decoration: none;
-}
-.btn-service-more:hover { color: var(--primary); gap: 0.7rem; }
-
-/* Statistics (Dark Section) */
-.stats-section { background: #0b1a2d; color: #fff; }
-
-.stats-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 4rem; align-items: center; }
-
-.stats-content span { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
-
-.stats-content h2 { color: #fff; font-size: 2.2rem; margin: 1rem 0 1.5rem; }
-
-.stats-content p { font-size: 0.85rem; opacity: 0.7; margin-bottom: 3rem; }
-
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-.stat-box {
-  background: rgba(255,255,255,0.05);
-  padding: 2rem;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.stat-box .material-symbols-outlined { font-size: 2rem; color: var(--primary); margin-bottom: 1rem; }
-
-.stat-box h4 { font-size: 1.8rem; color: #fff; margin-bottom: 0.25rem; }
-
-.stat-box p { font-size: 0.75rem; opacity: 0.6; }
-
-/* DOCTORS SECTION */
-.doctors-header { text-align: center; margin-bottom: 5rem; }
-
-.doctors-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
-
-.doctor-card { 
-  text-align: center; 
-  background: #ffffff; 
-  padding: 1.5rem; 
-  border-radius: 24px; 
-  border: 1px solid var(--border-color);
-  position: relative;
-}
-.doctor-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
-
-.doctor-img-box {
-  position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-
-.doctor-card img { width: 100%; height: 380px; transition: 0.6s; }
-.doctor-card:hover img { transform: scale(1.1); }
-
-.doctor-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 26, 45, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
+img { max-width: 100%; height: auto; display: block; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+ul { list-style: none; }
+input, select, textarea { font-family: inherit; }
+
+/* ─── ANIMATIONS ─── */
+.scroll-fade-up {
   opacity: 0;
-  transition: 0.4s;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.doctor-card:hover .doctor-overlay { opacity: 1; }
-
-.doctor-social {
-  width: 45px;
-  height: 45px;
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
+.scroll-fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.doctor-badge {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background-color: var(--secondary) !important;
-  color: #ffffff !important;
-  font-size: 0.65rem;
-  padding: 0.4rem 1rem;
-  border-radius: 50px;
-  font-weight: 800;
-  z-index: 5;
+/* ─── TYPOGRAPHY ─── */
+.t-display { font-family: var(--font-display); font-size: clamp(38px,5vw,64px); line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+.t-h2 { font-family: var(--font-display); font-size: clamp(28px,3.5vw,44px); line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; }
+.t-h3 { font-family: var(--font-body); font-size: 22px; line-height: 1.3; font-weight: 600; }
+.t-h4 { font-family: var(--font-body); font-size: 16px; font-weight: 600; }
+.t-body-lg { font-family: var(--font-body); font-size: 18px; line-height: 1.7; font-weight: 400; }
+.t-body { font-family: var(--font-body); font-size: 15px; line-height: 1.65; font-weight: 400; }
+.t-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.t-caption { font-family: var(--font-body); font-size: 13px; line-height: 1.5; font-weight: 400; }
+.col-primary { color: var(--primary); }
+.col-secondary { color: var(--secondary); }
+.col-muted { color: var(--text-muted); }
+.col-light { color: var(--text-light); }
+.col-white { color: #ffffff; }
+
+/* ─── LAYOUT ─── */
+.v2-container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.v2-section { padding: 96px 0; }
+.v2-section-sm { padding: 64px 0; }
+.v2-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 100px;
+  background: var(--primary-light); color: var(--primary-dark);
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
 }
+.v2-section-head { text-align: center; margin-bottom: 60px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.v2-section-head p { max-width: 520px; }
 
-.doctor-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
-
-.doctor-card p { color: var(--primary); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
-
-/* FAQ */
-.faq-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: 5rem; align-items: center; }
-
-.faq-image img { border-radius: 8px; height: 500px; width: 100%; }
-
-.faq-header span { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
-
-.faq-header h2 { font-size: 2.2rem; margin: 1rem 0 2.5rem; }
-
-.faq-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
-
-.faq-item-box {
-  background: var(--bg-soft);
-  border-radius: 4px;
-  overflow: hidden;
+/* ─── BUTTONS ─── */
+.v2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 28px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.22s ease; white-space: nowrap;
 }
+.v2-btn-primary { background: var(--primary); color: #fff; }
+.v2-btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.v2-btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+.v2-btn-outline:hover { background: var(--primary-xlight); }
+.v2-btn-ghost { background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.5); color: #fff; }
+.v2-btn-ghost:hover { background: rgba(255,255,255,0.28); }
+.v2-btn-accent { background: var(--accent); color: #fff; }
+.v2-btn-accent:hover { opacity: 0.9; transform: translateY(-1px); }
 
-.faq-item-box summary {
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
-  list-style: none;
+/* ─── HEADER ─── */
+.v2-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(248,255,254,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
-.faq-item-box summary::-webkit-details-marker { display: none; }
-
-.faq-item-box summary::after { 
-  content: '+'; 
-  color: var(--primary); 
-  font-size: 1.5rem; 
+.v2-header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 1.5rem; max-width: 1200px; margin: 0 auto;
 }
-
-.faq-item-box[open] summary::after { content: '-'; }
-
-.faq-answer {
-  padding: 0 2rem 1.5rem;
-  color: var(--text-light);
-  font-size: 0.85rem;
+.v2-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--primary-dark);
 }
-
-/* Contact Form */
-.contact-section { background: var(--bg-soft); text-align: center; }
-
-.contact-card {
-  max-width: 750px;
-  margin: 3rem auto 0;
-  background: #ffffff;
-  padding: 4rem;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+.v2-logo-mark {
+  width: 38px; height: 38px; background: var(--primary);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
 }
-
-.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-.contact-grid input, .contact-grid textarea {
-  width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-soft);
-  font-family: inherit;
-  font-size: 0.85rem;
-  outline: none;
+.v2-logo-mark span { color: #fff; font-size: 20px; }
+.v2-nav { display: none; align-items: center; gap: 36px; }
+.v2-nav a { font-size: 14px; font-weight: 500; color: var(--text-muted); transition: color 0.2s; }
+.v2-nav a:hover { color: var(--primary); }
+.v2-header-cta { display: flex; align-items: center; gap: 14px; }
+.v2-header-phone {
+  display: none; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600; color: var(--secondary);
 }
+.v2-header-phone span.material-symbols-outlined { font-size: 18px; color: var(--primary); }
 
-.contact-grid textarea { grid-column: span 2; }
-
-.btn-submit {
-  grid-column: span 2;
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  padding: 1rem;
-  border: none;
-  font-weight: 800;
-  cursor: pointer;
-  font-size: 0.9rem;
+/* ─── HERO ─── */
+.v2-hero {
+  position: relative; overflow: hidden;
+  background: var(--surface);
+  padding: 80px 0 0;
+  min-height: 92vh; display: flex; align-items: center;
 }
-
-/* Footer */
-.footer { background: #0b1a2d; color: #fff; padding: 5rem 0 2rem; }
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
-  gap: 4rem;
-  padding-bottom: 4rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+.v2-hero-bg-circles {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
 }
-
-.footer-col h4 { color: #fff; margin-bottom: 1.5rem; font-size: 1rem; }
-
-.footer-col p { font-size: 0.8rem; opacity: 0.6; line-height: 1.8; }
-
-.footer-links { list-style: none; }
-
-.footer-links li { margin-bottom: 0.75rem; }
-
-.footer-links a { color: #fff; opacity: 0.6; text-decoration: none; font-size: 0.8rem; }
-
-.footer-links a:hover { color: var(--primary); }
-
-.footer-bottom { text-align: center; padding-top: 2rem; font-size: 0.75rem; opacity: 0.4; }
-
-@media (max-width: 1024px) {
-  .hero h1 { font-size: 2.5rem; }
-  .features-grid { grid-template-columns: 1fr; }
-  .about, .stats-container, .faq-section, .footer-grid { grid-template-columns: 1fr; }
-  .services-grid, .doctors-grid { grid-template-columns: 1fr 1fr; }
-  .about-bento { height: 400px; margin-bottom: 2rem; }
+.v2-circle-1 {
+  position: absolute; top: -100px; right: -100px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+  opacity: 0.6;
 }
+.v2-circle-2 {
+  position: absolute; bottom: -200px; left: -100px;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+  opacity: 0.4;
+}
+.v2-hero-inner {
+  position: relative; z-index: 2;
+  display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center;
+}
+.v2-hero-text { display: flex; flex-direction: column; gap: 28px; }
+.v2-hero-stat-chips { display: flex; gap: 12px; flex-wrap: wrap; }
+.v2-stat-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 100px;
+  background: #fff; border: 1px solid var(--border-mid);
+  box-shadow: var(--shadow-sm);
+}
+.v2-stat-chip span.num { font-weight: 700; color: var(--primary); }
+.v2-stat-chip span.lbl { font-size: 13px; color: var(--text-muted); }
+.v2-hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.v2-hero-trust { display: flex; align-items: center; gap: 10px; }
+.v2-trust-avatars { display: flex; }
+.v2-trust-avatars img {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid #fff; object-fit: cover; margin-left: -8px;
+}
+.v2-trust-avatars img:first-child { margin-left: 0; }
+.v2-trust-text { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.v2-trust-text strong { color: var(--primary); }
+.v2-hero-visual { position: relative; }
+.v2-hero-img-wrap {
+  position: relative; border-radius: var(--radius-xl);
+  overflow: hidden; aspect-ratio: 4/5;
+  box-shadow: var(--shadow-lg);
+}
+.v2-hero-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.v2-hero-img-wrap:hover img { transform: scale(1.05); }
+.v2-hero-card-1 {
+  position: absolute; bottom: 32px; left: -20px;
+  background: #fff; border-radius: var(--radius-md);
+  padding: 16px 20px; box-shadow: var(--shadow-md);
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border);
+}
+.v2-hero-card-1 .icon-bg { width: 44px; height: 44px; border-radius: 12px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; }
+.v2-hero-card-1 .icon-bg span { color: var(--primary); font-size: 22px; }
+.v2-hero-card-2 {
+  position: absolute; top: 24px; right: -20px;
+  background: var(--primary); border-radius: var(--radius-md);
+  padding: 14px 18px; box-shadow: var(--shadow-md);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.v2-hero-card-2 span.big { font-size: 28px; font-weight: 700; color: #fff; font-family: var(--font-display); }
+.v2-hero-card-2 span.sm { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 0.05em; }
 
-@media (max-width: 640px) {
-  .services-grid, .doctors-grid { grid-template-columns: 1fr; }
-  .contact-card { padding: 2rem; }
-  .contact-grid { grid-template-columns: 1fr; }
-  .contact-grid textarea, .btn-submit { grid-column: span 1; }
+/* ─── SERVICES ─── */
+.v2-services-grid {
+  display: grid; grid-template-columns: 1fr; gap: 20px;
+}
+.v2-service-card {
+  background: #fff; border-radius: var(--radius-md);
+  padding: 32px 28px; display: flex; flex-direction: column; gap: 16px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease; cursor: default;
+}
+.v2-service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.v2-service-icon {
+  width: 56px; height: 56px; border-radius: var(--radius-sm);
+  background: var(--primary-xlight); display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s;
+}
+.v2-service-card:hover .v2-service-icon { background: var(--primary); }
+.v2-service-icon span { color: var(--primary); font-size: 28px; transition: color 0.3s; }
+.v2-service-card:hover .v2-service-icon span { color: #fff; }
+.v2-service-card h3 { font-size: 18px; font-weight: 600; color: var(--on-surface); }
+.v2-service-card p { font-size: 14px; color: var(--text-muted); line-height: 1.65; flex: 1; }
+.v2-service-link { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--primary); }
+.v2-service-link span.material-symbols-outlined { font-size: 16px; }
+
+/* ─── STATS STRIP ─── */
+.v2-stats-section {
+  background: var(--secondary); padding: 64px 0;
+}
+.v2-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+}
+.v2-stat-item { text-align: center; transition: transform 0.3s ease; }
+.v2-stat-item:hover { transform: translateY(-5px); }
+.v2-stat-num { font-family: var(--font-display); font-size: clamp(36px,5vw,56px); font-weight: 700; color: var(--primary-dark); line-height: 1; }
+.v2-stat-suffix { color: var(--primary); }
+.v2-stat-label { font-size: 14px; color: var(--text-muted); margin-top: 6px; font-weight: 600; }
+
+/* ─── ABOUT / TEAM ─── */
+.v2-about-grid { display: grid; grid-template-columns: 1fr; gap: 60px; align-items: center; }
+.v2-about-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.v2-about-img-main { grid-column: 1 / -1; border-radius: var(--radius-lg); overflow: hidden; aspect-ratio: 16/9; }
+.v2-about-img-main img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.v2-about-img-main:hover img { transform: scale(1.05); }
+.v2-about-img-sm { border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1; }
+.v2-about-img-sm img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.v2-about-img-sm:hover img { transform: scale(1.05); }
+.v2-about-text { display: flex; flex-direction: column; gap: 28px; }
+.v2-about-points { display: flex; flex-direction: column; gap: 20px; }
+.v2-about-point { display: flex; gap: 16px; align-items: flex-start; }
+.v2-about-point-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--secondary); display: flex; align-items: center; justify-content: center; }
+.v2-about-point-icon span { color: var(--primary); font-size: 20px; }
+.v2-about-point-text h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.v2-about-point-text p { font-size: 14px; color: var(--text-muted); }
+
+/* ─── PROCESS ─── */
+.v2-process-bg { background: var(--primary-xlight); }
+.v2-process-grid { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.v2-process-step {
+  background: #fff; border-radius: var(--radius-md);
+  padding: 32px; display: flex; gap: 20px; align-items: flex-start;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.v2-process-step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.v2-step-num {
+  flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px;
+  background: var(--primary); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 20px; font-weight: 700; color: #fff;
+}
+.v2-step-body h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.v2-step-body p { font-size: 14px; color: var(--text-muted); }
+
+/* ─── TESTIMONIALS ─── */
+.v2-testi-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.v2-testi-card {
+  background: #fff; border-radius: var(--radius-md);
+  padding: 28px; display: flex; flex-direction: column; gap: 16px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.v2-testi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.v2-testi-stars { display: flex; gap: 3px; }
+.v2-testi-stars span { color: var(--accent); font-size: 18px; }
+.v2-testi-quote { font-size: 15px; color: var(--text-muted); line-height: 1.7; font-style: italic; flex: 1; }
+.v2-testi-author { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px; }
+.v2-testi-author img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.v2-testi-name { font-size: 14px; font-weight: 600; }
+.v2-testi-role { font-size: 12px; color: var(--text-light); }
+
+/* ─── CTA SECTION ─── */
+.v2-cta-section {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  position: relative; overflow: hidden;
+}
+.v2-cta-decor {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 50%);
+}
+.v2-cta-inner {
+  position: relative; z-index: 2;
+  display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center;
+}
+.v2-cta-text { display: flex; flex-direction: column; gap: 20px; }
+.v2-cta-text h2 { font-family: var(--font-display); font-size: clamp(28px,4vw,48px); color: #fff; font-weight: 700; }
+.v2-cta-text p { font-size: 17px; color: rgba(255,255,255,0.8); max-width: 440px; }
+.v2-cta-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.v2-cta-form-card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-lg);
+  padding: 36px;
+}
+.v2-cta-form-title { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 24px; }
+.v2-form-field { margin-bottom: 16px; }
+.v2-form-label { display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75); margin-bottom: 6px; letter-spacing: 0.05em; }
+.v2-form-input {
+  width: 100%; padding: 12px 14px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm); color: #fff; font-size: 14px;
+}
+.v2-form-input::placeholder { color: rgba(255,255,255,0.5); }
+.v2-form-input:focus { outline: none; border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.2); }
+.v2-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.v2-form-submit { width: 100%; background: #fff; color: var(--primary-dark); padding: 13px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+.v2-form-submit:hover { background: var(--primary-light); }
+
+/* ─── FAQ ─── */
+.v2-faq-wrap { max-width: 720px; margin: 0 auto; }
+.v2-faq-list { display: flex; flex-direction: column; gap: 12px; }
+.v2-faq-item {
+  background: #fff; border-radius: var(--radius-md);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.v2-faq-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; cursor: pointer; list-style: none;
+  font-size: 16px; font-weight: 600; color: var(--on-surface);
+}
+.v2-faq-summary::-webkit-details-marker { display: none; }
+.v2-faq-summary .material-symbols-outlined { transition: transform 0.25s; color: var(--primary); }
+.v2-faq-item[open] .v2-faq-summary { color: var(--primary); }
+.v2-faq-item[open] .v2-faq-summary .material-symbols-outlined { transform: rotate(180deg); }
+.v2-faq-body { padding: 0 24px 20px; font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+/* ─── FOOTER ─── */
+.v2-footer {
+  background: var(--secondary); color: rgba(255,255,255,0.8);
+}
+.v2-footer-top {
+  display: grid; grid-template-columns: 1fr; gap: 40px;
+  padding: 60px 1.5rem; max-width: 1200px; margin: 0 auto;
+}
+.v2-footer-brand { display: flex; flex-direction: column; gap: 16px; }
+.v2-footer-logo { display: flex; align-items: center; gap: 10px; }
+.v2-footer-logo-mark { width: 36px; height: 36px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.v2-footer-logo-mark span { color: #fff; font-size: 18px; }
+.v2-footer-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; }
+.v2-footer-desc { font-size: 14px; line-height: 1.7; max-width: 280px; }
+.v2-footer-socials { display: flex; gap: 12px; }
+.v2-footer-social-link { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.v2-footer-social-link:hover { background: var(--primary); }
+.v2-footer-social-link span { color: rgba(255,255,255,0.7); font-size: 18px; }
+.v2-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+.v2-footer-links { display: flex; flex-direction: column; gap: 10px; }
+.v2-footer-links a { font-size: 14px; color: rgba(255,255,255,0.7); transition: color 0.2s; }
+.v2-footer-links a:hover { color: #fff; }
+.v2-footer-contact { display: flex; flex-direction: column; gap: 12px; }
+.v2-footer-contact li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.v2-footer-contact li span.material-symbols-outlined { font-size: 16px; color: var(--primary); }
+.v2-footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 20px 1.5rem; max-width: 1200px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+}
+.v2-footer-bottom p { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+/* ─── MEDIA QUERIES ─── */
+@media (min-width: 640px) {
+  .v2-header-phone { display: flex; }
+  .v2-stats-grid { grid-template-columns: repeat(4,1fr); }
+}
+@media (min-width: 768px) {
+  .v2-nav { display: flex; }
+  .v2-hero-inner { grid-template-columns: 1fr 1fr; }
+  .v2-services-grid { grid-template-columns: 1fr 1fr; }
+  .v2-process-grid { grid-template-columns: 1fr 1fr; }
+  .v2-testi-grid { grid-template-columns: 1fr 1fr 1fr; }
+  .v2-cta-inner { grid-template-columns: 1fr 1fr; }
+  .v2-footer-top { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .v2-footer-bottom { flex-direction: row; justify-content: space-between; text-align: left; }
+  .v2-about-img-main { grid-column: span 1; aspect-ratio: 4/5; }
+}
+@media (min-width: 1024px) {
+  .v2-services-grid { grid-template-columns: repeat(4,1fr); }
+  .v2-about-grid { grid-template-columns: 1fr 1fr; }
 }
 `;
 
 export const healthcare02Html = `
-<header class="navbar">
-  <div class="container nav-inner">
-    <div class="logo">LOGO_PLACEHOLDER</div>
-    <a href="#contact" class="btn-register">REGISTER</a>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@400;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+
+<!-- ═══ HEADER ═══ -->
+<header class="v2-header">
+  <div class="v2-header-inner">
+    <a class="v2-logo" href="#">
+      LOGO_PLACEHOLDER
+    </a>
+    <div class="v2-header-cta">
+      <button class="v2-btn v2-btn-primary">Book Appointment</button>
+    </div>
   </div>
 </header>
 
-<section class="hero">
-  <div class="hero-bg">
-    <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=1600" alt="Hero">
-  </div>
-  <div class="hero-overlay"></div>
-  <div class="container hero-content">
-    <span>✦ QUALITY HEALTHCARE SERVICES</span>
-    <h1>Trust Our Experts for Your <br><span>Healthy Future</span></h1>
-    <a href="#contact" class="btn-join">BOOK AN APPOINTMENT</a>
-  </div>
-</section>
+<main>
 
-<div class="container features-bar">
-  <div class="features-grid">
-    <div class="feature-card">
-      <span class="material-symbols-outlined">health_and_safety</span>
-      <h3 class="text-on-surface">Health Care</h3>
-      <p>Professional care services for your well-being and health maintenance.</p>
-    </div>
-    <div class="feature-card active">
-      <span class="material-symbols-outlined">medical_information</span>
-      <h3 class="text-white">Best Doctors</h3>
-      <p class="text-white" style="opacity:0.9;">Highly qualified and experienced medical professionals at your service.</p>
-    </div>
-    <div class="feature-card">
-      <span class="material-symbols-outlined">support_agent</span>
-      <h3 class="text-on-surface">24/7 Support</h3>
-      <p>Round-the-clock medical assistance and patient support services.</p>
-    </div>
+<!-- ═══ SECTION 1: HERO ═══ -->
+<section class="v2-hero">
+  <div class="v2-hero-bg-circles">
+    <div class="v2-circle-1"></div>
+    <div class="v2-circle-2"></div>
   </div>
-</div>
-
-<section class="section-padding container">
-  <div class="about">
-    <div class="about-bento">
-      <div class="bento-item-1"><img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="Doctor Large"></div>
-      <div class="bento-item-2"><img src="https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=400" alt="Care Small"></div>
-      <div class="bento-item-3"><img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&q=80&w=400" alt="Team Small"></div>
-    </div>
-    <div class="about-text">
-      <span>ABOUT US</span>
-      <h2>Our Quality System Is Ready To Help You!</h2>
-      <p>We combine cutting-edge technology with the human touch of world-class physicians to provide a healthcare experience that is faster, safer, and more personal.</p>
-      <ul class="check-list">
-        <li><span class="material-symbols-outlined">check_circle</span> Professional Medical Staff</li>
-        <li><span class="material-symbols-outlined">check_circle</span> Advanced Health Technology</li>
-        <li><span class="material-symbols-outlined">check_circle</span> 24/7 Emergency Services</li>
-        <li><span class="material-symbols-outlined">check_circle</span> Personalized Patient Care</li>
-      </ul>
-      <a href="#" class="btn-about">LEARN MORE</a>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding services-section">
-  <div class="container">
-    <div class="services-header">
-      <span>SERVICES</span>
-      <h2 style="font-size:2.5rem; margin-top:1.5rem;">World-Class Healthcare Services</h2>
-    </div>
-    <div class="services-grid">
-      <div class="service-card">
-        <div class="service-icon-box">
-          <span class="material-symbols-outlined">cardiology</span>
+  <div class="v2-container" style="padding-bottom:80px">
+    <div class="v2-hero-inner">
+      <div class="v2-hero-text">
+        <div>
+          <span class="v2-tag"><span class="material-symbols-outlined" style="font-size:13px;font-variation-settings:'FILL' 1">verified</span> ISO 9001 Certified Clinic</span>
         </div>
+        <h1 class="t-display">Modern Healthcare,<br><span class="col-primary">Timeless Care</span></h1>
+        <p class="t-body-lg col-muted" style="max-width:480px">Comprehensive wellness solutions delivered by specialists who combine cutting-edge medicine with genuine compassion for every patient.</p>
+        <div class="v2-hero-stat-chips">
+          <div class="v2-stat-chip"><span class="num">15K+</span><span class="lbl">Patients Treated</span></div>
+          <div class="v2-stat-chip"><span class="num">98%</span><span class="lbl">Satisfaction Rate</span></div>
+          <div class="v2-stat-chip"><span class="num">50+</span><span class="lbl">Specialists</span></div>
+        </div>
+        <div class="v2-hero-actions">
+          <button class="v2-btn v2-btn-primary" style="padding:16px 32px;font-size:16px">Get Free Consultation</button>
+          <button class="v2-btn v2-btn-outline">View Services</button>
+        </div>
+        <div class="v2-hero-trust">
+          <div class="v2-trust-avatars">
+            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=100&q=80" alt="Dr 1"/>
+            <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=100&q=80" alt="Dr 2"/>
+            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=100&q=80" alt="Dr 3"/>
+          </div>
+          <p class="v2-trust-text"><strong>50+ doctors</strong> ready to help you today</p>
+        </div>
+      </div>
+      <div class="v2-hero-visual">
+        <div class="v2-hero-img-wrap">
+          <img src="https://images.unsplash.com/photo-1638202993928-7267aad84c31?auto=format&fit=crop&w=800&q=80" alt="Modern Healthcare Facility"/>
+        </div>
+        <div class="v2-hero-card-1">
+          <div class="icon-bg"><span class="material-symbols-outlined">favorite</span></div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--on-surface)">Avg. Wait Time</p>
+            <p style="font-size:11px;color:var(--text-light)">Under 10 minutes</p>
+          </div>
+        </div>
+        <div class="v2-hero-card-2">
+          <span class="big">4.9</span>
+          <span class="sm">★ RATED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 2: SERVICES ═══ -->
+<section class="v2-section" id="services">
+  <div class="v2-container">
+    <div class="v2-section-head">
+      <span class="v2-tag">What We Offer</span>
+      <h2 class="t-h2">Specialized Care for Every Need</h2>
+      <p class="t-body col-muted">From routine check-ups to advanced procedures, our multidisciplinary team provides expert care across all medical disciplines.</p>
+    </div>
+    <div class="v2-services-grid">
+      <div class="v2-service-card">
+        <div class="v2-service-icon"><span class="material-symbols-outlined">cardiology</span></div>
         <h3>Cardiology</h3>
-        <p>Expert heart care and diagnostics for a healthier cardiovascular system.</p>
-        <a href="#" class="btn-service-more">LEARN MORE <span class="material-symbols-outlined" style="font-size:1.2rem;">arrow_forward</span></a>
+        <p>Advanced cardiac diagnostics, ECG, echocardiography and intervention by board-certified cardiologists.</p>
+        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
-      <div class="service-card">
-        <div class="service-icon-box">
-          <span class="material-symbols-outlined">child_care</span>
-        </div>
-        <h3>Pediatrics</h3>
-        <p>Specialized medical care for children from infancy through adolescence.</p>
-        <a href="#" class="btn-service-more">LEARN MORE <span class="material-symbols-outlined" style="font-size:1.2rem;">arrow_forward</span></a>
-      </div>
-      <div class="service-card">
-        <div class="service-icon-box">
-          <span class="material-symbols-outlined">neurology</span>
-        </div>
+      <div class="v2-service-card">
+        <div class="v2-service-icon"><span class="material-symbols-outlined">neurology</span></div>
         <h3>Neurology</h3>
-        <p>Comprehensive neurological examinations and treatments for brain health.</p>
-        <a href="#" class="btn-service-more">LEARN MORE <span class="material-symbols-outlined" style="font-size:1.2rem;">arrow_forward</span></a>
+        <p>Comprehensive neurological assessments, brain MRI analysis and headache management clinics.</p>
+        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+      </div>
+      <div class="v2-service-card">
+        <div class="v2-service-icon"><span class="material-symbols-outlined">orthopedics</span></div>
+        <h3>Orthopaedics</h3>
+        <p>Joint replacement, sports injury rehabilitation and minimally invasive spinal procedures.</p>
+        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+      </div>
+      <div class="v2-service-card">
+        <div class="v2-service-icon"><span class="material-symbols-outlined">child_care</span></div>
+        <h3>Paediatrics</h3>
+        <p>Gentle, age-appropriate care for children from newborns through to adolescence, with specialist support.</p>
+        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section-padding stats-section">
-  <div class="container stats-container">
-    <div class="stats-content">
-      <span>STATISTICS</span>
-      <h2>What Makes Us Different From Others</h2>
-      <p>Our commitment to excellence is reflected in our success rates and patient satisfaction levels.</p>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <span class="material-symbols-outlined">sentiment_satisfied</span>
-          <h4>250+</h4>
-          <p>Happy Patients</p>
-        </div>
-        <div class="stat-box">
-          <span class="material-symbols-outlined">task_alt</span>
-          <h4>800+</h4>
-          <p>Project Done</p>
-        </div>
+<!-- ═══ SECTION 3: STATS STRIP ═══ -->
+<section class="v2-stats-section">
+  <div class="v2-container">
+    <div class="v2-stats-grid">
+      <div class="v2-stat-item">
+        <div class="v2-stat-num">15<span class="v2-stat-suffix">K+</span></div>
+        <div class="v2-stat-label">Patients Annually</div>
       </div>
-    </div>
-    <div class="stats-image">
-      <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800" alt="Stats">
+      <div class="v2-stat-item">
+        <div class="v2-stat-num">98<span class="v2-stat-suffix">%</span></div>
+        <div class="v2-stat-label">Satisfaction Score</div>
+      </div>
+      <div class="v2-stat-item">
+        <div class="v2-stat-num">50<span class="v2-stat-suffix">+</span></div>
+        <div class="v2-stat-label">Senior Specialists</div>
+      </div>
+      <div class="v2-stat-item">
+        <div class="v2-stat-num">20<span class="v2-stat-suffix">yrs</span></div>
+        <div class="v2-stat-label">Clinical Excellence</div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="section-padding container">
-  <div class="doctors-header">
-    <span>DOCTORS</span>
-    <h2 style="font-size:2.5rem; margin-top:1.5rem;">Meet Our Specialist Team</h2>
-  </div>
-  <div class="doctors-grid">
-    <div class="doctor-card">
-      <div class="doctor-badge">TOP RATED</div>
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=600" alt="Doctor 1">
-        <div class="doctor-overlay">
-          <a href="#" class="doctor-social">T</a>
-          <a href="#" class="doctor-social">L</a>
+<!-- ═══ SECTION 4: ABOUT / WHY US ═══ -->
+<section class="v2-section" id="about">
+  <div class="v2-container">
+    <div class="v2-about-grid">
+      <div class="v2-about-imgs">
+        <div class="v2-about-img-main">
+          <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80" alt="Modern Clinic"/>
+        </div>
+        <div class="v2-about-img-sm">
+          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=400&q=80" alt="Consultation"/>
+        </div>
+        <div class="v2-about-img-sm">
+          <img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=400&q=80" alt="Lab"/>
         </div>
       </div>
-      <h3>Dr. Alexander Rivera</h3>
-      <p>Chief Cardiologist</p>
-    </div>
-    <div class="doctor-card">
-      <div class="doctor-badge">EXPERT</div>
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=600" alt="Doctor 2">
-        <div class="doctor-overlay">
-          <a href="#" class="doctor-social">T</a>
-          <a href="#" class="doctor-social">L</a>
+      <div class="v2-about-text">
+        <div>
+          <span class="v2-tag" style="margin-bottom:16px;display:inline-flex">Why VitaCare</span>
+          <h2 class="t-h2" style="margin-top:12px">Where Evidence Meets Empathy</h2>
         </div>
-      </div>
-      <h3>Dr. Sarah Chen</h3>
-      <p>Senior Neurologist</p>
-    </div>
-    <div class="doctor-card">
-      <div class="doctor-badge">SPECIALIST</div>
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=600" alt="Doctor 3">
-        <div class="doctor-overlay">
-          <a href="#" class="doctor-social">T</a>
-          <a href="#" class="doctor-social">L</a>
+        <p class="t-body col-muted">Founded by leading physicians, PROJECT_NAME_PLACEHOLDER integrates the latest evidence-based protocols with a patient-first philosophy — because great medicine is also great care.</p>
+        <div class="v2-about-points">
+          <div class="v2-about-point">
+            <div class="v2-about-point-icon"><span class="material-symbols-outlined">science</span></div>
+            <div class="v2-about-point-text">
+              <h4>Evidence-Based Protocols</h4>
+              <p>Every treatment plan follows the latest NICE and WHO clinical guidelines, reviewed quarterly by our medical board.</p>
+            </div>
+          </div>
+          <div class="v2-about-point">
+            <div class="v2-about-point-icon"><span class="material-symbols-outlined">schedule</span></div>
+            <div class="v2-about-point-text">
+              <h4>Same-Day Appointments</h4>
+              <p>We reserve 30% of daily slots for urgent cases so you're never left waiting when it matters most.</p>
+            </div>
+          </div>
+          <div class="v2-about-point">
+            <div class="v2-about-point-icon"><span class="material-symbols-outlined">encrypted</span></div>
+            <div class="v2-about-point-text">
+              <h4>Private & Confidential</h4>
+              <p>Your data is fully GDPR-compliant. All records are stored on ISO 27001-certified secure servers.</p>
+            </div>
+          </div>
         </div>
+        <button class="v2-btn v2-btn-primary" style="align-self:flex-start">Meet Our Doctors</button>
       </div>
-      <h3>Dr. James Wilson</h3>
-      <p>Lead Pediatrician</p>
     </div>
   </div>
 </section>
 
-<section class="section-padding container faq-section">
-  <div class="faq-image">
-    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="FAQ">
-  </div>
-  <div class="faq-content">
-    <div class="faq-header">
-      <span>FAQ</span>
-      <h2>Here Are The Most Asked Questions</h2>
+<!-- ═══ SECTION 5: PROCESS ═══ -->
+<section class="v2-section v2-process-bg" id="process">
+  <div class="v2-container">
+    <div class="v2-section-head">
+      <span class="v2-tag">How It Works</span>
+      <h2 class="t-h2">Your Care Journey in 4 Steps</h2>
+      <p class="t-body col-muted">Seamless from first contact to long-term wellness, our structured approach ensures nothing is missed.</p>
     </div>
-    <div class="faq-list">
-      <details class="faq-item-box">
-        <summary>Can i dental implant?</summary>
-        <div class="faq-answer">
-          Yes, we provide advanced dental implant services with high success rates using modern technology.
+    <div class="v2-process-grid">
+      <div class="v2-process-step">
+        <div class="v2-step-num">01</div>
+        <div class="v2-step-body">
+          <h3>Book Online or Call</h3>
+          <p>Choose your specialist, preferred date and time through our instant booking portal or call our coordinators directly.</p>
         </div>
-      </details>
-      <details class="faq-item-box">
-        <summary>How can I book an appointment?</summary>
-        <div class="faq-answer">
-          You can book an appointment through our website form or by calling our support line directly.
+      </div>
+      <div class="v2-process-step">
+        <div class="v2-step-num">02</div>
+        <div class="v2-step-body">
+          <h3>Comprehensive Assessment</h3>
+          <p>A full clinical workup including digital vitals, advanced imaging, and a detailed history review by your assigned physician.</p>
         </div>
-      </details>
-      <details class="faq-item-box">
-        <summary>Is 24/7 support available?</summary>
-        <div class="faq-answer">
-          Yes, we have a dedicated medical support team available round the clock for any assistance.
+      </div>
+      <div class="v2-process-step">
+        <div class="v2-step-num">03</div>
+        <div class="v2-step-body">
+          <h3>Personalised Treatment Plan</h3>
+          <p>You receive a clear, evidence-based plan with treatment options, costs, and timelines explained in plain language.</p>
         </div>
-      </details>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding contact-section" id="contact">
-  <div class="container">
-    <h2>Contact For Urgent Service</h2>
-    <div class="contact-card">
-      <form class="contact-grid">
-        <input type="text" name="first_name" placeholder="First Name">
-        <input type="text" name="last_name" placeholder="Last Name">
-        <input type="email" name="email_address" placeholder="Email Address">
-        <input type="tel" name="phone" placeholder="Phone Number">
-        <textarea name="message" rows="4" placeholder="Your Message" style="grid-column: span 2;"></textarea>
-        <button type="submit" class="btn-submit" style="grid-column: span 2;">SUBMIT NOW</button>
-      </form>
+      </div>
+      <div class="v2-process-step">
+        <div class="v2-step-num">04</div>
+        <div class="v2-step-body">
+          <h3>Ongoing Monitoring</h3>
+          <p>Scheduled follow-ups, teleconsultations, and a dedicated care coordinator keep your health on track long-term.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<footer class="footer">
-  <div class="container footer-grid">
-    <div class="footer-col">
-      <div class="logo">LOGO_PLACEHOLDER</div>
-      <p>Providing high-quality healthcare services with a focus on patient well-being and advanced medical treatments.</p>
+<!-- ═══ SECTION 6: TESTIMONIALS ═══ -->
+<section class="v2-section" id="testimonials">
+  <div class="v2-container">
+    <div class="v2-section-head">
+      <span class="v2-tag">Patient Stories</span>
+      <h2 class="t-h2">Trusted by Thousands</h2>
     </div>
-    <div class="footer-col">
-      <h4>Service</h4>
-      <ul class="footer-links">
-        <li><a href="#">Cardiology</a></li>
-        <li><a href="#">Pediatrics</a></li>
-        <li><a href="#">Neurology</a></li>
-      </ul>
+    <div class="v2-testi-grid">
+      <div class="v2-testi-card">
+        <div class="v2-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="v2-testi-quote">"The cardiology team detected an issue my previous GP had missed for two years. Their thoroughness genuinely changed my life. I cannot recommend them highly enough."</p>
+        <div class="v2-testi-author">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt="James"/>
+          <div><p class="v2-testi-name">James Whitfield</p><p class="v2-testi-role">Cardiology Patient</p></div>
+        </div>
+      </div>
+      <div class="v2-testi-card">
+        <div class="v2-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="v2-testi-quote">"My knee replacement surgery went flawlessly. The aftercare physiotherapy programme had me walking without pain in under six weeks — remarkable outcomes."</p>
+        <div class="v2-testi-author">
+          <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=100&q=80" alt="Priya"/>
+          <div><p class="v2-testi-name">Priya Sharma</p><p class="v2-testi-role">Orthopaedic Patient</p></div>
+        </div>
+      </div>
+      <div class="v2-testi-card">
+        <div class="v2-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="v2-testi-quote">"As a mother, finding paediatric doctors who are both clinically brilliant and wonderful with children has been a relief. My daughter actually looks forward to appointments."</p>
+        <div class="v2-testi-author">
+          <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=100&q=80" alt="Amara"/>
+          <div><p class="v2-testi-name">Amara Osei</p><p class="v2-testi-role">Paediatrics Parent</p></div>
+        </div>
+      </div>
     </div>
-    <div class="footer-col">
+  </div>
+</section>
+
+<!-- ═══ SECTION 7: CTA BOOKING ═══ -->
+<section class="v2-section v2-cta-section" id="booking">
+  <div class="v2-cta-decor"></div>
+  <div class="v2-container">
+    <div class="v2-cta-inner">
+      <div class="v2-cta-text">
+        <span class="v2-tag" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2)">Start Today</span>
+        <h2>Your Health Deserves World-Class Attention</h2>
+        <p>New patients receive a complimentary 30-minute health screening worth £150. Limited availability — book your slot today.</p>
+        <div class="v2-cta-actions">
+          <button class="v2-btn" style="background:#fff;color:var(--primary-dark);padding:16px 32px;font-size:16px">Book Free Screening</button>
+          <button class="v2-btn v2-btn-ghost">Call Us Now</button>
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.8);font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">check_circle</span>
+            No referral needed
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.8);font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">check_circle</span>
+            Same week availability
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.8);font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">check_circle</span>
+            All insurers accepted
+          </div>
+        </div>
+      </div>
+      <div class="v2-cta-form-card">
+        <p class="v2-cta-form-title">Request an Appointment</p>
+        <form>
+          <div class="v2-form-field">
+            <label class="v2-form-label">Full Name</label>
+            <input class="v2-form-input" type="text" placeholder="Your full name"/>
+          </div>
+          <div class="v2-form-grid">
+            <div class="v2-form-field">
+              <label class="v2-form-label">Phone</label>
+              <input class="v2-form-input" type="tel" placeholder="+44 7000 000"/>
+            </div>
+            <div class="v2-form-field">
+              <label class="v2-form-label">Specialty</label>
+              <select class="v2-form-input" style="appearance:none">
+                <option>Cardiology</option>
+                <option>Neurology</option>
+                <option>Orthopaedics</option>
+                <option>Paediatrics</option>
+                <option>General Medicine</option>
+              </select>
+            </div>
+          </div>
+          <div class="v2-form-field">
+            <label class="v2-form-label">Preferred Date</label>
+            <input class="v2-form-input" type="date"/>
+          </div>
+          <button class="v2-form-submit" type="submit">Confirm Request →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 8: FAQ ═══ -->
+<section class="v2-section" id="faqs">
+  <div class="v2-container">
+    <div class="v2-section-head">
+      <span class="v2-tag">FAQ</span>
+      <h2 class="t-h2">Common Questions Answered</h2>
+    </div>
+    <div class="v2-faq-wrap">
+      <div class="v2-faq-list">
+        <details class="v2-faq-item" open>
+          <summary class="v2-faq-summary">
+            Do I need a referral to see a specialist?
+            <span class="material-symbols-outlined">expand_more</span>
+          </summary>
+          <div class="v2-faq-body">No. As a private clinic we accept self-referrals for all specialties. Simply book online or call us and we'll arrange an initial consultation, often within 48 hours.</div>
+        </details>
+        <details class="v2-faq-item">
+          <summary class="v2-faq-summary">
+            Which insurance providers do you work with?
+            <span class="material-symbols-outlined">expand_more</span>
+          </summary>
+          <div class="v2-faq-body">We are recognised by all major UK insurers including Bupa, AXA, Aviva, Vitality and Cigna. Our billing team handles all pre-authorisation to make the process seamless for you.</div>
+        </details>
+        <details class="v2-faq-item">
+          <summary class="v2-faq-summary">
+            How quickly can I get an appointment?
+            <span class="material-symbols-outlined">expand_more</span>
+          </summary>
+          <div class="v2-faq-body">Most patients are seen within 2-3 working days. For urgent matters we offer same-day emergency slots; please call our priority line directly.</div>
+        </details>
+        <details class="v2-faq-item">
+          <summary class="v2-faq-summary">
+            Are virtual / teleconsultation appointments available?
+            <span class="material-symbols-outlined">expand_more</span>
+          </summary>
+          <div class="v2-faq-body">Yes. We offer secure HD video consultations for follow-ups, medication reviews, and initial assessments where a physical exam is not required. Available 7 days a week.</div>
+        </details>
+        <details class="v2-faq-item">
+          <summary class="v2-faq-summary">
+            What is your cancellation policy?
+            <span class="material-symbols-outlined">expand_more</span>
+          </summary>
+          <div class="v2-faq-body">We ask for 24 hours' notice to cancel or reschedule at no charge. Cancellations within 24 hours may incur a small fee which goes towards supporting our emergency slot programme.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="v2-footer">
+  <div class="v2-footer-top">
+    <div class="v2-footer-brand">
+      <div class="v2-footer-logo">
+        <span class="v2-footer-logo-text">LOGO_PLACEHOLDER</span>
+      </div>
+      <p class="v2-footer-desc">Premium private healthcare delivered with clinical excellence and genuine compassion since 2004.</p>
+      <div class="v2-footer-socials">
+        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">public</span></a>
+        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">chat_bubble</span></a>
+        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">video_camera_front</span></a>
+      </div>
+    </div>
+    <div class="v2-footer-col">
+      <h4>Services</h4>
+      <nav class="v2-footer-links">
+        <a href="#">Cardiology</a>
+        <a href="#">Neurology</a>
+        <a href="#">Orthopaedics</a>
+        <a href="#">Paediatrics</a>
+        <a href="#">General Medicine</a>
+      </nav>
+    </div>
+    <div class="v2-footer-col">
       <h4>Company</h4>
-      <ul class="footer-links">
-        <li><a href="#">About Us</a></li>
-        <li><a href="#">Services</a></li>
-        <li><a href="#">Contact</a></li>
+      <nav class="v2-footer-links">
+        <a href="#">About Us</a>
+        <a href="#">Our Doctors</a>
+        <a href="#">Patient Stories</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+      </nav>
+    </div>
+    <div class="v2-footer-col">
+      <h4>Contact</h4>
+      <ul class="v2-footer-contact">
+        <li><span class="material-symbols-outlined">location_on</span><span>14 Harley Street, London W1G 9PH</span></li>
+        <li><span class="material-symbols-outlined">phone</span><span>+44 20 7946 0000</span></li>
+        <li><span class="material-symbols-outlined">mail</span><span>care@vitacare.co.uk</span></li>
+        <li><span class="material-symbols-outlined">schedule</span><span>Mon–Sat: 8am – 8pm</span></li>
       </ul>
     </div>
-    <div class="footer-col">
-      <h4>Contact</h4>
-      <p>Email: hello@healthcare.com<br>Phone: +1 234 567 890</p>
-    </div>
   </div>
-  <div class="footer-bottom">
+  <div class="v2-footer-bottom">
     <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
+    <p style="font-size:13px;color:rgba(255,255,255,0.35)">Privacy Policy · Terms of Service · Accessibility</p>
   </div>
 </footer>
+
+<script>
+  (function() {
+    const initAnimations = () => {
+      const animateElements = document.querySelectorAll('.v2-hero-text, .v2-hero-visual, .v2-section-head, .v2-service-card, .v2-stat-item, .v2-about-imgs, .v2-about-text, .v2-process-step, .v2-testi-card, .v2-cta-text, .v2-cta-form-card, .v2-faq-wrap');
+      
+      animateElements.forEach(el => {
+        if (!el.classList.contains('scroll-fade-up')) {
+          el.classList.add('scroll-fade-up');
+        }
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.scroll-fade-up').forEach(el => observer.observe(el));
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAnimations);
+    } else {
+      initAnimations();
+    }
+  })();
+</script>
 `;
