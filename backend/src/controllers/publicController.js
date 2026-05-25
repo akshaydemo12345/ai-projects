@@ -396,7 +396,8 @@ const buildLeadCaptureScript = (page) => {
           window.location.replace(finalUrl);
         } else {
           var u = new URL(window.location.href);
-          window.location.replace(u.origin + u.pathname + u.search + '#' + SL + '?status=thank-you');
+          var currentPath = u.pathname.replace(/\\/+$/, '');
+          window.location.replace(u.origin + currentPath + "/thank-you" + u.search);
         }
       }
     })
@@ -534,7 +535,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   // ── Thank You Redirect Script ────────────────────────────────────────────
   // Handles Gravity Forms and generic form submission success events
   const thankYouUrl = page.thankYouUrl?.trim() || '';
-  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var u=new URL(window.location.href);window.location.replace(u.origin+u.pathname+u.search+"#"+window.pageSlug+"?status=thank-you")}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
+  const rawTyScript = `!function(){window.pageThankYouUrl=${JSON.stringify(thankYouUrl)};window.pageSlug=${JSON.stringify(page.slug)};function doRedirect(){if(window.pageThankYouUrl&&window.pageThankYouUrl.trim()){window.location.replace(window.pageThankYouUrl)}else{var currentPath=window.location.pathname.replace(/\\/$/, '');window.location.replace(window.location.origin+currentPath+"/thank-you"+window.location.search)}}document.addEventListener('gform_confirmation_loaded',function(){doRedirect()});document.addEventListener('submit-success',function(){doRedirect()});if(window.location.hash&&window.location.hash.includes('gf_')){doRedirect()}document.addEventListener('DOMContentLoaded',function(){var forms=document.querySelectorAll('form');forms.forEach(function(form){if(form.hasAttribute('data-no-redirect'))return;form.addEventListener('submit',function(){})})})}();`;
   const encodedTyScript = Buffer.from(rawTyScript).toString('base64');
   const thankYouRedirectScript = `<script>eval(atob("${encodedTyScript}"));</script>`;
 
@@ -873,7 +874,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
     const pgSlug = String(req.query.pg || '').trim();
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
-    const isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
+    let isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
     const forceRender = req.query.render === 'true';
     let page = null;
 
@@ -899,6 +900,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
         if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
           pageSlug = slugParts[slugParts.length - 2];
           urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+          isThankYou = true;
         } else {
           pageSlug = slugParts[slugParts.length - 1];
           urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
@@ -936,6 +938,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
       if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
         pageSlug = slugParts[slugParts.length - 2];
         urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+        isThankYou = true;
       } else {
         pageSlug = slugParts[slugParts.length - 1];
         urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
@@ -979,6 +982,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
       if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
         pageSlug = slugParts[slugParts.length - 2];
         urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
+        isThankYou = true;
       } else {
         pageSlug = slugParts[slugParts.length - 1];
         urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
@@ -1217,14 +1221,8 @@ exports.handleFormSubmission = async (req, res, next) => {
     }).lean();
 
     if (!schema || !schema.fields?.length) {
-      console.warn(`[PUBLIC_FORM] No schema found for PageId: "${pageId}", Slug: "${pageSlug}"`);
-
-      // If it's a traditional form, don't just return JSON
-      if (!req.xhr && !req.headers.accept?.includes('json')) {
-        return res.status(404).send('<h1>Form Configuration Missing</h1><p>Please ensure you have configured a form in the landing page editor and published it.</p>');
-      }
-
-      return res.status(400).json({ status: 'fail', message: 'Form schema not found. Please ensure page is published and form is configured.' });
+      console.warn(`[PUBLIC_FORM] No schema found for PageId: "${pageId}", Slug: "${pageSlug}". Proceeding with raw data fallback.`);
+      // We will fallback to capturing raw fields below
     }
 
     // ── FIX: Resolve pageSlug from the Page document BEFORE Lead.create ──────
@@ -1306,16 +1304,18 @@ exports.handleFormSubmission = async (req, res, next) => {
     const missingFields = [];
     const leadData = {};
 
-    for (const field of schema.fields) {
-      const value = getSmartFieldValue(field, rawData);
+    if (schema && schema.fields) {
+      for (const field of schema.fields) {
+        const value = getSmartFieldValue(field, rawData);
 
-      if (field.required && !value) {
-        missingFields.push(field.label || field.field_name);
-      }
+        if (field.required && !value) {
+          missingFields.push(field.label || field.field_name);
+        }
 
-      const storageKey = field.name || field.field_name;
-      if (value !== undefined) {
-        leadData[storageKey] = value;
+        const storageKey = field.name || field.field_name;
+        if (value !== undefined) {
+          leadData[storageKey] = value;
+        }
       }
     }
 
@@ -1335,14 +1335,11 @@ exports.handleFormSubmission = async (req, res, next) => {
     });
 
     // FIX: Soft-warn — NEVER hard-fail on missing required fields.
-    // Previously this returned 400 and the lead was lost entirely.
-    // Now we log the warning and save with whatever data was received.
-    // Only hard-fail when the post is completely empty (bot protection).
     if (missingFields.length > 0) {
       logger.warn(`[FORM] Missing required fields [${missingFields.join(', ')}] on "${pageSlug}" — saving with available data`);
     }
     const _allEmpty = Object.values(leadData).every(v => !v || String(v).trim() === '');
-    if (_allEmpty && schema.fields.length > 0) {
+    if (_allEmpty && schema && schema.fields && schema.fields.length > 0) {
       return res.status(400).json({ status: 'fail', message: 'No form data received', fields: missingFields });
     }
 
@@ -1370,8 +1367,8 @@ exports.handleFormSubmission = async (req, res, next) => {
 
     // 5. Create Lead
     const lead = await Lead.create({
-      projectId: schema.project_id || projectId,
-      pageId: schema.page_id || pageId,
+      projectId: (schema && schema.project_id) || projectId,
+      pageId: (schema && schema.page_id) || pageId,
       pageSlug: pageSlug,          // FIX: always resolved above — never undefined
       data: leadData,
       utm,
@@ -1385,13 +1382,14 @@ exports.handleFormSubmission = async (req, res, next) => {
       }
     });
 
-    if (schema.project_id) {
+    const projIdToUpdate = (schema && schema.project_id) || projectId;
+    if (projIdToUpdate) {
       const Project = require('../models/Project');
       const emailService = require('../services/emailService');
 
-      await Project.findByIdAndUpdate(schema.project_id, { $inc: { leadCount: 1 } }).catch(() => { });
+      await Project.findByIdAndUpdate(projIdToUpdate, { $inc: { leadCount: 1 } }).catch(() => { });
 
-      const project = await Project.findById(schema.project_id).lean();
+      const project = await Project.findById(projIdToUpdate).lean();
       if (project) {
         console.log(`📬 Processing email notifications for project: ${project.name}`);
         const now = new Date().toLocaleString();
@@ -1546,12 +1544,25 @@ exports.handleFormSubmission = async (req, res, next) => {
     let thankYouUrl = rawData.redirect;
 
     if (!thankYouUrl) {
-      const pageDoc = await Page.findById(schema.page_id).select('thankYouUrl slug projectId');
+      const pageDoc = pageId ? await Page.findById(pageId).select('thankYouUrl slug projectId') : null;
       if (pageDoc && pageDoc.thankYouUrl) {
         thankYouUrl = pageDoc.thankYouUrl;
       } else {
         // Build default redirect path (retaining path context)
-        thankYouUrl = `/${pageSlug || schema.page_slug || pageDoc?.slug}?status=thank-you`;
+        let baseForRedirect = rawData.url || rawData.pageUrl || req.get('referer');
+        if (baseForRedirect) {
+          try {
+            let parsed = new URL(baseForRedirect);
+            parsed.pathname = '/' + parsed.pathname.split('/').filter(Boolean).join('/') + '/thank-you';
+            thankYouUrl = parsed.toString();
+          } catch (e) {
+            const finalSlug = (pageSlug || (schema && schema.page_slug) || pageDoc?.slug || '').split('/').filter(Boolean).join('/');
+            thankYouUrl = `/${finalSlug}/thank-you`;
+          }
+        } else {
+          const finalSlug = (pageSlug || (schema && schema.page_slug) || pageDoc?.slug || '').split('/').filter(Boolean).join('/');
+          thankYouUrl = `/${finalSlug}/thank-you`;
+        }
       }
     }
 
