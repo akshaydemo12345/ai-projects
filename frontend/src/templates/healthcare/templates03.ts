@@ -1,844 +1,910 @@
-// Premium Healthcare Template 03 — Extensive, High-Fidelity & Multi-Section Design
-// Optimized for Large Medical Institutions & Dynamic Branding
+// Auto-generated ULTRA-DYNAMIC template — healthcare templates03
+// Generated: 2026-05-25T00:00:00.000Z
+// Theme: NovaMed Advanced Medical — Indigo / Violet — Tech-Forward Premium
 
 export const healthcare03Styles = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 :root {
-  --primary: PRIMARY_COLOR_PLACEHOLDER;
-  --secondary: SECONDARY_COLOR_PLACEHOLDER;
-  --text-dark: #0f172a;
-  --text-light: #64748b;
-  --white: #ffffff;
-  --bg-soft: #f8fafc;
-  --bg-dark: #0b1a2d;
-  --border-color: #f1f5f9;
+  --p3-primary: PRIMARY_COLOR_PLACEHOLDER;
+  --p3-primary-mid: PRIMARY_COLOR_PLACEHOLDER;
+  --p3-primary-light: #f5f5f5ff;
+  --p3-primary-xlight: #f0f0f0ef;
+  --p3-accent: SECONDARY_COLOR_PLACEHOLDER;
+  --p3-accent-light: #eeeeeeff;
+  --p3-secondary: SECONDARY_COLOR_PLACEHOLDER;
+  --p3-on-surface: #0D0B1E;
+  --p3-surface: #FAFAFA;
+  --p3-card: #d1d1d1ff;
+  --p3-muted: #4B4869;
+  --p3-light-text: #e6e6e6ff;
+  --p3-border: #E8E4F8;
+  --p3-border-mid: #d6d6d6ff;
+  --p3-shadow-sm: 0 2px 8px rgba(91,33,182,0.07);
+  --p3-shadow-md: 0 8px 28px rgba(91,33,182,0.12);
+  --p3-shadow-lg: 0 24px 64px rgba(91,33,182,0.16);
+  --p3-r-sm: 8px;
+  --p3-r-md: 16px;
+  --p3-r-lg: 24px;
+  --p3-r-xl: 32px;
+  --p3-font-display: 'Fraunces', serif;
+  --p3-font-body: 'Plus Jakarta Sans', sans-serif;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+  letter-spacing: normal; text-transform: none; display: inline-block;
+  white-space: nowrap; word-wrap: normal; direction: ltr;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
 }
-
-@keyframes slowZoom {
-  from { transform: scale(1); }
-  to { transform: scale(1.1); }
-}
-
-@keyframes floating {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-  100% { transform: translateY(0px); }
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+body {
+  font-family: var(--p3-font-body);
+  background: var(--p3-surface);
+  color: var(--p3-on-surface);
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px; line-height: 1.6;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+ul { list-style: none; }
+input, select, textarea { font-family: inherit; }
 
-body { 
-  font-family: 'Inter', sans-serif; 
-  color: var(--text-dark); 
-  line-height: 1.6; 
-  background: var(--white); 
-  overflow-x: hidden; 
+@keyframes formPop {
+  0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-h1, h2, h3, h4, h5 { 
-  font-family: 'Plus Jakarta Sans', sans-serif; 
-  font-weight: 800; 
-  color: var(--text-dark); 
-  line-height: 1.2;
+.p3-hero-form {
+  display: flex; gap: 8px; align-items: center; background: #fff; padding: 10px; border-radius: 100px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  animation: formPop 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  margin-top: 24px;
+}
+.p3-hero-form input, .p3-hero-form select {
+  flex: 1; border: none; padding: 14px 20px; outline: none; font-family: inherit; font-size: 14px; border-right: 1px solid var(--p3-border);
+  background: transparent; transition: background 0.3s ease; border-radius: 50px;
+}
+.p3-hero-form input:hover, .p3-hero-form select:hover, .p3-hero-form input:focus, .p3-hero-form select:focus {
+  background: var(--p3-primary-xlight);
+}
+.p3-hero-form .p3-btn-primary {
+  border-radius: 100px; padding: 14px 28px; font-size: 15px; margin-left: 4px;
+}
+@media (max-width: 900px) {
+  .p3-hero-form { flex-direction: column; border-radius: 20px; padding: 16px; align-items: stretch; }
+  .p3-hero-form input, .p3-hero-form select { border-right: none; border-bottom: 1px solid var(--p3-border); border-radius: 8px; }
+  .p3-hero-form .p3-btn-primary { margin-left: 0; margin-top: 12px; border-radius: 8px; }
 }
 
-.container { 
-  max-width: 1300px; 
-  margin: 0 auto; 
-  padding: 0 2rem; 
+/* ─── TYPOGRAPHY ─── */
+.p3-display { font-family: var(--p3-font-display); font-size: clamp(36px,5vw,66px); line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+.p3-h2 { font-family: var(--p3-font-display); font-size: clamp(26px,3.5vw,44px); line-height: 1.2; font-weight: 600; }
+.p3-h3 { font-family: var(--p3-font-body); font-size: 20px; font-weight: 700; }
+.p3-h4 { font-family: var(--p3-font-body); font-size: 15px; font-weight: 700; }
+.p3-body-lg { font-size: 18px; line-height: 1.75; font-weight: 400; }
+.p3-body { font-size: 15px; line-height: 1.7; font-weight: 400; }
+.p3-small { font-size: 13px; line-height: 1.6; font-weight: 400; }
+.p3-label { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
+.p3-col-primary { color: var(--p3-primary-mid); }
+.p3-col-accent { color: var(--p3-accent); }
+.p3-col-muted { color: var(--p3-muted); }
+.p3-col-light { color: var(--p3-light-text); }
+.p3-col-white { color: #ffffff; }
+
+/* ─── LAYOUT ─── */
+.p3-container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.p3-section { padding: 100px 0; }
+.p3-section-sm { padding: 64px 0; }
+.p3-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 14px; border-radius: 100px;
+  background: var(--p3-primary-light); color: var(--p3-primary);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
 }
-
-.section-padding { padding: 9rem 0; }
-
-.text-primary { color: var(--primary) !important; }
-
-img { max-width: 100%; display: block; border-radius: 12px; object-fit: cover; }
-
-/* Navbar */
-.navbar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  z-index: 1000;
-  padding: 1.5rem 0;
-  background: transparent;
+.p3-pill-accent {
+  background: var(--p3-accent-light); color: #0E7490;
 }
+.p3-section-head { text-align: center; margin-bottom: 64px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
 
-.nav-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ─── BUTTONS ─── */
+.p3-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border-radius: var(--p3-r-sm);
+  font-weight: 700; font-size: 15px; cursor: pointer;
+  transition: all 0.22s ease; white-space: nowrap;
+  font-family: var(--p3-font-body);
 }
+.p3-btn-primary { background: var(--p3-primary-mid); color: #fff; }
+.p3-btn-primary:hover { background: var(--p3-primary); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91,33,182,0.25); }
+.p3-btn-accent { background: var(--p3-accent); color: #fff; }
+.p3-btn-accent:hover { background: #0891B2; transform: translateY(-1px); }
+.p3-btn-outline { background: transparent; border: 2px solid var(--p3-primary-mid); color: var(--p3-primary-mid); }
+.p3-btn-outline:hover { background: var(--p3-primary-xlight); }
+.p3-btn-white { background: #fff; color: var(--p3-primary); }
+.p3-btn-white:hover { background: var(--p3-primary-light); }
+.p3-btn-ghost-w { background: transparent; border: 2px solid rgba(255,255,255,0.4); color: #fff; }
+.p3-btn-ghost-w:hover { background: rgba(255,255,255,0.12); }
 
-.nav-links { display: flex; gap: 2.5rem; list-style: none; }
-.nav-links a { text-decoration: none; color: #fff; font-weight: 600; font-size: 0.9rem; opacity: 0.8; }
-.nav-links a:hover { opacity: 1; color: var(--primary); }
-
-.btn-nav {
-  background-color: var(--primary) !important;
-  color: #fff !important;
-  padding: 0.8rem 2rem;
-  border-radius: 50px;
-  font-weight: 700;
-  text-decoration: none;
-  font-size: 0.85rem;
+/* ─── HEADER ─── */
+.p3-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,250,250,0.94); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--p3-border);
 }
-
-/* CINEMATIC HERO */
-.hero {
-  height: 100vh;
-  min-height: 800px;
-  background: #000;
-  display: flex;
-  align-items: center;
-  position: relative;
-  color: #fff;
-  overflow: hidden;
+.p3-header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 16px 1.5rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
 }
+.p3-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--p3-font-display); font-size: 21px; font-weight: 700;
+  color: var(--p3-secondary);
+}
+.p3-logo-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--p3-primary-mid), var(--p3-accent));
+}
+.p3-logo-badge span { color: #fff; font-size: 20px; }
+.p3-nav { display: none; align-items: center; gap: 32px; }
+.p3-nav a { font-size: 14px; font-weight: 600; color: var(--p3-muted); transition: color 0.2s; }
+.p3-nav a:hover { color: var(--p3-primary-mid); }
+.p3-header-right { display: flex; align-items: center; gap: 12px; }
+.p3-header-phone { display: none; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--p3-secondary); }
+.p3-header-phone span.material-symbols-outlined { font-size: 18px; color: var(--p3-primary-mid); }
 
-.hero-bg-image {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+/* ─── HERO ─── */
+.p3-hero {
+  position: relative; overflow: hidden;
+  padding: 120px 0 160px;
+  background-image: url('https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1920&q=80');
   background-size: cover;
   background-position: center;
-  animation: slowZoom 20s infinite alternate linear;
-  overflow: hidden;
 }
-.hero-bg-image img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-  border-radius: 0;
-  filter: brightness(0.5);
+.p3-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(0,0,0,0.65); z-index: 1;
 }
-
-.hero-content {
-  max-width: 800px;
-  margin-top: -5rem;
-  position: relative;
-  z-index: 10;
-  animation: fadeUp 1.2s ease-out forwards;
+.p3-hero-grid-bg {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
-
-.hero h1 { font-size: clamp(3.5rem, 6vw, 5.5rem); color: #fff; margin-bottom: 2rem; }
-.hero p { font-size: 1.2rem; color: rgba(255,255,255,0.8); margin-bottom: 3rem; max-width: 600px; }
-
-.btn-hero-contact {
-  display: inline-block;
-  padding: 1.2rem 3rem;
-  border: 2px solid #fff;
+.p3-hero-inner-centered {
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  max-width: 900px; margin: 0 auto; gap: 32px;
   color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2px;
 }
-.btn-hero-contact:hover { background: #fff; color: #000; }
-
-/* HORIZONTAL BOOKING BAR */
-.booking-bar {
-  background-color: var(--primary);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  height: 120px;
-  z-index: 100;
+.p3-hero-inner-centered .p3-display { color: #fff; }
+.p3-hero-inner-centered p { color: rgba(255,255,255,0.85) !important; }
+.p3-hero-features { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+.p3-hero-feat { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #fff; }
+.p3-hero-feat span.material-symbols-outlined { font-size: 18px; font-variation-settings:'FILL' 1; color: #22C55E; }
+.p3-hero-img-main {
+  width: 100%; border-radius: var(--p3-r-xl); overflow: hidden;
+  aspect-ratio: 21/9; box-shadow: var(--p3-shadow-lg); position: relative;
+  margin-top: 16px;
 }
-
-.booking-label {
-  background: var(--primary) !important;
-  width: 30%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4rem;
-  clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%);
-  color: #fff;
-  position: relative;
+.p3-hero-img-main img { width: 100%; height: 100%; object-fit: cover; }
+.p3-hero-img-tag {
+  position: absolute; bottom: 20px; right: 20px;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  border-radius: 100px; padding: 12px 20px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
-
-.booking-label::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.3); /* Dark overlay for secondary color */
-  z-index: 1;
+.p3-hero-img-tag .dot { width: 10px; height: 10px; border-radius: 50%; background: #22C55E; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(34,197,94,0.2); }
+.p3-hero-img-tag span { font-size: 14px; font-weight: 700; color: var(--p3-on-surface); }
+.p3-hero-mini-cards {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  width: 100%; margin-top: -40px; position: relative; z-index: 10; padding: 0 32px;
 }
-
-.booking-label > div { position: relative; z-index: 5; }
-
-.booking-label h2 { color: #fff; font-size: 1.8rem; line-height: 1; }
-.booking-label span { color: #fff; opacity: 0.8; display: block; font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 2px; font-weight: 700; }
-
-.booking-inputs {
-  background: var(--primary) !important;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 0 4rem;
-  gap: 2rem;
+.p3-mini-card {
+  background: #fff; border-radius: var(--p3-r-md); padding: 20px;
+  border: 1px solid var(--p3-border); box-shadow: var(--p3-shadow-md);
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
+}
+.p3-mini-card .icon { font-size: 24px; color: var(--p3-primary-mid); }
+.p3-mini-card .val { font-family: var(--p3-font-display); font-size: 26px; font-weight: 700; color: var(--p3-secondary); }
+.p3-mini-card .lbl { font-size: 13px; color: var(--p3-light-text); font-weight: 600; }
+@media (max-width: 768px) {
+  .p3-hero-mini-cards { grid-template-columns: repeat(2, 1fr); padding: 0; margin-top: 24px; }
+  .p3-hero-img-main { aspect-ratio: 16/9; }
 }
 
-.input-item {
-  flex: 1;
-  position: relative;
+/* ─── SERVICES (Diagonal Split Layout) ─── */
+.p3-services-outer { background: #fff; }
+.p3-services-header-wrap {
+  background: var(--p3-secondary); padding: 64px 0 100px;
 }
-
-.input-item label { 
-  display: block; 
-  color: rgba(255,255,255,0.7); 
-  font-size: 0.75rem; 
-  font-weight: 700; 
-  text-transform: uppercase; 
-  margin-bottom: 0.25rem; 
+.p3-services-cards-wrap { margin-top: -60px; }
+.p3-services-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;
 }
-
-.input-item input, .input-item select {
-  width: 100%;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 0.75rem 0;
-  color: #fff;
-  border-width: 0 0 1px 0;
-  outline: none;
-  font-size: 1rem;
-  font-weight: 600;
+.p3-svc-card {
+  background: #fff; border-radius: var(--p3-r-lg); padding: 32px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid var(--p3-border);
+  display: flex; flex-direction: column; gap: 14px;
+  transition: all 0.3s ease;
 }
-.input-item input::placeholder { color: #fff; }
-
-.btn-booking-now {
-  background: #fff !important;
-  color: var(--primary) !important;
-  border: none;
-  padding: 1.2rem 2.5rem;
-  font-weight: 900;
-  font-size: 0.9rem;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 26px;
+.p3-svc-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-color: var(--p3-primary-mid); }
+.p3-svc-icon-row { display: flex; align-items: center; justify-content: space-between; }
+.p3-svc-icon {
+  width: 52px; height: 52px; border-radius: var(--p3-r-sm);
+  background: var(--p3-primary-xlight);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s;
 }
-.btn-booking-now:hover { background: #1e293b !important; color: #fff !important; }
+.p3-svc-card:hover .p3-svc-icon { background: var(--p3-primary-mid); }
+.p3-svc-icon span { color: var(--p3-primary-mid); font-size: 26px; transition: color 0.3s; }
+.p3-svc-card:hover .p3-svc-icon span { color: #fff; }
+.p3-svc-num { font-family: var(--p3-font-display); font-size: 36px; font-weight: 700; color: var(--p3-border); }
+.p3-svc-card h3 { font-size: 18px; font-weight: 700; }
+.p3-svc-card p { font-size: 14px; color: var(--p3-muted); line-height: 1.65; flex: 1; }
+.p3-svc-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.p3-svc-tag { padding: 3px 10px; border-radius: 100px; background: var(--p3-primary-xlight); color: var(--p3-primary); font-size: 11px; font-weight: 600; }
 
-/* FEATURES ROW */
-.section-padding-large { padding: 12rem 0 6rem; }
-.features-grid-03 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+/* ─── ABOUT ─── */
+.p3-about-grid { display: grid; grid-template-columns: 1fr; gap: 60px; align-items: center; }
+.p3-about-visual { position: relative; }
+.p3-about-img-box {
+  border-radius: var(--p3-r-xl); overflow: hidden;
+  aspect-ratio: 4/5; box-shadow: var(--p3-shadow-lg);
 }
-
-.feature-card-03 {
-  background: #fff;
-  padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.05);
-  text-align: center;
-  cursor: pointer;
+.p3-about-img-box img { width: 100%; height: 100%; object-fit: cover; }
+.p3-about-float {
+  position: absolute; bottom: -20px; right: -10px;
+  background: var(--p3-secondary); border-radius: var(--p3-r-lg); padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 4px;
+  box-shadow: var(--p3-shadow-lg);
 }
-
-.feature-card-03:hover {
-  transform: translateY(-15px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
-  border: 1px solid var(--primary);
+.p3-about-float .val { font-family: var(--p3-font-display); font-size: 36px; font-weight: 700; color: #fff; }
+.p3-about-float .lbl { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500; }
+.p3-about-float .accent-line { width: 32px; height: 3px; background: var(--p3-accent); border-radius: 2px; margin-bottom: 4px; }
+.p3-about-text { display: flex; flex-direction: column; gap: 28px; }
+.p3-credentials { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.p3-cred-card {
+  background: var(--p3-primary-xlight); border-radius: var(--p3-r-md); padding: 20px;
+  border: 1px solid var(--p3-primary-light); display: flex; flex-direction: column; gap: 6px;
 }
+.p3-cred-card span.material-symbols-outlined { color: var(--p3-primary-mid); font-size: 22px; }
+.p3-cred-card h4 { font-size: 14px; font-weight: 700; }
+.p3-cred-card p { font-size: 13px; color: var(--p3-muted); }
 
-.feature-card-03 .material-symbols-outlined {
-  font-size: 3rem;
-  color: var(--primary);
-  margin-bottom: 1.5rem;
-  transition: transform 0.4s;
+/* ─── PROCESS ─── */
+.p3-process-bg { background: var(--p3-primary-xlight); }
+.p3-process-steps { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
+.p3-proc-step { display: flex; gap: 24px; padding: 32px 0; position: relative; }
+.p3-proc-step:not(:last-child)::after {
+  content: ''; position: absolute; left: 24px; top: 80px; bottom: 0;
+  width: 2px; background: var(--p3-primary-light);
 }
-
-.feature-card-03:hover .material-symbols-outlined {
-  transform: scale(1.1) rotate(5deg);
+.p3-proc-left { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0; }
+.p3-proc-circle {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--p3-primary-mid); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 17px; color: #fff; z-index: 1;
 }
+.p3-proc-body { flex: 1; padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.p3-proc-body h3 { font-size: 18px; font-weight: 700; }
+.p3-proc-body p { font-size: 14px; color: var(--p3-muted); }
+.p3-proc-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; background: #fff; border: 1px solid var(--p3-secondary); font-size: 12px; font-weight: 600; color: var(--p3-primary); }
 
-/* ABOUT SECTION */
-.about-03 { display: grid; grid-template-columns: 1fr 1.2fr; gap: 6rem; align-items: center; }
-
-.about-imgs {
-  position: relative;
-  height: 550px;
+/* ─── DOCTORS ─── */
+.p3-doctors-bg { background: #fff; }
+.p3-doctors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+.p3-doctor-card {
+  border-radius: var(--p3-r-lg); overflow: hidden;
+  border: 1px solid var(--p3-border); box-shadow: var(--p3-shadow-sm);
+  transition: all 0.3s ease;
 }
+.p3-doctor-card:hover { transform: translateY(-4px); box-shadow: var(--p3-shadow-md); }
+.p3-doctor-img { aspect-ratio: 4/3; overflow: hidden; }
+.p3-doctor-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.p3-doctor-card:hover .p3-doctor-img img { transform: scale(1.04); }
+.p3-doctor-info { padding: 20px; display: flex; flex-direction: column; gap: 6px; }
+.p3-doctor-name { font-size: 17px; font-weight: 700; }
+.p3-doctor-spec { font-size: 13px; color: var(--p3-primary-mid); font-weight: 600; }
+.p3-doctor-exp { font-size: 12px; color: var(--p3-light-text); }
+.p3-doctor-book { margin-top: 12px; display: block; text-align: center; padding: 10px; border-radius: var(--p3-r-sm); background: var(--p3-secondary); font-size: 14px; font-weight: 600; transition: background 0.2s; color: #fff; }
+.p3-doctor-book:hover { background: var(--p3-primary); color: #fff; }
 
-.img-main { width: 80%; height: 500px; }
-.img-sub { 
-  position: absolute; 
-  bottom: 0; 
-  right: 0; 
-  width: 50%; 
-  height: 300px; 
-  border: 10px solid #fff; 
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+/* ─── TESTIMONIALS ─── */
+.p3-testi-bg { background: var(--p3-secondary); }
+.p3-testi-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.p3-testi-card {
+  background: rgba(255,255,255,0.06); border-radius: var(--p3-r-lg); padding: 28px;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; flex-direction: column; gap: 16px;
 }
+.p3-testi-quote-icon span { font-size: 40px; color: var(--p3-accent); opacity: 0.5; }
+.p3-testi-text { font-size: 15px; line-height: 1.75; color: rgba(255,255,255,0.85); font-style: italic; flex: 1; }
+.p3-testi-author { display: flex; align-items: center; gap: 12px; }
+.p3-testi-author img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); }
+.p3-testi-name { font-size: 14px; font-weight: 700; color: #fff; }
+.p3-testi-tag { font-size: 12px; color: var(--p3-accent); font-weight: 500; }
+.p3-testi-stars { display: flex; gap: 2px; }
+.p3-testi-stars span { color: #FCD34D; font-size: 15px; }
 
-.about-text-03 h2 { font-size: 3rem; margin-bottom: 2rem; }
-.about-text-03 p { color: var(--text-light); margin-bottom: 2.5rem; }
-
-/* INNOVATION SECTION */
-.innovation-section { 
-  background-color: var(--secondary);
-  color: #fff; 
-  overflow: hidden; 
-  position: relative;
-  border-radius: 100px 100px 0 0;
+/* ─── CTA SECTION ─── */
+.p3-cta-bg {
+  background: linear-gradient(135deg, var(--p3-primary) 0%, var(--p3-primary-mid) 50%, var(--p3-accent) 100%);
+  position: relative; overflow: hidden;
 }
-
-.innovation-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: var(--secondary);
-  z-index: 1;
+.p3-cta-mesh {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(255,255,255,0.06) 0%, transparent 50%);
 }
-
-.innovation-grid { 
-  position: relative;
-  z-index: 5;
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 6rem; 
-  align-items: center; 
+.p3-cta-inner {
+  position: relative; z-index: 2; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 28px;
 }
+.p3-cta-inner h2 { font-family: var(--p3-font-display); font-size: clamp(28px,4vw,52px); color: #fff; font-weight: 700; }
+.p3-cta-inner p { font-size: 17px; color: rgba(255,255,255,0.8); max-width: 500px; }
+.p3-cta-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.p3-cta-perks { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+.p3-cta-perk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.75); }
+.p3-cta-perk span.material-symbols-outlined { font-size: 15px; font-variation-settings:'FILL' 1; color: rgba(255,255,255,0.9); }
 
-.innovation-content h2 { color: #fff; font-size: 3.5rem; margin-bottom: 2rem; }
-.innovation-content p { color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 3rem; }
-
-.tech-cluster {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  position: relative;
+/* ─── FAQ ─── */
+.p3-faq-wrap { max-width: 700px; margin: 0 auto; }
+.p3-faq-list { display: flex; flex-direction: column; gap: 10px; }
+.p3-faq-item {
+  border-radius: var(--p3-r-md); overflow: hidden;
+  background: #fff; border: 1px solid var(--p3-border);
+  transition: border-color 0.25s;
 }
-
-.tech-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  padding: 2.5rem;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-  animation: floating 4s infinite ease-in-out;
+.p3-faq-item[open] { border-color: var(--p3-primary-mid); }
+.p3-faq-sum {
+  padding: 20px 24px; cursor: pointer; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 15px; font-weight: 600;
 }
+.p3-faq-sum::-webkit-details-marker { display: none; }
+.p3-faq-sum .material-symbols-outlined { color: var(--p3-primary-mid); transition: transform 0.25s; }
+.p3-faq-item[open] .p3-faq-sum { color: var(--p3-primary); }
+.p3-faq-item[open] .p3-faq-sum .material-symbols-outlined { transform: rotate(180deg); }
+.p3-faq-ans { padding: 0 24px 20px; font-size: 14px; color: var(--p3-muted); line-height: 1.7; }
 
-.tech-card:nth-child(even) { 
-  transform: translateY(40px); 
-  animation-delay: 1s;
+/* ─── FOOTER ─── */
+.p3-footer { background: #0D0B1E; }
+.p3-footer-top {
+  display: grid; grid-template-columns: 1fr; gap: 40px;
+  padding: 64px 1.5rem; max-width: 1200px; margin: 0 auto;
 }
-
-.tech-card:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--primary);
-  animation-play-state: paused;
+.p3-footer-brand { display: flex; flex-direction: column; gap: 16px; }
+.p3-footer-logo { display: flex; align-items: center; gap: 10px; }
+.p3-footer-logo-badge { width: 36px; height: 36px; border-radius: 9px; background: linear-gradient(135deg, var(--p3-primary-mid), var(--p3-accent)); display: flex; align-items: center; justify-content: center; }
+.p3-footer-logo-badge span { color: #fff; font-size: 18px; }
+.p3-footer-logo-text { font-family: var(--p3-font-display); font-size: 18px; font-weight: 700; color: #fff; }
+.p3-footer-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; max-width: 260px; }
+.p3-footer-socials { display: flex; gap: 10px; }
+.p3-footer-s-btn { width: 36px; height: 36px; border-radius: 9px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.p3-footer-s-btn:hover { background: var(--p3-primary-mid); }
+.p3-footer-s-btn span { color: rgba(255,255,255,0.6); font-size: 17px; }
+.p3-footer-col h5 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+.p3-footer-links { display: flex; flex-direction: column; gap: 10px; }
+.p3-footer-links a { font-size: 14px; color: rgba(255,255,255,0.6); transition: color 0.2s; }
+.p3-footer-links a:hover { color: #fff; }
+.p3-footer-contact-list { display: flex; flex-direction: column; gap: 12px; }
+.p3-footer-contact-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.55); }
+.p3-footer-contact-list li span.material-symbols-outlined { font-size: 16px; color: var(--p3-accent); flex-shrink: 0; margin-top: 2px; }
+.p3-footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 20px 1.5rem; max-width: 1200px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center;
 }
+.p3-footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.3); }
 
-/* DOCTORS SECTION (NEW) */
-.doctors-grid-03 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; margin-top: 4rem; }
-
-.doctor-card-03 {
-  background: #fff;
-  border-radius: 40px;
-  padding: 3rem;
-  text-align: center;
-  border: 1px solid var(--border-color);
-  position: relative;
-  overflow: hidden;
+/* ─── RESPONSIVE ─── */
+@media (min-width: 640px) {
+  .p3-header-phone { display: flex; }
+  .p3-services-grid { grid-template-columns: 1fr 1fr; }
+  .p3-doctors-grid { grid-template-columns: 1fr 1fr; }
+  .p3-testi-grid { grid-template-columns: 1fr 1fr; }
 }
-
-.doctor-card-03:hover {
-  transform: translateY(-15px);
-  border-color: var(--primary);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.1);
+@media (min-width: 768px) {
+  .p3-nav { display: flex; }
+  .p3-hero-inner { grid-template-columns: 1.1fr 1fr; }
+  .p3-about-grid { grid-template-columns: 1fr 1fr; }
+  .p3-footer-top { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .p3-footer-bottom { flex-direction: row; justify-content: space-between; text-align: left; }
 }
-
-.doctor-img-box {
-  width: 180px;
-  height: 180px;
-  margin: 0 auto 2rem;
-  position: relative;
-  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.doctor-card-03:hover .doctor-img-box {
-  transform: scale(1.1);
-}
-
-.doctor-img-box img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 5px solid var(--bg-soft);
-}
-
-.doctor-card-03 h4 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-.doctor-card-03 span { color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-
-.doctor-social {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-.doctor-social a { 
-  width: 40px; height: 40px; 
-  background: var(--bg-soft); 
-  border-radius: 50%; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  text-decoration: none;
-  color: var(--text-dark);
-}
-.doctor-social a:hover { background: var(--primary); color: #fff; }
-
-/* TESTIMONIALS SECTION */
-.testimonials-03 { background: var(--bg-soft); }
-
-.testimonial-grid-03 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; }
-
-.test-card-03 {
-  background: #fff;
-  padding: 3rem;
-  border-radius: 30px;
-  position: relative;
-}
-
-/* FOOTER 03 */
-.footer-03 { 
-  background: var(--secondary); 
-  color: #fff; 
-  padding: 8rem 0 3rem; 
-  position: relative;
-}
-
-.footer-03::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5); /* Slightly darker for footer */
-  z-index: 1;
-}
-
-.footer-03-grid { 
-  position: relative;
-  z-index: 5;
-  display: grid; 
-  grid-template-columns: 1.5fr 1fr 1fr 1.5fr; 
-  gap: 4rem; 
-  padding-bottom: 5rem; 
-  border-bottom: 1px solid rgba(255,255,255,0.1); 
-}
-
-.footer-col { position: relative; z-index: 5; }
-
-/* FAQ 03 */
-.faq-03-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 6rem; 
-  align-items: flex-start; 
-  padding: 9rem 0;
-}
-
-.faq-high-tech { 
-  position: relative; 
-  height: 600px;
-  display: flex;
-  align-items: center;
-}
-
-.faq-img-1 {
-  width: 80%;
-  height: 500px;
-  border-radius: 40px;
-  overflow: hidden;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.1);
-  position: relative;
-  z-index: 1;
-}
-
-.faq-img-2 {
-  width: 50%;
-  height: 300px;
-  border-radius: 30px;
-  overflow: hidden;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  z-index: 2;
-  border: 10px solid #fff;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.2);
-  animation: floating 5s infinite ease-in-out;
-}
-
-.faq-high-tech img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.faq-list-03 { display: flex; flex-direction: column; gap: 1.5rem; }
-
-.faq-item-03 { 
-  background: #fff; 
-  border-radius: 20px; 
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  transition: all 0.4s;
-}
-
-.faq-item-03[open] {
-  border-color: var(--primary);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
-}
-
-.faq-item-03 summary { 
-  padding: 2rem; 
-  font-weight: 700; 
-  cursor: pointer; 
-  list-style: none; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.1rem;
-}
-
-.faq-item-03 summary::after { 
-  content: 'add'; 
-  font-family: 'Material Symbols Outlined'; 
-  color: var(--primary); 
-  font-size: 1.8rem;
-  transition: transform 0.4s;
-}
-
-.faq-item-03[open] summary::after { 
-  content: 'remove';
-  transform: rotate(180deg);
-}
-
-.faq-answer {
-  padding: 0 2rem 2rem;
-  color: var(--text-light);
-  line-height: 1.8;
-  font-size: 0.95rem;
-  animation: fadeUp 0.5s ease-out;
-}
-
-@media (max-width: 1024px) {
-  .hero-grid, .about-03, .faq-03-grid, .innovation-grid { grid-template-columns: 1fr; }
-  .features-grid-03, .footer-03-grid, .testimonial-grid-03, .doctors-grid-03 { grid-template-columns: 1fr 1fr; }
-  .booking-bar { flex-direction: column; height: auto; position: static; }
-  .booking-label, .booking-inputs { width: 100%; clip-path: none; padding: 2rem; }
-}
-
-@media (max-width: 640px) {
-  .features-grid-03, .footer-03-grid, .testimonial-grid-03, .doctors-grid-03 { grid-template-columns: 1fr; }
+@media (min-width: 1024px) {
+  .p3-services-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .p3-doctors-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .p3-testi-grid { grid-template-columns: 1fr 1fr 1fr; }
 }
 `;
 
 export const healthcare03Html = `
-<nav class="navbar">
-  <div class="container nav-inner">
-    <div class="logo">LOGO_PLACEHOLDER</div>
-    <a href="#booking" class="btn-nav">GET STARTED</a>
-  </div>
-</nav>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
 
-<section class="hero" id="home">
-  <div class="hero-bg-image"></div>
-  <div class="container">
-    <div class="hero-content">
-      <h1 style="color: #fff;">Modern Care For <br><span class="text-primary">Your Healthy Life</span></h1>
-      <p>Providing advanced healthcare solutions with world-class expertise and compassion. Experience the next generation of medical care.</p>
-      <a href="#about" class="btn-hero-contact">CONTACT US</a>
+<!-- ═══ HEADER ═══ -->
+<header class="p3-header">
+  <div class="p3-header-inner">
+    <a class="p3-logo" href="#">
+      LOGO_PLACEHOLDER
+    </a>
+   
+    <div class="p3-header-right">
+      <button class="p3-btn p3-btn-primary">Book Now</button>
     </div>
   </div>
-  
-  <div class="booking-bar" id="booking">
-    <div class="booking-label">
-      <div>
-        <h2>BOOK YOUR <br>APPOINTMENT</h2>
-        <span>✦ CHOOSE SERVICE</span>
-      </div>
-    </div>
-    <div class="booking-inputs">
-      <form class="booking-inputs" style="display:contents;">
-      <div class="input-item">
-        <label>Preferred Date</label>
-        <input type="date" name="preferred_date" placeholder="Select Date">
-      </div>
-      <div class="input-item">
-        <label>Choose Service</label>
-        <select name="service">
-          <option>General Checkup</option>
-          <option>Cardiology</option>
-          <option>Dental Care</option>
-          <option>Neurology</option>
-        </select>
-      </div>
-      <div class="input-item">
-        <label>Phone Number</label>
-        <input type="tel" name="phone" placeholder="Enter Number">
-      </div>
-      <div class="input-item">
-        <label>Email Address</label>
-        <input type="email" name="email_address" placeholder="you@email.com">
-      </div>
-      <button type="submit" class="btn-booking-now">BOOK NOW</button>
-      </form>
-    </div>
-  </div>
-</section>
+</header>
 
-<section class="section-padding-large container">
-  <div class="features-grid-03">
-    <div class="feature-card-03">
-      <span class="material-symbols-outlined">medical_services</span>
-      <h3>Medical Advice</h3>
-      <p>Professional guidance for all your health concerns.</p>
-    </div>
-    <div class="feature-card-03">
-      <span class="material-symbols-outlined">emergency</span>
-      <h3>Emergency Care</h3>
-      <p>24/7 immediate assistance for critical situations.</p>
-    </div>
-    <div class="feature-card-03">
-      <span class="material-symbols-outlined">biotech</span>
-      <h3>Modern Lab</h3>
-      <p>Advanced diagnostic facilities for precise results.</p>
-    </div>
-    <div class="feature-card-03">
-      <span class="material-symbols-outlined">vaccines</span>
-      <h3>Vaccination</h3>
-      <p>Protecting you and your family from diseases.</p>
-    </div>
-  </div>
-</section>
+<main>
 
-<section class="section-padding container about-03" id="about">
-  <div class="about-imgs">
-    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="Doctor" class="img-main">
-    <img src="https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&q=80&w=500" alt="Patient" class="img-sub">
-  </div>
-  <div class="about-text-03">
-    <h2>Our Quality System Is Ready To <span class="text-primary">Help You!</span></h2>
-    <p>We have built a reputation for excellence by focusing on patient outcomes and compassionate care delivery.</p>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-bottom:3rem;">
-      <div style="display:flex; align-items:center; gap:1rem;">
-        <span class="material-symbols-outlined text-primary">check_circle</span>
-        <span>15+ Years Experience</span>
+<!-- ═══ SECTION 1: HERO ═══ -->
+<section class="p3-hero">
+  <div class="p3-hero-grid-bg"></div>
+  <div class="p3-container">
+    <div class="p3-hero-inner-centered">
+      
+      <span class="p3-pill"><span class="material-symbols-outlined" style="font-size:12px; color: #22C55E;">bolt</span>Advanced Medical Technology</span>
+      
+      <h1 class="p3-display" style="font-size: clamp(40px, 6vw, 76px); line-height: 1.05;">
+        Medicine <em style="color: var(--p3-primary-mid);">Reimagined</em> For You
+      </h1>
+      
+      <p class="p3-body-lg p3-col-muted" style="max-width: 600px;">
+        PROJECT_NAME_PLACEHOLDER combines AI-assisted diagnostics with elite specialist care — delivering precision medicine that was once reserved for research hospitals.
+      </p>
+      
+      <div class="p3-hero-features">
+        <div class="p3-hero-feat"><span class="material-symbols-outlined">check_circle</span>AI-powered imaging</div>
+        <div class="p3-hero-feat"><span class="material-symbols-outlined">check_circle</span>Tumour boards</div>
+        <div class="p3-hero-feat"><span class="material-symbols-outlined">check_circle</span>Remote monitoring</div>
       </div>
-      <div style="display:flex; align-items:center; gap:1rem;">
-        <span class="material-symbols-outlined text-primary">check_circle</span>
-        <span>Specialized Doctors</span>
+      
+      <div class="p3-hero-form-wrap" style="width: 100%;">
+        <form class="p3-hero-form">
+          <input type="text" placeholder="Full Name" required />
+          <input type="email" placeholder="Email Address" required />
+          <input type="tel" placeholder="Phone" required />
+          <button type="submit" class="p3-btn p3-btn-primary">Book Now</button>
+        </form>
       </div>
-    </div>
-    <a href="#services" class="btn-booking-now bg-primary" style="display:inline-block; text-decoration:none; color:#fff !important; background:var(--primary) !important;">EXPLORE SERVICES</a>
-  </div>
-</section>
 
-<section class="section-padding innovation-section" id="innovation">
-  <div class="container innovation-grid">
-    <div class="innovation-content">
-      <span>✦ NEXT-GEN MEDICINE</span>
-      <h2>Precision Medical <br><span class="text-primary">Innovation</span></h2>
-      <p>We are redefining healthcare through artificial intelligence and robotic precision, ensuring that every patient receives the most advanced treatment available in modern science.</p>
-      <a href="#home" class="btn-hero-contact">DISCOVER MORE</a>
-    </div>
-    <div class="tech-cluster">
-      <div class="tech-card">
-        <span class="material-symbols-outlined">smart_toy</span>
-        <h4>Robotic Surgery</h4>
-        <p>Unmatched precision in complex procedures.</p>
-      </div>
-      <div class="tech-card">
-        <span class="material-symbols-outlined">psychology</span>
-        <h4>AI Diagnosis</h4>
-        <p>Predictive analytics for early detection.</p>
-      </div>
-      <div class="tech-card">
-        <span class="material-symbols-outlined">cloud_sync</span>
-        <h4>Digital Cloud</h4>
-        <p>Your records accessible anywhere, instantly.</p>
-      </div>
-      <div class="tech-card">
-        <span class="material-symbols-outlined">genetics</span>
-        <h4>Genomic Care</h4>
-        <p>Treatments tailored to your unique DNA.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding container" id="testimonials">
-  <div style="text-align:center;">
-    <span>PATIENT REVIEWS</span>
-    <h2 style="font-size:3rem; margin-top:1rem;">What Our Patients <br><span class="text-primary">Say About Us</span></h2>
-  </div>
-  <div class="testimonial-grid-03">
-    <div class="test-card-03">
-      <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
-      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
-        <div>
-          <h4>Sarah Johnson</h4>
-          <span style="font-size:0.8rem; color:var(--text-light);">Cardiac Patient</span>
+      <div class="p3-hero-img-main">
+        <img src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=1200&q=80" alt="Advanced Medical Facility" />
+        <div class="p3-hero-img-tag">
+          <div class="dot"></div>
+          <span>Live monitoring active — 247 patients today</span>
         </div>
       </div>
-      <p>"The level of care I received was exceptional. The doctors and staff were attentive, professional, and truly cared about my recovery."</p>
-    </div>
-    <div class="test-card-03">
-      <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
-      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
-        <div>
-          <h4>Mark Wilson</h4>
-          <span style="font-size:0.8rem; color:var(--text-light);">General Wellness</span>
+      
+      <div class="p3-hero-mini-cards">
+        <div class="p3-mini-card">
+          <span class="material-symbols-outlined icon">psychology</span>
+          <span class="val">99<span style="font-size:16px">%</span></span>
+          <span class="lbl">Diagnostic Accuracy</span>
+        </div>
+        <div class="p3-mini-card">
+          <span class="material-symbols-outlined icon">timer</span>
+          <span class="val">24h</span>
+          <span class="lbl">Result Turnaround</span>
+        </div>
+        <div class="p3-mini-card">
+          <span class="material-symbols-outlined icon">groups</span>
+          <span class="val">120<span style="font-size:16px">+</span></span>
+          <span class="lbl">Specialists On-Site</span>
+        </div>
+        <div class="p3-mini-card">
+          <span class="material-symbols-outlined icon">workspace_premium</span>
+          <span class="val">#1</span>
+          <span class="lbl">Ranked in Region</span>
         </div>
       </div>
-      <p>"A very modern facility with friendly people. The AI-driven diagnosis gave me peace of mind about my health results."</p>
+
     </div>
-    <div class="test-card-03">
-      <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary); opacity:0.1; position:absolute; top:2rem; right:2rem;">format_quote</span>
-      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=120" style="width:60px; height:60px; border-radius:50%;" alt="Patient">
-        <div>
-          <h4>Emily Davis</h4>
-          <span style="font-size:0.8rem; color:var(--text-light);">Dental Care</span>
+  </div>
+</section>
+
+<!-- ═══ SECTION 2: SERVICES ═══ -->
+<section class="p3-services-outer" id="services">
+  <div class="p3-services-header-wrap">
+    <div class="p3-container">
+      <div class="p3-section-head" style="margin-bottom:0">
+        <span class="p3-pill" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85)">Our Specialties</span>
+        <h2 class="p3-h2" style="color:#fff">Expert Care Across<br>Every Discipline</h2>
+        <p style="color:rgba(255,255,255,0.65);font-size:16px;max-width:500px;text-align:center">Our centres of excellence bring together top specialists, the latest technology, and evidence-based pathways for optimal outcomes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="p3-services-cards-wrap">
+    <div class="p3-container p3-section-sm">
+      <div class="p3-services-grid">
+        <div class="p3-svc-card">
+          <div class="p3-svc-icon-row">
+            <div class="p3-svc-icon"><span class="material-symbols-outlined">cardiology</span></div>
+            <span class="p3-svc-num">01</span>
+          </div>
+          <h3>Cardiovascular Centre</h3>
+          <p>Advanced cardiac imaging, interventional cardiology, electrophysiology, and a dedicated heart failure clinic.</p>
+          <div class="p3-svc-tags">
+            <span class="p3-svc-tag">Imaging</span>
+            <span class="p3-svc-tag">Surgery</span>
+            <span class="p3-svc-tag">Rehab</span>
+          </div>
+        </div>
+        <div class="p3-svc-card">
+          <div class="p3-svc-icon-row">
+            <div class="p3-svc-icon"><span class="material-symbols-outlined">genetics</span></div>
+            <span class="p3-svc-num">02</span>
+          </div>
+          <h3>Oncology & Genomics</h3>
+          <p>Personalised cancer care using genomic sequencing, immunotherapy and precision radiotherapy technologies.</p>
+          <div class="p3-svc-tags">
+            <span class="p3-svc-tag">Genomics</span>
+            <span class="p3-svc-tag">Immunotherapy</span>
+          </div>
+        </div>
+        <div class="p3-svc-card">
+          <div class="p3-svc-icon-row">
+            <div class="p3-svc-icon"><span class="material-symbols-outlined">neurology</span></div>
+            <span class="p3-svc-num">03</span>
+          </div>
+          <h3>Neuroscience Institute</h3>
+          <p>Comprehensive diagnostics and treatment for neurological and neurosurgical conditions using 7T MRI technology.</p>
+          <div class="p3-svc-tags">
+            <span class="p3-svc-tag">7T MRI</span>
+            <span class="p3-svc-tag">Surgery</span>
+          </div>
+        </div>
+        <div class="p3-svc-card">
+          <div class="p3-svc-icon-row">
+            <div class="p3-svc-icon"><span class="material-symbols-outlined">ent</span></div>
+            <span class="p3-svc-num">04</span>
+          </div>
+          <h3>Metabolic & Endocrine</h3>
+          <p>Diabetes management, thyroid care, adrenal disorders and weight management with multidisciplinary support.</p>
+          <div class="p3-svc-tags">
+            <span class="p3-svc-tag">Diabetes</span>
+            <span class="p3-svc-tag">Thyroid</span>
+          </div>
         </div>
       </div>
-      <p>"Best dental experience ever! Painless procedure and the clinic is beautiful. Highly recommend to everyone."</p>
     </div>
   </div>
 </section>
 
-<section class="section-padding container" id="doctors" style="background:var(--bg-soft); border-radius:100px 100px 0 0;">
-  <div style="text-align:center;">
-    <span>EXPERIENCED DOCTORS</span>
-    <h2 style="font-size:3rem; margin-top:1rem;">Our Medical <span class="text-primary">Specialists</span></h2>
-  </div>
-  <div class="doctors-grid-03">
-    <div class="doctor-card-03">
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=400" alt="Doctor">
+<!-- ═══ SECTION 3: ABOUT ═══ -->
+<section class="p3-section" id="about">
+  <div class="p3-container">
+    <div class="p3-about-grid">
+      <div class="p3-about-visual">
+        <div class="p3-about-img-box">
+          <img src="https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=800&q=80" alt="Medical Research"/>
+        </div>
+        <div class="p3-about-float">
+          <div class="p3-about-float accent-line"></div>
+          <span class="val">2,400+</span>
+          <span class="lbl">Clinical trials completed</span>
+        </div>
       </div>
-      <h4>Dr. James Wilson</h4>
-      <span>Cardiology Specialist</span>
-      <div class="doctor-social">
-        <a href="#"><span class="material-symbols-outlined">chat</span></a>
-        <a href="#"><span class="material-symbols-outlined">alternate_email</span></a>
-      </div>
-    </div>
-    <div class="doctor-card-03">
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=400" alt="Doctor">
-      </div>
-      <h4>Dr. Emily Brown</h4>
-      <span>Neurology Expert</span>
-      <div class="doctor-social">
-        <a href="#"><span class="material-symbols-outlined">chat</span></a>
-        <a href="#"><span class="material-symbols-outlined">alternate_email</span></a>
-      </div>
-    </div>
-    <div class="doctor-card-03">
-      <div class="doctor-img-box">
-        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400" alt="Doctor">
-      </div>
-      <h4>Dr. Michael Chen</h4>
-      <span>Dental Surgeon</span>
-      <div class="doctor-social">
-        <a href="#"><span class="material-symbols-outlined">chat</span></a>
-        <a href="#"><span class="material-symbols-outlined">alternate_email</span></a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding container">
-  <div class="faq-03-grid">
-    <div class="faq-high-tech">
-      <div class="faq-img-1">
-        <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800" alt="Technology">
-      </div>
-      <div class="faq-img-2">
-        <img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&q=80&w=500" alt="Specialist">
-      </div>
-    </div>
-    <div class="faq-content-03">
-      <span class="text-primary" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem;">Common Questions</span>
-      <h2 style="font-size: clamp(2.5rem, 4vw, 3.5rem); margin: 1.5rem 0 3.5rem;">Everything You Need <br><span class="text-primary">To Know</span></h2>
-      <div class="faq-list-03">
-        <details class="faq-item-03" open>
-          <summary>How do I book an appointment?</summary>
-          <div class="faq-answer">You can book an appointment directly through our website using the quick booking bar or by calling our helpdesk. Our team will confirm your slot within minutes.</div>
-        </details>
-        <details class="faq-item-03">
-          <summary>Do you accept health insurance?</summary>
-          <div class="faq-answer">Yes, we partner with major insurance providers globally. Please bring your insurance card during your visit for a seamless cashless experience.</div>
-        </details>
-        <details class="faq-item-03">
-          <summary>Is emergency care available 24/7?</summary>
-          <div class="faq-answer">Absolutely. Our emergency department and trauma center are fully operational 24 hours a day, 365 days a year, with a dedicated team of specialists.</div>
-        </details>
-        <details class="faq-item-03">
-          <summary>What should I bring for my first visit?</summary>
-          <div class="faq-answer">Please bring a valid ID, any previous medical records, and your current medications list to help our doctors understand your health history better.</div>
-        </details>
+      <div class="p3-about-text">
+        <div>
+          <span class="p3-pill" style="margin-bottom:16px;display:inline-flex">Why NovaMed</span>
+          <h2 class="p3-h2" style="margin-top:12px">The Science of Better Outcomes</h2>
+        </div>
+        <p class="p3-body p3-col-muted">PROJECT_NAME_PLACEHOLDER was built on a single principle: every patient deserves hospital-grade, research-backed care. We invest 12% of revenue back into clinical research — ensuring our protocols remain a decade ahead of standard practice.</p>
+        <div class="p3-credentials">
+          <div class="p3-cred-card">
+            <span class="material-symbols-outlined">biotech</span>
+            <h4>Research-Grade Diagnostics</h4>
+            <p>Equipped with the same technology used in Oxford and Cambridge research hospitals.</p>
+          </div>
+          <div class="p3-cred-card">
+            <span class="material-symbols-outlined">groups_3</span>
+            <h4>Tumour Board Reviews</h4>
+            <p>Complex cases are reviewed by a panel of specialists every Tuesday and Thursday.</p>
+          </div>
+          <div class="p3-cred-card">
+            <span class="material-symbols-outlined">robot_2</span>
+            <h4>AI-Assisted Pathology</h4>
+            <p>Machine learning models validated against 10 million images support every diagnosis.</p>
+          </div>
+          <div class="p3-cred-card">
+            <span class="material-symbols-outlined">security</span>
+            <h4>ISO 27001 Certified</h4>
+            <p>Your health data is protected by the highest international information security standard.</p>
+          </div>
+        </div>
+        <button class="p3-btn p3-btn-primary" style="align-self:flex-start">Our Research Programme</button>
       </div>
     </div>
   </div>
 </section>
 
-<footer class="footer-03">
-  <div class="container footer-03-grid">
-    <div class="footer-col">
-      <div class="footer-logo">LOGO_PLACEHOLDER</div>
-      <p class="footer-desc">Leading the way in medical excellence and patient-centered care. Your health is our priority.</p>
+<!-- ═══ SECTION 4: PROCESS ═══ -->
+<section class="p3-section p3-process-bg" id="process">
+  <div class="p3-container">
+    <div class="p3-section-head">
+      <span class="p3-pill">Patient Journey</span>
+      <h2 class="p3-h2">Precision from First Contact</h2>
+      <p class="p3-body p3-col-muted" style="max-width:500px">Our structured pathway ensures you receive the right care, at the right time, from the right specialist.</p>
     </div>
-    <div class="footer-col">
-      <h4>Company</h4>
-      <ul style="list-style:none; opacity:0.6; display:flex; flex-direction:column; gap:0.5rem;">
-        <li>About Us</li>
-        <li>Our Team</li>
-        <li>Services</li>
+    <div class="p3-process-steps">
+      <div class="p3-proc-step">
+        <div class="p3-proc-left">
+          <div class="p3-proc-circle">1</div>
+        </div>
+        <div class="p3-proc-body">
+          <span class="p3-proc-chip"><span class="material-symbols-outlined" style="font-size:14px">schedule</span>Day 1</span>
+          <h3>Intake & Pre-Assessment</h3>
+          <p>Your coordinator completes a digital health intake, reviews your history and arranges any pre-appointment investigations to maximise your consultation time.</p>
+        </div>
+      </div>
+      <div class="p3-proc-step">
+        <div class="p3-proc-left">
+          <div class="p3-proc-circle">2</div>
+        </div>
+        <div class="p3-proc-body">
+          <span class="p3-proc-chip"><span class="material-symbols-outlined" style="font-size:14px">person</span>Day 2–3</span>
+          <h3>Specialist Consultation</h3>
+          <p>A 60-minute consultation with your assigned specialist. No rushed appointments — you will have time to ask every question and understand every option.</p>
+        </div>
+      </div>
+      <div class="p3-proc-step">
+        <div class="p3-proc-left">
+          <div class="p3-proc-circle">3</div>
+        </div>
+        <div class="p3-proc-body">
+          <span class="p3-proc-chip"><span class="material-symbols-outlined" style="font-size:14px">biotech</span>Day 3–5</span>
+          <h3>Advanced Diagnostics</h3>
+          <p>Same-site imaging, pathology and genetic testing with results reviewed by our AI-assisted diagnostic platform and your consultant simultaneously.</p>
+        </div>
+      </div>
+      <div class="p3-proc-step">
+        <div class="p3-proc-left">
+          <div class="p3-proc-circle">4</div>
+        </div>
+        <div class="p3-proc-body">
+          <span class="p3-proc-chip"><span class="material-symbols-outlined" style="font-size:14px">task_alt</span>Week 1+</span>
+          <h3>Personalised Care Plan</h3>
+          <p>A written, evidence-cited care plan is delivered within 24 hours of your results. Ongoing support from your dedicated care navigator ensures you're never alone.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 5: DOCTORS ═══ -->
+<section class="p3-section p3-doctors-bg" id="doctors">
+  <div class="p3-container">
+    <div class="p3-section-head">
+      <span class="p3-pill">Meet the Team</span>
+      <h2 class="p3-h2">World-Class Specialists</h2>
+      <p class="p3-body p3-col-muted" style="max-width:480px">Every physician at PROJECT_NAME_PLACEHOLDER holds a subspecialty qualification and brings international research experience.</p>
+    </div>
+    <div class="p3-doctors-grid">
+      <div class="p3-doctor-card">
+        <div class="p3-doctor-img">
+          <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=600&q=80" alt="Dr Ahmed"/>
+        </div>
+        <div class="p3-doctor-info">
+          <p class="p3-doctor-name">Dr Khalid Ahmed</p>
+          <p class="p3-doctor-spec">Interventional Cardiology</p>
+          <p class="p3-doctor-exp">22 years · Former NHS Consultant</p>
+          <a class="p3-doctor-book" href="#">Book Consultation</a>
+        </div>
+      </div>
+      <div class="p3-doctor-card">
+        <div class="p3-doctor-img">
+          <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80" alt="Dr Patel"/>
+        </div>
+        <div class="p3-doctor-info">
+          <p class="p3-doctor-name">Dr Sonia Patel</p>
+          <p class="p3-doctor-spec">Oncology & Genomics</p>
+          <p class="p3-doctor-exp">18 years · Harvard-trained</p>
+          <a class="p3-doctor-book" href="#">Book Consultation</a>
+        </div>
+      </div>
+      <div class="p3-doctor-card">
+        <div class="p3-doctor-img">
+          <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=600&q=80" alt="Dr Larsson"/>
+        </div>
+        <div class="p3-doctor-info">
+          <p class="p3-doctor-name">Dr Eva Larsson</p>
+          <p class="p3-doctor-spec">Neurosurgery</p>
+          <p class="p3-doctor-exp">15 years · Oxford DPhil</p>
+          <a class="p3-doctor-book" href="#">Book Consultation</a>
+        </div>
+      </div>
+      <div class="p3-doctor-card">
+        <div class="p3-doctor-img">
+          <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80" alt="Dr Okonkwo"/>
+        </div>
+        <div class="p3-doctor-info">
+          <p class="p3-doctor-name">Dr Emmanuel Okonkwo</p>
+          <p class="p3-doctor-spec">Endocrinology & Diabetes</p>
+          <p class="p3-doctor-exp">12 years · King's College</p>
+          <a class="p3-doctor-book" href="#">Book Consultation</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 6: TESTIMONIALS ═══ -->
+<section class="p3-section p3-testi-bg" id="testimonials">
+  <div class="p3-container">
+    <div class="p3-section-head">
+      <span class="p3-pill p3-pill-accent">Patient Outcomes</span>
+      <h2 class="p3-h2 p3-col-white">Lives Changed. Stories Told.</h2>
+    </div>
+    <div class="p3-testi-grid">
+      <div class="p3-testi-card">
+        <div class="p3-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="p3-testi-text">"The genomic testing identified a rare variant that changed my entire treatment path. Other hospitals hadn't even considered it. I'm now 3 years in remission."</p>
+        <div class="p3-testi-author">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt="Marcus"/>
+          <div>
+            <p class="p3-testi-name">Marcus Thornton</p>
+            <p class="p3-testi-tag">Oncology · 3 Years in Remission</p>
+          </div>
+        </div>
+      </div>
+      <div class="p3-testi-card">
+        <div class="p3-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="p3-testi-text">"The 7T MRI found the source of my epilepsy that 3 previous scans missed. The neurosurgery team operated within the month. I haven't had a seizure since."</p>
+        <div class="p3-testi-author">
+          <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=100&q=80" alt="Natalia"/>
+          <div>
+            <p class="p3-testi-name">Natalia Kowalski</p>
+            <p class="p3-testi-tag">Neuroscience · Seizure-Free 18 Months</p>
+          </div>
+        </div>
+      </div>
+      <div class="p3-testi-card">
+        <div class="p3-testi-stars">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <p class="p3-testi-text">"My HbA1c was 11.2 when I arrived. Six months into the personalised metabolic programme it's 6.4. The team's precision approach made everything click."</p>
+        <div class="p3-testi-author">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="Raj"/>
+          <div>
+            <p class="p3-testi-name">Rajesh Menon</p>
+            <p class="p3-testi-tag">Endocrinology · HbA1c Normalised</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 7: CTA ═══ -->
+<section class="p3-section p3-cta-bg" id="booking">
+  <div class="p3-cta-mesh"></div>
+  <div class="p3-container">
+    <div class="p3-cta-inner">
+      <span class="p3-pill" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2)">Start Today</span>
+      <h2>Precision Care<br>Starts With One Call</h2>
+      <p>New patients receive a complimentary multidisciplinary health review — a £400 value — with no obligation. Appointments typically within 72 hours.</p>
+      <div class="p3-cta-actions">
+        <button class="p3-btn p3-btn-white" style="padding:16px 36px;font-size:16px">Book Free Review</button>
+        <button class="p3-btn p3-btn-ghost-w">Speak to a Coordinator</button>
+      </div>
+      <div class="p3-cta-perks">
+        <div class="p3-cta-perk"><span class="material-symbols-outlined">check_circle</span>No GP referral needed</div>
+        <div class="p3-cta-perk"><span class="material-symbols-outlined">check_circle</span>All major insurers accepted</div>
+        <div class="p3-cta-perk"><span class="material-symbols-outlined">check_circle</span>Self-pay options available</div>
+        <div class="p3-cta-perk"><span class="material-symbols-outlined">check_circle</span>Available 7 days a week</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 8: FAQ ═══ -->
+<section class="p3-section" id="faqs">
+  <div class="p3-container">
+    <div class="p3-section-head">
+      <span class="p3-pill">FAQ</span>
+      <h2 class="p3-h2">Questions, Answered</h2>
+    </div>
+    <div class="p3-faq-wrap">
+      <div class="p3-faq-list">
+        <details class="p3-faq-item" open>
+          <summary class="p3-faq-sum">What makes NovaMed different from other private hospitals? <span class="material-symbols-outlined">expand_more</span></summary>
+          <div class="p3-faq-ans">We invest 12% of our revenue into ongoing clinical research, meaning our protocols are continually updated as new evidence emerges. Our AI-assisted diagnostic platform, 7T MRI, and multidisciplinary tumour boards are not typically available in private hospitals.</div>
+        </details>
+        <details class="p3-faq-item">
+          <summary class="p3-faq-sum">How quickly can I access specialist care? <span class="material-symbols-outlined">expand_more</span></summary>
+          <div class="p3-faq-ans">The majority of patients are seen within 72 hours of initial contact. For urgent or oncological cases, we offer next-day priority slots. Our care coordinators are available 8am–8pm seven days a week.</div>
+        </details>
+        <details class="p3-faq-item">
+          <summary class="p3-faq-sum">Do you accept private health insurance? <span class="material-symbols-outlined">expand_more</span></summary>
+          <div class="p3-faq-ans">Yes. We are recognised by all major UK private insurers including Bupa, AXA Health, Aviva, Vitality, and Cigna. We handle all pre-authorisation paperwork on your behalf. Self-pay and medical finance options are also available.</div>
+        </details>
+        <details class="p3-faq-item">
+          <summary class="p3-faq-sum">Is the genomic and AI diagnostic data kept confidential? <span class="material-symbols-outlined">expand_more</span></summary>
+          <div class="p3-faq-ans">Absolutely. All patient data, including genomic information, is stored under ISO 27001 certification and is fully GDPR-compliant. Your data is never used for commercial purposes without explicit written consent.</div>
+        </details>
+        <details class="p3-faq-item">
+          <summary class="p3-faq-sum">Can I access care remotely or through telemedicine? <span class="material-symbols-outlined">expand_more</span></summary>
+          <div class="p3-faq-ans">Yes. Follow-up consultations, medication reviews, and second opinions can be provided via our secure HD telemedicine platform. Remote patient monitoring devices can be sent to your home for ongoing clinical oversight.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="p3-footer">
+  <div class="p3-footer-top">
+    <div class="p3-footer-brand">
+      <div class="p3-footer-logo">
+        <span class="p3-footer-logo-text">LOGO_PLACEHOLDER</span>
+      </div>
+      <p class="p3-footer-desc">Precision medicine for the modern era. Research-backed, data-driven, deeply human.</p>
+      <div class="p3-footer-socials">
+        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">public</span></a>
+        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">science</span></a>
+        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">video_camera_front</span></a>
+      </div>
+    </div>
+    <div class="p3-footer-col">
+      <h5>Specialties</h5>
+      <nav class="p3-footer-links">
+        <a href="#">Cardiovascular</a>
+        <a href="#">Oncology</a>
+        <a href="#">Neuroscience</a>
+        <a href="#">Endocrinology</a>
+        <a href="#">Genomics</a>
+      </nav>
+    </div>
+    <div class="p3-footer-col">
+      <h5>Patients</h5>
+      <nav class="p3-footer-links">
+        <a href="#">Book Appointment</a>
+        <a href="#">Patient Portal</a>
+        <a href="#">Insurance Info</a>
+        <a href="#">Research Trials</a>
+        <a href="#">Patient Stories</a>
+      </nav>
+    </div>
+    <div class="p3-footer-col">
+      <h5>Contact</h5>
+      <ul class="p3-footer-contact-list">
+        <li><span class="material-symbols-outlined">location_on</span><span>Nova Tower, 1 Medical Quarter, London EC1A 1BB</span></li>
+        <li><span class="material-symbols-outlined">phone</span><span>0800 000 NOVA</span></li>
+        <li><span class="material-symbols-outlined">mail</span><span>patients@novamed.co.uk</span></li>
+        <li><span class="material-symbols-outlined">schedule</span><span>7 days · 8am – 10pm</span></li>
       </ul>
     </div>
-    <div class="footer-col">
-      <h4>Support</h4>
-      <ul style="list-style:none; opacity:0.6; display:flex; flex-direction:column; gap:0.5rem;">
-        <li>Help Center</li>
-        <li>Privacy Policy</li>
-        <li>Contact Us</li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Newsletter</h4>
-      <p class="footer-desc">Subscribe to get health tips.</p>
-      <div style="display:flex; gap:0.5rem;">
-        <input type="email" placeholder="Email" style="padding:0.8rem; border-radius:8px; border:none; background:rgba(255,255,255,0.05); color:#fff; flex:1;">
-        <button style="background:var(--primary); color:#fff; border:none; padding:0 1rem; border-radius:8px;">GO</button>
-      </div>
-    </div>
   </div>
-  <div class="container" style="text-align:center; padding-top:3rem; opacity:0.4; font-size:0.8rem;">
-    <p>© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</p>
+  <div class="p3-footer-bottom">
+    <p>© 2026 PROJECT_NAME_PLACEHOLDER Ltd. All rights reserved.</p>
+    <p>Privacy · Terms · Accessibility · Research Ethics</p>
   </div>
 </footer>
 `;

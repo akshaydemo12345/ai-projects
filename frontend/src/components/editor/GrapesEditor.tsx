@@ -140,6 +140,8 @@ const GrapesEditor = () => {
   // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
   const [isEditorFullyLoaded, setIsEditorFullyLoaded] = useState(false);
+  // CSS loading state — show overlay while template CSS loads
+  const [isCanvasLoading, setIsCanvasLoading] = useState(false);
 
   const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
@@ -231,6 +233,9 @@ const GrapesEditor = () => {
 
     const activeMode = forcedMode || mode;
     console.log('🔄 Applying content to editor. Mode:', activeMode, 'Page ID:', currentPage._id);
+
+    // ── Show loading overlay while content + CSS load ──
+    setIsCanvasLoading(true);
 
     let dbContent: string = '';
     let dbStyles: string = '';
@@ -379,7 +384,7 @@ const GrapesEditor = () => {
         if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
           canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
         }
-        
+
         let coreIconStyles = canvasDoc.getElementById('core-icon-styles');
         if (!coreIconStyles) {
           coreIconStyles = canvasDoc.createElement('style');
@@ -439,6 +444,29 @@ const GrapesEditor = () => {
             btn.setAttribute('type', 'submit');
           }
         });
+        
+        // Remove existing editor-interaction script if present
+        const existingInteractionScript = canvasDoc.getElementById('editor-interactions');
+        if (existingInteractionScript) existingInteractionScript.remove();
+        
+        const interactionScript = canvasDoc.createElement('script');
+        interactionScript.id = 'editor-interactions';
+        interactionScript.innerHTML = `
+          document.addEventListener('click', function(e) {
+            const summary = e.target.closest('summary');
+            if (summary) {
+              const details = summary.parentElement;
+              if (details && details.tagName === 'DETAILS') {
+                if (details.hasAttribute('open')) {
+                  details.removeAttribute('open');
+                } else {
+                  details.setAttribute('open', '');
+                }
+              }
+            }
+          }, true);
+        `;
+        canvasDoc.body.appendChild(interactionScript);
       }
 
 
@@ -506,8 +534,12 @@ const GrapesEditor = () => {
       dbContent = configHTML + dbContent;
 
       editor.setComponents(dbContent);
+      // ── Hide loader after canvas has had time to render CSS/fonts ──
+      setTimeout(() => setIsCanvasLoading(false), 1200);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
+      // hide loader for empty case too
+      setTimeout(() => setIsCanvasLoading(false), 400);
       if (mode === 'thank-you') {
         editor.setComponents(`
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -539,11 +571,13 @@ const GrapesEditor = () => {
             </div>
           </section>
         `);
+        setTimeout(() => setIsCanvasLoading(false), 400);
       } else {
         editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
           `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
           `<p>Start editing by choosing a block from the left or use the AI generator.</p>` +
           `</div>`);
+        setTimeout(() => setIsCanvasLoading(false), 400);
       }
     }
   };
@@ -1049,6 +1083,23 @@ const GrapesEditor = () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
+      // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
+      try {
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc) {
+          const resetStyle = canvasDoc.createElement('style');
+          resetStyle.id = 'gjs-canvas-reset';
+          resetStyle.innerHTML = `
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow-x: hidden;
+            }
+          `;
+          canvasDoc.head.appendChild(resetStyle);
+        }
+      } catch (e) { /* canvas not ready */ }
+
       // Configure RTE after load to avoid TS errors in init
       const rte = editor.RichTextEditor;
       rte.add('foreColor', {
@@ -1388,6 +1439,7 @@ const GrapesEditor = () => {
       });
 
       applyContentToEditor(editor);
+      contentAppliedRef.current = true;
       // Set up custom color picker injection after load
       setTimeout(() => injectCustomColorPickers(editor), 500);
 
@@ -1629,8 +1681,8 @@ const GrapesEditor = () => {
       });
     });
 
-    // Fallback if load already happened
-    setTimeout(() => applyContentToEditor(editor), 1000);
+    // Fallback removed — editor.on('load') handles first apply,
+    // and the useEffect([page, isEditorFullyLoaded]) handles late page data arrival.
 
     editorRef.current = editor;
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
@@ -1817,9 +1869,12 @@ const GrapesEditor = () => {
     }
   }, [themePrimary, themeSecondary]);
 
-  // Initial content load (Only once when page data arrives)
+  // Initial content load — runs when page data arrives AND editor is already ready
+  // (covers the case where page loads AFTER the editor 'load' event)
+  const contentAppliedRef = useRef(false);
   useEffect(() => {
-    if (editorRef.current && page && !isEditorFullyLoaded) {
+    if (editorRef.current && page && isEditorFullyLoaded && !contentAppliedRef.current) {
+      contentAppliedRef.current = true;
       applyContentToEditor(editorRef.current);
     }
   }, [page, isEditorFullyLoaded]);
@@ -1944,26 +1999,20 @@ const GrapesEditor = () => {
     else newParams.delete('mode');
     navigate(`?${newParams.toString()}`, { replace: true });
 
-    // 3. Update Sidebar Tab if needed
+    // 3. Update Sidebar Tab
     if (newMode === 'thank-you') {
       setLeftTab('thank-you');
-      // Force an immediate sync from the thank you panel if it's already mounted
-      setTimeout(() => {
-        const thankYouHtml = page?.thankYouPageContent;
-        if (thankYouHtml && editorRef.current) {
-          applyContentToEditor(editorRef.current, 'thank-you');
-        }
-      }, 100);
     } else if (leftTab === 'thank-you') {
       setLeftTab('blocks');
     }
 
-    // 4. Load content of new mode
+    // 4. Load content of new mode — single call with loader
     setTimeout(() => {
       if (editorRef.current) {
+        setIsCanvasLoading(true);
         applyContentToEditor(editorRef.current, newMode);
       }
-    }, 100);
+    }, 150);
   };
 
   // ─── Preview ───
@@ -2519,9 +2568,11 @@ const GrapesEditor = () => {
                 updatePageMutation.mutate({ status: val });
 
                 if (val === 'unpublished') {
-                  toast.error('Site is now Unpublished and hidden from public view.');
-                } else {
-                  toast.success(`Status changed to ${val}`);
+                  toast.success('Page has been unpublished.');
+                } else if (val === 'draft') {
+                  toast.success('Page status changed to Draft.');
+                } else if (val === 'published') {
+                  toast.success('Page has been published successfully.');
                 }
               }}
               style={{
@@ -2533,7 +2584,6 @@ const GrapesEditor = () => {
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
-              <option value="republished">Republished</option>
               <option value="unpublished">Unpublished</option>
             </select>
           </div>
@@ -2892,36 +2942,32 @@ const GrapesEditor = () => {
                 onSelect={async (html, css) => {
                   if (editorRef.current) {
                     console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
+                    setIsCanvasLoading(true);
 
-                    // Clear both HTML and CSS to prevent merging
+                    // Clear editor state
                     editorRef.current.setComponents('');
                     try {
-                      if (editorRef.current.DomComponents && editorRef.current.DomComponents.clear) {
-                        editorRef.current.DomComponents.clear();
-                      }
+                      if (editorRef.current.DomComponents?.clear) editorRef.current.DomComponents.clear();
                       // @ts-ignore
-                      if (editorRef.current.Css && editorRef.current.Css.clear) {
-                        editorRef.current.Css.clear();
-                      }
+                      if (editorRef.current.Css?.clear) editorRef.current.Css.clear();
                       // @ts-ignore
-                      if (editorRef.current.UndoManager && editorRef.current.UndoManager.clear) {
-                        editorRef.current.UndoManager.clear();
-                      }
+                      if (editorRef.current.UndoManager?.clear) editorRef.current.UndoManager.clear();
                     } catch (e) { }
 
                     let finalHtml = html;
                     let finalCss = css || '';
 
-                    // Robust parsing for full HTML templates
+                    // Parse full HTML document
                     if (html.toLowerCase().includes('<body')) {
                       try {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
+
+                        // Extract styles
                         const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
                         if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
 
-                        // ✅ KEY FIX: Extract and backup ALL scripts from the new template
-                        // so they survive GrapesJS stripping on save/publish
+                        // Backup scripts
                         const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
                         const newBackupScripts = allTemplateScripts
                           .filter(s => {
@@ -2934,16 +2980,13 @@ const GrapesEditor = () => {
                           .join('\n');
                         if (newBackupScripts) {
                           setExtractedTemplateScripts(newBackupScripts);
-                          console.log(`📦 Backed up ${allTemplateScripts.length} scripts from new template`);
                         }
 
                         finalHtml = doc.body.innerHTML;
-                        console.log('✅ Parsed full HTML body content.');
                       } catch (e) {
                         console.error('Error parsing Thank You HTML:', e);
                       }
                     } else {
-                      // Even for body-only templates, extract any inline scripts
                       const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
                       const filteredScripts = scriptMatches.filter(s =>
                         !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
@@ -2953,17 +2996,36 @@ const GrapesEditor = () => {
                       }
                     }
 
-                    // Apply new content
+                    // Apply content — strip body{} rules to avoid iframe margin/padding issues
                     editorRef.current.setComponents(finalHtml);
                     if (finalCss) {
-                      finalCss = finalCss.replace(/body\s*\{/g, 'body, .grapesjs-safeguard-wrapper {');
-                      editorRef.current.getWrapper().addClass('grapesjs-safeguard-wrapper');
-                      editorRef.current.setStyle(finalCss);
+                      // ⚠️ Remove body margin/padding from template CSS to prevent iframe scroll issues
+                      const cleanCss = finalCss
+                        .replace(/body\s*\{[^}]*margin[^}]*\}/gi, '')
+                        .replace(/body\s*\{[^}]*padding[^}]*\}/gi, '');
+                      editorRef.current.setStyle(cleanCss);
                     }
 
-                    // Force refresh
+                    // Inject CSS directly into canvas iframe for reliable rendering
+                    try {
+                      const canvasDoc = editorRef.current.Canvas.getDocument();
+                      if (canvasDoc && finalCss) {
+                        let tplTag = canvasDoc.getElementById('ty-template-styles') as HTMLStyleElement | null;
+                        if (!tplTag) {
+                          tplTag = canvasDoc.createElement('style');
+                          tplTag.id = 'ty-template-styles';
+                          canvasDoc.head.appendChild(tplTag);
+                        }
+                        // Reset body margin/padding in canvas to prevent scrollbar/padding issues
+                        tplTag.innerHTML = `
+                          body, html { margin: 0 !important; padding: 0 !important; overflow-x: hidden; }
+                          ${finalCss}
+                        `;
+                      }
+                    } catch (e) { }
+
                     editorRef.current.refresh();
-                    console.log('✨ Canvas updated with new Thank You template.');
+                    setTimeout(() => setIsCanvasLoading(false), 1200);
                   }
                 }}
               />
@@ -2974,6 +3036,28 @@ const GrapesEditor = () => {
         {/* ══ CANVAS (light grey bg) ══ */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e2e8f0' }}>
           <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
+          {/* ── CSS Loading Overlay — shown while template CSS/fonts load ── */}
+          {isCanvasLoading && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 50,
+              background: 'rgba(226, 232, 240, 0.85)',
+              backdropFilter: 'blur(2px)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 14,
+              pointerEvents: 'none',
+            }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: '50%',
+                border: '3px solid rgba(124,58,237,0.15)',
+                borderTop: '3px solid #7c3aed',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+              <p style={{ color: '#7c3aed', fontWeight: 700, fontSize: 13, letterSpacing: 0.3, margin: 0 }}>
+                Loading template...
+              </p>
+              <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
+            </div>
+          )}
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}

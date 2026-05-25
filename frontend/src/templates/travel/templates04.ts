@@ -103,9 +103,9 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
 .vibe-content p { font-size: 0.9rem; opacity: 0; transform: translateY(20px); transition: 0.5s 0.2s; }
 .vibe-panel:hover .vibe-content p { opacity: 1; transform: translateY(0); }
 
-.vibe-panel.night { background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000') center/cover; }
-.vibe-panel.culture { background: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=1000') center/cover; }
-.vibe-panel.foodie { background: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000') center/cover; }
+.vibe-panel.night { }
+.vibe-panel.culture { }
+.vibe-panel.foodie { }
 
 /* 24-Hour Timeline */
 .timeline-sec { padding: 12rem 0; background: #f9fafb; }
@@ -312,26 +312,38 @@ export const travel04Html = `
       <span class="section-tag" style="text-align: center; display: block;">// choose your persona</span>
       <h2 class="section-title" style="text-align: center; margin-bottom: 5rem;">What's your <span>weekend</span> vibe?</h2>
       <div class="vibe-container">
-        <div class="vibe-panel night">
+        <div class="vibe-panel night" style="position: relative; overflow: hidden;">
+          <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Night Vibe">
+          <div style="position: relative; z-index: 2;">
            <div class="vibe-content">
               <h3>The Night Owl</h3>
               <p>Underground jazz, neon alleys, and sunrise breakfasts. We know where the lights stay on.</p>
               <a href="#" class="btn-hero-white" style="background: #eaff00; color: #000; padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Nightlife</a>
            </div>
+           </div>
+          </div>
         </div>
-        <div class="vibe-panel culture">
+        <div class="vibe-panel culture" style="position: relative; overflow: hidden;">
+          <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Culture Vibe">
+          <div style="position: relative; z-index: 2;">
            <div class="vibe-content">
               <h3>The Culture Vulture</h3>
               <p>Hidden galleries, Brutalist landmarks, and centuries of stories told in stone.</p>
               <a href="#" class="btn-hero-white" style="background: #fff; color: #000; padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Arts</a>
            </div>
+           </div>
+          </div>
         </div>
-        <div class="vibe-panel foodie">
+        <div class="vibe-panel foodie" style="position: relative; overflow: hidden;">
+          <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Foodie Vibe">
+          <div style="position: relative; z-index: 2;">
            <div class="vibe-content">
               <h3>The Global Foodie</h3>
               <p>Michelin stars meet street stalls. Every meal is a destination in itself.</p>
               <a href="#" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Tastes</a>
            </div>
+           </div>
+          </div>
         </div>
       </div>
     </div>
