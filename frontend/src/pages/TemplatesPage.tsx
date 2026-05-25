@@ -25,14 +25,14 @@ const LANDING_TEMPLATES = [
     id: "healthcare-02",
     name: "Elite Healthcare",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates02/screnshort8.png",
+    img: "/assets/templates/healthcare/templates02/screnshort81.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
   },
   {
     id: "healthcare-03",
     name: "Lumina Medical Center",
     tag: "Healthcare",
-    img: "/assets/templates/healthcare/templates03/hero.png",
+    img: "/assets/templates/healthcare/templates03/screnshort82.png",
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
   },
   {

@@ -444,6 +444,29 @@ const GrapesEditor = () => {
             btn.setAttribute('type', 'submit');
           }
         });
+        
+        // Remove existing editor-interaction script if present
+        const existingInteractionScript = canvasDoc.getElementById('editor-interactions');
+        if (existingInteractionScript) existingInteractionScript.remove();
+        
+        const interactionScript = canvasDoc.createElement('script');
+        interactionScript.id = 'editor-interactions';
+        interactionScript.innerHTML = `
+          document.addEventListener('click', function(e) {
+            const summary = e.target.closest('summary');
+            if (summary) {
+              const details = summary.parentElement;
+              if (details && details.tagName === 'DETAILS') {
+                if (details.hasAttribute('open')) {
+                  details.removeAttribute('open');
+                } else {
+                  details.setAttribute('open', '');
+                }
+              }
+            }
+          }, true);
+        `;
+        canvasDoc.body.appendChild(interactionScript);
       }
 
 
