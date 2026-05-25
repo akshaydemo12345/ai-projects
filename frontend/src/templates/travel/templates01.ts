@@ -422,13 +422,13 @@ header {
 .ft-item.dark-bg {
   color: #fff;
 }
-.ft-header { display: flex; align-items: center; gap: 1rem; padding: 1.2rem; cursor: pointer; user-select: none; }
+.ft-header { display: flex; align-items: center; gap: 1rem; padding: 1.2rem; cursor: pointer; user-select: none; list-style: none; }
+.ft-header::-webkit-details-marker { display: none; }
 .ft-title { font-size: clamp(1rem, 1.5vw, 1.1rem); font-weight: 700; margin: 0; flex: 1; color: var(--dark); }
 .ft-item.dark-bg .ft-title { color: #fff; }
 .ft-icon-toggle { font-size: 1.2rem; color: var(--primary); transition: transform 0.3s ease; flex-shrink: 0; }
-.ft-item.active .ft-icon-toggle { transform: rotate(180deg); }
-.ft-body { max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), padding 0.3s ease; padding: 0 1.2rem; }
-.ft-item.active .ft-body { padding: 0 1.2rem 1.2rem 1.2rem; max-height: 1000px; }
+.ft-item[open] .ft-icon-toggle { transform: rotate(180deg); }
+.ft-body { padding: 0 1.2rem 1.2rem 1.2rem; }
 .ft-body p { color: var(--gray); font-size: 0.95rem; line-height: 1.5; margin: 0; }
 .ft-item.dark-bg .ft-body p { color: #e2e8f0; }
 
@@ -783,35 +783,41 @@ export const travel01Html = `
         <span class="section-subtitle">Why Choose Us</span>
         <h2>Experience the World with our Travelon Co</h2>
         <div class="ft-list">
-        <div class="ft-item">
-          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
-            <h3 class="ft-title">Experience the World with our Travelon Co</h3>
+        <details class="ft-item" open>
+          <summary class="ft-header">
+            <h3 class="ft-title">
+              <span>Experience the World with our Travelon Co</span>
+            </h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
-          </div>
+          </summary>
           <div class="ft-body">
             <p>We ensure every moment of your trip is perfectly curated.</p>
           </div>
-        </div>
+        </details>
         
-        <div class="ft-item">
-          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
-            <h3 class="ft-title">Where Do You Want To Go?</h3>
+        <details class="ft-item">
+          <summary class="ft-header">
+            <h3 class="ft-title">
+              <span>Where Do You Want To Go?</span>
+            </h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
-          </div>
+          </summary>
           <div class="ft-body">
             <p>Choose from our extensive network of global tour packages tailored to your dreams.</p>
           </div>
-        </div>
+        </details>
         
-        <div class="ft-item">
-          <div class="ft-header" onclick="window.toggleFtAccordion(this)">
-            <h3 class="ft-title">What Are Your Expectations?</h3>
+        <details class="ft-item">
+          <summary class="ft-header">
+            <h3 class="ft-title">
+              <span>What Are Your Expectations?</span>
+            </h3>
             <span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span>
-          </div>
+          </summary>
           <div class="ft-body">
             <p>We tailor our itineraries to meet and exceed all your expectations and travel needs.</p>
           </div>
-        </div>
+        </details>
       </div>
     </div>
   </section>
@@ -864,84 +870,6 @@ export const travel01Html = `
   <div class="copyright">
     <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
   </div>
-	<script>
-	(function() {
-	  window.toggleFtAccordion = function(header) {
-	    const item = header.closest('.ft-item');
-	    if (!item) return;
-	    const items = document.querySelectorAll('.ft-item');
-	    items.forEach(i => {
-	      if (i !== item) {
-	        i.classList.remove('active');
-	        const ic = i.querySelector('.ft-icon-toggle');
-	        if (ic) ic.style.transform = 'rotate(0deg)';
-	      }
-	    });
-	    item.classList.toggle('active');
-	    const icon = item.querySelector('.ft-icon-toggle');
-	    if (icon) icon.style.transform = item.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
-	  };
-
-	  function initAccordion() {
-	    const items = document.querySelectorAll('.ft-item');
-	    items.forEach(item => {
-	      const header = item.querySelector('.ft-header');
-	      const title = item.querySelector('.ft-title');
-	      const icon = item.querySelector('.ft-icon-toggle');
-	      if (!header) return;
-	      
-	      // Prevent duplicate listener bindings in GrapesJS editor
-	      if (header.dataset.accordionBound === 'true') return;
-	      header.dataset.accordionBound = 'true';
-	      
-	      header.addEventListener('click', () => {
-	        // Close other items
-	        items.forEach(i => {
-	          if (i !== item) {
-	            i.classList.remove('active');
-	            const ic = i.querySelector('.ft-icon-toggle');
-	            if (ic) ic.style.transform = 'rotate(0deg)';
-	          }
-	        });
-	        // Toggle this item
-	        item.classList.toggle('active');
-	        if (icon) {
-	          icon.style.transform = item.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
-	        }
-	      });
-	
-	      // Determine background based on title color brightness
-	      const setBackground = () => {
-	        if (!title) return;
-	        const style = getComputedStyle(title);
-	        const color = style.color;
-	        const rgb = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-	        if (rgb) {
-	          const r = +rgb[1], g = +rgb[2], b = +rgb[3];
-	          const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-	          if (luminance > 186) {
-	            item.classList.remove('dark-bg');
-	            item.classList.add('light-bg');
-	          } else {
-	            item.classList.remove('light-bg');
-	            item.classList.add('dark-bg');
-	          }
-	        }
-	      };
-	      setBackground();
-	    });
-	  }
-	
-	  if (document.readyState === 'loading') {
-	    document.addEventListener('DOMContentLoaded', initAccordion);
-	  } else {
-	    initAccordion();
-	  }
-	  
-	  // Also bind to load to ensure it runs inside the iframe
-	  window.addEventListener('load', initAccordion);
-	})();
-	</script>
 </footer>
 `;
 
