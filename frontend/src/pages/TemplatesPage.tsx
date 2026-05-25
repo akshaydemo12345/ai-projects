@@ -36,6 +36,13 @@ const LANDING_TEMPLATES = [
     gradient: "linear-gradient(135deg, #00d2f3 0%, #5b5ef0 100%)",
   },
   {
+    id: "healthcare-04",
+    name: "Medlio Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates04/H1.png",
+    gradient: "linear-gradient(135deg, #1750A8 0%, #e6f2ff 100%)",
+  },
+  {
     id: "travel-01",
     name: "Azure Luxury Escapes",
     tag: "Travel",
