@@ -528,5 +528,6 @@ module.exports = {
   generateDescriptionSuggestion,
   generateProjectSuggestions,
   generateStrategicStructure,
-  optimizeStrategicStructure
+  optimizeStrategicStructure,
+  callAIText   // exported for use by detectIndustryWithAI in analyzeService
 };

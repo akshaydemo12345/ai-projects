@@ -612,6 +612,7 @@ export interface Lead {
   referer?: string;
   url?: string;
   trackingDetails?: {
+    ip: any;
     referral_url?: string;
     referral_source?: string;
   };

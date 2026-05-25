@@ -111,9 +111,16 @@ exports.createLead = async (req, res) => {
     }
 
     // 4. Referral / Landing Page URLs
+    // Priority: pageurl > trackingDetails.referral_url > url > referer header
+    // - pageurl: full current page URL sent by frontend (includes slug + UTM params)
+    // - referrer: the previous page / true referring domain (document.referrer from browser)
     const trackingDetails = rawData.trackingDetails || {};
-    const referralUrl = trackingDetails.referral_url || rawData.url || rawData.pageUrl || req.headers.referer || '';
+    const referralUrl = trackingDetails.referral_url
+      || rawData.pageurl || rawData.pageUrl   // full URL with slug — sent by form script
+      || rawData.url                           // fallback bare URL
+      || req.headers.referer || '';
     const referralSource = trackingDetails.referral_source || rawData.referrer || rawData.referer || 'Direct';
+    // referrer = the TRUE referring site (document.referrer — where they came FROM, not where the form IS)
     const referrer = rawData.referer || rawData.referrer || req.headers.referer || '';
     const formData = rawData.formData || rawData.formDetails || undefined;
 
