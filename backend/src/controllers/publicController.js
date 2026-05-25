@@ -444,6 +444,7 @@ const buildLeadCaptureScript = (page) => {
       pageId: PI,
       projectId: PJ,
       timestamp: new Date().getTime(),
+      pageurl: window.location.href,  // full current URL with slug + UTM params (backend Issue #3 fix)
       url: window.location.href,
       domain: window.location.hostname
     };

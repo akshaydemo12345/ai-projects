@@ -118,7 +118,7 @@ const LeadsPage = () => {
   const formSchema = data?.formSchema;
 
   const dynamicColumns = useMemo(() => {
-    const skipKeys = ['name', 'full name', 'email', 'phone', 'tel', 'message', 'comment', 'date', 'action', '_id', 'createdat', 'updatedat', '__v'];
+    const skipKeys = ['name', 'full name', 'email', 'phone', 'tel', 'message', 'comment', 'date', 'action', '_id', 'createdat', 'updatedat', '__v', 'referrer'];
     
     if (formSchema && formSchema.fields) {
       return formSchema.fields
@@ -904,7 +904,7 @@ const LeadsPage = () => {
                   </div>
                   {(() => {
                     const extraFields: { label: string, value: any }[] = [];
-                    const skipKeys = ['name', 'fullname', 'email', 'phone', 'tel', 'message', 'comment'];
+                    const skipKeys = ['name', 'fullname', 'email', 'phone', 'tel', 'message', 'comment','referrer'];
                     
                     if (selectedLead.data) {
                       Object.entries(selectedLead.data).forEach(([key, value]) => {
@@ -992,12 +992,58 @@ const LeadsPage = () => {
                   <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                 </div>
                 <div className="grid grid-cols-1 gap-4">
+
+                  {/* Referral URL */}
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Referral URL</p>
-                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-all flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5" /> {selectedLead.trackingDetails?.referral_url || selectedLead.url || selectedLead.meta?.url || selectedLead.pageSlug || "Direct URL"}
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">
+                      Referral URL
+                    </p>
+
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-all flex items-start gap-2">
+                      <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+
+                      {selectedLead.trackingDetails?.referral_url ||
+                        selectedLead.url ||
+                        selectedLead.meta?.url ||
+                        selectedLead.pageSlug ||
+                        "Direct URL"}
                     </p>
                   </div>
+
+                  {/* Referral Source */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">
+                      Referral Source
+                    </p>
+
+                    <p className="text-sm font-bold text-slate-900 dark:text-white break-all flex items-start gap-2">
+                      <ExternalLink className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+
+                      {selectedLead.trackingDetails?.referral_source ||
+                        selectedLead.data?.referrer ||
+                        "Direct / Unknown"}
+                    </p>
+                  </div>
+
+                  {/* IP Address */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">
+                      IP Address
+                    </p>
+
+                    <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+
+                      {
+                        selectedLead.meta?.ip ||
+                        (selectedLead as any)?.ip ||
+                        selectedLead.data?.ip ||
+                        selectedLead.trackingDetails?.ip ||
+                        "Not Available"
+                      }
+                    </p>
+                  </div>
+
                 </div>
               </section>
 

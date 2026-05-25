@@ -134,7 +134,9 @@ const findBestLogo = ($, baseUrl) => {
   return candidates[0].src;
 };
 
-const CSS_VAR_COLOR_REGEX = /--([\w-]*?(?:primary|secondary|accent|brand|theme|main)[\w-]*)\s*:\s*(#[A-Fa-f0-9]{3,6}|rgba?\([^)]+\))/gi;
+// Broad regex: captures ANY CSS variable that holds a hex or rgb color value.
+// Brand-weighted selection still happens downstream via variableColorEntries filtering.
+const CSS_VAR_COLOR_REGEX = /--([\.\w-]+)\s*:\s*(#[A-Fa-f0-9]{3,6}|rgba?\([^)]+\))/gi;
 const CSS_COLOR_PROP_REGEX = /(background(?:-color)?|color|border(?:-color)?|fill|stroke)\s*:\s*(#[A-Fa-fA-F0-9]{3,6}|rgba?\([^)]+\))/gi;
 const STYLESHEET_LINK_SELECTOR = 'link[rel="stylesheet"][href], link[rel="preload"][as="style"][href], link[rel="stylesheet"][type="text/css"][href]';
 
@@ -262,6 +264,25 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
 
   const logoPalette = logoUrl ? (await extractBrandColorsFromLogo(logoUrl)) || [] : [];
   logger.info(`Logo palette extracted: ${JSON.stringify(logoPalette)}`);
+
+  // OG image fallback: if the logo gave zero colors, try the og:image as a color source
+  if (logoPalette.length === 0) {
+    try {
+      const ogImageHref = $('meta[property="og:image"]').attr('content');
+      if (ogImageHref) {
+        const ogNormalized = normalizeImageUrl(ogImageHref, baseUrl);
+        if (ogNormalized) {
+          const ogPalette = await extractBrandColorsFromLogo(ogNormalized).catch(() => []);
+          if (ogPalette && ogPalette.length > 0) {
+            logoPalette.push(...ogPalette);
+            logger.info(`OG image color fallback applied: ${JSON.stringify(ogPalette)}`);
+          }
+        }
+      }
+    } catch (ogErr) {
+      logger.warn(`OG image color fallback failed: ${ogErr.message}`);
+    }
+  }
 
   // Strong preference for logo palette
   let primaryColor = selectFirstNonNeutral(logoPalette) || '';
@@ -780,6 +801,35 @@ const analyzeBrandColors = async ($, logoUrl, baseUrl) => {
 }
 
 /**
+ * AI-powered industry & sub-industry classifier.
+ * Uses callAIText (supports both OpenAI and Claude) to classify based on
+ * full website context. Falls back to keyword matching on any failure.
+ */
+const detectIndustryWithAI = async (aiHelper, projectName, description, services, bodyText) => {
+  const systemPrompt = `You are a precise business classifier. Given website context, return ONLY a valid JSON object — no markdown, no extra text.
+Format: {"industry": "<Industry>", "subIndustry": "<SubIndustry>"}
+Industry options: Agency, SaaS, Finance, Education, Technology, Consulting, Healthcare, Real Estate, E-commerce, Construction, Hospitality, Legal, Beauty & Wellness, General`;
+
+  const userPrompt = `Business: ${projectName || 'Unknown'}
+Description: ${(description || '').substring(0, 300)}
+Services: ${(services || []).slice(0, 12).join(', ')}
+Content: ${(bodyText || '').substring(0, 600)}
+
+Classify and return JSON only.`;
+
+  const result = await aiHelper.callAIText
+    ? aiHelper.callAIText(systemPrompt, userPrompt)
+    : (() => { throw new Error('callAIText not exported'); })();
+
+  const raw = (result && result.text ? result.text : result).replace(/```json|```/gi, '').trim();
+  const parsed = JSON.parse(raw);
+  return {
+    detectedIndustry: (parsed.industry || 'General').trim(),
+    detectedSubIndustry: (parsed.subIndustry || '').trim()
+  };
+};
+
+/**
  * Universal website analysis and landing page generation system
  */
 const extractProjectData = async (url) => {
@@ -1082,11 +1132,25 @@ const extractProjectData = async (url) => {
       keywords = Array.from(generatedKeywords).slice(0, 15);
     }
 
-    // Detect industry from services
-    const detectedIndustry = detectIndustryFromServices(cleanedServices);
-
-        // Detect sub-industry from services and industry
-    const detectedSubIndustry = detectSubIndustryFromServices(cleanedServices, detectedIndustry);
+    // Detect industry & sub-industry: try AI first, fall back to keyword matching
+    const aiHelper = require('./aiService');
+    let detectedIndustry, detectedSubIndustry;
+    try {
+      const bodySnippet = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 1500);
+      const aiIndustryResult = await detectIndustryWithAI(
+        aiHelper,
+        projectName,
+        projectDesc,
+        cleanedServices,
+        bodySnippet
+      );
+      detectedIndustry = aiIndustryResult.detectedIndustry;
+      detectedSubIndustry = aiIndustryResult.detectedSubIndustry;
+    } catch (aiIndustryErr) {
+      logger.warn(`AI industry detection failed: ${aiIndustryErr.message}. Using keyword fallback.`);
+      detectedIndustry = detectIndustryFromServices(cleanedServices);
+      detectedSubIndustry = detectSubIndustryFromServices(cleanedServices, detectedIndustry);
+    }
 
     // Detect brand personality from content
     const brandPersonality = detectBrandPersonality(projectDesc, $('body').text());
