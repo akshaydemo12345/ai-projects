@@ -246,7 +246,10 @@ export const finance02Html = `
 </nav>
 
 <section class="hero">
-  <div class="hero-overlay" style="background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600'); background-size: cover; background-position: center;"></div>
+  <div class="hero-overlay" style="overflow: hidden;">
+    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Hero Background">
+    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)); z-index: 2;"></div>
+  </div>
   <div class="container">
     <div class="hero-content">
       <h1>Preserving Wealth. <br>Building <span class="text-gold">Legacies.</span></h1>
@@ -336,7 +339,9 @@ export const finance02Html = `
 
 <section class="section-padding" style="background: #f8fafc;" id="about">
   <div class="container expertise-block">
-    <div class="expertise-img" style="background: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200'); background-size: cover; background-position: center;"></div>
+    <div class="expertise-img" style="position: relative; overflow: hidden;">
+      <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" alt="Expertise Background">
+    </div>
     <div class="expertise-content">
       <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px;">Our Heritage</span>
       <h2 style="font-size: 3rem; margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
