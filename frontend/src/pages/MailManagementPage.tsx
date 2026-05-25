@@ -132,7 +132,6 @@ const MailManagementPage = () => {
     sendToEmail: "",
     fromName: "",
     fromEmail: "",
-    replyTo: "",
     bcc: "",
     subject: "New Lead Captured",
     templateId: "",
@@ -142,7 +141,6 @@ const MailManagementPage = () => {
     sendToMode: "field",
     fromName: "",
     fromEmail: "",
-    replyTo: "",
     bcc: "",
     subject: "Thank you for reaching out!",
     templateId: "",
@@ -203,7 +201,6 @@ const MailManagementPage = () => {
         userNotification: {
           enabled: userCfg.enabled,
           subject: user.subject,
-          replyTo: user.replyTo,
           bcc: user.bcc,
         }
       });
@@ -267,7 +264,6 @@ const MailManagementPage = () => {
           ...prev,
           subject: proj.userNotification.subject || prev.subject,
           templateId: proj.userNotification.templateId || "",
-          replyTo: proj.userNotification.replyTo || "",
           bcc: proj.userNotification.bcc || "",
           fromName: proj.fromName || proj.name || "",
           fromEmail: proj.fromEmail || "",
@@ -443,20 +439,12 @@ const MailManagementPage = () => {
               />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <Field label="Sender Name">
                 <Input
                   placeholder="Lead Notification"
                   value={admin.fromName}
                   onChange={(e) => setAdmin((a) => ({ ...a, fromName: e.target.value }))}
-                  className="h-10 rounded-lg bg-background/50 border-border/40 text-sm"
-                />
-              </Field>
-              <Field label="Reply-To">
-                <Input
-                  placeholder="contact@yourcompany.com"
-                  value={admin.replyTo}
-                  onChange={(e) => setAdmin((a) => ({ ...a, replyTo: e.target.value }))}
                   className="h-10 rounded-lg bg-background/50 border-border/40 text-sm"
                 />
               </Field>
@@ -486,22 +474,12 @@ const MailManagementPage = () => {
             onSave={handleSaveUser}
             saved={savedUser}
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <Field label="From Name" hint="Sender name shown to the user">
                 <Input
                   placeholder="Support Team"
                   value={user.fromName}
                   onChange={(e) => setUser((u) => ({ ...u, fromName: e.target.value }))}
-                  className="h-10 rounded-lg bg-background/50 border-border/40 text-sm"
-                />
-              </Field>
-
-              <Field label="Reply To" hint="Where the user's replies go">
-                <Input
-                  type="email"
-                  placeholder="contact@yourcompany.com"
-                  value={user.replyTo}
-                  onChange={(e) => setUser((u) => ({ ...u, replyTo: e.target.value }))}
                   className="h-10 rounded-lg bg-background/50 border-border/40 text-sm"
                 />
               </Field>
