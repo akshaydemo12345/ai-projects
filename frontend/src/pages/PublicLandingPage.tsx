@@ -61,10 +61,16 @@ const PublicLandingPage = () => {
       const slug = (pageResponse as any)?.slug || resolvedSlug || '';
       if (slug) {
         setLoadingThankYou(true);
-        fetch(`${API_URL}/api/thank-you/render/${slug}`)
+        const isPreviewMode = window.location.pathname.startsWith('/preview');
+        const queryParams = isPreviewMode ? '?preview=true' : '';
+        fetch(`${API_URL}/api/thank-you/render/${slug}${queryParams}`)
           .then(r => r.text())
           .then(html => {
-            if (html && html.length > 200) setThankYouHtml(html);
+            if (html && html.length > 200) {
+              let htmlWithBase = html.replace(/href="\//g, `href="${window.location.origin}/`);
+              htmlWithBase = htmlWithBase.replace(/<a /g, '<a target="_parent" ');
+              setThankYouHtml(htmlWithBase);
+            }
           })
           .catch(e => console.error('Error fetching thank you:', e))
           .finally(() => setLoadingThankYou(false));
