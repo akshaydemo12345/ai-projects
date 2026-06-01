@@ -15,6 +15,7 @@
   window.addEventListener('hashchange', () => window.location.reload());
   const landingUrl = window.location.href;
   const previousReferrer = document.referrer;
+  console.log('🌐 [SDK] Landing URL for tracking:', previousReferrer);
 
   /**
    * Captures UTM parameters strictly from the current browser URL.
@@ -136,7 +137,8 @@
       });
 
       // Metadata injection
-      const referralSource = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+      const referrer = previousReferrer || document.referrer || '';
+      const referralSource = referrer || 'Direct';
       const referralUrl = window.location.href;
 
       Object.assign(data, {
@@ -150,7 +152,7 @@
           referral_url: referralUrl,
           referral_source: referralSource
         },
-        referer: previousReferrer || '',
+        referer: referrer,
         ...getUTMParameters(),
         formData
       });

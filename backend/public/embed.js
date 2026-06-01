@@ -62,6 +62,7 @@
 
   const landingUrl = buildLandingUrl();
   const previousReferrer = document.referrer;
+  console.log('🌐 [SDK] Landing URL for tracking:', previousReferrer);
 
   /**
    * Captures UTM parameters strictly from the current browser URL.
@@ -451,7 +452,8 @@
       }
 
       // Add metadata
-      const referralSource = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+      const referrer = previousReferrer || document.referrer || '';
+      const referralSource = referrer || 'Direct';
       const referralUrl = window.location.href;
 
       data.domain = window.location.hostname;
@@ -462,9 +464,9 @@
       data.projectId = projectId;
       data.trackingDetails = {
         referral_url: referralUrl,
-        referral_source: referralSource
+        referral_source: document.referrer || 'Direct'
       };
-      data.referer = previousReferrer || '';
+      data.referer = referrer;
       Object.assign(data, getUTMParameters());
       data.formData = capturedFormFields;
 

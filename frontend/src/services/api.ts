@@ -550,6 +550,11 @@ export const aiApi = {
       return { status: 'success', data: { suggestions } };
     }
   },
+  proxyImage: (imageUrl: string) => {
+    // Returns the proxy URL for an image
+    const encoded = encodeURIComponent(imageUrl);
+    return `${API_BASE_URL}/ai/proxy-image?url=${encoded}`;
+  },
 };
 
 // --- Legacy Compatibility Site API (Maps to Projects/Pages) ---

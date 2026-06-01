@@ -50,4 +50,17 @@ router.post('/optimize-page', protect, aiRateLimit, require('../controllers/aiCo
 router.post('/strategic-plan', protect, aiRateLimit, require('../controllers/aiController').getStrategicPlan);
 router.post('/editor-chat', protect, aiRateLimit, require('../controllers/aiController').editorChat);
 
+/**
+ * @route   GET /ai/proxy-image
+ * @desc    Proxy external images to avoid CORS issues (public endpoint)
+ * @query   url - The image URL to fetch
+ * @access  Public (rate-limited)
+ */
+const imageRateLimit = rateLimiter({
+  windowMs: 60_000,
+  max: 30,
+  message: 'Too many image requests. Please wait a moment before trying again.',
+});
+router.get('/proxy-image', imageRateLimit, require('../controllers/aiController').proxyImage);
+
 module.exports = router;
