@@ -227,7 +227,7 @@ export const finance01Html = `
 
   <!-- FLOATING HORIZONTAL FORM BAR -->
   <div class="container form-bar-container">
-    <form class="form-bar">
+    <form class="form-bar" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
       <div class="form-group">
         <label>Full Name</label>
         <input type="text" name="full_name" placeholder="John Carter">
@@ -414,7 +414,7 @@ export const finance01Html = `
     <div class="container">
       <span>GET IN TOUCH</span>
       <h2 style="margin-top: 1.5rem;">Ready to Talk Numbers?</h2>
-      <form class="contact-form">
+      <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
         <input type="text" name="full_name" placeholder="Jane Doe">
         <input type="email" name="email_address" placeholder="jane@company.com">
         <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="form-full">
@@ -458,10 +458,10 @@ export const finance01Html = `
     <div class="foot-col">
        <h5>Newsletter</h5>
        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">Get monthly insights from our senior advisors.</p>
-       <div style="display: flex; gap: 10px;">
-          <input type="email" placeholder="Your email" style="background: #1e293b; border: none; padding: 0.8rem; border-radius: 4px; color: #fff; width: 100%;">
-          <button style="background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 0.8rem 1.2rem; border-radius: 4px;"><i class="fa-solid fa-paper-plane"></i></button>
-       </div>
+       <form onsubmit="event.preventDefault(); alert('Subscribed successfully!'); this.reset();" style="display: flex; gap: 10px;">
+          <input type="email" placeholder="Your email" style="background: #1e293b; border: none; padding: 0.8rem; border-radius: 4px; color: #fff; width: 100%;" required>
+          <button type="submit" style="background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 0.8rem 1.2rem; border-radius: 4px;"><i class="fa-solid fa-paper-plane"></i></button>
+       </form>
     </div>
   </div>
   <div class="container" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: #4b5563; font-size: 0.85rem;">

@@ -179,7 +179,7 @@ export const travel04Html = `
         <h1>Cities that never sleep, weekends that never end.</h1>
         <p>Curated 48-hour itineraries in the world's most electric cities. Hotels, food, hidden bars — all sorted.</p>
         
-        <form class="hero-form">
+        <form class="hero-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
           <h3>// Book your weekend <span style="font-weight: 400; color: #64748b;">Plan your city break</span></h3>
           <div class="form-grid">
             <div class="form-group">
