@@ -26,8 +26,8 @@ a{color:inherit;text-decoration:none}
   background-color: var(--btn-bg, var(--primary));
   color: var(--btn-text, #fff);
   border: none;
-  padding: 1.3rem 2.5rem;
-  border-radius: 15px;
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -46,20 +46,23 @@ a{color:inherit;text-decoration:none}
 /* 1. HERO */
 .hero{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;overflow:hidden}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scale(1.1);animation:slow-pan 20s infinite alternate}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.2), var(--primary)) !important;background-color:var(--midnight);background-blend-mode:multiply;opacity:0.75;z-index:1}
+.hero-overlay{position:absolute;inset:0;background-color:var(--primary) !important;background-image:linear-gradient(to bottom, rgba(10,17,40,0.2), var(--primary)) !important;opacity:0.5;z-index:1}
 .hero-content{position:relative;z-index:2;max-width:1200px;display:grid;grid-template-columns:1fr 400px;gap:6rem;align-items:center;text-align:left}
 .hero-text h1{font-family:var(--serif);font-size:clamp(3rem,6vw,6rem);font-weight:400;line-height:1;margin-bottom:2rem;letter-spacing:-.02em}
 .hero-text p.kicker{font-size:1rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--primary);margin-bottom:1.5rem;font-weight:600}
 
-.hero-form{background:rgba(255,255,255,0.08);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.15);padding:3rem;border-radius:40px;box-shadow:0 50px 120px rgba(0,0,0,0.4);display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-.hero-form h3{font-family:var(--serif);font-size:1.8rem;margin-bottom:1rem;grid-column:span 2;text-align:left}
+.hero-form{background:rgba(255,255,255,0.08);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.15);padding:2.5rem;border-radius:30px;box-shadow:0 50px 120px rgba(0,0,0,0.4);display:grid;grid-template-columns:1fr;gap:1.2rem}
+.hero-form h3{font-family:var(--serif);font-size:1.6rem;margin-bottom:0.5rem;text-align:left}
 .form-field{margin-bottom:0}
-.form-field.full{grid-column:span 2}
-.form-field label{display:block;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);margin-bottom:0.5rem;font-weight:700}
-.form-field input, .form-field select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1.1rem;color:#fff;border-radius:15px;font-family:inherit;outline:none;transition:all 0.3s;font-size:0.9rem}
+.form-field.full{grid-column:1 / -1}
+.form-field label{display:block;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;font-weight:700}
+.form-field input, .form-field select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:0.8rem 1rem;color:#fff;border-radius:10px;font-family:inherit;outline:none;transition:all 0.3s;font-size:0.9rem}
 .form-field input:focus, .form-field select:focus{background:#fff;border-color:var(--primary);color:var(--midnight)}
+.form-field select option{color:var(--midnight);background:#fff}
+.form-field input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1)}
+.form-field input:focus::-webkit-calendar-picker-indicator{filter:invert(0)}
 .form-field select:focus{color:var(--primary);font-weight:600}
-.hero-form .btn-primary{grid-column:span 2;margin-top:1rem;width:100%;background-color:var(--btn-bg, var(--primary));color:var(--btn-text, #fff);border:none}
+.hero-form .btn-primary{grid-column:1 / -1;margin-top:1rem;width:100%;background-color:var(--btn-bg, var(--primary));color:var(--btn-text, #fff);border:none}
 
 .scroll-hint{position:absolute;bottom:3rem;left:50%;transform:translateX(-50%);z-index:2;animation:bounce 2s infinite}
 
@@ -173,7 +176,7 @@ export const travel03Html = `
       <p class="kicker" style="color:var(--secondary)">Handcrafted Journeys for the Soul</p>
       <h1>The Art of<br/>Slowing Down.</h1>
     </div>
-    <form class="hero-form">
+    <form class="hero-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
       <h3>Begin Your Pause</h3>
       <div class="form-field full">
         <label>Full Name</label>
@@ -182,6 +185,14 @@ export const travel03Html = `
       <div class="form-field">
         <label>Travel Date</label>
         <input type="date" name="travel_date" required>
+      </div>
+      <div class="form-field">
+        <label>Guests</label>
+        <select name="guests" required>
+          <option value="1">1 Guest</option>
+          <option value="2">2 Guests</option>
+          <option value="3+">3+ Guests</option>
+        </select>
       </div>
       <div class="form-field full">
         <label>Email Address</label>
@@ -359,7 +370,7 @@ export const travel03Html = `
       <div class="footer-col">
         <h5>Connect</h5>
         <p style="opacity:0.6;font-size:0.9rem;margin-bottom:1.5rem">Receive our seasonal curations on mindful travel.</p>
-        <form style="display:flex;gap:1rem">
+        <form style="display:flex;gap:1rem" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
           <input type="email" placeholder="Email Address" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;color:#fff;border-radius:5px">
           <button type="submit" class="btn-primary" style="padding: 1rem 2rem; border-radius: 5px;">Join</button>
         </form>

@@ -112,22 +112,26 @@ header {
   position: relative; 
   min-height: 100vh; 
   display: flex; 
-  align-items: center; 
-  padding: 7rem 0 5rem 0; 
+  flex-direction: column;
+  justify-content: center;
+  padding: 8rem 0 10rem; 
   background-position: center; 
   background-size: cover; 
   background-repeat: no-repeat; 
-  flex-wrap: wrap;
 }
 .hero::before { 
   content: ''; 
   position: absolute; 
   inset: 0; 
-  background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%); 
+  background: linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.5) 100%); 
+  z-index: 1;
+}
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
 }
 .hero-content { 
-  position: relative; 
-  z-index: 10; 
   display: grid; 
   grid-template-columns: 1fr 1fr; 
   gap: 4rem; 
@@ -135,83 +139,153 @@ header {
   width: 100%; 
 }
 .hero-text h4 { 
-  color: #fff; 
+  color: rgba(255,255,255,0.85); 
   font-size: clamp(0.8rem, 1.5vw, 1rem); 
   text-transform: uppercase; 
-  letter-spacing: 2px; 
-  margin-bottom: 1rem; 
+  letter-spacing: 3px; 
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 .hero-text h1 { 
   color: #fff; 
-  font-size: clamp(2.2rem, 5vw + 1rem, 5rem); 
+  font-size: clamp(2.4rem, 5vw + 1rem, 5rem); 
   font-weight: 800; 
   line-height: 1.1; 
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+.hero-text p {
+  color: rgba(255,255,255,0.8);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  max-width: 420px;
+  line-height: 1.7;
 }
 .hero-card { 
   background: #fff; 
-  padding: 0.5rem; 
-  border-radius: 20px; 
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+  padding: 0.6rem; 
+  border-radius: 24px; 
+  box-shadow: 0 30px 60px rgba(0,0,0,0.35); 
   justify-self: end; 
   width: 100%;
-  max-width: 320px; 
-  transform: rotate(5deg); 
-  transition: transform 0.3s ease;
+  max-width: 310px; 
+  transform: rotate(4deg); 
+  transition: transform 0.4s ease;
 }
-.hero-card:hover { transform: rotate(0deg); }
+.hero-card:hover { transform: rotate(0deg) scale(1.02); }
 .hero-card img { 
-  border-radius: 15px; 
-  height: clamp(300px, 40vh, 430px); 
+  border-radius: 18px; 
+  height: clamp(280px, 38vh, 420px); 
   object-fit: cover; 
   width: 100%; 
 }
 
-/* Search Bar / Lead Form */
-.search-wrapper { 
-  position: absolute; 
-  bottom: -40px; 
-  left: 0; 
-  right: 0; 
-  z-index: 20; 
-  padding: 0 1.5rem;
+/* Lead Form — floating white card */
+.hero-form-section {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin-top: 3rem;
 }
-.search-bar, .search-bar form { 
-  background: #fff; 
-  border-radius: 20px; 
-  display: flex; 
-  align-items: center; 
-  max-width: 900px; 
-  margin: 0 auto; 
-  width: 100%; 
+.lead-form-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  width: 100%;
+}
+.lead-form-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
-.search-bar form { 
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-  padding: 0.5rem; 
+.lead-form-top h3 {
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 800;
+  color: var(--dark);
+  margin: 0;
 }
-.search-item { 
-  flex: 1; 
-  min-width: 200px;
-  display: flex; 
-  align-items: center; 
-  gap: 1rem; 
-  padding: 1rem 1.5rem; 
-  border-right: 1px solid #eee; 
+.lead-form-top span {
+  font-size: 0.85rem;
+  color: var(--gray);
 }
-.search-item i { color: var(--primary); font-size: 1.2rem; }
-.search-item input { 
-  border: none !important; 
-  outline: none !important; 
-  font-size: 1rem; 
-  width: 100%; 
-  padding: 0.5rem 0px !important; 
-  background: transparent !important; 
-  color: var(--dark); 
-  box-shadow: none !important; 
+.lead-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
 }
-.search-item input:focus { border: none !important; box-shadow: none !important; outline: none !important; }
-.search-btn { padding: 1rem 2.5rem; flex-shrink: 0; white-space: nowrap; }
+.lead-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.lead-field label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lead-field-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1.5px solid #e5e7eb !important;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  background: #f9fafb !important;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.lead-field-inner:focus-within {
+  border-color: var(--primary) !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.lead-field-inner i {
+  color: var(--primary);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.lead-field-inner input {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--dark) !important;
+  font-size: 0.88rem;
+  width: 100%;
+  box-shadow: none !important;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+}
+.lead-field-inner input::placeholder { color: #9ca3af !important; font-weight: 400; }
+.lead-form-submit-wrap {
+  display: flex;
+  align-items: flex-end;
+}
+.lead-form-submit {
+  padding: 0.65rem 1.8rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  width: 100%;
+  cursor: pointer;
+  border: none !important;
+  background: var(--primary) !important;
+  color: #fff !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+.lead-form-submit:hover { opacity: 0.88; transform: translateY(-2px); }
+
+
 
 /* Tour Places */
 .tours { padding: clamp(6rem, 10vw, 8rem) 0 5rem; background: #fff; }
@@ -452,16 +526,22 @@ footer { background: #111; color: #fff; padding: clamp(4rem, 8vw, 6rem) 0 2rem; 
 /* --- RESPONSIVE MEDIA QUERIES --- */
 
 @media (max-width: 1024px) {
-  .hero-content { grid-template-columns: 1fr; text-align: center; gap: 3rem; }
+  .hero { padding: 8rem 0 6rem; }
+  .hero-content { grid-template-columns: 1fr; text-align: center; gap: 2.5rem; }
   .hero-card { justify-self: center; transform: rotate(0); }
-  .search-wrapper { position: static; margin-top: -30px; padding: 0 1.5rem; }
-  .search-bar, .search-bar form { flex-direction: column; border-radius: 20px; padding: 1rem; gap: 0.5rem; }
-  .search-item { border-right: none; border-bottom: 1px solid #eee; width: 100%; justify-content: flex-start; }
-  .search-btn { width: 100%; margin-top: 1rem; }
+  .hero-text p { margin: 0 auto; }
+  .lead-form-grid { grid-template-columns: 1fr 1fr; }
+  .lead-form-submit-wrap { grid-column: span 2; }
+  .lead-form-submit { width: 100%; }
   .exp-grid, .ft-grid { grid-template-columns: 1fr; gap: 3rem; }
   .exp-images { height: 450px; margin-top: 2rem; }
   .blog-grid { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .lead-form-card { padding: 1.2rem; }
+  .lead-form-grid { grid-template-columns: 1fr; }
+  .lead-form-submit-wrap { grid-column: span 1; }
 }
 
 @media (max-width: 768px) {
@@ -507,36 +587,53 @@ export const travel01Html = `
 </header>
 
 <main>
-  <section class="hero" style="position: relative; overflow: hidden;">
-    <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=2000" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;" alt="Hero Background">
-    <div class="container hero-content">
-      <div class="hero-text">
-        <h4>Let's Travel The World</h4>
-        <h1>Adventure &<br>Experience The<br>Travel!</h1>
+  <section class="hero" style="background-image: url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=2000');">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h4>Let's Travel The World</h4>
+          <h1>Adventure &<br>Experience The<br>Travel!</h1>
+          <p>Discover breathtaking destinations with our expert-curated travel packages. Your dream vacation starts here.</p>
+        </div>
+        <div class="hero-card">
+          <img src="https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&q=80&w=800" alt="Island">
+        </div>
       </div>
-      <div class="hero-card">
-        <img src="https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&q=80&w=800" alt="Island">
-      </div>
-    </div>
-    <div class="search-wrapper">
-      <div class="search-bar">
-        <form class="lead-form" action="#" method="POST" onsubmit="event.preventDefault(); alert('Thank you! Your submission has been received.'); this.reset();">
-          <div class="search-item">
-            <i class="fa-solid fa-envelope"></i>
-            <div>
-              <div style="font-size: 0.8rem; color: var(--gray);">Email</div>
-              <input type="email" name="email" placeholder="Enter your email" required>
-            </div>
+      <div class="hero-form-section">
+        <div class="lead-form-card">
+          <div class="lead-form-top">
+            <h3>✈️ Plan Your Dream Trip</h3>
+            <span>Free quote · No commitment</span>
           </div>
-          <div class="search-item">
-            <i class="fa-solid fa-phone"></i>
-            <div>
-              <div style="font-size: 0.8rem; color: var(--gray);">Phone</div>
-              <input type="tel" name="phone" placeholder="Enter phone number" required>
+          <form class="lead-form" action="#" method="POST" onsubmit="event.preventDefault(); alert('Thank you! We will contact you shortly.'); this.reset();">
+            <div class="lead-form-grid">
+              <div class="lead-field">
+                <label>Full Name</label>
+                <div class="lead-field-inner">
+                  <i class="fa-solid fa-user"></i>
+                  <input type="text" name="name" placeholder="e.g. John Smith" required>
+                </div>
+              </div>
+              <div class="lead-field">
+                <label>Email Address</label>
+                <div class="lead-field-inner">
+                  <i class="fa-solid fa-envelope"></i>
+                  <input type="email" name="email" placeholder="you@email.com" required>
+                </div>
+              </div>
+              <div class="lead-field">
+                <label>Phone Number</label>
+                <div class="lead-field-inner">
+                  <i class="fa-solid fa-phone"></i>
+                  <input type="tel" name="phone" placeholder="+1 234 567 890" required>
+                </div>
+              </div>
+              <div class="lead-form-submit-wrap">
+                <button type="submit" class="lead-form-submit">Get Free Quote <i class="fa-solid fa-arrow-right" style="margin-left:6px;"></i></button>
+              </div>
             </div>
-          </div>
-          <button type="submit" class="btn btn-primary search-btn">Get Started</button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </section>
@@ -860,7 +957,7 @@ export const travel01Html = `
     <div class="footer-col newsletter">
       <h4>Newsletter</h4>
       <p>Subscribe to our newsletter to get the latest updates and offers.</p>
-      <form>
+      <form onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
         <input type="email" placeholder="Enter your email address">
         <button type="button">Subscribe Now</button>
       </form>
