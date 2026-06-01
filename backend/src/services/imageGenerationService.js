@@ -36,30 +36,39 @@ async function generateGetImgUrl(
     /**
      * UPDATED API ENDPOINT
      */
-    const response = await fetch(
-      'https://api.getimg.ai/v1/flux-schnell/text-to-image',
-      {
-        method: 'POST',
-
-        headers: {
-          Authorization: `Bearer ${actualKey}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-
-        body: JSON.stringify({
-
-          prompt: promptText,
-
-          width,
-          height,
-
-          steps: 4,
-
-          response_format: 'b64'
-        })
+    let response;
+    let retries = 3;
+    let delay = 1000; // start with 1 second delay
+    
+    while (retries > 0) {
+      response = await fetch(
+        'https://api.getimg.ai/v1/flux-schnell/text-to-image',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${actualKey}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({
+            prompt: promptText,
+            width,
+            height,
+            steps: 4,
+            response_format: 'b64'
+          })
+        }
+      );
+      
+      if (response.status === 429) {
+        logger.warn(`[getimg.ai] Rate limited. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // exponential backoff
+        retries--;
+      } else {
+        break; // break out of retry loop if success or other error
       }
-    );
+    }
 
     /**
      * RAW RESPONSE
@@ -351,42 +360,23 @@ async function replacePlaceholdersInHtml(
     /**
      * GENERATE ALL
      */
-    const results = await Promise.all(
+    const results = [];
+    for (const img of imagesToReplace) {
+      const prompt = getPromptForIndustry(industry, subIndustry, img.context);
+      const width = img.context.isHero ? 1152 : 1024;
+      const height = img.context.isHero ? 768 : 1024;
+      const newUrl = await generateGetImgUrl(prompt, width, height);
 
-      imagesToReplace.map(async (img) => {
+      results.push({
+        type: img.type,
+        element: img.element,
+        originalSrc: img.src,
+        newUrl
+      });
 
-        const prompt =
-          getPromptForIndustry(
-            industry,
-            subIndustry,
-            img.context
-          );
-
-        const width =
-          img.context.isHero
-            ? 1152
-            : 1024;
-
-        const height =
-          img.context.isHero
-            ? 768
-            : 1024;
-
-        const newUrl =
-          await generateGetImgUrl(
-            prompt,
-            width,
-            height
-          );
-
-        return {
-          type: img.type,
-          element: img.element,
-          originalSrc: img.src,
-          newUrl
-        };
-      })
-    );
+      // Add a small delay between requests to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     /**
      * APPLY URLS
@@ -412,7 +402,55 @@ async function replacePlaceholdersInHtml(
       );
     });
 
-    return $.html();
+    let finalHtml = $.html();
+
+    /**
+     * REGEX FOR ANY REMAINING STOCK URLS (e.g. background-image)
+     */
+    const stockRegex = /(https?:\/\/(?:images\.unsplash\.com|source\.unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)[^'"\s\)\>]*)/gi;
+    
+    let match;
+    const remainingUrls = [];
+    while ((match = stockRegex.exec(finalHtml)) !== null) {
+      const url = match[1];
+      if (!remainingUrls.some(r => r.url === url)) {
+        const startIdx = Math.max(0, match.index - 300);
+        const precedingText = finalHtml.substring(startIdx, match.index).toLowerCase();
+        const isHero = precedingText.includes('hero') || precedingText.includes('banner');
+        
+        remainingUrls.push({ url, isHero });
+      }
+    }
+
+    if (remainingUrls.length > 0) {
+      logger.info(`[ImageGenerationService] Found ${remainingUrls.length} background/inline images`);
+      
+      const remainingResults = [];
+      for (const item of remainingUrls) {
+        const context = {
+          isHero: item.isHero,
+          sectionClass: item.isHero ? 'hero' : ''
+        };
+        const prompt = getPromptForIndustry(industry, subIndustry, context);
+        const width = item.isHero ? 1152 : 1024;
+        const height = item.isHero ? 768 : 1024;
+        const newUrl = await generateGetImgUrl(prompt, width, height);
+        
+        remainingResults.push({ originalUrl: item.url, newUrl });
+        
+        // Add a small delay between requests to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      remainingResults.forEach(res => {
+        if (res && res.newUrl) {
+          finalHtml = finalHtml.split(res.originalUrl).join(res.newUrl);
+          logger.info(`[ImageGenerationService] Replaced background image: ${res.originalUrl}`);
+        }
+      });
+    }
+
+    return finalHtml;
 
   } catch (err) {
 

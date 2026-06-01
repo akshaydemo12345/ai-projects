@@ -121,7 +121,7 @@ export const saasHeroHtml = `
       </div>
       <div class="hero-form">
         <h3>Request a Demo</h3>
-        <form>
+        <form onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
           <input type="text" placeholder="Full Name" required />
           <input type="email" placeholder="Work Email" required />
           <input type="text" placeholder="Company Name" required />
