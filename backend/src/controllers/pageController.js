@@ -317,11 +317,25 @@ exports.createPage = async (req, res, next) => {
         clearTimeout(timeoutId);
 
         if (checkResponse.status === 200) {
-          return res.status(400).json({
-            success: false,
-            message: `Page already exists on website`,
-            data: {}
-          });
+          // Verify if the site uses catch-all routing by fetching a random URL
+          const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
+          const catchAllController = new AbortController();
+          const catchAllTimeout = setTimeout(() => catchAllController.abort(), 5000);
+          const catchAllResponse = await fetch(randomUrl, {
+            method: 'GET',
+            signal: catchAllController.signal
+          }).catch(() => null);
+          clearTimeout(catchAllTimeout);
+
+          // If the random URL does NOT return 200, it means the site handles 404s properly.
+          // Therefore, the 200 on our checkUrl means the page ACTUALLY exists.
+          if (!catchAllResponse || catchAllResponse.status !== 200) {
+            return res.status(400).json({
+              success: false,
+              message: `Page already exists on website`,
+              data: {}
+            });
+          }
         }
       } catch (err) {
         logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
@@ -654,10 +668,19 @@ exports.updatePage = async (req, res, next) => {
           const checkResponse = await fetch(checkUrl, { method: 'GET', signal: controller.signal });
           clearTimeout(timeoutId);
           if (checkResponse.status === 200) {
-            return res.status(400).json({
-              status: 'fail',
-              message: `Page already exists on website`
-            });
+            // Verify if the site uses catch-all routing by fetching a random URL
+            const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
+            const catchAllController = new AbortController();
+            const catchAllTimeout = setTimeout(() => catchAllController.abort(), 5000);
+            const catchAllResponse = await fetch(randomUrl, { method: 'GET', signal: catchAllController.signal }).catch(() => null);
+            clearTimeout(catchAllTimeout);
+
+            if (!catchAllResponse || catchAllResponse.status !== 200) {
+              return res.status(400).json({
+                status: 'fail',
+                message: `Page already exists on website`
+              });
+            }
           }
         } catch (err) {
           logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
