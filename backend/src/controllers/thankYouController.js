@@ -115,14 +115,19 @@ exports.renderThankYouPage = async (req, res, next) => {
     try {
       const project = await Project.findById(page.projectId);
       const preSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
-      landingPageUrl = preSlug ? `/${preSlug}/${page.slug}` : `/${page.slug}`;
+      const isPreview = req.query.preview === 'true';
+      if (isPreview) {
+        landingPageUrl = preSlug ? `/preview/${preSlug}/${page.slug}` : `/preview/${page.slug}`;
+      } else {
+        landingPageUrl = preSlug ? `/${preSlug}/${page.slug}` : `/${page.slug}`;
+      }
     } catch (e) { }
 
     const content = {
       heading: page.thankYouConfig?.content?.heading || layoutConfig.defaultContent.heading,
       subheading: page.thankYouConfig?.content?.subheading || layoutConfig.defaultContent.subheading,
       ctaText: page.thankYouConfig?.content?.ctaText || layoutConfig.defaultContent.ctaText,
-      ctaUrl: page.thankYouConfig?.content?.ctaUrl && page.thankYouConfig?.content?.ctaUrl !== '#' ? page.thankYouConfig.content.ctaUrl : landingPageUrl,
+      ctaUrl: page.thankYouConfig?.content?.ctaUrl && page.thankYouConfig?.content?.ctaUrl !== '#' && page.thankYouConfig?.content?.ctaUrl !== '/' ? page.thankYouConfig.content.ctaUrl : landingPageUrl,
       phoneNumber: page.thankYouConfig?.content?.phoneNumber || layoutConfig.defaultContent.phoneNumber,
       offerText: page.thankYouConfig?.content?.offerText || layoutConfig.defaultContent.offerText,
       customMessage: page.thankYouConfig?.content?.customMessage || layoutConfig.defaultContent.customMessage
@@ -326,7 +331,7 @@ exports.previewThankYouPage = async (req, res, next) => {
       heading: content?.heading || layoutConfig.defaultContent.heading,
       subheading: content?.subheading || layoutConfig.defaultContent.subheading,
       ctaText: content?.ctaText || layoutConfig.defaultContent.ctaText,
-      ctaUrl: content?.ctaUrl && content?.ctaUrl !== '#' ? content.ctaUrl : landingPageUrl,
+      ctaUrl: content?.ctaUrl && content?.ctaUrl !== '#' && content?.ctaUrl !== '/' ? content.ctaUrl : landingPageUrl,
       phoneNumber: content?.phoneNumber || layoutConfig.defaultContent.phoneNumber,
       offerText: content?.offerText || layoutConfig.defaultContent.offerText,
       customMessage: content?.customMessage || layoutConfig.defaultContent.customMessage
