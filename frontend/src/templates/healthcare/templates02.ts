@@ -721,7 +721,7 @@ export const healthcare02Html = `
       </div>
       <div class="v2-cta-form-card">
         <p class="v2-cta-form-title">Request an Appointment</p>
-        <form>
+        <form onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
           <div class="v2-form-field">
             <label class="v2-form-label">Full Name</label>
             <input class="v2-form-input" type="text" placeholder="Your full name"/>

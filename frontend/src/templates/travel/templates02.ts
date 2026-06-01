@@ -46,14 +46,15 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
 .btn-signup:hover { background: var(--secondary); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
 
 /* HERO */
-.hero { margin-top: 80px; position: relative; height: 600px; display: flex; align-items: center; justify-content: center; background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=2000') center/cover; }
-.hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.2)); }
+.hero { margin-top: 80px; position: relative; height: 600px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #000; }
+.hero-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.2)); z-index: 1; }
 .hero-content { position: relative; z-index: 2; text-align: center; color: #fff; width: 100%; max-width: 800px; padding: 0 1.5rem; }
 .hero-title { font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
 .hero-subtitle { font-size: 1.1rem; opacity: 0.9; margin-bottom: 3rem; font-weight: 500; }
 
 /* BOOKING FORM */
-.booking-box { background: #fff; border-radius: 20px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.15); text-align: left; margin: 0 auto; position: absolute; bottom: -80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 900px; z-index: 10; }
+.booking-box { background: #fff; border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.15); text-align: left; margin: -80px auto 4rem; position: relative; width: 90%; max-width: 1000px; z-index: 10; }
 .booking-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
 .booking-title i { color: var(--primary); font-size: 1.3rem; }
 
@@ -68,7 +69,7 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
   transform: translateY(0);
 }
 
-.booking-fields { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1fr auto; gap: 1.5rem; align-items: end; }
+.booking-form-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
 .field { display: flex; flex-direction: column; gap: 0.5rem; position: relative; }
 .field label { font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
 .field label i { color: var(--primary); }
@@ -106,10 +107,21 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
 .dot:hover { background: #94a3b8; }
 
 /* TOURS (ARCHED) */
+input[name="tour-filter"] { display: none; }
+#filter-all:checked ~ .tour-filters label[for="filter-all"],
+#filter-family:checked ~ .tour-filters label[for="filter-family"],
+#filter-honeymoon:checked ~ .tour-filters label[for="filter-honeymoon"],
+#filter-luxury:checked ~ .tour-filters label[for="filter-luxury"],
+#filter-wildlife:checked ~ .tour-filters label[for="filter-wildlife"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+#filter-family:checked ~ .tours-grid .tour-card:not([data-category~="family"]),
+#filter-honeymoon:checked ~ .tours-grid .tour-card:not([data-category~="honeymoon"]),
+#filter-luxury:checked ~ .tours-grid .tour-card:not([data-category~="luxury"]),
+#filter-wildlife:checked ~ .tours-grid .tour-card:not([data-category~="wildlife"]) { display: none; }
+
 .tour-filters { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
-.filter-btn { padding: 0.6rem 1.5rem; border-radius: 50px; font-weight: 600; font-size: 0.95rem; color: var(--gray); background: #f1f5f9; transition: 0.3s; cursor: pointer; border: 2px solid transparent; }
+.filter-btn { padding: 0.6rem 1.5rem; border-radius: 50px; font-weight: 600; font-size: 0.95rem; color: var(--gray); background: #f1f5f9; transition: 0.3s; cursor: pointer; border: 2px solid transparent; display: inline-block; }
 .filter-btn:hover { background: #e2e8f0; }
-.filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 .tours-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
 .tour-card { background: #fff; border-radius: 120px 120px 20px 20px; padding: 10px 10px 20px 10px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid var(--border); }
@@ -135,8 +147,9 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
 .btn-view-all:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
 
 /* WHY CHOOSE US */
-.why-section { background: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000') center/cover; padding: 6rem 0; position: relative; }
-.why-section::before { content: ''; position: absolute; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(2px); }
+.why-section { padding: 6rem 0; position: relative; overflow: hidden; background-color: #0f172a; }
+.why-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.why-section::before { content: ''; position: absolute; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(2px); z-index: 1; }
 .why-section .section-title { color: #fff; position: relative; z-index: 2; }
 .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; position: relative; z-index: 2; margin-top: 3rem; }
 .why-card { background: #fff; padding: 2.5rem 1.5rem; border-radius: 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -153,14 +166,9 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
 .journey-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 3rem; }
 .journey-main { height: 500px; border-radius: 24px; overflow: hidden; position: relative; }
 .journey-side { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; height: 500px; }
-.journey-item { position: relative; border-radius: 20px; overflow: hidden; cursor: pointer; }
-.journey-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-.journey-item:hover img { transform: scale(1.05); }
-.journey-item::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.2); transition: 0.3s; }
-.journey-item:hover::after { background: rgba(0,0,0,0.4); }
-.play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: rgba(255,255,255,0.95); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--primary); z-index: 2; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
-.journey-item:hover .play-btn { transform: translate(-50%, -50%) scale(1.15); }
-.journey-main .play-btn { width: 80px; height: 80px; font-size: 1.5rem; }
+.journey-item { position: relative; border-radius: 20px; overflow: hidden; }
+.journey-item img, .journey-item video { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+.journey-item:hover img, .journey-item:hover video { transform: scale(1.05); }
 
 /* LIMITED OFFER */
 .offer-banner { background: linear-gradient(135deg, var(--dark) 0%, #1a2942 100%); border-radius: 24px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; margin-top: 4rem; position: relative; }
@@ -188,7 +196,7 @@ button { font-family: var(--font); cursor: pointer; border: none; outline: none;
 .author-loc { font-size: 0.8rem; color: var(--gray); }
 .stars { color: #f59e0b; font-size: 0.85rem; }
  /* FAQ */
-    .v2-section-head { text-align: center; margin-bottom: 60px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .v2-section-head { padding: 3rem 0rem; text-align: center; margin-bottom: 60px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
     .t-h2 { font-family: 'Playfair Display', serif; font-size: clamp(28px,3.5vw,44px); line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; }
     .t-body { font-family: var(--font-body); font-size: 15px; line-height: 1.65; font-weight: 400; }
     .col-muted { color: var(--text-muted); }
@@ -316,7 +324,7 @@ footer { background: var(--dark); color: #94a3b8; padding: 5rem 0 2rem; margin-t
 .socials a:hover { background: var(--primary); }
 
 @media (max-width: 1024px) {
-  .booking-fields { grid-template-columns: 1fr 1fr; }
+  .booking-form-wrap { grid-template-columns: repeat(2, 1fr); }
   .btn-search { width: 100%; }
   .tours-grid { grid-template-columns: repeat(2, 1fr); }
   .why-grid { grid-template-columns: repeat(2, 1fr); }
@@ -335,10 +343,10 @@ footer { background: var(--dark); color: #94a3b8; padding: 5rem 0 2rem; margin-t
   .nav-links { display: none; }
   .hero-title { font-size: 2.5rem; }
   .hero-subtitle { font-size: 0.95rem; }
-  .booking-box { position: relative; transform: none; bottom: auto; left: auto; margin: 2rem auto 0; width: 95%; }
-  .booking-fields { grid-template-columns: 1fr; }
+  .booking-box { margin: -40px auto 2rem; width: 95%; padding: 1.5rem; }
+  .booking-form-wrap { grid-template-columns: 1fr; }
   .btn-search { width: 100%; }
-  .dest-grid { grid-template-columns: repeat(3, 1fr); }
+  .dest-grid { grid-template-columns: repeat(1, 1fr); }
   .carousel-nav { display: none; }
   .tours-grid { grid-template-columns: 1fr; }
   .why-grid { grid-template-columns: 1fr; }
@@ -364,31 +372,56 @@ export const travel02Html = `
 </nav>
 
 <section class="hero">
+  <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=2000" class="hero-bg-img" alt="Travel Destination" />
   <div class="hero-content">
     <h1 class="hero-title">Travel Far, Live Fully, and Come Alive in Every Moment.</h1>
     <p class="hero-subtitle">It inspires you to go see the world, enjoy every moment, and feel truly alive.</p>
   </div>
   
-  <div class="booking-box">
-    <div class="booking-title">
-      <i class="fas fa-suitcase"></i> Plan Your Trip
+</section>
+  
+<form class="booking-box" onsubmit="event.preventDefault(); alert('Booking submitted successfully! We will contact you soon.'); this.reset();">
+  <div class="booking-title">
+    <i class="fas fa-suitcase"></i> Plan Your Trip
+  </div>
+  <div class="booking-form-wrap">
+    <div class="field">
+      <label><i class="fas fa-user"></i> Full Name</label>
+      <input type="text" placeholder="Enter your name">
     </div>
-    <div class="booking-fields-top" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-      <div class="field">
-        <label><i class="fas fa-user"></i> Full Name</label>
-        <input type="text" placeholder="Enter your name">
-      </div>
-      <div class="field">
-        <label><i class="fas fa-envelope"></i> Email Address</label>
-        <input type="email" placeholder="Enter your email">
-      </div>
+    <div class="field">
+      <label><i class="fas fa-envelope"></i> Email Address</label>
+      <input type="email" placeholder="Enter your email">
     </div>
-    <div class="booking-fields">
-
-      <button class="btn-search">Submit</button>
+    <div class="field">
+      <label><i class="fas fa-map-marker-alt"></i> Destination</label>
+      <input type="text" placeholder="Where to?">
+    </div>
+    <div class="field">
+      <label><i class="far fa-calendar-alt"></i> Date</label>
+      <input type="date">
+    </div>
+    <div class="field">
+      <label><i class="fas fa-user-friends"></i> Guests</label>
+      <select>
+        <option>1 Person</option>
+        <option>2 People</option>
+        <option>3+ People</option>
+      </select>
+    </div>
+    <div class="field">
+      <label><i class="fas fa-plane-departure"></i> Type</label>
+      <select>
+        <option>Flight + Hotel</option>
+        <option>Hotel Only</option>
+        <option>Flight Only</option>
+      </select>
     </div>
   </div>
-</section>
+  <div style="text-align: center; margin-top: 1rem;">
+    <button type="submit" class="btn-search" style="display: inline-flex; min-width: 200px; height: 50px; font-size: 1.1rem; margin: 0 auto;">Book Now</button>
+  </div>
+</form>
 
 <section class="section" id="destinations">
   <div class="container">
@@ -430,11 +463,6 @@ export const travel02Html = `
         </div>
       </div>
     </div>
-    <div class="dots">
-      <div class="dot active"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-    </div>
   </div>
 </section>
 
@@ -445,12 +473,18 @@ export const travel02Html = `
       <p class="section-subtitle">Handpicked experiences from our expert guides</p>
     </div>
     
+    <input type="radio" name="tour-filter" id="filter-all" checked>
+    <input type="radio" name="tour-filter" id="filter-family">
+    <input type="radio" name="tour-filter" id="filter-honeymoon">
+    <input type="radio" name="tour-filter" id="filter-luxury">
+    <input type="radio" name="tour-filter" id="filter-wildlife">
+
     <div class="tour-filters">
-      <button class="filter-btn active" onclick="filterTours('all', this)">Show All</button>
-      <button class="filter-btn" onclick="filterTours('family', this)">Family Tour</button>
-      <button class="filter-btn" onclick="filterTours('honeymoon', this)">Honeymoon Tour</button>
-      <button class="filter-btn" onclick="filterTours('luxury', this)">Luxury Tour</button>
-      <button class="filter-btn" onclick="filterTours('wildlife', this)">Wildlife Safari</button>
+      <label for="filter-all" class="filter-btn">Show All</label>
+      <label for="filter-family" class="filter-btn">Family Tour</label>
+      <label for="filter-honeymoon" class="filter-btn">Honeymoon Tour</label>
+      <label for="filter-luxury" class="filter-btn">Luxury Tour</label>
+      <label for="filter-wildlife" class="filter-btn">Wildlife Safari</label>
     </div>
 
     <div class="tours-grid">
@@ -584,6 +618,7 @@ export const travel02Html = `
 </section>
 
 <section class="why-section">
+  <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000" class="why-bg-img" alt="Why Choose Us Background" />
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">Why We're Your Best Choice</h2>
@@ -622,27 +657,22 @@ export const travel02Html = `
     </div>
     
     <div class="journey-grid">
-      <a href="https://youtube.com/" target="_blank" class="journey-main journey-item" style="display: block;">
-        <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=800" alt="Video" style="width: 100%; height: 100%; object-fit: cover;">
-        <div class="play-btn"><i class="fas fa-play"></i></div>
-      </a>
+      <div class="journey-main journey-item" style="display: block;">
+        <video src="https://www.w3schools.com/html/mov_bbb.mp4" poster="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=800" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+      </div>
       <div class="journey-side">
-        <a href="https://youtube.com/" target="_blank" class="journey-item" style="display: block;">
-          <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=400" alt="Video" style="width: 100%; height: 100%; object-fit: cover;">
-          <div class="play-btn"><i class="fas fa-play"></i></div>
-        </a>
-        <a href="https://youtube.com/" target="_blank" class="journey-item" style="display: block;">
-          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" alt="Video" style="width: 100%; height: 100%; object-fit: cover;">
-          <div class="play-btn"><i class="fas fa-play"></i></div>
-        </a>
-        <a href="https://youtube.com/" target="_blank" class="journey-item" style="display: block;">
-          <img src="https://images.unsplash.com/photo-1500595046891-9fdf982b6158?auto=format&fit=crop&q=80&w=400" alt="Video" style="width: 100%; height: 100%; object-fit: cover;">
-          <div class="play-btn"><i class="fas fa-play"></i></div>
-        </a>
-        <a href="https://youtube.com/" target="_blank" class="journey-item" style="display: block;">
-          <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&q=80&w=400" alt="Video" style="width: 100%; height: 100%; object-fit: cover;">
-          <div class="play-btn"><i class="fas fa-play"></i></div>
-        </a>
+        <div class="journey-item" style="display: block;">
+          <video src="https://www.w3schools.com/html/mov_bbb.mp4" poster="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=400" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+        </div>
+        <div class="journey-item" style="display: block;">
+          <video src="https://www.w3schools.com/html/mov_bbb.mp4" poster="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+        </div>
+        <div class="journey-item" style="display: block;">
+          <video src="https://www.w3schools.com/html/mov_bbb.mp4" poster="https://images.unsplash.com/photo-1500595046891-9fdf982b6158?auto=format&fit=crop&q=80&w=400" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+        </div>
+        <div class="journey-item" style="display: block;">
+          <video src="https://www.w3schools.com/html/mov_bbb.mp4" poster="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&q=80&w=400" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+        </div>
       </div>
     </div>
   </div>
@@ -818,10 +848,10 @@ export const travel02Html = `
       <div class="nl-content">
         <h2>Unlock exclusive deals – subscribe now!</h2>
         <p>Sign up to unlock our secret deals and weekly travel inspiration directly to your inbox.</p>
-        <div class="nl-form">
-          <input type="email" placeholder="Your email address">
-          <button class="btn-sub">Subscribe</button>
-        </div>
+        <form class="nl-form" onsubmit="event.preventDefault(); alert('Subscribed successfully!'); this.reset();">
+          <input type="email" placeholder="Your email address" required>
+          <button type="submit" class="btn-sub">Subscribe</button>
+        </form>
       </div>
     </div>
   </div>
@@ -944,58 +974,7 @@ export const travel02Html = `
 
 })();
 
-function scrollDest(btn, direction) {
 
-  const grid = document.getElementById('destGrid');
-
-  if (!grid) return;
-
-  const scrollAmount = 200;
-
-  grid.scrollBy({
-    left: direction * scrollAmount,
-    behavior: 'smooth'
-  });
-
-}
-
-function filterTours(category, btn) {
-
-  const cards = document.querySelectorAll('.tour-card');
-  const btns = document.querySelectorAll('.filter-btn');
-
-  btns.forEach(b => b.classList.remove('active'));
-
-  if (btn) {
-    btn.classList.add('active');
-  }
-
-  cards.forEach(card => {
-
-    if (
-      category === 'all' ||
-      card.dataset.category.includes(category)
-    ) {
-
-      card.style.display = 'block';
-
-      setTimeout(() => {
-        card.style.opacity = '1';
-      }, 10);
-
-    } else {
-
-      card.style.opacity = '0';
-
-      setTimeout(() => {
-        card.style.display = 'none';
-      }, 300);
-
-    }
-
-  });
-
-}
 
 function toggleFaq(head) {
 

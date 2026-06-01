@@ -140,7 +140,7 @@ export const finance03Html = `
         </div>
       </div>
       
-      <form class="hero-form-bar">
+      <form class="hero-form-bar" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
         <div class="form-field">
           <label>Full Name</label>
           <input type="text" name="full_name" placeholder="John Doe" required>
