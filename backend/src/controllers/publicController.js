@@ -1772,11 +1772,11 @@ exports.downloadPlugin = async (req, res, next) => {
     const possiblePaths = [
       // Backend public/zip directory
       path.resolve(__dirname, '../../public/zip/buildify-ai.zip'),
-      path.resolve(__dirname, '../../public/zip/domain-mapper-test.zip'),
-      path.resolve(__dirname, '../../public/zip/ai-landing-page-publisher.zip'),
+      // path.resolve(__dirname, '../../public/zip/domain-mapper-test.zip'),
+      // path.resolve(__dirname, '../../public/zip/ai-landing-page-publisher.zip'),
       // Frontend public/zip directory
-      path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper.zip'),
-      path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper-backup.zip'),
+      // path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper.zip'),
+      // path.resolve(__dirname, '../../../frontend/public/zip/domain-mapper-backup.zip'),
     ];
 
     let zipPath = null;

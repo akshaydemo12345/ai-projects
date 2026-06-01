@@ -48,7 +48,6 @@ exports.updateProfile = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const schema = z.object({
-      currentPassword: z.string().min(1, 'Current password is required'),
       newPassword: z.string().min(8, 'New password must be at least 8 characters'),
     });
 
@@ -57,11 +56,11 @@ exports.changePassword = async (req, res, next) => {
       return next(new AppError(Object.values(parsed.error.flatten().fieldErrors).flat().join('. '), 400));
     }
 
-    const { currentPassword, newPassword } = parsed.data;
+    const { newPassword } = parsed.data;
 
     const user = await User.findById(req.user._id).select('+password');
-    if (!user || !(await user.comparePassword(currentPassword))) {
-      return next(new AppError('Current password is incorrect', 401));
+    if (!user) {
+      return next(new AppError('User not found', 404));
     }
 
     user.password = newPassword;

@@ -571,3 +571,59 @@ exports.optimizePage = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * @route   GET /ai/proxy-image
+ * @desc    Fetch and proxy external images to avoid CORS issues
+ * @query   url - The image URL to fetch
+ * @access  Public (rate-limited)
+ */
+exports.proxyImage = async (req, res, next) => {
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).json({ status: 'fail', message: 'Image URL required' });
+    }
+
+    // Validate URL is HTTP(S)
+    if (!/^https?:\/\/.{5,}/.test(url)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid image URL' });
+    }
+
+    const axios = require('axios');
+    
+    // Fetch the image with timeout
+    const response = await axios.get(url, {
+      timeout: 8000,
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      }
+    });
+
+    const contentType = response.headers['content-type'] || 'image/png';
+    
+    // Set cache headers for 30 days
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=2592000');
+    res.set('Access-Control-Allow-Origin', '*');
+    
+    return res.send(response.data);
+  } catch (err) {
+    // Return a 1px transparent PNG fallback on error
+    const fallbackPng = Buffer.from([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
+      0x0D, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x63, 0xF8, 0xFF, 0xFF, 0x3F,
+      0x00, 0x05, 0xFE, 0x02, 0xB7, 0xA7, 0x37, 0x81, 0x84, 0x00, 0x00, 0x00,
+      0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+    ]);
+    
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.send(fallbackPng);
+  }
+};
