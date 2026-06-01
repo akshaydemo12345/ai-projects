@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard, cleanUrl } from "@/lib/utils";
+import { copyToClipboard, cleanUrl, normalizeLogoUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -218,7 +218,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
     try {
       const res = await aiApi.generateDescription({
         pageName,
-        industry: project.category || "Service",
+        industry: project.category || project.industry || "Service",
         projectDesc: project.description,
         currentPrompt: aiPrompt.trim() || undefined
       });
@@ -583,7 +583,23 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="upload-logo-analyze" />
                     {logoPreview ? (
                       <div className="h-10 w-10 rounded border border-border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                        <img 
+                          src={logoPreview} 
+                          alt="Logo" 
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            // Try proxy endpoint as fallback if it's an absolute URL
+                            if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
+                              const proxyUrl = aiApi.proxyImage(logoPreview);
+                              if (e.currentTarget.src !== proxyUrl) {
+                                e.currentTarget.src = proxyUrl;
+                                return;
+                              }
+                            }
+                            // If proxy also fails, clear the logo
+                            setLogoPreview(null);
+                          }}
+                        />
                       </div>
                     ) : null}
                     <label htmlFor="upload-logo-analyze" className="text-xs font-medium text-primary hover:text-primary/80 cursor-pointer">
@@ -1348,6 +1364,8 @@ const ProjectDetailPage = () => {
     refetchInterval: 5000, // Live-updating dynamic data polling
   });
 
+  const displayCategory = project ? (project.category || project.industry || "General") : "General";
+
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
   const [deletePageId, setDeletePageId] = useState<string | null>(null);
@@ -1556,14 +1574,27 @@ const ProjectDetailPage = () => {
 
           <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
 
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{project.category}</span>
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{displayCategory}</span>
         </div>
         <div className="flex items-center gap-4 flex-shrink-0">
           {project.logoUrl && (
             <img
-              src={project.logoUrl}
+              src={normalizeLogoUrl(project.logoUrl)}
               alt="brand-logo"
               className="h-12 w-auto max-w-[150px] object-contain drop-shadow-sm transition-transform hover:scale-105"
+              onError={(e) => {
+                // Try proxy endpoint as fallback if it's an absolute URL
+                const currentSrc = (e.currentTarget.src || '');
+                if (currentSrc.startsWith('http') && !currentSrc.startsWith('data:') && !currentSrc.includes('/proxy-image')) {
+                  const proxyUrl = aiApi.proxyImage(project.logoUrl);
+                  if (currentSrc !== proxyUrl) {
+                    e.currentTarget.src = proxyUrl;
+                    return;
+                  }
+                }
+                // If all else fails, hide the image
+                e.currentTarget.style.display = 'none';
+              }}
             />
           )}
           <a

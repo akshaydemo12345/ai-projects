@@ -11,15 +11,13 @@
  * @package DomainMapper
  */
 
-defined('ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 
-class DomainMapper_Form_Interceptor
-{
+class DomainMapper_Form_Interceptor {
 
     private array $settings;
 
-    public function __construct(array $settings)
-    {
+    public function __construct( array $settings ) {
         $this->settings = $settings;
     }
 
@@ -31,31 +29,29 @@ class DomainMapper_Form_Interceptor
      * Returns a single clean external <script> tag.
      * The JS body is served at /dm-interceptor.js by class-proxy.php.
      */
-    public function get_script(): string
-    {
-        $source = $this->strip_scheme($this->settings['source_domain'] ?? '');
-        if (empty($source)) {
+    public function get_script(): string {
+        $source = $this->strip_scheme( $this->settings['source_domain'] ?? '' );
+        if ( empty( $source ) ) {
             return '';
         }
-        return '<script src="https://' . esc_attr($source) . '/dm-interceptor.js" defer></script>';
+        return '<script src="http://' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
     }
 
     /**
      * Returns the raw JS interceptor body (no surrounding <script> tags).
      * Called by class-proxy.php to serve /dm-interceptor.js.
      */
-    public function get_js_body(): string
-    {
-        $source = $this->strip_scheme($this->settings['source_domain'] ?? '');
-        $target = $this->strip_scheme($this->settings['target_domain'] ?? '');
-        $bare = (string) preg_replace('/^www\./i', '', $target);
-        $relay_prefix = 'https://' . $source . '/dm-relay/';
-        $relay_domains = $this->get_relay_domains($bare);
+    public function get_js_body(): string {
+        $source       = $this->strip_scheme( $this->settings['source_domain'] ?? '' );
+        $target       = $this->strip_scheme( $this->settings['target_domain'] ?? '' );
+        $bare         = (string) preg_replace( '/^www\./i', '', $target );
+        $relay_prefix = 'http://' . $source . '/dm-relay/';
+        $relay_domains = $this->get_relay_domains( $bare );
 
-        $rp = addslashes($relay_prefix);
-        $rds = wp_json_encode($relay_domains);
-        $sh = addslashes($source);
-        $th = addslashes($target);
+        $rp  = addslashes( $relay_prefix );
+        $rds = wp_json_encode( $relay_domains );
+        $sh  = addslashes( $source );
+        $th  = addslashes( $target );
 
         return <<<JS
 (function() {
@@ -65,76 +61,6 @@ class DomainMapper_Form_Interceptor
     var TARGET_HOST   = '{$th}';
     var RELAY_PREFIX  = '{$rp}';
     var RELAY_DOMAINS = {$rds};
-
-    // ── UTM Persistence: Capture on page load ─────────────────────────────
-    function captureUTMs() {
-        var q = new URLSearchParams(window.location.search);
-        // Also try parent frame (if embedded in iframe)
-        try {
-            if (window.top !== window && window.top.location.search) {
-                var pq = new URLSearchParams(window.top.location.search);
-                pq.forEach(function(v, k) { if (!q.has(k)) q.append(k, v); });
-            }
-        } catch(e) {}
-        // Also parse hash params (some redirectors put UTMs there)
-        if (window.location.hash && window.location.hash.indexOf('?') !== -1) {
-            var hq = new URLSearchParams(window.location.hash.split('?')[1]);
-            hq.forEach(function(v, k) { if (!q.has(k)) q.append(k, v); });
-        }
-        var keys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid'];
-        var hasUtm = false;
-        for (var i = 0; i < keys.length; i++) {
-            if (q.get(keys[i])) { hasUtm = true; break; }
-        }
-        keys.forEach(function(k) {
-            try {
-                if (hasUtm) {
-                    var v = q.get(k);
-                    if (v) {
-                        sessionStorage.setItem('dm_' + k, v);
-                        localStorage.setItem('dm_' + k, v);
-                    } else {
-                        sessionStorage.removeItem('dm_' + k);
-                        localStorage.removeItem('dm_' + k);
-                    }
-                } else {
-                    sessionStorage.removeItem('dm_' + k);
-                    localStorage.removeItem('dm_' + k);
-                }
-            } catch(e) {}
-        });
-        // Persist referrer on first load
-        if (document.referrer) {
-            try {
-                if (!sessionStorage.getItem('dm_referrer')) {
-                    sessionStorage.setItem('dm_referrer', document.referrer);
-                }
-            } catch(e) {}
-            try {
-                if (!localStorage.getItem('dm_referrer')) {
-                    localStorage.setItem('dm_referrer', document.referrer);
-                }
-            } catch(e) {}
-        }
-    }
-    captureUTMs();
-
-    function getUTM(k) {
-        var v = null;
-        try { v = sessionStorage.getItem('dm_' + k) || localStorage.getItem('dm_' + k); } catch(e) {}
-        if (!v) {
-            var q = new URLSearchParams(window.location.search);
-            v = q.get(k);
-        }
-        return v || '';
-    }
-
-    function getReferrer() {
-        var ref = '';
-        try { ref = sessionStorage.getItem('dm_referrer') || localStorage.getItem('dm_referrer') || ''; } catch(e) {}
-        if (!ref) ref = document.referrer || '';
-        return ref;
-    }
 
     function rewriteUrl(url) {
         if (!url || typeof url !== 'string') return url;
@@ -269,34 +195,19 @@ class DomainMapper_Form_Interceptor
             var result = await response.json();
             console.log("📥 API Response:", result);
 
-            if (result.status === 'success') {
+            if (result.status === 'success' || result.status === 'error') {
                 form.reset();
+                var currentPath = window.location.pathname;
                 
                 // Smart Redirection: Use backend's suggested redirect if available
                 if (result.redirect) {
                     window.location.href = result.redirect;
                 } else {
-                    // FIX: Use query parameter instead of path suffix to avoid conflicts 
-                    // with the host website's own /thank-you page.
-                    var u = new URL(window.location.href);
-                    u.searchParams.set('status', 'thank-you');
-                    window.location.href = u.toString();
+                    var thankYouPath = currentPath.endsWith('/') ? currentPath + 'thank-you' : currentPath + '/thank-you';
+                    window.location.href = thankYouPath;
                 }
             } else {
-                // FIX: On error/fail, re-enable the button and show an inline
-                // error message. Previously this triggered a redirect to thank-you,
-                // which was confusing — user saw "thank you" even when submission failed.
-                if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
-                var errMsg = result.message || 'Submission failed. Please try again.';
-                var errEl = form.querySelector('.dm-form-error') || (function() {
-                    var d = document.createElement('p');
-                    d.className = 'dm-form-error';
-                    d.style.cssText = 'color:red;margin-top:8px;font-size:14px;font-weight:500;';
-                    form.appendChild(d);
-                    return d;
-                })();
-                errEl.textContent = errMsg;
-                throw new Error(errMsg);
+                throw new Error(result.message || 'Server error');
             }
         } catch (err) {
             console.error("❌ Lead Submission Error:", err);
@@ -314,15 +225,8 @@ class DomainMapper_Form_Interceptor
             form.method = 'POST';
             form.action = rewriteUrl(form.action);
 
-            // FIX: Previously only intercepted forms with email or name inputs.
-            // This silently skipped travel/booking/service forms (date, phone,
-            // destination, etc.) — leads were never captured.
-            // Now intercept ALL forms that have at least one user-fillable input.
-            var hasInputs = form.querySelector(
-                'input:not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="button"]), select, textarea'
-            );
-
-            if (hasInputs) {
+            // Intercept if it looks like a lead form (has email or name)
+            if (form.querySelector('input[type="email"]') || form.querySelector('input[name*="name"]')) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 
@@ -347,42 +251,14 @@ class DomainMapper_Form_Interceptor
                     pageId: pageId,
                     projectId: projectId,
                     pageSlug: resolvedSlug,
-                    // FIX: Include url + domain so backend can resolve the correct
-                    // page even when pageId/projectId meta tags are not injected.
-                    url: window.location.href,
-                    domain: window.location.hostname,
-                    referrer: getReferrer(),
-                    timestamp: new Date().getTime(),
-                    trackingDetails: {
-                        referral_url: window.location.href,
-                        referral_source: getReferrer() || 'Direct'
-                    }
+                    timestamp: new Date().getTime()
                 };
 
-                // Capture every named field individually (handles checkboxes, radios, selects)
-                form.querySelectorAll('input, select, textarea').forEach(function(el) {
-                    if (!el.name) return;
-                    var val = el.value ? String(el.value).trim() : '';
-                    if (el.type === 'checkbox' || el.type === 'radio') {
-                        if (el.checked) data[el.name] = val;
-                    } else if (val !== '') {
-                        data[el.name] = val;
-                    }
-                });
-
-                // Also include FormData as a safety net for complex inputs
+                // Capture ALL fields dynamically
                 fd.forEach(function(v, k) {
-                    if (k && v && String(v).trim() !== '' && !data[k]) data[k] = v;
+                    if (k && v && String(v).trim() !== "") data[k] = v;
                 });
 
-                // UTM capture from URL query string (persisted via sessionStorage)
-                var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid'];
-                utmKeys.forEach(function(k) {
-                    var val = getUTM(k);
-                    if (val) data[k] = val;
-                });
-
-                console.log('📡 [DM-Interceptor] Final Lead Data:', data);
                 submitLead(data, form, btn, originalText);
             }
         }
@@ -418,31 +294,29 @@ JS;
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function get_relay_domains(string $bare_domain): array
-    {
+    private function get_relay_domains( string $bare_domain ): array {
         $domains = [];
-        foreach (['dashboard', 'cdn', 'static', 'assets', 'api', 'app', 'media', 'img'] as $sub) {
+        foreach ( [ 'dashboard', 'cdn', 'static', 'assets', 'api', 'app', 'media', 'img' ] as $sub ) {
             $domains[] = $sub . '.' . $bare_domain;
         }
         $extra = $this->settings['extra_relay_domains'] ?? '';
-        if (!empty($extra)) {
-            foreach (preg_split('/[\r\n,]+/', $extra) as $line) {
-                $line = trim((string) preg_replace('#^https?://#i', '', $line));
-                if ($line !== '' && !in_array($line, $domains, true)) {
+        if ( ! empty( $extra ) ) {
+            foreach ( preg_split( '/[\r\n,]+/', $extra ) as $line ) {
+                $line = trim( (string) preg_replace( '#^https?://#i', '', $line ) );
+                if ( $line !== '' && ! in_array( $line, $domains, true ) ) {
                     $domains[] = $line;
                 }
             }
         }
-        foreach (['kxcdn.com', 'cloudfront.net', 'agencyplatform.com', 'edeveloperz.com', 'crazyegg.com'] as $d) {
-            if (!in_array($d, $domains, true)) {
+        foreach ( [ 'kxcdn.com', 'cloudfront.net', 'agencyplatform.com', 'edeveloperz.com', 'crazyegg.com' ] as $d ) {
+            if ( ! in_array( $d, $domains, true ) ) {
                 $domains[] = $d;
             }
         }
-        return array_values(array_unique(array_filter($domains)));
+        return array_values( array_unique( array_filter( $domains ) ) );
     }
 
-    private function strip_scheme(string $url): string
-    {
-        return (string) preg_replace('#^https?://#i', '', rtrim($url, '/'));
+    private function strip_scheme( string $url ): string {
+        return (string) preg_replace( '#^https?://#i', '', rtrim( $url, '/' ) );
     }
 }

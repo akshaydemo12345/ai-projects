@@ -16,11 +16,10 @@ const SettingsPage = () => {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Password Form States & Visibility Toggles
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -83,10 +82,6 @@ const SettingsPage = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword) {
-      toast.error("Please enter your current password.");
-      return;
-    }
     if (newPassword.length < 8) {
       toast.error("New password must be at least 8 characters long.");
       return;
@@ -98,9 +93,8 @@ const SettingsPage = () => {
 
     setIsChangingPassword(true);
     try {
-      await userApi.changePassword({ currentPassword, newPassword });
+      await userApi.changePassword({ newPassword });
       toast.success("Password changed successfully!");
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
@@ -254,31 +248,7 @@ const SettingsPage = () => {
           </div>
 
           <div className="space-y-4 max-w-2xl">
-            {/* Current Password */}
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-1">Current Password</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                  <Lock className="h-4 w-4" />
-                </span>
-                <Input
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 pr-12 h-10 text-sm"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
-                  aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
+
 
             {/* Password input grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

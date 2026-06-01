@@ -45,6 +45,36 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Ensures a URL starts with a protocol (http/https).
  */
+export const normalizeLogoUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+
+  let normalized = url.trim();
+  if (!normalized) return undefined;
+
+  // Protocol-relative URLs
+  if (normalized.startsWith('//')) {
+    normalized = `https:${normalized}`;
+  }
+
+  // Already a valid data URI
+  if (/^data:image\/[a-zA-Z]+;base64,/.test(normalized)) {
+    return normalized;
+  }
+
+  // Already an absolute URL
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+
+  // Raw base64 string without prefix
+  if (/^[A-Za-z0-9+/=\s]+$/.test(normalized) && normalized.length > 100) {
+    return `data:image/png;base64,${normalized.replace(/\s+/g, '')}`;
+  }
+
+  // Relative path or fallback string - leave it as-is for the browser to resolve
+  return normalized;
+};
+
 export const cleanUrl = (url?: string) => {
   if (!url) return "#";
   // If URL already has protocol, return as-is

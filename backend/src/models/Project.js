@@ -140,6 +140,14 @@ const projectSchema = new mongoose.Schema({
   },
 });
 
+// Expose industry as category for frontend compatibility
+projectSchema.virtual('category').get(function() {
+  return this.industry;
+});
+
+projectSchema.set('toObject', { virtuals: true });
+projectSchema.set('toJSON', { virtuals: true });
+
 // Middleware to update updatedAt and generate apiToken
 projectSchema.pre('save', function (next) {
   this.updatedAt = Date.now();

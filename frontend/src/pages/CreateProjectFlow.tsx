@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { projectsApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { copyToClipboard } from "@/lib/utils";
+import { copyToClipboard, normalizeLogoUrl } from "@/lib/utils";
 
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script";
@@ -185,8 +185,11 @@ const CreateProjectFlow = () => {
         setDescription(meta.projectDesc || '');
       }
       if (meta.projectLogo) {
-        setLogoPreview(meta.projectLogo);
-        setLogoBase64(meta.projectLogo);
+        const normalizedLogo = normalizeLogoUrl(meta.projectLogo);
+        if (normalizedLogo) {
+          setLogoPreview(normalizedLogo);
+          setLogoBase64(normalizedLogo);
+        }
       }
       if (meta.theme) {
         setThemeColor(meta.theme);
@@ -212,25 +215,40 @@ const CreateProjectFlow = () => {
       if (meta.scrapedData) {
         setScrapedData(meta.scrapedData);
       }
+
       let detectedCategory = category;
       if (meta.industry) {
         detectedCategory = meta.industry;
         setCategory(meta.industry);
-        // Add detected industry to available categories if not already present
         setAvailableCategories(prev => {
           if (!prev.includes(meta.industry)) {
             return [...prev, meta.industry];
           }
           return prev;
         });
+      } else if (meta.scrapedData?.industry) {
+        detectedCategory = meta.scrapedData.industry;
+        setCategory(meta.scrapedData.industry);
+        setAvailableCategories(prev => {
+          if (!prev.includes(meta.scrapedData.industry)) {
+            return [...prev, meta.scrapedData.industry];
+          }
+          return prev;
+        });
       }
-      if (meta.scrapedData?.subIndustry) {
-        setSubIndustry(meta.scrapedData.subIndustry);
-      } else if (meta.subIndustry) {
-        setSubIndustry(meta.subIndustry);
-      } else if (detectedCategory && detectedCategory !== "Other") {
-        setSubIndustry("Other");
+
+      const candidateSubIndustry = meta.scrapedData?.subIndustry || meta.subIndustry || '';
+      if (candidateSubIndustry) {
+        const validSubIndustries = subIndustryOptions[detectedCategory] || [];
+        if (validSubIndustries.includes(candidateSubIndustry)) {
+          setSubIndustry(candidateSubIndustry);
+          setCustomSubIndustry('');
+        } else {
+          setSubIndustry('Other');
+          setCustomSubIndustry(candidateSubIndustry);
+        }
       }
+
       if (meta.scrapedImages) {
         setScrapedImages(meta.scrapedImages);
       }
@@ -551,7 +569,24 @@ const CreateProjectFlow = () => {
                 {logoPreview ? (
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
                     <div className="h-14 w-14 rounded-xl border border-border bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-contain"
+                        onError={(e) => {
+                          // Try proxy endpoint as fallback if it's an absolute URL
+                          if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
+                            const proxyUrl = aiApi.proxyImage(logoPreview);
+                            if (e.currentTarget.src !== proxyUrl) {
+                              e.currentTarget.src = proxyUrl;
+                              return;
+                            }
+                          }
+                          // If proxy also fails, clear the logo
+                          setLogoPreview(null);
+                          setLogoBase64(null);
+                        }}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">Logo uploaded</p>

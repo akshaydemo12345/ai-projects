@@ -115,13 +115,20 @@ exports.createLead = async (req, res) => {
     // - pageurl: full current page URL sent by frontend (includes slug + UTM params)
     // - referrer: the previous page / true referring domain (document.referrer from browser)
     const trackingDetails = rawData.trackingDetails || {};
+    const pageName = pageSlug || (page ? page.slug : '');
+    const fallbackPageUrl = rawData.domain
+      ? `https://${String(rawData.domain).replace(/\/+$|\s+/g, '').replace(/\/+$/,'')}/${String(pageName).replace(/^\/+/, '')}`
+      : page && req.get('host')
+        ? `${req.protocol}://${req.get('host')}/${String(pageName).replace(/^\/+/, '')}`
+        : '';
     const referralUrl = trackingDetails.referral_url
       || rawData.pageurl || rawData.pageUrl   // full URL with slug — sent by form script
       || rawData.url                           // fallback bare URL
+      || fallbackPageUrl
       || req.headers.referer || '';
-    const referralSource = trackingDetails.referral_source || rawData.referrer || rawData.referer || 'Direct';
+    const referralSource = rawData.referer || rawData.referrer || trackingDetails.referral_source || 'Direct';
     // referrer = the TRUE referring site (document.referrer — where they came FROM, not where the form IS)
-    const referrer = rawData.referer || rawData.referrer || req.headers.referer || '';
+    const referrer = rawData.referer || rawData.referrer || req.headers.referer || referralUrl || fallbackPageUrl || '';
     const formData = rawData.formData || rawData.formDetails || undefined;
 
     // 5. UTM strictly from URL / current payload (no localStorage)
@@ -186,7 +193,6 @@ exports.createLead = async (req, res) => {
     }
 
     const submitted_at = new Date();
-
     // 7. Create Lead in MongoDB
     const lead = await Lead.create({
       projectId: finalProjectId || (schema ? schema.project_id : undefined),
@@ -208,7 +214,7 @@ exports.createLead = async (req, res) => {
       formData: finalFormData,
       trackingDetails: {
         referral_url: referralUrl,
-        referral_source: referralSource
+        referral_source: document.referrer || 'Direct',
       },
       meta: {
         ip: ip_address,

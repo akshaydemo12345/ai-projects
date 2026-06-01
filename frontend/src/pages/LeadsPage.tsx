@@ -1003,6 +1003,7 @@ const LeadsPage = () => {
                       <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
 
                       {selectedLead.trackingDetails?.referral_url ||
+                        (selectedLead as any).landing_page ||
                         selectedLead.url ||
                         selectedLead.meta?.url ||
                         selectedLead.pageSlug ||
@@ -1020,6 +1021,8 @@ const LeadsPage = () => {
                       <ExternalLink className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
 
                       {selectedLead.trackingDetails?.referral_source ||
+                        (selectedLead as any).referrer ||
+                        selectedLead.meta?.referer ||
                         selectedLead.data?.referrer ||
                         "Direct / Unknown"}
                     </p>
