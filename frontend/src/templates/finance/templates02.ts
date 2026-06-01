@@ -274,7 +274,7 @@ export const finance02Html = `
           <p style="color: var(--slate); font-size: 0.9rem;">Wall Street, New York, NY 10005</p>
         </div>
       </div>
-      <form class="contact-form">
+      <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
         <div class="form-group">
           <label>First Name</label>
           <input type="text" name="first_name" placeholder="John">

@@ -161,12 +161,18 @@ input, select, textarea { font-family: inherit; }
 .p3-hero {
   position: relative; overflow: hidden;
   padding: 120px 0 160px;
-  background-image: url('https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1920&q=80');
-  background-size: cover;
-  background-position: center;
+  background-color: #000;
+}
+.p3-hero-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
 }
 .p3-hero::before {
-  content: ''; position: absolute; inset: 0;
+  content: ''; position: absolute; inset: 0; z-index: 1;
   background: rgba(0,0,0,0.65); z-index: 1;
 }
 .p3-hero-grid-bg {
@@ -447,8 +453,9 @@ export const healthcare03Html = `
 
 <!-- ═══ SECTION 1: HERO ═══ -->
 <section class="p3-hero">
+  <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1920&q=80" class="p3-hero-bg-img" alt="Medical Hero Background" />
   <div class="p3-hero-grid-bg"></div>
-  <div class="p3-container">
+  <div class="p3-container" style="position: relative; z-index: 2;">
     <div class="p3-hero-inner-centered">
       
       <span class="p3-pill"><span class="material-symbols-outlined" style="font-size:12px; color: #22C55E;">bolt</span>Advanced Medical Technology</span>
@@ -468,7 +475,7 @@ export const healthcare03Html = `
       </div>
       
       <div class="p3-hero-form-wrap" style="width: 100%;">
-        <form class="p3-hero-form">
+        <form class="p3-hero-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
           <input type="text" placeholder="Full Name" required />
           <input type="email" placeholder="Email Address" required />
           <input type="tel" placeholder="Phone" required />

@@ -566,11 +566,20 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     margin: 0; 
     overflow-x: hidden;
   }
-  /* Guarantee form input visibility overrides */
-  input, textarea, select {
+  /* Guarantee form input visibility overrides — scoped to avoid conflicting with styled template inputs */
+  input:not(.lead-field-inner input), textarea:not(.lead-field-inner textarea), select:not(.lead-field-inner select) {
     color: #0f172a !important;
     background-color: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
+  }
+  .lead-field-inner input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
   }
   input::placeholder, textarea::placeholder {
     color: #94a3b8 !important;
