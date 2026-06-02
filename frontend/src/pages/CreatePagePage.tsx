@@ -6,6 +6,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
+import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
@@ -471,7 +472,13 @@ const CreatePagePage = () => {
   const [secondaryColor, setSecondaryColor] = useState("#6366f1");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    const brightness = await getImageAverageBrightness(img.src);
+    setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
+  };
 
   const scrollbarStyles = `
     .custom-scrollbar::-webkit-scrollbar {
@@ -1025,7 +1032,13 @@ ${enrichedContent}
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold">Logo</p>
                   <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
                   <label htmlFor="logo-upload" className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all">
-                    {logoPreview ? <img src={logoPreview} alt="Logo" className="h-5 w-5 object-contain rounded" /> : <Upload className="h-4 w-4 text-gray-400" />}
+                    {logoPreview ? (
+                      <span className={`h-5 w-5 rounded-lg flex items-center justify-center overflow-hidden shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
+                        <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)} />
+                      </span>
+                    ) : (
+                      <Upload className="h-4 w-4 text-gray-400" />
+                    )}
                     <span className="text-xs text-gray-500">{logoPreview ? "Change" : "Upload"}</span>
                   </label>
                 </div>

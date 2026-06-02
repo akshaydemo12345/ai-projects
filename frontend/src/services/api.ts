@@ -53,6 +53,63 @@ export interface Project {
   };
 }
 
+export interface Branding {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    surface: string;
+    text: string;
+    textLight: string;
+    border: string;
+  };
+  buttons: {
+    primary: {
+      backgroundColor: string;
+      textColor: string;
+      borderRadius: string;
+      padding: string;
+      fontSize: string;
+      fontWeight: string;
+      borderColor: string;
+    };
+    secondary: {
+      backgroundColor: string;
+      textColor: string;
+      borderRadius: string;
+      padding: string;
+      fontSize: string;
+      fontWeight: string;
+      borderColor: string;
+    };
+  };
+  navigation: {
+    backgroundColor: string;
+    textColor: string;
+    linkColor: string;
+    activeLinkColor: string;
+    hoverBackgroundColor: string;
+    bordercolor: string;
+    height: string;
+    fontSize: string;
+    padding: string;
+    logoMaxHeight: string;
+  };
+  footer: {
+    backgroundColor: string;
+    textColor: string;
+    linkColor: string;
+    borderTopColor: string;
+    padding: string;
+    fontSize: string;
+  };
+  brandingSourceUrl?: string;
+  lastScrapedAt?: string;
+  scrapedBrandingData?: Record<string, any>;
+  extractedColors?: string[];
+}
+
 export interface LandingPage {
   _id: string;
   name: string;
@@ -362,6 +419,22 @@ export const projectsApi = {
   delete: async (id: string) => {
     return apiFetch(`/projects/${id}`, {
       method: 'DELETE',
+    });
+  },
+  getBranding: async (id: string) => {
+    const res = await apiFetch(`/projects/${id}/branding`);
+    return res.data.branding;
+  },
+  updateBranding: async (id: string, data: any) => {
+    return apiFetch(`/projects/${id}/branding`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  extractBrandingFromWebsite: async (id: string, data: any) => {
+    return apiFetch(`/projects/${id}/branding/extract-from-website`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 };

@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard, cleanUrl, normalizeLogoUrl } from "@/lib/utils";
+import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -241,6 +241,12 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [secondaryColor, setSecondaryColor] = useState(project.secondaryColor || "#6366f1");
   const [logoPreview, setLogoPreview] = useState<string | null>(project.logoUrl || null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logoUrl);
+  const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
+
+  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    const brightness = await getImageAverageBrightness(img.src);
+    setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
+  };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -582,11 +588,12 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div className="flex items-center gap-3">
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="upload-logo-analyze" />
                     {logoPreview ? (
-                      <div className="h-10 w-10 rounded border border-border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <div className={`h-10 w-10 rounded flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
                         <img 
                           src={logoPreview} 
                           alt="Logo" 
                           className="w-full h-full object-contain"
+                          onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
                           onError={(e) => {
                             // Try proxy endpoint as fallback if it's an absolute URL
                             if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {

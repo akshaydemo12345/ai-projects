@@ -88,3 +88,60 @@ export const cleanUrl = (url?: string) => {
   // Otherwise, add https://
   return `https://${url}`;
 };
+
+export const getImageAverageBrightness = async (src: string): Promise<number | null> => {
+  if (!src) return null;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+
+        // Composite transparent images over white so light/white logos are detected properly.
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let total = 0;
+        let count = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i] / 255;
+          const g = data[i + 1] / 255;
+          const b = data[i + 2] / 255;
+          const luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          total += luminosity;
+          count += 1;
+        }
+
+        resolve(count > 0 ? total / count : null);
+      } catch (error) {
+        resolve(null);
+      }
+    };
+
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+};
+
+export const getLogoPreviewContainerClasses = (brightness: number | null): string => {
+  if (brightness === null) {
+    return "border border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-700";
+  }
+
+  return brightness >= 0.65
+    ? "border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950"
+    : "border border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-700";
+};
