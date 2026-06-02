@@ -408,6 +408,16 @@ exports.getProfile = async (req, res, next) => {
       { $group: { _id: null, total: { $sum: '$leadCount' } } },
     ]);
 
+    let totalAiCost = 0;
+    let totalImagesGenerated = 0;
+    
+    pages.forEach(p => {
+      if (p.aiUsage) {
+        totalAiCost += p.aiUsage.cost || 0;
+        totalImagesGenerated += p.aiUsage.imageCount || 0;
+      }
+    });
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -419,6 +429,8 @@ exports.getProfile = async (req, res, next) => {
           creditsRemaining: req.user.credits,
           plan: req.user.plan,
           totalLeads: totalLeads[0]?.total || 0,
+          totalAiCost,
+          totalImagesGenerated
         },
         pages,
       },
