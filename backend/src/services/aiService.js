@@ -309,8 +309,22 @@ const buildUserPrompt = (input) => {
     `PRIMARY COLOR: ${input.primaryColor || '#7c3aed'}`,
     `SECONDARY COLOR: ${input.secondaryColor || '#6366f1'}`,
     `LOGO: {{LOGO_URL}}`,
-    `\n🎨 STYLE DIRECTION FOR THIS GENERATION: ${randomNudge}`,
   ];
+
+  if (input.navColors?.palette?.length) {
+    lines.push(`NAV COLORS: ${input.navColors.palette.slice(0, 6).join(', ')}`);
+  }
+  if (input.headerColors?.palette?.length) {
+    lines.push(`HEADER COLORS: ${input.headerColors.palette.slice(0, 6).join(', ')}`);
+  }
+  if (input.footerColors?.palette?.length) {
+    lines.push(`FOOTER COLORS: ${input.footerColors.palette.slice(0, 6).join(', ')}`);
+  }
+  if (input.buttonColors?.palette?.length) {
+    lines.push(`BUTTON COLORS: ${input.buttonColors.palette.slice(0, 6).join(', ')}`);
+  }
+
+  lines.push(`\n🎨 STYLE DIRECTION FOR THIS GENERATION: ${randomNudge}`);
 
   if (input.businessDescription) lines.push(`\nABOUT THE BUSINESS:\n${input.businessDescription}`);
   if (input.targetAudience) lines.push(`\nTARGET AUDIENCE: ${input.targetAudience}`);

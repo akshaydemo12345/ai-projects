@@ -454,17 +454,42 @@
       // Add metadata
       const referrer = previousReferrer || document.referrer || '';
       const referralSource = referrer || 'Direct';
-      const referralUrl = window.location.href;
+      const currentUrl = window.location.href;
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      const currentHash = window.location.hash;
+
+      let referrerHostname = '';
+      let referrerPath = '';
+      try {
+        const parsedReferrer = referrer ? new URL(referrer) : null;
+        if (parsedReferrer) {
+          referrerHostname = parsedReferrer.hostname;
+          referrerPath = `${parsedReferrer.pathname}${parsedReferrer.search}${parsedReferrer.hash}`;
+        }
+      } catch (e) {
+        referrerHostname = '';
+        referrerPath = '';
+      }
 
       data.domain = window.location.hostname;
-      data.url = referralUrl;
-      data.path = window.location.pathname;
+      data.url = currentUrl;
+      data.path = currentPath;
+      data.hash = currentHash;
       data.pageSlug = slug;
       data.pageId = pageId;
       data.projectId = projectId;
+      data.pageurl = currentUrl;
       data.trackingDetails = {
-        referral_url: referralUrl,
-        referral_source: document.referrer || 'Direct'
+        referral_url: referrer || 'Direct',
+        referral_source: referralSource,
+        current_page_url: currentUrl,
+        current_page_path: currentPath,
+        current_page_search: currentSearch,
+        current_page_hash: currentHash,
+        referrer_domain: referrerHostname,
+        referrer_path: referrerPath,
+        utm: getUTMParameters()
       };
       data.referer = referrer;
       Object.assign(data, getUTMParameters());
