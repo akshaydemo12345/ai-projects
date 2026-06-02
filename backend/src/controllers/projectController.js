@@ -10,8 +10,8 @@ exports.createProject = async (req, res, next) => {
 
     // Generate unique API Token if not provided
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
-
-    const project = await Project.create({
+    // Build initial project payload
+    const projectPayload = {
       name,
       description,
       userId: req.user._id,
@@ -27,7 +27,30 @@ exports.createProject = async (req, res, next) => {
       websiteUrl: req.body.websiteUrl || req.body.url,
       preSlug: req.body.preSlug,
       scrapedData: req.body.scrapedData || {},
-    });
+    };
+
+    // If a website URL is provided and no explicit branding supplied, attempt to auto-extract branding
+    try {
+      const websiteToInspect = projectPayload.websiteUrl;
+      const userProvidedBranding = req.body.branding;
+      if (websiteToInspect && !userProvidedBranding) {
+        const { fetchAndExtractBranding } = require('../services/brandingService');
+        const result = await fetchAndExtractBranding(websiteToInspect);
+        if (result && result.success) {
+          projectPayload.branding = result.data;
+          projectPayload.branding = projectPayload.branding || {};
+          projectPayload.branding.brandingSourceUrl = websiteToInspect;
+          projectPayload.branding.lastScrapedAt = new Date();
+          projectPayload.scrapedData = projectPayload.scrapedData || {};
+          projectPayload.scrapedData.branding = result.data.extractedColors || result.data.extractedColors || [];
+        }
+      }
+    } catch (err) {
+      // Non-fatal: log and continue creating project with defaults
+      console.error('Branding extraction during project create failed:', err.message);
+    }
+
+    const project = await Project.create(projectPayload);
 
     res.status(201).json({
       status: 'success',
@@ -213,6 +236,123 @@ exports.deleteProject = async (req, res, next) => {
       status: 'success',
       message: 'Project deleted successfully',
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET PROJECT BRANDING
+exports.getBranding = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
+    const project = await Project.findOne({
+      _id: id,
+      userId: req.user._id,
+    }).select('branding');
+
+    if (!project) {
+      return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: { branding: project.branding },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// UPDATE PROJECT BRANDING
+exports.updateBranding = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { branding } = req.body;
+
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
+    if (!branding) {
+      return res.status(400).json({ status: 'fail', message: 'Branding configuration is required' });
+    }
+
+    const project = await Project.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      { branding, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    );
+
+    if (!project) {
+      return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Branding updated successfully',
+      data: { branding: project.branding },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// FETCH AND EXTRACT BRANDING FROM WEBSITE
+exports.extractBrandingFromWebsite = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { websiteUrl } = req.body;
+
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
+    if (!websiteUrl) {
+      return res.status(400).json({ status: 'fail', message: 'Website URL is required' });
+    }
+
+    const project = await Project.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!project) {
+      return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    // Use the branding service to extract colors
+    const { fetchAndExtractBranding } = require('../services/brandingService');
+    const result = await fetchAndExtractBranding(websiteUrl);
+
+    if (result.success) {
+      // Update project with extracted branding
+      project.branding = result.data;
+      project.branding.brandingSourceUrl = websiteUrl;
+      project.branding.lastScrapedAt = new Date();
+      project.branding.scrapedBrandingData = {
+        sourceUrl: websiteUrl,
+        scrapedAt: new Date(),
+        extractedColors: result.data.extractedColors,
+      };
+
+      await project.save({ validateBeforeSave: false });
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Branding extracted successfully from website',
+        data: { branding: project.branding },
+      });
+    } else {
+      res.status(400).json({
+        status: 'fail',
+        message: result.message,
+        data: { branding: result.data },
+      });
+    }
   } catch (err) {
     next(err);
   }

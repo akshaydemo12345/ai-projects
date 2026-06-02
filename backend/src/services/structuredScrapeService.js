@@ -2,6 +2,7 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { extractFormFields: extractFormFieldsFromHtml } = require('../utils/formExtractor');
 const logger = require('../utils/logger');
 
 /**
@@ -23,7 +24,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const images = extractImages($, baseUrl);
     const videos = extractVideos($, baseUrl);
     const textContent = extractTextContent($);
-    const formFields = extractFormFields($);
+    const formFields = extractFormFieldsFromHtml(html);
 
     // STEP 3: DETECT STRUCTURE
     const structuredContent = detectStructure($, images, textContent);
@@ -32,7 +33,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const cleanedContent = cleanAndOptimize(structuredContent, images, videos);
 
     // STEP 5: META INFORMATION
-    const meta = extractMeta($);
+    const meta = extractMeta($, baseUrl);
 
     // OUTPUT FORMAT
     return {
@@ -574,14 +575,33 @@ const cleanText = (text, seenStrings) => {
 /**
  * Extract meta information
  */
-const extractMeta = ($) => {
+const extractMeta = ($, baseUrl) => {
   const title = $('title').text().trim() || $('meta[property="og:title"]').attr('content') || '';
   const description = $('meta[name="description"]').attr('content') ||
     $('meta[property="og:description"]').attr('content') || '';
 
+  let favicon = $('link[rel="icon"]').attr('href') ||
+    $('link[rel="shortcut icon"]').attr('href') ||
+    $('link[rel="apple-touch-icon"]').attr('href');
+  if (favicon && !favicon.startsWith('http')) {
+    try {
+      favicon = new URL(favicon, baseUrl).href;
+    } catch (e) {
+      favicon = favicon;
+    }
+  }
+  if (!favicon) {
+    try {
+      favicon = `${new URL(baseUrl).origin}/favicon.ico`;
+    } catch (e) {
+      favicon = '';
+    }
+  }
+
   return {
     title,
-    description
+    description,
+    favicon
   };
 };
 

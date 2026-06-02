@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { projectsApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { copyToClipboard, normalizeLogoUrl } from "@/lib/utils";
+import { copyToClipboard, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script";
@@ -61,7 +61,7 @@ const CreateProjectFlow = () => {
   const [name, setName] = useState("");
   const [preSlug, setPreSlug] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("https://");
-  const [category, setCategory] = useState("Agency");
+  const [category, setCategory] = useState("");
   const [availableCategories, setAvailableCategories] = useState(industries);
   const [subIndustry, setSubIndustry] = useState("");
   const [customIndustry, setCustomIndustry] = useState("");
@@ -78,7 +78,13 @@ const CreateProjectFlow = () => {
   const [scrapedData, setScrapedData] = useState<any>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [scrapedImages, setScrapedImages] = useState<any[]>([]);
+
+  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    const brightness = await getImageAverageBrightness(img.src);
+    setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
+  };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -427,6 +433,7 @@ const CreateProjectFlow = () => {
                   }}
                   className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
+                  <option value="">Select industry</option>
                   {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
@@ -568,11 +575,12 @@ const CreateProjectFlow = () => {
                 />
                 {logoPreview ? (
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
-                    <div className="h-14 w-14 rounded-xl border border-border bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                    <div className={`h-14 w-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg ring-1 ring-slate-600 p-1 ${logoPreviewBgClass}`}>
                       <img
                         src={logoPreview}
                         alt="Logo preview"
-                        className="h-full w-full object-contain"
+                        className="max-h-full max-w-full object-contain"
+                        onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
                         onError={(e) => {
                           // Try proxy endpoint as fallback if it's an absolute URL
                           if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {

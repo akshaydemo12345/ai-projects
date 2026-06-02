@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { normalizeDomain } = require('../utils/validation');
+const brandingService = require('../services/brandingService');
 
 const projectSchema = new mongoose.Schema({
   userId: {
@@ -138,6 +139,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  branding: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
 });
 
 // Expose industry as category for frontend compatibility
@@ -161,6 +166,15 @@ projectSchema.pre('save', function (next) {
     this.websiteUrl = normalizeDomain(this.websiteUrl);
   }
 
+  // Ensure there's a baseline branding object so frontend code has something to read
+  if (!this.branding || Object.keys(this.branding || {}).length === 0) {
+    try {
+      this.branding = brandingService.getDefaultBranding();
+    } catch (err) {
+      this.branding = {};
+    }
+  }
+
   next();
 });
 
@@ -168,6 +182,44 @@ projectSchema.pre('save', function (next) {
 projectSchema.pre(/^find/, function (next) {
   this.find({ isDeleted: { $ne: true } });
   next();
+});
+
+/**
+ * Static: fetch branding from website and persist to project
+ */
+projectSchema.statics.updateBrandingFromUrl = async function(projectId) {
+  const ProjectModel = this;
+  const project = await ProjectModel.findById(projectId);
+  if (!project || !project.websiteUrl) return null;
+
+  try {
+    const res = await brandingService.fetchAndExtractBranding(project.websiteUrl);
+    if (res && res.success && res.data) {
+      project.branding = res.data;
+      project.branding.brandingSourceUrl = project.websiteUrl;
+      project.branding.lastScrapedAt = new Date();
+      project.markModified('branding');
+      await project.save();
+    }
+    return project;
+  } catch (err) {
+    console.error('Error updating branding for project', projectId, err && err.message);
+    return project;
+  }
+};
+
+// After save, trigger background extraction if websiteUrl present and branding empty/default
+projectSchema.post('save', function(doc) {
+  try {
+    const hasBranding = doc.branding && Object.keys(doc.branding || {}).length > 0;
+    if (doc.websiteUrl && !hasBranding) {
+      setImmediate(() => {
+        try { doc.constructor.updateBrandingFromUrl(doc._id).catch(() => {}); } catch(e) {}
+      });
+    }
+  } catch (e) {
+    // noop
+  }
 });
 
 const Project = mongoose.model('Project', projectSchema);
