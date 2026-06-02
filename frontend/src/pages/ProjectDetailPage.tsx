@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
+import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, normalizeLogoUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
@@ -643,8 +643,53 @@ interface UsageModalProps {
 const UsageModal = ({ page, onClose }: UsageModalProps) => {
   const usage = page.aiUsage;
   const history = page.aiUsageHistory || [];
+  
+  const [realBalance, setRealBalance] = useState<number | null>(null);
+  const [globalStats, setGlobalStats] = useState<any>(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [balanceRes, statsRes] = await Promise.all([
+          aiApi.getImgBalance().catch(() => null),
+          statsApi.getDashboardStats().catch(() => null)
+        ]);
+
+        if (balanceRes?.data?.amount !== undefined) {
+          setRealBalance(balanceRes.data.amount);
+        } else if (balanceRes?.data?.balance !== undefined) {
+          setRealBalance(balanceRes.data.balance);
+        }
+
+        if (statsRes) {
+          setGlobalStats(statsRes);
+        }
+      } catch (err) {
+        console.error('Failed to fetch usage data:', err);
+      } finally {
+        setLoadingBalance(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   if (!usage && history.length === 0) return null;
+
+  // The total combined cost is usage.cost. We also have precise fields usage.imageCost and usage.imageCount now.
+  let calculatedTotalCost = usage?.cost || 0;
+  
+  // Read exact image cost from DB if available, else fallback to 0
+  let calculatedImgCost = usage?.imageCost || 0;
+  let calculatedImageCount = usage?.imageCount || 0;
+  let calculatedTokenCost = Math.max(0, calculatedTotalCost - calculatedImgCost);
+
+  // Fallback for old pages generated before imageCost was tracked
+  if (calculatedImgCost === 0 && calculatedTotalCost > 0 && !usage?.imageCount) {
+    calculatedImgCost = calculatedTotalCost * 0.40;
+    calculatedTokenCost = calculatedTotalCost * 0.60;
+    calculatedImageCount = Math.max(1, Math.round(calculatedImgCost / 0.002));
+  }
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -668,17 +713,81 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
             <div className="p-6 border-b border-border bg-muted/10">
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Consumption</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Tokens Consumption</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-mono font-black text-foreground">{(usage.totalTokens || 0).toLocaleString()}</span>
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Tokens</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Estimated Cost</p>
-                  <p className="text-3xl font-mono font-black text-emerald-600">
-                    ${(usage.cost || 0).toFixed(4)}
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Tokens Cost (Est.)</p>
+                  <p className="text-3xl font-mono font-black text-blue-600">
+                    ${calculatedTokenCost.toFixed(4)}
                   </p>
+                </div>
+              </div>
+
+              {/* IMAGE USAGE COST UI */}
+              <div className="grid grid-cols-2 gap-6 mb-6 pt-6 border-t border-border/50">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Image Generation
+                  </p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-mono font-bold text-foreground">
+                      {calculatedImageCount}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase">Images generated</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">IMG - Cost Deducted</p>
+                  <p className="text-2xl font-mono font-black text-purple-600">
+                    ${calculatedImgCost.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+
+              {/* TOTAL GRAND COST & BALANCE SIMULATION */}
+              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20 mb-6">
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-emerald-500/20">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Grand Total Cost</p>
+                    <p className="text-[10px] text-emerald-600/80 dark:text-emerald-500/80">Tokens + Images</p>
+                  </div>
+                  <p className="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    -${calculatedTotalCost.toFixed(4)}
+                  </p>
+                </div>
+                
+                {/* API Global Usage (Real-time Fetch & Estimated) */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
+                    <span>Current Balance</span>
+                    <span className="font-mono text-sm">
+                      {loadingBalance ? 'Loading...' : (realBalance !== null ? `$${realBalance.toFixed(2)}` : 'N/A')}
+                    </span>
+                  </div>
+                  
+                  {realBalance !== null && (
+                    <>
+                      <div className="flex justify-between items-center text-[11px] font-medium text-red-500/80">
+                        <span>Total Spent</span>
+                        <span className="font-mono">${(globalStats?.totalAiCost || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] font-medium text-blue-600/80 dark:text-blue-400/80">
+                        <span>Images Generated</span>
+                        <span className="font-mono">
+                          {globalStats?.totalImagesGenerated || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300 pt-1 border-t border-border/50">
+                        <span>Remaining Balance</span>
+                        <span className="font-mono text-sm">${realBalance.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

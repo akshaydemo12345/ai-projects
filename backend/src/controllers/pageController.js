@@ -503,6 +503,7 @@ exports.createPage = async (req, res, next) => {
     }
 
     // 8.1 Replace Unsplash/Picsum/Freepik/Placeholder images with getimg.ai API generated images
+    let generatedImageCount = 0;
     try {
       const ImageGenerationService = require('../services/imageGenerationService');
 
@@ -513,37 +514,45 @@ exports.createPage = async (req, res, next) => {
 
       // 1. Process page.content if it is a string (AI generation HTML)
       if (typeof page.content === 'string') {
-        page.content = await ImageGenerationService.replacePlaceholdersInHtml(
+        const result = await ImageGenerationService.replacePlaceholdersInHtml(
           page.content,
           industryToUse,
           subIndustryToUse
         );
+        page.content = result.html;
+        generatedImageCount += result.imageCount || 0;
       }
       // 2. Process page.content if it is an object (template generation data)
       else if (page.content && typeof page.content === 'object') {
         if (page.content.fullHtml) {
-          page.content.fullHtml = await ImageGenerationService.replacePlaceholdersInHtml(
+          const result = await ImageGenerationService.replacePlaceholdersInHtml(
             page.content.fullHtml,
             industryToUse,
             subIndustryToUse
           );
+          page.content.fullHtml = result.html;
+          generatedImageCount += result.imageCount || 0;
         }
         if (page.content.html) {
-          page.content.html = await ImageGenerationService.replacePlaceholdersInHtml(
+          const result = await ImageGenerationService.replacePlaceholdersInHtml(
             page.content.html,
             industryToUse,
             subIndustryToUse
           );
+          page.content.html = result.html;
+          generatedImageCount += result.imageCount || 0;
         }
       }
 
       // 3. Process page.landingPageContent (full HTML page stored for preview/publish)
       if (page.landingPageContent && typeof page.landingPageContent === 'string') {
-        page.landingPageContent = await ImageGenerationService.replacePlaceholdersInHtml(
+        const result = await ImageGenerationService.replacePlaceholdersInHtml(
           page.landingPageContent,
           industryToUse,
           subIndustryToUse
         );
+        page.landingPageContent = result.html;
+        generatedImageCount += result.imageCount || 0;
       }
     } catch (imgErr) {
       logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
@@ -552,15 +561,21 @@ exports.createPage = async (req, res, next) => {
     page.seo = aiResponse.seo || {};
 
     // 8.2 Update Page with Cumulative AI Usage and History
-    if (aiResponse.aiUsage) {
-      const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+    if (aiResponse.aiUsage || generatedImageCount > 0) {
+      const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0, imageCount: 0, imageCost: 0 };
+
+      // cost of images: $0.002 per image
+      const newImageCost = generatedImageCount * 0.002;
+      const newTextCost = aiResponse.aiUsage?.cost || 0;
 
       page.aiUsage = {
-        promptTokens: (currentUsage.promptTokens || 0) + aiResponse.aiUsage.promptTokens,
-        completionTokens: (currentUsage.completionTokens || 0) + aiResponse.aiUsage.completionTokens,
-        totalTokens: (currentUsage.totalTokens || 0) + aiResponse.aiUsage.totalTokens,
-        cost: (currentUsage.cost || 0) + aiResponse.aiUsage.cost,
-        model: aiResponse.aiUsage.model,
+        promptTokens: (currentUsage.promptTokens || 0) + (aiResponse.aiUsage?.promptTokens || 0),
+        completionTokens: (currentUsage.completionTokens || 0) + (aiResponse.aiUsage?.completionTokens || 0),
+        totalTokens: (currentUsage.totalTokens || 0) + (aiResponse.aiUsage?.totalTokens || 0),
+        cost: (currentUsage.cost || 0) + newTextCost + newImageCost,
+        imageCount: (currentUsage.imageCount || 0) + generatedImageCount,
+        imageCost: (currentUsage.imageCost || 0) + newImageCost,
+        model: aiResponse.aiUsage?.model || 'flux-schnell',
         currency: 'USD',
         lastUsageAt: Date.now()
       };
@@ -568,6 +583,9 @@ exports.createPage = async (req, res, next) => {
       page.aiUsageHistory.push({
         action: 'Initial Creation',
         ...aiResponse.aiUsage,
+        imageCount: generatedImageCount,
+        imageCost: newImageCost,
+        cost: newTextCost + newImageCost,
         createdAt: Date.now()
       });
     }
