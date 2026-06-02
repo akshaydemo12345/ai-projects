@@ -14,7 +14,6 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .nav { padding: 1.25rem 0; background: #fff; position: relative; z-index: 100; }
 .nav-inner { display: flex; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-.logo::before { content: ''; width: 12px; height: 12px; background-color: var(--primary); border-radius: 2px; }
 .nav-links { display: flex; gap: 2.5rem; }
 .nav-links a { color: #4b5563; font-size: 0.9rem; font-weight: 600; }
 .btn-primary { background-color: var(--primary); color: #fff; padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
