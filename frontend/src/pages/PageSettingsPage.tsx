@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 
 const PageSettingsPage = () => {
   const { id: projectId, pageId } = useParams();
@@ -43,6 +44,12 @@ const PageSettingsPage = () => {
   const [secondaryColor, setSecondaryColor] = useState("#6366f1");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
+
+  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    const brightness = await getImageAverageBrightness(img.src);
+    setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
+  };
   const [mainHeader, setMainHeader] = useState("");
   const [mainFooter, setMainFooter] = useState("");
   const [thankYouHeader, setThankYouHeader] = useState("");
@@ -253,8 +260,8 @@ const PageSettingsPage = () => {
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-slate-500">Logo</label>
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0">
-                      {logoPreview ? <img src={logoPreview} className="w-full h-full object-contain" /> : <Layout className="h-5 w-5 text-slate-300" />}
+                    <div className={`h-12 w-12 rounded-lg flex items-center justify-center overflow-hidden shrink-0 shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
+                      {logoPreview ? <img src={logoPreview} className="w-full h-full object-contain" onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)} /> : <Layout className="h-5 w-5 text-slate-300" />}
                     </div>
                     <label className="text-[10px] font-bold px-3 py-2 bg-primary/10 text-primary rounded-lg cursor-pointer hover:bg-primary/20 transition-colors">
                       Upload

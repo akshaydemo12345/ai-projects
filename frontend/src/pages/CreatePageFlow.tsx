@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { pagesApi, aiApi, projectsApi, type Project } from "@/services/api";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
+import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { toast } from "sonner";
 
@@ -45,8 +46,14 @@ const CreatePageFlow = () => {
   const [accentColor, setAccentColor] = useState("#6366f1");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    const brightness = await getImageAverageBrightness(img.src);
+    setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
+  };
 
   const industries = ["Other"];
   const pageTypes = [
@@ -384,7 +391,9 @@ const CreatePageFlow = () => {
                   <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   {logoPreview ? (
                     <div className="flex flex-col items-center">
-                      <img src={logoPreview} alt="Logo Preview" className="h-16 object-contain mb-2" />
+                      <div className={`h-20 w-20 rounded-xl flex items-center justify-center overflow-hidden mb-2 shadow-lg ring-1 ring-slate-600 p-2 ${logoPreviewBgClass}`}>
+                        <img src={logoPreview} alt="Logo Preview" className="max-h-full max-w-full object-contain" onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)} />
+                      </div>
                       <span className="text-xs text-primary font-medium">Click to change</span>
                     </div>
                   ) : (

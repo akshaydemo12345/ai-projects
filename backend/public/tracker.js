@@ -139,18 +139,42 @@
       // Metadata injection
       const referrer = previousReferrer || document.referrer || '';
       const referralSource = referrer || 'Direct';
-      const referralUrl = window.location.href;
+      const currentUrl = window.location.href;
+      const currentPath = window.location.pathname;
+      const currentHash = window.location.hash;
+      const currentSearch = window.location.search;
+
+      let referrerHostname = '';
+      let referrerPath = '';
+      try {
+        const parsedReferrer = referrer ? new URL(referrer) : null;
+        if (parsedReferrer) {
+          referrerHostname = parsedReferrer.hostname;
+          referrerPath = `${parsedReferrer.pathname}${parsedReferrer.search}${parsedReferrer.hash}`;
+        }
+      } catch (e) {
+        referrerHostname = '';
+        referrerPath = '';
+      }
 
       Object.assign(data, {
         domain: CONFIG.domain,
-        url: referralUrl,
-        path: CONFIG.path,
+        url: currentUrl,
+        path: currentPath,
+        hash: currentHash,
         pageId: CONFIG.pageId,
         projectId: CONFIG.projectId,
         timestamp: new Date().toISOString(),
         trackingDetails: {
-          referral_url: referralUrl,
-          referral_source: referralSource
+          referral_url: referrer || 'Direct',
+          referral_source: referralSource,
+          current_page_url: currentUrl,
+          current_page_path: currentPath,
+          current_page_search: currentSearch,
+          current_page_hash: currentHash,
+          referrer_domain: referrerHostname,
+          referrer_path: referrerPath,
+          utm: getUTMParameters()
         },
         referer: referrer,
         ...getUTMParameters(),
