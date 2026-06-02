@@ -173,6 +173,164 @@ const generateAiPage = (
   };
 };
 
+// ─── Scraped Data Injection Helper ───────────────────────────────────────────
+const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: string, subIndustryText: string, logoUrl?: string) => {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // 1. Update H1
+    const h1 = doc.querySelector("h1");
+    if (h1) {
+      h1.textContent = pageTitle;
+      h1.style.position = "relative";
+      h1.style.zIndex = "10";
+    }
+
+    // 2. Main description
+    const descText = project?.description || project?.scrapedData?.description || project?.scrapedData?.about || project?.scrapedData?.summary;
+    const allParagraphs = Array.from(doc.querySelectorAll("p")).filter(
+      p => !p.closest("footer") && !p.closest("form") && p.textContent && p.textContent.trim().length > 20
+    );
+    if (descText && allParagraphs.length > 0) {
+      allParagraphs[0].textContent = descText;
+    }
+
+    // 3. Inject Services
+    const services = project?.scrapedData?.services || [];
+    if (services.length > 0) {
+      const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card")
+      );
+
+      serviceHeadings.forEach((heading, idx) => {
+        if (idx < services.length) {
+          const service = services[idx];
+          if (typeof service === "string") {
+            heading.textContent = service;
+          } else if (service.title || service.name) {
+            heading.textContent = service.title || service.name;
+            const parent = heading.parentElement;
+            if (parent && service.description) {
+              const p = parent.querySelector("p");
+              if (p) p.textContent = service.description;
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Inject Testimonials
+    const testimonials = project?.scrapedData?.testimonials || [];
+    if (testimonials.length > 0) {
+      const testiCards = Array.from(doc.querySelectorAll(".testi-card, [class*='testimonial']"));
+      testiCards.forEach((card, idx) => {
+        if (idx < testimonials.length) {
+          const t = testimonials[idx];
+          const tText = card.querySelector(".testi-text, p");
+          if (tText && (t.text || t.content)) tText.textContent = `"${t.text || t.content}"`;
+
+          const tAuthor = card.querySelector(".author-name, h4, .name");
+          if (tAuthor && (t.author || t.name)) tAuthor.textContent = t.author || t.name;
+        }
+      });
+    }
+
+    // 5. Inject FAQs
+    const faqs = project?.scrapedData?.faq || project?.scrapedData?.faqs || [];
+    if (faqs.length > 0) {
+      const faqItems = Array.from(doc.querySelectorAll("details, .faq-item, .v2-faq-item"));
+      faqItems.forEach((item, idx) => {
+        if (idx < faqs.length) {
+          const faq = faqs[idx];
+          const summary = item.querySelector("summary, .faq-question");
+          if (summary && faq.question) {
+            const icon = summary.querySelector("span, i");
+            summary.textContent = faq.question;
+            if (icon) summary.appendChild(icon);
+          }
+          const body = item.querySelector(".v2-faq-body, .faq-body, .faq-answer, p");
+          if (body && faq.answer) {
+            body.textContent = faq.answer;
+          }
+        }
+      });
+    }
+
+    // 6. Inject Videos
+    const videos = project?.scrapedData?.videos || [];
+    if (videos.length > 0) {
+      const videoElements = Array.from(doc.querySelectorAll("video")) as HTMLVideoElement[];
+      videoElements.forEach((vid, idx) => {
+        if (idx < videos.length) {
+          vid.src = typeof videos[idx] === 'string' ? videos[idx] : (videos[idx].url || videos[idx].src);
+        }
+      });
+    }
+
+    // 7. Inject Form / CTA
+    const formHeading = doc.querySelector("form")?.previousElementSibling;
+    if (formHeading && (formHeading.tagName === 'H2' || formHeading.tagName === 'H3')) {
+      formHeading.textContent = project?.scrapedData?.cta || project?.scrapedData?.forms?.[0]?.title || "Contact Us";
+    }
+
+    const formInnerTitle = doc.querySelector("form .booking-title, form h2, form h3");
+    if (formInnerTitle && project?.scrapedData?.forms?.[0]?.title) {
+      formInnerTitle.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          node.textContent = ` ${project.scrapedData.forms[0].title} `;
+        }
+      });
+    }
+
+    // 8. Fallback for other paragraphs
+    const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.`;
+    if (allParagraphs.length > 1) {
+      for (let i = 1; i < allParagraphs.length; i++) {
+        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']")) {
+          continue;
+        }
+        if (project?.scrapedData?.summary && i === 1) {
+          allParagraphs[i].textContent = project.scrapedData.summary;
+        } else if (project?.scrapedData?.about && i === 2) {
+          allParagraphs[i].textContent = project.scrapedData.about;
+        } else {
+          allParagraphs[i].textContent = fallbackText;
+        }
+      }
+    }
+
+    // 9. Force inject Logo if missing or altered by AI
+    if (logoUrl) {
+      const headerImgs = Array.from(doc.querySelectorAll("header img, .navbar img, .nav img")) as HTMLImageElement[];
+      if (headerImgs.length > 0) {
+        headerImgs[0].src = logoUrl;
+        headerImgs[0].alt = project?.name || "Logo";
+        // Ensure it isn't completely generic
+        if (headerImgs[0].src.includes("LOGO_PLACEHOLDER")) {
+          headerImgs[0].src = logoUrl;
+        }
+      } else {
+        const logoContainer = doc.querySelector(".logo, .brand, .navbar-brand");
+        if (logoContainer) {
+          const img = logoContainer.querySelector("img") as HTMLImageElement | null;
+          if (img) {
+            img.src = logoUrl;
+            img.alt = project?.name || "Logo";
+          } else {
+            logoContainer.innerHTML = `<img src="${logoUrl}" alt="${project?.name || 'Logo'}" style="height: 40px; width: auto; object-fit: contain;">`;
+          }
+        }
+      }
+    }
+
+    return doc.body.innerHTML;
+  } catch (err) {
+    console.error("DOM parsing failed", err);
+    return html;
+  }
+};
+
 // ─── Template definitions ─────────────────────────────────────────────────────
 const LANDING_TEMPLATES: any[] = [
   {
@@ -387,7 +545,7 @@ const CreatePagePage = () => {
         type="button"
         onClick={handleGenerate}
         disabled={generating}
-        className="mt-4 btn-primary flex items-center gap-2"
+        className="mt-0 btn-primary flex items-center gap-2"
       >
         {generating ? "Generating…" : "Generate AI Images"}
       </button>
@@ -562,7 +720,13 @@ const CreatePagePage = () => {
 
           const aiResult = generationRes?.data?.content;
           if (aiResult && aiResult.fullHtml) {
-            enrichedContent = aiResult.fullHtml;
+            let extractedHtml = aiResult.fullHtml;
+            // Prevent nested HTML documents which break browser rendering and FAQ details tags
+            const bodyMatch = extractedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+            if (bodyMatch) {
+              extractedHtml = bodyMatch[1];
+            }
+            enrichedContent = extractedHtml;
             if (aiResult.fullCss && aiResult.fullCss.length > 50) {
               enrichedStyles = aiResult.fullCss;
             }
@@ -612,50 +776,11 @@ const CreatePagePage = () => {
       const subIndustryText = project.subIndustry || project.scrapedData?.subIndustry || "Services";
       const pageTitle = project.name ? `${project.name} - ${industryText}` : `${industryText} ${subIndustryText} Services`;
 
-      // Combine all available text from scraped data to create a large pool of content
-      let allText = [];
-      if (project.description) allText.push(project.description);
-      if (project.scrapedData?.summary) allText.push(project.scrapedData.summary);
-      if (project.scrapedData?.description) allText.push(project.scrapedData.description);
-      if (project.scrapedData?.about) allText.push(project.scrapedData.about);
-      if (Array.isArray(project.scrapedData?.services)) {
-        allText.push(...project.scrapedData.services.map((s: any) => typeof s === 'string' ? s : (s.description || s.title || '')));
-      }
-
-      const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions. We are dedicated to delivering top-tier services tailored to your specific needs. Our expert team ensures quality and excellence in everything we do. Partner with us for a brighter future and unparalleled success in your industry.`;
-      const combinedText = allText.filter(Boolean).join(" ") || fallbackText;
-      const scrapedWords = combinedText.split(/\s+/).filter(Boolean);
-      const totalWords = scrapedWords.length;
-
       // 2. IMPORTANT: Leave Unsplash and template asset image placeholders intact!
       // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
 
-      // 3. Remove static pageName from banner and use proper valid keywords (title)
-      enrichedContent = enrichedContent.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/i, `<h1 class="font-h1" style="z-index: 10; position: relative;">${pageTitle}</h1>`);
-
-      // 4. Inject valid scraped data into all sections (paragraphs) safely without repetition
-      let currentWordIndex = 0;
-      enrichedContent = enrichedContent.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, content) => {
-        // Only replace non-empty paragraphs that don't contain inner HTML tags
-        if (content.length > 20 && !content.includes('<') && !content.includes('>')) {
-          // Calculate how many words we need to keep the design structure intact (~6 chars per word)
-          const targetWordCount = Math.max(8, Math.floor(content.length / 6));
-
-          let snippetWords = [];
-          for (let i = 0; i < targetWordCount; i++) {
-            snippetWords.push(scrapedWords[(currentWordIndex + i) % totalWords]);
-          }
-          currentWordIndex = (currentWordIndex + targetWordCount) % totalWords;
-
-          // Capitalize first letter and add a period at the end for proper formatting
-          let snippet = snippetWords.join(" ");
-          snippet = snippet.charAt(0).toUpperCase() + snippet.slice(1);
-          if (!snippet.endsWith('.')) snippet += '.';
-
-          return match.replace(content, () => snippet.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
-        }
-        return match;
-      });
+      // 3. Intelligently inject scraped data using the helper
+      enrichedContent = injectScrapedDataIntoTemplate(enrichedContent, project, pageTitle, subIndustryText, finalLogo);
 
       // 5. Light/Dark Text Contrast adjustment script (auto-adapts text color based on background image brightness)
       const colorScript = `
@@ -1270,7 +1395,12 @@ ${enrichedContent}
                 ? `<img src="${previewLogo}" alt="${previewName}" style="height:40px;width:auto;object-fit:contain;">`
                 : `<span style="font-weight:800;font-size:1.4rem;color:${previewPrimary};">${previewName}</span>`;
 
-              // Replace ALL placeholders in HTML
+              // Replace ALL placeholders in HTML using the helper
+              const previewIndustryText = project?.category || "Business";
+              const previewSubIndustryText = project?.subIndustry || project?.scrapedData?.subIndustry || "Services";
+              const previewPageTitle = project?.name ? `${project.name} - ${previewIndustryText}` : `${previewIndustryText} ${previewSubIndustryText} Services`;
+              tpHtml = injectScrapedDataIntoTemplate(tpHtml, project, previewPageTitle, previewSubIndustryText, previewLogo);
+
               tpHtml = tpHtml
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
