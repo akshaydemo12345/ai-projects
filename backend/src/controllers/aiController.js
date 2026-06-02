@@ -258,6 +258,20 @@ exports.analyzeWebsite = async (req, res, next) => {
     // Call service
     const aiContent = await analyzeService(targetUrl);
 
+    // Attempt to extract branding from the analyzed website so frontend can apply dynamic colors
+    let extractedBranding = null;
+    try {
+      const { fetchAndExtractBranding } = require('../services/brandingService');
+      const brandingResult = await fetchAndExtractBranding(targetUrl);
+      if (brandingResult && brandingResult.success) {
+        extractedBranding = brandingResult.data;
+        extractedBranding.brandingSourceUrl = targetUrl;
+        extractedBranding.lastScrapedAt = new Date();
+      }
+    } catch (err) {
+      console.error('Branding extraction during website analysis failed:', err.message);
+    }
+
     // Deduct 1 credit
     user.credits = Math.max(0, user.credits - 1);
     await user.save({ validateBeforeSave: false });
@@ -295,13 +309,28 @@ exports.analyzeWebsite = async (req, res, next) => {
       }
     }
 
+    // If analysis found branding and the page is associated with a project, persist branding to that project
+    if (extractedBranding && updatedPage && updatedPage.projectId) {
+      try {
+        await Project.findByIdAndUpdate(updatedPage.projectId, {
+          branding: extractedBranding,
+          'branding.brandingSourceUrl': targetUrl,
+          'branding.lastScrapedAt': new Date(),
+          'branding.scrapedBrandingData': { sourceUrl: targetUrl, scrapedAt: new Date(), extractedColors: extractedBranding.extractedColors || [] }
+        }, { new: true, runValidators: false });
+      } catch (err) {
+        console.error('Failed to persist extracted branding to project:', err.message);
+      }
+    }
+
     return res.status(200).json({
       status: 'success',
       data: {
         content: aiContent,
         creditsRemaining: user.credits,
         ...(updatedPage && { page: updatedPage }),
-        aiUsage: aiContent.aiUsage
+        aiUsage: aiContent.aiUsage,
+        ...(extractedBranding && { branding: extractedBranding })
       },
     });
   } catch (err) {

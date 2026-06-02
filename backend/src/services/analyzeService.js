@@ -5,13 +5,30 @@ const cheerio = require('cheerio');
 const sharp = require('sharp');
 const logger = require('../utils/logger');
 
+const svgMarkupToDataUrl = (markup) => {
+  const cleaned = markup.trim();
+  return `data:image/svg+xml;base64,${Buffer.from(cleaned).toString('base64')}`;
+};
+
 const normalizeImageUrl = (src, baseUrl) => {
   if (!src) return '';
   let normalized = src.trim();
-  if (/^(data|blob|javascript|chrome-extension):/i.test(normalized)) return '';
+
+  if (/^<svg[\s\S]*<\/svg>$/i.test(normalized)) {
+    return svgMarkupToDataUrl(normalized);
+  }
+
+  if (/^(data|blob|javascript|chrome-extension):/i.test(normalized)) {
+    if (/^data:image\/(svg\+xml|png|jpe?g|webp|avif);/i.test(normalized)) {
+      return normalized;
+    }
+    return '';
+  }
+
   if (normalized.startsWith('//')) {
     normalized = `https:${normalized}`;
   }
+
   if (!/^https?:\/\//i.test(normalized)) {
     try {
       normalized = new URL(normalized, baseUrl).href;
@@ -22,11 +39,28 @@ const normalizeImageUrl = (src, baseUrl) => {
   return normalized;
 };
 
+const extractCssUrl = (value, baseUrl) => {
+  if (!value || typeof value !== 'string') return '';
+  const match = value.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
+  if (match && match[1]) {
+    return normalizeImageUrl(match[1], baseUrl);
+  }
+  return normalizeImageUrl(value, baseUrl);
+};
+
 const isLogoUrlCandidate = (url) => {
   if (!url) return false;
   const lower = url.toLowerCase();
+  if (lower.includes('favicon')) {
+    // Allow brand logo paths that include "favicon" only when they also contain explicit logo branding
+    if (lower.includes('logo-and-favicon') || lower.includes('logos-logo') || lower.includes('logo') || lower.includes('brand-sites')) {
+      return true;
+    }
+    return false;
+  }
+
   const invalid = [
-    'favicon', 'icon', 'pixel', 'sprite', 'tracking', 'badge', 'share', 'social', 'og-image', 'logo-preview', 'logo-mask', 'marker', 'loading', 'placeholder', 'button', 'avatar', 'profile', 'thumb', 'thumbnail', 'partner', 'premier', 'award', 'certified', 'sponsor'
+    'icon', 'pixel', 'sprite', 'tracking', 'badge', 'share', 'social', 'og-image', 'logo-preview', 'logo-mask', 'marker', 'loading', 'placeholder', 'button', 'avatar', 'profile', 'thumb', 'thumbnail', 'partner', 'premier', 'award', 'certified', 'sponsor'
   ];
   return !invalid.some((pattern) => lower.includes(pattern));
 };
@@ -74,13 +108,85 @@ const scoreLogoCandidate = ($, el, src, origin) => {
   return score;
 };
 
-const findBestLogo = ($, baseUrl) => {
+const extractCssBackgroundLogoCandidates = async ($, baseUrl) => {
+  const urls = new Set();
+  const cssTexts = await collectExternalCssTexts($, baseUrl);
+  cssTexts.forEach((cssText) => {
+    const ruleRegex = /([^{]+)\{([^}]*url\([^}]+\)[^}]*)\}/gi;
+    let ruleMatch;
+    while ((ruleMatch = ruleRegex.exec(cssText)) !== null) {
+      const selector = (ruleMatch[1] || '').toLowerCase();
+      const body = ruleMatch[2] || '';
+      if (/logo|brand|navbar|header|site-branding|branding|footer|identity/i.test(selector)) {
+        const url = extractCssUrl(body, baseUrl);
+        if (url) urls.add(url);
+      }
+    }
+  });
+  return Array.from(urls);
+};
+
+const findInlineSvgLogoCandidates = ($, baseUrl) => {
+  const candidates = [];
+  const svgSelectors = [
+    'svg[id*="logo" i]',
+    'svg[class*="logo" i]',
+    'svg[aria-label*="logo" i]',
+    '.logo svg',
+    '.site-branding svg',
+    'header .logo svg',
+    'nav .logo svg',
+    '.navbar svg',
+    '.brand svg',
+    '.branding svg'
+  ];
+
+  $(svgSelectors.join(',')).each((i, el) => {
+    const svgMarkup = $.html(el);
+    if (!svgMarkup) return;
+    const dataUrl = svgMarkupToDataUrl(svgMarkup);
+    candidates.push({ src: dataUrl, el });
+  });
+
+  return candidates;
+};
+
+const findHeaderLogoImage = ($, baseUrl) => {
+  const selectors = [
+    'a[data-qa="hd-logo"] img',
+    '.header__logo img',
+    '.header__logo a img',
+    'header .header__logo img',
+    'header .logo img',
+    '.site-header .logo img',
+    '.site-branding img',
+    'img[alt*="go to home page" i]',
+    'img[alt*="home page" i]',
+    'img[alt*="go to homepage" i]'
+  ];
+
+  for (const selector of selectors) {
+    const el = $(selector).first();
+    if (!el || !el.length) continue;
+    const rawSrc = (el.attr('src') || el.attr('data-src') || el.attr('data-lazy-src') || el.attr('data-original') || '').trim();
+    const src = extractCssUrl(rawSrc, baseUrl);
+    if (src && isLogoUrlCandidate(src)) {
+      return src;
+    }
+  }
+  return '';
+};
+
+const findBestLogo = async ($, baseUrl) => {
   const logoSelectors = [
     'img[id*="logo" i]',
     'img[class*="logo" i]',
     'img[src*="logo" i]',
     'img[alt*="logo" i]',
     'img[data-src*="logo" i]',
+    '.header__logo img',
+    '.header__logo a img',
+    'a[data-qa="hd-logo"] img',
     '.logo img',
     '.logo a img',
     'header .logo img',
@@ -104,6 +210,9 @@ const findBestLogo = ($, baseUrl) => {
     '.navigation .logo a img',
     '.menu-header-menu-container .logo img',
     '.menu-header-menu-container .logo a img',
+    'img[alt*="go to home page" i]',
+    'img[alt*="home page" i]',
+    'img[alt*="go to homepage" i]',
     'img[src*="brand" i]',
     'img[src*="identity" i]',
     'img[alt*="brand" i]',
@@ -113,17 +222,45 @@ const findBestLogo = ($, baseUrl) => {
   const origin = new URL(baseUrl).origin;
   const candidates = [];
   const seen = new Set();
+  const addCandidate = (rawSrc, el, forcedScore = null) => {
+    const src = extractCssUrl(rawSrc, baseUrl);
+    if (!src || seen.has(src) || !isLogoUrlCandidate(src)) return;
+    seen.add(src);
+    const score = typeof forcedScore === 'number' ? forcedScore : scoreLogoCandidate($, el, src, origin);
+    const width = el ? parseInt($(el).attr('width') || '0', 10) || 0 : 0;
+    const height = el ? parseInt($(el).attr('height') || '0', 10) || 0 : 0;
+    const area = width * height;
+    candidates.push({ src, score, order: candidates.length, area });
+  };
 
   logoSelectors.forEach((selector) => {
     $(selector).each((i, el) => {
       const rawSrc = ($(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original') || '').trim();
-      const src = normalizeImageUrl(rawSrc, baseUrl);
-      if (!src || seen.has(src) || !isLogoUrlCandidate(src)) return;
-      seen.add(src);
-      const score = scoreLogoCandidate($, el, src, origin);
-      candidates.push({ src, score, order: candidates.length, area: (parseInt($(el).attr('width') || '0', 10) || 0) * (parseInt($(el).attr('height') || '0', 10) || 0) });
+      addCandidate(rawSrc, el);
     });
   });
+
+  // Inline SVGs within likely logo/header/nav containers
+  findInlineSvgLogoCandidates($, baseUrl).forEach(({ src, el }) => {
+    addCandidate(src, el, 70);
+  });
+
+  // Inline CSS background-image logos inside logo/header/nav containers
+  ['.logo', '.site-branding', 'header .logo', 'nav .logo', '.navbar', '.header', '.branding'].forEach((selector) => {
+    $(selector).each((i, el) => {
+      const style = ($(el).attr('style') || '').toString();
+      const bgSrc = extractCssUrl(style, baseUrl);
+      if (bgSrc) addCandidate(bgSrc, el, 40);
+    });
+  });
+
+  // Background images from external/internal CSS rules that look like logo selectors
+  try {
+    const cssBgUrls = await extractCssBackgroundLogoCandidates($, baseUrl);
+    cssBgUrls.forEach((url) => addCandidate(url, null, 30));
+  } catch (e) {
+    logger.debug(`CSS background logo extraction failed: ${e.message}`);
+  }
 
   if (candidates.length === 0) return '';
   candidates.sort((a, b) => {
@@ -341,6 +478,28 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
     cssColorValues.push(...parseCssColorDeclarations(cssText));
   });
 
+  // Extract palette from images/backgrounds in key page sections (nav, footer, buttons, hero, etc.)
+  let pageAssetPalette = [];
+  try {
+    pageAssetPalette = await extractColorsFromPageAssets($, baseUrl);
+    if (pageAssetPalette && pageAssetPalette.length > 0) {
+      logger.info(`Page asset palette extracted (${pageAssetPalette.length} colors)`);
+    }
+  } catch (e) {
+    logger.debug(`Page asset color extraction error: ${e.message}`);
+  }
+
+  // Component-specific palettes
+  let navColors = { palette: [] }, headerColors = { palette: [] }, footerColors = { palette: [] }, componentButtonColors = { palette: [] };
+  try {
+    navColors = await extractComponentColors($, baseUrl, 'nav');
+    headerColors = await extractComponentColors($, baseUrl, 'header');
+    footerColors = await extractComponentColors($, baseUrl, 'footer');
+    componentButtonColors = await extractComponentColors($, baseUrl, '.btn, button, a.btn, a.button');
+  } catch (e) {
+    logger.debug(`Component color extraction error: ${e.message}`);
+  }
+
   const variableColorEntries = Object.entries(cssVariables).map(([name, color]) => ({ name, color }));
   const explicitPrimaryColors = variableColorEntries
     .filter((entry) => /primary|brand|main|theme/i.test(entry.name))
@@ -357,6 +516,11 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
 
   const allColors = uniqueHexColors([
     ...logoPalette,
+    ...pageAssetPalette,
+    ...navColors.palette,
+    ...headerColors.palette,
+    ...footerColors.palette,
+    ...componentButtonColors.palette,
     ...Object.values(cssVariables),
     ...cssColorValues,
     ...buttonBgColors,
@@ -475,7 +639,13 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
     textColor,
     confidence,
     buttonColors,
-    colors: allColors
+    colors: allColors,
+    componentColors: {
+      nav: navColors,
+      header: headerColors,
+      footer: footerColors,
+      buttons: componentButtonColors
+    }
   };
 };
 
@@ -501,18 +671,27 @@ const inspectWebsite = async (url) => {
     const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
 
     // 2. Favicon
-    let favicon = $('link[rel="shortcut icon"]').attr('href') ||
-      $('link[rel="icon"]').attr('href') ||
+    let favicon = $('link[rel="icon"]').attr('href') ||
+      $('link[rel="shortcut icon"]').attr('href') ||
       $('link[rel="apple-touch-icon"]').attr('href');
     if (favicon && !favicon.startsWith('http')) {
       favicon = new URL(favicon, url).href;
-    } else if (!favicon) {
+    }
+    if (!favicon) {
       favicon = `${urlObj.origin}/favicon.ico`;
     }
 
-    let logo = findBestLogo($, url) || $('meta[property="og:image"]').attr('content') || $('link[rel="image_src"]').attr('href') || '';
-    if (logo && !logo.startsWith('http')) {
-      logo = new URL(logo, url).href;
+    let logo = findHeaderLogoImage($, url) || await findBestLogo($, url) || $('meta[property="og:image"]').attr('content') || $('link[rel="image_src"]').attr('href') || '';
+    if (logo && !logo.startsWith('http') && !logo.startsWith('data:')) {
+      try {
+        logo = new URL(logo, url).href;
+      } catch (e) {
+        logger.debug(`Failed to resolve logo URL ${logo}: ${e.message}`);
+      }
+    }
+
+    if (!logo && favicon) {
+      logo = favicon;
     }
 
     // 4. Color Extraction (Heuristic)
@@ -559,6 +738,11 @@ const inspectWebsite = async (url) => {
       backgroundColor: theme.backgroundColor,
       textColor: theme.textColor,
       colors: theme.colors,
+      componentColors: theme.componentColors,
+      navColors: theme.componentColors.nav,
+      headerColors: theme.componentColors.header,
+      footerColors: theme.componentColors.footer,
+      buttonColors: theme.componentColors.buttons,
       suggestedColors,
       socialLinks,
       rawContent: cleanText
@@ -676,7 +860,19 @@ const analyzeWebsite = async (websiteUrl) => {
     pageType: 'lead generation',
     businessDescription: metadata.description || metadata.rawContent.substring(0, 200),
     logoUrl: metadata.logo,
-    aiPrompt: prompt
+    primaryColor: metadata.primaryColor,
+    secondaryColor: metadata.secondaryColor,
+    navColors: metadata.navColors,
+    headerColors: metadata.headerColors,
+    footerColors: metadata.footerColors,
+    buttonColors: metadata.buttonColors,
+    aiPrompt: `${prompt}
+
+    ADDITIONAL STYLE NOTES:
+    - Use the source website's header and footer palette for the top navigation and bottom footer styling.
+    - Keep the landing page's header/footer visual tone aligned with the original site brand colors.
+    - Prefer strong contrast for nav/footer text when using dark brand backgrounds.
+  `
   });
 };
 
@@ -1037,36 +1233,56 @@ const extractProjectData = async (url) => {
     // ============ STEP 2: SEO DATA EXTRACTION ============
     let projectDesc = '';
     let projectLogo = '';
+    let favicon = '';
 
     try {
       projectDesc = $('meta[name="description"]').attr('content')?.trim() ||
         $('meta[property="og:description"]').attr('content')?.trim() || '';
 
       // LOGO EXTRACTION REFINEMENT: Prioritize actual logo elements over OG:Image (which is often a banner)
-      const extractedLogo = findBestLogo($, normalizedUrl) || $('meta[property="og:image"]').attr('content')?.trim() || $('link[rel="image_src"]').attr('href')?.trim() || '';
+      const extractedLogo = findHeaderLogoImage($, normalizedUrl) || (await findBestLogo($, normalizedUrl)) || $('meta[property="og:image"]').attr('content')?.trim() || $('link[rel="image_src"]').attr('href')?.trim() || '';
       if (extractedLogo) {
         projectLogo = normalizeImageUrl(extractedLogo, normalizedUrl);
+      }
+
+      favicon = $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href') || $('link[rel="apple-touch-icon"]').attr('href');
+      if (favicon) {
+        favicon = normalizeImageUrl(favicon, normalizedUrl);
+      } else {
+        favicon = `${new URL(normalizedUrl).origin}/favicon.ico`;
+      }
+
+      if (!projectLogo && favicon) {
+        projectLogo = favicon;
       }
     } catch (e) {
       logger.warn(`SEO/Logo extraction failed: ${e.message}`);
     }
 
-    // Color extraction - deterministic brand color analysis
+    // Color extraction - deterministic brand color analysis + page theme extraction
     let primaryColor = '';
     let secondaryColor = '';
     let buttonColors = { primaryBg: '', primaryText: '', primaryHover: '', secondaryBg: '', secondaryText: '' };
+    let theme = { primaryColor: '', secondaryColor: '', accentColor: '', backgroundColor: '', textColor: '', colors: [], buttonColors: {}, componentColors: {} };
     const colorSet = new Set();
     let colors = [];
 
     try {
-      const brandColors = await analyzeBrandColors($, projectLogo, normalizedUrl);
-      primaryColor = brandColors.primaryColor;
-      secondaryColor = brandColors.secondaryColor;
-      buttonColors = brandColors.buttonColors;
+      theme = await extractThemeColors($, normalizedUrl, projectLogo);
+      primaryColor = theme.primaryColor || primaryColor;
+      secondaryColor = theme.secondaryColor || secondaryColor;
+      buttonColors = { ...buttonColors, ...theme.buttonColors };
+      colors = uniqueHexColors([...(theme.colors || [])]);
+    } catch (e) {
+      logger.warn(`Theme extraction failed: ${e.message}`);
+    }
 
-      // Extract colors from CSS and inline styles
-      // From inline styles
-      colors = brandColors.colors || [];
+    try {
+      const brandColors = await analyzeBrandColors($, projectLogo, normalizedUrl);
+      primaryColor = primaryColor || brandColors.primaryColor;
+      secondaryColor = secondaryColor || brandColors.secondaryColor;
+      buttonColors = { ...buttonColors, ...brandColors.buttonColors };
+      colors = uniqueHexColors([...(colors || []), ...(brandColors.colors || [])]);
     } catch (e) {
       logger.warn(`Color extraction failed: ${e.message}`);
     }
@@ -1292,12 +1508,20 @@ const extractProjectData = async (url) => {
       backgroundColor: themeSystem.colors.background,
       textColor: themeSystem.colors.text,
       colors: allColors, // All extracted colors for database storage
+      componentColors: theme.componentColors,
+      navColors: theme.componentColors.nav,
+      headerColors: theme.componentColors.header,
+      footerColors: theme.componentColors.footer,
+      buttonColors: theme.componentColors.buttons,
+      themeData: theme,
       services: cleanedServices,
       keywords,
       industry: detectedIndustry,
       subIndustry: detectedSubIndustry,
+      favicon,
       themeSystem, // Complete theme system for design
       scrapedData: {
+        favicon,
         images: bulkMedia.images,
         videos: bulkMedia.videos,
         ...structuredData,
@@ -1716,7 +1940,15 @@ const extractBrandColorsFromLogo = async (logoUrl) => {
       const response = await axios.get(logoUrl, {
         responseType: 'arraybuffer',
         timeout: 10000,
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' }
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+          'Referer': logoUrl,
+          'Sec-Fetch-Dest': 'image',
+          'Sec-Fetch-Mode': 'no-cors',
+          'Sec-Fetch-Site': 'cross-site'
+        },
+        maxRedirects: 5
       });
       imageBuffer = Buffer.from(response.data);
     } else {
@@ -1743,6 +1975,149 @@ const extractBrandColorsFromLogo = async (logoUrl) => {
   } catch (error) {
     logger.warn(`Failed to extract color from logo (${logoUrl}): ${error.message}`);
     return null;
+  }
+};
+
+const extractColorsFromPageAssets = async ($, baseUrl, maxImages = 12) => {
+  try {
+    const urls = new Set();
+
+    // Collect <img> sources
+    $('img').each((i, el) => {
+      const src = ($(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || '').trim();
+      if (src) urls.add(normalizeImageUrl(src, baseUrl));
+    });
+
+    // Collect background-image from inline styles
+    $('[style]').each((i, el) => {
+      const style = ($(el).attr('style') || '').toString();
+      const match = style.match(/background(?:-image)?\s*:\s*url\(([^)]+)\)/i);
+      if (match && match[1]) {
+        const raw = match[1].replace(/['"\s]/g, '');
+        urls.add(normalizeImageUrl(raw, baseUrl));
+      }
+    });
+
+    // Targeted selectors for nav, footer, buttons, hero, cta
+    const selectors = ['header', 'nav', 'footer', '.hero', '.masthead', '.site-banner', '.cta', 'button', 'a.btn', '.btn', '.banner'];
+    selectors.forEach((sel) => {
+      $(sel).find('img').each((i, el) => {
+        const s = ($(el).attr('src') || '').trim();
+        if (s) urls.add(normalizeImageUrl(s, baseUrl));
+      });
+    });
+
+    // Also parse external CSS for url(...) occurrences
+    const cssTexts = await collectExternalCssTexts($, baseUrl);
+    cssTexts.forEach((cssText) => {
+      const urlRegex = /url\(([^)]+)\)/gi;
+      let m;
+      while ((m = urlRegex.exec(cssText)) !== null) {
+        const raw = (m[1] || '').replace(/['"\s]/g, '');
+        if (raw && !/^data:/i.test(raw)) urls.add(normalizeImageUrl(raw, baseUrl));
+      }
+    });
+
+    // Filter and limit URLs
+    const finalUrls = Array.from(urls).filter(Boolean).slice(0, maxImages);
+    const allColors = [];
+
+    for (const u of finalUrls) {
+      try {
+        const resp = await axios.get(u, {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+            'Referer': baseUrl,
+            'Sec-Fetch-Dest': 'image',
+            'Sec-Fetch-Mode': 'no-cors',
+            'Sec-Fetch-Site': 'cross-site'
+          },
+          maxRedirects: 5
+        });
+        const buf = Buffer.from(resp.data);
+        const resized = await sharp(buf).resize(300, 300, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+        const palette = await Vibrant.from(resized).maxColorCount(64).getPalette();
+        Object.values(palette).forEach((sw) => {
+          if (sw && sw.hex) allColors.push(sw.hex);
+        });
+      } catch (e) {
+        logger.debug(`Failed to extract colors from page asset ${u}: ${e.message}`);
+      }
+    }
+
+    return uniqueHexColors(allColors);
+  } catch (err) {
+    logger.warn(`extractColorsFromPageAssets failed: ${err.message}`);
+    return [];
+  }
+};
+
+const extractComponentColors = async ($, baseUrl, selector, maxImages = 6) => {
+  try {
+    // Inline style colors inside the selector
+    const inlineColors = collectInlineStyleColors($, [selector]);
+
+    // Gather image/background-image URLs inside the selector
+    const urls = new Set();
+    $(selector).find('img').each((i, el) => {
+      const src = ($(el).attr('src') || $(el).attr('data-src') || '').trim();
+      if (src) urls.add(normalizeImageUrl(src, baseUrl));
+    });
+    $(selector).find('[style]').each((i, el) => {
+      const style = ($(el).attr('style') || '').toString();
+      const m = style.match(/url\(([^)]+)\)/i);
+      if (m && m[1]) {
+        const raw = m[1].replace(/['"\s]/g, '');
+        urls.add(normalizeImageUrl(raw, baseUrl));
+      }
+    });
+
+    const final = Array.from(urls).filter(Boolean).slice(0, maxImages);
+    const palette = [];
+    for (const u of final) {
+      try {
+        const resp = await axios.get(u, {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+            'Referer': baseUrl,
+            'Sec-Fetch-Dest': 'image',
+            'Sec-Fetch-Mode': 'no-cors',
+            'Sec-Fetch-Site': 'cross-site'
+          },
+          maxRedirects: 5
+        });
+        const buf = Buffer.from(resp.data);
+        const resized = await sharp(buf).resize(300, 300, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+        const p = await Vibrant.from(resized).maxColorCount(32).getPalette();
+        Object.values(p).forEach((sw) => { if (sw && sw.hex) palette.push(sw.hex); });
+      } catch (e) {
+        logger.debug(`component Vibrant fail ${u}: ${e.message}`);
+      }
+    }
+
+    const paletteDistinct = uniqueHexColors([...(inlineColors || []), ...palette]);
+    const backgroundCandidate = selectFirstNonNeutral(inlineColors) || paletteDistinct[0] || '';
+    const primary = selectFirstNonNeutral(paletteDistinct) || '';
+    const textColor = primary ? generateTextColor(primary) : (selectFirstNonNeutral(inlineColors) || '#1f2937');
+    const hover = primary ? generateHoverColor(primary) : '';
+
+    return {
+      selector,
+      palette: paletteDistinct,
+      backgroundCandidate,
+      primary,
+      textColor,
+      hover
+    };
+  } catch (err) {
+    logger.warn(`extractComponentColors(${selector}) failed: ${err.message}`);
+    return { selector, palette: [], backgroundCandidate: '', primary: '', textColor: '', hover: '' };
   }
 };
 

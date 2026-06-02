@@ -37,18 +37,18 @@ function extractFormFields(content, shouldFixHtml = false) {
       if (['submit', 'button', 'reset', 'password'].includes(type)) return;
       if (type === 'hidden' && !$el.attr('name')) return;
 
-      let name = $el.attr("name") || $el.attr("id") || $el.attr("data-name") || $el.attr("data-field");
-      const placeholder = $el.attr("placeholder") || "";
+      const rawNameOrId = $el.attr('name') || $el.attr('id') || $el.attr('data-name') || $el.attr('data-field');
+      const placeholder = $el.attr('placeholder') || "";
       const id = $el.attr('id');
       let labelText = "";
-      
+
       if (id) {
         labelText = $(`label[for="${id}"]`).text().trim();
       }
-      
+
       if (!labelText) {
-        labelText = $el.closest('label').text().trim() || 
-                    $el.prev('label').text().trim() || 
+        labelText = $el.closest('label').text().trim() ||
+                    $el.prev('label').text().trim() ||
                     $el.parent().find('label').text().trim();
       }
 
@@ -61,63 +61,48 @@ function extractFormFields(content, shouldFixHtml = false) {
       }
 
       const stopWords = ['enter', 'your', 'please', 'select', 'type', 'here', 'input', 'field'];
-      const slugify = (text) => {
+      const normalizeFieldKey = (text) => {
         if (!text) return "";
-        let s = text.toLowerCase()
+        return String(text).toLowerCase()
           .replace(/[^a-z0-9]/g, '_')
           .replace(/_+/g, '_')
-          .replace(/^_|_$/g, '');
-        
-        // Strip noise words
-        const words = s.split('_').filter(w => !stopWords.includes(w) && w.length > 0);
-        return words.join('_');
+          .replace(/^_|_$/g, '')
+          .split('_')
+          .filter(w => w && !stopWords.includes(w))
+          .join('_');
       };
 
-      let semanticName = "";
-      const placeholderSlug = slugify(placeholder);
-      const labelSlug = slugify(labelText);
+      const placeholderSlug = normalizeFieldKey(placeholder);
+      const labelSlug = normalizeFieldKey(labelText);
+      const rawSlug = normalizeFieldKey(rawNameOrId);
+      const fallbackSlug = placeholderSlug || labelSlug || `field_${i}`;
+      let stableName = rawSlug || fallbackSlug;
 
-      // Prioritize Placeholder for the technical Name/ID (often cleaner in AI templates)
-      const commonFieldPatterns = ['name', 'email', 'phone', 'tele', 'cell', 'message', 'comment', 'subject', 'date', 'time', 'location', 'city', 'address', 'zip', 'service', 'company'];
-      const isCommonPlaceholder = commonFieldPatterns.some(p => placeholderSlug.includes(p));
-      const isCommonLabel = commonFieldPatterns.some(p => labelSlug.includes(p));
-
-      if (placeholderSlug && (isCommonPlaceholder || !labelSlug)) {
-        semanticName = placeholderSlug;
-      } else if (labelSlug && (isCommonLabel || !placeholderSlug)) {
-        semanticName = labelSlug;
-      } else if (placeholderSlug) {
-        semanticName = placeholderSlug;
-      } else {
-        semanticName = labelSlug;
+      if (['input', 'text', 'select', 'textarea', 'field'].includes(stableName)) {
+        stableName = fallbackSlug;
+      }
+      if (!stableName) {
+        stableName = `field_${i}`;
       }
 
-      // If the current name is missing or generic, use the semantic name
-      if (!name || name.startsWith('field_') || name === 'input' || name === 'text' || name === 'select') {
-        if (semanticName && semanticName.length > 1) {
-          name = semanticName;
-        }
-      }
-      
-      if (!name) name = `field_${i}`;
-
-      let finalName = name;
+      let uniqueName = stableName;
       let counter = 1;
-      while (seenNames.has(finalName)) {
-        finalName = `${name}_${counter++}`;
+      while (seenNames.has(uniqueName)) {
+        uniqueName = `${stableName}_${counter++}`;
       }
-      seenNames.add(finalName);
+      seenNames.add(uniqueName);
 
-      // Injected Fix: Assign name/id to HTML if missing
+      // Inject missing identifiers into the HTML for stable form submission
       if (shouldFixHtml) {
         if (!$el.attr('name')) {
-          $el.attr('name', finalName);
+          $el.attr('name', uniqueName);
         }
         if (!$el.attr('id')) {
-          $el.attr('id', finalName);
+          $el.attr('id', uniqueName);
         }
       }
 
+      const actualName = $el.attr('name') || rawNameOrId || uniqueName;
       let options = [];
       if (tag === "select") {
         $el.find("option").each((_, opt) => {
@@ -129,15 +114,17 @@ function extractFormFields(content, shouldFixHtml = false) {
         });
       }
 
+      const generatedLabel = (labelText || placeholder || uniqueName.replace(/_/g, ' ')).trim();
+
       fields.push({
-        field_name: finalName,
-        name: semanticName || finalName,
-        label: (labelText || placeholder || finalName.replace(/_/g, ' ')).charAt(0).toUpperCase() + (labelText || placeholder || finalName.replace(/_/g, ' ')).slice(1),
+        field_name: uniqueName,
+        name: actualName,
+        label: generatedLabel.charAt(0).toUpperCase() + generatedLabel.slice(1),
         type,
-        required: semanticName ? ($el.prop('required') || $el.attr('required') !== undefined) : false,
+        required: $el.prop('required') || $el.attr('required') !== undefined,
         placeholder,
         options,
-        validation: generateValidation(semanticName || finalName, type)
+        validation: generateValidation(uniqueName, type)
       });
     });
   } catch (e) {

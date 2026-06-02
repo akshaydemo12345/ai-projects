@@ -111,24 +111,34 @@ exports.createLead = async (req, res) => {
     }
 
     // 4. Referral / Landing Page URLs
-    // Priority: pageurl > trackingDetails.referral_url > url > referer header
-    // - pageurl: full current page URL sent by frontend (includes slug + UTM params)
-    // - referrer: the previous page / true referring domain (document.referrer from browser)
+    // Priority: current page URL from frontend > pageurl/pageUrl/url > domain fallback
+    // trackingDetails.referrer_url is the originating page URL, not the landing page itself
     const trackingDetails = rawData.trackingDetails || {};
     const pageName = pageSlug || (page ? page.slug : '');
     const fallbackPageUrl = rawData.domain
-      ? `https://${String(rawData.domain).replace(/\/+$|\s+/g, '').replace(/\/+$/,'')}/${String(pageName).replace(/^\/+/, '')}`
+      ? `https://${String(rawData.domain).replace(/\/+$/g, '').replace(/\s+/g, '')}/${String(pageName).replace(/^\/+/, '')}`
       : page && req.get('host')
         ? `${req.protocol}://${req.get('host')}/${String(pageName).replace(/^\/+/, '')}`
         : '';
-    const referralUrl = trackingDetails.referral_url
-      || rawData.pageurl || rawData.pageUrl   // full URL with slug — sent by form script
-      || rawData.url                           // fallback bare URL
+    const landingPageUrl = trackingDetails.current_page_url
+      || rawData.pageurl || rawData.pageUrl
+      || rawData.url
       || fallbackPageUrl
+      || '';
+    const referrerUrl = trackingDetails.referrer_url
+      || rawData.referer || rawData.referrer
       || req.headers.referer || '';
-    const referralSource = rawData.referer || rawData.referrer || trackingDetails.referral_source || 'Direct';
-    // referrer = the TRUE referring site (document.referrer — where they came FROM, not where the form IS)
-    const referrer = rawData.referer || rawData.referrer || req.headers.referer || referralUrl || fallbackPageUrl || '';
+    const referralSource = rawData.referrer_source || rawData.referrer || rawData.referer || trackingDetails.referral_source || (referrerUrl ? referrerUrl : 'Direct');
+    const parseUrlSafe = (value) => {
+      try { return new URL(value); } catch (e) { return null; }
+    };
+    const parsedLanding = parseUrlSafe(landingPageUrl);
+    const parsedReferrer = parseUrlSafe(referrerUrl);
+    const landingPagePath = trackingDetails.page_path || rawData.path || (parsedLanding ? `${parsedLanding.pathname}${parsedLanding.search}${parsedLanding.hash}` : '');
+    const landingPageDomain = trackingDetails.hostname || rawData.domain || (parsedLanding ? parsedLanding.hostname : '');
+    const landingPageHash = trackingDetails.hash || rawData.hash || (parsedLanding ? parsedLanding.hash : '');
+    const referrerHostname = trackingDetails.referrer_domain || (parsedReferrer ? parsedReferrer.hostname : '');
+    const referrerPath = trackingDetails.referrer_path || (parsedReferrer ? `${parsedReferrer.pathname}${parsedReferrer.search}${parsedReferrer.hash}` : '');
     const formData = rawData.formData || rawData.formDetails || undefined;
 
     // 5. UTM strictly from URL / current payload (no localStorage)
@@ -155,10 +165,10 @@ exports.createLead = async (req, res) => {
       }
     });
 
-    // Extract from referralUrl (landing page URL) if missing
-    if (referralUrl) {
+    // Extract from landingPageUrl if missing
+    if (landingPageUrl) {
       try {
-        const parsedUrl = new URL(referralUrl);
+        const parsedUrl = new URL(landingPageUrl);
         utmFields.forEach(k => {
           if (utm[k] === null || utm[k] === '') {
             const val = parsedUrl.searchParams.get(k);
@@ -166,8 +176,8 @@ exports.createLead = async (req, res) => {
           }
         });
       } catch (e) {
-        if (referralUrl.includes('?')) {
-          const params = new URLSearchParams(referralUrl.split('?')[1]);
+        if (landingPageUrl.includes('?')) {
+          const params = new URLSearchParams(landingPageUrl.split('?')[1]);
           utmFields.forEach(k => {
             if (utm[k] === null || utm[k] === '') {
               const val = params.get(k);
@@ -213,20 +223,29 @@ exports.createLead = async (req, res) => {
 
       formData: finalFormData,
       trackingDetails: {
-        referral_url: referralUrl,
-        referral_source: document.referrer || 'Direct',
+        referral_url: referrerUrl || 'Direct',
+        referral_source: referralSource,
+        current_page_url: landingPageUrl,
+        landing_page_url: landingPageUrl,
+        landing_page_domain: landingPageDomain,
+        page_path: landingPagePath,
+        hash: landingPageHash,
+        referrer_domain: referrerHostname,
+        referrer_path: referrerPath,
+        search: trackingDetails.search || rawData.search || (parsedLanding ? parsedLanding.search : ''),
+        utm: { ...utm }
       },
       meta: {
         ip: ip_address,
         userAgent: req.get('User-Agent'),
-        domain: rawData.domain || req.get('origin'),
-        url: referralUrl,
-        referer: referrer
+        domain: landingPageDomain || rawData.domain || req.get('origin'),
+        url: landingPageUrl,
+        referer: referrerUrl
       },
 
       // Flattened explicit analytics fields
-      landing_page: referralUrl,
-      referrer: referrer,
+      landing_page: landingPageUrl,
+      referrer: referrerUrl,
       user_agent: req.get('User-Agent') || '',
       ip_address: ip_address,
       submitted_at: submitted_at
@@ -339,11 +358,11 @@ exports.createLead = async (req, res) => {
 
             // ── Page info rows ───────────────────────────────────────────────
             const pageInfoRows = [];
-            if (referralUrl) {
-              pageInfoRows.push({ label: 'Landing Page', value: `<a href="${referralUrl}" style="color: ${pColor}; text-decoration: none; word-break: break-all; overflow-wrap: break-word;">${referralUrl}</a>` });
+            if (landingPageUrl) {
+              pageInfoRows.push({ label: 'Landing Page', value: `<a href="${landingPageUrl}" style="color: ${pColor}; text-decoration: none; word-break: break-all; overflow-wrap: break-word;">${landingPageUrl}</a>` });
             }
-            if (referrer && referrer !== referralUrl) {
-              pageInfoRows.push({ label: 'Referrer', value: `<a href="${referrer}" style="color: ${pColor}; text-decoration: none; word-break: break-all; overflow-wrap: break-word;">${referrer}</a>` });
+            if (referrerUrl && referrerUrl !== landingPageUrl) {
+              pageInfoRows.push({ label: 'Referrer', value: `<a href="${referrerUrl}" style="color: ${pColor}; text-decoration: none; word-break: break-all; overflow-wrap: break-word;">${referrerUrl}</a>` });
             }
             const capturedPage = pageSlug || (schema ? schema.page_slug : '') || '';
             if (capturedPage) {
