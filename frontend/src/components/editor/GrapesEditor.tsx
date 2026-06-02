@@ -2056,11 +2056,24 @@ const GrapesEditor = () => {
 
     // Extract all custom script tags from the canvas document using the unified helper
     let canvasScriptsForDownload = '';
+    let globalCssForDownload = '';
     try {
       const canvasDoc = editorRef.current.Canvas.getDocument();
-      if (canvasDoc) canvasScriptsForDownload = extractCanvasScripts(canvasDoc);
+      if (canvasDoc) {
+        canvasScriptsForDownload = extractCanvasScripts(canvasDoc);
+        
+        const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
+        const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+        const templateStyleTag = canvasDoc.getElementById('template-styles');
+
+        const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
+          .replace(/var\\(--primary\\)/g, themePrimary)
+          .replace(/var\\(--secondary\\)/g, themeSecondary);
+
+        globalCssForDownload = (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '') + '\\n' + cleanTemplateCss;
+      }
     } catch (e) {
-      console.warn('Failed to extract scripts from canvas for download:', e);
+      console.warn('Failed to extract scripts or styles from canvas for download:', e);
     }
 
     // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
@@ -2068,10 +2081,10 @@ const GrapesEditor = () => {
 
     // 1. Get raw content directly from editor to ensure latest state
     let landingHtml = mode === 'landing' ? editorRef.current.getHtml() : (page?.landingPageContent || '');
-    let landingCss = mode === 'landing' ? editorRef.current.getCss() || '' : (page?.landingPageStyles || '');
+    let landingCss = mode === 'landing' ? globalCssForDownload + '\\n' + (editorRef.current.getCss() || '') : (page?.landingPageStyles || '');
 
     let thankYouHtml = mode === 'thank-you' ? editorRef.current.getHtml() : (page?.thankYouPageContent || '');
-    let thankYouCss = mode === 'thank-you' ? editorRef.current.getCss() || '' : (page?.thankYouPageStyles || '');
+    let thankYouCss = mode === 'thank-you' ? globalCssForDownload + '\\n' + (editorRef.current.getCss() || '') : (page?.thankYouPageStyles || '');
 
     if (mode === 'landing' && customScripts) {
       landingHtml = landingHtml + '\n' + customScripts;

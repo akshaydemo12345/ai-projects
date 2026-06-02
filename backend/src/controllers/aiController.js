@@ -627,3 +627,34 @@ exports.proxyImage = async (req, res, next) => {
     return res.send(fallbackPng);
   }
 };
+
+/**
+ * @route   GET /ai/getimg-balance
+ * @desc    Fetch real-time GetImg.ai API balance
+ * @access  Private
+ */
+exports.getImgBalance = async (req, res, next) => {
+  try {
+    const fetch = require('node-fetch') || global.fetch; // fallback if needed
+    const API_KEY = process.env.GETIMG_API_KEY || '3eN1TZwy915cfl344JDr5FKOQGtrRTV8MsKS519K9nqhWakXqh5bU9BU6iwebRIorqNuMYF7hxK3V85jZ1F3ZKAxBbqZq3wQ';
+    const actualKey = API_KEY.startsWith('key-') ? API_KEY : `key-${API_KEY}`;
+
+    const response = await fetch('https://api.getimg.ai/v1/account/balance', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${actualKey}`,
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ status: 'fail', message: `GetImg API Error: ${errorText}` });
+    }
+
+    const data = await response.json();
+    return res.status(200).json({ status: 'success', data });
+  } catch (err) {
+    next(err);
+  }
+};
