@@ -17,6 +17,26 @@ router.get('/:id', projectController.getProject);
 router.put('/:id', projectController.updateProject);
 router.delete('/:id', projectController.deleteProject);
 
+// ─── Branding Routes ────────────────────────────────────────────────────────
+
+/**
+ * @route   GET /projects/:id/branding
+ * @desc    Get project branding configuration
+ */
+router.get('/:id/branding', projectController.getBranding);
+
+/**
+ * @route   PUT /projects/:id/branding
+ * @desc    Update project branding configuration
+ */
+router.put('/:id/branding', projectController.updateBranding);
+
+/**
+ * @route   POST /projects/:id/branding/extract-from-website
+ * @desc    Fetch website and extract branding colors
+ */
+router.post('/:id/branding/extract-from-website', projectController.extractBrandingFromWebsite);
+
 // ─── Nested Landing Page Routes ──────────────────────────────────────────────
 
 /**

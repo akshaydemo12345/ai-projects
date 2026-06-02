@@ -75,12 +75,12 @@ function normalizeData(schemaFields, rawData) {
     const { value, usedKeys } = getFieldValueWithKeys(field, rawData);
 
     if (value !== undefined && value !== null) {
-      const storageKey = field.name || field.field_name;
+      const storageKey = field.field_name || field.name;
       normalized[storageKey] = value;
       
       usedKeys.forEach(k => processedRawKeys.add(k));
       // Also add normalized versions for safety
-      processedRawKeys.add(normalizeKey(field.field_name));
+      if (field.field_name) processedRawKeys.add(normalizeKey(field.field_name));
       if (field.name) processedRawKeys.add(normalizeKey(field.name));
     }
   });
