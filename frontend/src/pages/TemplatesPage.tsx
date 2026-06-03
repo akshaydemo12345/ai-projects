@@ -12,8 +12,16 @@ import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
+import { law01Html, law01Styles } from "../templates/law/templates01";
 
 const LANDING_TEMPLATES = [
+  {
+    id: "law-01",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+  },
   {
     id: "healthcare-01",
     name: "Lumina Dental",
@@ -79,10 +87,11 @@ const LANDING_TEMPLATES = [
   }
 ];
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance"];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
 
 const getTemplateContent = (id: string) => {
   switch (id) {
+    case "law-01": return { html: law01Html, css: law01Styles };
     case "healthcare-01": return { html: healthcare01Html, css: healthcare01Styles };
     case "healthcare-02": return { html: healthcare02Html, css: healthcare02Styles };
     case "healthcare-03": return { html: healthcare03Html, css: healthcare03Styles };

@@ -20,6 +20,7 @@ import { finance01Html, finance01Styles } from "../templates/finance/templates01
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 import { finance04Html, finance04Styles } from "../templates/finance/templates04";
+import { law01Html, law01Styles } from "../templates/law/templates01";
 import { useState, useEffect } from "react";
 
 // Templates removed as per user request
@@ -335,6 +336,14 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
 // ─── Template definitions ─────────────────────────────────────────────────────
 const LANDING_TEMPLATES: any[] = [
   {
+    id: "law-01",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot.png",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+    prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -437,7 +446,7 @@ const LANDING_TEMPLATES: any[] = [
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance",];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -680,6 +689,7 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+      else if (promptLower.includes("law") || promptLower.includes("legal") || promptLower.includes("attorney") || promptLower.includes("advocate") || projectCat.includes("law")) detectedCategory = "Law Firm";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -699,6 +709,7 @@ const CreatePagePage = () => {
       const tName = templateObj?.name || "Template";
 
       switch (finalTemplateId) {
+        case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1361,6 +1372,7 @@ ${enrichedContent}
               let tpHtml = "";
               let tpStyles = "";
               switch (previewTemplate.id) {
+                case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
