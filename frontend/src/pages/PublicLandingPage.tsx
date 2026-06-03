@@ -257,6 +257,93 @@ const PublicLandingPage = () => {
               el.classList.add("revealed");
             });
           }, 2000);
+
+          // ─── Tab interaction (law01 and any tab-based template) ───
+          function initTabs() {
+            // Enable JS-driven styles (animate-up, tab CSS etc)
+            document.body.classList.add('js-enabled');
+
+            // Make all animate-up/animate-fade elements visible via IntersectionObserver
+            if ('IntersectionObserver' in window) {
+              var animObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                  if (entry.isIntersecting) entry.target.classList.add('in-view');
+                });
+              }, { threshold: 0.1 });
+              document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+                animObserver.observe(el);
+              });
+              // Also trigger on scroll
+              setTimeout(function() {
+                document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+                  var rect = el.getBoundingClientRect();
+                  if (rect.top < window.innerHeight) el.classList.add('in-view');
+                });
+              }, 200);
+            } else {
+              document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+                el.classList.add('in-view');
+              });
+            }
+
+            // Tab switching — index-based, works with any tab structure
+            document.querySelectorAll('.tabs-container').forEach(function(container) {
+              var allTabs = Array.from(container.querySelectorAll('.tab-item'));
+              var allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
+              if (!allTabs.length) return;
+
+              // Ensure first tab is active if none are marked active
+              var hasActive = allPanels.some(function(p) { return p.classList.contains('active'); });
+              if (!hasActive) {
+                allTabs[0].classList.add('active');
+                if (allPanels[0]) allPanels[0].classList.add('active');
+              }
+
+              allTabs.forEach(function(tabEl, index) {
+                tabEl.style.cursor = 'pointer';
+                tabEl.addEventListener('click', function(e) {
+                  allTabs.forEach(function(t) { t.classList.remove('active'); });
+                  allPanels.forEach(function(p) { p.classList.remove('active'); });
+                  tabEl.classList.add('active');
+                  if (allPanels[index]) allPanels[index].classList.add('active');
+                });
+              });
+            });
+
+            // ─── Custom FAQ toggles (e.g. Travel template) ───
+            document.addEventListener('click', function(e) {
+              const faqHead = e.target.closest('.faq-head, .v2-faq-summary');
+              if (faqHead && !faqHead.closest('details')) {
+                const item = faqHead.parentElement;
+                if (item && item.classList.contains('faq-item')) {
+                  const allItems = document.querySelectorAll('.faq-item');
+                  allItems.forEach(function(el) {
+                    if (el !== item) el.classList.remove('active');
+                  });
+                  item.classList.toggle('active');
+                }
+              }
+
+              // ─── Custom Dropdowns (e.g. Travel template) ───
+              const dropdownToggle = e.target.closest('.dropdown-toggle');
+              if (dropdownToggle) {
+                e.stopPropagation();
+                dropdownToggle.classList.toggle('active');
+                const menu = dropdownToggle.parentElement.querySelector('.dropdown-menu');
+                if (menu) menu.classList.toggle('active');
+              } else {
+                document.querySelectorAll('.dropdown-toggle, .dropdown-menu').forEach(function(el) {
+                  el.classList.remove('active');
+                });
+              }
+            });
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTabs);
+          } else {
+            initTabs();
+          }
         }();
       </script>
     `;
