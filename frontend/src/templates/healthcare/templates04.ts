@@ -1823,12 +1823,4 @@ export const healthcare04Html = `
       </div>
     </div>
   </footer>
-
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script>
-    if (typeof feather !== 'undefined') {
-      feather.replace();
-    }
-  </script>
 `;
-

@@ -452,7 +452,15 @@ const GrapesEditor = () => {
         const interactionScript = canvasDoc.createElement('script');
         interactionScript.id = 'editor-interactions';
         interactionScript.innerHTML = `
+          // Add js-enabled so template CSS (active tab visibility) works in editor
+          document.body.classList.add('js-enabled');
+          // Immediately make all animated elements visible in editor (no scroll trigger needed)
+          document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+            el.classList.add('in-view');
+          });
+
           document.addEventListener('click', function(e) {
+            // Handle details/summary toggle
             const summary = e.target.closest('summary');
             if (summary) {
               const details = summary.parentElement;
@@ -463,6 +471,47 @@ const GrapesEditor = () => {
                   details.setAttribute('open', '');
                 }
               }
+            }
+
+            // Handle tab clicks for law01 and any tab-based template
+            const tabItem = e.target.closest('.tab-item');
+            if (tabItem) {
+              const container = tabItem.closest('.tabs-container');
+              if (container) {
+                const allTabs = Array.from(container.querySelectorAll('.tab-item'));
+                const allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
+                const tabIndex = allTabs.indexOf(tabItem);
+                allTabs.forEach(function(t) { t.classList.remove('active'); });
+                allPanels.forEach(function(p) { p.classList.remove('active'); });
+                tabItem.classList.add('active');
+                if (allPanels[tabIndex]) {
+                  allPanels[tabIndex].classList.add('active');
+                }
+              }
+            }
+
+            // Handle custom FAQ toggles (e.g. Travel template)
+            const faqHead = e.target.closest('.faq-head, .v2-faq-summary');
+            if (faqHead && !faqHead.closest('details')) {
+              const item = faqHead.parentElement;
+              if (item && item.classList.contains('faq-item')) {
+                const allItems = document.querySelectorAll('.faq-item');
+                allItems.forEach(el => {
+                  if (el !== item) el.classList.remove('active');
+                });
+                item.classList.toggle('active');
+              }
+            }
+
+            // Handle custom Dropdowns (e.g. Travel template)
+            const dropdownToggle = e.target.closest('.dropdown-toggle');
+            if (dropdownToggle) {
+              e.stopPropagation();
+              dropdownToggle.classList.toggle('active');
+              const menu = dropdownToggle.parentElement.querySelector('.dropdown-menu');
+              if (menu) menu.classList.toggle('active');
+            } else {
+              document.querySelectorAll('.dropdown-toggle, .dropdown-menu').forEach(el => el.classList.remove('active'));
             }
           }, true);
         `;
@@ -535,7 +584,20 @@ const GrapesEditor = () => {
 
       editor.setComponents(dbContent);
       // ── Hide loader after canvas has had time to render CSS/fonts ──
-      setTimeout(() => setIsCanvasLoading(false), 1200);
+      // Re-add js-enabled + in-view after setComponents so animations & tabs work in editor
+      setTimeout(() => {
+        try {
+          const cDoc = editor.Canvas.getDocument();
+          if (cDoc && cDoc.body) {
+            cDoc.body.classList.add('js-enabled');
+            // Make all animated elements visible (no scroll needed in editor)
+            cDoc.querySelectorAll('.animate-up, .animate-fade').forEach((el: Element) => {
+              el.classList.add('in-view');
+            });
+          }
+        } catch(e) { /* ignore */ }
+        setIsCanvasLoading(false);
+      }, 1200);
     } else {
       console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
       // hide loader for empty case too
@@ -3759,6 +3821,60 @@ function buildPublishHtml(
 <body>
 ${bodyHtml}
 ${scripts}
+<script>
+(function() {
+  function initPublishedPage() {
+    // 1. Enable JS-driven styles
+    document.body.classList.add('js-enabled');
+
+    // 2. Scroll animations
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) entry.target.classList.add('in-view');
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+        observer.observe(el);
+      });
+    } else {
+      // Fallback: show all immediately
+      document.querySelectorAll('.animate-up, .animate-fade').forEach(function(el) {
+        el.classList.add('in-view');
+      });
+    }
+
+    // 3. Tab interactions — index-based, works with any tab structure
+    document.querySelectorAll('.tabs-container').forEach(function(container) {
+      var allTabs = Array.from(container.querySelectorAll('.tab-item'));
+      var allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
+
+      // Ensure first tab is active if none are
+      var hasActive = allPanels.some(function(p) { return p.classList.contains('active'); });
+      if (!hasActive && allTabs.length > 0) {
+        allTabs[0].classList.add('active');
+        if (allPanels[0]) allPanels[0].classList.add('active');
+      }
+
+      allTabs.forEach(function(tabEl, index) {
+        tabEl.style.cursor = 'pointer';
+        tabEl.addEventListener('click', function() {
+          allTabs.forEach(function(t) { t.classList.remove('active'); });
+          allPanels.forEach(function(p) { p.classList.remove('active'); });
+          tabEl.classList.add('active');
+          if (allPanels[index]) allPanels[index].classList.add('active');
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPublishedPage);
+  } else {
+    initPublishedPage();
+  }
+})();
+</script>
 </body>
 </html>`;
 }
