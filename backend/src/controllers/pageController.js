@@ -136,6 +136,86 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
   return uniqueSlug;
 };
 
+const normalizeSlug = (value) => {
+  if (!value) return '';
+  return value.toString().trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+};
+
+const checkPageExistsOnExternalWebsite = async (project, slug) => {
+  if (!project?.websiteUrl || !slug) {
+    logger.debug(`Skipping external website check: websiteUrl=${!!project?.websiteUrl}, slug=${!!slug}`);
+    return false;
+  }
+  let baseUrl = project.websiteUrl;
+  if (!baseUrl.startsWith('http')) {
+    baseUrl = 'https://' + baseUrl;
+  }
+  baseUrl = baseUrl.replace(/\/+$|\s+/g, '');
+  const checkUrl = `${baseUrl}/${slug}`;
+  logger.info(`Checking if page exists on external website: ${checkUrl}`);
+  try {
+    // HEAD request (no body = faster) with 10s timeout to handle slow/redirecting sites
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let checkResponse;
+    try {
+      checkResponse = await fetch(checkUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+    } catch (headErr) {
+      // Some servers reject HEAD - fall back to GET
+      logger.debug(`HEAD failed for ${checkUrl}, trying GET: ${headErr?.message}`);
+      checkResponse = await fetch(checkUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+    }
+    clearTimeout(timeoutId);
+
+    logger.debug(`External website check response for ${checkUrl}: status=${checkResponse.status}`);
+
+    if (checkResponse.status === 200) {
+      // Catch-all check: detect sites that return 200 for ANY URL (e.g. WordPress catch-all)
+      const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
+      const catchAllController = new AbortController();
+      const catchAllTimeout = setTimeout(() => catchAllController.abort(), 10000);
+      let catchAllResponse = null;
+      try {
+        catchAllResponse = await fetch(randomUrl, {
+          method: 'HEAD',
+          signal: catchAllController.signal,
+          redirect: 'follow',
+        });
+      } catch (_headErr2) {
+        try {
+          catchAllResponse = await fetch(randomUrl, {
+            method: 'GET',
+            signal: catchAllController.signal,
+            redirect: 'follow',
+          });
+        } catch (_getErr2) {
+          catchAllResponse = null;
+        }
+      }
+      clearTimeout(catchAllTimeout);
+
+      logger.debug(`Catch-all check for ${randomUrl}: status=${catchAllResponse?.status}`);
+
+      if (!catchAllResponse || catchAllResponse.status !== 200) {
+        logger.warn(`Page slug "${slug}" exists on website ${baseUrl} (returned 200, catch-all confirmed)`);
+        return true;
+      }
+      logger.debug(`Site has catch-all routing enabled, random URL also returned 200`);
+    }
+  } catch (err) {
+    logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err?.message || err });
+  }
+  return false;
+};
+
 // Helper: Ensure project ownership
 const checkProjectOwnership = async (projectId, userId) => {
   return await Project.exists({ _id: projectId, userId });
@@ -180,6 +260,70 @@ exports.getPagesInProject = async (req, res, next) => {
         page: parseInt(page),
         totalPages: Math.ceil(total / parseInt(limit))
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.verifyPageSlug = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { name, slug, prefix } = req.body || {};
+
+    if (!projectId) {
+      return res.status(400).json({ success: false, message: 'Project ID is required in URL', data: {} });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found', data: {} });
+    }
+
+    if (project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to verify pages for this project', data: {} });
+    }
+
+    const baseSlug = slug || name || '';
+    const normalizedSlug = normalizeSlug(prefix ? `${prefix}-${baseSlug}` : baseSlug);
+
+    if (!normalizedSlug) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid page name or slug', data: {} });
+    }
+
+    if (await Page.exists({ projectId, slug: normalizedSlug })) {
+      return res.status(400).json({
+        success: false,
+        message: 'This URL slug already exists in this project. Please choose a different page name.',
+        data: {}
+      });
+    }
+
+    // Check if page exists on external website if websiteUrl is configured
+    let checkedExternal = false;
+    let externalCheckMessage = '';
+    
+    if (project.websiteUrl) {
+      checkedExternal = true;
+      const pageExistsOnWebsite = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
+      if (pageExistsOnWebsite) {
+        logger.info(`Page slug "${normalizedSlug}" already exists on website "${project.websiteUrl}"`);
+        return res.status(400).json({
+          success: false,
+          message: 'Page already exists on website',
+          data: {}
+        });
+      }
+      externalCheckMessage = 'checked on your website';
+    } else {
+      logger.debug(`Skipping external website check: project.websiteUrl not configured for project ${projectId}`);
+      externalCheckMessage = 'internal database only';
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Slug is available', 
+      data: { slug: normalizedSlug, checkedExternal, externalCheckMessage } 
     });
   } catch (err) {
     next(err);
