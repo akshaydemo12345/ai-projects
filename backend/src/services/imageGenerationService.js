@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const cheerio = require('cheerio');
+const sharp = require('sharp');
 const logger = require('../utils/logger');
 
 /**
@@ -39,7 +40,7 @@ async function generateGetImgUrl(
     let response;
     let retries = 3;
     let delay = 1000; // start with 1 second delay
-    
+
     while (retries > 0) {
       response = await fetch(
         'https://api.getimg.ai/v1/flux-schnell/text-to-image',
@@ -55,11 +56,12 @@ async function generateGetImgUrl(
             width,
             height,
             steps: 4,
+            output_format: 'jpeg',
             response_format: 'b64'
           })
         }
       );
-      
+
       if (response.status === 429) {
         logger.warn(`[getimg.ai] Rate limited. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -121,12 +123,21 @@ async function generateGetImgUrl(
      * BASE64 IMAGE
      */
     if (data?.image) {
+      logger.info(`[getimg.ai] Image generated successfully. Compressing with sharp...`);
+      try {
+        const buffer = Buffer.from(data.image, 'base64');
+        const compressedBuffer = await sharp(buffer)
+          .resize({ width, height, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 60 }) // High compression to keep it in KBs
+          .toBuffer();
 
-      logger.info(
-        `[getimg.ai] Image generated successfully`
-      );
-
-      return `data:image/jpeg;base64,${data.image}`;
+        const compressedBase64 = compressedBuffer.toString('base64');
+        logger.info(`[getimg.ai] Image compressed successfully. Size reduced.`);
+        return `data:image/webp;base64,${compressedBase64}`;
+      } catch (err) {
+        logger.error(`[getimg.ai] Compression failed, using original: ${err.message}`);
+        return `data:image/webp;base64,${data.image}`;
+      }
     }
 
     /**
@@ -277,11 +288,19 @@ async function replacePlaceholdersInHtml(
   subIndustry
 ) {
 
+  // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
+  const DISABLE_AI_IMAGES_FOR_TESTING = false;
+  // 👆👆👆
+
   if (
     !htmlContent ||
-    typeof htmlContent !== 'string'
+    typeof htmlContent !== 'string' ||
+    DISABLE_AI_IMAGES_FOR_TESTING
   ) {
-    return htmlContent;
+    if (DISABLE_AI_IMAGES_FOR_TESTING) {
+      console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Skipping getimg.ai API.');
+    }
+    return { html: htmlContent, imageCount: 0 };
   }
 
   try {
@@ -363,8 +382,8 @@ async function replacePlaceholdersInHtml(
     const results = [];
     for (const img of imagesToReplace) {
       const prompt = getPromptForIndustry(industry, subIndustry, img.context);
-      const width = img.context.isHero ? 1152 : 1024;
-      const height = img.context.isHero ? 768 : 1024;
+      const width = img.context.isHero ? 768 : 512;
+      const height = img.context.isHero ? 512 : 512;
       const newUrl = await generateGetImgUrl(prompt, width, height);
 
       results.push({
@@ -408,7 +427,7 @@ async function replacePlaceholdersInHtml(
      * REGEX FOR ANY REMAINING STOCK URLS (e.g. background-image)
      */
     const stockRegex = /(https?:\/\/(?:images\.unsplash\.com|source\.unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)[^'"\s\)\>]*)/gi;
-    
+
     let match;
     const remainingUrls = [];
     while ((match = stockRegex.exec(finalHtml)) !== null) {
@@ -417,14 +436,14 @@ async function replacePlaceholdersInHtml(
         const startIdx = Math.max(0, match.index - 300);
         const precedingText = finalHtml.substring(startIdx, match.index).toLowerCase();
         const isHero = precedingText.includes('hero') || precedingText.includes('banner');
-        
+
         remainingUrls.push({ url, isHero });
       }
     }
 
     if (remainingUrls.length > 0) {
       logger.info(`[ImageGenerationService] Found ${remainingUrls.length} background/inline images`);
-      
+
       const remainingResults = [];
       for (const item of remainingUrls) {
         const context = {
@@ -432,12 +451,12 @@ async function replacePlaceholdersInHtml(
           sectionClass: item.isHero ? 'hero' : ''
         };
         const prompt = getPromptForIndustry(industry, subIndustry, context);
-        const width = item.isHero ? 1152 : 1024;
-        const height = item.isHero ? 768 : 1024;
+        const width = item.isHero ? 768 : 512;
+        const height = item.isHero ? 512 : 512;
         const newUrl = await generateGetImgUrl(prompt, width, height);
-        
+
         remainingResults.push({ originalUrl: item.url, newUrl });
-        
+
         // Add a small delay between requests to avoid rate limits
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -450,7 +469,10 @@ async function replacePlaceholdersInHtml(
       });
     }
 
-    return finalHtml;
+    const totalImagesGenerated = results.filter(r => r.newUrl).length +
+      (typeof remainingResults !== 'undefined' ? remainingResults.filter(r => r.newUrl).length : 0);
+
+    return { html: finalHtml, imageCount: totalImagesGenerated };
 
   } catch (err) {
 
@@ -458,7 +480,7 @@ async function replacePlaceholdersInHtml(
       `[ImageGenerationService] ${err.message}`
     );
 
-    return htmlContent;
+    return { html: htmlContent, imageCount: 0 };
   }
 }
 

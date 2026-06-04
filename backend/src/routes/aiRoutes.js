@@ -62,5 +62,6 @@ const imageRateLimit = rateLimiter({
   message: 'Too many image requests. Please wait a moment before trying again.',
 });
 router.get('/proxy-image', imageRateLimit, require('../controllers/aiController').proxyImage);
+router.get('/getimg-balance', protect, require('../controllers/aiController').getImgBalance);
 
 module.exports = router;
