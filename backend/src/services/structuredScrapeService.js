@@ -598,10 +598,27 @@ const extractMeta = ($, baseUrl) => {
     }
   }
 
+  const canonicalUrl = $('link[rel="canonical"]').attr('href') || baseUrl;
+  const keywords = $('meta[name="keywords"]').attr('content')?.split(',').map(k => k.trim()).filter(Boolean) || [];
+  const siteName = $('meta[property="og:site_name"]').attr('content') || $('meta[name="application-name"]').attr('content') || '';
+  const themeColor = $('meta[name="theme-color"]').attr('content') || '';
+  const robots = $('meta[name="robots"]').attr('content') || '';
+  const openGraphImage = $('meta[property="og:image"]').attr('content') || '';
+  const twitterImage = $('meta[name="twitter:image"]').attr('content') || '';
+  const twitterCard = $('meta[name="twitter:card"]').attr('content') || '';
+
   return {
     title,
     description,
-    favicon
+    favicon,
+    canonicalUrl: canonicalUrl.startsWith('http') ? canonicalUrl : new URL(canonicalUrl, baseUrl).href,
+    keywords,
+    siteName,
+    themeColor,
+    robots,
+    openGraphImage: openGraphImage.startsWith('http') ? openGraphImage : (openGraphImage ? new URL(openGraphImage, baseUrl).href : ''),
+    twitterImage: twitterImage.startsWith('http') ? twitterImage : (twitterImage ? new URL(twitterImage, baseUrl).href : ''),
+    twitterCard,
   };
 };
 
