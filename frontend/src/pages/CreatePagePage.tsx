@@ -19,6 +19,8 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { finance04Html, finance04Styles } from "../templates/finance/templates04";
+import { law01Html, law01Styles } from "../templates/law/templates01";
 import { useState, useEffect } from "react";
 
 // Templates removed as per user request
@@ -334,6 +336,14 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
 // ─── Template definitions ─────────────────────────────────────────────────────
 const LANDING_TEMPLATES: any[] = [
   {
+    id: "law-01",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot.png",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+    prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -425,10 +435,18 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   },
 
+  {
+    id: "finance-04",
+    name: "Finova Analytics",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates04/screenshot.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
+    prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
+  },
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance",];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -442,6 +460,18 @@ const CreatePagePage = () => {
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
   });
+
+  const { data: projectPages = [] } = useQuery({
+    queryKey: ["project-pages", id],
+    queryFn: () => pagesApi.getPagesByProject(id!),
+    enabled: !!id,
+  });
+
+  const [slugError, setSlugError] = useState("");
+  const [pageNameError, setPageNameError] = useState("");
+  const [methodError, setMethodError] = useState("");
+  const [isSlugVerified, setIsSlugVerified] = useState(false);
+  const [isVerifyingSlug, setIsVerifyingSlug] = useState(false);
 
   const { data: suggestionsData } = useQuery({
     queryKey: ["project-suggestions", id],
@@ -569,6 +599,175 @@ const CreatePagePage = () => {
     }
   }, [project]);
 
+  // Debounced background check for slug availability (checks local DB & external website)
+  useEffect(() => {
+    const normalizedSlug = normalizeSlug(pageSlug);
+    if (!normalizedSlug) {
+      setIsSlugVerified(false);
+      setSlugError("");
+      return;
+    }
+
+    const isDuplicate = projectPages.some((page: any) => normalizeSlug(page.slug || "") === normalizedSlug);
+    if (isDuplicate) {
+      setSlugError("This URL slug already exists in this project. Please choose a different page name.");
+      setIsSlugVerified(false);
+      return;
+    }
+
+    setSlugError("");
+
+    const timer = setTimeout(async () => {
+      await verifySlugAvailability(normalizedSlug, true);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [pageSlug, projectPages]);
+
+  const normalizeSlug = (value: string) => autoSlug(value.trim());
+
+  const validateDuplicateSlug = (slugValue: string) => {
+    const normalizedSlug = normalizeSlug(slugValue);
+    if (!normalizedSlug) {
+      setSlugError("");
+      setIsSlugVerified(false);
+      return false;
+    }
+
+    const slugAlreadyExists = projectPages.some((page: any) => normalizeSlug(page.slug || "") === normalizedSlug);
+    if (slugAlreadyExists) {
+      setSlugError("This URL slug already exists in this project. Please choose a different page name.");
+      setIsSlugVerified(false);
+      return true;
+    }
+
+    setSlugError("");
+    return false;
+  };
+
+  const verifySlugAvailability = async (slugValue: string, silent = false) => {
+    const normalizedSlug = normalizeSlug(slugValue);
+    if (!normalizedSlug) {
+      setSlugError("Page name or URL slug is required.");
+      setIsSlugVerified(false);
+      return true;
+    }
+
+    if (validateDuplicateSlug(normalizedSlug)) {
+      return true;
+    }
+
+    setIsVerifyingSlug(true);
+    try {
+      const response = await pagesApi.verifySlug(id!, { slug: normalizedSlug });
+      setSlugError("");
+      setIsSlugVerified(true);
+      
+      // Provide feedback based on what was checked
+      if (!silent) {
+        const message = response?.data?.externalCheckMessage || 'unknown';
+        if (message === 'checked on your website') {
+          toast.success(`✓ Slug "${normalizedSlug}" verified on your website`);
+        } else if (message === 'internal database only') {
+          toast.success(`✓ Slug "${normalizedSlug}" is available (website URL not configured - checked database only)`);
+        } else {
+          toast.success(`✓ Slug "${normalizedSlug}" is available`);
+        }
+      }
+      return false;
+    } catch (err: any) {
+      const errorMsg = err.message || "This URL slug is unavailable.";
+      setSlugError(errorMsg);
+      setIsSlugVerified(false);
+      if (!silent) {
+        if (errorMsg.includes("already exists on website")) {
+          toast.error(`✗ Page already exists on your website`);
+        } else {
+          toast.error(errorMsg);
+        }
+      }
+      return true;
+    } finally {
+      setIsVerifyingSlug(false);
+    }
+  };
+
+  const validateForm = async () => {
+    let isValid = true;
+    const normalizedSlug = normalizeSlug(pageSlug || pageName);
+
+    if (!pageName.trim()) {
+      setPageNameError("Page name is required.");
+      isValid = false;
+    } else {
+      setPageNameError("");
+    }
+
+    if (!normalizedSlug) {
+      setSlugError("Please enter a valid page name or URL slug.");
+      setIsSlugVerified(false);
+      isValid = false;
+    }
+
+    if (activeMethod === "ai") {
+      if (!aiPrompt.trim()) {
+        setMethodError("Describe your page for AI generation.");
+        isValid = false;
+      } else {
+        setMethodError("");
+      }
+    } else if (activeMethod === "template") {
+      if (!selectedTemplate) {
+        setMethodError("Select a template before generating.");
+        isValid = false;
+      } else {
+        setMethodError("");
+      }
+    } else if (activeMethod === "figma") {
+      if (!figmaFile) {
+        setMethodError("Upload a Figma or design file before generating.");
+        isValid = false;
+      } else {
+        setMethodError("");
+      }
+    } else {
+      setMethodError("");
+    }
+
+    if (!isValid) {
+      return false;
+    }
+
+    if (!isSlugVerified) {
+      const hasError = await verifySlugAvailability(normalizedSlug, false);
+      if (hasError) {
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  };
+
+  const handlePageNameBlur = async () => {
+    if (!pageName.trim()) {
+      setPageNameError("Page name is required.");
+      setSlugError("");
+      setIsSlugVerified(false);
+      return;
+    }
+
+    setPageNameError("");
+    const generatedSlug = normalizeSlug(pageName);
+    setPageSlug(generatedSlug);
+    await verifySlugAvailability(generatedSlug, false);
+  };
+
+  const handleSlugBlur = async () => {
+    const normalizedSlug = normalizeSlug(pageSlug || pageName);
+    setPageSlug(normalizedSlug);
+    await verifySlugAvailability(normalizedSlug, false);
+  };
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -651,8 +850,8 @@ const CreatePagePage = () => {
   };
 
   const handleCreate = async () => {
-    if (!pageName.trim()) { toast.error("Please enter a page name."); return; }
-    if (activeMethod !== "figma" && !aiPrompt.trim()) { toast.error("Please describe your page or select a template."); return; }
+    const isValid = await validateForm();
+    if (!isValid) return;
     if (!project) return;
 
     setShowLoader(true);
@@ -671,6 +870,7 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+      else if (promptLower.includes("law") || promptLower.includes("legal") || promptLower.includes("attorney") || promptLower.includes("advocate") || projectCat.includes("law")) detectedCategory = "Law Firm";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -690,6 +890,7 @@ const CreatePagePage = () => {
       const tName = templateObj?.name || "Template";
 
       switch (finalTemplateId) {
+        case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -701,6 +902,7 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        case "finance-04": enrichedContent = finance04Html; enrichedStyles = finance04Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -757,6 +959,10 @@ const CreatePagePage = () => {
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
       enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
+      enrichedContent = enrichedContent.replace(/PHONE_PLACEHOLDER/g, project.scrapedData?.phone || project.phone || "+1 (800) 123-4567");
+      enrichedContent = enrichedContent.replace(/EMAIL_PLACEHOLDER/g, project.scrapedData?.email || project.contactEmail || project.fromEmail || "contact@example.com");
+      enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, project.scrapedData?.address || "123 Business Avenue, New York, NY");
+
 
       // Replace any remaining placeholders in content (just in case)
       enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
@@ -963,22 +1169,60 @@ ${enrichedContent}
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Page Name *</label>
                   <input
                     value={pageName}
-                    onChange={(e) => { setPageName(e.target.value); setPageSlug(autoSlug(e.target.value)); }}
+                    onChange={(e) => {
+                      setPageName(e.target.value);
+                      const generated = autoSlug(e.target.value);
+                      setPageSlug(generated);
+                      // Clear validation states as the user is actively typing
+                      setIsSlugVerified(false);
+                      setSlugError("");
+                    }}
+                    onBlur={handlePageNameBlur}
                     placeholder="e.g. Roofing Delhi"
-                    className="w-full h-11 border border-gray-200 bg-gray-50 rounded-xl px-4 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                    className={`w-full h-11 border rounded-xl px-4 text-sm outline-none transition-all ${
+                      pageNameError 
+                        ? 'border-red-500 bg-red-50/10 focus:border-red-500 focus:ring-2 focus:ring-red-100' 
+                        : 'border-gray-200 bg-gray-50 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100'
+                    }`}
                   />
+                  {pageNameError && (
+                    <span className="text-red-500 text-xs mt-1 block">{pageNameError}</span>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">URL Slug</label>
-                  <div className="flex items-center h-11 border border-gray-200 bg-gray-50 rounded-xl overflow-hidden focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 transition-all">
+                  <div className={`flex items-center h-11 border rounded-xl overflow-hidden transition-all ${
+                    slugError 
+                      ? 'border-red-500 bg-red-50/10 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100' 
+                      : isSlugVerified 
+                        ? 'border-emerald-500 bg-emerald-50/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100' 
+                        : 'border-gray-200 bg-gray-50 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100'
+                  }`}>
                     <span className="px-3 h-full flex items-center bg-gray-100 text-xs font-bold text-gray-500 border-r border-gray-200 whitespace-nowrap">/</span>
                     <input
                       value={pageSlug}
-                      onChange={(e) => setPageSlug(autoSlug(e.target.value))}
+                      onChange={(e) => {
+                        setPageSlug(autoSlug(e.target.value));
+                        // Clear validation states as the user is actively typing
+                        setIsSlugVerified(false);
+                        setSlugError("");
+                      }}
+                      onBlur={handleSlugBlur}
                       placeholder="roofing-delhi"
                       className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
                     />
+                    <div className="flex items-center gap-1.5 px-3 flex-shrink-0">
+                      {isVerifyingSlug && (
+                        <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
+                      )}
+                      {!isVerifyingSlug && isSlugVerified && (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      )}
+                    </div>
                   </div>
+                  {slugError && (
+                    <span className="text-red-500 text-xs mt-1 block">{slugError}</span>
+                  )}
                 </div>
               </div>
               <div
@@ -1347,6 +1591,7 @@ ${enrichedContent}
               let tpHtml = "";
               let tpStyles = "";
               switch (previewTemplate.id) {
+                case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
@@ -1358,6 +1603,7 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
+                case "finance-04": tpHtml = finance04Html; tpStyles = finance04Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
@@ -1405,6 +1651,9 @@ ${enrichedContent}
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
                 .replace(/CONTACT_PLACEHOLDER/g, project?.contactEmail || project?.phone || "Contact Us")
+                .replace(/PHONE_PLACEHOLDER/g, project?.scrapedData?.phone || project?.phone || "+1 (800) 123-4567")
+                .replace(/EMAIL_PLACEHOLDER/g, project?.scrapedData?.email || project?.contactEmail || project?.fromEmail || "contact@example.com")
+                .replace(/ADDRESS_PLACEHOLDER/g, project?.scrapedData?.address || "123 Business Avenue, New York, NY")
                 .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
                 .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
                 .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))

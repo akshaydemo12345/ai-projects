@@ -157,6 +157,7 @@ const CreateProjectFlow = () => {
       preSlug: preSlug.trim(),
       websiteUrl: websiteUrl.trim(),
       category: selectedCategory,
+      subIndustry: selectedSubIndustry || undefined,
       description: description.trim(),
       logoUrl: logoBase64 || undefined,
       themeColor: themeColor || undefined,

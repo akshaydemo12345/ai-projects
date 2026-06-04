@@ -221,6 +221,8 @@ const pageSchema = new mongoose.Schema({
     completionTokens: { type: Number, default: 0 },
     totalTokens: { type: Number, default: 0 },
     cost: { type: Number, default: 0 },
+    imageCount: { type: Number, default: 0 },
+    imageCost: { type: Number, default: 0 },
     model: String,
     currency: { type: String, default: 'USD' },
     lastUsageAt: { type: Date, default: Date.now }
@@ -233,6 +235,8 @@ const pageSchema = new mongoose.Schema({
       completionTokens: Number,
       totalTokens: Number,
       cost: Number,
+      imageCount: { type: Number, default: 0 },
+      imageCost: { type: Number, default: 0 },
       createdAt: { type: Date, default: Date.now }
     }
   ],
