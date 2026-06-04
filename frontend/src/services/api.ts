@@ -35,7 +35,9 @@ export interface Project {
   url?: string;
   websiteUrl?: string;
   category: string;
-    industry?: string;
+  industry?: string;
+  subIndustry?: string;
+  scrapedData?: Record<string, any>;
   apiToken: string;
   userId: string;
   isDeleted: boolean;
@@ -157,6 +159,8 @@ export interface LandingPage {
     completionTokens: number;
     totalTokens: number;
     cost: number;
+    imageCount?: number;
+    imageCost?: number;
     model: string;
     currency: string;
     lastUsageAt?: string;
@@ -168,6 +172,8 @@ export interface LandingPage {
     completionTokens: number;
     totalTokens: number;
     cost: number;
+    imageCount?: number;
+    imageCost?: number;
     createdAt: string;
   }>;
   publishedAt?: string;
@@ -494,6 +500,18 @@ export const pagesApi = {
     }
     return res.data;
   },
+  verifySlug: async (projectId: string, data: any) => {
+    const payload = {
+      ...data,
+      title: data.name || data.title || 'Untitled Page',
+      name: data.name || data.title || 'Untitled Page',
+    };
+    const res = await apiFetch(`/projects/${projectId}/pages/verify`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
   update: async (projectId: string, pageId: string, data: any) => {
     // Normalization helper
     const normalizeScript = (value = '') => {
@@ -627,6 +645,11 @@ export const aiApi = {
     // Returns the proxy URL for an image
     const encoded = encodeURIComponent(imageUrl);
     return `${API_BASE_URL}/ai/proxy-image?url=${encoded}`;
+  },
+  getImgBalance: async () => {
+    return apiFetch('/ai/getimg-balance', {
+      method: 'GET',
+    });
   },
 };
 

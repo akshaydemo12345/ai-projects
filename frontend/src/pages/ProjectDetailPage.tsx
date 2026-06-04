@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
+import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
@@ -242,11 +242,39 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [logoPreview, setLogoPreview] = useState<string | null>(project.logoUrl || null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logoUrl);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
+  const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
+  const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
   const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
     const brightness = await getImageAverageBrightness(img.src);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
+
+  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
+    const brightness = await getImageAverageBrightness(img.src);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
+    if (!src) return;
+    const normalized = normalizeLogoUrl(src);
+    if (!normalized) return;
+
+    const brightness = await getImageAverageBrightness(normalized);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  useEffect(() => {
+    updateLogoBackgroundFromUrl(logoUrl || project.logoUrl);
+  }, [logoUrl, project.logoUrl]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -650,8 +678,53 @@ interface UsageModalProps {
 const UsageModal = ({ page, onClose }: UsageModalProps) => {
   const usage = page.aiUsage;
   const history = page.aiUsageHistory || [];
+  
+  const [realBalance, setRealBalance] = useState<number | null>(null);
+  const [globalStats, setGlobalStats] = useState<any>(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [balanceRes, statsRes] = await Promise.all([
+          aiApi.getImgBalance().catch(() => null),
+          statsApi.getDashboardStats().catch(() => null)
+        ]);
+
+        if (balanceRes?.data?.amount !== undefined) {
+          setRealBalance(balanceRes.data.amount);
+        } else if (balanceRes?.data?.balance !== undefined) {
+          setRealBalance(balanceRes.data.balance);
+        }
+
+        if (statsRes) {
+          setGlobalStats(statsRes);
+        }
+      } catch (err) {
+        console.error('Failed to fetch usage data:', err);
+      } finally {
+        setLoadingBalance(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   if (!usage && history.length === 0) return null;
+
+  // The total combined cost is usage.cost. We also have precise fields usage.imageCost and usage.imageCount now.
+  let calculatedTotalCost = usage?.cost || 0;
+  
+  // Read exact image cost from DB if available, else fallback to 0
+  let calculatedImgCost = usage?.imageCost || 0;
+  let calculatedImageCount = usage?.imageCount || 0;
+  let calculatedTokenCost = Math.max(0, calculatedTotalCost - calculatedImgCost);
+
+  // Fallback for old pages generated before imageCost was tracked
+  if (calculatedImgCost === 0 && calculatedTotalCost > 0 && !usage?.imageCount) {
+    calculatedImgCost = calculatedTotalCost * 0.40;
+    calculatedTokenCost = calculatedTotalCost * 0.60;
+    calculatedImageCount = Math.max(1, Math.round(calculatedImgCost / 0.002));
+  }
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -675,17 +748,81 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
             <div className="p-6 border-b border-border bg-muted/10">
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Consumption</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Tokens Consumption</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-mono font-black text-foreground">{(usage.totalTokens || 0).toLocaleString()}</span>
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Tokens</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Total Estimated Cost</p>
-                  <p className="text-3xl font-mono font-black text-emerald-600">
-                    ${(usage.cost || 0).toFixed(4)}
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Tokens Cost (Est.)</p>
+                  <p className="text-3xl font-mono font-black text-blue-600">
+                    ${calculatedTokenCost.toFixed(4)}
                   </p>
+                </div>
+              </div>
+
+              {/* IMAGE USAGE COST UI */}
+              <div className="grid grid-cols-2 gap-6 mb-6 pt-6 border-t border-border/50">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Image Generation
+                  </p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-mono font-bold text-foreground">
+                      {calculatedImageCount}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase">Images generated</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">IMG - Cost Deducted</p>
+                  <p className="text-2xl font-mono font-black text-purple-600">
+                    ${calculatedImgCost.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+
+              {/* TOTAL GRAND COST & BALANCE SIMULATION */}
+              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20 mb-6">
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-emerald-500/20">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Grand Total Cost</p>
+                    <p className="text-[10px] text-emerald-600/80 dark:text-emerald-500/80">Tokens + Images</p>
+                  </div>
+                  <p className="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    -${calculatedTotalCost.toFixed(4)}
+                  </p>
+                </div>
+                
+                {/* API Global Usage (Real-time Fetch & Estimated) */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
+                    <span>Current Balance</span>
+                    <span className="font-mono text-sm">
+                      {loadingBalance ? 'Loading...' : (realBalance !== null ? `$${realBalance.toFixed(2)}` : 'N/A')}
+                    </span>
+                  </div>
+                  
+                  {realBalance !== null && (
+                    <>
+                      <div className="flex justify-between items-center text-[11px] font-medium text-red-500/80">
+                        <span>Total Spent</span>
+                        <span className="font-mono">${(globalStats?.totalAiCost || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] font-medium text-blue-600/80 dark:text-blue-400/80">
+                        <span>Images Generated</span>
+                        <span className="font-mono">
+                          {globalStats?.totalImagesGenerated || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300 pt-1 border-t border-border/50">
+                        <span>Remaining Balance</span>
+                        <span className="font-mono text-sm">${realBalance.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1299,12 +1436,13 @@ interface EditProjectModalProps {
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
   const [name, setName] = useState(project.name);
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || project.url || "");
-    const [preSlug, setPreSlug] = useState(project.preSlug || "");
-   const [category, setCategory] = useState(project.industry || project.category || "SaaS");
+  const [preSlug, setPreSlug] = useState(project.preSlug || "");
+  const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
+  const [subIndustry, setSubIndustry] = useState(project.subIndustry || project.scrapedData?.subIndustry || "");
 
   const handleSave = () => {
     if (!name.trim()) { toast.error("Project name is required."); return; }
-  onSave({ name, websiteUrl, preSlug, category });
+    onSave({ name, websiteUrl, preSlug, industry, subIndustry });
   };
 
   return (
@@ -1332,10 +1470,10 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
             </p>
           </div>
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Category</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Industry</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             >
               <option value="SaaS">SaaS</option>
@@ -1345,6 +1483,14 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
               <option value="Real Estate">Real Estate</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Sub-Industry</label>
+            <Input
+              value={subIndustry}
+              onChange={(e) => setSubIndustry(e.target.value)}
+              placeholder="e.g. Fintech, Dental Care, Luxury Homes"
+            />
           </div>
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-border bg-muted/20">
@@ -1387,6 +1533,8 @@ const ProjectDetailPage = () => {
   const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
+  const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
   // Mutations
   const createPageMutation = useMutation({
@@ -1430,6 +1578,21 @@ const ProjectDetailPage = () => {
     },
     onError: () => toast.error("Failed to update project"),
   });
+
+  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
+    if (!src) return;
+    const normalized = normalizeLogoUrl(src);
+    if (!normalized) return;
+    const brightness = await getImageAverageBrightness(normalized);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  useEffect(() => {
+    updateLogoBackgroundFromUrl(project?.logoUrl);
+  }, [project?.logoUrl]);
 
   useEffect(() => {
     if (project) {
@@ -1508,7 +1671,14 @@ const ProjectDetailPage = () => {
 
   const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
-
+  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
+    const brightness = await getImageAverageBrightness(img.src);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
 
   return (
     <div className="flex-1 overflow-y-auto"
@@ -1585,24 +1755,27 @@ const ProjectDetailPage = () => {
         </div>
         <div className="flex items-center gap-4 flex-shrink-0">
           {project.logoUrl && (
-            <img
-              src={normalizeLogoUrl(project.logoUrl)}
-              alt="brand-logo"
-              className="h-12 w-auto max-w-[150px] object-contain drop-shadow-sm transition-transform hover:scale-105"
-              onError={(e) => {
-                // Try proxy endpoint as fallback if it's an absolute URL
-                const currentSrc = (e.currentTarget.src || '');
-                if (currentSrc.startsWith('http') && !currentSrc.startsWith('data:') && !currentSrc.includes('/proxy-image')) {
-                  const proxyUrl = aiApi.proxyImage(project.logoUrl);
-                  if (currentSrc !== proxyUrl) {
-                    e.currentTarget.src = proxyUrl;
-                    return;
+            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md ${logoHeaderBgClass}`} style={{ backgroundColor: logoHeaderBgColor }}>
+              <img
+                src={normalizeLogoUrl(project.logoUrl)}
+                alt="brand-logo"
+                className="max-h-12 max-w-[150px] object-contain transition-transform hover:scale-105"
+                onLoad={(e) => handleHeaderLogoImageLoad(e.currentTarget)}
+                onError={(e) => {
+                  // Try proxy endpoint as fallback if it's an absolute URL
+                  const currentSrc = (e.currentTarget.src || '');
+                  if (currentSrc.startsWith('http') && !currentSrc.startsWith('data:') && !currentSrc.includes('/proxy-image')) {
+                    const proxyUrl = aiApi.proxyImage(project.logoUrl);
+                    if (currentSrc !== proxyUrl) {
+                      e.currentTarget.src = proxyUrl;
+                      return;
+                    }
                   }
-                }
-                // If all else fails, hide the image
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+                  // If all else fails, hide the image
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
           )}
           <a
             href={cleanUrl(project.websiteUrl)}

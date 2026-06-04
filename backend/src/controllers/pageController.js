@@ -136,6 +136,86 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
   return uniqueSlug;
 };
 
+const normalizeSlug = (value) => {
+  if (!value) return '';
+  return value.toString().trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+};
+
+const checkPageExistsOnExternalWebsite = async (project, slug) => {
+  if (!project?.websiteUrl || !slug) {
+    logger.debug(`Skipping external website check: websiteUrl=${!!project?.websiteUrl}, slug=${!!slug}`);
+    return false;
+  }
+  let baseUrl = project.websiteUrl;
+  if (!baseUrl.startsWith('http')) {
+    baseUrl = 'https://' + baseUrl;
+  }
+  baseUrl = baseUrl.replace(/\/+$|\s+/g, '');
+  const checkUrl = `${baseUrl}/${slug}`;
+  logger.info(`Checking if page exists on external website: ${checkUrl}`);
+  try {
+    // HEAD request (no body = faster) with 10s timeout to handle slow/redirecting sites
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let checkResponse;
+    try {
+      checkResponse = await fetch(checkUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+    } catch (headErr) {
+      // Some servers reject HEAD - fall back to GET
+      logger.debug(`HEAD failed for ${checkUrl}, trying GET: ${headErr?.message}`);
+      checkResponse = await fetch(checkUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+    }
+    clearTimeout(timeoutId);
+
+    logger.debug(`External website check response for ${checkUrl}: status=${checkResponse.status}`);
+
+    if (checkResponse.status === 200) {
+      // Catch-all check: detect sites that return 200 for ANY URL (e.g. WordPress catch-all)
+      const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
+      const catchAllController = new AbortController();
+      const catchAllTimeout = setTimeout(() => catchAllController.abort(), 10000);
+      let catchAllResponse = null;
+      try {
+        catchAllResponse = await fetch(randomUrl, {
+          method: 'HEAD',
+          signal: catchAllController.signal,
+          redirect: 'follow',
+        });
+      } catch (_headErr2) {
+        try {
+          catchAllResponse = await fetch(randomUrl, {
+            method: 'GET',
+            signal: catchAllController.signal,
+            redirect: 'follow',
+          });
+        } catch (_getErr2) {
+          catchAllResponse = null;
+        }
+      }
+      clearTimeout(catchAllTimeout);
+
+      logger.debug(`Catch-all check for ${randomUrl}: status=${catchAllResponse?.status}`);
+
+      if (!catchAllResponse || catchAllResponse.status !== 200) {
+        logger.warn(`Page slug "${slug}" exists on website ${baseUrl} (returned 200, catch-all confirmed)`);
+        return true;
+      }
+      logger.debug(`Site has catch-all routing enabled, random URL also returned 200`);
+    }
+  } catch (err) {
+    logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err?.message || err });
+  }
+  return false;
+};
+
 // Helper: Ensure project ownership
 const checkProjectOwnership = async (projectId, userId) => {
   return await Project.exists({ _id: projectId, userId });
@@ -180,6 +260,70 @@ exports.getPagesInProject = async (req, res, next) => {
         page: parseInt(page),
         totalPages: Math.ceil(total / parseInt(limit))
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.verifyPageSlug = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { name, slug, prefix } = req.body || {};
+
+    if (!projectId) {
+      return res.status(400).json({ success: false, message: 'Project ID is required in URL', data: {} });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found', data: {} });
+    }
+
+    if (project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to verify pages for this project', data: {} });
+    }
+
+    const baseSlug = slug || name || '';
+    const normalizedSlug = normalizeSlug(prefix ? `${prefix}-${baseSlug}` : baseSlug);
+
+    if (!normalizedSlug) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid page name or slug', data: {} });
+    }
+
+    if (await Page.exists({ projectId, slug: normalizedSlug })) {
+      return res.status(400).json({
+        success: false,
+        message: 'This URL slug already exists in this project. Please choose a different page name.',
+        data: {}
+      });
+    }
+
+    // Check if page exists on external website if websiteUrl is configured
+    let checkedExternal = false;
+    let externalCheckMessage = '';
+    
+    if (project.websiteUrl) {
+      checkedExternal = true;
+      const pageExistsOnWebsite = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
+      if (pageExistsOnWebsite) {
+        logger.info(`Page slug "${normalizedSlug}" already exists on website "${project.websiteUrl}"`);
+        return res.status(400).json({
+          success: false,
+          message: 'Page already exists on website',
+          data: {}
+        });
+      }
+      externalCheckMessage = 'checked on your website';
+    } else {
+      logger.debug(`Skipping external website check: project.websiteUrl not configured for project ${projectId}`);
+      externalCheckMessage = 'internal database only';
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Slug is available', 
+      data: { slug: normalizedSlug, checkedExternal, externalCheckMessage } 
     });
   } catch (err) {
     next(err);
@@ -503,6 +647,7 @@ exports.createPage = async (req, res, next) => {
     }
 
     // 8.1 Replace Unsplash/Picsum/Freepik/Placeholder images with getimg.ai API generated images
+    let generatedImageCount = 0;
     try {
       const ImageGenerationService = require('../services/imageGenerationService');
 
@@ -513,37 +658,45 @@ exports.createPage = async (req, res, next) => {
 
       // 1. Process page.content if it is a string (AI generation HTML)
       if (typeof page.content === 'string') {
-        page.content = await ImageGenerationService.replacePlaceholdersInHtml(
+        const result = await ImageGenerationService.replacePlaceholdersInHtml(
           page.content,
           industryToUse,
           subIndustryToUse
         );
+        page.content = result.html;
+        generatedImageCount += result.imageCount || 0;
       }
       // 2. Process page.content if it is an object (template generation data)
       else if (page.content && typeof page.content === 'object') {
         if (page.content.fullHtml) {
-          page.content.fullHtml = await ImageGenerationService.replacePlaceholdersInHtml(
+          const result = await ImageGenerationService.replacePlaceholdersInHtml(
             page.content.fullHtml,
             industryToUse,
             subIndustryToUse
           );
+          page.content.fullHtml = result.html;
+          generatedImageCount += result.imageCount || 0;
         }
         if (page.content.html) {
-          page.content.html = await ImageGenerationService.replacePlaceholdersInHtml(
+          const result = await ImageGenerationService.replacePlaceholdersInHtml(
             page.content.html,
             industryToUse,
             subIndustryToUse
           );
+          page.content.html = result.html;
+          generatedImageCount += result.imageCount || 0;
         }
       }
 
       // 3. Process page.landingPageContent (full HTML page stored for preview/publish)
       if (page.landingPageContent && typeof page.landingPageContent === 'string') {
-        page.landingPageContent = await ImageGenerationService.replacePlaceholdersInHtml(
+        const result = await ImageGenerationService.replacePlaceholdersInHtml(
           page.landingPageContent,
           industryToUse,
           subIndustryToUse
         );
+        page.landingPageContent = result.html;
+        generatedImageCount += result.imageCount || 0;
       }
     } catch (imgErr) {
       logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
@@ -552,15 +705,21 @@ exports.createPage = async (req, res, next) => {
     page.seo = aiResponse.seo || {};
 
     // 8.2 Update Page with Cumulative AI Usage and History
-    if (aiResponse.aiUsage) {
-      const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
+    if (aiResponse.aiUsage || generatedImageCount > 0) {
+      const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0, imageCount: 0, imageCost: 0 };
+
+      // cost of images: $0.002 per image
+      const newImageCost = generatedImageCount * 0.002;
+      const newTextCost = aiResponse.aiUsage?.cost || 0;
 
       page.aiUsage = {
-        promptTokens: (currentUsage.promptTokens || 0) + aiResponse.aiUsage.promptTokens,
-        completionTokens: (currentUsage.completionTokens || 0) + aiResponse.aiUsage.completionTokens,
-        totalTokens: (currentUsage.totalTokens || 0) + aiResponse.aiUsage.totalTokens,
-        cost: (currentUsage.cost || 0) + aiResponse.aiUsage.cost,
-        model: aiResponse.aiUsage.model,
+        promptTokens: (currentUsage.promptTokens || 0) + (aiResponse.aiUsage?.promptTokens || 0),
+        completionTokens: (currentUsage.completionTokens || 0) + (aiResponse.aiUsage?.completionTokens || 0),
+        totalTokens: (currentUsage.totalTokens || 0) + (aiResponse.aiUsage?.totalTokens || 0),
+        cost: (currentUsage.cost || 0) + newTextCost + newImageCost,
+        imageCount: (currentUsage.imageCount || 0) + generatedImageCount,
+        imageCost: (currentUsage.imageCost || 0) + newImageCost,
+        model: aiResponse.aiUsage?.model || 'flux-schnell',
         currency: 'USD',
         lastUsageAt: Date.now()
       };
@@ -568,6 +727,9 @@ exports.createPage = async (req, res, next) => {
       page.aiUsageHistory.push({
         action: 'Initial Creation',
         ...aiResponse.aiUsage,
+        imageCount: generatedImageCount,
+        imageCost: newImageCost,
+        cost: newTextCost + newImageCost,
         createdAt: Date.now()
       });
     }
