@@ -223,14 +223,5 @@ export const saasHeroHtml = `
       <div class="loader-text">Setting up your demo...</div>
     </div>
 
-    <script>
-      document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.getElementById('loader').style.display = 'flex';
-        setTimeout(function() {
-          console.log('Form submitted, loader would stay until thank you page');
-        }, 2000);
-      });
-    </script>
-  </div>
+</div>
 `;

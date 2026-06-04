@@ -159,6 +159,8 @@ export interface LandingPage {
     completionTokens: number;
     totalTokens: number;
     cost: number;
+    imageCount?: number;
+    imageCost?: number;
     model: string;
     currency: string;
     lastUsageAt?: string;
@@ -170,6 +172,8 @@ export interface LandingPage {
     completionTokens: number;
     totalTokens: number;
     cost: number;
+    imageCount?: number;
+    imageCost?: number;
     createdAt: string;
   }>;
   publishedAt?: string;
@@ -641,6 +645,11 @@ export const aiApi = {
     // Returns the proxy URL for an image
     const encoded = encodeURIComponent(imageUrl);
     return `${API_BASE_URL}/ai/proxy-image?url=${encoded}`;
+  },
+  getImgBalance: async () => {
+    return apiFetch('/ai/getimg-balance', {
+      method: 'GET',
+    });
   },
 };
 
