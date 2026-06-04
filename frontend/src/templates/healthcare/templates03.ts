@@ -59,20 +59,21 @@ input, select, textarea { font-family: inherit; }
 }
 
 .p3-hero-form {
-  display: flex; gap: 8px; align-items: center; background: #fff; padding: 10px; border-radius: 100px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  display: flex; gap: 8px; align-items: center; background: #fff; padding: 8px; border-radius: 100px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   animation: formPop 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
   margin-top: 24px;
+  overflow: hidden;
 }
 .p3-hero-form input, .p3-hero-form select {
-  flex: 1; border: none; padding: 14px 20px; outline: none; font-family: inherit; font-size: 14px; border-right: 1px solid var(--p3-border);
+  flex: 1; min-width: 0; border: none; padding: 12px 16px; outline: none; font-family: inherit; font-size: 14px; border-right: 1px solid var(--p3-border);
   background: transparent; transition: background 0.3s ease; border-radius: 50px;
 }
 .p3-hero-form input:hover, .p3-hero-form select:hover, .p3-hero-form input:focus, .p3-hero-form select:focus {
   background: var(--p3-primary-xlight);
 }
 .p3-hero-form .p3-btn-primary {
-  border-radius: 100px; padding: 14px 28px; font-size: 15px; margin-left: 4px;
+  border-radius: 100px; padding: 12px 24px; font-size: 14px; margin-left: 4px; flex-shrink: 0; white-space: nowrap;
 }
 @media (max-width: 900px) {
   .p3-hero-form { flex-direction: column; border-radius: 20px; padding: 16px; align-items: stretch; }
