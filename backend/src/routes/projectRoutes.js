@@ -46,6 +46,12 @@ router.post('/:id/branding/extract-from-website', projectController.extractBrand
 router.post('/:projectId/pages', pageController.createPage);
 
 /**
+ * @route   POST /projects/:projectId/pages/verify
+ * @desc    Verify a page name/slug before creating it
+ */
+router.post('/:projectId/pages/verify', pageController.verifyPageSlug);
+
+/**
  * @route   GET /projects/:projectId/pages
  * @desc    List all pages belonging to a specific project
  */
