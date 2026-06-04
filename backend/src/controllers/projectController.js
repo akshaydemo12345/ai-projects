@@ -17,15 +17,25 @@ exports.createProject = async (req, res, next) => {
       userId: req.user._id,
       apiToken,
       logoUrl: req.body.logoUrl,
-      services: req.body.services || [],
-      keywords: req.body.keywords || [],
-      industry: req.body.category || req.body.industry,
+      business: {
+        companyName: name,
+        industry: req.body.category || req.body.industry,
+        subIndustry: req.body.subIndustry || req.body.scrapedData?.subIndustry,
+        services: req.body.services || [],
+        keywords: req.body.keywords || [],
+        contacts: {
+          website: req.body.websiteUrl || req.body.url,
+        },
+      },
       primaryColor: req.body.primaryColor || req.body.themeColor,
       secondaryColor: req.body.secondaryColor,
       colors: req.body.colors || [],
       themeSystem: req.body.themeSystem || {},
-      websiteUrl: req.body.websiteUrl || req.body.url,
       preSlug: req.body.preSlug,
+      scrapeMeta: {
+        sourceUrl: req.body.websiteUrl || req.body.url,
+        status: 'pending',
+      },
       scrapedData: req.body.scrapedData || {},
     };
 
@@ -176,25 +186,35 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-      const { name, description, logoUrl, industry, category, primaryColor, secondaryColor, websiteUrl, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey } = req.body;
+      const { name, description, logoUrl, industry, category, subIndustry, primaryColor, secondaryColor, websiteUrl, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey } = req.body;
     const updateData = {
-      name,
-      description,
-      logoUrl,
-      industry: industry || category,
-      primaryColor,
-      secondaryColor,
-      preSlug,
-      fromName,
-      fromEmail,
-      adminNotification,
-      userNotification,
-      emailProvider,
-      brevoKey,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
+
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+    if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
+    if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
+    if (preSlug !== undefined) updateData.preSlug = preSlug;
+    if (fromName !== undefined) updateData.fromName = fromName;
+    if (fromEmail !== undefined) updateData.fromEmail = fromEmail;
+    if (adminNotification !== undefined) updateData.adminNotification = adminNotification;
+    if (userNotification !== undefined) updateData.userNotification = userNotification;
+    if (emailProvider !== undefined) updateData.emailProvider = emailProvider;
+    if (brevoKey !== undefined) updateData.brevoKey = brevoKey;
+
+    if (industry !== undefined || category !== undefined) {
+      updateData['business.industry'] = industry || category;
+    }
+
+    if (subIndustry !== undefined) {
+      updateData['business.subIndustry'] = subIndustry;
+    }
+
     if (websiteUrl !== undefined) {
-      updateData.websiteUrl = websiteUrl ? normalizeDomain(websiteUrl) : "";
+      updateData['business.contacts.website'] = websiteUrl ? normalizeDomain(websiteUrl) : "";
+      updateData['scrapeMeta.sourceUrl'] = websiteUrl ? normalizeDomain(websiteUrl) : "";
     }
 
     const project = await Project.findOneAndUpdate(

@@ -1124,23 +1124,39 @@ const extractProjectData = async (url) => {
 
     let response;
     try {
-      response = await axios.get(normalizedUrl, {
-        timeout: 15000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none',
-          'Sec-Fetch-User': '?1',
-          'Cache-Control': 'max-age=0',
-          'Referer': 'https://www.google.com/',
+      // Retry logic with increasing timeouts for slow sites
+      const timeouts = [30000, 45000]; // 30s, then 45s
+      let lastError = null;
+      
+      for (let i = 0; i < timeouts.length; i++) {
+        try {
+          response = await axios.get(normalizedUrl, {
+            timeout: timeouts[i],
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1',
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Mode': 'navigate',
+              'Sec-Fetch-Site': 'none',
+              'Sec-Fetch-User': '?1',
+              'Cache-Control': 'max-age=0',
+              'Referer': 'https://www.google.com/',
+            }
+          });
+          break; // Success, exit loop
+        } catch (err) {
+          lastError = err;
+          if (i < timeouts.length - 1) {
+            logger.debug(`Retry ${i + 1} failed for ${normalizedUrl} (timeout: ${timeouts[i]}ms), attempting with longer timeout...`);
+          }
         }
-      });
+      }
+      
+      if (!response) throw lastError;
     } catch (fetchErr) {
       logger.warn(`Initial fetch failed for ${normalizedUrl}: ${fetchErr.message}. Proceeding with Lite analysis.`);
       // FALLBACK: Lite analysis when scraping is blocked (e.g., 403, 404, Timeout)
