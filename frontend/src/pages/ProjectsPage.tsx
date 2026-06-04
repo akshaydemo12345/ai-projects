@@ -22,7 +22,8 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   const [name, setName] = useState(project.name);
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
-  const [category, setCategory] = useState(project.category || "SaaS");
+  const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
+  const [subIndustry, setSubIndustry] = useState(project.subIndustry || project.scrapedData?.subIndustry || "");
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -33,7 +34,8 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
       name,
       websiteUrl,
       preSlug,
-      category
+      industry,
+      subIndustry
     });
   };
 
@@ -62,10 +64,10 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
             </p>
           </div>
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Category</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Industry</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             >
               <option value="SaaS">SaaS</option>
@@ -75,6 +77,14 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
               <option value="Real Estate">Real Estate</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Sub-Industry</label>
+            <Input
+              value={subIndustry}
+              onChange={(e) => setSubIndustry(e.target.value)}
+              placeholder="e.g. Fintech, Dental Care, Luxury Homes"
+            />
           </div>
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-border bg-muted/20">
