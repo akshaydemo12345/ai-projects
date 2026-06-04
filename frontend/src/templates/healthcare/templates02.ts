@@ -853,35 +853,4 @@ export const healthcare02Html = `
     <p style="font-size:13px;color:rgba(255,255,255,0.35)">Privacy Policy · Terms of Service · Accessibility</p>
   </div>
 </footer>
-
-<script>
-  (function() {
-    const initAnimations = () => {
-      const animateElements = document.querySelectorAll('.v2-hero-text, .v2-hero-visual, .v2-section-head, .v2-service-card, .v2-stat-item, .v2-about-imgs, .v2-about-text, .v2-process-step, .v2-testi-card, .v2-cta-text, .v2-cta-form-card, .v2-faq-wrap');
-      
-      animateElements.forEach(el => {
-        if (!el.classList.contains('scroll-fade-up')) {
-          el.classList.add('scroll-fade-up');
-        }
-      });
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1 });
-
-      document.querySelectorAll('.scroll-fade-up').forEach(el => observer.observe(el));
-    };
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initAnimations);
-    } else {
-      initAnimations();
-    }
-  })();
-</script>
 `;

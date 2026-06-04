@@ -36,8 +36,8 @@ app.use(express.static(path.join(__dirname, '../public')));
 // MIDDLEWARES
 app.use(logger.httpLogger);
 // app.use(compression()); // Moved to specific routes to avoid proxy corruption
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 app.use(cookieParser);
 app.use(sanitizeInput);
 const allowedOrigins = [

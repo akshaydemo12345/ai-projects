@@ -19,6 +19,8 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { finance04Html, finance04Styles } from "../templates/finance/templates04";
+import { law01Html, law01Styles } from "../templates/law/templates01";
 import { useState, useEffect } from "react";
 
 // Templates removed as per user request
@@ -334,6 +336,14 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
 // ─── Template definitions ─────────────────────────────────────────────────────
 const LANDING_TEMPLATES: any[] = [
   {
+    id: "law-01",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot.png",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+    prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -425,10 +435,18 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
   },
 
+  {
+    id: "finance-04",
+    name: "Finova Analytics",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates04/screenshot.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
+    prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
+  },
 ];
 
 
-const TEMPLATE_CATEGORIES = ["All", "Healthcare", "Travel", "Finance",];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -852,6 +870,7 @@ const CreatePagePage = () => {
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
       else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
       else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
+      else if (promptLower.includes("law") || promptLower.includes("legal") || promptLower.includes("attorney") || promptLower.includes("advocate") || projectCat.includes("law")) detectedCategory = "Law Firm";
 
       if (detectedCategory) {
         const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
@@ -871,6 +890,7 @@ const CreatePagePage = () => {
       const tName = templateObj?.name || "Template";
 
       switch (finalTemplateId) {
+        case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -882,6 +902,7 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+        case "finance-04": enrichedContent = finance04Html; enrichedStyles = finance04Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -938,6 +959,10 @@ const CreatePagePage = () => {
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
       enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
+      enrichedContent = enrichedContent.replace(/PHONE_PLACEHOLDER/g, project.scrapedData?.phone || project.phone || "+1 (800) 123-4567");
+      enrichedContent = enrichedContent.replace(/EMAIL_PLACEHOLDER/g, project.scrapedData?.email || project.contactEmail || project.fromEmail || "contact@example.com");
+      enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, project.scrapedData?.address || "123 Business Avenue, New York, NY");
+
 
       // Replace any remaining placeholders in content (just in case)
       enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
@@ -1566,6 +1591,7 @@ ${enrichedContent}
               let tpHtml = "";
               let tpStyles = "";
               switch (previewTemplate.id) {
+                case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
@@ -1577,6 +1603,7 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
+                case "finance-04": tpHtml = finance04Html; tpStyles = finance04Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
@@ -1624,6 +1651,9 @@ ${enrichedContent}
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
                 .replace(/CONTACT_PLACEHOLDER/g, project?.contactEmail || project?.phone || "Contact Us")
+                .replace(/PHONE_PLACEHOLDER/g, project?.scrapedData?.phone || project?.phone || "+1 (800) 123-4567")
+                .replace(/EMAIL_PLACEHOLDER/g, project?.scrapedData?.email || project?.contactEmail || project?.fromEmail || "contact@example.com")
+                .replace(/ADDRESS_PLACEHOLDER/g, project?.scrapedData?.address || "123 Business Avenue, New York, NY")
                 .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
                 .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)
                 .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(previewPrimary))
