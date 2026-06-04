@@ -242,11 +242,39 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [logoPreview, setLogoPreview] = useState<string | null>(project.logoUrl || null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logoUrl);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
+  const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
+  const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
   const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
     const brightness = await getImageAverageBrightness(img.src);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
+
+  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
+    const brightness = await getImageAverageBrightness(img.src);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
+    if (!src) return;
+    const normalized = normalizeLogoUrl(src);
+    if (!normalized) return;
+
+    const brightness = await getImageAverageBrightness(normalized);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  useEffect(() => {
+    updateLogoBackgroundFromUrl(logoUrl || project.logoUrl);
+  }, [logoUrl, project.logoUrl]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1299,12 +1327,13 @@ interface EditProjectModalProps {
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
   const [name, setName] = useState(project.name);
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || project.url || "");
-    const [preSlug, setPreSlug] = useState(project.preSlug || "");
-   const [category, setCategory] = useState(project.industry || project.category || "SaaS");
+  const [preSlug, setPreSlug] = useState(project.preSlug || "");
+  const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
+  const [subIndustry, setSubIndustry] = useState(project.subIndustry || project.scrapedData?.subIndustry || "");
 
   const handleSave = () => {
     if (!name.trim()) { toast.error("Project name is required."); return; }
-  onSave({ name, websiteUrl, preSlug, category });
+    onSave({ name, websiteUrl, preSlug, industry, subIndustry });
   };
 
   return (
@@ -1332,10 +1361,10 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
             </p>
           </div>
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Category</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Industry</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             >
               <option value="SaaS">SaaS</option>
@@ -1345,6 +1374,14 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
               <option value="Real Estate">Real Estate</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Sub-Industry</label>
+            <Input
+              value={subIndustry}
+              onChange={(e) => setSubIndustry(e.target.value)}
+              placeholder="e.g. Fintech, Dental Care, Luxury Homes"
+            />
           </div>
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-border bg-muted/20">
@@ -1387,6 +1424,8 @@ const ProjectDetailPage = () => {
   const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
+  const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
   // Mutations
   const createPageMutation = useMutation({
@@ -1430,6 +1469,21 @@ const ProjectDetailPage = () => {
     },
     onError: () => toast.error("Failed to update project"),
   });
+
+  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
+    if (!src) return;
+    const normalized = normalizeLogoUrl(src);
+    if (!normalized) return;
+    const brightness = await getImageAverageBrightness(normalized);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
+
+  useEffect(() => {
+    updateLogoBackgroundFromUrl(project?.logoUrl);
+  }, [project?.logoUrl]);
 
   useEffect(() => {
     if (project) {
@@ -1508,7 +1562,14 @@ const ProjectDetailPage = () => {
 
   const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
-
+  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
+    if (!img?.src) return;
+    const brightness = await getImageAverageBrightness(img.src);
+    const bgClass = getLogoPreviewContainerClasses(brightness);
+    setLogoHeaderBgClass(bgClass);
+    // Set appropriate background color based on brightness
+    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
+  };
 
   return (
     <div className="flex-1 overflow-y-auto"
@@ -1585,24 +1646,27 @@ const ProjectDetailPage = () => {
         </div>
         <div className="flex items-center gap-4 flex-shrink-0">
           {project.logoUrl && (
-            <img
-              src={normalizeLogoUrl(project.logoUrl)}
-              alt="brand-logo"
-              className="h-12 w-auto max-w-[150px] object-contain drop-shadow-sm transition-transform hover:scale-105"
-              onError={(e) => {
-                // Try proxy endpoint as fallback if it's an absolute URL
-                const currentSrc = (e.currentTarget.src || '');
-                if (currentSrc.startsWith('http') && !currentSrc.startsWith('data:') && !currentSrc.includes('/proxy-image')) {
-                  const proxyUrl = aiApi.proxyImage(project.logoUrl);
-                  if (currentSrc !== proxyUrl) {
-                    e.currentTarget.src = proxyUrl;
-                    return;
+            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md ${logoHeaderBgClass}`} style={{ backgroundColor: logoHeaderBgColor }}>
+              <img
+                src={normalizeLogoUrl(project.logoUrl)}
+                alt="brand-logo"
+                className="max-h-12 max-w-[150px] object-contain transition-transform hover:scale-105"
+                onLoad={(e) => handleHeaderLogoImageLoad(e.currentTarget)}
+                onError={(e) => {
+                  // Try proxy endpoint as fallback if it's an absolute URL
+                  const currentSrc = (e.currentTarget.src || '');
+                  if (currentSrc.startsWith('http') && !currentSrc.startsWith('data:') && !currentSrc.includes('/proxy-image')) {
+                    const proxyUrl = aiApi.proxyImage(project.logoUrl);
+                    if (currentSrc !== proxyUrl) {
+                      e.currentTarget.src = proxyUrl;
+                      return;
+                    }
                   }
-                }
-                // If all else fails, hide the image
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+                  // If all else fails, hide the image
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
           )}
           <a
             href={cleanUrl(project.websiteUrl)}
