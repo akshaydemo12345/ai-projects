@@ -301,7 +301,7 @@ const MailManagementPage = () => {
   return (
     <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
       {/* Header */}
-      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
           <div className="space-y-1">
             <h1 className="text-lg font-bold text-foreground">Lead Notifications</h1>
@@ -339,7 +339,7 @@ const MailManagementPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-6 space-y-4 flex-1">
+      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-4 space-y-4 flex-1">
         {/* Brevo Configuration Section */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center gap-6 px-8 py-5 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-800/10">

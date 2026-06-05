@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, Globe, FileText, Code2, Shield, 
+import {
+  ArrowLeft, Globe, FileText, Code2, Shield,
   Palette, CheckCircle2, Save, ExternalLink,
   Loader2, Layout, MousePointer2, AlertTriangle, Link
 } from "lucide-react";
@@ -101,8 +101,8 @@ const PageSettingsPage = () => {
   };
 
   const updateContentColors = (
-    content: string | undefined, 
-    newPrimary: string, 
+    content: string | undefined,
+    newPrimary: string,
     newSecondary: string,
     oldPrimary?: string,
     oldSecondary?: string
@@ -182,7 +182,7 @@ const PageSettingsPage = () => {
         fullCss: updateContentColors(page.content.fullCss, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor)
       };
     }
-    
+
     updatePageMutation.mutate({
       ...page,
       name: name.trim(),
@@ -234,10 +234,10 @@ const PageSettingsPage = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between w-full">
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-4">
+        <div className=" flex items-center justify-between w-full">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => navigate(`/dashboard/projects/${projectId}`)}
               className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             >
@@ -248,20 +248,19 @@ const PageSettingsPage = () => {
               <p className="text-xs text-slate-500">Configure page details and tracking scripts.</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => navigate(`/dashboard/projects/${projectId}`)} className="rounded-xl px-6">Cancel</Button>
             <Button onClick={handleSave} disabled={updatePageMutation.isPending} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
               {updatePageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save All
+              Update
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 max-w-[1600px] w-full mx-auto px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          
+      <div className="flex-1 w-full  px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
           {/* LEFT CARD: Page Details */}
           <div className="space-y-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
             <div className="flex items-center gap-3 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -409,13 +408,6 @@ const PageSettingsPage = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-center pt-8">
-          <Button onClick={handleSave} disabled={updatePageMutation.isPending} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
-            {updatePageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save All Page Settings
-          </Button>
         </div>
       </div>
     </div>

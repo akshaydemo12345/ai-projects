@@ -19,6 +19,7 @@ import { leadsApi, projectsApi, pagesApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 /**
  * Professional Leads Dashboard
@@ -80,6 +81,7 @@ const LeadsPage = () => {
 
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
 
   // ── Projects list ─────────────────────────────────────────────────────────
   const { data: projects = [] } = useQuery({
@@ -292,8 +294,13 @@ const LeadsPage = () => {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this lead?")) {
-      deleteMutation.mutate(id);
+    setDeleteLeadId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteLeadId) {
+      deleteMutation.mutate(deleteLeadId);
+      setDeleteLeadId(null);
     }
   };
 
@@ -363,7 +370,7 @@ const LeadsPage = () => {
   return (
     <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
       {/* ─── Header ─── */}
-      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
           <div>
             <h1 className="text-lg font-bold text-foreground">Leads Management</h1>
@@ -1063,6 +1070,14 @@ const LeadsPage = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteLeadId}
+        onClose={() => setDeleteLeadId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Lead?"
+        description="Are you sure you want to delete this lead? This action cannot be undone."
+      />
     </div>
   );
 };
