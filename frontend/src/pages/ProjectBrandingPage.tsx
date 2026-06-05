@@ -66,15 +66,12 @@ export default function ProjectBrandingPage() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={handleBack}
-              className="gap-2"
+              className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Project
-            </Button>
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
