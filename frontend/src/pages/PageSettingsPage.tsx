@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pagesApi, projectsApi, type LandingPage } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -248,11 +249,11 @@ const PageSettingsPage = () => {
                   <label className="text-xs font-bold text-slate-500">Theme Colors</label>
                   <div className="flex gap-3">
                     <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} />
                       <span className="text-[10px] font-mono">{primaryColor}</span>
                     </div>
                     <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} />
                       <span className="text-[10px] font-mono">{secondaryColor}</span>
                     </div>
                   </div>

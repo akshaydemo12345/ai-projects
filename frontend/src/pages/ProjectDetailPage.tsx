@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
@@ -475,14 +476,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
@@ -598,14 +599,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
