@@ -4,13 +4,14 @@ import {
   ArrowLeft, Plus, Globe, FileEdit, Rocket, Users as UsersIcon,
   Settings2, Copy, CheckCircle2, X, Sparkles, ExternalLink,
   FileText, Eye, Trash2, Zap, Search, Brain, Loader2, Link,
-  Puzzle, Code2, Monitor, Download, Info, Activity, MoreVertical
+  Puzzle, Code2, Monitor, Download, Info, Activity, MoreVertical,
+  Filter, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PickrColorInput } from "@/components/ui/PickrColorInput";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
@@ -1515,16 +1516,25 @@ const ProjectDetailPage = () => {
     queryKey: ["project", id],
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
-    refetchInterval: 5000, // Live-updating dynamic data polling
+    refetchInterval: (query) => {
+      const proj = query?.state?.data as any;
+      const hasGenerating = proj?.pages?.some((p: any) => p.status === "generating");
+      return hasGenerating ? 5000 : false;
+    },
+    refetchOnWindowFocus: false, // Prevent API calls on every window click/focus
+    placeholderData: keepPreviousData, // Smooth transition, keep layout intact while switching
   });
 
   // Fetch all projects to allow switching
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: projectsApi.getAll,
+    staleTime: 5 * 60 * 1000, // Cache list of projects for 5 minutes
+    refetchOnWindowFocus: false, // Prevent API calls on every window click/focus
   });
 
   const displayCategory = project ? (project.category || project.industry || "General") : "General";
+  const isSwitching = !!(project && project._id !== id);
 
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
@@ -1540,6 +1550,8 @@ const ProjectDetailPage = () => {
   const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
   const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
@@ -1615,8 +1627,19 @@ const ProjectDetailPage = () => {
   }, [project, searchParams, navigate]);
 
   const filteredPages = project?.pages?.filter(p => {
-    if (statusFilter === "all") return true;
-    return p.status?.toLowerCase() === statusFilter.toLowerCase();
+    // 1. Status Filter
+    if (statusFilter !== "all" && p.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+      return false;
+    }
+    // 2. Search Text Filter
+    if (search.trim()) {
+      const query = search.toLowerCase();
+      const matchesName = p.name?.toLowerCase().includes(query);
+      const matchesSlug = p.slug?.toLowerCase().includes(query);
+      const matchesType = p.type?.toLowerCase().includes(query);
+      return matchesName || matchesSlug || matchesType;
+    }
+    return true;
   }) || [];
 
   if (isLoading) return (
@@ -1688,9 +1711,9 @@ const ProjectDetailPage = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto"
+    <div className="flex-1 min-h-full flex flex-col"
       onClick={() => setMenuOpenPageId(null)}
-      style={{ background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)" }}
+      style={{ background: "#f2f2f2" }}
     >
 
       {/* Modals */}
@@ -1741,18 +1764,20 @@ const ProjectDetailPage = () => {
       )}
 
       {/* ─── Page Top Bar / Breadcrumb ─── */}
-      <div className="px-8 pt-6 pb-4 border-b border-border flex items-center gap-4">
+      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
 
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm mr-2"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
 
           <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: `linear-gradient(135deg, #7c3aed, #6366f1)` }}>
             <Globe className="h-3.5 w-3.5 text-white" />
           </div>
-
-          <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
-
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{displayCategory}</span>
 
           <Select
             value={id}
@@ -1761,12 +1786,12 @@ const ProjectDetailPage = () => {
                 navigate(`/dashboard/projects/${val}`);
               }
             }}
+            {...({ modal: false } as any)}
           >
-            <SelectTrigger className="h-7 bg-slate-50 dark:bg-slate-800 px-2.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-xs font-semibold focus:ring-0 focus:ring-offset-0 gap-1.5 flex-shrink-0 ml-2">
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <SelectValue placeholder="Switch Project" />
-              </div>
+            <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
+              <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
+                {project.name}
+              </span>
             </SelectTrigger>
             <SelectContent>
               {(projects as any[]).map((p: any) => (
@@ -1776,8 +1801,12 @@ const ProjectDetailPage = () => {
               ))}
             </SelectContent>
           </Select>
+
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">
+            {displayCategory}
+          </span>
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto md:justify-end">
           {project.logoUrl && (
             <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md`}>
               <img
@@ -1814,7 +1843,13 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* ─── MAIN CONTENT (full-width, single column) ─── */}
-      <div className="max-w-[1800px] mx-auto px-8 py-6 space-y-8">
+      <div className="w-full px-4 py-4 space-y-4 flex-1 relative" style={{ background: "#f2f2f2" }}>
+
+        {isSwitching && (
+          <div className="absolute inset-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
 
         {/* ─── Stats Summary Bar ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -1838,7 +1873,7 @@ const ProjectDetailPage = () => {
         </div>
 
         {/* ─── Main Grid Layout: Landing Pages (Left) & Integration (Right) ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-3 items-start">
 
           {/* ─── Left Side: Landing Pages List ─── */}
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden min-h-[500px]">
@@ -1854,10 +1889,30 @@ const ProjectDetailPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* Search Bar Input */}
+                <div className="relative w-40 md:w-52">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search pages..."
+                    className="pl-9 pr-8 h-9 bg-background border-border text-xs rounded-xl focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-slate-300"
+                  />
+                  {search.trim() && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground focus:outline-none"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-9 w-[120px] bg-background border-border text-xs font-semibold rounded-xl">
                     <div className="flex items-center gap-2">
-                      <Search className="h-3 w-3 text-muted-foreground" />
+                      <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                       <SelectValue placeholder="Filter" />
                     </div>
                   </SelectTrigger>
@@ -2058,17 +2113,17 @@ const ProjectDetailPage = () => {
 
           {/* ─── Right Side: Integration & Embedding ─── */}
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-border bg-card flex flex-col gap-1">
+            <div className="px-4 py-3 border-b border-border bg-card flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
-                  <Link className="h-4 w-4 text-white" />
+                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
+                  <Link className="h-3.5 w-3.5 text-white" />
                 </div>
                 <h2 className="text-base font-bold text-foreground">Integration </h2>
               </div>
-              <p className="text-[11px] text-muted-foreground ml-11">WordPress or Script</p>
+              <p className="text-[11px] text-muted-foreground ml-10">WordPress or Script</p>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-4">
               <div className="flex gap-1 bg-muted p-1 rounded-xl">
                 {([
                   {
@@ -2112,16 +2167,16 @@ const ProjectDetailPage = () => {
                         num: 2, title: "Website  Token", desc: "Copy & paste the API token in the plugin settings", extra: (
                           <div
                             onClick={copyToken}
-                            className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
+                            className={`flex items-center gap-2 border rounded-lg px-2 py-1 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
                           >
-                            <span className={`text-[10px] font-mono truncate max-w-[150px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
+                            <span className={`text-[10px] font-mono truncate max-w-[110px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
                             {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                           </div>
                         )
                       },
                     ].map((s) => (
-                      <div key={s.num} className="flex gap-3">
-                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
+                      <div key={s.num} className="flex gap-2.5">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-start gap-2 pr-1">
                             <p className="text-xs font-semibold text-foreground">{s.title}</p>
@@ -2159,7 +2214,7 @@ const ProjectDetailPage = () => {
                         {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
                       </Button>
                     </div>
-                    <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
+                    <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                   </div>
                 )}
 
