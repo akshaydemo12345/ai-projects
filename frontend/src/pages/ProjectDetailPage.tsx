@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
@@ -475,14 +476,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
@@ -598,14 +599,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
@@ -617,9 +618,9 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="upload-logo-analyze" />
                     {logoPreview ? (
                       <div className={`h-10 w-10 rounded flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
-                        <img 
-                          src={logoPreview} 
-                          alt="Logo" 
+                        <img
+                          src={logoPreview}
+                          alt="Logo"
                           className="w-full h-full object-contain"
                           onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
                           onError={(e) => {
@@ -678,7 +679,7 @@ interface UsageModalProps {
 const UsageModal = ({ page, onClose }: UsageModalProps) => {
   const usage = page.aiUsage;
   const history = page.aiUsageHistory || [];
-  
+
   const [realBalance, setRealBalance] = useState<number | null>(null);
   const [globalStats, setGlobalStats] = useState<any>(null);
   const [loadingBalance, setLoadingBalance] = useState(true);
@@ -713,7 +714,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
 
   // The total combined cost is usage.cost. We also have precise fields usage.imageCost and usage.imageCount now.
   let calculatedTotalCost = usage?.cost || 0;
-  
+
   // Read exact image cost from DB if available, else fallback to 0
   let calculatedImgCost = usage?.imageCost || 0;
   let calculatedImageCount = usage?.imageCount || 0;
@@ -795,7 +796,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                     -${calculatedTotalCost.toFixed(4)}
                   </p>
                 </div>
-                
+
                 {/* API Global Usage (Real-time Fetch & Estimated) */}
                 <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
@@ -804,7 +805,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                       {loadingBalance ? 'Loading...' : (realBalance !== null ? `$${realBalance.toFixed(2)}` : 'N/A')}
                     </span>
                   </div>
-                  
+
                   {realBalance !== null && (
                     <>
                       <div className="flex justify-between items-center text-[11px] font-medium text-red-500/80">
@@ -1517,6 +1518,12 @@ const ProjectDetailPage = () => {
     refetchInterval: 5000, // Live-updating dynamic data polling
   });
 
+  // Fetch all projects to allow switching
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: projectsApi.getAll,
+  });
+
   const displayCategory = project ? (project.category || project.industry || "General") : "General";
 
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
@@ -1735,13 +1742,7 @@ const ProjectDetailPage = () => {
 
       {/* ─── Page Top Bar / Breadcrumb ─── */}
       <div className="px-8 pt-6 pb-4 border-b border-border flex items-center gap-4">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> All Projects
-        </button>
-        <span className="text-muted-foreground/40">/</span>
+
         <div className="flex items-center gap-2 flex-1 min-w-0">
 
           <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -1752,14 +1753,37 @@ const ProjectDetailPage = () => {
           <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
 
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{displayCategory}</span>
+
+          <Select
+            value={id}
+            onValueChange={(val) => {
+              if (val && val !== id) {
+                navigate(`/dashboard/projects/${val}`);
+              }
+            }}
+          >
+            <SelectTrigger className="h-7 bg-slate-50 dark:bg-slate-800 px-2.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-xs font-semibold focus:ring-0 focus:ring-offset-0 gap-1.5 flex-shrink-0 ml-2">
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <SelectValue placeholder="Switch Project" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {(projects as any[]).map((p: any) => (
+                <SelectItem key={p._id} value={p._id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-4 flex-shrink-0">
           {project.logoUrl && (
-            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md ${logoHeaderBgClass}`} style={{ backgroundColor: logoHeaderBgColor }}>
+            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md`}>
               <img
                 src={normalizeLogoUrl(project.logoUrl)}
                 alt="brand-logo"
-                className="max-h-12 max-w-[150px] object-contain transition-transform hover:scale-105"
+                className="max-h-12 max-w-[80px] object-contain transition-transform hover:scale-105"
                 onLoad={(e) => handleHeaderLogoImageLoad(e.currentTarget)}
                 onError={(e) => {
                   // Try proxy endpoint as fallback if it's an absolute URL

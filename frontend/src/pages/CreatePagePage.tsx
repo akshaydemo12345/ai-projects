@@ -8,6 +8,7 @@ import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/
 import { toast } from "sonner";
 import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
@@ -964,18 +965,30 @@ const CreatePagePage = () => {
       enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, project.scrapedData?.address || "123 Business Avenue, New York, NY");
 
 
-      // Replace any remaining placeholders in content (just in case)
-      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      // Replace any remaining placeholders in content (just in case) with CSS variables to keep them dynamic
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)');
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)');
       enrichedContent = enrichedContent.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
       enrichedContent = enrichedContent.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
 
       // Clean up placeholders in styles
-      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
-      enrichedStyles = enrichedStyles.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
-      enrichedStyles = enrichedStyles.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
-      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
+      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      enrichedStyles = enrichedStyles
+        .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor || "#6366f1"}`)
+        .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor || "#4f46e5"}`)
+        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor || "#6366f1"}`)
+        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor || "#6366f1"}`)
+        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor || "#6366f1"}`)
+        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor || "#6366f1"}`)
+        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor || "#6366f1"}`);
+
+      // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
+      enrichedStyles = enrichedStyles
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"))
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"))
+        .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       // 1. Extract proper valid keywords for title and text
       const industryText = project.category || "Business";
@@ -1245,7 +1258,7 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold">Primary</p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
-                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: primaryColor }} />
                     <span className="text-xs font-mono text-gray-500 uppercase">{primaryColor}</span>
                   </div>
@@ -1253,7 +1266,7 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold">Secondary</p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
-                    <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: secondaryColor }} />
                     <span className="text-xs font-mono text-gray-500 uppercase">{secondaryColor}</span>
                   </div>
