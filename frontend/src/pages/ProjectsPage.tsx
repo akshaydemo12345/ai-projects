@@ -178,251 +178,257 @@ const ProjectsPage = () => {
   };
 
   return (
-    <div className="p-8 min-h-full" onClick={() => setMenuOpen(null)}>
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="flex-1 min-h-full flex flex-col" onClick={() => setMenuOpen(null)} style={{ background: "#f2f2f2" }}>
+      {/* ── Header Bar (White / slate-900) ── */}
+      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Projects</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-lg font-bold text-foreground">My Projects</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage your landing page projects
           </p>
         </div>
         <Button
-          className="gap-2 bg-primary hover:bg-primary/90"
+          className="gap-2 bg-primary hover:bg-primary/90 h-10 px-4 rounded-xl"
           onClick={() => navigate("/dashboard/projects/new")}
         >
           <Plus className="h-4 w-4" /> New Project
         </Button>
       </div>
 
-      {/* ── Stats ── */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {statCards.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
-            <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
-              <s.icon className={`h-5 w-5 ${s.tc}`} />
+      {/* ── Main Content Area ── */}
+      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-6 space-y-4 flex-1">
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {statCards.map((s) => (
+            <div key={s.label} className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex items-center gap-4 shadow-sm">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
+                <s.icon className={`h-5 w-5 ${s.tc}`} />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{s.label}</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{s.value}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-2xl font-bold text-foreground">{s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* ── Search & View Toggle ── */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="pl-9 h-9"
-          />
-        </div>
-        <div className="flex border border-border rounded-lg overflow-hidden">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-2 ${viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`p-2 ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <List className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* ── Content ── */}
-      {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-5">
-            <Zap className="h-8 w-8 text-primary" />
+        {/* ── Search & View Toggle ── */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects..."
+              className="pl-9 h-10 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-slate-300"
+            />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            Create your first project
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            Start by creating a project for your client. Each project can have
-            multiple SEO and PPC landing pages.
-          </p>
-          <Button
-            className="gap-2 bg-primary hover:bg-primary/90"
-            onClick={() => navigate("/dashboard/projects/new")}
-          >
-            <Plus className="h-4 w-4" /> New Project
-          </Button>
-        </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((project: any) => (
-            <div
-              key={project._id}
-              className="rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-all group relative"
+          <div className="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === "grid" ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" : "text-muted-foreground hover:bg-muted"}`}
             >
-              <div className="h-2 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
-                      <Globe className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <a className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || categoryColors.Other}`}>
-                        {project.category || "General"}
-                      </a>
-                      <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <a className="text-xs text-muted-foreground truncate"
-                          target="_blank"
-                          href={cleanUrl(project.websiteUrl)}
-                        >
-                          {cleanUrl(project.websiteUrl)}
-                        </a>
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === "list" ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Content ── */}
+        {projects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-5">
+              <Zap className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              Create your first project
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+              Start by creating a project for your client. Each project can have
+              multiple SEO and PPC landing pages.
+            </p>
+            <Button
+              className="gap-2 bg-primary hover:bg-primary/90"
+              onClick={() => navigate("/dashboard/projects/new")}
+            >
+              <Plus className="h-4 w-4" /> New Project
+            </Button>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((project: any) => (
+              <div
+                key={project._id}
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-all group relative flex flex-col"
+              >
+                <div className="h-1.5 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
+                        <Globe className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-base truncate">{project.name}</h3>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                            {project.category || "General"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                          <a className="text-xs text-muted-foreground hover:text-primary transition-colors truncate font-medium"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={cleanUrl(project.websiteUrl)}
+                          >
+                            {cleanUrl(project.websiteUrl)}
+                          </a>
+                        </div>
                       </div>
                     </div>
+                    <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setMenuOpen(menuOpen === project._id ? null : project._id)}
+                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {menuOpen === project._id && (
+                        <div className="absolute right-0 top-8 z-50 w-40 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                          <button
+                            onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                          >
+                            <LayoutDashboard className="h-3.5 w-3.5" /> Project Dashboard
+                          </button>
+                          <button
+                            onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                          >
+                            <Mail className="h-3.5 w-3.5" /> Email Settings
+                          </button>
+                          <button
+                            onClick={() => setEditingProject(project)}
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                          >
+                            <Settings2 className="h-3.5 w-3.5" /> Project Settings
+                          </button>
+                          <button
+                            onClick={() => handleDelete(project._id)}
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setMenuOpen(menuOpen === project._id ? null : project._id)}
-                      className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                    {menuOpen === project._id && (
-                      <div className="absolute right-0 top-8 z-50 w-40 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
-                        <button
-                          onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                        >
-                          <LayoutDashboard className="h-3.5 w-3.5" /> Project Dashboard
-                        </button>
-                        <button
-                          onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                        >
-                          <Mail className="h-3.5 w-3.5" /> Email Settings
-                        </button>
-                        <button
-                          onClick={() => setEditingProject(project)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                        >
-                          <Settings2 className="h-3.5 w-3.5" /> Project Settings
-                        </button>
-                        <button
-                          onClick={() => handleDelete(project._id)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
-                        </button>
+
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100/55 dark:border-slate-800/50">
+                    <span>Pages: <strong className="text-slate-800 dark:text-slate-200">{project.pageCount || 0}</strong></span>
+                    <span className="text-slate-200 dark:text-slate-700">|</span>
+                    <span>Leads: <strong className="text-slate-800 dark:text-slate-200">{project.leadCount || 0}</strong></span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center justify-between w-full">
+                      <Button
+                        size="sm"
+                        className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all"
+                        onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                      >
+                        Go to Dashboard →
+                      </Button>
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-wide uppercase">
+                        {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-50 text-violet-600 border border-violet-100 px-1.5 py-0.5 rounded-md">PPC</span>}
+                        {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded-md">SEO</span>}
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium mb-4 bg-muted/30 rounded-md p-2">
-                  <span>Pages: {project.pageCount || 0}</span>
-                  <span className="text-muted-foreground/30">|</span>
-                  <span>Leads: {project.leadCount || 0}</span>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="h-8 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm transition-all"
-                      onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                    >
-                      Go to Dashboard →
-                    </Button>
-                    <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">
-                      {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">PPC</span>}
-                      {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">SEO</span>}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          <div
-            onClick={() => navigate("/dashboard/projects/new")}
-            className="rounded-xl border-2 border-dashed border-border bg-card/50 flex flex-col items-center justify-center min-h-[200px] hover:border-primary/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background mb-3 group-hover:border-primary/40 transition-colors">
-              <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div
+              onClick={() => navigate("/dashboard/projects/new")}
+              className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/30 flex flex-col items-center justify-center min-h-[220px] hover:border-primary/40 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer group"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white mb-3 group-hover:border-primary/40 transition-colors shadow-sm">
+                <Plus className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
+              </div>
+              <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">
+                New Project
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-              New Project
-            </p>
           </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">PROJECT</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground">CATEGORY</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground">PAGES</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-muted-foreground">LEADS</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((project: any) => (
-                <tr key={project._id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{project.name}</p>
-                      <a className="text-xs text-muted-foreground" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-center">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || categoryColors.Other}`}>
-                      {project.category || "General"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-muted-foreground text-center font-bold">{project.pageCount || 0}</td>
-                  <td className="px-5 py-3.5 text-sm text-muted-foreground text-center font-bold">{project.leadCount || 0}</td>
-
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 px-2 text-[10px] gap-1 font-bold bg-muted hover:bg-primary/10 hover:text-primary transition-all"
-                        title="Email Settings"
-                        onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
-                      >
-                        <Mail className="h-3 w-3" />
-                        Email
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="h-7 text-[10px] font-bold gap-1.5 hover:bg-primary hover:text-white transition-all" 
-                        onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                      >
-                        <LayoutDashboard className="h-3 w-3" />
-                        Project Dashboard
-                      </Button>
-                      <button onClick={() => handleDelete(project._id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50/55 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                  <th className="text-left px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PROJECT</th>
+                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CATEGORY</th>
+                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PAGES</th>
+                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">LEADS</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {filtered.map((project: any) => (
+                  <tr key={project._id} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-5 py-4">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{project.name}</p>
+                        <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                        {project.category || "General"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.pageCount || 0}</td>
+                    <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.leadCount || 0}</td>
+
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 px-3 text-[11px] gap-1.5 font-bold bg-slate-50 hover:bg-primary/10 hover:text-primary transition-all rounded-xl border border-slate-100"
+                          title="Email Settings"
+                          onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                          Email
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-3 text-[11px] font-bold gap-1.5 hover:bg-primary hover:text-white transition-all rounded-xl"
+                          onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                        >
+                          <LayoutDashboard className="h-3.5 w-3.5" />
+                          Dashboard
+                        </Button>
+                        <button onClick={() => handleDelete(project._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {editingProject && (
         <EditProjectModal
@@ -436,3 +442,4 @@ const ProjectsPage = () => {
 };
 
 export default ProjectsPage;
+

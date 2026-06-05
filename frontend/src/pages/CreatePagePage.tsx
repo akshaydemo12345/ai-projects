@@ -1145,12 +1145,12 @@ ${enrichedContent}
     <div className="min-h-screen flex flex-col bg-white">
       <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
       {/* ══ TOP NAV ══ */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center gap-3 shadow-sm">
         <button
           onClick={() => navigate(`/dashboard/projects/${id}`)}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
         <span className="text-gray-300">/</span>
         {project && <span className="text-sm text-gray-400 truncate max-w-[160px]">{project.name}</span>}
