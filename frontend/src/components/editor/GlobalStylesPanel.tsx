@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Type, X } from 'lucide-react';
 import type { Editor } from 'grapesjs';
-
+import { PickrColorInput } from '@/components/ui/PickrColorInput';
 interface GlobalStylesPanelProps {
   editor: Editor | null;
   initialPrimary?: string;
@@ -208,7 +208,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const handleUpdate = (cat: string, key: string, val: string) => {
+  const handleUpdate = (cat: string, key: string, val: string, isFinal = true) => {
     setStyles(prev => {
       const next = {
         ...prev,
@@ -232,6 +232,11 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       if (cat === 'Colors' && (key === 'primary' || key === 'secondary')) {
         const oldVal = prevColorsRef.current[key];
         
+        // Skip heavy replacement if this is just a drag preview (isFinal = false)
+        if (!isFinal) {
+           return;
+        }
+
         // Only run the heavy CSS replacement if the new value is a valid 7-character hex code.
         // This prevents intermediate typing states (like "#" or "#ff") from corrupting the stylesheet.
         if (!val || val.length !== 7 || !val.startsWith('#')) {
@@ -430,14 +435,11 @@ button, .btn, [class*="btn-"] {
                       
                       {prop.type === 'color' && (
                         <>
-                          <div className="relative w-[18px] h-[18px] rounded-[2px] border border-[#2a2a3e] overflow-hidden ml-1 flex-shrink-0 cursor-pointer">
-                            <input 
-                              type="color" 
-                              value={prop.value.length === 7 ? prop.value : '#000000'}
-                              onChange={(e) => handleUpdate(category, key, e.target.value)}
-                              className="absolute -top-2 -left-2 w-[40px] h-[40px] cursor-pointer"
-                            />
-                          </div>
+                          <PickrColorInput
+                            value={prop.value.length === 7 || prop.value.length === 9 ? prop.value : '#000000'}
+                            onChange={(val, isFinal) => handleUpdate(category, key, val, isFinal)}
+                            className="ml-1"
+                          />
                           <input 
                             type="text" 
                             value={prop.value} 

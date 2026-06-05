@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { projectsApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { copyToClipboard, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script";
@@ -516,11 +517,10 @@ const CreateProjectFlow = () => {
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input
-                        type="color"
+                      <PickrColorInput
                         value={primaryColor || "#000000"}
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
+                        onChange={(val) => setPrimaryColor(val)}
+                        className="border-0 bg-transparent flex-shrink-0"
                       />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
                     </div>
@@ -528,11 +528,10 @@ const CreateProjectFlow = () => {
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input
-                        type="color"
+                      <PickrColorInput
                         value={secondaryColor || "#000000"}
-                        onChange={(e) => setSecondaryColor(e.target.value)}
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
+                        onChange={(val) => setSecondaryColor(val)}
+                        className="border-0 bg-transparent flex-shrink-0"
                       />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
                     </div>

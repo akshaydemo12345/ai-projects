@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pagesApi, projectsApi, type LandingPage } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -99,10 +100,87 @@ const PageSettingsPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const updateContentColors = (
+    content: string | undefined, 
+    newPrimary: string, 
+    newSecondary: string,
+    oldPrimary?: string,
+    oldSecondary?: string
+  ) => {
+    if (!content) return content;
+    let updated = content;
+
+    // 1. Update the :root variable declarations
+    updated = updated.replace(/--primary\s*:\s*[^;}]+/g, `--primary: ${newPrimary}`);
+    updated = updated.replace(/--secondary\s*:\s*[^;}]+/g, `--secondary: ${newSecondary}`);
+    updated = updated.replace(/--accent\s*:\s*[^;}]+/g, `--accent: ${newSecondary}`);
+    updated = updated.replace(/--gold\s*:\s*[^;}]+/g, `--gold: ${newPrimary}`);
+    updated = updated.replace(/--btn-bg\s*:\s*[^;}]+/g, `--btn-bg: ${newPrimary}`);
+
+    // Update button-gradient variable if present
+    updated = updated.replace(/--button-gradient\s*:\s*linear-gradient\([^)]+\)/g, `--button-gradient: linear-gradient(135deg, ${newPrimary}, ${newSecondary})`);
+
+    // 2. Self-healing: if there were hardcoded occurrences of the old primary/secondary colors in styles (e.g. from previously saved pages),
+    // we also replace them to var(--primary) / var(--secondary) so they become dynamic!
+    if (oldPrimary && oldPrimary !== newPrimary) {
+      const escapedOld = oldPrimary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--primary)');
+    }
+    if (oldSecondary && oldSecondary !== newSecondary) {
+      const escapedOld = oldSecondary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--secondary)');
+    }
+
+    return updated;
+  };
+
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) {
       toast.error("Name and slug are required.");
       return;
+    }
+
+    // Update content and styles with new colors
+    const updatedLandingPageContent = updateContentColors(
+      page.landingPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedLandingPageStyles = updateContentColors(
+      page.landingPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageContent = updateContentColors(
+      page.thankYouPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageStyles = updateContentColors(
+      page.thankYouPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+
+    // If page has a content object with html/fullHtml/styles
+    let updatedContentObj = page.content;
+    if (page.content) {
+      updatedContentObj = {
+        ...page.content,
+        fullHtml: updateContentColors(page.content.fullHtml, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        html: updateContentColors(page.content.html, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        fullCss: updateContentColors(page.content.fullCss, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor)
+      };
     }
     
     updatePageMutation.mutate({
@@ -120,7 +198,13 @@ const PageSettingsPage = () => {
       mainFooter,
       thankYouHeader,
       thankYouFooter,
-      thankYouUrl
+      thankYouUrl,
+      landingPageContent: updatedLandingPageContent,
+      landingPageStyles: updatedLandingPageStyles,
+      thankYouPageContent: updatedThankYouPageContent,
+      thankYouPageStyles: updatedThankYouPageStyles,
+      content: updatedContentObj,
+      styles: updatedLandingPageStyles
     } as LandingPage);
   };
 
@@ -248,11 +332,11 @@ const PageSettingsPage = () => {
                   <label className="text-xs font-bold text-slate-500">Theme Colors</label>
                   <div className="flex gap-3">
                     <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} />
                       <span className="text-[10px] font-mono">{primaryColor}</span>
                     </div>
                     <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} />
                       <span className="text-[10px] font-mono">{secondaryColor}</span>
                     </div>
                   </div>
