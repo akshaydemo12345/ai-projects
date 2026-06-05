@@ -364,7 +364,7 @@ const CreateProjectFlow = () => {
 
         {/* ─── Step 1: Project Form ─── */}
         {step === "form" && (
-          <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-4 space-y-4 flex-1">
+          <div className="max-w-[1000px] w-full px-4 sm:px-4 py-4 space-y-4 flex-1">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
               {/* Left Column - Core Info */}
@@ -695,7 +695,7 @@ const CreateProjectFlow = () => {
 
         {/* ─── Step 2: Integration Setup ─── */}
         {step === "integration" && createdProject && (
-          <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-8 py-6 space-y-6 flex-1">
+          <div className="max-w-[1000px] w-full px-4 sm:px-8 py-6 space-y-6 flex-1">
             <div className="max-w-3xl mx-auto space-y-6">
               {/* Success banner */}
               <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-5 flex items-center gap-4">
