@@ -351,13 +351,34 @@ const GrapesEditor = () => {
         sRgb = hexToRgbStr(secondaryColor);
       } catch (e) { }
 
-      // Replace placeholders in template CSS styles
-      // NOTE: We do NOT replace var(--primary)/var(--secondary) with hardcoded hex here.
-      // The :root block defines --primary and --secondary as actual hex values (no circular refs).
-      // Keeping var(--primary) in template CSS ensures editor color changes apply globally.
-      const finalStyles = (dbStyles || '')
-        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor)
-        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor)
+      let finalStyles = (dbStyles || '');
+
+      // Recover hardcoded hex colors to dynamic variables for existing/previously saved pages
+      if (primaryColor) {
+        const escapedColor = primaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, 'var(--primary)');
+      }
+      if (secondaryColor) {
+        const escapedColor = secondaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, 'var(--secondary)');
+      }
+
+      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      finalStyles = finalStyles
+        .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor}`)
+        .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor}`)
+        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor}`)
+        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor}`)
+        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor}`)
+        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor}`)
+        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor}`);
+
+      // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
+      finalStyles = finalStyles
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
         .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
         .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
@@ -2046,13 +2067,9 @@ const GrapesEditor = () => {
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
     const templateStyleTag = canvasDoc.getElementById('template-styles');
 
-    // Replace var(--primary/secondary) with actual hex values before saving.
-    // This prevents circular CSS variable references (e.g. --primary: var(--primary)) on reload.
-    const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
-      .replace(/var\(--primary\)/g, themePrimary)
-      .replace(/var\(--secondary\)/g, themeSecondary);
+    const templateCss = templateStyleTag?.innerHTML || '';
 
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
+    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
 
     const styleData = globalCss + '\n' + css;
 
@@ -2370,13 +2387,9 @@ const GrapesEditor = () => {
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
 
-      // Replace var(--primary/secondary) with actual hex values before saving.
-      // This prevents circular CSS variable references on reload/publish.
-      const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
-        .replace(/var\(--primary\)/g, themePrimary)
-        .replace(/var\(--secondary\)/g, themeSecondary);
+      const templateCss = templateStyleTag?.innerHTML || '';
 
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + cleanTemplateCss;
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
       const styleData = globalCss + '\n' + css;
 
       // Extract scripts from canvas using unified helper, then merge with backup

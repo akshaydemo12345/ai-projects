@@ -100,10 +100,87 @@ const PageSettingsPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const updateContentColors = (
+    content: string | undefined, 
+    newPrimary: string, 
+    newSecondary: string,
+    oldPrimary?: string,
+    oldSecondary?: string
+  ) => {
+    if (!content) return content;
+    let updated = content;
+
+    // 1. Update the :root variable declarations
+    updated = updated.replace(/--primary\s*:\s*[^;}]+/g, `--primary: ${newPrimary}`);
+    updated = updated.replace(/--secondary\s*:\s*[^;}]+/g, `--secondary: ${newSecondary}`);
+    updated = updated.replace(/--accent\s*:\s*[^;}]+/g, `--accent: ${newSecondary}`);
+    updated = updated.replace(/--gold\s*:\s*[^;}]+/g, `--gold: ${newPrimary}`);
+    updated = updated.replace(/--btn-bg\s*:\s*[^;}]+/g, `--btn-bg: ${newPrimary}`);
+
+    // Update button-gradient variable if present
+    updated = updated.replace(/--button-gradient\s*:\s*linear-gradient\([^)]+\)/g, `--button-gradient: linear-gradient(135deg, ${newPrimary}, ${newSecondary})`);
+
+    // 2. Self-healing: if there were hardcoded occurrences of the old primary/secondary colors in styles (e.g. from previously saved pages),
+    // we also replace them to var(--primary) / var(--secondary) so they become dynamic!
+    if (oldPrimary && oldPrimary !== newPrimary) {
+      const escapedOld = oldPrimary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--primary)');
+    }
+    if (oldSecondary && oldSecondary !== newSecondary) {
+      const escapedOld = oldSecondary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--secondary)');
+    }
+
+    return updated;
+  };
+
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) {
       toast.error("Name and slug are required.");
       return;
+    }
+
+    // Update content and styles with new colors
+    const updatedLandingPageContent = updateContentColors(
+      page.landingPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedLandingPageStyles = updateContentColors(
+      page.landingPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageContent = updateContentColors(
+      page.thankYouPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageStyles = updateContentColors(
+      page.thankYouPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+
+    // If page has a content object with html/fullHtml/styles
+    let updatedContentObj = page.content;
+    if (page.content) {
+      updatedContentObj = {
+        ...page.content,
+        fullHtml: updateContentColors(page.content.fullHtml, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        html: updateContentColors(page.content.html, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        fullCss: updateContentColors(page.content.fullCss, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor)
+      };
     }
     
     updatePageMutation.mutate({
@@ -121,7 +198,13 @@ const PageSettingsPage = () => {
       mainFooter,
       thankYouHeader,
       thankYouFooter,
-      thankYouUrl
+      thankYouUrl,
+      landingPageContent: updatedLandingPageContent,
+      landingPageStyles: updatedLandingPageStyles,
+      thankYouPageContent: updatedThankYouPageContent,
+      thankYouPageStyles: updatedThankYouPageStyles,
+      content: updatedContentObj,
+      styles: updatedLandingPageStyles
     } as LandingPage);
   };
 
