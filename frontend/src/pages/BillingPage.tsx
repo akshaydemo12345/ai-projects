@@ -41,7 +41,7 @@ const BillingPage = () => {
             <Button size="sm" variant="ghost" className="gap-1 text-xs"><Download className="h-3 w-3" /> Download All</Button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[500px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left text-xs font-medium text-muted-foreground py-2">Invoice</th>

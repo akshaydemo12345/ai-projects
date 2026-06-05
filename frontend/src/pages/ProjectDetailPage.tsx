@@ -1865,9 +1865,9 @@ const ProjectDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-3 items-start">
 
           {/* ─── Left Side: Landing Pages List ─── */}
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden min-h-[500px]">
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
             {/* Section Header */}
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card">
+            <div className="px-6 py-4 border-b border-border flex flex-wrap items-center justify-between bg-card gap-4">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
                   <Sparkles className="h-4 w-4 text-white" />
@@ -1877,7 +1877,7 @@ const ProjectDetailPage = () => {
                   <p className="text-xs text-muted-foreground">{pages.length} page{pages.length !== 1 ? "s" : ""} in this project</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {/* Search Bar Input */}
                 <div className="relative w-40 md:w-52">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -1921,9 +1921,11 @@ const ProjectDetailPage = () => {
               </div>
             </div>
 
-            {/* Table Header */}
+            <div className="overflow-x-auto flex-1 overflow-y-auto custom-scrollbar">
+              <div className="min-w-[700px]">
+                {/* Table Header */}
             {pages.length > 0 && (
-              <div className="hidden md:grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="sticky top-0 z-10 grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 px-6 py-2.5 border-b border-border bg-muted/95 backdrop-blur-sm text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 <span>Page Name</span>
                 <span className="text-center">Status</span>
                 <span className="text-center">Preview</span>
@@ -1958,7 +1960,7 @@ const ProjectDetailPage = () => {
                 filteredPages.map((page) => (
                   <div
                     key={page._id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_90px_60px_80px_100px_100px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
+                    className="grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -2098,6 +2100,8 @@ const ProjectDetailPage = () => {
                 ))
               )}
             </div>
+            </div>
+          </div>
           </div>
 
           {/* ─── Right Side: Integration & Embedding ─── */}

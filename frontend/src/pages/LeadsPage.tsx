@@ -386,7 +386,7 @@ const LeadsPage = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Stats */}
             <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden sm:flex">
               <div className="text-right">
@@ -613,7 +613,7 @@ const LeadsPage = () => {
             <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
                     <tr className="border-b border-slate-200 dark:border-slate-800">
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">Full Name</th>
@@ -684,7 +684,7 @@ const LeadsPage = () => {
                           </p>
                         </td>
                         <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -718,7 +718,7 @@ const LeadsPage = () => {
                     onClick={() => setSelectedLead(lead)}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                           {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                         </div>
@@ -756,13 +756,13 @@ const LeadsPage = () => {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
                         <div className="space-y-1.5">
                           {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5">
+                            <div key={idx} className="flex flex-wrap items-center gap-1.5">
                               <Mail className="h-3 w-3 text-slate-400 shrink-0" />
                               <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
                             </div>
                           ))}
                           {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5">
+                            <div key={idx} className="flex flex-wrap items-center gap-1.5">
                               <Phone className="h-3 w-3 text-slate-400 shrink-0" />
                               <p className="text-xs text-slate-500 font-medium">{phone}</p>
                             </div>
@@ -802,7 +802,7 @@ const LeadsPage = () => {
                 <span className="ml-2 text-primary normal-case font-normal">(filtered)</span>
               )}
             </p>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"

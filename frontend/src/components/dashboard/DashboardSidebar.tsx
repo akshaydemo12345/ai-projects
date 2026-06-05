@@ -23,7 +23,12 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar-collapsed") === "true";
+    const stored = localStorage.getItem("sidebar-collapsed");
+    // If user has never set a preference, default to collapsed on desktop (≥1280px)
+    if (stored === null) {
+      return window.innerWidth >= 1280;
+    }
+    return stored === "true";
   });
 
   const toggleCollapse = () => {
@@ -33,6 +38,7 @@ const DashboardSidebar = () => {
       return next;
     });
   };
+
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return location.pathname === "/dashboard";

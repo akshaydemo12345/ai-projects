@@ -187,7 +187,7 @@ const ProjectsPage = () => {
   return (
     <div className="flex-1 min-h-full flex flex-col" onClick={() => setMenuOpen(null)} style={{ background: "#f2f2f2" }}>
       {/* ── Header Bar (White / slate-900) ── */}
-      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900">
         <div>
           <h1 className="text-lg font-bold text-foreground">My Projects</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -220,7 +220,7 @@ const ProjectsPage = () => {
         </div>
 
         {/* ── Search & View Toggle ── */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
@@ -276,18 +276,19 @@ const ProjectsPage = () => {
                 <div className="h-1.5 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
                         <Globe className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
-                          {project.category || "General"}
-                        </span>
+
                         <div className="mt-0.5">
                           <h3 className="font-bold text-slate-900 dark:text-white text-base truncate">{project.name}</h3>
                         </div>
-                        <div className="flex items-center gap-1 mt-1">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                          {project.category || "General"}
+                        </span>
+                        <div className="flex items-center gap-1 mt-2">
                           <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
                           <a className="text-xs text-muted-foreground hover:text-primary transition-colors truncate font-medium"
                             target="_blank"
@@ -337,14 +338,14 @@ const ProjectsPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100/55 dark:border-slate-800/50">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-semibold mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100/55 dark:border-slate-800/50">
                     <span>Pages: <strong className="text-slate-800 dark:text-slate-200">{project.pageCount || 0}</strong></span>
                     <span className="text-slate-200 dark:text-slate-700">|</span>
                     <span>Leads: <strong className="text-slate-800 dark:text-slate-200">{project.leadCount || 0}</strong></span>
                   </div>
 
                   <div className="flex items-center justify-between pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex flex-wrap items-center justify-between w-full gap-2">
                       <Button
                         size="sm"
                         className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all"
@@ -352,7 +353,7 @@ const ProjectsPage = () => {
                       >
                         Go to Dashboard →
                       </Button>
-                      <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-wide uppercase">
+                      <div className="flex flex-wrap items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-wide uppercase">
                         {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-50 text-violet-600 border border-violet-100 px-1.5 py-0.5 rounded-md">PPC</span>}
                         {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded-md">SEO</span>}
                       </div>
@@ -376,63 +377,65 @@ const ProjectsPage = () => {
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50/55 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="text-left px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PROJECT</th>
-                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CATEGORY</th>
-                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PAGES</th>
-                  <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">LEADS</th>
-                  <th className="text-right px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((project: any) => (
-                  <tr key={project._id} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-5 py-4">
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{project.name}</p>
-                        <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
-                        {project.category || "General"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.pageCount || 0}</td>
-                    <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.leadCount || 0}</td>
-
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 px-3 text-[11px] gap-1.5 font-bold bg-slate-50 hover:bg-primary/10 hover:text-primary transition-all rounded-xl border border-slate-100"
-                          title="Email Settings"
-                          onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                          Email
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-3 text-[11px] font-bold gap-1.5 hover:bg-primary hover:text-white transition-all rounded-xl"
-                          onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                        >
-                          <LayoutDashboard className="h-3.5 w-3.5" />
-                          Dashboard
-                        </Button>
-                        <button onClick={() => handleDelete(project._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="bg-slate-50/55 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                    <th className="text-left px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PROJECT</th>
+                    <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CATEGORY</th>
+                    <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PAGES</th>
+                    <th className="text-center px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">LEADS</th>
+                    <th className="text-right px-5 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">ACTIONS</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((project: any) => (
+                    <tr key={project._id} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-5 py-4">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{project.name}</p>
+                          <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                          {project.category || "General"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.pageCount || 0}</td>
+                      <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.leadCount || 0}</td>
+
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 px-3 text-[11px] gap-1.5 font-bold bg-slate-50 hover:bg-primary/10 hover:text-primary transition-all rounded-xl border border-slate-100"
+                            title="Email Settings"
+                            onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            Email
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-3 text-[11px] font-bold gap-1.5 hover:bg-primary hover:text-white transition-all rounded-xl"
+                            onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                          >
+                            <LayoutDashboard className="h-3.5 w-3.5" />
+                            Dashboard
+                          </Button>
+                          <button onClick={() => handleDelete(project._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
