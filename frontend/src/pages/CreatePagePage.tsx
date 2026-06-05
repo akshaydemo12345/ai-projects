@@ -965,18 +965,30 @@ const CreatePagePage = () => {
       enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, project.scrapedData?.address || "123 Business Avenue, New York, NY");
 
 
-      // Replace any remaining placeholders in content (just in case)
-      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
+      // Replace any remaining placeholders in content (just in case) with CSS variables to keep them dynamic
+      enrichedContent = enrichedContent.replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)');
+      enrichedContent = enrichedContent.replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)');
       enrichedContent = enrichedContent.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
       enrichedContent = enrichedContent.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
 
       // Clean up placeholders in styles
-      enrichedStyles = enrichedStyles.replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor || "#6366f1");
-      enrichedStyles = enrichedStyles.replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor || "#4f46e5");
-      enrichedStyles = enrichedStyles.replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"));
-      enrichedStyles = enrichedStyles.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
-      enrichedStyles = enrichedStyles.replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
+      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      enrichedStyles = enrichedStyles
+        .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor || "#6366f1"}`)
+        .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor || "#4f46e5"}`)
+        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor || "#6366f1"}`)
+        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor || "#6366f1"}`)
+        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor || "#6366f1"}`)
+        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor || "#6366f1"}`)
+        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor || "#6366f1"}`);
+
+      // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
+      enrichedStyles = enrichedStyles
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"))
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"))
+        .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       // 1. Extract proper valid keywords for title and text
       const industryText = project.category || "Business";
