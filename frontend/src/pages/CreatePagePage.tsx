@@ -8,6 +8,7 @@ import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/
 import { toast } from "sonner";
 import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
@@ -1245,7 +1246,7 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold">Primary</p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
-                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: primaryColor }} />
                     <span className="text-xs font-mono text-gray-500 uppercase">{primaryColor}</span>
                   </div>
@@ -1253,7 +1254,7 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold">Secondary</p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
-                    <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: secondaryColor }} />
                     <span className="text-xs font-mono text-gray-500 uppercase">{secondaryColor}</span>
                   </div>

@@ -9,6 +9,8 @@ import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
+import Pickr from '@simonwep/pickr';
+import '@simonwep/pickr/dist/themes/monolith.min.css';
 import './grapes-custom.css';
 import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
@@ -147,6 +149,9 @@ const GrapesEditor = () => {
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const cpObserverRef = useRef<MutationObserver | null>(null);
+  const pickrInstanceRef = useRef<Pickr | null>(null);
+  const pickrContainerRef = useRef<HTMLDivElement | null>(null);
+  const pickrCurrentFieldRef = useRef<{ fieldEl: HTMLElement | null; cssProperty: string }>({ fieldEl: null, cssProperty: '' });
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [extractedTemplateScripts, setExtractedTemplateScripts] = useState<string>('');
@@ -346,15 +351,15 @@ const GrapesEditor = () => {
         sRgb = hexToRgbStr(secondaryColor);
       } catch (e) { }
 
-      // Replace placeholders with ACTUAL color values (not var()) to avoid circular CSS variable references
+      // Replace placeholders in template CSS styles
+      // NOTE: We do NOT replace var(--primary)/var(--secondary) with hardcoded hex here.
+      // The :root block defines --primary and --secondary as actual hex values (no circular refs).
+      // Keeping var(--primary) in template CSS ensures editor color changes apply globally.
       const finalStyles = (dbStyles || '')
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, primaryColor)
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, secondaryColor)
         .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
         .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
-        // Also clean up any previously saved var(--primary) circular references
-        .replace(/:\s*var\(--primary\)/g, `: ${primaryColor}`)
-        .replace(/:\s*var\(--secondary\)/g, `: ${secondaryColor}`)
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
@@ -444,11 +449,11 @@ const GrapesEditor = () => {
             btn.setAttribute('type', 'submit');
           }
         });
-        
+
         // Remove existing editor-interaction script if present
         const existingInteractionScript = canvasDoc.getElementById('editor-interactions');
         if (existingInteractionScript) existingInteractionScript.remove();
-        
+
         const interactionScript = canvasDoc.createElement('script');
         interactionScript.id = 'editor-interactions';
         interactionScript.innerHTML = `
@@ -595,7 +600,7 @@ const GrapesEditor = () => {
               el.classList.add('in-view');
             });
           }
-        } catch(e) { /* ignore */ }
+        } catch (e) { /* ignore */ }
         setIsCanvasLoading(false);
       }, 1200);
     } else {
@@ -1761,10 +1766,85 @@ const GrapesEditor = () => {
     };
   }, [pageId, projectLoading, pageLoading]);
 
-  // ─── Custom Color Picker Injection ───
+  // ─── Custom Color Picker Injection (Pickr-based) ───
   const injectCustomColorPickers = (editor: Editor) => {
     const container = document.getElementById('styles-container');
     if (!container) return;
+
+    // Create a persistent Pickr container div if not already exists
+    if (!pickrContainerRef.current) {
+      const div = document.createElement('div');
+      div.id = 'pickr-global-container';
+      div.style.cssText = 'position:fixed;z-index:999999;pointer-events:none;';
+      document.body.appendChild(div);
+      pickrContainerRef.current = div;
+
+      // Create a button element for Pickr to attach to
+      const btn = document.createElement('button');
+      btn.id = 'pickr-anchor-btn';
+      btn.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
+      document.body.appendChild(btn);
+
+      const toHex6 = (hex: string): string => {
+        if (!hex) return '#000000';
+        if (hex.startsWith('#') && hex.length === 9) return hex.slice(0, 7);
+        if (hex.startsWith('#') && hex.length === 7) return hex;
+        if (hex.startsWith('#') && hex.length === 4) {
+          const [, r, g, b] = hex;
+          return `#${r}${r}${g}${g}${b}${b}`;
+        }
+        return hex.length === 6 ? `#${hex}` : '#000000';
+      };
+
+      const pickr = Pickr.create({
+        el: btn,
+        theme: 'monolith',
+        default: '#7c3aed',
+        useAsButton: true,
+        components: {
+          preview: true,
+          opacity: false,
+          hue: true,
+          interaction: { hex: true, input: true, save: true },
+        },
+      });
+
+      // Live update as user drags
+      pickr.on('change', (color: Pickr.HSVaColor) => {
+        const hex = toHex6(color.toHEXA().toString());
+        applyPickrColor(hex);
+      });
+
+      pickr.on('save', (color: Pickr.HSVaColor) => {
+        const hex = toHex6(color.toHEXA().toString());
+        applyPickrColor(hex);
+        pickr.hide();
+      });
+
+      pickrInstanceRef.current = pickr;
+    }
+
+    const applyPickrColor = (hex: string) => {
+      const { fieldEl, cssProperty } = pickrCurrentFieldRef.current;
+      // Update visual swatch in GrapesJS
+      if (fieldEl) {
+        const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
+        if (swatch) swatch.style.background = hex;
+        // Trigger GrapesJS hidden input change — use InputEvent for React/GrapesJS compat
+        const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
+        if (hiddenInput) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+          if (nativeInputValueSetter) nativeInputValueSetter.call(hiddenInput, hex);
+          hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      // Apply directly to selected GrapesJS component
+      if (editorRef.current && cssProperty) {
+        const selected = editorRef.current.getSelected();
+        if (selected) selected.addStyle({ [cssProperty]: hex });
+      }
+    };
 
     const processFields = () => {
       const fields = container.querySelectorAll<HTMLElement>('.gjs-field-colorp:not([data-cp-injected])');
@@ -1779,35 +1859,53 @@ const GrapesEditor = () => {
           e.preventDefault();
           e.stopPropagation();
 
-          // Get current color from hidden input
+          const pickr = pickrInstanceRef.current;
+          if (!pickr) return;
+
+          // Read current color
           const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
           const rawColor = hiddenInput?.value || swatch.style.background || '#000000';
           const hexColor = normalizeToHex(rawColor);
 
-          // Get CSS property name from parent class or label
+          // Detect CSS property from label
           const propWrapper = fieldEl.closest<HTMLElement>('.gjs-sm-property');
           const labelEl = propWrapper?.querySelector('.gjs-sm-label');
           const labelText = (labelEl?.textContent || '').trim().toLowerCase();
           const cssProperty = resolveCssProp(labelText, propWrapper);
 
-          // Position the picker to the LEFT of the right sidebar
+          // Save context for applyPickrColor
+          pickrCurrentFieldRef.current = { fieldEl, cssProperty };
+
+          // Position Pickr anchor near the swatch
           const rect = swatch.getBoundingClientRect();
-          const pickerW = 260;
-          const pickerH = 380;
-          // Open to the left of the sidebar: right edge of picker = left edge of swatch
-          let x = rect.left - pickerW - 10;
-          // Vertically: align top with swatch, clamp so it stays in viewport
-          let y = rect.top;
-          if (y + pickerH > window.innerHeight - 10) y = window.innerHeight - pickerH - 10;
-          if (y < 10) y = 10;
-          // If opening left goes off screen, open below instead
-          if (x < 10) {
-            x = rect.left;
-            y = rect.bottom + 6;
-            if (x + pickerW > window.innerWidth - 10) x = window.innerWidth - pickerW - 10;
+          const anchorBtn = document.getElementById('pickr-anchor-btn');
+          if (anchorBtn) {
+            anchorBtn.style.left = `${rect.left}px`;
+            anchorBtn.style.top = `${rect.bottom + 4}px`;
+            anchorBtn.style.pointerEvents = 'auto';
           }
 
-          setColorPicker({ visible: true, x, y, color: hexColor, fieldEl, cssProperty });
+          // Set color and show
+          try { pickr.setColor(hexColor); } catch { }
+          pickr.show();
+
+          // Reposition Pickr popup to left of sidebar after it opens
+          setTimeout(() => {
+            const popup = document.querySelector<HTMLElement>('.pcr-app');
+            if (popup) {
+              popup.style.position = 'fixed';
+              popup.style.zIndex = '999999';
+              const pickerW = popup.offsetWidth || 250;
+              let x = rect.left - pickerW - 10;
+              let y = rect.top;
+              if (x < 10) { x = rect.left; y = rect.bottom + 6; }
+              if (y + (popup.offsetHeight || 300) > window.innerHeight - 10)
+                y = window.innerHeight - (popup.offsetHeight || 300) - 10;
+              if (y < 10) y = 10;
+              popup.style.left = `${x}px`;
+              popup.style.top = `${y}px`;
+            }
+          }, 30);
         });
       });
     };
@@ -1864,29 +1962,8 @@ const GrapesEditor = () => {
     editor.on('styleManager:sector:open', () => setTimeout(processFields, 150));
   };
 
-  // ─── Apply color from custom picker ───
-  const applyColorFromPicker = (hex: string) => {
-    const { fieldEl, cssProperty } = colorPicker;
-    setColorPicker(prev => ({ ...prev, color: hex }));
-
-    // Update the visual swatch
-    if (fieldEl) {
-      const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
-      if (swatch) swatch.style.background = hex;
-      // Trigger GrapesJS hidden input change
-      const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
-      if (hiddenInput) {
-        hiddenInput.value = hex;
-        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    }
-
-    // Apply style directly to selected element
-    if (editorRef.current && cssProperty) {
-      const selected = editorRef.current.getSelected();
-      if (selected) selected.addStyle({ [cssProperty]: hex });
-    }
-  };
+  // ─── Apply color from custom picker (legacy stub — Pickr handles it inline) ───
+  const applyColorFromPicker = (_hex: string) => { };
 
   // ─── Branding Sync (Reactive to Sidebar) ───
   useEffect(() => {
@@ -2123,7 +2200,7 @@ const GrapesEditor = () => {
       const canvasDoc = editorRef.current.Canvas.getDocument();
       if (canvasDoc) {
         canvasScriptsForDownload = extractCanvasScripts(canvasDoc);
-        
+
         const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
         const brandingStyleTag = canvasDoc.getElementById('branding-vars');
         const templateStyleTag = canvasDoc.getElementById('template-styles');
@@ -2381,12 +2458,40 @@ const GrapesEditor = () => {
         pageId
       });
 
-      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
+      let improvedHtml: string = res.data.improvedContent.fullHtml || res.data.improvedContent;
+
+      // ── Extract <style> blocks from AI HTML and inject into template-styles ──
+      const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      let extractedCss = '';
+      let match;
+      while ((match = styleTagRegex.exec(improvedHtml)) !== null) {
+        extractedCss += match[1] + '\n';
+      }
+      // Remove style tags from HTML before adding to canvas
+      const cleanHtml = improvedHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+      if (extractedCss.trim()) {
+        const canvasDoc = editorRef.current.Canvas.getDocument();
+        if (canvasDoc) {
+          let templateStyleTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
+          if (!templateStyleTag) {
+            templateStyleTag = canvasDoc.createElement('style');
+            templateStyleTag.id = 'template-styles';
+            canvasDoc.head.appendChild(templateStyleTag);
+          }
+          templateStyleTag.innerHTML += '\n/* AI Generated */\n' + extractedCss;
+        }
+        // Also register with GrapesJS CSS composer
+        try {
+          const existingCss = editorRef.current.getCss() || '';
+          editorRef.current.setStyle(existingCss + '\n/* AI Generated */\n' + extractedCss);
+        } catch { }
+      }
 
       if (selected) {
-        selected.replaceWith(improvedHtml);
+        selected.replaceWith(cleanHtml || improvedHtml);
       } else {
-        editorRef.current.addComponents(improvedHtml);
+        editorRef.current.addComponents(cleanHtml || improvedHtml);
       }
 
       setAiLoading(false);
@@ -2415,8 +2520,35 @@ const GrapesEditor = () => {
         pageId
       });
 
-      const improvedHtml = res.data.improvedContent.fullHtml || res.data.improvedContent;
-      selected.replaceWith(improvedHtml);
+      let improvedHtml: string = res.data.improvedContent.fullHtml || res.data.improvedContent;
+
+      // ── Extract <style> blocks and inject into template-styles ──
+      const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      let extractedCss = '';
+      let match;
+      while ((match = styleTagRegex.exec(improvedHtml)) !== null) {
+        extractedCss += match[1] + '\n';
+      }
+      const cleanHtml = improvedHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+      if (extractedCss.trim()) {
+        const canvasDoc = editorRef.current.Canvas.getDocument();
+        if (canvasDoc) {
+          let templateStyleTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
+          if (!templateStyleTag) {
+            templateStyleTag = canvasDoc.createElement('style');
+            templateStyleTag.id = 'template-styles';
+            canvasDoc.head.appendChild(templateStyleTag);
+          }
+          templateStyleTag.innerHTML += '\n/* AI Edit */\n' + extractedCss;
+        }
+        try {
+          const existingCss = editorRef.current.getCss() || '';
+          editorRef.current.setStyle(existingCss + '\n/* AI Edit */\n' + extractedCss);
+        } catch { }
+      }
+
+      selected.replaceWith(cleanHtml || improvedHtml);
 
       setAiLoading(false);
       setEditAiPrompt('');
@@ -3448,126 +3580,7 @@ const GrapesEditor = () => {
         </div>
       )}
 
-      {/* ═══════════════ CUSTOM COLOR PICKER ═══════════════ */}
-      {colorPicker.visible && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))}
-            style={{ position: 'fixed', inset: 0, zIndex: 999990 }}
-          />
-          {/* Picker Panel */}
-          <div
-            ref={colorPickerRef}
-            style={{
-              position: 'fixed',
-              left: colorPicker.x,
-              top: colorPicker.y,
-              zIndex: 999999,
-              width: 260,
-              maxHeight: 'calc(100vh - 20px)',
-              overflowY: 'auto',
-              background: '#1a1a2e',
-              border: '1px solid rgba(124,58,237,0.4)',
-              borderRadius: 14,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
-              overflow: 'hidden',
-              fontFamily: 'Inter, system-ui, sans-serif',
-            }}
-          >
-            {/* Header */}
-            <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                {colorPicker.cssProperty || 'Color'}
-              </span>
-              <button onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))} style={{ background: 'none', border: 'none', color: '#4a4a6a', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 2 }}>✕</button>
-            </div>
-
-            {/* Gradient Spectrum Bar */}
-            <div style={{ padding: '10px 14px 6px' }}>
-              <div style={{ width: '100%', height: 24, borderRadius: 6, background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)', marginBottom: 6, cursor: 'crosshair', border: '1px solid rgba(255,255,255,0.1)' }}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const ratio = (e.clientX - rect.left) / rect.width;
-                  const hue = Math.round(ratio * 360);
-                  const hex = hslToHex(hue, 100, 50);
-                  applyColorFromPicker(hex);
-                }}
-              />
-              {/* Lightness bar */}
-              <div style={{ width: '100%', height: 16, borderRadius: 6, background: `linear-gradient(to right, #000000, ${colorPicker.color}, #ffffff)`, marginBottom: 8, cursor: 'crosshair', border: '1px solid rgba(255,255,255,0.1)' }}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const ratio = (e.clientX - rect.left) / rect.width;
-                  const lighter = blendWithWhiteBlack(colorPicker.color, ratio);
-                  applyColorFromPicker(lighter);
-                }}
-              />
-            </div>
-
-            {/* Hex Input + Preview */}
-            <div style={{ padding: '0 14px 10px', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: colorPicker.color, border: '2px solid rgba(255,255,255,0.15)', flexShrink: 0 }} />
-              <input
-                type="text"
-                value={colorPicker.color}
-                onChange={e => {
-                  const val = e.target.value;
-                  if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                    setColorPicker(prev => ({ ...prev, color: val }));
-                    if (val.length === 7) applyColorFromPicker(val);
-                  }
-                }}
-                style={{ flex: 1, background: '#111128', color: '#e2e8f0', border: '1px solid #252545', borderRadius: 6, padding: '7px 10px', fontSize: 12, fontFamily: 'monospace', outline: 'none' }}
-              />
-              {/* Native picker as fallback */}
-              <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Open system color picker">
-                <input
-                  type="color"
-                  value={colorPicker.color.length === 7 ? colorPicker.color : '#7c3aed'}
-                  onChange={e => applyColorFromPicker(e.target.value)}
-                  style={{ width: 28, height: 28, padding: 0, border: '1px solid #252545', borderRadius: 6, cursor: 'pointer', background: 'none' }}
-                />
-              </label>
-            </div>
-
-            {/* Preset Color Swatches */}
-            <div style={{ padding: '0 14px 14px' }}>
-              <div style={{ fontSize: 9, color: '#4a4a6a', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>Presets</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {[
-                  '#000000', '#ffffff', '#f8fafc', '#1e293b', '#334155',
-                  '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
-                  '#3b82f6', '#6366f1', '#7c3aed', '#a855f7', '#ec4899',
-                  '#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#64748b',
-                ].map(c => (
-                  <button
-                    key={c}
-                    onClick={() => applyColorFromPicker(c)}
-                    title={c}
-                    style={{
-                      width: 22, height: 22, borderRadius: 5, background: c,
-                      border: colorPicker.color === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)',
-                      cursor: 'pointer', padding: 0, flexShrink: 0,
-                      boxShadow: colorPicker.color === c ? '0 0 0 2px #7c3aed' : 'none',
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Apply Button */}
-            <div style={{ padding: '0 14px 14px' }}>
-              <button
-                onClick={() => setColorPicker(prev => ({ ...prev, visible: false }))}
-                style={{ width: '100%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-              >
-                ✓ Apply Color
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Pickr is now used directly — no custom color picker panel needed */}
     </div>
   );
 };
