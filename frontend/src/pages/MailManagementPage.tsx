@@ -80,7 +80,7 @@ const NotificationPanel = ({
 }) => (
   <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full shadow-sm group">
     {/* Panel Header */}
-    <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-800/10">
+    <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-800/10">
       <div className="flex flex-col">
         <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{title}</p>
       </div>
@@ -311,14 +311,14 @@ const MailManagementPage = () => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full md:w-auto">
             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Current Project</label>
             <Select
               value={selectedProject}
               onValueChange={(val) => val && handleProjectSelect(val)}
               {...({ modal: false } as any)}
             >
-              <SelectTrigger className="h-10 min-w-[240px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-foreground shadow-sm hover:border-primary/30 focus:ring-2 focus:ring-primary/20 transition-all gap-2">
+              <SelectTrigger className="h-10 w-full md:min-w-[240px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-foreground shadow-sm hover:border-primary/30 focus:ring-2 focus:ring-primary/20 transition-all gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="h-5 w-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}>
                     <Globe className="h-3 w-3 text-white" />
@@ -343,14 +343,14 @@ const MailManagementPage = () => {
         {/* Brevo Configuration Section */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center gap-6 px-8 py-5 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-800/10">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <svg viewBox="0 0 81.177 24" className="h-5 w-auto opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="m66.587 14.86c0-3.633 2.3-6.188 5.57-6.188s5.607 2.554 5.607 6.188c0 3.635-2.336 6.045-5.607 6.045-3.27 0-5.57-2.52-5.57-6.045zm-3.414 0c0 5.362 3.738 9.14 8.984 9.14s9.02-3.778 9.02-9.14c0-5.36-3.738-9.282-9.02-9.282s-8.984 3.85-8.984 9.282zm-17.428-9.067 7.043 17.99h3.307l7.043-17.99h-3.557l-5.103 13.89h-.072l-5.103-13.89zm-13.692 8.42c.215-3.312 2.408-5.541 5.39-5.541 2.587 0 4.528 1.655 4.816 4.138h-5.966c-2.12 0-3.27.252-4.132 1.404h-.108zm-3.413.539c0 5.361 3.773 9.246 8.983 9.246 3.522 0 6.611-1.798 7.94-4.642l-2.873-1.44c-1.006 1.872-2.947 2.987-5.067 2.987-2.552 0-4.852-1.943-4.852-3.814 0-.971.647-1.404 1.581-1.404h11.391v-.97c0-5.398-3.45-9.14-8.408-9.14s-8.696 3.85-8.696 9.176m-9.774 9.03h3.235v-11.044c0-2.374 1.472-4.066 3.522-4.066.862 0 1.76.288 2.192.683.324-.864.827-1.726 1.58-2.59-.862-.72-2.334-1.188-3.772-1.188-3.953 0-6.757 2.95-6.757 7.16v11.046zm-15.63-11.907v-8.78h5.318c1.796 0 2.982 1.043 2.982 2.626 0 1.799-1.544 3.166-4.707 4.21-2.156.682-3.125 1.258-3.485 1.943zm0 8.816v-3.67c0-1.62 1.365-3.202 3.27-3.814 1.69-.576 3.09-1.152 4.276-1.763 1.581.936 2.55 2.554 2.55 4.246 0 2.878-2.73 5-6.432 5zm-3.235 3.093h7.187c5.463 0 9.558-3.417 9.558-7.951 0-2.483-1.257-4.713-3.485-6.153 1.15-1.152 1.689-2.483 1.689-4.102 0-3.347-2.409-5.577-6.037-5.577h-8.912z" fill="#0b996e" />
               </svg>
               <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 hidden md:block" />
               <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Email Service Provider</p>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
               {["brevo", "smtp"].map((p) => (
                 <label key={p} className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-foreground capitalize group">
                   <div className="relative flex items-center justify-center">
@@ -370,7 +370,7 @@ const MailManagementPage = () => {
             </div>
           </div>
 
-          <div className="p-8 flex flex-col xl:flex-row items-start justify-between gap-10">
+          <div className="p-4 sm:p-8 flex flex-col xl:flex-row items-start justify-between gap-6 xl:gap-10">
             <div className="flex-1 w-full max-w-3xl">
               {provider === "brevo" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -412,7 +412,7 @@ const MailManagementPage = () => {
               )}
 
               {provider === "smtp" && (
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-2"><label className="text-[10px] font-bold text-muted-foreground uppercase">Host</label><Input placeholder="smtp.example.com" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 font-mono text-xs" /></div>
                   <div className="space-y-2"><label className="text-[10px] font-bold text-muted-foreground uppercase">Port</label><Input placeholder="587" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 font-mono text-xs" /></div>
                   <div className="space-y-2"><label className="text-[10px] font-bold text-muted-foreground uppercase">Username</label><Input placeholder="user@example.com" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 font-mono text-xs" /></div>
