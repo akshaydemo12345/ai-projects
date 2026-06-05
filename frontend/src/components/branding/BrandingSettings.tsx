@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { projectsApi, type Branding } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 
 interface BrandingSettingsProps {
   projectId: string;
@@ -445,11 +446,10 @@ function ColorPickerField({
         <label className="text-sm font-medium text-gray-700 block mb-2">{label}</label>
         <div className="flex gap-2">
           <div className="flex items-center gap-2 flex-1">
-            <input
-              type="color"
+            <PickrColorInput
               value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+              onChange={(val) => onChange(val)}
+              className="w-12 h-10 border border-gray-300"
             />
             <Input
               value={value}
