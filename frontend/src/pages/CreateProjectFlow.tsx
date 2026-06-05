@@ -343,7 +343,7 @@ const CreateProjectFlow = () => {
     : ""; return (
       <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
         {/* ─── Header ─── */}
-        <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
+        <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
             <div className="space-y-1">
               <div className="flex items-center gap-3">

@@ -663,7 +663,7 @@ const CreatePagePage = () => {
       const response = await pagesApi.verifySlug(id!, { slug: normalizedSlug });
       setSlugError("");
       setIsSlugVerified(true);
-      
+
       // Provide feedback based on what was checked
       if (!silent) {
         const message = response?.data?.externalCheckMessage || 'unknown';
@@ -1161,7 +1161,7 @@ ${enrichedContent}
       <div className="flex-1 flex min-h-0">
         {/* LEFT PANEL */}
         <div className="flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 w-full md:w-[52%] lg:w-[55%]">
-          <div className="px-8 pt-10 pb-6 border-b border-gray-50">
+          <div className="px-4 pt-10 pb-6 border-b border-gray-50">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-md"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
@@ -1174,7 +1174,7 @@ ${enrichedContent}
             </div>
           </div>
 
-          <div className="flex-1 px-8 py-7 space-y-7">
+          <div className="flex-1 px-4 py-7 space-y-7">
             <section>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Page Identity</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1192,11 +1192,10 @@ ${enrichedContent}
                     }}
                     onBlur={handlePageNameBlur}
                     placeholder="e.g. Roofing Delhi"
-                    className={`w-full h-11 border rounded-xl px-4 text-sm outline-none transition-all ${
-                      pageNameError 
-                        ? 'border-red-500 bg-red-50/10 focus:border-red-500 focus:ring-2 focus:ring-red-100' 
-                        : 'border-gray-200 bg-gray-50 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100'
-                    }`}
+                    className={`w-full h-11 border rounded-xl px-4 text-sm outline-none transition-all ${pageNameError
+                      ? 'border-red-500 bg-red-50/10 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                      : 'border-gray-200 bg-gray-50 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100'
+                      }`}
                   />
                   {pageNameError && (
                     <span className="text-red-500 text-xs mt-1 block">{pageNameError}</span>
@@ -1204,13 +1203,12 @@ ${enrichedContent}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">URL Slug</label>
-                  <div className={`flex items-center h-11 border rounded-xl overflow-hidden transition-all ${
-                    slugError 
-                      ? 'border-red-500 bg-red-50/10 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100' 
-                      : isSlugVerified 
-                        ? 'border-emerald-500 bg-emerald-50/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100' 
-                        : 'border-gray-200 bg-gray-50 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100'
-                  }`}>
+                  <div className={`flex items-center h-11 border rounded-xl overflow-hidden transition-all ${slugError
+                    ? 'border-red-500 bg-red-50/10 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100'
+                    : isSlugVerified
+                      ? 'border-emerald-500 bg-emerald-50/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100'
+                      : 'border-gray-200 bg-gray-50 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100'
+                    }`}>
                     <span className="px-3 h-full flex items-center bg-gray-100 text-xs font-bold text-gray-500 border-r border-gray-200 whitespace-nowrap">/</span>
                     <input
                       value={pageSlug}
@@ -1372,11 +1370,11 @@ ${enrichedContent}
         <div className="hidden md:flex flex-col w-1/2 bg-gray-50 overflow-y-auto border-l border-gray-100">
           {activeMethod === 'ai' && (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-5 duration-300">
-              <div className="px-7 pt-10 pb-5 border-b border-gray-100">
+              <div className="px-4 pt-10 pb-5 border-b border-gray-100">
                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">AI Prompt Inspiration</p>
                 <p className="text-sm text-gray-500 mt-0.5">Click a preset to instantly build your landing page</p>
               </div>
-              <div className="flex-1 px-7 py-8 flex flex-col gap-4">
+              <div className="flex-1 px-4 py-4 flex flex-col gap-4">
                 {[
 
                   { title: "Local Business Lead Gen", desc: "Optimized for roofing, plumbing, or dental services.", color: "bg-emerald-50 text-emerald-600", icon: <MapPin className="h-4 w-4" />, prompt: "PPC landing page for a local roofing company. High-visibility phone number, service area map, 'Get a Quote' form above the fold, and client testimonials." },

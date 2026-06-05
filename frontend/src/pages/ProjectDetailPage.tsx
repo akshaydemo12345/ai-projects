@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PickrColorInput } from "@/components/ui/PickrColorInput";
+import PickrColorInput from "@/components/ui/PickrColorInput";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
@@ -1739,32 +1740,20 @@ const ProjectDetailPage = () => {
           onClose={() => setViewingUsagePage(null)}
         />
       )}
-      {deletePageId && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-background border border-border rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-6">
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">Delete Landing Page?</h3>
-              <p className="text-sm text-muted-foreground">
-                Are you absolutely sure? This action cannot be undone and will permanently remove this landing page.
-              </p>
-            </div>
-            <div className="p-4 bg-muted/30 border-t border-border flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeletePageId(null)}>Cancel</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Delete Page</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDeleteModal
+        isOpen={!!deletePageId}
+        onClose={() => setDeletePageId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Landing Page?"
+        description="Are you absolutely sure? This action cannot be undone and will permanently remove this landing page."
+      />
 
       {showTokenHelp && (
         <TokenHelpModal onClose={() => setShowTokenHelp(false)} apiToken={project.apiToken} />
       )}
 
       {/* ─── Page Top Bar / Breadcrumb ─── */}
-      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
           <button
@@ -1852,7 +1841,7 @@ const ProjectDetailPage = () => {
         )}
 
         {/* ─── Stats Summary Bar ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Total Pages", value: pages.length, icon: <FileText className="h-4 w-4" />, color: "from-violet-500 to-indigo-500", textColor: "text-violet-600" },
             { label: "Published", value: publishedCount, icon: <Globe className="h-4 w-4" />, color: "from-emerald-500 to-teal-500", textColor: "text-emerald-600" },

@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl } from "@/lib/utils";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 // ─── Edit Project Modal ──────────────────────────────────────
 interface EditProjectModalProps {
@@ -105,6 +106,7 @@ const ProjectsPage = () => {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<any | null>(null);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -137,8 +139,13 @@ const ProjectsPage = () => {
   });
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this project?")) {
-      deleteMutation.mutate(id);
+    setDeleteProjectId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteProjectId) {
+      deleteMutation.mutate(deleteProjectId);
+      setDeleteProjectId(null);
     }
   };
 
@@ -180,7 +187,7 @@ const ProjectsPage = () => {
   return (
     <div className="flex-1 min-h-full flex flex-col" onClick={() => setMenuOpen(null)} style={{ background: "#f2f2f2" }}>
       {/* ── Header Bar (White / slate-900) ── */}
-      <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900">
         <div>
           <h1 className="text-lg font-bold text-foreground">My Projects</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -196,9 +203,9 @@ const ProjectsPage = () => {
       </div>
 
       {/* ── Main Content Area ── */}
-      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-6 space-y-4 flex-1">
+      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-4 space-y-4 flex-1">
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {statCards.map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex items-center gap-4 shadow-sm">
               <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
@@ -260,7 +267,7 @@ const ProjectsPage = () => {
             </Button>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((project: any) => (
               <div
                 key={project._id}
@@ -274,11 +281,11 @@ const ProjectsPage = () => {
                         <Globe className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                          {project.category || "General"}
+                        </span>
+                        <div className="mt-0.5">
                           <h3 className="font-bold text-slate-900 dark:text-white text-base truncate">{project.name}</h3>
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
-                            {project.category || "General"}
-                          </span>
                         </div>
                         <div className="flex items-center gap-1 mt-1">
                           <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
@@ -437,6 +444,14 @@ const ProjectsPage = () => {
           onSave={(data) => updateMutation.mutate(data)}
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteProjectId}
+        onClose={() => setDeleteProjectId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Project?"
+        description="Are you sure you want to delete this project? This will permanently remove all landing pages and leads associated with it."
+      />
     </div>
   );
 };
