@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Plus, Globe, FileEdit, Rocket, Users as UsersIcon,
@@ -245,36 +245,19 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
   const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
-  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
-    if (!img?.src) return;
-    const brightness = await getImageAverageBrightness(img.src);
+  const handleLogoPreviewImageLoad = (img: HTMLImageElement) => {
+    const brightness = getImageAverageBrightness(img);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
 
-  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
-    if (!img?.src) return;
-    const brightness = await getImageAverageBrightness(img.src);
+  const handleHeaderLogoImageLoad = (img: HTMLImageElement) => {
+    const brightness = getImageAverageBrightness(img);
     const bgClass = getLogoPreviewContainerClasses(brightness);
     setLogoHeaderBgClass(bgClass);
     // Set appropriate background color based on brightness
     setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
   };
 
-  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
-    if (!src) return;
-    const normalized = normalizeLogoUrl(src);
-    if (!normalized) return;
-
-    const brightness = await getImageAverageBrightness(normalized);
-    const bgClass = getLogoPreviewContainerClasses(brightness);
-    setLogoHeaderBgClass(bgClass);
-    // Set appropriate background color based on brightness
-    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
-  };
-
-  useEffect(() => {
-    updateLogoBackgroundFromUrl(logoUrl || project.logoUrl);
-  }, [logoUrl, project.logoUrl]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -617,9 +600,9 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="upload-logo-analyze" />
                     {logoPreview ? (
                       <div className={`h-10 w-10 rounded flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
-                        <img 
-                          src={logoPreview} 
-                          alt="Logo" 
+                        <img
+                          src={logoPreview}
+                          alt="Logo"
                           className="w-full h-full object-contain"
                           onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
                           onError={(e) => {
@@ -678,7 +661,7 @@ interface UsageModalProps {
 const UsageModal = ({ page, onClose }: UsageModalProps) => {
   const usage = page.aiUsage;
   const history = page.aiUsageHistory || [];
-  
+
   const [realBalance, setRealBalance] = useState<number | null>(null);
   const [globalStats, setGlobalStats] = useState<any>(null);
   const [loadingBalance, setLoadingBalance] = useState(true);
@@ -713,7 +696,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
 
   // The total combined cost is usage.cost. We also have precise fields usage.imageCost and usage.imageCount now.
   let calculatedTotalCost = usage?.cost || 0;
-  
+
   // Read exact image cost from DB if available, else fallback to 0
   let calculatedImgCost = usage?.imageCost || 0;
   let calculatedImageCount = usage?.imageCount || 0;
@@ -795,7 +778,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                     -${calculatedTotalCost.toFixed(4)}
                   </p>
                 </div>
-                
+
                 {/* API Global Usage (Real-time Fetch & Estimated) */}
                 <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
@@ -804,7 +787,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                       {loadingBalance ? 'Loading...' : (realBalance !== null ? `$${realBalance.toFixed(2)}` : 'N/A')}
                     </span>
                   </div>
-                  
+
                   {realBalance !== null && (
                     <>
                       <div className="flex justify-between items-center text-[11px] font-medium text-red-500/80">
@@ -1509,12 +1492,30 @@ const ProjectDetailPage = () => {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
-  // Queries
+  // ── Query 1: Project meta (header, stats, integration panel) ─────────────────
+  // Seeds instantly from the projects list cache so the header renders with zero delay.
+  const cachedProjects: any[] = queryClient.getQueryData(["projects"]) ?? [];
+  const cachedProject = useMemo(
+    () => cachedProjects.find((p: any) => p._id === id),
+    [cachedProjects, id]
+  );
+
   const { data: project, isLoading, error } = useQuery({
     queryKey: ["project", id],
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
-    refetchInterval: 5000, // Live-updating dynamic data polling
+    initialData: cachedProject,   // render header instantly while detail loads
+    staleTime: 30_000,            // mutations call invalidateQueries manually — no polling needed
+  });
+
+  // ── Query 2: Pages list (independent — only this section re-renders on change) ──
+  // Fetches lightweight page summaries (no HTML content) separately from project meta.
+  // Mutations call invalidateQueries(["project-pages", id]) to refresh only this block.
+  const { data: pages = [], isLoading: pagesLoading } = useQuery({
+    queryKey: ["project-pages", id],
+    queryFn: () => projectsApi.getPagesSummary(id!),
+    enabled: !!id,
+    staleTime: 30_000,
   });
 
   const displayCategory = project ? (project.category || project.industry || "General") : "General";
@@ -1540,10 +1541,11 @@ const ProjectDetailPage = () => {
   const createPageMutation = useMutation({
     mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
     onSuccess: (newPage) => {
+      // Invalidate pages list (the heavy part) + project meta (for count badges)
+      queryClient.invalidateQueries({ queryKey: ["project-pages", id] });
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreateOpen(false);
       toast.success("Page created successfully.");
-      // Handle navigation to editor or similar
       navigate(`/editor/${id}/${newPage._id}`);
     },
     onError: (err: any) => toast.error(err.message || "Failed to create page"),
@@ -1552,6 +1554,7 @@ const ProjectDetailPage = () => {
   const deletePageMutation = useMutation({
     mutationFn: (pageId: string) => pagesApi.delete(id!, pageId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-pages", id] });
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setDeletePageId(null);
       toast.success("Page deleted successfully.");
@@ -1562,7 +1565,7 @@ const ProjectDetailPage = () => {
   const updatePageMutation = useMutation({
     mutationFn: (page: LandingPage) => pagesApi.update(id!, page._id, page),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["project-pages", id] });
       setPublishingPage(null);
       toast.success("Page updated successfully.");
     },
@@ -1573,32 +1576,19 @@ const ProjectDetailPage = () => {
     mutationFn: (data: Partial<Project>) => projectsApi.update(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] }); // refresh list too
       setEditProjectOpen(false);
       toast.success("Project updated successfully.");
     },
     onError: () => toast.error("Failed to update project"),
   });
 
-  const updateLogoBackgroundFromUrl = async (src?: string | null) => {
-    if (!src) return;
-    const normalized = normalizeLogoUrl(src);
-    if (!normalized) return;
-    const brightness = await getImageAverageBrightness(normalized);
-    const bgClass = getLogoPreviewContainerClasses(brightness);
-    setLogoHeaderBgClass(bgClass);
-    // Set appropriate background color based on brightness
-    setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
-  };
-
-  useEffect(() => {
-    updateLogoBackgroundFromUrl(project?.logoUrl);
-  }, [project?.logoUrl]);
 
   useEffect(() => {
     if (project) {
       const pubId = searchParams.get("publish");
       if (pubId) {
-        const page = project.pages?.find(p => p._id === pubId);
+        const page = pages.find(p => p._id === pubId);
         if (page) {
           setPublishingPage(page);
         }
@@ -1607,12 +1597,12 @@ const ProjectDetailPage = () => {
     }
   }, [project, searchParams, navigate]);
 
-  const filteredPages = project?.pages?.filter(p => {
+  const filteredPages = pages.filter(p => {
     if (statusFilter === "all") return true;
     return p.status?.toLowerCase() === statusFilter.toLowerCase();
   }) || [];
 
-  if (isLoading) return (
+  if (isLoading && !project) return (
     <div className="flex items-center justify-center min-h-[400px]">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
@@ -1663,17 +1653,16 @@ const ProjectDetailPage = () => {
   };
 
   // Computed stats
-  const pages = project.pages || [];
-  const publishedCount = pages.filter(p => p.status?.toLowerCase() === "published").length;
-  const draftCount = pages.filter(p => p.status?.toLowerCase() !== "published").length;
+  // pages come from the separate pages query above
+  const publishedCount = pages.filter((p: any) => p.status?.toLowerCase() === "published").length;
+  const draftCount = pages.filter((p: any) => p.status?.toLowerCase() !== "published").length;
   const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
   const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}" async></script>`;
 
-  const handleHeaderLogoImageLoad = async (img: HTMLImageElement) => {
-    if (!img?.src) return;
-    const brightness = await getImageAverageBrightness(img.src);
+  const handleHeaderLogoImageLoad = (img: HTMLImageElement) => {
+    const brightness = getImageAverageBrightness(img);
     const bgClass = getLogoPreviewContainerClasses(brightness);
     setLogoHeaderBgClass(bgClass);
     // Set appropriate background color based on brightness
@@ -1866,7 +1855,21 @@ const ProjectDetailPage = () => {
             )}
 
             <div className="divide-y divide-border">
-              {filteredPages.length === 0 ? (
+              {pagesLoading ? (
+                <div className="divide-y divide-border">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-4 px-6 py-4">
+                      <div className="h-10 w-10 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-1/3 bg-muted animate-pulse rounded" />
+                        <div className="h-2 w-1/4 bg-muted animate-pulse rounded" />
+                      </div>
+                      <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
+                      <div className="h-8 w-16 bg-muted animate-pulse rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredPages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                   <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg">
                     <Zap className="h-7 w-7 text-white" />

@@ -4,6 +4,8 @@ const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
 const projectController = require('../controllers/projectController');
 const pageController = require('../controllers/pageController');
+// settings-specific handlers (lean payload — no HTML blobs)
+const { getPageSettings, updatePageSettings } = pageController;
 
 const router = express.Router();
 
@@ -14,6 +16,7 @@ router.use(protect); // All routes below are protected
 router.post('/', projectController.createProject);
 router.get('/', projectController.listProjects);
 router.get('/:id', projectController.getProject);
+router.get('/:id/pages/summary', projectController.getProjectPagesSummary);
 router.put('/:id', projectController.updateProject);
 router.delete('/:id', projectController.deleteProject);
 
@@ -56,6 +59,18 @@ router.post('/:projectId/pages/verify', pageController.verifyPageSlug);
  * @desc    List all pages belonging to a specific project
  */
 router.get('/:projectId/pages', pageController.getPagesInProject);
+
+/**
+ * @route   GET /projects/:projectId/pages/:id/settings
+ * @desc    Fetch only the fields needed by PageSettingsPage — no HTML/CSS blobs
+ */
+router.get('/:projectId/pages/:id/settings', pageController.getPageSettings);
+
+/**
+ * @route   PATCH /projects/:projectId/pages/:id/settings
+ * @desc    Update only settings fields — never touches content/styles blobs
+ */
+router.patch('/:projectId/pages/:id/settings', pageController.updatePageSettings);
 
 /**
  * @route   GET /projects/:projectId/pages/:id

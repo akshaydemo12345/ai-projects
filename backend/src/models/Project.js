@@ -50,103 +50,10 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  logoUrl: {
-    type: String,
-  },
-  business: {
-    companyName: { type: String, trim: true },
-    industry: { type: String, trim: true },
-    subIndustry: { type: String, trim: true },
-    services: { type: [String], default: [] },
-    keywords: { type: [String], default: [] },
-    tagline: { type: String, trim: true },
-    about: { type: String, trim: true },
-    contacts: {
-      email: { type: String, trim: true },
-      phone: { type: String, trim: true },
-      address: { type: String, trim: true },
-      website: { type: String, trim: true },
-    },
-    socialLinks: {
-      type: [
-        {
-          provider: String,
-          url: String,
-        }
-      ],
-      default: [],
-    },
-    locations: {
-      type: [
-        {
-          address: String,
-          city: String,
-          state: String,
-          zip: String,
-          country: String,
-        }
-      ],
-      default: [],
-    },
-  },
-  primaryColor: {
-    type: String,
-  },
-  secondaryColor: {
-    type: String,
-  },
-  colors: {
-    type: [String],
-    default: [],
-  },
-  themeSystem: {
-    type: Object,
-    default: {},
-  },
-  // scrapedImages: {
-  //   type: [
-  //     {
-  //       url: String,
-  //       alt: String,
-  //       type: {
-  //         type: String,
-  //         enum: ['logo', 'banner', 'person', 'product', 'environment', 'screenshot', 'general'],
-  //       },
-  //       context: String,
-  //       relevance: {
-  //         type: String,
-  //         enum: ['high', 'medium', 'low'],
-  //       },
-  //       width: Number,
-  //       height: Number,
-  //     }
-  //   ],
-  //   default: [],
-  // },
   preSlug: {
     type: String,
     trim: true,
     lowercase: true,
-  },
-  scrapeMeta: {
-    status: {
-      type: String,
-      enum: ['pending', 'success', 'failed', 'partial'],
-      default: 'pending',
-    },
-    durationMs: Number,
-    startedAt: Date,
-    finishedAt: Date,
-    sourceUrl: String,
-    pagesScanned: Number,
-    errors: {
-      type: [String],
-      default: [],
-    },
-  },
-  scrapedData: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {},
   },
   fromName: {
     type: String,
@@ -176,260 +83,279 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  branding: {
-    logo: String,
-    logoUrl: String,
-    favicon: String,
-    companyName: String,
-    tagline: String,
 
+  // ─── SINGLE SOURCE OF TRUTH ────────────────────────────────────────────────
+  // All scraped/analyzed data is stored here. No more duplicates.
+  websiteProfile: {
+    // 1. Project Identity
+    identity: {
+      name: String,
+      description: String,
+      logoUrl: String,
+      favicon: String,
+    },
+
+    // 2. Industry Classification
+    industry: {
+      industry: String,
+      subIndustry: String,
+      confidence: Number,
+      detectedFrom: [String],
+    },
+
+    // 3. Brand Colors
     colors: {
       primary: String,
       secondary: String,
       accent: String,
-      background: String,
-      surface: String,
-      text: String,
-      textLight: String,
-      heading: String,
-      mutedText: String,
-      border: String,
-      success: String,
-      warning: String,
-      danger: String,
-      gradient: [String],
+      palette: [String],
     },
 
-    typography: {
-      fontFamily: String,
-      headingFontFamily: String,
-      baseFontSize: String,
-      headingScale: {
-        h1: String,
-        h2: String,
-        h3: String,
-        h4: String,
+    // 4. Theme System (per-component)
+    theme: {
+      header: { background: String, text: String },
+      navigation: { background: String, text: String, active: String },
+      buttons: {
+        primaryBg: String,
+        primaryText: String,
+        secondaryBg: String,
+        secondaryText: String,
       },
-      fontWeight: {
-        light: String,
-        normal: String,
-        medium: String,
-        bold: String,
-      },
-      letterSpacing: String,
-      lineHeight: String,
+      footer: { background: String, text: String },
     },
 
-    navigation: {
-      backgroundColor: String,
-      textColor: String,
-      linkColor: String,
-      activeLinkColor: String,
-      hoverColor: String,
-      hoverBackgroundColor: String,
-      borderColor: String,
-      shadow: String,
-      height: String,
-      padding: String,
-      sticky: Boolean,
-      transparent: Boolean,
-      logoMaxHeight: String,
-      fontFamily: String,
-      fontWeight: String,
-      fontSize: String,
+    // 5. Typography
+    fonts: {
+      primaryFont: String,
+      headingFont: String,
+      googleFonts: [String],
     },
 
-    footer: {
-      backgroundColor: String,
-      textColor: String,
-      linkColor: String,
-      borderTopColor: String,
-      padding: String,
-      fontSize: String,
-      layout: String,
-      socialIconStyle: String,
+    // 6. Images
+    images: {
+      type: [
+        {
+          url: String,
+          alt: String,
+          section: String,
+          width: Number,
+          height: Number,
+        },
+      ],
+      default: [],
     },
 
-    buttons: {
-      primary: {
-        backgroundColor: String,
-        textColor: String,
-        borderRadius: String,
-        borderColor: String,
-        padding: String,
-        fontSize: String,
-        fontWeight: String,
-        hoverBackgroundColor: String,
-        hoverTextColor: String,
-        boxShadow: String,
-        textTransform: String,
-      },
-      secondary: {
-        backgroundColor: String,
-        textColor: String,
-        borderRadius: String,
-        borderColor: String,
-        padding: String,
-        fontSize: String,
-        fontWeight: String,
-        hoverBackgroundColor: String,
-        hoverTextColor: String,
-        boxShadow: String,
-        textTransform: String,
-      },
+    // 7. Videos
+    videos: {
+      type: [
+        {
+          url: String,
+          platform: String,
+          videoId: String,
+          poster: String,
+          section: String,
+        },
+      ],
+      default: [],
     },
 
-    sections: {
+    // 8. Website Content
+    content: {
       hero: {
-        backgroundColor: String,
-        textAlign: String,
-        padding: String,
+        title: String,
+        subtitle: String,
+        ctaText: String,
       },
-      cards: {
-        backgroundColor: String,
-        borderRadius: String,
-        shadow: String,
-        borderColor: String,
+      taglines: [String],
+      services: [
+        {
+          title: String,
+          description: String,
+          icon: String,
+        },
+      ],
+      testimonials: [
+        {
+          name: String,
+          company: String,
+          text: String,
+          rating: Number,
+        },
+      ],
+      ctas: [
+        {
+          title: String,
+          description: String,
+          buttonText: String,
+        },
+      ],
+    },
+
+    // 9. Forms
+    forms: [
+      {
+        formName: String,
+        fields: [
+          new mongoose.Schema({
+            name: String,
+            label: String,
+            type: String,
+            placeholder: String,
+            required: Boolean,
+          }, { _id: false }),
+        ],
       },
-      formSection: {
-        backgroundColor: String,
+    ],
+
+    // 10. SEO
+    seo: {
+      title: String,
+      description: String,
+      canonicalUrl: String,
+      robots: String,
+      keywords: [String],
+      openGraph: {
+        title: String,
+        description: String,
+        image: String,
+        url: String,
+      },
+      twitter: {
+        card: String,
+        title: String,
+        description: String,
+        image: String,
       },
     },
 
-    forms: {
-      inputBackground: String,
-      inputBorderColor: String,
-      inputRadius: String,
-      labelColor: String,
-      placeholderColor: String,
-      focusBorderColor: String,
-      inputHeight: String,
-      fontFamily: String,
-    },
+    // 11. Landing Page Sections
+    sections: [
+      new mongoose.Schema({
+        type: String,
+        enabled: Boolean,
+        order: Number,
+        data: mongoose.Schema.Types.Mixed,
+      }, { _id: false }),
+    ],
 
-    layout: {
-      borderRadius: {
-        small: String,
-        medium: String,
-        large: String,
-      },
-      spacing: {
-        xs: String,
-        sm: String,
-        md: String,
-        lg: String,
-        xl: String,
-      },
-      containerWidth: String,
-    },
-
-    effects: {
-      boxShadow: String,
-      hoverShadow: String,
-      transition: String,
-    },
-
-    assets: {
-      heroImages: [String],
-      banners: [String],
-    },
-
-    computedBranding: mongoose.Schema.Types.Mixed,
-    brandingSourceUrl: String,
-    lastScrapedAt: Date,
-    scrapedBrandingData: {
+    // 12. Extraction Metadata
+    extraction: {
       sourceUrl: String,
+      finalUrl: String,
       scrapedAt: Date,
-      fonts: [String],
-      extractedColors: [String],
-      headerSelector: String,
-      footerSelector: String,
-      buttonSelectors: [String],
+      extractionVersion: String,
+    },
+  },
+
+  // ─── SCRAPE META (kept separate - not duplicated in websiteProfile) ───────
+  scrapeMeta: {
+    status: {
+      type: String,
+      enum: ['pending', 'success', 'failed', 'partial'],
+      default: 'pending',
+    },
+    durationMs: Number,
+    startedAt: Date,
+    finishedAt: Date,
+    sourceUrl: String,
+    pagesScanned: Number,
+    errors: {
+      type: [String],
+      default: [],
     },
   },
 });
 
-projectSchema.virtual('industry')
-  .get(function() {
-    return this.business?.industry;
-  })
-  .set(function(value) {
-    this.business = this.business || {};
-    this.business.industry = value ? value.trim() : value;
-  });
+// ─── VIRTUAL FIELDS for backward compatibility ───────────────────────────────
+// These map to websiteProfile so existing frontend code continues to work.
 
-projectSchema.virtual('subIndustry')
-  .get(function() {
-    return this.business?.subIndustry;
-  })
-  .set(function(value) {
-    this.business = this.business || {};
-    this.business.subIndustry = value ? value.trim() : value;
-  });
+projectSchema.virtual('logoUrl').get(function () {
+  return this.websiteProfile?.identity?.logoUrl || null;
+});
 
-projectSchema.virtual('services')
-  .get(function() {
-    return this.business?.services || [];
-  })
-  .set(function(value) {
-    this.business = this.business || {};
-    this.business.services = Array.isArray(value) ? value : (value ? [value] : []);
-  });
+projectSchema.virtual('primaryColor').get(function () {
+  return this.websiteProfile?.colors?.primary || null;
+});
 
-projectSchema.virtual('keywords')
-  .get(function() {
-    return this.business?.keywords || [];
-  })
-  .set(function(value) {
-    this.business = this.business || {};
-    this.business.keywords = Array.isArray(value) ? value : (value ? [value] : []);
-  });
+projectSchema.virtual('secondaryColor').get(function () {
+  return this.websiteProfile?.colors?.secondary || null;
+});
 
-projectSchema.virtual('websiteUrl')
-  .get(function() {
-    return this.business?.contacts?.website;
-  })
-  .set(function(value) {
-    this.business = this.business || {};
-    this.business.contacts = this.business.contacts || {};
-    this.business.contacts.website = value ? value.trim() : value;
-  });
+projectSchema.virtual('colors').get(function () {
+  return this.websiteProfile?.colors?.palette || [];
+});
 
-// Expose industry as category for frontend compatibility
-projectSchema.virtual('category').get(function() {
+projectSchema.virtual('themeSystem').get(function () {
+  return this.websiteProfile?.theme || {};
+});
+
+projectSchema.virtual('brandingData').get(function () {
+  // Map websiteProfile to old brandingData shape for backward compatibility
+  const wp = this.websiteProfile || {};
+  return {
+    identity: wp.identity,
+    colors: wp.colors,
+    themeSystem: wp.theme,
+    typography: wp.fonts,
+    images: wp.images,
+    videos: wp.videos,
+    content: wp.content,
+    forms: wp.forms,
+    seo: wp.seo,
+    sections: wp.sections?.map(s => s.type).filter(Boolean) || [],
+    industry: wp.industry?.industry,
+    subIndustry: wp.industry?.subIndustry,
+    sourceUrl: wp.extraction?.sourceUrl,
+    scrapedAt: wp.extraction?.scrapedAt,
+    durationMs: wp.extraction?.durationMs || 0,
+  };
+});
+
+// Business virtuals (keep for backward compatibility)
+projectSchema.virtual('business').get(function () {
+  const wp = this.websiteProfile || {};
+  return {
+    companyName: wp.identity?.name,
+    industry: wp.industry?.industry,
+    subIndustry: wp.industry?.subIndustry,
+    services: (wp.content?.services || []).map(s => s.title),
+    keywords: wp.seo?.keywords || [],
+    contacts: {
+      website: wp.extraction?.sourceUrl || wp.extraction?.finalUrl,
+    },
+  };
+});
+
+projectSchema.virtual('industry').get(function () {
+  return this.websiteProfile?.industry?.industry;
+});
+
+projectSchema.virtual('subIndustry').get(function () {
+  return this.websiteProfile?.industry?.subIndustry;
+});
+
+projectSchema.virtual('services').get(function () {
+  return (this.websiteProfile?.content?.services || []).map(s => s.title);
+});
+
+projectSchema.virtual('keywords').get(function () {
+  return this.websiteProfile?.seo?.keywords || [];
+});
+
+projectSchema.virtual('websiteUrl').get(function () {
+  return this.websiteProfile?.extraction?.sourceUrl || this.websiteProfile?.extraction?.finalUrl;
+});
+
+projectSchema.virtual('category').get(function () {
   return this.industry;
 });
 
 projectSchema.set('toObject', { virtuals: true });
 projectSchema.set('toJSON', { virtuals: true });
 
-// Migrate legacy fields into nested business metadata when loading old documents
-projectSchema.pre('init', function(doc) {
-  if (!doc.business) {
-    doc.business = {};
-  }
+// ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 
-  if (doc.industry && !doc.business.industry) {
-    doc.business.industry = doc.industry;
-  }
-  if (doc.subIndustry && !doc.business.subIndustry) {
-    doc.business.subIndustry = doc.subIndustry;
-  }
-  if (Array.isArray(doc.services) && doc.services.length && (!Array.isArray(doc.business.services) || doc.business.services.length === 0)) {
-    doc.business.services = doc.services;
-  }
-  if (Array.isArray(doc.keywords) && doc.keywords.length && (!Array.isArray(doc.business.keywords) || doc.business.keywords.length === 0)) {
-    doc.business.keywords = doc.keywords;
-  }
-  if (doc.websiteUrl) {
-    doc.business.contacts = doc.business.contacts || {};
-    if (!doc.business.contacts.website) {
-      doc.business.contacts.website = doc.websiteUrl;
-    }
-  }
-});
-
-// Middleware to update updatedAt and generate apiToken
+// Generate API token if missing
 projectSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
 
@@ -438,30 +364,18 @@ projectSchema.pre('save', function (next) {
     this.apiToken = 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
   }
 
-  if (this.websiteUrl) {
-    this.websiteUrl = normalizeDomain(this.websiteUrl);
-  }
-
-  this.business = this.business || {};
-  if (this.websiteUrl) {
-    this.business.contacts = this.business.contacts || {};
-    if (!this.business.contacts.website) {
-      this.business.contacts.website = this.websiteUrl;
-    }
-  }
-
+  // Ensure scrapeMeta exists
   this.scrapeMeta = this.scrapeMeta || { status: 'pending', errors: [] };
-  if (this.websiteUrl && !this.scrapeMeta.sourceUrl) {
-    this.scrapeMeta.sourceUrl = this.websiteUrl;
+
+  // Update scrapeMeta sourceUrl from websiteProfile if available
+  const wpSource = this.websiteProfile?.extraction?.sourceUrl;
+  if (wpSource && !this.scrapeMeta.sourceUrl) {
+    this.scrapeMeta.sourceUrl = wpSource;
   }
 
-  // Ensure there's a baseline branding object so frontend code has something to read
-  if (!this.branding || Object.keys(this.branding || {}).length === 0) {
-    try {
-      this.branding = brandingService.getDefaultBranding();
-    } catch (err) {
-      this.branding = {};
-    }
+  // Apply domain normalization to sourceUrl if it exists
+  if (this.scrapeMeta.sourceUrl) {
+    this.scrapeMeta.sourceUrl = normalizeDomain(this.scrapeMeta.sourceUrl);
   }
 
   next();
@@ -473,43 +387,43 @@ projectSchema.pre(/^find/, function (next) {
   next();
 });
 
-/**
- * Static: fetch branding from website and persist to project
- */
-projectSchema.statics.updateBrandingFromUrl = async function(projectId) {
-  const ProjectModel = this;
-  const project = await ProjectModel.findById(projectId);
-  if (!project || !project.websiteUrl) return null;
+// ─── STATIC METHODS ───────────────────────────────────────────────────────────
 
-  try {
-    const res = await brandingService.fetchAndExtractBranding(project.websiteUrl);
-    if (res && res.success && res.data) {
-      project.branding = res.data;
-      project.branding.brandingSourceUrl = project.websiteUrl;
-      project.branding.lastScrapedAt = new Date();
-      project.markModified('branding');
-      await project.save();
-    }
-    return project;
-  } catch (err) {
-    console.error('Error updating branding for project', projectId, err && err.message);
-    return project;
+/**
+ * Update websiteProfile from scraped data
+ */
+projectSchema.statics.updateWebsiteProfile = async function (projectId, scrapedData, themeData = null) {
+  const { buildWebsiteProfile } = require('../services/structuredScrapeService');
+  const ProjectModel = this;
+
+  const websiteProfile = buildWebsiteProfile(scrapedData, themeData);
+
+  const updateData = {
+    websiteProfile,
+    'scrapeMeta.status': 'success',
+    'scrapeMeta.finishedAt': new Date(),
+  };
+
+  // Copy colors to top-level for easier querying (indexed fields)
+  if (websiteProfile?.colors?.primary) {
+    // Note: These are not stored as separate fields, but can be used in queries
+    // via websiteProfile.colors.primary - no duplication needed.
   }
+
+  return ProjectModel.findByIdAndUpdate(
+    projectId,
+    updateData,
+    { new: true, runValidators: false }
+  );
 };
 
-// After save, trigger background extraction if websiteUrl present and branding empty/default
-projectSchema.post('save', function(doc) {
-  try {
-    const hasBranding = doc.branding && Object.keys(doc.branding || {}).length > 0;
-    if (doc.websiteUrl && !hasBranding) {
-      setImmediate(() => {
-        try { doc.constructor.updateBrandingFromUrl(doc._id).catch(() => {}); } catch(e) {}
-      });
-    }
-  } catch (e) {
-    // noop
-  }
-});
+// Indexes for fast user-scoped queries
+projectSchema.index({ userId: 1, createdAt: -1 });
+projectSchema.index({ userId: 1, _id: 1 });
+// Compound index for websiteProfile identity queries (if needed)
+projectSchema.index({ 'websiteProfile.identity.name': 1 });
+// Index for sourceUrl lookups
+projectSchema.index({ 'websiteProfile.extraction.sourceUrl': 1 });
 
 const Project = mongoose.model('Project', projectSchema);
 module.exports = Project;

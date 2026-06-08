@@ -302,7 +302,7 @@ exports.verifyPageSlug = async (req, res, next) => {
     // Check if page exists on external website if websiteUrl is configured
     let checkedExternal = false;
     let externalCheckMessage = '';
-    
+
     if (project.websiteUrl) {
       checkedExternal = true;
       const pageExistsOnWebsite = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
@@ -320,10 +320,10 @@ exports.verifyPageSlug = async (req, res, next) => {
       externalCheckMessage = 'internal database only';
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Slug is available', 
-      data: { slug: normalizedSlug, checkedExternal, externalCheckMessage } 
+    return res.status(200).json({
+      success: true,
+      message: 'Slug is available',
+      data: { slug: normalizedSlug, checkedExternal, externalCheckMessage }
     });
   } catch (err) {
     next(err);
@@ -358,6 +358,81 @@ exports.getPage = async (req, res, next) => {
           liveUrl
         }
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── GET /projects/:projectId/pages/:id/settings ─────────────────────────────
+// Returns only the ~14 fields PageSettingsPage renders. No content/styles blobs.
+// Typical response: ~800 bytes vs ~500 KB+ for the full page object.
+exports.getPageSettings = async (req, res, next) => {
+  try {
+    const { id, projectId } = req.params;
+    const page = await Page.findOne({ _id: id, userId: req.user._id, projectId })
+      .select('_id title slug metaTitle metaDescription primaryColor secondaryColor logoUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouUrl noIndex noFollow')
+      .lean();
+
+    if (!page) return res.status(404).json({ status: 'fail', message: 'Page not found' });
+
+    res.status(200).json({
+      status: 'success',
+      data: { page: { ...page, name: page.title } },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── PATCH /projects/:projectId/pages/:id/settings ───────────────────────────
+// Writes only the settings fields. Content/styles blobs are never touched.
+const SETTINGS_FIELDS = [
+  'title', 'slug', 'metaTitle', 'metaDescription',
+  'primaryColor', 'secondaryColor', 'logoUrl',
+  'mainHeader', 'mainFooter',
+  'thankYouHeader', 'thankYouFooter', 'thankYouUrl',
+  'noIndex', 'noFollow',
+];
+
+exports.updatePageSettings = async (req, res, next) => {
+  try {
+    const { id, projectId } = req.params;
+
+    // Build update object from only the allowed fields — ignore everything else in body
+    const updates = {};
+    for (const field of SETTINGS_FIELDS) {
+      if (field in req.body) updates[field] = req.body[field];
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ status: 'fail', message: 'No valid settings fields provided' });
+    }
+
+    // Slug uniqueness check (only if slug is being changed)
+    if (updates.slug) {
+      const conflict = await Page.exists({
+        projectId,
+        slug: updates.slug,
+        _id: { $ne: id },
+        isDeleted: { $ne: true },
+      });
+      if (conflict) {
+        return res.status(409).json({ status: 'fail', message: 'Slug is already used by another page in this project' });
+      }
+    }
+
+    const page = await Page.findOneAndUpdate(
+      { _id: id, userId: req.user._id, projectId },
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('_id title slug metaTitle metaDescription primaryColor secondaryColor logoUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouUrl noIndex noFollow').lean();
+
+    if (!page) return res.status(404).json({ status: 'fail', message: 'Page not found' });
+
+    res.status(200).json({
+      status: 'success',
+      data: { page: { ...page, name: page.title } },
     });
   } catch (err) {
     next(err);

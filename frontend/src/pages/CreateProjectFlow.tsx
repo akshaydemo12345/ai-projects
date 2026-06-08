@@ -81,8 +81,8 @@ const CreateProjectFlow = () => {
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [scrapedImages, setScrapedImages] = useState<any[]>([]);
 
-  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
-    const brightness = await getImageAverageBrightness(img.src);
+  const handleLogoPreviewImageLoad = (img: HTMLImageElement) => {
+    const brightness = getImageAverageBrightness(img);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
 

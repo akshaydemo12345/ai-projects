@@ -51,6 +51,14 @@ const extractCssUrl = (value, baseUrl) => {
 const isLogoUrlCandidate = (url) => {
   if (!url) return false;
   const lower = url.toLowerCase();
+
+  // Verify image format support (PNG, JPG, GIF, SVG, WebP, AVIF)
+  const supportedFormats = /\.(png|jpg|jpeg|gif|svg|webp|avif)(\?|#|$)/i;
+  const isDataUrl = /^data:image\/(png|jpg|jpeg|gif|svg\+xml|webp|avif);/i.test(lower);
+  if (!supportedFormats.test(lower) && !isDataUrl) {
+    return false;
+  }
+
   if (lower.includes('favicon')) {
     // Allow brand logo paths that include "favicon" only when they also contain explicit logo branding
     if (lower.includes('logo-and-favicon') || lower.includes('logos-logo') || lower.includes('logo') || lower.includes('brand-sites')) {
@@ -449,7 +457,7 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
   if (primaryColor) {
     logger.info(`Primary color selected from logo palette: ${primaryColor}`);
   }
-  
+
   // Try secondary color with strict distance first (35), then lenient (20) from logo
   let secondaryColor = '';
   if (primaryColor) {
@@ -754,7 +762,7 @@ const inspectWebsite = async (url) => {
 };
 
 function rgbToHex(color) {
-if (!color || typeof color !== 'string') return '';
+  if (!color || typeof color !== 'string') return '';
   const normalized = color.trim().toLowerCase();
 
   const hexMatch = normalized.match(/^#([a-f0-9]{3}|[a-f0-9]{6})$/i);
@@ -1082,34 +1090,7 @@ const analyzeBrandColors = async ($, logoUrl, baseUrl) => {
   return theme;
 }
 
-/**
- * AI-powered industry & sub-industry classifier.
- * Uses callAIText (supports both OpenAI and Claude) to classify based on
- * full website context. Falls back to keyword matching on any failure.
- */
-const detectIndustryWithAI = async (aiHelper, projectName, description, services, bodyText) => {
-  const systemPrompt = `You are a precise business classifier. Given website context, return ONLY a valid JSON object — no markdown, no extra text.
-Format: {"industry": "<Industry>", "subIndustry": "<SubIndustry>"}
-Industry options: Agency, SaaS, Finance, Education, Technology, Consulting, Healthcare, Real Estate, E-commerce, Construction, Hospitality, Legal, Beauty & Wellness, General`;
-
-  const userPrompt = `Business: ${projectName || 'Unknown'}
-Description: ${(description || '').substring(0, 300)}
-Services: ${(services || []).slice(0, 12).join(', ')}
-Content: ${(bodyText || '').substring(0, 600)}
-
-Classify and return JSON only.`;
-
-  const result = await (aiHelper.callAIText
-    ? aiHelper.callAIText(systemPrompt, userPrompt)
-    : (() => { throw new Error('callAIText not exported'); })());
-
-  const raw = String(result && result.text ? result.text : result).replace(/```json|```/gi, '').trim();
-  const parsed = JSON.parse(raw);
-  return {
-    detectedIndustry: (parsed.industry || 'General').trim(),
-    detectedSubIndustry: (parsed.subIndustry || '').trim()
-  };
-};
+// Industry classification uses keyword matching only (see detectIndustryFromServices / detectSubIndustryFromServices)
 
 /**
  * Universal website analysis and landing page generation system
@@ -1123,63 +1104,70 @@ const extractProjectData = async (url) => {
     }
 
     let response;
+    // Shared headers that mimic a real browser — reduces 403s on bot-detecting CDNs
+    const BROWSER_HEADERS = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Cache-Control': 'max-age=0',
+      'Referer': 'https://www.google.com/',
+    };
+
     try {
-      // Retry logic with increasing timeouts for slow sites
-      const timeouts = [30000, 45000]; // 30s, then 45s
-      let lastError = null;
-      
-      for (let i = 0; i < timeouts.length; i++) {
+      // Strategy 1: direct fetch (fast, works for most sites)
+      response = await axios.get(normalizedUrl, { timeout: 20000, headers: BROWSER_HEADERS });
+    } catch (firstErr) {
+      const isHardFail = /4\d\d/.test(String(firstErr.response?.status));
+      if (isHardFail) {
+        // 403/404/410 etc. — retrying with the same URL won't help, fall through to partial analysis
+        logger.warn(`[analyzeService] Fetch blocked (${firstErr.response?.status}) for ${normalizedUrl} — continuing with partial data`);
+      } else {
+        // Timeout or network error — try www. variant if bare domain, then extend timeout once
+        logger.debug(`[analyzeService] First fetch failed (${firstErr.message}), retrying ${normalizedUrl}…`);
         try {
-          response = await axios.get(normalizedUrl, {
-            timeout: timeouts[i],
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Accept-Encoding': 'gzip, deflate, br',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1',
-              'Sec-Fetch-Dest': 'document',
-              'Sec-Fetch-Mode': 'navigate',
-              'Sec-Fetch-Site': 'none',
-              'Sec-Fetch-User': '?1',
-              'Cache-Control': 'max-age=0',
-              'Referer': 'https://www.google.com/',
-            }
-          });
-          break; // Success, exit loop
-        } catch (err) {
-          lastError = err;
-          if (i < timeouts.length - 1) {
-            logger.debug(`Retry ${i + 1} failed for ${normalizedUrl} (timeout: ${timeouts[i]}ms), attempting with longer timeout...`);
-          }
+          const urlObj = new URL(normalizedUrl);
+          // If already has www, try without it; if not, try adding it
+          const altHost = urlObj.hostname.startsWith('www.')
+            ? urlObj.hostname.slice(4)
+            : 'www.' + urlObj.hostname;
+          const altUrl = normalizedUrl.replace(urlObj.hostname, altHost);
+          response = await axios.get(altUrl, { timeout: 30000, headers: BROWSER_HEADERS });
+        } catch (altErr) {
+          logger.warn(`[analyzeService] Both fetch attempts failed for ${normalizedUrl}: ${altErr.message} — continuing with partial data`);
         }
       }
-      
-      if (!response) throw lastError;
-    } catch (fetchErr) {
-      logger.warn(`Initial fetch failed for ${normalizedUrl}: ${fetchErr.message}. Proceeding with Lite analysis.`);
-      // FALLBACK: Lite analysis when scraping is blocked (e.g., 403, 404, Timeout)
+    }
+
+    // If we still have no response, build partial data from what we already know
+    // rather than returning fully generated fake content
+    if (!response) {
       const domainParts = new URL(normalizedUrl).hostname.replace('www.', '').split('.');
       const rawName = domainParts[0] || 'My Brand';
       const projectName = rawName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-      const primaryColor = generateAccentColor('#5b21b6');
-      const secondaryColor = generateSecondaryColor(primaryColor, []);
-
+      logger.warn(`[analyzeService] No HTML retrieved for ${normalizedUrl} — returning domain-derived partial data`);
+      // Return minimal partial data — no fake generated colors or services
+      // brandingService (Playwright) will still run separately and may succeed
       return {
         websiteUrl: normalizedUrl,
-        projectName: projectName,
-        projectDesc: `${projectName} - Modern business solutions.`,
+        projectName,
+        projectDesc: '',
         projectLogo: '',
-        theme: primaryColor,
-        primaryColor,
-        secondaryColor,
-        colors: [primaryColor, secondaryColor, generateBackgroundColor(primaryColor), generateTextColor(primaryColor)],
-        services: [`${projectName} Services`, 'Consulting', 'Support'],
-        keywords: [rawName.toLowerCase(), 'business', 'online'],
+        theme: null,
+        primaryColor: null,
+        secondaryColor: null,
+        colors: [],
+        services: [],
+        keywords: [],
         industry: 'General',
-        themeSystem: generateAdvancedBrandingSystem(projectName, 'General', 'Professional', primaryColor, secondaryColor, {}, [primaryColor, secondaryColor], `A company called ${projectName}`, [])
+        themeSystem: {},
+        _fetchFailed: true,   // flag so caller can detect partial result
       };
     }
 
@@ -1303,7 +1291,7 @@ const extractProjectData = async (url) => {
       logger.warn(`Color extraction failed: ${e.message}`);
     }
 
-      if (!colors || colors.length === 0) {
+    if (!colors || colors.length === 0) {
       colors = [primaryColor, secondaryColor].filter(Boolean).map((value) => rgbToHex(value)).filter(Boolean);
     }
 
@@ -1319,7 +1307,7 @@ const extractProjectData = async (url) => {
 
     // Ensure they are NEVER the same color in the final output
     if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
-            secondaryColor = getDistinctColor(primaryColor, colors) || '#1e293b';
+      secondaryColor = getDistinctColor(primaryColor, colors) || '#1e293b';
     }
 
     // ============ STEP 3: SMART SERVICE EXTRACTION ============
@@ -1456,25 +1444,9 @@ const extractProjectData = async (url) => {
       keywords = Array.from(generatedKeywords).slice(0, 15);
     }
 
-    // Detect industry & sub-industry: try AI first, fall back to keyword matching
-    const aiHelper = require('./aiService');
-    let detectedIndustry, detectedSubIndustry;
-    try {
-      const bodySnippet = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 1500);
-      const aiIndustryResult = await detectIndustryWithAI(
-        aiHelper,
-        projectName,
-        projectDesc,
-        cleanedServices,
-        bodySnippet
-      );
-      detectedIndustry = aiIndustryResult.detectedIndustry;
-      detectedSubIndustry = aiIndustryResult.detectedSubIndustry;
-    } catch (aiIndustryErr) {
-      logger.warn(`AI industry detection failed: ${aiIndustryErr.message}. Using keyword fallback.`);
-      detectedIndustry = detectIndustryFromServices(cleanedServices);
-      detectedSubIndustry = detectSubIndustryFromServices(cleanedServices, detectedIndustry);
-    }
+    // Detect industry & sub-industry using keyword matching
+    const detectedIndustry = detectIndustryFromServices(cleanedServices);
+    const detectedSubIndustry = detectSubIndustryFromServices(cleanedServices, detectedIndustry);
 
     // Detect brand personality from content
     const brandPersonality = detectBrandPersonality(projectDesc, $('body').text());
@@ -1628,7 +1600,7 @@ const generateTextColor = (primaryColor) => {
 
   // Calculate luminance to decide if text should be dark or light
   const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-  
+
   // If background is light (luminance > 0.5), use dark text, otherwise use light text
   return luminance > 0.5 ? '#1f2937' : '#f9fafb';
 };
@@ -1645,8 +1617,8 @@ const generateSecondaryColor = (primaryColor, extractedColors = []) => {
 
   // If we have extracted colors, find one that's distinct from primary
   if (extractedColors && extractedColors.length > 0) {
-    const distinct = extractedColors.find(color => 
-      color && color.toLowerCase() !== primaryColor.toLowerCase() && 
+    const distinct = extractedColors.find(color =>
+      color && color.toLowerCase() !== primaryColor.toLowerCase() &&
       getColorDistance(primaryColor, color) > 35
     );
     if (distinct) return distinct;
@@ -2193,14 +2165,14 @@ const detectIndustryFromServices = (services) => {
   // Dynamic industry detection with context-aware logic
   const industryPatterns = {
     // Home Services - context-based detection
-        // Agency - marketing and creative services
+    // Agency - marketing and creative services
     'Agency': ['marketing', 'seo', 'ppc', 'advertising', 'social media', 'content', 'branding', 'lead generation', 'campaign', 'design', 'creative', 'logo', 'graphic', 'photography', 'video production', 'web design', 'agency'],
 
     // SaaS / Software - technology and platform indicators
-        'SaaS': ['software', 'platform', 'dashboard', 'analytics', 'automation', 'cloud', 'saas', 'subscription', 'api', 'integration', 'workflow', 'productivity', 'collaboration'],
+    'SaaS': ['software', 'platform', 'dashboard', 'analytics', 'automation', 'cloud', 'saas', 'subscription', 'api', 'integration', 'workflow', 'productivity', 'collaboration'],
 
     // Digital Marketing - marketing and advertising
-     // Finance - financial services
+    // Finance - financial services
     'Finance': ['finance', 'accounting', 'investment', 'insurance', 'lending', 'crypto', 'wealth management', 'financial', 'banking'],
 
     // Education - learning and training
@@ -2247,7 +2219,7 @@ const detectIndustryFromServices = (services) => {
 
   // Fallback to basic keyword matching
   const basicIndustryMap = {
- 'web design': 'Agency',
+    'web design': 'Agency',
     'development': 'Technology',
     'agency': 'Agency',
     'fitness': 'Healthcare',
@@ -2663,4 +2635,3 @@ const extractStructuredData = ($) => {
 };
 
 module.exports = { analyzeWebsite, inspectWebsite, extractProjectData, extractBulkMedia, extractStructuredData };
-

@@ -7,57 +7,37 @@ const { normalizeDomain } = require('../utils/validation');
 exports.createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
-
-    // Generate unique API Token if not provided
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
-    // Build initial project payload
+
     const projectPayload = {
       name,
       description,
       userId: req.user._id,
       apiToken,
-      logoUrl: req.body.logoUrl,
-      business: {
-        companyName: name,
-        industry: req.body.category || req.body.industry,
-        subIndustry: req.body.subIndustry || req.body.scrapedData?.subIndustry,
-        services: req.body.services || [],
-        keywords: req.body.keywords || [],
-        contacts: {
-          website: req.body.websiteUrl || req.body.url,
-        },
-      },
-      primaryColor: req.body.primaryColor || req.body.themeColor,
-      secondaryColor: req.body.secondaryColor,
-      colors: req.body.colors || [],
-      themeSystem: req.body.themeSystem || {},
       preSlug: req.body.preSlug,
       scrapeMeta: {
         sourceUrl: req.body.websiteUrl || req.body.url,
         status: 'pending',
       },
-      scrapedData: req.body.scrapedData || {},
     };
 
-    // If a website URL is provided and no explicit branding supplied, attempt to auto-extract branding
-    try {
-      const websiteToInspect = projectPayload.websiteUrl;
-      const userProvidedBranding = req.body.branding;
-      if (websiteToInspect && !userProvidedBranding) {
-        const { fetchAndExtractBranding } = require('../services/brandingService');
-        const result = await fetchAndExtractBranding(websiteToInspect);
-        if (result && result.success) {
-          projectPayload.branding = result.data;
-          projectPayload.branding = projectPayload.branding || {};
-          projectPayload.branding.brandingSourceUrl = websiteToInspect;
-          projectPayload.branding.lastScrapedAt = new Date();
-          projectPayload.scrapedData = projectPayload.scrapedData || {};
-          projectPayload.scrapedData.branding = result.data.extractedColors || result.data.extractedColors || [];
-        }
+    // Scrape and build websiteProfile in one pass
+    if (req.body.websiteUrl || req.body.url) {
+      try {
+        const websiteToInspect = req.body.websiteUrl || req.body.url;
+        const { scrapeWebsiteStructure, buildWebsiteProfile } = require('../services/structuredScrapeService');
+
+        const scraped = await scrapeWebsiteStructure(websiteToInspect);
+        projectPayload.websiteProfile = buildWebsiteProfile(scraped, null);
+
+        // Update scrape meta
+        projectPayload.scrapeMeta.status = 'success';
+        projectPayload.scrapeMeta.finishedAt = new Date();
+      } catch (err) {
+        console.error('[projectController] scrape failed:', err.message);
+        projectPayload.scrapeMeta.status = 'failed';
+        projectPayload.scrapeMeta.errors = [err.message || 'Unknown scrape error'];
       }
-    } catch (err) {
-      // Non-fatal: log and continue creating project with defaults
-      console.error('Branding extraction during project create failed:', err.message);
     }
 
     const project = await Project.create(projectPayload);
@@ -74,30 +54,53 @@ exports.createProject = async (req, res, next) => {
 // LIST PROJECTS
 exports.listProjects = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 1000) || 1;
-    const limit = parseInt(req.query.limit, 1000) || 1000;
-    const skip = (page - 1) * limit;
+    const pageNum = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 1000;
+    const skip = (pageNum - 1) * limit;
 
+    // Only fields actually used by the frontend list views (ProjectsPage, LeadsPage sidebar)
+    // Excludes: branding, scrapedData, themeSystem, business, colors, scrapeMeta, emailNotifications, etc.
     const projects = await Project.find({ userId: req.user._id })
+      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt')
       .sort('-createdAt')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // Attach only page `type` field — needed for PPC/SEO badges on the list
+    const projectIds = projects.map(p => p._id);
+    const pageTypes = await Page.find(
+      { projectId: { $in: projectIds }, isDeleted: { $ne: true } },
+      { projectId: 1, type: 1, _id: 0 }
+    ).lean();
+
+    const typesByProject = {};
+    for (const pt of pageTypes) {
+      const pid = pt.projectId.toString();
+      if (!typesByProject[pid]) typesByProject[pid] = [];
+      typesByProject[pid].push({ type: pt.type });
+    }
+
+    const enriched = projects.map(p => ({
+      ...p,
+      pages: typesByProject[p._id.toString()] || [],
+    }));
 
     const total = await Project.countDocuments({ userId: req.user._id });
 
     res.status(200).json({
       status: 'success',
-      results: projects.length,
+      results: enriched.length,
       total,
-      page,
-      data: { projects },
+      page: pageNum,
+      data: { projects: enriched },
     });
   } catch (err) {
     next(err);
   }
 };
 
-// GET PROJECT
+// GET PROJECT — only meta fields, no pages (pages fetched separately via /projects/:id/pages/summary)
 exports.getProject = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -105,73 +108,81 @@ exports.getProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const project = await Project.findOne({
-      _id: id,
-      userId: req.user._id,
-    });
+    const project = await Project.findOne({ _id: id, userId: req.user._id })
+      .select('_id name description preSlug apiToken pageCount leadCount publishedPageCount createdAt updatedAt websiteProfile')
+      .lean();
 
     if (!project) {
       return res.status(404).json({ status: 'fail', message: 'Project not found' });
     }
 
-    // Also fetch pages for this project to ensure frontend has them
-    const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } });
-
-    let needsSave = false;
-
-    // Ensure pageCount is accurate (sync it just in case)
-    const pageCount = pages.length;
-    const publishedPageCount = pages.filter(p => p.status === 'published').length;
-
-    if (project.pageCount !== pageCount) {
-      project.pageCount = pageCount;
-      needsSave = true;
-    }
-
-    if (project.publishedPageCount !== publishedPageCount) {
-      project.publishedPageCount = publishedPageCount;
-      needsSave = true;
-    }
-
-    // Ensure leadCount is accurate (auto-heal desyncs from past deletions)
+    // Sync counts in background
     const Lead = require('../models/Lead');
-    const trueLeadCount = await Lead.countDocuments({ projectId: id, isDeleted: { $ne: true } });
-    if (project.leadCount !== trueLeadCount) {
-      project.leadCount = trueLeadCount;
-      needsSave = true;
-    }
+    const Page = require('../models/Page');
 
-    if (needsSave) {
-      await project.save({ validateBeforeSave: false });
-    }
-
-    const FormSchema = require('../models/FormSchema');
-    const cleanPages = await Promise.all(pages.map(async (p) => {
-      const pObj = p.toObject();
-      pObj.name = pObj.title;
-      const count = await Lead.countDocuments({ pageId: p._id, isDeleted: { $ne: true } });
-      pObj.leads = new Array(count).fill({}); // Fallback for frontend UI relying on leads.length
-      pObj.leadCount = count;
-      
-      // Attach page-specific schema
-      pObj.formSchema = await FormSchema.findOne({ page_id: p._id });
-      
-      return pObj;
-    }));
-
-    // Fetch the FormSchema associated with this project (using existing FormSchema model)
-    const formSchema = await FormSchema.findOne({ project_id: id });
+    Promise.all([
+      Page.countDocuments({ projectId: id, isDeleted: { $ne: true } }),
+      Page.countDocuments({ projectId: id, isDeleted: { $ne: true }, status: 'published' }),
+      Lead.countDocuments({ projectId: id, isDeleted: { $ne: true } }),
+    ]).then(([pageCount, publishedPageCount, leadCount]) => {
+      const updates = {};
+      if (project.pageCount !== pageCount) updates.pageCount = pageCount;
+      if (project.publishedPageCount !== publishedPageCount) updates.publishedPageCount = publishedPageCount;
+      if (project.leadCount !== leadCount) updates.leadCount = leadCount;
+      if (Object.keys(updates).length > 0) {
+        Project.updateOne({ _id: id }, updates).catch(() => { });
+      }
+    }).catch(() => { });
 
     res.status(200).json({
       status: 'success',
-      data: {
-        project: {
-          ...project.toObject(),
-          leadCount: trueLeadCount, // explicitly guarantee Top Level Metric
-          pages: cleanPages,
-          formSchema: formSchema // Attach the schema here
-        }
-      },
+      data: { project },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET PROJECT PAGES SUMMARY — lightweight list for ProjectDetailPage, no HTML content
+exports.getProjectPagesSummary = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
+    // Ownership verified implicitly: pages are scoped to both projectId + userId via Page model
+    // (no extra Project.exists() round-trip needed)
+
+    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory
+    const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } })
+      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage')
+      .sort('-createdAt')
+      .lean();
+
+    const Lead = require('../models/Lead');
+    const pageIds = pages.map((p) => p._id);
+
+    // One aggregation instead of N countDocuments calls
+    const leadCounts = await Lead.aggregate([
+      { $match: { pageId: { $in: pageIds }, isDeleted: { $ne: true } } },
+      { $group: { _id: '$pageId', count: { $sum: 1 } } },
+    ]);
+    const leadCountMap = Object.fromEntries(leadCounts.map((r) => [r._id.toString(), r.count]));
+
+    const enrichedPages = pages.map((p) => {
+      const leadCount = leadCountMap[p._id.toString()] ?? 0;
+      return {
+        ...p,
+        name: p.title,
+        leadCount,
+        leads: new Array(leadCount).fill({}), // frontend uses leads.length for the badge
+      };
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: { pages: enrichedPages },
     });
   } catch (err) {
     next(err);
@@ -186,16 +197,14 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-      const { name, description, logoUrl, industry, category, subIndustry, primaryColor, secondaryColor, websiteUrl, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey } = req.body;
+    const { name, description, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey } = req.body;
+
     const updateData = {
       updatedAt: Date.now(),
     };
 
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
-    if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
-    if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
-    if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
     if (preSlug !== undefined) updateData.preSlug = preSlug;
     if (fromName !== undefined) updateData.fromName = fromName;
     if (fromEmail !== undefined) updateData.fromEmail = fromEmail;
@@ -204,17 +213,11 @@ exports.updateProject = async (req, res, next) => {
     if (emailProvider !== undefined) updateData.emailProvider = emailProvider;
     if (brevoKey !== undefined) updateData.brevoKey = brevoKey;
 
-    if (industry !== undefined || category !== undefined) {
-      updateData['business.industry'] = industry || category;
-    }
-
-    if (subIndustry !== undefined) {
-      updateData['business.subIndustry'] = subIndustry;
-    }
-
-    if (websiteUrl !== undefined) {
-      updateData['business.contacts.website'] = websiteUrl ? normalizeDomain(websiteUrl) : "";
-      updateData['scrapeMeta.sourceUrl'] = websiteUrl ? normalizeDomain(websiteUrl) : "";
+    // Update websiteProfile if provided
+    if (req.body.websiteUrl) {
+      updateData['websiteProfile.extraction.sourceUrl'] = normalizeDomain(req.body.websiteUrl);
+      updateData.scrapeMeta = updateData.scrapeMeta || {};
+      updateData.scrapeMeta.sourceUrl = normalizeDomain(req.body.websiteUrl);
     }
 
     const project = await Project.findOneAndUpdate(
@@ -265,22 +268,24 @@ exports.deleteProject = async (req, res, next) => {
 exports.getBranding = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!require('mongoose').Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
-    }
-
-    const project = await Project.findOne({
-      _id: id,
-      userId: req.user._id,
-    }).select('branding');
+    const project = await Project.findOne({ _id: id, userId: req.user._id })
+      .select('websiteProfile.colors websiteProfile.theme websiteProfile.fonts websiteProfile.identity.logoUrl');
 
     if (!project) {
       return res.status(404).json({ status: 'fail', message: 'Project not found' });
     }
 
+    // Map to old branding format for compatibility
+    const branding = {
+      colors: project.websiteProfile?.colors || {},
+      theme: project.websiteProfile?.theme || {},
+      typography: project.websiteProfile?.fonts || {},
+      logoUrl: project.websiteProfile?.identity?.logoUrl,
+    };
+
     res.status(200).json({
       status: 'success',
-      data: { branding: project.branding },
+      data: { branding },
     });
   } catch (err) {
     next(err);

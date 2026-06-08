@@ -16,18 +16,27 @@ const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
 
-    // Check if user still exists
-    const currentUser = await User.findById(decoded.id);
+    // If the token already carries user meta (new-style tokens), skip the DB lookup entirely.
+    // This eliminates one DB round-trip on every authenticated request.
+    // Old tokens (id-only) fall back to a single DB fetch.
+    if (decoded.name && decoded.email && decoded.plan !== undefined) {
+      req.user = {
+        _id: decoded.id,
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+        plan: decoded.plan,
+        credits: decoded.credits ?? 0,
+      };
+      return next();
+    }
+
+    // Fallback for old tokens — fetch from DB once, then future logins will use new token format
+    const currentUser = await User.findById(decoded.id).select('_id name email plan credits').lean();
     if (!currentUser) {
       return res.status(401).json({ status: 'fail', message: 'User no longer exists' });
     }
 
-    // Email verification disabled per user request
-    // if (!currentUser.isEmailVerified) {
-    //   return res.status(403).json({ status: 'fail', message: 'Email address not verified' });
-    // }
-
-    // Grant access to protected route
     req.user = currentUser;
     next();
   } catch (err) {
