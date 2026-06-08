@@ -3,6 +3,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const sharp = require('sharp');
+const { Resvg } = require('@resvg/resvg-js');
 const logger = require('../utils/logger');
 
 const svgMarkupToDataUrl = (markup) => {
@@ -185,98 +186,88 @@ const findHeaderLogoImage = ($, baseUrl) => {
   return '';
 };
 
-const findBestLogo = async ($, baseUrl) => {
-  const logoSelectors = [
-    'img[id*="logo" i]',
-    'img[class*="logo" i]',
-    'img[src*="logo" i]',
-    'img[alt*="logo" i]',
-    'img[data-src*="logo" i]',
-    '.header__logo img',
-    '.header__logo a img',
-    'a[data-qa="hd-logo"] img',
-    '.logo img',
-    '.logo a img',
-    'header .logo img',
-    'header .logo a img',
-    'nav .logo img',
-    'nav .logo a img',
-    'a[class*="logo" i] img',
-    'div[class*="logo" i] img',
-    'div[class*="logo" i] a img',
-    '.site-branding img',
-    '.site-branding a img',
-    '.brand img',
-    '.brand a img',
-    '.header img',
-    'header img',
-    '.navbar img',
-    '.navbar a img',
-    '.nav img',
-    '.nav a img',
-    '.navigation .logo img',
-    '.navigation .logo a img',
-    '.menu-header-menu-container .logo img',
-    '.menu-header-menu-container .logo a img',
-    'img[alt*="go to home page" i]',
-    'img[alt*="home page" i]',
-    'img[alt*="go to homepage" i]',
-    'img[src*="brand" i]',
-    'img[src*="identity" i]',
-    'img[alt*="brand" i]',
-    'img[alt*="identity" i]'
-  ];
-
+const findBestLogo = async ($, baseUrl, faviconUrl = null) => {
   const origin = new URL(baseUrl).origin;
   const candidates = [];
   const seen = new Set();
-  const addCandidate = (rawSrc, el, forcedScore = null) => {
-    const src = extractCssUrl(rawSrc, baseUrl);
-    if (!src || seen.has(src) || !isLogoUrlCandidate(src)) return;
-    seen.add(src);
-    const score = typeof forcedScore === 'number' ? forcedScore : scoreLogoCandidate($, el, src, origin);
-    const width = el ? parseInt($(el).attr('width') || '0', 10) || 0 : 0;
-    const height = el ? parseInt($(el).attr('height') || '0', 10) || 0 : 0;
-    const area = width * height;
-    candidates.push({ src, score, order: candidates.length, area });
-  };
+
+  // Priority 1: Exact header logo with specific selectors (highest priority)
+  const exactSelectors = [
+    'a[data-qa="hd-logo"] img',
+    '.header__logo img',
+    '.site-branding img',
+    'img[itemprop="logo"]',
+    'img[alt*="go to home page" i]',
+    'img[alt*="home page" i]'
+  ];
+
+  for (const selector of exactSelectors) {
+    const el = $(selector).first();
+    if (el.length) {
+      const src = (el.attr('src') || el.attr('data-src') || '').trim();
+      if (src) {
+        const fullUrl = normalizeImageUrl(src, baseUrl);
+        if (fullUrl && !seen.has(fullUrl)) {
+          candidates.push({ src: fullUrl, score: 100, priority: 1 });
+          seen.add(fullUrl);
+        }
+      }
+    }
+  }
+
+  // Priority 2: SVG logos (keep as SVG, don't convert)
+  $('svg').each((i, el) => {
+    const $el = $(el);
+    const cls = ($el.attr('class') || '').toLowerCase();
+    const id = ($el.attr('id') || '').toLowerCase();
+    const isLogo = cls.includes('logo') || id.includes('logo') ||
+      $el.closest('.logo, .site-branding, header').length > 0;
+
+    if (isLogo) {
+      const svgMarkup = $.html(el);
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgMarkup).toString('base64')}`;
+      if (!seen.has(dataUrl)) {
+        candidates.push({ src: dataUrl, score: 95, priority: 2 });
+        seen.add(dataUrl);
+      }
+    }
+  });
+
+  // Priority 3: Regular logo selectors with scoring
+  const logoSelectors = [
+    'img[id*="logo" i]', 'img[class*="logo" i]', 'img[src*="logo" i]',
+    'img[alt*="logo" i]', '.logo img', '.navbar-brand img', '.brand img'
+  ];
 
   logoSelectors.forEach((selector) => {
     $(selector).each((i, el) => {
-      const rawSrc = ($(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original') || '').trim();
-      addCandidate(rawSrc, el);
+      const rawSrc = ($(el).attr('src') || $(el).attr('data-src') || '').trim();
+      const src = normalizeImageUrl(rawSrc, baseUrl);
+      if (src && !seen.has(src)) {
+        const score = scoreLogoCandidate($, el, src, origin);
+        candidates.push({ src, score, priority: 3 });
+        seen.add(src);
+      }
     });
   });
 
-  // Inline SVGs within likely logo/header/nav containers
-  findInlineSvgLogoCandidates($, baseUrl).forEach(({ src, el }) => {
-    addCandidate(src, el, 70);
+  // Sort by priority then score
+  candidates.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return b.score - a.score;
   });
 
-  // Inline CSS background-image logos inside logo/header/nav containers
-  ['.logo', '.site-branding', 'header .logo', 'nav .logo', '.navbar', '.header', '.branding'].forEach((selector) => {
-    $(selector).each((i, el) => {
-      const style = ($(el).attr('style') || '').toString();
-      const bgSrc = extractCssUrl(style, baseUrl);
-      if (bgSrc) addCandidate(bgSrc, el, 40);
-    });
-  });
-
-  // Background images from external/internal CSS rules that look like logo selectors
-  try {
-    const cssBgUrls = await extractCssBackgroundLogoCandidates($, baseUrl);
-    cssBgUrls.forEach((url) => addCandidate(url, null, 30));
-  } catch (e) {
-    logger.debug(`CSS background logo extraction failed: ${e.message}`);
+  // Return best candidate or fallback to favicon
+  if (candidates.length > 0) {
+    return candidates[0].src;
   }
 
-  if (candidates.length === 0) return '';
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (b.area !== a.area) return b.area - a.area;
-    return a.order - b.order;
-  });
-  return candidates[0].src;
+  // FALLBACK: Return favicon if available
+  if (faviconUrl && faviconUrl !== '') {
+    return faviconUrl;
+  }
+
+  return '';
 };
 
 // Broad regex: captures ANY CSS variable that holds a hex or rgb color value.
@@ -411,93 +402,106 @@ const collectMetaColors = ($) => {
 const extractThemeColors = async ($, baseUrl, logoUrl) => {
   logger.info(`Extracting theme colors - Logo: ${logoUrl}, BaseUrl: ${baseUrl}`);
 
-  const logoPalette = logoUrl ? (await extractBrandColorsFromLogo(logoUrl)) || [] : [];
+  // COLLECT EXACT COLORS FIRST (highest priority)
+  const exactColors = {
+    primary: null,
+    secondary: null,
+    accent: null,
+    background: null,
+    text: null
+  };
 
-  // OG image fallback: if the logo gave zero colors, try the og:image as a color source
-  if (logoPalette.length === 0) {
-    try {
-      const ogImageHref = $('meta[property="og:image"]').attr('content');
-      if (ogImageHref) {
-        const ogNormalized = normalizeImageUrl(ogImageHref, baseUrl);
-        if (ogNormalized) {
-          const ogPalette = await extractBrandColorsFromLogo(ogNormalized).catch(() => []);
-          if (ogPalette && ogPalette.length > 0) {
-            logoPalette.push(...ogPalette);
-            logger.info(`OG image color fallback applied: ${JSON.stringify(ogPalette)}`);
-          }
-        }
-      }
-    } catch (ogErr) {
-      logger.warn(`OG image color fallback failed: ${ogErr.message}`);
-    }
-  }
-
-  const logoPaletteDistinct = uniqueHexColors(logoPalette);
-  logger.info(`Logo palette extracted: ${JSON.stringify(logoPalette)}; distinct: ${JSON.stringify(logoPaletteDistinct)}`);
-  if (logoPalette.length === 0) {
-    try {
-      const ogImageHref = $('meta[property="og:image"]').attr('content');
-      if (ogImageHref) {
-        const ogNormalized = normalizeImageUrl(ogImageHref, baseUrl);
-        if (ogNormalized) {
-          const ogPalette = await extractBrandColorsFromLogo(ogNormalized).catch(() => []);
-          if (ogPalette && ogPalette.length > 0) {
-            logoPalette.push(...ogPalette);
-            logger.info(`OG image color fallback applied: ${JSON.stringify(ogPalette)}`);
-          }
-        }
-      }
-    } catch (ogErr) {
-      logger.warn(`OG image color fallback failed: ${ogErr.message}`);
-    }
-  }
-
-  // Strong preference for logo palette for BOTH colors
-  let primaryColor = selectFirstNonNeutral(logoPaletteDistinct) || '';
-  if (primaryColor) {
-    logger.info(`Primary color selected from logo palette: ${primaryColor}`);
-  }
-
-  // Try secondary color with strict distance first (35), then lenient (20) from logo
-  let secondaryColor = '';
-  if (primaryColor) {
-    const logoCandidates = logoPaletteDistinct.filter((c) => c.toLowerCase() !== primaryColor.toLowerCase());
-    const strictDistinct = selectDistinctColor(primaryColor, logoCandidates);
-    if (strictDistinct) {
-      secondaryColor = strictDistinct;
-      logger.info(`Secondary color selected from logo palette (strict distance): ${secondaryColor}`);
-    } else {
-      const lenientDistinct = selectDistinctColorWithDistance(primaryColor, logoCandidates, 20);
-      if (lenientDistinct) {
-        secondaryColor = lenientDistinct;
-        logger.info(`Secondary color selected from logo palette (lenient distance): ${secondaryColor}`);
-      } else if (logoCandidates.length > 0) {
-        secondaryColor = logoCandidates[0];
-        logger.info(`Secondary color selected as second distinct logo palette color: ${secondaryColor}`);
-      }
-    }
-  }
-
+  // 1. Priority 1: CSS custom properties (--primary, --brand, etc.)
   const cssTexts = await collectExternalCssTexts($, baseUrl);
   const cssVariables = {};
   const cssColorValues = [];
+
   cssTexts.forEach((cssText) => {
-    Object.assign(cssVariables, parseCssVariables(cssText));
-    cssColorValues.push(...parseCssColorDeclarations(cssText));
+    // Parse CSS variables
+    const varMatches = cssText.match(/--([a-zA-Z][a-zA-Z0-9-]*)\s*:\s*([^;]+)/g);
+    if (varMatches) {
+      varMatches.forEach(match => {
+        const [key, value] = match.split(':');
+        const varName = key.trim().substring(2);
+        const varValue = value.trim();
+        if (varName && varValue) {
+          cssVariables[varName] = normalizeColorValue(varValue);
+        }
+      });
+    }
+
+    // Parse regular color declarations
+    const colorMatches = cssText.match(/(?:color|background(?:-color)?|border(?:-color)?|fill|stroke)\s*:\s*(#[A-Fa-f0-9]{3,6}|rgba?\([^)]+\))/gi);
+    if (colorMatches) {
+      colorMatches.forEach(match => {
+        const color = match.split(':')[1].trim();
+        cssColorValues.push(normalizeColorValue(color));
+      });
+    }
   });
 
-  // Extract palette from images/backgrounds in key page sections (nav, footer, buttons, hero, etc.)
-  let pageAssetPalette = [];
-  try {
-    pageAssetPalette = await extractColorsFromPageAssets($, baseUrl);
-    if (pageAssetPalette && pageAssetPalette.length > 0) {
-      logger.info(`Page asset palette extracted (${pageAssetPalette.length} colors)`);
+  // Check for primary color variables
+  const primaryVarPatterns = ['primary', 'brand', 'theme', 'main', 'color-primary', 'brand-primary', '--primary'];
+  const secondaryVarPatterns = ['secondary', 'accent', 'color-secondary', 'brand-secondary', '--secondary'];
+
+  for (const [varName, colorValue] of Object.entries(cssVariables)) {
+    const lowerName = varName.toLowerCase();
+    if (!exactColors.primary && primaryVarPatterns.some(p => lowerName.includes(p))) {
+      exactColors.primary = colorValue;
     }
-  } catch (e) {
-    logger.debug(`Page asset color extraction error: ${e.message}`);
+    if (!exactColors.secondary && secondaryVarPatterns.some(p => lowerName.includes(p))) {
+      exactColors.secondary = colorValue;
+    }
+    if (!exactColors.accent && lowerName.includes('accent')) {
+      exactColors.accent = colorValue;
+    }
   }
 
-  // Component-specific palettes
+  // 2. Priority 2: Meta theme colors
+  const metaTheme = $('meta[name="theme-color"]').attr('content');
+  if (metaTheme && !exactColors.primary) {
+    exactColors.primary = normalizeColorValue(metaTheme);
+  }
+
+  const metaMsTile = $('meta[name="msapplication-TileColor"]').attr('content');
+  if (metaMsTile && !exactColors.secondary) {
+    exactColors.secondary = normalizeColorValue(metaMsTile);
+  }
+
+  // 3. Priority 3: Button colors (most reliable for primary)
+  if (!exactColors.primary) {
+    const primaryBtns = $('.btn-primary, .button-primary, .cta-button, button[class*="primary"]');
+    for (let i = 0; i < primaryBtns.length; i++) {
+      const style = $(primaryBtns[i]).attr('style') || '';
+      const match = style.match(/background(?:-color)?:\s*([#][0-9a-fA-F]{3,6}|rgba?\([^)]+\))/i);
+      if (match) {
+        exactColors.primary = normalizeColorValue(match[1]);
+        if (exactColors.primary) break;
+      }
+    }
+  }
+
+  // 4. Priority 4: Logo colors (last resort for primary)
+  let logoPalette = [];
+  if (!exactColors.primary && logoUrl) {
+    logoPalette = (await extractBrandColorsFromLogo(logoUrl)) || [];
+    if (logoPalette.length > 0) {
+      exactColors.primary = logoPalette[0];
+      if (logoPalette.length > 1) exactColors.secondary = logoPalette[1];
+    }
+  }
+
+  // Ensure we have valid colors
+  const primaryColor = exactColors.primary || generateAccentColor('#7c3aed');
+  const secondaryColor = exactColors.secondary || getDistinctColor(primaryColor, [primaryColor], 35) || generateSecondaryColor(primaryColor);
+
+  // Extract exact background and text colors from body
+  const bodyBg = $('body').css('background-color');
+  const bodyText = $('body').css('color');
+  const backgroundColor = exactColors.background || normalizeColorValue(bodyBg) || '#ffffff';
+  const textColor = exactColors.text || normalizeColorValue(bodyText) || '#1f2937';
+
+  // Extract component colors
   let navColors = { palette: [] }, headerColors = { palette: [] }, footerColors = { palette: [] }, componentButtonColors = { palette: [] };
   try {
     navColors = await extractComponentColors($, baseUrl, 'nav');
@@ -508,152 +512,29 @@ const extractThemeColors = async ($, baseUrl, logoUrl) => {
     logger.debug(`Component color extraction error: ${e.message}`);
   }
 
-  const variableColorEntries = Object.entries(cssVariables).map(([name, color]) => ({ name, color }));
-  const explicitPrimaryColors = variableColorEntries
-    .filter((entry) => /primary|brand|main|theme/i.test(entry.name))
-    .map((entry) => entry.color);
-  const explicitSecondaryColors = variableColorEntries
-    .filter((entry) => /secondary|accent/i.test(entry.name))
-    .map((entry) => entry.color);
-
-  const buttonBgColors = collectInlineStyleColors($, ['button', 'a.btn', 'a.button', '[class*=\"btn\"]', '[class*=\"button\"]', '[class*=\"cta\"]']);
-  const buttonTextColors = collectInlineStyleColors($, ['button', 'a.btn', 'a.button', '[class*=\"btn\"]', '[class*=\"button\"]', '[class*=\"cta\"]']);
-  const heroBgColors = collectInlineStyleColors($, ['header', '.hero', '.site-header', '.masthead', '.topbar', '.navbar', '.site-banner', '.hero-section', '.page-header', '.branding']);
-  const textColors = collectInlineStyleColors($, ['p', 'span', 'a', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
-  const metaColors = collectMetaColors($);
-
-  const allColors = uniqueHexColors([
-    ...logoPalette,
-    ...pageAssetPalette,
-    ...navColors.palette,
-    ...headerColors.palette,
-    ...footerColors.palette,
-    ...componentButtonColors.palette,
-    ...Object.values(cssVariables),
-    ...cssColorValues,
-    ...buttonBgColors,
-    ...buttonTextColors,
-    ...heroBgColors,
-    ...textColors,
-    ...metaColors
-  ]);
-
-  if (!primaryColor) {
-    primaryColor = selectFirstNonNeutral(explicitPrimaryColors)
-      || selectFirstNonNeutral(buttonBgColors)
-      || selectFirstNonNeutral(heroBgColors)
-      || selectFirstNonNeutral(cssColorValues)
-      || selectFirstNonNeutral(metaColors)
-      || selectFirstNonNeutral(allColors) || '';
-  }
-
-  if (!secondaryColor) {
-    // Prioritize logo palette with lenient distance, then try other sources
-    const logoCandidates = logoPaletteDistinct.filter((c) => c.toLowerCase() !== primaryColor.toLowerCase());
-    const lenientLogoPalette = selectDistinctColorWithDistance(primaryColor, logoCandidates, 20);
-    if (lenientLogoPalette) {
-      secondaryColor = lenientLogoPalette;
-      logger.info(`Secondary color selected from logo palette (lenient fallback): ${secondaryColor}`);
-    } else {
-      const fromExplicit = selectDistinctColor(primaryColor, explicitSecondaryColors);
-      if (fromExplicit) {
-        secondaryColor = fromExplicit;
-        logger.warn(`Secondary color from explicit CSS variables: ${secondaryColor} (not from logo)`);
-      } else {
-        const fromButtons = selectDistinctColor(primaryColor, buttonBgColors);
-        if (fromButtons) {
-          secondaryColor = fromButtons;
-          logger.warn(`Secondary color from button colors: ${secondaryColor} (not from logo)`);
-        } else {
-          const fromHero = selectDistinctColor(primaryColor, heroBgColors);
-          if (fromHero) {
-            secondaryColor = fromHero;
-            logger.warn(`Secondary color from hero section: ${secondaryColor} (not from logo)`);
-          } else {
-            const fromMeta = selectDistinctColor(primaryColor, metaColors);
-            if (fromMeta) {
-              secondaryColor = fromMeta;
-              logger.warn(`Secondary color from meta tags: ${secondaryColor} (not from logo)`);
-            } else {
-              const fromCss = selectDistinctColor(primaryColor, cssColorValues);
-              if (fromCss) {
-                secondaryColor = fromCss;
-                logger.warn(`Secondary color from CSS: ${secondaryColor} (not from logo)`);
-              } else {
-                const fromAll = selectDistinctColor(primaryColor, allColors);
-                if (fromAll) {
-                  secondaryColor = fromAll;
-                  logger.warn(`Secondary color from all colors: ${secondaryColor} (not from logo)`);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  const accentColor = selectDistinctColor(primaryColor, explicitSecondaryColors)
-    || selectDistinctColor(primaryColor, buttonBgColors)
-    || selectDistinctColor(primaryColor, cssColorValues)
-    || selectDistinctColor(primaryColor, allColors)
-    || secondaryColor || generateAccentColor(primaryColor);
-
-  const backgroundColor = selectFirstNonNeutral([].concat(
-    collectInlineStyleColors($, ['body', 'section', '.hero', '.site-header', '.site-banner', '.page-header']),
-    [normalizeColorValue($('body').css('background-color') || '')]
-  )) || generateBackgroundColor(primaryColor);
-
-  const textColor = selectFirstNonNeutral(textColors)
-    || selectDistinctColor(backgroundColor, textColors)
-    || generateTextColor(primaryColor);
-
-  const buttonColorPrimaryBg = selectFirstNonNeutral(buttonBgColors);
-  const buttonColorSecondaryBg = buttonBgColors.find((color) => color !== buttonColorPrimaryBg) || '';
-  const buttonColorPrimaryText = selectFirstNonNeutral(buttonTextColors) || textColor;
-
-  const buttonColors = {
-    primaryBg: buttonColorPrimaryBg || primaryColor,
-    primaryText: buttonColorPrimaryText,
-    primaryHover: buttonColorPrimaryBg ? generateHoverColor(buttonColorPrimaryBg) : generateHoverColor(primaryColor),
-    secondaryBg: buttonColorSecondaryBg || secondaryColor,
-    secondaryText: buttonColorPrimaryText
-  };
-
-  // Track if colors came from logo
-  const primaryFromLogo = logoPalette.includes(primaryColor);
-  const secondaryFromLogo = logoPalette.includes(secondaryColor);
-
-  // Only use fallback if no logo colors were extracted
-  if (!primaryColor) {
-    primaryColor = generateAccentColor('#7c3aed');
-    logger.warn('No primary color found - generating dynamic fallback');
-  }
-  if (!secondaryColor || secondaryColor.toLowerCase() === primaryColor.toLowerCase()) {
-    const fallbackSecondary = getDistinctColor(primaryColor, allColors, 20) || getDistinctColor(primaryColor, allColors, 15);
-    secondaryColor = fallbackSecondary || generateSecondaryColor(primaryColor, allColors);
-    logger.warn(`Secondary color adjusted to be distinct from primary: ${secondaryColor}`);
-  }
-
-  const confidence = logoPalette.length > 0 ? 'high' : 'medium';
-
-  logger.info(`Final theme colors - Primary: ${primaryColor} (from logo: ${primaryFromLogo}), Secondary: ${secondaryColor} (from logo: ${secondaryFromLogo}), Accent: ${accentColor}, Text: ${textColor}, Background: ${backgroundColor}, Confidence: ${confidence}`);
+  logger.info(`Exact colors extracted - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
 
   return {
     primaryColor,
     secondaryColor,
-    accentColor,
+    accentColor: exactColors.accent || generateAccentColor(primaryColor),
     backgroundColor,
     textColor,
-    confidence,
-    buttonColors,
-    colors: allColors,
+    confidence: exactColors.primary ? 'high' : 'medium',
+    buttonColors: {
+      primaryBg: primaryColor,
+      primaryText: getContrastingTextColor(primaryColor),
+      secondaryBg: secondaryColor,
+      secondaryText: getContrastingTextColor(secondaryColor)
+    },
     componentColors: {
       nav: navColors,
       header: headerColors,
       footer: footerColors,
       buttons: componentButtonColors
-    }
+    },
+    colors: [primaryColor, secondaryColor, ...logoPalette, ...cssColorValues].filter(Boolean),
+    exactCssVariables: cssVariables
   };
 };
 
@@ -678,7 +559,7 @@ const inspectWebsite = async (url) => {
     const title = $('title').text().trim() || $('meta[property="og:title"]').attr('content') || '';
     const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
 
-    // 2. Favicon
+    // 2. Favicon (extract first for fallback)
     let favicon = $('link[rel="icon"]').attr('href') ||
       $('link[rel="shortcut icon"]').attr('href') ||
       $('link[rel="apple-touch-icon"]').attr('href');
@@ -689,7 +570,8 @@ const inspectWebsite = async (url) => {
       favicon = `${urlObj.origin}/favicon.ico`;
     }
 
-    let logo = findHeaderLogoImage($, url) || await findBestLogo($, url) || $('meta[property="og:image"]').attr('content') || $('link[rel="image_src"]').attr('href') || '';
+    // 3. Logo with favicon fallback
+    let logo = findHeaderLogoImage($, url) || await findBestLogo($, url, favicon) || $('meta[property="og:image"]').attr('content') || $('link[rel="image_src"]').attr('href') || '';
     if (logo && !logo.startsWith('http') && !logo.startsWith('data:')) {
       try {
         logo = new URL(logo, url).href;
@@ -702,7 +584,7 @@ const inspectWebsite = async (url) => {
       logo = favicon;
     }
 
-    // 4. Color Extraction (Heuristic)
+    // 4. Color Extraction with exact colors
     const theme = await extractThemeColors($, url, logo);
     const suggestedColors = uniqueHexColors([
       ...(theme.colors || []),
@@ -753,7 +635,8 @@ const inspectWebsite = async (url) => {
       buttonColors: theme.componentColors.buttons,
       suggestedColors,
       socialLinks,
-      rawContent: cleanText
+      rawContent: cleanText,
+      exactCssVariables: theme.exactCssVariables
     };
   } catch (err) {
     logger.error(`Scraping failed for ${url}: ${err.message}`);
@@ -1915,34 +1798,93 @@ const extractServicesFromSchema = (schema, services) => {
 
 const { Vibrant } = require('node-vibrant/node');
 
+/**
+ * Extract fill/stroke hex colors directly from raw SVG markup.
+ * These are exact brand colors — more reliable than Vibrant palette sampling.
+ */
+const extractColorsFromSvgMarkup = (svgMarkup) => {
+  const colors = new Set();
+  const attrRe = /(?:fill|stroke)="(#[0-9a-fA-F]{3,6})"/gi;
+  const styleRe = /(?:fill|stroke)\s*:\s*(#[0-9a-fA-F]{3,6})/gi;
+  let m;
+  while ((m = attrRe.exec(svgMarkup)) !== null) {
+    const c = normalizeColorValue(m[1]);
+    if (c && !isNeutralColor(c)) colors.add(c);
+  }
+  while ((m = styleRe.exec(svgMarkup)) !== null) {
+    const c = normalizeColorValue(m[1]);
+    if (c && !isNeutralColor(c)) colors.add(c);
+  }
+  return Array.from(colors);
+};
+
 const extractBrandColorsFromLogo = async (logoUrl) => {
   try {
     let imageBuffer;
+    let svgMarkup = null;
     if (!logoUrl) return null;
 
     if (logoUrl.startsWith('data:')) {
-      const match = logoUrl.match(/^data:.*;base64,(.*)$/);
+      const match = logoUrl.match(/^data:([^;]+);base64,(.*)$/);
       if (!match) return null;
-      imageBuffer = Buffer.from(match[1], 'base64');
+      const mimeType = match[1];
+      imageBuffer = Buffer.from(match[2], 'base64');
+
+      // Fix: use .includes('svg') to handle 'image/svg+xml' and edge-case variants
+      if (mimeType.includes('svg')) {
+        svgMarkup = imageBuffer.toString('utf8');
+        const resvg = new Resvg(imageBuffer, { fitTo: { mode: 'width', value: 256 } });
+        imageBuffer = resvg.render().asPng();
+      }
     } else if (logoUrl.startsWith('http')) {
       const response = await axios.get(logoUrl, {
         responseType: 'arraybuffer',
         timeout: 10000,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
-          'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-          'Referer': logoUrl,
-          'Sec-Fetch-Dest': 'image',
-          'Sec-Fetch-Mode': 'no-cors',
-          'Sec-Fetch-Site': 'cross-site'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         },
-        maxRedirects: 5
       });
-      imageBuffer = Buffer.from(response.data);
-    } else {
-      imageBuffer = Buffer.from(logoUrl, 'binary');
+      let buf = Buffer.from(response.data);
+
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('svg') || logoUrl.match(/\.svg(\?|$)/i)) {
+        svgMarkup = buf.toString('utf8');
+        const resvg = new Resvg(buf, { fitTo: { mode: 'width', value: 256 } });
+        buf = resvg.render().asPng();
+      }
+      imageBuffer = buf;
     }
 
+    // Priority 1: extract colors directly from SVG markup (exact brand colors)
+    if (svgMarkup) {
+      const svgColors = extractColorsFromSvgMarkup(svgMarkup);
+      if (svgColors.length > 0) {
+        logger.info(`SVG direct colors extracted: ${svgColors.slice(0, 3).join(', ')}`);
+        // Still run Vibrant as supplementary but prefer SVG-native colors
+        try {
+          const resizedBuffer = await sharp(imageBuffer)
+            .resize(250, 250, { fit: 'inside', withoutEnlargement: true })
+            .png()
+            .toBuffer();
+          const palette = await Vibrant.from(resizedBuffer).maxColorCount(64).getPalette();
+          const vibrantColors = Object.values(palette)
+            .filter((swatch) => swatch && swatch.hex)
+            .sort((a, b) => (b._population || 0) - (a._population || 0))
+            .map((swatch) => swatch.hex)
+            .filter(Boolean);
+          // Merge: SVG-native first, then any distinct Vibrant colors not already present
+          const merged = [...svgColors];
+          for (const vc of vibrantColors) {
+            if (!merged.some((c) => c.toLowerCase() === vc.toLowerCase())) merged.push(vc);
+          }
+          return merged.slice(0, 3);
+        } catch (_) {
+          return svgColors.slice(0, 3);
+        }
+      }
+    }
+
+    // Priority 2: Vibrant palette for raster logos
     const resizedBuffer = await sharp(imageBuffer)
       .resize(250, 250, { fit: 'inside', withoutEnlargement: true })
       .png()

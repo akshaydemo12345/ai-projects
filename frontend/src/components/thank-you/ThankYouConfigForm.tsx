@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, Eye } from 'lucide-react';
 import { ThankYouLayoutSelector } from './ThankYouLayoutSelector';
+import { PickrColorInput } from '@/components/ui/PickrColorInput';
 import {
   Dialog,
   DialogContent,
@@ -465,17 +466,15 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
               <div className="space-y-2">
                 <Label htmlFor="primaryColor">Primary Color</Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="primaryColor"
-                    type="color"
+                  <PickrColorInput
                     value={config.branding.primaryColor || '#7c3aed'}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setConfig({
                         ...config,
-                        branding: { ...config.branding, primaryColor: e.target.value },
+                        branding: { ...config.branding, primaryColor: val },
                       })
                     }
-                    className="w-20 h-10"
+                    className="w-10 h-10"
                   />
                   <Input
                     value={config.branding.primaryColor || ''}
@@ -493,17 +492,15 @@ export const ThankYouConfigForm = ({ pageId, industry, onSave }: ThankYouConfigF
               <div className="space-y-2">
                 <Label htmlFor="secondaryColor">Secondary Color</Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="secondaryColor"
-                    type="color"
+                  <PickrColorInput
                     value={config.branding.secondaryColor || '#6366f1'}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setConfig({
                         ...config,
-                        branding: { ...config.branding, secondaryColor: e.target.value },
+                        branding: { ...config.branding, secondaryColor: val },
                       })
                     }
-                    className="w-20 h-10"
+                    className="w-10 h-10"
                   />
                   <Input
                     value={config.branding.secondaryColor || ''}

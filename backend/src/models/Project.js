@@ -93,9 +93,20 @@ const projectSchema = new mongoose.Schema({
       description: String,
       logoUrl: String,
       favicon: String,
+      // Logo metadata — set during scrape
+      logoFormat: String,   // e.g. 'png', 'svg-inline', 'svg-url', 'webp', 'favicon-fallback'
+      logoSource: String,   // 'scraped' | 'favicon-fallback'
     },
 
-    // 2. Industry Classification
+    // 2. Logo-Specific Colors (extracted directly from logo image)
+    logoColors: {
+      primary: String,      // Primary color from logo
+      secondary: String,    // Secondary color from logo
+      palette: [String],    // Full color palette from logo
+      source: String,       // 'svg-direct' | 'vibrant' | null
+    },
+
+    // 3. Industry Classification
     industry: {
       industry: String,
       subIndustry: String,
@@ -103,15 +114,18 @@ const projectSchema = new mongoose.Schema({
       detectedFrom: [String],
     },
 
-    // 3. Brand Colors
+    // 4. Brand Colors (from entire page, logo takes precedence)
     colors: {
       primary: String,
       secondary: String,
       accent: String,
       palette: [String],
+      // Page-wide colors (fallback when logo colors not available)
+      pagePrimary: String,
+      pageSecondary: String,
     },
 
-    // 4. Theme System (per-component)
+    // 5. Theme System (per-component)
     theme: {
       header: { background: String, text: String },
       navigation: { background: String, text: String, active: String },
@@ -124,14 +138,16 @@ const projectSchema = new mongoose.Schema({
       footer: { background: String, text: String },
     },
 
-    // 5. Typography
+    // 6. Typography
     fonts: {
       primaryFont: String,
       headingFont: String,
       googleFonts: [String],
+      bodyFont: String,
+      bodyFontSize: String,
     },
 
-    // 6. Images
+    // 7. Images
     images: {
       type: [
         {
@@ -145,7 +161,7 @@ const projectSchema = new mongoose.Schema({
       default: [],
     },
 
-    // 7. Videos
+    // 8. Videos
     videos: {
       type: [
         {
@@ -159,7 +175,7 @@ const projectSchema = new mongoose.Schema({
       default: [],
     },
 
-    // 8. Website Content
+    // 9. Website Content
     content: {
       hero: {
         title: String,
@@ -168,6 +184,13 @@ const projectSchema = new mongoose.Schema({
       },
       taglines: [String],
       services: [
+        {
+          title: String,
+          description: String,
+          icon: String,
+        },
+      ],
+      features: [
         {
           title: String,
           description: String,
@@ -189,9 +212,10 @@ const projectSchema = new mongoose.Schema({
           buttonText: String,
         },
       ],
+      sectionHeadings: [String],
     },
 
-    // 9. Forms
+    // 10. Forms
     forms: [
       {
         formName: String,
@@ -207,7 +231,7 @@ const projectSchema = new mongoose.Schema({
       },
     ],
 
-    // 10. SEO
+    // 11. SEO
     seo: {
       title: String,
       description: String,
@@ -228,7 +252,7 @@ const projectSchema = new mongoose.Schema({
       },
     },
 
-    // 11. Landing Page Sections
+    // 12. Landing Page Sections
     sections: [
       new mongoose.Schema({
         type: String,
@@ -238,12 +262,13 @@ const projectSchema = new mongoose.Schema({
       }, { _id: false }),
     ],
 
-    // 12. Extraction Metadata
+    // 13. Extraction Metadata
     extraction: {
       sourceUrl: String,
       finalUrl: String,
       scrapedAt: Date,
       extractionVersion: String,
+      durationMs: Number,
     },
   },
 
@@ -274,15 +299,32 @@ projectSchema.virtual('logoUrl').get(function () {
 });
 
 projectSchema.virtual('primaryColor').get(function () {
-  return this.websiteProfile?.colors?.primary || null;
+  // Priority: logoColors.primary > colors.primary > null
+  return this.websiteProfile?.logoColors?.primary ||
+    this.websiteProfile?.colors?.primary ||
+    null;
 });
 
 projectSchema.virtual('secondaryColor').get(function () {
-  return this.websiteProfile?.colors?.secondary || null;
+  // Priority: logoColors.secondary > colors.secondary > null
+  return this.websiteProfile?.logoColors?.secondary ||
+    this.websiteProfile?.colors?.secondary ||
+    null;
+});
+
+projectSchema.virtual('accentColor').get(function () {
+  return this.websiteProfile?.colors?.accent || null;
 });
 
 projectSchema.virtual('colors').get(function () {
-  return this.websiteProfile?.colors?.palette || [];
+  // Return logo colors palette first, fallback to page colors palette
+  const logoPalette = this.websiteProfile?.logoColors?.palette || [];
+  const pagePalette = this.websiteProfile?.colors?.palette || [];
+  return logoPalette.length > 0 ? logoPalette : pagePalette;
+});
+
+projectSchema.virtual('logoColors').get(function () {
+  return this.websiteProfile?.logoColors || {};
 });
 
 projectSchema.virtual('themeSystem').get(function () {
@@ -294,6 +336,7 @@ projectSchema.virtual('brandingData').get(function () {
   const wp = this.websiteProfile || {};
   return {
     identity: wp.identity,
+    logoColors: wp.logoColors,
     colors: wp.colors,
     themeSystem: wp.theme,
     typography: wp.fonts,
@@ -338,6 +381,10 @@ projectSchema.virtual('services').get(function () {
   return (this.websiteProfile?.content?.services || []).map(s => s.title);
 });
 
+projectSchema.virtual('features').get(function () {
+  return (this.websiteProfile?.content?.features || []).map(f => f.title);
+});
+
 projectSchema.virtual('keywords').get(function () {
   return this.websiteProfile?.seo?.keywords || [];
 });
@@ -348,6 +395,14 @@ projectSchema.virtual('websiteUrl').get(function () {
 
 projectSchema.virtual('category').get(function () {
   return this.industry;
+});
+
+projectSchema.virtual('logoFormat').get(function () {
+  return this.websiteProfile?.identity?.logoFormat || null;
+});
+
+projectSchema.virtual('logoSource').get(function () {
+  return this.websiteProfile?.identity?.logoSource || null;
 });
 
 projectSchema.set('toObject', { virtuals: true });
@@ -391,6 +446,10 @@ projectSchema.pre(/^find/, function (next) {
 
 /**
  * Update websiteProfile from scraped data
+ * @param {string} projectId - Project ID
+ * @param {Object} scrapedData - Data from scrapeWebsiteStructure
+ * @param {Object} themeData - Optional theme data
+ * @returns {Promise<Object>} Updated project
  */
 projectSchema.statics.updateWebsiteProfile = async function (projectId, scrapedData, themeData = null) {
   const { buildWebsiteProfile } = require('../services/structuredScrapeService');
@@ -402,12 +461,16 @@ projectSchema.statics.updateWebsiteProfile = async function (projectId, scrapedD
     websiteProfile,
     'scrapeMeta.status': 'success',
     'scrapeMeta.finishedAt': new Date(),
+    'scrapeMeta.durationMs': scrapedData.durationMs || 0,
   };
 
-  // Copy colors to top-level for easier querying (indexed fields)
-  if (websiteProfile?.colors?.primary) {
-    // Note: These are not stored as separate fields, but can be used in queries
-    // via websiteProfile.colors.primary - no duplication needed.
+  // Also update top-level name if available and project name is empty/generic
+  if (websiteProfile?.identity?.name && websiteProfile.identity.name !== 'Unknown Brand') {
+    // Only update if current name is default or empty
+    const currentProject = await ProjectModel.findById(projectId).select('name');
+    if (currentProject && (currentProject.name === 'My Project' || currentProject.name === '' || currentProject.name === 'Untitled Project')) {
+      updateData.name = websiteProfile.identity.name;
+    }
   }
 
   return ProjectModel.findByIdAndUpdate(
@@ -417,6 +480,48 @@ projectSchema.statics.updateWebsiteProfile = async function (projectId, scrapedD
   );
 };
 
+/**
+ * Get brand colors with logo priority
+ * @returns {Object} Colors with logo priority
+ */
+projectSchema.methods.getBrandColors = function () {
+  const wp = this.websiteProfile || {};
+  return {
+    primary: wp.logoColors?.primary || wp.colors?.primary || '#7c3aed',
+    secondary: wp.logoColors?.secondary || wp.colors?.secondary || '#6366f1',
+    accent: wp.colors?.accent || '#f59e0b',
+    fromLogo: !!(wp.logoColors?.primary),
+    logoPalette: wp.logoColors?.palette || [],
+    pagePalette: wp.colors?.palette || [],
+  };
+};
+
+/**
+ * Check if logo colors are available
+ * @returns {boolean}
+ */
+projectSchema.methods.hasLogoColors = function () {
+  const wp = this.websiteProfile || {};
+  return !!(wp.logoColors?.primary || wp.logoColors?.secondary);
+};
+
+/**
+ * Get logo extraction info
+ * @returns {Object}
+ */
+projectSchema.methods.getLogoInfo = function () {
+  const wp = this.websiteProfile || {};
+  return {
+    url: wp.identity?.logoUrl || null,
+    format: wp.identity?.logoFormat || null,
+    source: wp.identity?.logoSource || null,
+    hasColors: this.hasLogoColors(),
+    colorSource: wp.logoColors?.source || null,
+  };
+};
+
+// ─── INDEXES ───────────────────────────────────────────────────────────────────
+
 // Indexes for fast user-scoped queries
 projectSchema.index({ userId: 1, createdAt: -1 });
 projectSchema.index({ userId: 1, _id: 1 });
@@ -424,6 +529,10 @@ projectSchema.index({ userId: 1, _id: 1 });
 projectSchema.index({ 'websiteProfile.identity.name': 1 });
 // Index for sourceUrl lookups
 projectSchema.index({ 'websiteProfile.extraction.sourceUrl': 1 });
+// Index for logo colors queries
+projectSchema.index({ 'websiteProfile.logoColors.primary': 1 });
+// Index for industry queries
+projectSchema.index({ 'websiteProfile.industry.industry': 1 });
 
 const Project = mongoose.model('Project', projectSchema);
 module.exports = Project;

@@ -20,10 +20,7 @@ const AllSitesPage = () => {
     });
   }, []);
 
-  const handleDelete = async (id: string) => {
-    await sitesApi.delete(id);
-    setSites(sites.filter((s) => s.id !== id));
-  };
+
 
   const filtered = sites.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -102,12 +99,12 @@ const AllSitesPage = () => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((site) => (
-            <Link key={site.id} to="/editor" className="group">
+            <Link key={site._id} to="/editor" className="group">
               <div className="rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-all">
-                <div className={`h-40 ${site.id === "1" ? "bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(280,70%,70%)]" : "bg-muted"}`} />
+                <div className={`h-40 ${site._id === "1" ? "bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(280,70%,70%)]" : "bg-muted"}`} />
                 <div className="p-4">
                   <h3 className="text-sm font-semibold text-foreground">{site.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{site.url.replace("https://", "").replace(".pagebuilder.ai", "")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{((site as any).url || site.domain || "").replace("https://", "").replace(".pagebuilder.ai", "")}</p>
                   <span className={`inline-block mt-2 text-xs px-2.5 py-0.5 rounded font-medium ${
                     site.status === "published" ? "bg-green-50 text-green-600" : "bg-muted text-muted-foreground"
                   }`}>
