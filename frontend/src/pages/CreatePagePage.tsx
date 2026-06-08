@@ -662,7 +662,7 @@ const CreatePagePage = () => {
       const response = await pagesApi.verifySlug(id!, { slug: normalizedSlug });
       setSlugError("");
       setIsSlugVerified(true);
-      
+
       // Provide feedback based on what was checked
       if (!silent) {
         const message = response?.data?.externalCheckMessage || 'unknown';
@@ -1179,11 +1179,10 @@ ${enrichedContent}
                     }}
                     onBlur={handlePageNameBlur}
                     placeholder="e.g. Roofing Delhi"
-                    className={`w-full h-11 border rounded-xl px-4 text-sm outline-none transition-all ${
-                      pageNameError 
-                        ? 'border-red-500 bg-red-50/10 focus:border-red-500 focus:ring-2 focus:ring-red-100' 
+                    className={`w-full h-11 border rounded-xl px-4 text-sm outline-none transition-all ${pageNameError
+                        ? 'border-red-500 bg-red-50/10 focus:border-red-500 focus:ring-2 focus:ring-red-100'
                         : 'border-gray-200 bg-gray-50 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100'
-                    }`}
+                      }`}
                   />
                   {pageNameError && (
                     <span className="text-red-500 text-xs mt-1 block">{pageNameError}</span>
@@ -1191,13 +1190,12 @@ ${enrichedContent}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">URL Slug</label>
-                  <div className={`flex items-center h-11 border rounded-xl overflow-hidden transition-all ${
-                    slugError 
-                      ? 'border-red-500 bg-red-50/10 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100' 
-                      : isSlugVerified 
-                        ? 'border-emerald-500 bg-emerald-50/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100' 
+                  <div className={`flex items-center h-11 border rounded-xl overflow-hidden transition-all ${slugError
+                      ? 'border-red-500 bg-red-50/10 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100'
+                      : isSlugVerified
+                        ? 'border-emerald-500 bg-emerald-50/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100'
                         : 'border-gray-200 bg-gray-50 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100'
-                  }`}>
+                    }`}>
                     <span className="px-3 h-full flex items-center bg-gray-100 text-xs font-bold text-gray-500 border-r border-gray-200 whitespace-nowrap">/</span>
                     <input
                       value={pageSlug}

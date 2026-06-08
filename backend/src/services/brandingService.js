@@ -14,20 +14,20 @@ const extractColorsFromDOM = (html) => {
   try {
     const dom = new jsdom(html);
     const document = dom.window.document;
-    
+
     const colorMap = {};
     const processedElements = new Set();
-    
+
     // Get all elements with background-color or color styles
     const elements = document.querySelectorAll('*');
-    
+
     elements.forEach((element) => {
       if (processedElements.size > 500) return; // Limit processing
-      
+
       const styles = dom.window.getComputedStyle(element);
       const bgColor = styles.backgroundColor;
       const textColor = styles.color;
-      
+
       // Track background colors
       if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
         const normalized = normalizeColor(bgColor);
@@ -35,7 +35,7 @@ const extractColorsFromDOM = (html) => {
           colorMap[normalized] = (colorMap[normalized] || 0) + 1;
         }
       }
-      
+
       // Track text colors
       if (textColor && !isNeutral(textColor)) {
         const normalized = normalizeColor(textColor);
@@ -43,16 +43,16 @@ const extractColorsFromDOM = (html) => {
           colorMap[normalized] = (colorMap[normalized] || 0) + 0.5; // Less weight for text
         }
       }
-      
+
       processedElements.add(element);
     });
-    
+
     // Sort colors by frequency
     const sortedColors = Object.entries(colorMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([color]) => color);
-    
+
     return sortedColors;
   } catch (error) {
     console.error('Error extracting colors from DOM:', error.message);
@@ -137,11 +137,17 @@ const extractColorsFromImages = async (document, baseUrl) => {
 
     // meta og:image, twitter:image
     const metaImg = document.querySelector('meta[property="og:image"]')?.content || document.querySelector('meta[name="twitter:image"]')?.content;
-    if (metaImg) candidates.add(metaImg);
+    if (metaImg && !metaImg.startsWith('data:')) candidates.add(metaImg);
 
-    // common logo selectors
-    const logo = document.querySelector('img.logo, img[alt*="logo" i], img[id*="logo" i]')?.src;
-    if (logo) candidates.add(logo);
+    const logoEl2 = document.querySelector('img.logo, img[alt*="logo" i], img[id*="logo" i]');
+    const logo = logoEl2?.getAttribute('data-src') || logoEl2?.getAttribute('data-lazy-src') || logoEl2?.src;
+    if (logo && !logo.startsWith('data:')) candidates.add(logo);
+
+    // Also filter in the first-few-images loop:
+    const firstImgs = Array.from(document.querySelectorAll('img'))
+      .slice(0, 10)
+      .map(i => i.getAttribute('data-src') || i.getAttribute('data-lazy-src') || i.src)
+      .filter(s => s && !s.startsWith('data:'));  // <-- add this filter
 
     // hero/banner candidates (class/id contains hero/banner/main)
     const heroImgs = Array.from(document.querySelectorAll('img'))
@@ -151,12 +157,11 @@ const extractColorsFromImages = async (document, baseUrl) => {
         const src = (img.src || '').toString().toLowerCase();
         return cls.includes('hero') || cls.includes('banner') || id.includes('hero') || id.includes('banner') || src.includes('hero') || src.includes('banner');
       })
-      .map(i => i.src)
-      .filter(Boolean);
+      .map(i => i.getAttribute('data-src') || i.getAttribute('data-lazy-src') || i.getAttribute('data-original') || i.src)
+      .filter(s => s && !s.startsWith('data:'));
     heroImgs.slice(0, 5).forEach(u => candidates.add(u));
 
     // fallback: first few images on page
-    const firstImgs = Array.from(document.querySelectorAll('img')).slice(0, 10).map(i => i.src).filter(Boolean);
     firstImgs.forEach(u => candidates.add(u));
 
     const results = [];
@@ -196,7 +201,7 @@ const normalizeColor = (color) => {
     const [, r, g, b] = rgbMatch;
     return '#' + [r, g, b].map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase();
   }
-  
+
   // Already hex
   if (color.startsWith('#')) {
     return color.toUpperCase();
@@ -207,7 +212,7 @@ const normalizeColor = (color) => {
   if (hsl) {
     return hsl;
   }
-  
+
   // Named colors - basic mapping
   const colorNames = {
     'white': '#FFFFFF',
@@ -219,7 +224,7 @@ const normalizeColor = (color) => {
     'grey': '#808080',
     'transparent': null,
   };
-  
+
   return colorNames[color.toLowerCase()] || null;
 };
 
@@ -228,15 +233,15 @@ const normalizeColor = (color) => {
  */
 const isNeutral = (hexColor) => {
   if (!hexColor || hexColor.length < 7) return true;
-  
+
   const rgb = convert.hex.rgb(hexColor);
   const [r, g, b] = rgb;
-  
+
   // If all channels are similar, it's neutral
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const saturation = max === 0 ? 0 : (max - min) / max;
-  
+
   return saturation < 0.15; // Low saturation = neutral
 };
 
@@ -332,155 +337,254 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
 
   const browser = await playwright.chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-extensions',
+      '--blink-settings=imagesEnabled=false',   // skip image downloads — faster
+    ],
   });
 
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  });
-  const page = await context.newPage();
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-  await page.waitForTimeout(1000);
+  let raw;
+  try {
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      // Block heavy resources that cause networkidle to stall
+      extraHTTPHeaders: { 'Accept-Language': 'en-US,en;q=0.9' },
+    });
 
-  const raw = await page.evaluate(() => {
-    const normalize = (value) => {
-      if (!value) return null;
-      const trimmed = value.trim();
-      if (!trimmed || trimmed === 'transparent' || trimmed === 'rgba(0, 0, 0, 0)') return null;
-      return trimmed;
-    };
-
-    const isVisible = (el) => {
-      if (!el || !(el instanceof Element)) return false;
-      const styles = window.getComputedStyle(el);
-      if (styles.visibility === 'hidden' || styles.display === 'none' || styles.opacity === '0') return false;
-      const rect = el.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0;
-    };
-
-    const getStyle = (el, property) => {
-      if (!el) return null;
-      return normalize(window.getComputedStyle(el).getPropertyValue(property));
-    };
-
-    const findFirstVisible = (selectors) => {
-      for (const selector of selectors) {
-        const nodes = Array.from(document.querySelectorAll(selector));
-        for (const node of nodes) {
-          if (isVisible(node)) return node;
-        }
+    // Block resource types that are not needed for style extraction
+    await context.route('**/*', (route) => {
+      const type = route.request().resourceType();
+      if (['image', 'media', 'font', 'websocket'].includes(type)) {
+        route.abort();
+      } else {
+        route.continue();
       }
-      return null;
-    };
+    });
 
-    const sampleColors = (selectors, property, limit = 20) => {
-      const colors = [];
-      for (const selector of selectors) {
-        const nodes = Array.from(document.querySelectorAll(selector));
-        for (const node of nodes) {
-          if (!isVisible(node)) continue;
-          const value = getStyle(node, property);
-          if (value) colors.push(value);
+    const page = await context.newPage();
+
+    // Tiered navigation strategy: try progressively more lenient wait conditions
+    // so slow/heavy sites (e.g. Mamaearth, Nykaa) don't time out
+    let navigated = false;
+    const strategies = [
+      { waitUntil: 'domcontentloaded', timeout: 20000 },
+      { waitUntil: 'load', timeout: 30000 },
+      { waitUntil: 'commit', timeout: 15000 },  // just wait for first byte
+    ];
+
+    for (const strategy of strategies) {
+      try {
+        await page.goto(url, strategy);
+        navigated = true;
+        break;
+      } catch (navErr) {
+        const reason = navErr.message || '';
+        // If blocked (403/404/ERR_CONNECTION_REFUSED) there's no point retrying
+        if (/net::ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|404|403/.test(reason)) {
+          throw navErr;
+        }
+        // Otherwise (timeout, networkidle stall) try next strategy
+      }
+    }
+
+    if (!navigated) {
+      throw new Error(`All navigation strategies exhausted for ${url}`);
+    }
+
+    // Give JS-rendered styles a moment to settle — but cap at 1.5s
+    await page.waitForTimeout(1500).catch(() => { });
+
+    raw = await page.evaluate(() => {
+      const normalize = (value) => {
+        if (!value) return null;
+        const trimmed = value.trim();
+        if (!trimmed || trimmed === 'transparent' || trimmed === 'rgba(0, 0, 0, 0)') return null;
+        return trimmed;
+      };
+
+      const isVisible = (el) => {
+        if (!el || !(el instanceof Element)) return false;
+        const styles = window.getComputedStyle(el);
+        if (styles.visibility === 'hidden' || styles.display === 'none' || styles.opacity === '0') return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+
+      const getStyle = (el, property) => {
+        if (!el) return null;
+        return normalize(window.getComputedStyle(el).getPropertyValue(property));
+      };
+
+      const findFirstVisible = (selectors) => {
+        for (const selector of selectors) {
+          const nodes = Array.from(document.querySelectorAll(selector));
+          for (const node of nodes) {
+            if (isVisible(node)) return node;
+          }
+        }
+        return null;
+      };
+
+      const sampleColors = (selectors, property, limit = 20) => {
+        const colors = [];
+        for (const selector of selectors) {
+          const nodes = Array.from(document.querySelectorAll(selector));
+          for (const node of nodes) {
+            if (!isVisible(node)) continue;
+            const value = getStyle(node, property);
+            if (value) colors.push(value);
+            if (colors.length >= limit) break;
+          }
           if (colors.length >= limit) break;
         }
-        if (colors.length >= limit) break;
-      }
-      return colors;
-    };
+        return colors;
+      };
 
-    const mostFrequent = (items) => {
-      const counts = {};
-      for (const item of items) {
-        if (!item) continue;
-        counts[item] = (counts[item] || 0) + 1;
-      }
-      return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([value]) => value)[0] || null;
-    };
+      const mostFrequent = (items) => {
+        const counts = {};
+        for (const item of items) {
+          if (!item) continue;
+          counts[item] = (counts[item] || 0) + 1;
+        }
+        return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([value]) => value)[0] || null;
+      };
 
-    const headerSelectors = ['header', 'nav', '.navbar', '.site-header', '.main-header', '.topbar', '.header'];
-    const footerSelectors = ['footer', '.footer', '.site-footer', '.page-footer', '.footer-section'];
-    const buttonSelectors = ['.btn-primary', 'button.primary', '.button-primary', '.btn', 'button', 'a.button', '.call-to-action', '.cta'];
-    const ctaSelectors = ['.cta', 'button.cta', 'a.cta', 'button', 'a[href*="/buy" i]', 'a[href*="/shop" i]', 'a[href*="/cart" i]', 'a[href*="/signup" i]', 'a[href*="/login" i]'];
-    const linkSelectors = ['a', 'nav a', 'header a', 'footer a', '.menu a', '.nav-link'];
-    const textSelectors = ['body', 'h1', 'h2', 'h3', 'p', '.hero-title', '.headline'];
-    const heroSelectors = ['.hero', '.banner', '.hero-section', '.top-section', '.hero-banner', '.main-hero'];
+      const headerSelectors = ['header', 'nav', '.navbar', '.site-header', '.main-header', '.topbar', '.header'];
+      const footerSelectors = ['footer', '.footer', '.site-footer', '.page-footer', '.footer-section'];
+      const buttonSelectors = ['.btn-primary', 'button.primary', '.button-primary', '.btn', 'button', 'a.button', '.call-to-action', '.cta'];
+      const ctaSelectors = ['.cta', 'button.cta', 'a.cta', 'button', 'a[href*="/buy" i]', 'a[href*="/shop" i]', 'a[href*="/cart" i]', 'a[href*="/signup" i]', 'a[href*="/login" i]'];
+      const linkSelectors = ['a', 'nav a', 'header a', 'footer a', '.menu a', '.nav-link'];
+      const textSelectors = ['body', 'h1', 'h2', 'h3', 'p', '.hero-title', '.headline'];
+      const heroSelectors = ['.hero', '.banner', '.hero-section', '.top-section', '.hero-banner', '.main-hero'];
 
-    const headerEl = findFirstVisible(headerSelectors);
-    const footerEl = findFirstVisible(footerSelectors);
-    const buttonEl = findFirstVisible(buttonSelectors);
-    const ctaEl = findFirstVisible(ctaSelectors);
-    const pageEl = findFirstVisible(['body', 'html']);
-    const heroEl = findFirstVisible(heroSelectors);
+      const headerEl = findFirstVisible(headerSelectors);
+      const footerEl = findFirstVisible(footerSelectors);
+      const buttonEl = findFirstVisible(buttonSelectors);
+      const ctaEl = findFirstVisible(ctaSelectors);
+      const pageEl = findFirstVisible(['body', 'html']);
+      const heroEl = findFirstVisible(heroSelectors);
 
-    const headerBackground = getStyle(headerEl, 'background-color');
-    const headerText = getStyle(headerEl, 'color');
-    const headerBorder = getStyle(headerEl, 'border-color');
-    const headerLink = mostFrequent(sampleColors(['nav a', 'header a', ...headerSelectors], 'color', 30));
+      const headerBackground = getStyle(headerEl, 'background-color');
+      const headerText = getStyle(headerEl, 'color');
+      const headerBorder = getStyle(headerEl, 'border-color');
+      const headerLink = mostFrequent(sampleColors(['nav a', 'header a', ...headerSelectors], 'color', 30));
 
-    const footerBackground = getStyle(footerEl, 'background-color');
-    const footerText = getStyle(footerEl, 'color');
-    const footerBorder = getStyle(footerEl, 'border-color');
-    const footerLink = mostFrequent(sampleColors(['footer a', '.footer a'], 'color', 30));
+      const footerBackground = getStyle(footerEl, 'background-color');
+      const footerText = getStyle(footerEl, 'color');
+      const footerBorder = getStyle(footerEl, 'border-color');
+      const footerLink = mostFrequent(sampleColors(['footer a', '.footer a'], 'color', 30));
 
-    const buttonBackground = getStyle(buttonEl, 'background-color');
-    const buttonText = getStyle(buttonEl, 'color');
-    const buttonBorder = getStyle(buttonEl, 'border-color');
+      const buttonBackground = getStyle(buttonEl, 'background-color');
+      const buttonText = getStyle(buttonEl, 'color');
+      const buttonBorder = getStyle(buttonEl, 'border-color');
 
-    const ctaBackground = getStyle(ctaEl, 'background-color');
-    const ctaText = getStyle(ctaEl, 'color');
-    const ctaBorder = getStyle(ctaEl, 'border-color');
+      const ctaBackground = getStyle(ctaEl, 'background-color');
+      const ctaText = getStyle(ctaEl, 'color');
+      const ctaBorder = getStyle(ctaEl, 'border-color');
 
-    const pageBackground = getStyle(pageEl, 'background-color');
-    const heroBackground = getStyle(heroEl, 'background-color');
+      const pageBackground = getStyle(pageEl, 'background-color');
+      const heroBackground = getStyle(heroEl, 'background-color');
 
-    const bodyText = mostFrequent(sampleColors(textSelectors, 'color', 40));
-    const linkColor = mostFrequent(sampleColors(linkSelectors, 'color', 50));
-    const borderColor = mostFrequent(sampleColors(['*'], 'border-color', 50));
+      const bodyText = mostFrequent(sampleColors(textSelectors, 'color', 40));
+      const linkColor = mostFrequent(sampleColors(linkSelectors, 'color', 50));
+      const borderColor = mostFrequent(sampleColors(['*'], 'border-color', 50));
 
-    return {
-      header: {
-        background: headerBackground,
-        text: headerText,
-        border: headerBorder,
-        link: headerLink,
-      },
-      footer: {
-        background: footerBackground,
-        text: footerText,
-        border: footerBorder,
-        link: footerLink,
-      },
-      buttons: {
-        primary: {
-          background: buttonBackground,
-          text: buttonText,
-          border: buttonBorder,
+      // Logo extraction
+      const logoEl = findFirstVisible([
+        'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]',
+        'header img', 'nav img', '.navbar img', '.site-header img',
+        'a[href="/"] img', '.brand img',
+      ]);
+      const getRealSrc = (el) => {
+        if (!el) return null;
+        const candidates = [
+          el.getAttribute('data-src'),
+          el.getAttribute('data-lazy-src'),
+          el.getAttribute('data-original'),
+          el.src,
+        ];
+        return candidates.find(s => s && !s.startsWith('data:')) || null;
+      };
+      const logoUrl = getRealSrc(logoEl);
+
+      // Favicon extraction
+      const faviconEl =
+        document.querySelector('link[rel="icon"]') ||
+        document.querySelector('link[rel="shortcut icon"]') ||
+        document.querySelector('link[rel="apple-touch-icon"]');
+      const favicon = faviconEl ? faviconEl.href : (window.location.origin + '/favicon.ico');
+
+      // Font extraction — Google Fonts links + computed font-family on body/headings
+      const googleFontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
+        .map(l => l.href);
+      const googleFontFamilies = googleFontLinks.flatMap(href => {
+        try {
+          const familyParam = new URL(href).searchParams.get('family');
+          return familyParam ? familyParam.split('|').map(f => f.split(':')[0].replace(/\+/g, ' ')) : [];
+        } catch (e) { return []; }
+      });
+
+      const bodyFontFamily = getStyle(document.body, 'font-family');
+      const headingEl = findFirstVisible(['h1', 'h2', 'h3']);
+      const headingFontFamily = getStyle(headingEl, 'font-family');
+
+      return {
+        header: {
+          background: headerBackground,
+          text: headerText,
+          border: headerBorder,
+          link: headerLink,
         },
-        cta: {
-          background: ctaBackground,
-          text: ctaText,
-          border: ctaBorder,
+        footer: {
+          background: footerBackground,
+          text: footerText,
+          border: footerBorder,
+          link: footerLink,
         },
-      },
-      text: {
-        body: bodyText,
-        link: linkColor,
-      },
-      background: {
-        page: pageBackground,
-        hero: heroBackground,
-      },
-      border: {
-        page: borderColor,
-      },
-      links: {
-        default: linkColor,
-        cta: ctaText,
-      },
-    };
-  });
+        buttons: {
+          primary: {
+            background: buttonBackground,
+            text: buttonText,
+            border: buttonBorder,
+          },
+          cta: {
+            background: ctaBackground,
+            text: ctaText,
+            border: ctaBorder,
+          },
+        },
+        text: {
+          body: bodyText,
+          link: linkColor,
+        },
+        background: {
+          page: pageBackground,
+          hero: heroBackground,
+        },
+        border: {
+          page: borderColor,
+        },
+        links: {
+          default: linkColor,
+          cta: ctaText,
+        },
+        logoUrl,
+        favicon,
+        typography: {
+          fontFamily: googleFontFamilies[0] || bodyFontFamily || null,
+          headingFontFamily: googleFontFamilies[1] || googleFontFamilies[0] || headingFontFamily || null,
+          googleFontFamilies,
+        },
+      };
+    });
 
-  await browser.close();
+  } finally {
+    await browser.close().catch(() => { });
+  }
 
   const colors = {
     header: {
@@ -537,9 +641,16 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
     colors.links.default,
   ].filter(Boolean);
 
-  const pickPrimary = detectedColors[0] || '#7C3AED';
-  const pickSecondary = detectedColors.find((c) => c && c !== pickPrimary) || '#6366F1';
-  const pickAccent = detectedColors.find((c) => c && c !== pickPrimary && c !== pickSecondary) || getComplementaryColor(pickPrimary);
+  const isBackground = (hex) => {
+    if (!hex) return true;
+    const tc = tinycolor(hex);
+    const { l } = tc.toHsl();
+    return l > 0.92 || l < 0.08;
+  };
+  const pickPrimary = detectedColors.find(c => !isBackground(c)) || detectedColors[0] || '#7C3AED';
+  const pickSecondary = detectedColors.find(c => c !== pickPrimary && !isBackground(c)) || '#6366F1';
+  const pickAccent = detectedColors.find(c => c !== pickPrimary && c !== pickSecondary && !isBackground(c))
+    || getComplementaryColor(pickPrimary);
 
   return {
     header: colors.header,
@@ -549,6 +660,13 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
     background: colors.background,
     border: colors.border,
     links: colors.links,
+    logoUrl: raw.logoUrl || null,
+    favicon: raw.favicon || null,
+    typography: {
+      fontFamily: raw.typography?.fontFamily || null,
+      headingFontFamily: raw.typography?.headingFontFamily || null,
+      googleFontFamilies: raw.typography?.googleFontFamilies || [],
+    },
     colors: {
       primary: pickPrimary,
       secondary: pickSecondary,
@@ -655,10 +773,24 @@ const fetchAndExtractBranding = async (websiteUrl) => {
     const footerText = footerTheme.color || getContrastingTextColor(footerBackground);
     const footerBorder = footerTheme.border || getComplementaryColor(footerBackground);
 
+    // Extract logo URL from DOM as fallback
+    const getRealImgSrc = (el) => {
+      if (!el) return null;
+      return [el.getAttribute('data-src'), el.getAttribute('data-lazy-src'), el.src]
+        .find(s => s && !s.startsWith('data:')) || null;
+    };
+    const domLogoEl = document.querySelector('img.logo, img[alt*="logo" i], img[id*="logo" i], header img, nav img');
+    const domLogoUrl = getRealImgSrc(domLogoEl);
+
+    // Extract favicon from DOM as fallback
+    const domFavicon =
+      document.querySelector('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')?.href ||
+      null;
+
     const branding = {
-      logo: computedBranding?.logoUrl || null,
-      logoUrl: computedBranding?.logoUrl || null,
-      favicon: computedBranding?.favicon || null,
+      logo: computedBranding?.logoUrl || domLogoUrl || null,
+      logoUrl: computedBranding?.logoUrl || domLogoUrl || null,
+      favicon: computedBranding?.favicon || domFavicon || null,
       companyName: computedBranding?.companyName || null,
       tagline: computedBranding?.tagline || null,
       colors: {
@@ -679,7 +811,8 @@ const fetchAndExtractBranding = async (websiteUrl) => {
       },
       typography: {
         fontFamily: computedBranding?.typography?.fontFamily || 'Inter, sans-serif',
-        headingFontFamily: computedBranding?.typography?.headingFontFamily || 'Inter, sans-serif',
+        headingFontFamily: computedBranding?.typography?.headingFontFamily || computedBranding?.typography?.fontFamily || 'Inter, sans-serif',
+        googleFontFamilies: computedBranding?.typography?.googleFontFamilies || [],
         baseFontSize: computedBranding?.typography?.baseFontSize || '16px',
         headingScale: {
           h1: computedBranding?.typography?.headingScale?.h1 || '2.5rem',
@@ -769,14 +902,14 @@ const fetchAndExtractBranding = async (websiteUrl) => {
         },
       },
       forms: {
-        inputBackground: computedBranding?.forms?.inputBackground || inputBackground || '#ffffff',
-        inputBorderColor: computedBranding?.forms?.inputBorderColor || inputBorderColor || '#d1d5db',
-        inputRadius: computedBranding?.forms?.inputRadius || inputRadius || '12px',
-        labelColor: computedBranding?.forms?.labelColor || labelColor || '#111827',
-        placeholderColor: computedBranding?.forms?.placeholderColor || inputPlaceholderColor || '#6b7280',
-        focusBorderColor: computedBranding?.forms?.focusBorderColor || inputBorderColor || '#7c3aed',
-        inputHeight: computedBranding?.forms?.inputHeight || inputHeight || '48px',
-        fontFamily: computedBranding?.forms?.fontFamily || inputFontFamily || 'Inter, sans-serif',
+        inputBackground: computedBranding?.forms?.inputBackground || '#ffffff',
+        inputBorderColor: computedBranding?.forms?.inputBorderColor || '#d1d5db',
+        inputRadius: computedBranding?.forms?.inputRadius || '12px',
+        labelColor: computedBranding?.forms?.labelColor || '#111827',
+        placeholderColor: computedBranding?.forms?.placeholderColor || '#6b7280',
+        focusBorderColor: computedBranding?.forms?.focusBorderColor || '#7c3aed',
+        inputHeight: computedBranding?.forms?.inputHeight || '48px',
+        fontFamily: computedBranding?.forms?.fontFamily || 'Inter, sans-serif',
       },
       layout: {
         borderRadius: {
@@ -791,11 +924,11 @@ const fetchAndExtractBranding = async (websiteUrl) => {
           lg: '32px',
           xl: '48px',
         },
-        containerWidth: computedBranding?.layout?.containerWidth || layoutContainerWidth || '1200px',
+        containerWidth: computedBranding?.layout?.containerWidth || '1200px',
       },
       effects: {
-        boxShadow: computedBranding?.effects?.boxShadow || cardShadow || primaryButtonTheme.boxShadow || '0 20px 60px rgba(15, 23, 42, 0.08)',
-        hoverShadow: computedBranding?.effects?.hoverShadow || cardShadow || primaryButtonTheme.boxShadow || '0 16px 40px rgba(15, 23, 42, 0.1)',
+        boxShadow: computedBranding?.effects?.boxShadow || '0 20px 60px rgba(15, 23, 42, 0.08)',
+        hoverShadow: computedBranding?.effects?.hoverShadow || '0 16px 40px rgba(15, 23, 42, 0.1)',
         transition: computedBranding?.effects?.transition || 'all 200ms ease',
       },
       assets: {

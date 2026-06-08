@@ -1442,13 +1442,19 @@ exports.handleFormSubmission = async (req, res, next) => {
                 <div class="content">
                   <div class="data-card">
                     <table width="100%" cellpadding="0" cellspacing="0">
-                      ${Object.entries(leadData).map(([key, value]) => `
+                      ${Object.entries(leadData).map(([key, value]) => {
+                        if (value !== undefined && value !== null && typeof value === 'object') {
+                          return '';
+                        }
+                        const displayValue = (value === undefined || value === null || value === '') ? 'Not provided' : String(value);
+                        return `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                           <div class="label">${key.replace(/_/g, ' ')}</div>
-                          <div class="value">${value || 'Not provided'}</div>
+                          <div class="value">${displayValue}</div>
                         </td>
-                      </tr>`).join('')}
+                      </tr>`;
+                      }).join('')}
                       ${Object.entries(utm).map(([key, value]) => value ? `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">

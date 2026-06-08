@@ -3,14 +3,20 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const JWT_SECRET     = process.env.JWT_SECRET     || 'fallback-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '9999d';
-const RT_SECRET      = process.env.RT_SECRET      || 'refresh-fallback-secret';
-const RT_EXPIRES_IN  = process.env.RT_EXPIRES_IN  || '9999d';
+const RT_SECRET = process.env.RT_SECRET || 'refresh-fallback-secret';
+const RT_EXPIRES_IN = process.env.RT_EXPIRES_IN || '9999d';
 
 // ─── Access Token ─────────────────────────────────────────────────────────────
-const signToken = (id) =>
-  jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+// Embed lightweight user fields in the token so authMiddleware can skip the DB lookup.
+// Fields: id (for queries), name/email/plan/credits (for req.user in controllers).
+const signToken = (id, userMeta = {}) =>
+  jwt.sign(
+    { id, name: userMeta.name, email: userMeta.email, plan: userMeta.plan, credits: userMeta.credits },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 
 // ─── Refresh Token ────────────────────────────────────────────────────────────
 const signRefreshToken = (id) =>
@@ -30,21 +36,21 @@ const createPasswordResetToken = () => {
 const hashResetToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
 
-  // ─── Email Verification Token (crypto, not JWT) ────────────────────────────────
-  const createEmailVerificationToken = () => {
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-    return { verificationToken, hashedToken, expiresAt };
-  };
+// ─── Email Verification Token (crypto, not JWT) ────────────────────────────────
+const createEmailVerificationToken = () => {
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+  const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+  return { verificationToken, hashedToken, expiresAt };
+};
 
-  const hashEmailVerificationToken = (token) =>
-    crypto.createHash('sha256').update(token).digest('hex');
+const hashEmailVerificationToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex');
 
 
 // ─── Send Access + Refresh Token Response ────────────────────────────────────
 const sendToken = (user, statusCode, res) => {
-  const accessToken  = signToken(user._id);
+  const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
   const refreshToken = signRefreshToken(user._id);
 
   // Send refresh token as httpOnly cookie

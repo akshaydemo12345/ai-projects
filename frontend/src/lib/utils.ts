@@ -23,16 +23,16 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     const textArea = document.createElement("textarea");
     textArea.value = text;
-    
+
     // Ensure the textarea is not visible but part of the DOM
     textArea.style.position = "fixed";
     textArea.style.left = "-9999px";
     textArea.style.top = "0";
     document.body.appendChild(textArea);
-    
+
     textArea.focus();
     textArea.select();
-    
+
     const successful = document.execCommand("copy");
     document.body.removeChild(textArea);
     return !!successful;
@@ -89,52 +89,35 @@ export const cleanUrl = (url?: string) => {
   return `https://${url}`;
 };
 
-export const getImageAverageBrightness = async (src: string): Promise<number | null> => {
-  if (!src) return null;
+// Accepts an already-rendered HTMLImageElement — avoids all CORS issues entirely.
+// The browser has already loaded and displayed the image; drawing it into a
+// canvas is always permitted regardless of image origin.
+export function getImageAverageBrightness(img: HTMLImageElement): number | null {
+  try {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    // Composite over white so transparent/light logos read correctly
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const { data } = ctx.getImageData(0, 0, w, h);
+    let total = 0, count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      total += 0.2126 * (data[i] / 255) + 0.7152 * (data[i + 1] / 255) + 0.0722 * (data[i + 2] / 255);
+      count++;
+    }
+    return count > 0 ? total / count : null;
+  } catch {
+    return null;
+  }
+}
 
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-
-        // Composite transparent images over white so light/white logos are detected properly.
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        let total = 0;
-        let count = 0;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i] / 255;
-          const g = data[i + 1] / 255;
-          const b = data[i + 2] / 255;
-          const luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-          total += luminosity;
-          count += 1;
-        }
-
-        resolve(count > 0 ? total / count : null);
-      } catch (error) {
-        resolve(null);
-      }
-    };
-
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-};
 
 export const getLogoPreviewContainerClasses = (brightness: number | null): string => {
   if (brightness === null) {

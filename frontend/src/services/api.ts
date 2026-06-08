@@ -126,7 +126,7 @@ export interface LandingPage {
   landingPageStyles?: string;
   thankYouPageContent?: any;
   thankYouPageStyles?: string;
-  
+
   metaTitle?: string;
   metaDescription?: string;
   publishedUrl?: string; // Virtual/Frontend helper
@@ -283,7 +283,7 @@ async function refreshAuthToken() {
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('pagecraft_token');
   const fullUrl = `${API_BASE_URL}${endpoint}`;
-    const hasRetried = Boolean((options as any)._retry);
+  const hasRetried = Boolean((options as any)._retry);
 
   console.log(`🌐 API Request: ${fullUrl}`, { hasToken: !!token, method: options.method });
 
@@ -297,24 +297,24 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const controller = new AbortController();
   const timeout = 300000; // 5 minutes timeout for AI generation
   const timeoutId = setTimeout(() => controller.abort(), timeout);
-    const { _retry, ...fetchOptions } = options as any;
+  const { _retry, ...fetchOptions } = options as any;
 
   const response = await fetch(fullUrl, {
-    ...fetchOptions,    headers,
-        credentials: 'include',
+    ...fetchOptions, headers,
+    credentials: 'include',
     signal: controller.signal,
   });
 
   clearTimeout(timeoutId);
 
-  const isPublicAuthRequest = endpoint.includes('/auth/login') || 
-                              endpoint.includes('/auth/signup') || 
-                              endpoint.includes('/auth/firebase') || 
-                              endpoint.includes('/auth/forgot-password') || 
-                              endpoint.includes('/auth/reset-password') || 
-                              endpoint.includes('/auth/resend-verification-email');
+  const isPublicAuthRequest = endpoint.includes('/auth/login') ||
+    endpoint.includes('/auth/signup') ||
+    endpoint.includes('/auth/firebase') ||
+    endpoint.includes('/auth/forgot-password') ||
+    endpoint.includes('/auth/reset-password') ||
+    endpoint.includes('/auth/resend-verification-email');
 
-   if (response.status === 401 && !hasRetried && !isPublicAuthRequest) {
+  if (response.status === 401 && !hasRetried && !isPublicAuthRequest) {
     try {
       const newToken = await refreshAuthToken();
       const retryOptions = {
@@ -374,7 +374,7 @@ export const authApi = {
       body: JSON.stringify(data),
     });
   },
-    firebaseSignIn: async (data: any) => {
+  firebaseSignIn: async (data: any) => {
     return apiFetch('/auth/firebase', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -405,6 +405,10 @@ export const projectsApi = {
   getById: async (id: string) => {
     const res = await apiFetch(`/projects/${id}`);
     return res.data.project;
+  },
+  getPagesSummary: async (id: string) => {
+    const res = await apiFetch(`/projects/${id}/pages/summary`);
+    return res.data.pages as LandingPage[];
   },
   create: async (data: any) => {
     return apiFetch('/projects', {
@@ -450,6 +454,43 @@ export const pagesApi = {
       ...p,
       name: p.title || p.name || 'Untitled Page'
     }));
+  },
+  // ── Lean settings endpoints — only the ~14 UI fields, no HTML/CSS blobs ──
+  getSettings: async (projectId: string, pageId: string) => {
+    const res = await apiFetch(`/projects/${projectId}/pages/${pageId}/settings`);
+    if (!res.data || !res.data.page) return null;
+    return res.data.page;
+  },
+  updateSettings: async (projectId: string, pageId: string, data: Partial<LandingPage>) => {
+    const normalizeScript = (value = '') => {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      const hasScriptTag = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(trimmed);
+      return hasScriptTag ? trimmed : `<script>${trimmed}</script>`;
+    };
+    const payload = {
+      title: data.name || data.title,
+      slug: data.slug,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      primaryColor: data.primaryColor,
+      secondaryColor: data.secondaryColor,
+      logoUrl: data.logoUrl,
+      mainHeader: data.mainHeader !== undefined ? normalizeScript(data.mainHeader) : undefined,
+      mainFooter: data.mainFooter !== undefined ? normalizeScript(data.mainFooter) : undefined,
+      thankYouHeader: data.thankYouHeader !== undefined ? normalizeScript(data.thankYouHeader) : undefined,
+      thankYouFooter: data.thankYouFooter !== undefined ? normalizeScript(data.thankYouFooter) : undefined,
+      thankYouUrl: data.thankYouUrl,
+      noIndex: data.noIndex,
+      noFollow: data.noFollow,
+    };
+    // Strip undefined keys so we don't overwrite fields we didn't intend to touch
+    const clean = Object.fromEntries(Object.entries(payload).filter(([, v]) => v !== undefined));
+    const res = await apiFetch(`/projects/${projectId}/pages/${pageId}/settings`, {
+      method: 'PATCH',
+      body: JSON.stringify(clean),
+    });
+    return res.data?.page ?? null;
   },
   getById: async (projectId: string, pageId: string) => {
     const res = await apiFetch(`/projects/${projectId}/pages/${pageId}`);
@@ -557,10 +598,10 @@ export const pagesApi = {
     // However, for previews/drafts, we pass the previewToken.
     // Add timestamp to bust browser cache
     const cacheBuster = `cb=${Date.now()}`;
-    const url = token 
+    const url = token
       ? `${API_BASE_URL}/api/public/page/${slug}?token=${token}&${cacheBuster}`
       : `${API_BASE_URL}/api/public/page/${slug}?${cacheBuster}`;
-      
+
     const response = await fetch(url);
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Page not found');
@@ -628,7 +669,7 @@ export const aiApi = {
       const project = await projectsApi.getById(projectId);
       const industry = project.category || "Service";
       const name = project.name;
-      
+
       const suggestions = [
         `Premium ${industry} consultation page for ${name}`,
         `${name} - Expert ${industry} solutions landing page`,
@@ -637,7 +678,7 @@ export const aiApi = {
         `Luxury ${name} ${industry} showcase and inquiry page`,
         `Contact ${name} for professional ${industry} help`
       ];
-      
+
       return { status: 'success', data: { suggestions } };
     }
   },
@@ -767,11 +808,11 @@ export const leadsApi = {
     });
   },
 
-  export: async (params: { 
-    projectId?: string; 
-    pageId?: string; 
-    search?: string; 
-    startDate?: string; 
+  export: async (params: {
+    projectId?: string;
+    pageId?: string;
+    search?: string;
+    startDate?: string;
     endDate?: string;
     utmSource?: string;
     utmMedium?: string;
@@ -781,10 +822,10 @@ export const leadsApi = {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) queryParams.append(key, String(value));
     });
-    
+
     const token = localStorage.getItem('pagecraft_token');
     const url = `${API_BASE_URL}/api/leads/export?${queryParams.toString()}`;
-    
+
     const response = await fetch(url, {
       headers: {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -877,13 +918,13 @@ export const thankYouApi = {
 
   preview: async (previewConfig: { layout: string; content?: any; branding?: any; pageId?: string }): Promise<string> => {
     const token = localStorage.getItem('pagecraft_token');
-    
+
     // Use consistent API base URL
     const baseUrl = API_BASE_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '');
     const fullUrl = `${baseUrl.replace(/\/+$/, '')}/api/thank-you/preview`;
-    
+
     console.log('📡 Fetching Thank You preview from:', fullUrl);
-    
+
     const res = await fetch(fullUrl, {
       method: 'POST',
       headers: {
@@ -892,18 +933,18 @@ export const thankYouApi = {
       },
       body: JSON.stringify(previewConfig),
     });
-    
+
     if (!res.ok) {
-        throw new Error('Failed to generate preview');
+      throw new Error('Failed to generate preview');
     }
-    
+
     let html = await res.text();
-    
+
     // 🎨 DUMMY UI SIMULATION: Frontend-only template rendering
     // Fallback to process mustache tags on the frontend if the backend fails to process them
     const { content = {}, branding = {} } = previewConfig;
     const businessName = 'Preview Business';
-    
+
     const escapeHtml = (text: string) => {
       if (!text) return '';
       return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -934,7 +975,7 @@ export const thankYouApi = {
       .replace(/SECONDARY_COLOR_PLACEHOLDER/g, escapeHtml(branding.secondaryColor || '#a855f7'))
       .replace(/\{\{logoUrl\}\}/g, escapeHtml(branding.logoUrl || ''))
       .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
-    
+
     return html;
   },
 };
