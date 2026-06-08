@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles, Link2, Upload, CheckCircle2, Rocket, ImagePlus, Gl
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { Progress } from "@/components/ui/progress";
 import { pagesApi, aiApi, projectsApi, type Project } from "@/services/api";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -421,7 +422,7 @@ const CreatePageFlow = () => {
                     <div key={label}>
                       <p className="text-xs text-muted-foreground mb-1">{label}</p>
                       <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
-                        <input type="color" value={value} onChange={(e) => setter(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0" />
+                        <PickrColorInput value={value} onChange={(val) => setter(val)} className="border-0" />
                         <span className="text-sm text-foreground">{value}</span>
                       </div>
                     </div>

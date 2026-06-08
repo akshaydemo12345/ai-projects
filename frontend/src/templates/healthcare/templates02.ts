@@ -145,8 +145,8 @@ input, select, textarea { font-family: inherit; }
 .v2-hero {
   position: relative; overflow: hidden;
   background: var(--surface);
-  padding: 80px 0 0;
-  min-height: 92vh; display: flex; align-items: center;
+  padding: 80px 0 80px;
+  min-height: 92vh; display: flex; align-items: flex-start;
 }
 .v2-hero-bg-circles {
   position: absolute; inset: 0; pointer-events: none; overflow: hidden;
@@ -178,11 +178,12 @@ input, select, textarea { font-family: inherit; }
 .v2-stat-chip span.num { font-weight: 700; color: var(--primary); }
 .v2-stat-chip span.lbl { font-size: 13px; color: var(--text-muted); }
 .v2-hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.v2-hero-trust { display: flex; align-items: center; gap: 10px; }
-.v2-trust-avatars { display: flex; }
+.v2-hero-trust { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.v2-trust-avatars { display: flex; flex-wrap: wrap; max-width: 200px; }
 .v2-trust-avatars img {
   width: 34px; height: 34px; border-radius: 50%;
   border: 2px solid #fff; object-fit: cover; margin-left: -8px;
+  flex-shrink: 0;
 }
 .v2-trust-avatars img:first-child { margin-left: 0; }
 .v2-trust-text { font-size: 13px; font-weight: 500; color: var(--text-muted); }
@@ -190,25 +191,27 @@ input, select, textarea { font-family: inherit; }
 .v2-hero-visual { position: relative; }
 .v2-hero-img-wrap {
   position: relative; border-radius: var(--radius-xl);
-  overflow: hidden; aspect-ratio: 4/5;
+  overflow: hidden; aspect-ratio: 16/9;
   box-shadow: var(--shadow-lg);
 }
 .v2-hero-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
 .v2-hero-img-wrap:hover img { transform: scale(1.05); }
 .v2-hero-card-1 {
+  display: none;
   position: absolute; bottom: 32px; left: -20px;
   background: #fff; border-radius: var(--radius-md);
   padding: 16px 20px; box-shadow: var(--shadow-md);
-  display: flex; align-items: center; gap: 12px;
+  align-items: center; gap: 12px;
   border: 1px solid var(--border);
 }
 .v2-hero-card-1 .icon-bg { width: 44px; height: 44px; border-radius: 12px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; }
 .v2-hero-card-1 .icon-bg span { color: var(--primary); font-size: 22px; }
 .v2-hero-card-2 {
+  display: none;
   position: absolute; top: 24px; right: -20px;
   background: var(--primary); border-radius: var(--radius-md);
   padding: 14px 18px; box-shadow: var(--shadow-md);
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex-direction: column; align-items: center; gap: 4px;
 }
 .v2-hero-card-2 span.big { font-size: 28px; font-weight: 700; color: #fff; font-family: var(--font-display); }
 .v2-hero-card-2 span.sm { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 0.05em; }
@@ -400,6 +403,9 @@ input, select, textarea { font-family: inherit; }
 @media (min-width: 768px) {
   .v2-nav { display: flex; }
   .v2-hero-inner { grid-template-columns: 1fr 1fr; }
+  .v2-hero-img-wrap { aspect-ratio: 4/5; }
+  .v2-hero-card-1 { display: flex; }
+  .v2-hero-card-2 { display: flex; }
   .v2-services-grid { grid-template-columns: 1fr 1fr; }
   .v2-process-grid { grid-template-columns: 1fr 1fr; }
   .v2-testi-grid { grid-template-columns: 1fr 1fr 1fr; }
@@ -439,7 +445,7 @@ export const healthcare02Html = `
     <div class="v2-circle-1"></div>
     <div class="v2-circle-2"></div>
   </div>
-  <div class="v2-container" style="padding-bottom:80px">
+  <div class="v2-container">
     <div class="v2-hero-inner">
       <div class="v2-hero-text">
         <div>
