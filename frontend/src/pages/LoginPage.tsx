@@ -14,7 +14,7 @@ const LoginPage = () => {
   const { login } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  
+
   // Forgot Password Steps: 1 = Email Input, 2 = New Passwords Input
   const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -41,11 +41,13 @@ const LoginPage = () => {
       let response;
       if (isSignUp) {
         response = await authApi.signup({ name, email, password });
-        
+
         // If the backend auto-logs in the user and returns an accessToken, use it.
         if (response.accessToken && response.data && response.data.user) {
           toast.success("Account created successfully.");
           login(response.accessToken, response.data.user);
+          console.log("Auto-login successful after sign-up", response.accessToken, response.data.user);
+          // return;
           navigate("/dashboard");
         } else {
           toast.success("Account created successfully.");
@@ -58,6 +60,8 @@ const LoginPage = () => {
         toast.success("Welcome back! You have signed in successfully.");
         const { accessToken, data } = response;
         login(accessToken, data.user);
+        console.log("Auto-login successful after sign-in", accessToken, data.user);
+
         navigate("/dashboard");
       }
     } catch (error: any) {
@@ -134,7 +138,7 @@ const LoginPage = () => {
     try {
       await new Promise(r => setTimeout(r, 1200));
       toast.success("Your password has been reset successfully! You can now sign in.");
-      
+
       // Reset forgot flow states
       setIsForgotPassword(false);
       setForgotStep(1);
@@ -177,7 +181,7 @@ const LoginPage = () => {
       } else {
         toast.error(errorMsg);
       }
-      
+
     } finally {
       setIsLoading(false);
     }
@@ -252,14 +256,14 @@ const LoginPage = () => {
       {/* Right Panel - Login / Sign Up Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md animate-in fade-in-50 duration-300">
-          
+
           {/* Main Form Area */}
           {isForgotPassword ? (
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-2">
                 Forgot password?
               </h2>
-              
+
               {forgotStep === 1 ? (
                 // Step 1: Input Email
                 <div>
@@ -429,7 +433,7 @@ const LoginPage = () => {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
-                Continue with Google
+                Continue with Googlea
               </button>
 
               <div className="relative mb-6">
@@ -529,7 +533,7 @@ const LoginPage = () => {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-amber-900">Email not verified</p>
                       <p className="text-sm text-amber-800 mt-1">
-                        We sent a verification email to <strong>{unverifiedEmail}</strong>. 
+                        We sent a verification email to <strong>{unverifiedEmail}</strong>.
                         Didn't receive it?
                       </p>
                       <Button

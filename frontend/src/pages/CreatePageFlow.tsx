@@ -180,6 +180,7 @@ const CreatePageFlow = () => {
             primaryColor,
             secondaryColor,
             logoUrl,
+            projectId,
           });
 
           const aiContent = res?.data?.content;

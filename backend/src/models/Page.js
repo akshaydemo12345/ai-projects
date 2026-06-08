@@ -260,12 +260,15 @@ const pageSchema = new mongoose.Schema({
 
 // Ensure slug is unique WITHIN A PROJECT (only for non-deleted pages)
 pageSchema.index(
-  { projectId: 1, slug: 1 }, 
-  { 
-    unique: true, 
-    partialFilterExpression: { isDeleted: false } 
+  { projectId: 1, slug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: false }
   }
 );
+
+// Fast lookup of all active pages for a project (used by dashboard summary endpoint)
+pageSchema.index({ projectId: 1, isDeleted: 1, createdAt: -1 });
 
 // Soft delete query middleware
 pageSchema.pre(/^find/, function (next) {
@@ -275,11 +278,11 @@ pageSchema.pre(/^find/, function (next) {
 
 pageSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
-  
+
   if (this.isModified('status') && this.status === 'published' && !this.publishedAt) {
     this.publishedAt = Date.now();
   }
-  
+
   next();
 });
 

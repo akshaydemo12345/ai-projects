@@ -74,7 +74,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   });
 
   const [selectedVars, setSelectedVars] = useState<string[]>([]);
-  
+
   // Track previous valid colors that are actually in the CSS
   const prevColorsRef = React.useRef({
     primary: INIT_STYLES.Colors.primary.value,
@@ -116,7 +116,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
           const computed = win.getComputedStyle(el);
           const textColor = computed.color;
           const bgColor = computed.backgroundColor;
-          
+
           // Check if computed color matches any of our variables
           // This is harder because computed is HEX/RGB, but we can check if the element has classes
         }
@@ -125,7 +125,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       // 3. PRIORITY MAPPING (Exclusive logic)
       const tagName = selected.get('tagName')?.toLowerCase();
       const classes = (selected.getAttributes().class || '').toLowerCase();
-      
+
       let specificVars: string[] = [];
 
       // Check for specific UI elements first (Highest Priority)
@@ -155,7 +155,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
         setExpanded(prev => {
           const next = { ...prev };
           let changed = false;
-          
+
           Object.entries(INIT_STYLES).forEach(([cat, properties]) => {
             // Only expand if the main identity of the section matches
             const hasMatch = Object.values(properties).some(p => finalVars.includes(p.varName));
@@ -166,7 +166,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
               changed = true;
             }
           });
-          
+
           return changed ? next : prev;
         });
       }
@@ -231,7 +231,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     if (editor) {
       if (cat === 'Colors' && (key === 'primary' || key === 'secondary')) {
         const oldVal = prevColorsRef.current[key];
-        
+
         // Only run the heavy CSS replacement if the new value is a valid 7-character hex code.
         // This prevents intermediate typing states (like "#" or "#ff") from corrupting the stylesheet.
         if (!val || val.length !== 7 || !val.startsWith('#')) {
@@ -254,7 +254,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
             const compStyle = comp.getStyle() || {};
             const updates: any = {};
             let changed = false;
-            
+
             Object.keys(compStyle).forEach(prop => {
               if (typeof compStyle[prop] === 'string') {
                 if (compStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
@@ -267,11 +267,11 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                 }
               }
             });
-            
+
             if (changed) {
               comp.addStyle(updates);
             }
-            
+
             comp.components().forEach(updateRecursive);
           };
           updateRecursive(wrapper);
@@ -282,10 +282,10 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
         if (canvasDoc) {
           const templateStyles = canvasDoc.getElementById('template-styles');
           if (templateStyles) {
-             let html = templateStyles.innerHTML;
-             html = html.replace(new RegExp(oldVal, 'gi'), val);
-             html = html.replace(new RegExp(oldRgb, 'gi'), newRgb);
-             templateStyles.innerHTML = html;
+            let html = templateStyles.innerHTML;
+            html = html.replace(new RegExp(oldVal, 'gi'), val);
+            html = html.replace(new RegExp(oldRgb, 'gi'), newRgb);
+            templateStyles.innerHTML = html;
           }
         }
 
@@ -295,32 +295,32 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
           const style = rule.getStyle();
           let changedRule = false;
           const newStyle = { ...style };
-          
+
           Object.keys(newStyle).forEach(prop => {
             if (typeof newStyle[prop] === 'string') {
               if (newStyle[prop].toLowerCase().includes(oldVal.toLowerCase())) {
-                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
-                 changedRule = true;
+                newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                changedRule = true;
               }
               if (newStyle[prop].includes(oldRgb)) {
-                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
-                 changedRule = true;
+                newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
+                changedRule = true;
               }
             }
           });
-          
+
           if (changedRule) {
-             rule.setStyle(newStyle);
+            rule.setStyle(newStyle);
           }
         });
-        
+
         prevColorsRef.current[key] = val;
       } else {
         // Apply directly to selected component if not a sweeping color change
         const selected = editor.getSelected();
         const varName = INIT_STYLES[cat]?.[key]?.varName;
         if (selected && varName) {
-           // Direct updates for specific properties
+          // Direct updates for specific properties
         }
       }
     }
@@ -336,7 +336,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     css += '}\n\n';
 
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
-    
+
     css += `
 button, .btn, [class*="btn-"] {
   background-color: var(--btn-bg);
@@ -420,27 +420,26 @@ button, .btn, [class*="btn-"] {
                     <span className="text-[12px] font-medium text-[#818cf8] flex items-center gap-1">
                       {prop.label}
                     </span>
-                    
+
                     {/* Controls Rendering */}
-                    <div className={`flex bg-[#0a0a14] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${
-                      selectedVars.includes(prop.varName) 
-                        ? 'border-violet-500 shadow-[0_0_10px_rgba(124,58,237,0.3)] bg-violet-500/10' 
-                        : 'border-[#2a2a3e] hover:border-[#4f46e5]'
-                    }`}>
-                      
+                    <div className={`flex bg-[#0a0a14] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
+                      ? 'border-violet-500 shadow-[0_0_10px_rgba(124,58,237,0.3)] bg-violet-500/10'
+                      : 'border-[#2a2a3e] hover:border-[#4f46e5]'
+                      }`}>
+
                       {prop.type === 'color' && (
                         <>
                           <div className="relative w-[18px] h-[18px] rounded-[2px] border border-[#2a2a3e] overflow-hidden ml-1 flex-shrink-0 cursor-pointer">
-                            <input 
-                              type="color" 
+                            <input
+                              type="color"
                               value={prop.value.length === 7 ? prop.value : '#000000'}
                               onChange={(e) => handleUpdate(category, key, e.target.value)}
                               className="absolute -top-2 -left-2 w-[40px] h-[40px] cursor-pointer"
                             />
                           </div>
-                          <input 
-                            type="text" 
-                            value={prop.value} 
+                          <input
+                            type="text"
+                            value={prop.value}
                             onChange={(e) => handleUpdate(category, key, e.target.value)}
                             className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-2 py-0.5 focus:outline-none"
                           />
@@ -453,10 +452,10 @@ button, .btn, [class*="btn-"] {
                             <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-transparent border-b-[#94a3b8] cursor-pointer hover:border-b-[#c0caf5]"></div>
                             <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-transparent border-t-[#94a3b8] cursor-pointer hover:border-t-[#c0caf5]"></div>
                           </div>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             step="0.1"
-                            value={prop.value} 
+                            value={prop.value}
                             onChange={(e) => handleUpdate(category, key, String(parseFloat(e.target.value) || 0))}
                             className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-1 py-0.5 focus:outline-none"
                           />
@@ -467,7 +466,7 @@ button, .btn, [class*="btn-"] {
                       {prop.type === 'font' && (
                         <div className="flex items-center w-full min-w-[160px]">
                           <Type size={12} className="text-[#64748b] ml-1.5" />
-                          <select 
+                          <select
                             value={prop.value}
                             onChange={(e) => handleUpdate(category, key, e.target.value)}
                             className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-2 py-0.5 focus:outline-none appearance-none cursor-pointer"

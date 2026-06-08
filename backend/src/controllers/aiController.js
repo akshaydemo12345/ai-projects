@@ -4,7 +4,7 @@ const { z } = require('zod');
 const { generateLandingPageContent } = require('../services/aiService');
 const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
-const { scrapeWebsiteStructure } = require('../services/structuredScrapeService');
+const { scrapeWebsiteStructure, buildWebsiteProfile } = require('../services/structuredScrapeService');
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
@@ -249,97 +249,36 @@ exports.analyzeWebsite = async (req, res, next) => {
     const { websiteUrl, url, pageId } = parsed.data;
     const targetUrl = websiteUrl || url;
 
-    // Credit check
-    const user = await User.findById(req.user._id);
-    if (user.credits <= 0) {
-      return res.status(402).json({ status: 'fail', message: 'Insufficient credits' });
-    }
+    const scraped = await scrapeWebsiteStructure(targetUrl);
+    const websiteProfile = buildWebsiteProfile(scraped, null);
 
-    // Call service
-    const aiContent = await analyzeService(targetUrl);
-
-    // Attempt to extract branding from the analyzed website so frontend can apply dynamic colors
-    let extractedBranding = null;
-    try {
-      const { fetchAndExtractBranding } = require('../services/brandingService');
-      const brandingResult = await fetchAndExtractBranding(targetUrl);
-      if (brandingResult && brandingResult.success) {
-        extractedBranding = brandingResult.data;
-        extractedBranding.brandingSourceUrl = targetUrl;
-        extractedBranding.lastScrapedAt = new Date();
-      }
-    } catch (err) {
-      console.error('Branding extraction during website analysis failed:', err.message);
-    }
-
-    // Deduct 1 credit
-    user.credits = Math.max(0, user.credits - 1);
-    await user.save({ validateBeforeSave: false });
-
-    let updatedPage;
+    // Persist to project if pageId provided
     if (pageId) {
-      const page = await Page.findOne({ _id: pageId, userId: req.user._id });
-      if (page) {
-        page.content = aiContent;
-        page.seo = aiContent.seo || {};
-
-        // 8. Update Page with AI Results and History
-        if (aiContent.aiUsage) {
-          const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0 };
-
-          page.aiUsage = {
-            promptTokens: (currentUsage.promptTokens || 0) + aiContent.aiUsage.promptTokens,
-            completionTokens: (currentUsage.completionTokens || 0) + aiContent.aiUsage.completionTokens,
-            totalTokens: (currentUsage.totalTokens || 0) + aiContent.aiUsage.totalTokens,
-            cost: (currentUsage.cost || 0) + aiContent.aiUsage.cost,
-            model: aiContent.aiUsage.model,
-            currency: 'USD',
-            lastUsageAt: Date.now()
-          };
-
-          page.aiUsageHistory.push({
-            action: 'Website Analysis',
-            ...aiContent.aiUsage,
-            createdAt: Date.now()
-          });
+      setImmediate(async () => {
+        try {
+          const page = await Page.findById(pageId);
+          if (page?.projectId) {
+            await Project.findByIdAndUpdate(
+              page.projectId,
+              {
+                websiteProfile,
+                'scrapeMeta.status': 'success',
+                'scrapeMeta.finishedAt': new Date(),
+              },
+              { runValidators: false }
+            );
+          }
+        } catch (bgErr) {
+          console.error('[aiController] analyzeWebsite bg persist failed:', bgErr.message);
         }
-        page.updatedAt = Date.now();
-
-        updatedPage = await page.save();
-      }
-    }
-
-    // If analysis found branding and the page is associated with a project, persist branding to that project
-    if (extractedBranding && updatedPage && updatedPage.projectId) {
-      try {
-        await Project.findByIdAndUpdate(updatedPage.projectId, {
-          branding: extractedBranding,
-          'branding.brandingSourceUrl': targetUrl,
-          'branding.lastScrapedAt': new Date(),
-          'branding.scrapedBrandingData': { sourceUrl: targetUrl, scrapedAt: new Date(), extractedColors: extractedBranding.extractedColors || [] }
-        }, { new: true, runValidators: false });
-      } catch (err) {
-        console.error('Failed to persist extracted branding to project:', err.message);
-      }
+      });
     }
 
     return res.status(200).json({
       status: 'success',
-      data: {
-        content: aiContent,
-        creditsRemaining: user.credits,
-        ...(updatedPage && { page: updatedPage }),
-        aiUsage: aiContent.aiUsage,
-        ...(extractedBranding && { branding: extractedBranding })
-      },
+      data: { websiteProfile, scrapedAt: scraped.scrapedAt },
     });
   } catch (err) {
-    if (err.message?.includes('OpenAI') || err.message?.includes('HTTP')) {
-      return res.status(502).json({
-        status: 'fail',
-        message: err.message
-      });
-    }
     next(err);
   }
 };
@@ -351,26 +290,52 @@ exports.analyzeWebsite = async (req, res, next) => {
  */
 exports.extractProject = async (req, res, next) => {
   try {
-    const { url } = req.body;
+    const { url, projectId } = req.body;
     if (!url) {
       return res.status(400).json({ status: 'fail', message: 'URL is required' });
     }
 
-    console.log('Starting extraction for URL:', url);
-    const data = await extractProjectData(url);
-    console.log('Extraction completed successfully:', JSON.stringify(data).substring(0, 200));
+    const scraped = await scrapeWebsiteStructure(url);
+    const websiteProfile = buildWebsiteProfile(scraped, null);
 
-    if (!data) {
-      return res.status(500).json({ status: 'fail', message: 'No data returned from extraction' });
+    if (projectId && require('mongoose').Types.ObjectId.isValid(projectId)) {
+      try {
+        await Project.findOneAndUpdate(
+          { _id: projectId, userId: req.user._id },
+          {
+            websiteProfile,
+            'scrapeMeta.status': 'success',
+            'scrapeMeta.finishedAt': new Date(),
+          },
+          { runValidators: false }
+        );
+      } catch (persistErr) {
+        console.error('[aiController] extractProject persist failed:', persistErr.message);
+      }
     }
 
-    res.status(200).json({
+    // Return data in format frontend expects
+    return res.status(200).json({
       status: 'success',
-      data
+      data: {
+        websiteProfile,
+        // Legacy fields for compatibility
+        projectName: websiteProfile?.identity?.name || '',
+        projectDesc: websiteProfile?.identity?.description || '',
+        projectLogo: websiteProfile?.identity?.logoUrl || '',
+        favicon: websiteProfile?.identity?.favicon || '',
+        primaryColor: websiteProfile?.colors?.primary || '',
+        secondaryColor: websiteProfile?.colors?.secondary || '',
+        accentColor: websiteProfile?.colors?.accent || '',
+        colors: websiteProfile?.colors?.palette || [],
+        services: (websiteProfile?.content?.services || []).map(s => s.title),
+        keywords: websiteProfile?.seo?.keywords || [],
+        industry: websiteProfile?.industry?.industry || '',
+        subIndustry: websiteProfile?.industry?.subIndustry || '',
+      },
     });
   } catch (err) {
-    console.error('Extraction error:', err.message);
-    console.error('Error stack:', err.stack);
+    console.error('[aiController] extractProject failed:', err.message);
     next(err);
   }
 };
@@ -610,7 +575,7 @@ exports.optimizePage = async (req, res, next) => {
 exports.proxyImage = async (req, res, next) => {
   try {
     const { url } = req.query;
-    
+
     if (!url) {
       return res.status(400).json({ status: 'fail', message: 'Image URL required' });
     }
@@ -621,7 +586,7 @@ exports.proxyImage = async (req, res, next) => {
     }
 
     const axios = require('axios');
-    
+
     // Fetch the image with timeout
     const response = await axios.get(url, {
       timeout: 8000,
@@ -632,12 +597,12 @@ exports.proxyImage = async (req, res, next) => {
     });
 
     const contentType = response.headers['content-type'] || 'image/png';
-    
+
     // Set cache headers for 30 days
     res.set('Content-Type', contentType);
     res.set('Cache-Control', 'public, max-age=2592000');
     res.set('Access-Control-Allow-Origin', '*');
-    
+
     return res.send(response.data);
   } catch (err) {
     // Return a 1px transparent PNG fallback on error
@@ -649,7 +614,7 @@ exports.proxyImage = async (req, res, next) => {
       0x00, 0x05, 0xFE, 0x02, 0xB7, 0xA7, 0x37, 0x81, 0x84, 0x00, 0x00, 0x00,
       0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
     ]);
-    
+
     res.set('Content-Type', 'image/png');
     res.set('Cache-Control', 'public, max-age=3600');
     res.set('Access-Control-Allow-Origin', '*');

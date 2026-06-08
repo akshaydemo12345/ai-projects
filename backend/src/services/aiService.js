@@ -311,17 +311,60 @@ const buildUserPrompt = (input) => {
     `LOGO: {{LOGO_URL}}`,
   ];
 
-  if (input.navColors?.palette?.length) {
+  // Rich branding — typography
+  if (input.branding?.typography?.fontFamily) {
+    lines.push(`BODY FONT: ${input.branding.typography.fontFamily}`);
+  }
+  if (input.branding?.typography?.headingFontFamily) {
+    lines.push(`HEADING FONT: ${input.branding.typography.headingFontFamily}`);
+  }
+  if (input.branding?.typography?.googleFontFamilies?.length) {
+    lines.push(`GOOGLE FONTS: ${input.branding.typography.googleFontFamilies.join(', ')}`);
+  }
+
+  // Rich branding — nav/header
+  if (input.branding?.navigation) {
+    const nav = input.branding.navigation;
+    const parts = [];
+    if (nav.backgroundColor) parts.push(`bg:${nav.backgroundColor}`);
+    if (nav.textColor) parts.push(`text:${nav.textColor}`);
+    if (nav.linkColor) parts.push(`link:${nav.linkColor}`);
+    if (parts.length) lines.push(`NAV COLORS: ${parts.join(', ')}`);
+  } else if (input.navColors?.palette?.length) {
     lines.push(`NAV COLORS: ${input.navColors.palette.slice(0, 6).join(', ')}`);
   }
   if (input.headerColors?.palette?.length) {
     lines.push(`HEADER COLORS: ${input.headerColors.palette.slice(0, 6).join(', ')}`);
   }
-  if (input.footerColors?.palette?.length) {
+
+  // Rich branding — footer
+  if (input.branding?.footer) {
+    const ft = input.branding.footer;
+    const parts = [];
+    if (ft.backgroundColor) parts.push(`bg:${ft.backgroundColor}`);
+    if (ft.textColor) parts.push(`text:${ft.textColor}`);
+    if (ft.linkColor) parts.push(`link:${ft.linkColor}`);
+    if (parts.length) lines.push(`FOOTER COLORS: ${parts.join(', ')}`);
+  } else if (input.footerColors?.palette?.length) {
     lines.push(`FOOTER COLORS: ${input.footerColors.palette.slice(0, 6).join(', ')}`);
   }
-  if (input.buttonColors?.palette?.length) {
+
+  // Rich branding — buttons
+  if (input.branding?.buttons?.primary) {
+    const btn = input.branding.buttons.primary;
+    const parts = [];
+    if (btn.backgroundColor) parts.push(`bg:${btn.backgroundColor}`);
+    if (btn.textColor) parts.push(`text:${btn.textColor}`);
+    if (btn.borderRadius) parts.push(`radius:${btn.borderRadius}`);
+    if (btn.textTransform) parts.push(`transform:${btn.textTransform}`);
+    if (parts.length) lines.push(`PRIMARY BUTTON STYLE: ${parts.join(', ')}`);
+  } else if (input.buttonColors?.palette?.length) {
     lines.push(`BUTTON COLORS: ${input.buttonColors.palette.slice(0, 6).join(', ')}`);
+  }
+
+  // Logo URL (actual resolved value, separate from placeholder)
+  if (input.branding?.logoUrl) {
+    lines.push(`LOGO URL (actual): ${input.branding.logoUrl}`);
   }
 
   lines.push(`\n🎨 STYLE DIRECTION FOR THIS GENERATION: ${randomNudge}`);

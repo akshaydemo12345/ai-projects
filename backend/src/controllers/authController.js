@@ -26,7 +26,7 @@ exports.signup = async (req, res, next) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return next(new AppError('Email already in use', 400));
 
-     // Create verification token
+    // Create verification token
     const { verificationToken, hashedToken, expiresAt } = createEmailVerificationToken();
 
     const user = await User.create({
@@ -60,7 +60,7 @@ exports.signup = async (req, res, next) => {
         console.error('❌ Failed to send verification email during signup:', emailError.message);
         return next(new AppError('Unable to send verification email. Please try again later.', 502));
       }
-      
+
       return res.status(201).json({
         status: 'success',
         message: 'Account created. Please check your email to verify your address.',
@@ -75,7 +75,7 @@ exports.signup = async (req, res, next) => {
       user.emailVerificationToken = undefined;
       user.emailVerificationExpiresAt = undefined;
       await user.save();
-      
+
       // Send token will automatically respond with 200/201 and user data
       return sendToken(user, 201, res);
     }
@@ -108,7 +108,7 @@ exports.verifyEmail = async (req, res, next) => {
 
     logger.info('Email verified', { userId: user._id, email: user.email });
 
-     res.status(200).json({
+    res.status(200).json({
       status: 'success',
       message: 'Email verified successfully! You can now log in.',
       data: { user: { id: user._id, email: user.email, name: user.name } },
@@ -189,7 +189,7 @@ exports.login = async (req, res, next) => {
 
     const user = await User.findOne({ email }).select('+password');
     console.log('User found:', !!user);
-    
+
     if (!user) {
       console.log('User not found');
       return next(new AppError('Invalid email or password', 401));
@@ -200,11 +200,11 @@ exports.login = async (req, res, next) => {
     //  console.log('Email not verified for user:', email);
     //  return next(new AppError('Please verify your email before logging in', 403));
     // }
-    
+
     console.log('Comparing password...');
     const passwordMatch = await user.comparePassword(password);
     console.log('Password match:', passwordMatch);
-    
+
     if (!passwordMatch) {
       return next(new AppError('Invalid email or password', 401));
     }
@@ -257,7 +257,7 @@ exports.refreshToken = async (req, res, next) => {
     // if (!user.isEmailVerified) {
     //  return next(new AppError('Email address not verified', 403));
     // }
-    const newAccessToken = signToken(user._id);
+    const newAccessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
 
     res.status(200).json({
       status: 'success',
@@ -410,7 +410,7 @@ exports.getProfile = async (req, res, next) => {
 
     let totalAiCost = 0;
     let totalImagesGenerated = 0;
-    
+
     pages.forEach(p => {
       if (p.aiUsage) {
         totalAiCost += p.aiUsage.cost || 0;
@@ -449,7 +449,7 @@ exports.googleCallback = (req, res) => {
     );
   }
 
-  const accessToken = signToken(req.user._id);
+  const accessToken = signToken(req.user._id, { name: req.user.name, email: req.user.email, plan: req.user.plan, credits: req.user.credits });
   const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
   logger.info('Google OAuth login', { userId: req.user._id });
