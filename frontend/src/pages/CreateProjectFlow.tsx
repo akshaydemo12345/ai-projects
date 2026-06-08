@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { projectsApi, aiApi } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { copyToClipboard, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 
 type Step = "form" | "integration";
 type IntegrationMethod = "wordpress" | "script";
@@ -339,490 +340,490 @@ const CreateProjectFlow = () => {
 
   const scriptCode = createdProject
     ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
-    : "";
-
-  return (
-    <div className="flex-1 overflow-y-auto">
-
-      {/* ─── Step 1: Project Form ─── */}
-      {step === "form" && (
-        <div className="max-w-2xl mx-auto py-10 px-6">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-7 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Projects
-          </button>
-
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Create New Project</h1>
-            <p className="text-muted-foreground text-sm">
-              Set up a client project. Brand colors and logo will apply across all pages.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {/* Project Name */}
-            <div className="rounded-xl border border-border bg-card p-6 space-y-5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Info</p>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Website URL</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={websiteUrl}
-                      onChange={(e) => setWebsiteUrl(e.target.value)}
-                      placeholder="https://yourclient.com"
-                      className="h-11 pl-9"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="h-11 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary"
-                    onClick={handleAnalyzeWebsite}
-                    disabled={isAnalyzing || !websiteUrl || websiteUrl === "https://"}
-                  >
-                    {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    Analyze
-                  </Button>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">
-                  Enter a URL and click Analyze to automatically fetch project name, logo and description.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                  Project Name <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Roofing Company"
-                  className="h-11"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                  Pre Slug <span className="text-muted-foreground font-normal">(optional)</span>
-                </label>
-                <Input
-                  value={preSlug}
-                  onChange={(e) => setPreSlug(e.target.value)}
-                  placeholder="e.g. landing-pages, ppc, lp"
-                  className="h-11"
-                />
-                <p className="text-[10px] text-muted-foreground mt-1.5">
-                  This will be added to the URL: domain.com/<strong>{preSlug || 'pre-slug'}</strong>/page-slug
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                  Industry <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => {
-                    setCategory(e.target.value);
-                    setSubIndustry("");
-                    setCustomIndustry("");
-                    setCustomSubIndustry("");
-                  }}
-                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    : ""; return (
+      <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
+        {/* ─── Header ─── */}
+        <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
                 >
-                  <option value="">Select industry</option>
-                  {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <p className="text-[10px] text-muted-foreground mt-1.5">
-                  Select the industry that best matches your project. If your industry is not listed, choose Other.                </p>
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back
+                </button>
+                <h1 className="text-lg font-bold text-foreground">Create New Project</h1>
               </div>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-lg">
+                Set up a client project. Brand colors and logo will apply across all pages.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              {category === "Other" && (
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                    Industry (custom)
-                  </label>
-                  <Input
-                    value={customIndustry}
-                    onChange={(e) => setCustomIndustry(e.target.value)}
-                    placeholder="e.g. Sustainable Packaging"
-                    className="h-11"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1.5">
-                    Enter a custom industry name when the default options do not match.
-                  </p>
-                </div>
-              )}
+        {/* ─── Step 1: Project Form ─── */}
+        {step === "form" && (
+          <div className="max-w-[1000px] w-full px-4 sm:px-4 py-4 space-y-4 flex-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
-              {category && category !== "" && category !== "Other" && (
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                    Sub-Industry
-                  </label>
-                  {subIndustryOptions[category]?.length > 0 ? (
-                    <>
-                      <select
-                        value={subIndustry}
-                        onChange={(e) => {
-                          setSubIndustry(e.target.value);
-                          if (e.target.value !== "Other") {
-                            setCustomSubIndustry("");
-                          }
-                        }}
-                        className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <option value="">Select a sub-industry</option>
-                        {subIndustryOptions[category].map((sub) => (
-                          <option key={sub} value={sub}>{sub}</option>
-                        ))}
-                        <option value="Other">Other</option>
-                      </select>
-                      {subIndustry === "Other" && (
+              {/* Left Column - Core Info */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-6 shadow-sm">
+
+                  {/* Website URL & Auto-Analyze */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Website URL</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
-                          value={customSubIndustry}
-                          onChange={(e) => setCustomSubIndustry(e.target.value)}
-                          placeholder="e.g. Renewable Energy SaaS"
-                          className="h-11 mt-2"
+                          value={websiteUrl}
+                          onChange={(e) => setWebsiteUrl(e.target.value)}
+                          placeholder="https://yourclient.com"
+                          className="h-11 pl-9 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="h-11 px-5 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl font-bold"
+                        onClick={handleAnalyzeWebsite}
+                        disabled={isAnalyzing || !websiteUrl || websiteUrl === "https://"}
+                      >
+                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                        Analyze Website
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/80 italic">
+                      Enter the URL and click Analyze to automatically extract logo, colors, services, and description.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Project Name */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        Project Name <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Roofing Company"
+                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+
+                    {/* Pre Slug */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        URL Pre-Slug <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+                      </label>
+                      <Input
+                        value={preSlug}
+                        onChange={(e) => setPreSlug(e.target.value)}
+                        placeholder="e.g. landing-pages, ppc"
+                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Industry */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        Industry <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => {
+                          setCategory(e.target.value);
+                          setSubIndustry("");
+                          setCustomIndustry("");
+                          setCustomSubIndustry("");
+                        }}
+                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="">Select industry</option>
+                        {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Sub-Industry (Conditional) */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        Sub-Industry
+                      </label>
+                      {category && category !== "" && category !== "Other" ? (
+                        subIndustryOptions[category]?.length > 0 ? (
+                          <select
+                            value={subIndustry}
+                            onChange={(e) => {
+                              setSubIndustry(e.target.value);
+                              if (e.target.value !== "Other") {
+                                setCustomSubIndustry("");
+                              }
+                            }}
+                            className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="">Select sub-industry</option>
+                            {subIndustryOptions[category].map((sub) => (
+                              <option key={sub} value={sub}>{sub}</option>
+                            ))}
+                            <option value="Other">Other</option>
+                          </select>
+                        ) : (
+                          <Input
+                            value={customSubIndustry}
+                            onChange={(e) => setCustomSubIndustry(e.target.value)}
+                            placeholder="e.g. Renewable Energy SaaS"
+                            className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                          />
+                        )
+                      ) : (
+                        <Input
+                          disabled
+                          placeholder="Select industry first"
+                          className="h-11 rounded-xl bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-60"
                         />
                       )}
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        Choose a more specific sub-industry to help the system generate better page content.
-                      </p>
-                    </>
-                  ) : (
-                    <>
+                    </div>
+                  </div>
+
+                  {/* Custom Industry Input (Other selected) */}
+                  {category === "Other" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        Custom Industry Name
+                      </label>
+                      <Input
+                        value={customIndustry}
+                        onChange={(e) => setCustomIndustry(e.target.value)}
+                        placeholder="e.g. Sustainable Packaging"
+                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                  )}
+
+                  {/* Custom Sub-Industry Input (Other sub-industry selected) */}
+                  {category && category !== "Other" && subIndustry === "Other" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        Custom Sub-Industry Name
+                      </label>
                       <Input
                         value={customSubIndustry}
                         onChange={(e) => setCustomSubIndustry(e.target.value)}
                         placeholder="e.g. Renewable Energy SaaS"
-                        className="h-11"
+                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                       />
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        Enter a custom sub-industry for this industry.
-                      </p>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Project Description</label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe the client's business, value proposition, and key target keywords..."
+                      className="min-h-[120px] resize-none rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  onClick={handleCreate}
+                  disabled={isSubmitting}
+                  className="w-full h-12 text-base bg-primary hover:bg-primary/90 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Creating Project...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-5 w-5" />
+                      Create Project &amp; Get Started
                     </>
                   )}
-                </div>
-              )}
-
-              {/* Branding Colors */}
-              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Branding</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
-                    <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input
-                        type="color"
-                        value={primaryColor || "#000000"}
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
-                      />
-                      <span className="text-xs font-mono text-muted-foreground">{primaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
-                    <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input
-                        type="color"
-                        value={secondaryColor || "#000000"}
-                        onChange={(e) => setSecondaryColor(e.target.value)}
-                        className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
-                      />
-                      <span className="text-xs font-mono text-muted-foreground">{secondaryColor || (isAnalyzing ? "Analyzing..." : "Select or analyze website")}</span>
-                    </div>
-                  </div>
-                </div>
+                </Button>
               </div>
 
-              {/* Extracted Services */}
-              {/* {extractedServices.length > 0 && (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detected Services</p>
-                  <div className="flex flex-wrap gap-2">
-                    {extractedServices.map((service, idx) => (
-                      <div 
-                        key={idx} 
-                        className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg px-2.5 py-1 text-xs font-medium"
-                      >
-                        {service}
-                        <button 
-                          onClick={() => setExtractedServices(prev => prev.filter((_, i) => i !== idx))}
-                          className="hover:text-primary/70"
+              {/* Right Column - Brand & Media Settings */}
+              <div className="space-y-6">
+                {/* Brand Colors Card */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-6 shadow-sm">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Branding Colors</h3>
+                    <p className="text-xs text-muted-foreground">Used dynamically to style landing page buttons, accents, and elements.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Primary Theme Color</label>
+                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-800">
+                        <PickrColorInput
+                          value={primaryColor || "#000000"}
+                          onChange={(val) => setPrimaryColor(val)}
+                          className="border-0 bg-transparent flex-shrink-0"
+                        />
+                        <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{primaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Secondary Accent Color</label>
+                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-800">
+                        <PickrColorInput
+                          value={secondaryColor || "#000000"}
+                          onChange={(val) => setSecondaryColor(val)}
+                          className="border-0 bg-transparent flex-shrink-0"
+                        />
+                        <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{secondaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo Card */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Project Logo</h3>
+                    <p className="text-xs text-muted-foreground">Will appear in header navigation templates.</p>
+                  </div>
+
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoChange}
+                  />
+
+                  {logoPreview ? (
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                      <div className={`h-16 w-16 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md ring-1 ring-slate-200 dark:ring-slate-700 p-1.5 ${logoPreviewBgClass}`}>
+                        <img
+                          src={logoPreview}
+                          alt="Logo preview"
+                          className="max-h-full max-w-full object-contain"
+                          onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
+                          onError={(e) => {
+                            if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
+                              const proxyUrl = aiApi.proxyImage(logoPreview);
+                              if (e.currentTarget.src !== proxyUrl) {
+                                e.currentTarget.src = proxyUrl;
+                                return;
+                              }
+                            }
+                            setLogoPreview(null);
+                            setLogoBase64(null);
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Logo Uploaded</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Ready to use in templates</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="text-[11px] text-primary hover:text-primary/80 font-bold px-2.5 py-1 rounded-lg border border-primary/20 hover:bg-primary/5 transition-all text-center"
                         >
-                          <X className="h-3 w-3" />
+                          Change
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="text-[11px] text-slate-500 hover:text-destructive font-semibold px-2 py-1 rounded-lg border border-slate-200 hover:border-destructive/20 hover:bg-destructive/5 transition-all flex items-center justify-center"
+                        >
+                          Remove
                         </button>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">These services will be used to generate your landing pages.</p>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-primary/40 hover:bg-primary/5 bg-slate-50 dark:bg-slate-800/40 py-8 cursor-pointer transition-all group"
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                        <ImageIcon className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">Upload Custom Logo</p>
+                        <p className="text-[10px] text-slate-400 mt-1">PNG, JPG, SVG up to 2MB</p>
+                      </div>
+                    </button>
+                  )}
                 </div>
-              )} */}
 
-              {/* Logo Upload */}
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Project Logo <span className="text-muted-foreground font-normal">(optional)</span></label>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoChange}
-                />
-                {logoPreview ? (
-                  <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
-                    <div className={`h-14 w-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg ring-1 ring-slate-600 p-1 ${logoPreviewBgClass}`}>
-                      <img
-                        src={logoPreview}
-                        alt="Logo preview"
-                        className="max-h-full max-w-full object-contain"
-                        onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
-                        onError={(e) => {
-                          // Try proxy endpoint as fallback if it's an absolute URL
-                          if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
-                            const proxyUrl = aiApi.proxyImage(logoPreview);
-                            if (e.currentTarget.src !== proxyUrl) {
-                              e.currentTarget.src = proxyUrl;
-                              return;
-                            }
-                          }
-                          // If proxy also fails, clear the logo
-                          setLogoPreview(null);
-                          setLogoBase64(null);
-                        }}
-                      />
+                {/* Extracted Images Card */}
+                {scrapedImages.length > 0 && (
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Extracted Images</h3>
+                      <p className="text-xs text-muted-foreground">{scrapedImages.length} brand images found on site.</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">Logo uploaded</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Click change to update</p>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => logoInputRef.current?.click()}
-                        className="text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-lg border border-primary/30 hover:bg-primary/5 transition-all"
-                      >
-                        Change
-                      </button>
-                      <button
-                        type="button"
-                        onClick={removeLogo}
-                        className="text-xs text-muted-foreground hover:text-destructive font-medium px-2 py-1.5 rounded-lg border border-border hover:border-destructive/30 hover:bg-destructive/5 transition-all"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+                    <div className="grid grid-cols-4 gap-2">
+                      {scrapedImages.slice(0, 8).map((img, idx) => (
+                        <div
+                          key={idx}
+                          className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 group"
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.alt || `Extracted ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 bg-muted/20 py-6 cursor-pointer transition-all group"
-                  >
-                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Upload Logo</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG, SVG — max 2MB</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-primary font-medium mt-1">
-                      <Upload className="h-3 w-3" /> Browse files
-                    </div>
-                  </button>
                 )}
               </div>
 
-              {/* Scraped Images Preview */}
-              {scrapedImages.length > 0 && (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detected Images</p>
-                    <span className="text-xs text-muted-foreground">{scrapedImages.length} images found</span>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Step 2: Integration Setup ─── */}
+        {step === "integration" && createdProject && (
+          <div className="max-w-[1000px] w-full px-4 sm:px-8 py-6 space-y-6 flex-1">
+            <div className="max-w-3xl mx-auto space-y-6">
+              {/* Success banner */}
+              <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-5 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    {createdProject.logoUrl && (
+                      <img src={createdProject.logoUrl} alt="Logo" className="h-6 w-6 rounded object-contain" />
+                    )}
+                    <h1 className="text-lg font-bold text-foreground">Project Created! 🎉</h1>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {scrapedImages.slice(0, 8).map((img, idx) => (
-                      <div
-                        key={idx}
-                        className="relative aspect-video rounded-lg overflow-hidden border border-border bg-muted/30 group"
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.alt || `Image ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-[10px] text-white text-center px-1">{img.type}</span>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{createdProject.name}</span> is ready.
+                    Choose how to integrate your landing pages.
+                  </p>
+                </div>
+                {/* Brand color swatches */}
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.primaryColor || createdProject.themeColor || '#7c3aed' }} title="Primary" />
+                  <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.secondaryColor }} title="Secondary" />
+                </div>
+              </div>
+
+              {/* Integration picker */}
+              <p className="text-sm font-semibold text-foreground mb-3">
+                Choose how you want to integrate landing pages into your website.
+              </p>
+              <div className="space-y-2 mb-5">
+                {integrationMethods.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMethod(m.id)}
+                    className={`w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${selectedMethod === m.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/30 bg-card"
+                      }`}
+                  >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                      }`}>
+                      {m.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${selectedMethod === m.id ? "text-primary" : "text-foreground"}`}>
+                        {m.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
+                    </div>
+                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "border-primary bg-primary" : "border-border"
+                      }`}>
+                      {selectedMethod === m.id && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* WordPress Steps */}
+              {selectedMethod === "wordpress" && (
+                <div className="rounded-xl border border-border bg-card overflow-hidden mb-5">
+                  <div className="px-5 py-4 border-b border-border bg-muted/30">
+                    <p className="text-sm font-semibold text-foreground">Setup Instructions</p>
+                  </div>
+                  <div className="p-5 space-y-5">
+                    {wordpressSteps.map((s) => (
+                      <div key={s.num} className="flex gap-4">
+                        <div className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {s.num}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
+                          {s.action}
                         </div>
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    These relevant images from the website will be used when generating landing pages.
-                  </p>
                 </div>
               )}
 
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Project Description</label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What does this client do? What's the product/service?"
-                  className="min-h-[80px] resize-none"
-                />
-              </div>
-            </div>
-
-            <Button
-              onClick={handleCreate}
-              disabled={isSubmitting}
-              className="w-full h-12 text-base bg-primary hover:bg-primary/90 gap-2"
-            >
-              <Rocket className="h-5 w-5" /> {isSubmitting ? "Creating..." : "Create Project"}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Step 2: Integration Setup ─── */}
-      {step === "integration" && createdProject && (
-        <div className="max-w-2xl mx-auto py-10 px-6">
-          {/* Success banner */}
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-5 mb-7 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                {createdProject.logoUrl && (
-                  <img src={createdProject.logoUrl} alt="Logo" className="h-6 w-6 rounded object-contain" />
-                )}
-                <h1 className="text-lg font-bold text-foreground">Project Created! 🎉</h1>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{createdProject.name}</span> is ready.
-                Choose how to integrate your landing pages.
-              </p>
-            </div>
-            {/* Brand color swatches */}
-            <div className="flex gap-1.5 flex-shrink-0">
-              <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.primaryColor || createdProject.themeColor || '#7c3aed' }} title="Primary" />
-              <div className="h-5 w-5 rounded-full border border-white shadow-sm" style={{ background: createdProject.secondaryColor }} title="Secondary" />
-            </div>
-          </div>
-
-          {/* Integration picker */}
-          <p className="text-sm font-semibold text-foreground mb-3">
-            Choose how you want to integrate landing pages into your website.
-          </p>
-          <div className="space-y-2 mb-5">
-            {integrationMethods.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMethod(m.id)}
-                className={`w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${selectedMethod === m.id
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/30 bg-card"
-                  }`}
-              >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                  }`}>
-                  {m.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${selectedMethod === m.id ? "text-primary" : "text-foreground"}`}>
-                    {m.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
-                </div>
-                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedMethod === m.id ? "border-primary bg-primary" : "border-border"
-                  }`}>
-                  {selectedMethod === m.id && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* WordPress Steps */}
-          {selectedMethod === "wordpress" && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden mb-5">
-              <div className="px-5 py-4 border-b border-border bg-muted/30">
-                <p className="text-sm font-semibold text-foreground">Setup Instructions</p>
-              </div>
-              <div className="p-5 space-y-5">
-                {wordpressSteps.map((s) => (
-                  <div key={s.num} className="flex gap-4">
-                    <div className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {s.num}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{s.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
-                      {s.action}
-                    </div>
+              {/* Script Code */}
+              {selectedMethod === "script" && (
+                <div className="rounded-xl border border-border bg-card overflow-hidden mb-5">
+                  <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground">Add to your website's &lt;head&gt;</p>
+                    <button
+                      onClick={async () => {
+                        const success = await copyToClipboard(scriptCode);
+                        if (success) {
+                          setScriptCopied(true);
+                          toast.success("Code copied successfully.");
+                          setTimeout(() => setScriptCopied(false), 2000);
+                        } else {
+                          toast.error("Failed to copy code");
+                        }
+                      }}
+                      className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
+                    >
+                      {scriptCopied ? (
+                        <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
+                      ) : (
+                        <><Copy className="h-3.5 w-3.5" /> Copy</>
+                      )}
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  <div className="p-5">
+                    <pre className="text-xs text-foreground font-mono bg-muted rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all">{scriptCode}</pre>
+                  </div>
+                </div>
+              )}
 
-          {/* Script Code */}
-          {selectedMethod === "script" && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden mb-5">
-              <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
-                <p className="text-sm font-semibold text-foreground">Add to your website's &lt;head&gt;</p>
-                <button
-                  onClick={async () => {
-                    const success = await copyToClipboard(scriptCode);
-                    if (success) {
-                      setScriptCopied(true);
-                      toast.success("Code copied successfully.");
-                      setTimeout(() => setScriptCopied(false), 2000);
-                    } else {
-                      toast.error("Failed to copy code");
-                    }
-                  }}
-                  className="text-xs text-primary flex items-center gap-1.5 hover:text-primary/80 transition-all active:scale-95"
+              {/* CTA */}
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="h-12 rounded-xl" onClick={() => navigate(`/dashboard/projects/${createdProject._id}`)}>
+                  View Project
+                </Button>
+                <Button
+                  className="h-12 gap-2 bg-primary hover:bg-primary/90 rounded-xl"
+                  onClick={() => navigate(`/dashboard/projects/${createdProject._id}?createPage=1`)}
                 >
-                  {scriptCopied ? (
-                    <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
-                  ) : (
-                    <><Copy className="h-3.5 w-3.5" /> Copy</>
-                  )}
-                </button>
-              </div>
-              <div className="p-5">
-                <pre className="text-xs text-foreground font-mono bg-muted rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all">{scriptCode}</pre>
+                  <FileText className="h-4 w-4" /> Create First Page <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          )}
-
-
-          {/* CTA */}
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="h-12" onClick={() => navigate(`/dashboard/projects/${createdProject._id}`)}>
-              View Project
-            </Button>
-            <Button
-              className="h-12 gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => navigate(`/dashboard/projects/${createdProject._id}?createPage=1`)}
-            >
-              <FileText className="h-4 w-4" /> Create First Page <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
 };
 
 export default CreateProjectFlow;

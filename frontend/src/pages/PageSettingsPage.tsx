@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pagesApi, projectsApi, type LandingPage } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -100,10 +101,87 @@ const PageSettingsPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const updateContentColors = (
+    content: string | undefined,
+    newPrimary: string,
+    newSecondary: string,
+    oldPrimary?: string,
+    oldSecondary?: string
+  ) => {
+    if (!content) return content;
+    let updated = content;
+
+    // 1. Update the :root variable declarations
+    updated = updated.replace(/--primary\s*:\s*[^;}]+/g, `--primary: ${newPrimary}`);
+    updated = updated.replace(/--secondary\s*:\s*[^;}]+/g, `--secondary: ${newSecondary}`);
+    updated = updated.replace(/--accent\s*:\s*[^;}]+/g, `--accent: ${newSecondary}`);
+    updated = updated.replace(/--gold\s*:\s*[^;}]+/g, `--gold: ${newPrimary}`);
+    updated = updated.replace(/--btn-bg\s*:\s*[^;}]+/g, `--btn-bg: ${newPrimary}`);
+
+    // Update button-gradient variable if present
+    updated = updated.replace(/--button-gradient\s*:\s*linear-gradient\([^)]+\)/g, `--button-gradient: linear-gradient(135deg, ${newPrimary}, ${newSecondary})`);
+
+    // 2. Self-healing: if there were hardcoded occurrences of the old primary/secondary colors in styles (e.g. from previously saved pages),
+    // we also replace them to var(--primary) / var(--secondary) so they become dynamic!
+    if (oldPrimary && oldPrimary !== newPrimary) {
+      const escapedOld = oldPrimary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--primary)');
+    }
+    if (oldSecondary && oldSecondary !== newSecondary) {
+      const escapedOld = oldSecondary.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedOld}`, 'gi');
+      updated = updated.replace(regex, 'var(--secondary)');
+    }
+
+    return updated;
+  };
+
   const handleSave = () => {
     if (!name.trim() || !slug.trim()) {
       toast.error("Name and slug are required.");
       return;
+    }
+
+    // Update content and styles with new colors
+    const updatedLandingPageContent = updateContentColors(
+      page.landingPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedLandingPageStyles = updateContentColors(
+      page.landingPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageContent = updateContentColors(
+      page.thankYouPageContent,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+    const updatedThankYouPageStyles = updateContentColors(
+      page.thankYouPageStyles,
+      primaryColor,
+      secondaryColor,
+      page.primaryColor,
+      page.secondaryColor
+    );
+
+    // If page has a content object with html/fullHtml/styles
+    let updatedContentObj = page.content;
+    if (page.content) {
+      updatedContentObj = {
+        ...page.content,
+        fullHtml: updateContentColors(page.content.fullHtml, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        html: updateContentColors(page.content.html, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor),
+        fullCss: updateContentColors(page.content.fullCss, primaryColor, secondaryColor, page.primaryColor, page.secondaryColor)
+      };
     }
 
     updatePageMutation.mutate({
@@ -120,8 +198,14 @@ const PageSettingsPage = () => {
       mainFooter,
       thankYouHeader,
       thankYouFooter,
-      thankYouUrl
-    });
+      thankYouUrl,
+      landingPageContent: updatedLandingPageContent,
+      landingPageStyles: updatedLandingPageStyles,
+      thankYouPageContent: updatedThankYouPageContent,
+      thankYouPageStyles: updatedThankYouPageStyles,
+      content: updatedContentObj,
+      styles: updatedLandingPageStyles
+    } as LandingPage);
   };
 
   if (!pageLoading && (pageError || !page)) {
@@ -141,14 +225,14 @@ const PageSettingsPage = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between w-full">
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-4">
+        <div className=" flex items-center justify-between w-full">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(`/dashboard/projects/${projectId}`)}
-              className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-primary transition-all hover:border-primary/30"
+              className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
             </button>
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{name || page?.name || "Page Settings"}</h1>
@@ -157,17 +241,16 @@ const PageSettingsPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => navigate(`/dashboard/projects/${projectId}`)} className="rounded-xl px-6">Cancel</Button>
-            <Button onClick={handleSave} disabled={updatePageMutation.isPending || pageLoading} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
+            <Button onClick={handleSave} disabled={updatePageMutation.isPending} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
               {updatePageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save All
+              Update
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 max-w-[1600px] w-full mx-auto px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="flex-1 w-full  px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
           {/* LEFT CARD: Page Details */}
           <div className="space-y-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
@@ -294,11 +377,11 @@ const PageSettingsPage = () => {
                       <label className="text-xs font-bold text-slate-500">Theme Colors</label>
                       <div className="flex gap-3">
                         <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                          <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                          <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} />
                           <span className="text-[10px] font-mono">{primaryColor}</span>
                         </div>
                         <div className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50">
-                          <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer" />
+                          <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} />
                           <span className="text-[10px] font-mono">{secondaryColor}</span>
                         </div>
                       </div>
@@ -406,15 +489,8 @@ const PageSettingsPage = () => {
             )}
           </div>
         </div>
-
-        <div className="flex justify-center pt-8">
-          <Button onClick={handleSave} disabled={updatePageMutation.isPending || pageLoading} className="rounded-xl px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 gap-2">
-            {updatePageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save All Page Settings
-          </Button>
-        </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

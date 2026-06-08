@@ -19,6 +19,7 @@ import { leadsApi, projectsApi, pagesApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 /**
  * Professional Leads Dashboard
@@ -63,8 +64,24 @@ const LeadsPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [renderedLead, setRenderedLead] = useState<Lead | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedLead) {
+      setRenderedLead(selectedLead);
+      const timer = setTimeout(() => setSidebarOpen(true), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setSidebarOpen(false);
+      const timer = setTimeout(() => setRenderedLead(null), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedLead]);
+
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
 
   // ── Projects list ─────────────────────────────────────────────────────────
   const { data: projects = [] } = useQuery({
@@ -119,14 +136,14 @@ const LeadsPage = () => {
 
   const dynamicColumns = useMemo(() => {
     const skipKeys = ['name', 'full name', 'email', 'phone', 'tel', 'message', 'comment', 'date', 'action', '_id', 'createdat', 'updatedat', '__v', 'referrer'];
-    
+
     if (formSchema && formSchema.fields) {
       return formSchema.fields
         .filter((f: any) => !skipKeys.some(sk => (f.label || f.field_name || '').toLowerCase().includes(sk)))
         .map((f: any) => ({ key: f.field_name || f.label, label: f.label || f.field_name }))
         .slice(0, 3);
     }
-    
+
     const cols = new Set<string>();
     leads.forEach((l: any) => {
       if (l.data) {
@@ -277,8 +294,13 @@ const LeadsPage = () => {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this lead?")) {
-      deleteMutation.mutate(id);
+    setDeleteLeadId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteLeadId) {
+      deleteMutation.mutate(deleteLeadId);
+      setDeleteLeadId(null);
     }
   };
 
@@ -298,24 +320,24 @@ const LeadsPage = () => {
     setFilterUtmCampaign("");
   };
 
-  const identityContacts = selectedLead ? getStackedContacts(selectedLead) : { emails: [], phones: [] };
+  const identityContacts = renderedLead ? getStackedContacts(renderedLead) : { emails: [], phones: [] };
 
-  const referralUrl = selectedLead ? (
-    selectedLead.meta?.url ||
-    selectedLead.meta?.referer ||
-    (selectedLead.meta?.domain && selectedLead.pageSlug
-      ? `https://${selectedLead.meta.domain.replace(/\/+$|\s+$/g, '')}/${selectedLead.pageSlug.replace(/^\/+/, '')}`
+  const referralUrl = renderedLead ? (
+    renderedLead.meta?.url ||
+    renderedLead.meta?.referer ||
+    (renderedLead.meta?.domain && renderedLead.pageSlug
+      ? `https://${renderedLead.meta.domain.replace(/\/+$|\s+$/g, '')}/${renderedLead.pageSlug.replace(/^\/+/, '')}`
       : "")
   ) : "";
 
   // Robust UTM Extraction Fallback
   const getUTM = (key: string) => {
     // 1. Try direct field
-    let val = (selectedLead as any)?.[key];
+    let val = (renderedLead as any)?.[key];
     if (val) return val;
 
     // 2. Try nested utm object
-    val = (selectedLead as any)?.utm?.[key];
+    val = (renderedLead as any)?.utm?.[key];
     if (val) return val;
 
     // 3. Fallback: Parse from Referral URL
@@ -346,32 +368,25 @@ const LeadsPage = () => {
   const hasUTMs = utm_source || utm_medium || utm_campaign || utm_term || utm_content || gclid || fbclid || msclkid;
 
   return (
-    <div className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-slate-950">
+    <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
       {/* ─── Header ─── */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-6">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                <Inbox className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Leads Management</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {selectedProjectName ? (
-                    <>
-                      Filtering for{" "}
-                      <span className="text-primary font-semibold">{selectedProjectName}</span>
-                    </>
-                  ) : (
-                    "Centralized hub for all your landing page conversions."
-                  )}
-                </p>
-              </div>
-            </div>
+            <h1 className="text-lg font-bold text-foreground">Leads Management</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {selectedProjectName ? (
+                <>
+                  Filtering for{" "}
+                  <span className="text-primary font-semibold">{selectedProjectName}</span>
+                </>
+              ) : (
+                "Centralized hub for all your landing page conversions."
+              )}
+            </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Stats */}
             <div className="flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-6 hidden sm:flex">
               <div className="text-right">
@@ -387,8 +402,7 @@ const LeadsPage = () => {
             {/* ── Export Dropdown ── */}
             <div className="relative">
               <Button
-                variant="outline"
-                className="gap-2 h-10 text-xs font-semibold px-4 sm:px-5 rounded-xl border-slate-200 dark:border-slate-800 w-full sm:w-auto"
+                className="gap-2 h-10 text-xs font-bold px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm transition-all w-full sm:w-auto"
                 onClick={() => setExportMenuOpen(v => !v)}
                 disabled={isExporting}
               >
@@ -445,10 +459,10 @@ const LeadsPage = () => {
       </div >
 
       {/* ─── Controls & Table ─── */}
-      <div className="flex-1 p-4 md:p-8 overflow-hidden flex flex-col w-full">
+      <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-6 space-y-2 flex-1 overflow-hidden flex flex-col">
 
         {/* Toolbar */}
-        <div className="mb-6 flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full lg:w-fit max-w-full">
+        <div className="mb-2 flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full lg:w-fit max-w-full">
 
           {/* Search */}
           <div className="relative w-full sm:w-[220px] shrink-0">
@@ -510,7 +524,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Source dropdown */}
-<Select value={filterUtmSource || "any-source"} onValueChange={(val) => setFilterUtmSource(val === "any-source" ? "" : val)}> 
+          <Select value={filterUtmSource || "any-source"} onValueChange={(val) => setFilterUtmSource(val === "any-source" ? "" : val)}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -526,7 +540,7 @@ const LeadsPage = () => {
           </Select>
 
           {/* UTM Medium dropdown */}
-          <Select value={filterUtmMedium || "any-medium"} onValueChange={(val) => setFilterUtmMedium(val === "any-medium" ? "" : val)}> 
+          <Select value={filterUtmMedium || "any-medium"} onValueChange={(val) => setFilterUtmMedium(val === "any-medium" ? "" : val)}>
             <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[130px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
               <div className="flex items-center gap-2">
                 <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -599,17 +613,17 @@ const LeadsPage = () => {
             <div className="flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-sm">
                     <tr className="border-b border-slate-200 dark:border-slate-800">
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Full Name</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phone</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">Full Name</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">Email</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">Phone</th>
                       {dynamicColumns.map(col => (
-                        <th key={col.key} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{col.label}</th>
+                        <th key={col.key} className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest truncate max-w-[120px]">{col.label}</th>
                       ))}
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">Date</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest w-[100px] text-right sticky right-0 bg-slate-50 dark:bg-slate-800 z-20 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -659,8 +673,8 @@ const LeadsPage = () => {
                         </td>
                         {dynamicColumns.map(col => (
                           <td key={col.key} className="px-6 py-5">
-                            <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]" title={String(lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value) || '—')}>
-                              {lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value) || '—'}
+                            <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]" title={String(lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f: any) => f.name === col.key || f.label === col.label)?.value) || '—')}>
+                              {lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f: any) => f.name === col.key || f.label === col.label)?.value) || '—'}
                             </p>
                           </td>
                         ))}
@@ -670,7 +684,7 @@ const LeadsPage = () => {
                           </p>
                         </td>
                         <td className="px-6 py-5 text-right sticky right-0 bg-white dark:bg-slate-900 z-10 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 transition-colors shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)]">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -704,7 +718,7 @@ const LeadsPage = () => {
                     onClick={() => setSelectedLead(lead)}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                           {(getLField(lead, "name").toString() || "L")[0].toUpperCase()}
                         </div>
@@ -742,13 +756,13 @@ const LeadsPage = () => {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Contact</p>
                         <div className="space-y-1.5">
                           {getStackedContacts(lead).emails.slice(0, 2).map((email, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5">
+                            <div key={idx} className="flex flex-wrap items-center gap-1.5">
                               <Mail className="h-3 w-3 text-slate-400 shrink-0" />
                               <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{email}</p>
                             </div>
                           ))}
                           {getStackedContacts(lead).phones.slice(0, 1).map((phone, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5">
+                            <div key={idx} className="flex flex-wrap items-center gap-1.5">
                               <Phone className="h-3 w-3 text-slate-400 shrink-0" />
                               <p className="text-xs text-slate-500 font-medium">{phone}</p>
                             </div>
@@ -758,11 +772,11 @@ const LeadsPage = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       {dynamicColumns.length > 0 && (
                         <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 col-span-1 sm:col-span-2">
                           {dynamicColumns.map(col => {
-                            const val = lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f:any) => f.name === col.key || f.label === col.label)?.value);
+                            const val = lead[col.key] || (lead.data && lead.data[col.key]) || (lead.formData?.find((f: any) => f.name === col.key || f.label === col.label)?.value);
                             if (!val) return null;
                             return (
                               <div key={col.key} className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
@@ -788,7 +802,7 @@ const LeadsPage = () => {
                 <span className="ml-2 text-primary normal-case font-normal">(filtered)</span>
               )}
             </p>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -813,27 +827,29 @@ const LeadsPage = () => {
       </div >
 
       {/* ─── Lead Detail Slide-over ─── */}
-      {selectedLead && (
+      {renderedLead && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all"
+          className={`fixed inset-0 z-[100] flex items-center justify-center md:justify-end p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-500 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
           onClick={() => setSelectedLead(null)}
         >
           <div
-            className="w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500 ease-out"
+            className={`w-full max-w-xl h-full md:h-[calc(100vh-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:rounded-[32px] shadow-2xl flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${sidebarOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+              }`}
             onClick={e => e.stopPropagation()}
           >
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
-                  {(getLField(selectedLead, "name").toString() || "L")[0].toUpperCase()}
+                  {(getLField(renderedLead, "name").toString() || "L")[0].toUpperCase()}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
-                    {getLField(selectedLead, "name") || "Lead Detail"}
+                    {getLField(renderedLead, "name") || "Lead Detail"}
                   </h2>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Verified Inquiry • {format(new Date(selectedLead.createdAt), "MMM d, yyyy")}</span>
+                    <span>Verified Inquiry • {format(new Date(renderedLead.createdAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
@@ -849,7 +865,7 @@ const LeadsPage = () => {
 
             <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
               {/* Message Section */}
-              {getLField(selectedLead, "message") && (
+              {getLField(renderedLead, "message") && (
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -858,7 +874,7 @@ const LeadsPage = () => {
                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4" />
                   </div>
                   <div className="p-6 rounded-[24px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 italic text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
-                    "{getLField(selectedLead, "message")}"
+                    "{getLField(renderedLead, "message")}"
                   </div>
                 </section>
               )}
@@ -875,8 +891,8 @@ const LeadsPage = () => {
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Email Addresses</p>
                     <div className="space-y-2">
-                      {getStackedContacts(selectedLead).emails.length > 0 ? (
-                        getStackedContacts(selectedLead).emails.map((email, idx) => (
+                      {getStackedContacts(renderedLead).emails.length > 0 ? (
+                        getStackedContacts(renderedLead).emails.map((email, idx) => (
                           <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Mail className="h-3.5 w-3.5 text-primary/60" />
                             {email}
@@ -890,8 +906,8 @@ const LeadsPage = () => {
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] text-slate-400 uppercase font-bold mb-2">Phone Numbers</p>
                     <div className="space-y-2">
-                      {getStackedContacts(selectedLead).phones.length > 0 ? (
-                        getStackedContacts(selectedLead).phones.map((phone, idx) => (
+                      {getStackedContacts(renderedLead).phones.length > 0 ? (
+                        getStackedContacts(renderedLead).phones.map((phone, idx) => (
                           <p key={idx} className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Phone className="h-3.5 w-3.5 text-primary/60" />
                             {phone}
@@ -904,19 +920,19 @@ const LeadsPage = () => {
                   </div>
                   {(() => {
                     const extraFields: { label: string, value: any }[] = [];
-                    const skipKeys = ['name', 'fullname', 'email', 'phone', 'tel', 'message', 'comment','referrer'];
-                    
-                    if (selectedLead.data) {
-                      Object.entries(selectedLead.data).forEach(([key, value]) => {
+                    const skipKeys = ['name', 'fullname', 'email', 'phone', 'tel', 'message', 'comment', 'referrer'];
+
+                    if (renderedLead.data) {
+                      Object.entries(renderedLead.data).forEach(([key, value]) => {
                         const lower = key.toLowerCase();
                         if (!skipKeys.some(sk => lower.includes(sk)) && value && typeof value !== 'object') {
                           extraFields.push({ label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), value });
                         }
                       });
                     }
-                    
-                    if (selectedLead.formData && Array.isArray(selectedLead.formData)) {
-                      selectedLead.formData.forEach(field => {
+
+                    if (renderedLead.formData && Array.isArray(renderedLead.formData)) {
+                      renderedLead.formData.forEach(field => {
                         const lower = (field.name || field.label || '').toLowerCase();
                         if (!skipKeys.some(sk => lower.includes(sk)) && field.value) {
                           const existing = extraFields.find(f => f.label.toLowerCase() === lower || f.label === field.label);
@@ -929,7 +945,7 @@ const LeadsPage = () => {
 
                     // Also check top level properties if they match dynamic columns
                     dynamicColumns.forEach(col => {
-                      const val = (selectedLead as any)[col.key];
+                      const val = (renderedLead as any)[col.key];
                       if (val && typeof val !== 'object' && !extraFields.find(f => f.label === col.label)) {
                         extraFields.push({ label: col.label, value: val });
                       }
@@ -949,7 +965,7 @@ const LeadsPage = () => {
               </section>
 
               {/* UTM Details */}
-              {((selectedLead as any).utm_source || (selectedLead as any).utm_medium || (selectedLead as any).utm_campaign || (selectedLead as any).utm_content || (selectedLead as any).utm_term) && (
+              {((renderedLead as any).utm_source || (renderedLead as any).utm_medium || (renderedLead as any).utm_campaign || (renderedLead as any).utm_content || (renderedLead as any).utm_term) && (
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -960,23 +976,23 @@ const LeadsPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Source</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_source || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(renderedLead as any).utm_source || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Medium</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_medium || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(renderedLead as any).utm_medium || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Campaign</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_campaign || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(renderedLead as any).utm_campaign || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Content</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_content || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(renderedLead as any).utm_content || "—"}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
                       <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Term</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(selectedLead as any).utm_term || "—"}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{(renderedLead as any).utm_term || "—"}</p>
                     </div>
                   </div>
                 </section>
@@ -1002,11 +1018,11 @@ const LeadsPage = () => {
                     <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-all flex items-start gap-2">
                       <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
 
-                      {selectedLead.trackingDetails?.referral_url ||
-                        (selectedLead as any).landing_page ||
-                        selectedLead.url ||
-                        selectedLead.meta?.url ||
-                        selectedLead.pageSlug ||
+                      {renderedLead.trackingDetails?.referral_url ||
+                        (renderedLead as any).landing_page ||
+                        renderedLead.url ||
+                        renderedLead.meta?.url ||
+                        renderedLead.pageSlug ||
                         "Direct URL"}
                     </p>
                   </div>
@@ -1020,10 +1036,10 @@ const LeadsPage = () => {
                     <p className="text-sm font-bold text-slate-900 dark:text-white break-all flex items-start gap-2">
                       <ExternalLink className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
 
-                      {selectedLead.trackingDetails?.referral_source ||
-                        (selectedLead as any).referrer ||
-                        selectedLead.meta?.referer ||
-                        selectedLead.data?.referrer ||
+                      {renderedLead.trackingDetails?.referral_source ||
+                        (renderedLead as any).referrer ||
+                        renderedLead.meta?.referer ||
+                        renderedLead.data?.referrer ||
                         "Direct / Unknown"}
                     </p>
                   </div>
@@ -1038,10 +1054,10 @@ const LeadsPage = () => {
                       <Shield className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
 
                       {
-                        selectedLead.meta?.ip ||
-                        (selectedLead as any)?.ip ||
-                        selectedLead.data?.ip ||
-                        selectedLead.trackingDetails?.ip ||
+                        renderedLead.meta?.ip ||
+                        (renderedLead as any)?.ip ||
+                        renderedLead.data?.ip ||
+                        renderedLead.trackingDetails?.ip ||
                         "Not Available"
                       }
                     </p>
@@ -1054,6 +1070,14 @@ const LeadsPage = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteLeadId}
+        onClose={() => setDeleteLeadId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Lead?"
+        description="Are you sure you want to delete this lead? This action cannot be undone."
+      />
     </div>
   );
 };

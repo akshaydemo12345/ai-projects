@@ -4,12 +4,15 @@ import {
   ArrowLeft, Plus, Globe, FileEdit, Rocket, Users as UsersIcon,
   Settings2, Copy, CheckCircle2, X, Sparkles, ExternalLink,
   FileText, Eye, Trash2, Zap, Search, Brain, Loader2, Link,
-  Puzzle, Code2, Monitor, Download, Info, Activity, MoreVertical
+  Puzzle, Code2, Monitor, Download, Info, Activity, MoreVertical,
+  Filter, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PickrColorInput from "@/components/ui/PickrColorInput";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
@@ -458,14 +461,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
@@ -581,14 +584,14 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Primary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{primaryColor}</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-foreground mb-1 block">Secondary Color</label>
                     <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-background">
-                      <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" />
+                      <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="border-0 bg-transparent flex-shrink-0" />
                       <span className="text-xs font-mono text-muted-foreground">{secondaryColor}</span>
                     </div>
                   </div>
@@ -1519,6 +1522,7 @@ const ProjectDetailPage = () => {
   });
 
   const displayCategory = project ? (project.category || project.industry || "General") : "General";
+  const isSwitching = !!(project && project._id !== id);
 
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
   const [publishingPage, setPublishingPage] = useState<LandingPage | null>(null);
@@ -1534,6 +1538,8 @@ const ProjectDetailPage = () => {
   const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
   const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
 
@@ -1598,8 +1604,19 @@ const ProjectDetailPage = () => {
   }, [project, searchParams, navigate]);
 
   const filteredPages = pages.filter(p => {
-    if (statusFilter === "all") return true;
-    return p.status?.toLowerCase() === statusFilter.toLowerCase();
+    // 1. Status Filter
+    if (statusFilter !== "all" && p.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+      return false;
+    }
+    // 2. Search Text Filter
+    if (search.trim()) {
+      const query = search.toLowerCase();
+      const matchesName = p.name?.toLowerCase().includes(query);
+      const matchesSlug = p.slug?.toLowerCase().includes(query);
+      const matchesType = p.type?.toLowerCase().includes(query);
+      return matchesName || matchesSlug || matchesType;
+    }
+    return true;
   }) || [];
 
   if (isLoading && !project) return (
@@ -1670,9 +1687,9 @@ const ProjectDetailPage = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto"
+    <div className="flex-1 min-h-full flex flex-col"
       onClick={() => setMenuOpenPageId(null)}
-      style={{ background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)" }}
+      style={{ background: "#f2f2f2" }}
     >
 
       {/* Modals */}
@@ -1698,57 +1715,68 @@ const ProjectDetailPage = () => {
           onClose={() => setViewingUsagePage(null)}
         />
       )}
-      {deletePageId && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-background border border-border rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-6">
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">Delete Landing Page?</h3>
-              <p className="text-sm text-muted-foreground">
-                Are you absolutely sure? This action cannot be undone and will permanently remove this landing page.
-              </p>
-            </div>
-            <div className="p-4 bg-muted/30 border-t border-border flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeletePageId(null)}>Cancel</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Delete Page</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDeleteModal
+        isOpen={!!deletePageId}
+        onClose={() => setDeletePageId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Landing Page?"
+        description="Are you absolutely sure? This action cannot be undone and will permanently remove this landing page."
+      />
 
       {showTokenHelp && (
         <TokenHelpModal onClose={() => setShowTokenHelp(false)} apiToken={project.apiToken} />
       )}
 
       {/* ─── Page Top Bar / Breadcrumb ─── */}
-      <div className="px-8 pt-6 pb-4 border-b border-border flex items-center gap-4">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> All Projects
-        </button>
-        <span className="text-muted-foreground/40">/</span>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
+
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm mr-2"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
 
           <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: `linear-gradient(135deg, #7c3aed, #6366f1)` }}>
             <Globe className="h-3.5 w-3.5 text-white" />
           </div>
 
-          <h1 className="text-lg font-bold text-foreground truncate">{project.name}</h1>
+          <Select
+            value={id}
+            onValueChange={(val) => {
+              if (val && val !== id) {
+                navigate(`/dashboard/projects/${val}`);
+              }
+            }}
+            {...({ modal: false } as any)}
+          >
+            <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
+              <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
+                {project.name}
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              {(cachedProjects as any[]).map((p: any) => (
+                <SelectItem key={p._id} value={p._id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">{displayCategory}</span>
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">
+            {displayCategory}
+          </span>
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto md:justify-end">
           {project.logoUrl && (
-            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md ${logoHeaderBgClass}`} style={{ backgroundColor: logoHeaderBgColor }}>
+            <div className={`inline-flex items-center justify-center py-2 px-4 rounded-md`}>
               <img
                 src={normalizeLogoUrl(project.logoUrl)}
                 alt="brand-logo"
-                className="max-h-12 max-w-[150px] object-contain transition-transform hover:scale-105"
+                className="max-h-12 max-w-[80px] object-contain transition-transform hover:scale-105"
                 onLoad={(e) => handleHeaderLogoImageLoad(e.currentTarget)}
                 onError={(e) => {
                   // Try proxy endpoint as fallback if it's an absolute URL
@@ -1779,10 +1807,16 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* ─── MAIN CONTENT (full-width, single column) ─── */}
-      <div className="max-w-[1800px] mx-auto px-8 py-6 space-y-8">
+      <div className="w-full px-4 py-4 space-y-4 flex-1 relative" style={{ background: "#f2f2f2" }}>
+
+        {isSwitching && (
+          <div className="absolute inset-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
 
         {/* ─── Stats Summary Bar ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Total Pages", value: pages.length, icon: <FileText className="h-4 w-4" />, color: "from-violet-500 to-indigo-500", textColor: "text-violet-600" },
             { label: "Published", value: publishedCount, icon: <Globe className="h-4 w-4" />, color: "from-emerald-500 to-teal-500", textColor: "text-emerald-600" },
@@ -1803,12 +1837,12 @@ const ProjectDetailPage = () => {
         </div>
 
         {/* ─── Main Grid Layout: Landing Pages (Left) & Integration (Right) ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-3 items-start">
 
           {/* ─── Left Side: Landing Pages List ─── */}
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden min-h-[500px]">
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
             {/* Section Header */}
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card">
+            <div className="px-6 py-4 border-b border-border flex flex-wrap items-center justify-between bg-card gap-4">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-sm">
                   <Sparkles className="h-4 w-4 text-white" />
@@ -1818,11 +1852,31 @@ const ProjectDetailPage = () => {
                   <p className="text-xs text-muted-foreground">{pages.length} page{pages.length !== 1 ? "s" : ""} in this project</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search Bar Input */}
+                <div className="relative w-40 md:w-52">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search pages..."
+                    className="pl-9 pr-8 h-9 bg-background border-border text-xs rounded-xl focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-slate-300"
+                  />
+                  {search.trim() && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground focus:outline-none"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-9 w-[120px] bg-background border-border text-xs font-semibold rounded-xl">
                     <div className="flex items-center gap-2">
-                      <Search className="h-3 w-3 text-muted-foreground" />
+                      <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                       <SelectValue placeholder="Filter" />
                     </div>
                   </SelectTrigger>
@@ -1842,212 +1896,216 @@ const ProjectDetailPage = () => {
               </div>
             </div>
 
-            {/* Table Header */}
-            {pages.length > 0 && (
-              <div className="hidden md:grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 px-6 py-2.5 border-b border-border bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                <span>Page Name</span>
-                <span className="text-center">Status</span>
-                <span className="text-center">Preview</span>
-                <span className="text-center">Leads</span>
-                <span className="text-center">Usage</span>
-                <span className="text-right">Actions</span>
-              </div>
-            )}
-
-            <div className="divide-y divide-border">
-              {pagesLoading ? (
-                <div className="divide-y divide-border">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-4 px-6 py-4">
-                      <div className="h-10 w-10 rounded-xl bg-muted animate-pulse flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 w-1/3 bg-muted animate-pulse rounded" />
-                        <div className="h-2 w-1/4 bg-muted animate-pulse rounded" />
-                      </div>
-                      <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
-                      <div className="h-8 w-16 bg-muted animate-pulse rounded-lg" />
-                    </div>
-                  ))}
-                </div>
-              ) : filteredPages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg">
-                    <Zap className="h-7 w-7 text-white" />
+            <div className="overflow-x-auto flex-1 overflow-y-auto custom-scrollbar">
+              <div className="min-w-[700px]">
+                {/* Table Header */}
+                {pages.length > 0 && (
+                  <div className="sticky top-0 z-10 grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 px-6 py-2.5 border-b border-border bg-muted/95 backdrop-blur-sm text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span>Page Name</span>
+                    <span className="text-center">Status</span>
+                    <span className="text-center">Preview</span>
+                    <span className="text-center">Leads</span>
+                    <span className="text-center">Usage</span>
+                    <span className="text-right">Actions</span>
                   </div>
-                  <p className="text-base font-bold text-foreground mb-1">No {statusFilter !== 'all' ? statusFilter : ''} pages found</p>
-                  <p className="text-sm text-muted-foreground mb-5">
-                    {statusFilter === 'all'
-                      ? "Create your first landing page to get started"
-                      : `You don't have any ${statusFilter} pages in this project.`}
-                  </p>
-                  {statusFilter === 'all' && (
-                    <Button
-                      onClick={() => navigate(`/dashboard/projects/${id}/create-page`)}
-                      className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
-                    >
-                      <Plus className="h-4 w-4" /> Create Landing Page
-                    </Button>
+                )}
+
+                <div className="divide-y divide-border">
+                  {pagesLoading ? (
+                    <div className="divide-y divide-border">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center gap-4 px-6 py-4">
+                          <div className="h-10 w-10 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-1/3 bg-muted animate-pulse rounded" />
+                            <div className="h-2 w-1/4 bg-muted animate-pulse rounded" />
+                          </div>
+                          <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
+                          <div className="h-8 w-16 bg-muted animate-pulse rounded-lg" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredPages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg">
+                        <Zap className="h-7 w-7 text-white" />
+                      </div>
+                      <p className="text-base font-bold text-foreground mb-1">No {statusFilter !== 'all' ? statusFilter : ''} pages found</p>
+                      <p className="text-sm text-muted-foreground mb-5">
+                        {statusFilter === 'all'
+                          ? "Create your first landing page to get started"
+                          : `You don't have any ${statusFilter} pages in this project.`}
+                      </p>
+                      {statusFilter === 'all' && (
+                        <Button
+                          onClick={() => navigate(`/dashboard/projects/${id}/create-page`)}
+                          className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
+                        >
+                          <Plus className="h-4 w-4" /> Create Landing Page
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    filteredPages.map((page) => (
+                      <div
+                        key={page._id}
+                        className="grid grid-cols-[1fr_90px_60px_80px_100px_100px] gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="h-10 w-10 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm"
+                            style={{ background: `linear-gradient(135deg, ${page.primaryColor || '#7c3aed'}, ${page.secondaryColor || '#6366f1'})` }}
+                          >
+                            <FileText className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <span className="text-sm font-bold text-foreground truncate">{page.name || "Untitled Page"}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 opacity-70">
+                              /{project.preSlug ? project.preSlug + '/' : ''}{page.slug}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-start md:justify-center">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full  tracking-tighter ${page.status?.toLowerCase() === 'published' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                            {page.status?.toLowerCase() === 'published' ? 'Published' : (page.status || 'Draft')}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-start md:justify-center">
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
+                              const url = page.status === "published"
+                                ? `/${preSlugPrefix}${page.slug}`
+                                : `/preview/${preSlugPrefix}${page.slug}`;
+                              window.open(url, '_blank');
+                            }}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
+                            title={page.status === "published" ? "View Live Page" : "Preview Draft"}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-start md:justify-center">
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/leads?project=${project._id}&page=${page._id}`);
+                            }}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
+                            title="View Leads"
+                          >
+                            <UsersIcon className="h-3 w-3" />
+                            <span>{(page as any).leads?.length || 0}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-start md:justify-center">
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (page.aiUsage) setViewingUsagePage(page);
+                            }}
+                            className={`flex flex-col items-center gap-0.5 text-[9px] text-muted-foreground p-1 px-2 rounded-lg transition-all ${page.aiUsage ? 'hover:bg-amber-500/10 cursor-pointer group/usage' : 'opacity-40'}`}
+                            title={page.aiUsage ? "Click to view detailed breakdown" : "No usage data available"}
+                          >
+                            {page.aiUsage ? (
+                              <>
+                                <div className="flex items-center gap-1 font-mono group-hover/usage:text-amber-600">
+                                  <Eye className="h-3 w-3 text-amber-500" />
+                                  <span className="font-bold">{page.aiUsage.totalTokens?.toLocaleString() || 0}</span>
+                                </div>
+                                <span className="text-emerald-600 font-bold">
+                                  ${(page.aiUsage.cost || 0).toFixed(4)}
+                                </span>
+                              </>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/editor/${project._id}/${page._id}`);
+                            }}
+                            className="h-7 px-3 text-[10px] font-bold gap-1.5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all rounded-lg"
+                          >
+                            <FileEdit className="h-3 w-3" />
+                            Editor
+                          </Button>
+
+                          <div className="relative">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuOpenPageId(menuOpenPageId === page._id ? null : page._id);
+                              }}
+                              className={`h-8 w-8 p-0 transition-all rounded-lg ${menuOpenPageId === page._id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                              title="More Actions"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+
+                            {menuOpenPageId === page._id && (
+                              <div className="absolute right-0 top-9 z-50 w-40 rounded-xl border border-border bg-card shadow-xl overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenPageId(null);
+                                    navigate(`/dashboard/projects/${project._id}/pages/${page._id}/settings`);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted transition-colors"
+                                >
+                                  <Settings2 className="h-3.5 w-3.5 text-slate-400" /> Page Settings
+                                </button>
+                                <div className="h-px bg-border my-1" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenPageId(null);
+                                    setDeletePageId(page._id);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Delete Page
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
-              ) : (
-                filteredPages.map((page) => (
-                  <div
-                    key={page._id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_90px_60px_80px_100px_100px] gap-3 md:gap-4 items-center px-6 py-4 hover:bg-muted/30 transition-all group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="h-10 w-10 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm"
-                        style={{ background: `linear-gradient(135deg, ${page.primaryColor || '#7c3aed'}, ${page.secondaryColor || '#6366f1'})` }}
-                      >
-                        <FileText className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 overflow-hidden">
-                          <span className="text-sm font-bold text-foreground truncate">{page.name || "Untitled Page"}</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 opacity-70">
-                          /{project.preSlug ? project.preSlug + '/' : ''}{page.slug}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-start md:justify-center">
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full  tracking-tighter ${page.status?.toLowerCase() === 'published' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                        {page.status?.toLowerCase() === 'published' ? 'Published' : (page.status || 'Draft')}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-start md:justify-center">
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
-                          const url = page.status === "published"
-                            ? `/${preSlugPrefix}${page.slug}`
-                            : `/preview/${preSlugPrefix}${page.slug}`;
-                          window.open(url, '_blank');
-                        }}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
-                        title={page.status === "published" ? "View Live Page" : "Preview Draft"}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-start md:justify-center">
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/dashboard/leads?project=${project._id}&page=${page._id}`);
-                        }}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
-                        title="View Leads"
-                      >
-                        <UsersIcon className="h-3 w-3" />
-                        <span>{(page as any).leads?.length || 0}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-start md:justify-center">
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (page.aiUsage) setViewingUsagePage(page);
-                        }}
-                        className={`flex flex-col items-center gap-0.5 text-[9px] text-muted-foreground p-1 px-2 rounded-lg transition-all ${page.aiUsage ? 'hover:bg-amber-500/10 cursor-pointer group/usage' : 'opacity-40'}`}
-                        title={page.aiUsage ? "Click to view detailed breakdown" : "No usage data available"}
-                      >
-                        {page.aiUsage ? (
-                          <>
-                            <div className="flex items-center gap-1 font-mono group-hover/usage:text-amber-600">
-                              <Eye className="h-3 w-3 text-amber-500" />
-                              <span className="font-bold">{page.aiUsage.totalTokens?.toLocaleString() || 0}</span>
-                            </div>
-                            <span className="text-emerald-600 font-bold">
-                              ${(page.aiUsage.cost || 0).toFixed(4)}
-                            </span>
-                          </>
-                        ) : (
-                          <span>-</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/editor/${project._id}/${page._id}`);
-                        }}
-                        className="h-7 px-3 text-[10px] font-bold gap-1.5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all rounded-lg"
-                      >
-                        <FileEdit className="h-3 w-3" />
-                        Editor
-                      </Button>
-
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpenPageId(menuOpenPageId === page._id ? null : page._id);
-                          }}
-                          className={`h-8 w-8 p-0 transition-all rounded-lg ${menuOpenPageId === page._id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-                          title="More Actions"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-
-                        {menuOpenPageId === page._id && (
-                          <div className="absolute right-0 top-9 z-50 w-40 rounded-xl border border-border bg-card shadow-xl overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMenuOpenPageId(null);
-                                navigate(`/dashboard/projects/${project._id}/pages/${page._id}/settings`);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted transition-colors"
-                            >
-                              <Settings2 className="h-3.5 w-3.5 text-slate-400" /> Page Settings
-                            </button>
-                            <div className="h-px bg-border my-1" />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMenuOpenPageId(null);
-                                setDeletePageId(page._id);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" /> Delete Page
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              </div>
             </div>
           </div>
 
           {/* ─── Right Side: Integration & Embedding ─── */}
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-border bg-card flex flex-col gap-1">
+            <div className="px-4 py-3 border-b border-border bg-card flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
-                  <Link className="h-4 w-4 text-white" />
+                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
+                  <Link className="h-3.5 w-3.5 text-white" />
                 </div>
                 <h2 className="text-base font-bold text-foreground">Integration </h2>
               </div>
-              <p className="text-[11px] text-muted-foreground ml-11">WordPress or Script</p>
+              <p className="text-[11px] text-muted-foreground ml-10">WordPress or Script</p>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-4">
               <div className="flex gap-1 bg-muted p-1 rounded-xl">
                 {([
                   {
@@ -2091,16 +2149,16 @@ const ProjectDetailPage = () => {
                         num: 2, title: "Website  Token", desc: "Copy & paste the API token in the plugin settings", extra: (
                           <div
                             onClick={copyToken}
-                            className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
+                            className={`flex items-center gap-2 border rounded-lg px-2 py-1 mt-1.5 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
                           >
-                            <span className={`text-[10px] font-mono truncate max-w-[150px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
+                            <span className={`text-[10px] font-mono truncate max-w-[110px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
                             {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                           </div>
                         )
                       },
                     ].map((s) => (
-                      <div key={s.num} className="flex gap-3">
-                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
+                      <div key={s.num} className="flex gap-2.5">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-start gap-2 pr-1">
                             <p className="text-xs font-semibold text-foreground">{s.title}</p>
@@ -2138,7 +2196,7 @@ const ProjectDetailPage = () => {
                         {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
                       </Button>
                     </div>
-                    <pre className="text-[10px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
+                    <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                   </div>
                 )}
 
