@@ -279,7 +279,9 @@ EVERY design decision must feel influenced by this unique seed.
 - Fully responsive, complete, and stunning HTML output.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📤 OUTPUT FORMAT:
+IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
 Return ONLY a complete HTML file inside one code block.
 No explanation before or after. No comments. Start with the HTML tag directly.
 \`\`\`html
@@ -392,6 +394,7 @@ You are FORBIDDEN from using standard, boring layouts:
 - Add micro-interactions, subtle hover scale transformations (e.g. group-hover), and elegant visual division.
 
 OUTPUT FORMAT:
+IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
 Return ONLY the complete improved HTML code. No explanation. No comments. Start directly with an HTML tag (e.g. <section> or <div>).
 `;
 
@@ -422,13 +425,14 @@ Return ONLY the raw HTML. Do not wrap in markdown or backticks. Start with the H
 // ─── EDITOR CHAT MODIFY ──────────────────────────────────────────────────────────
 const EDITOR_SYSTEM_PROMPT = `
 You are a Senior UI Developer modifying GrapesJS elements.
+IMPORTANT: You MUST respond in the English language only. Do not use Hindi or any other language.
 Return a valid JSON object ONLY — no markdown, no explanation:
 {
   "action": "style" | "text" | "both" | "html",
   "css": { "camelCaseProperty": "value" },
-  "text": "new text content",
+  "text": "new text content (in English)",
   "html": "full html string if action is html",
-  "summary": "one line: what you changed"
+  "summary": "one line: what you changed (in English)"
 }
 `;
 
