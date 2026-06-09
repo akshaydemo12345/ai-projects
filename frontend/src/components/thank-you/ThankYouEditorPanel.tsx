@@ -108,7 +108,7 @@ export const ThankYouEditorPanel = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#12121e] text-slate-500">
+      <div className="flex items-center justify-center h-full bg-[#fff] text-slate-500">
         <Loader2 className="h-6 w-6 animate-spin mr-2" />
         <span className="text-sm font-medium">Loading templates...</span>
       </div>
@@ -116,17 +116,17 @@ export const ThankYouEditorPanel = ({
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a14] overflow-hidden">
+    <div className="h-full flex flex-col bg-[#fff] overflow-hidden">
       {/* Search Header */}
-      <div className="p-4 border-b border-white/5 bg-[#0f0f1a]">
+      <div className="p-4 border-b border-slate-200 bg-[#fff]">
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-violet-500 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
           <input
             type="text"
             placeholder="Search templates..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#12121e] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 outline-none focus:border-violet-500/50 transition-all"
+            className="w-full bg-[#f9fafb] border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-violet-500/50 transition-all"
           />
         </div>
       </div>
@@ -141,12 +141,12 @@ export const ThankYouEditorPanel = ({
               key={layout.id}
               onClick={() => !isApplying && handleLayoutChange(layout.id)}
               className={`group relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected
-                  ? 'border-violet-500 bg-violet-500/5'
-                  : 'border-white/5 bg-[#12121e] hover:border-white/10'
+                  ? 'border-violet-500 bg-violet-50'
+                  : 'border-slate-200 bg-[#f9fafb] hover:border-slate-300'
                 }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isSelected ? 'bg-violet-500 text-white' : 'bg-[#1a1a2e] text-slate-500'
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isSelected ? 'bg-violet-500 text-white' : 'bg-[#e5e7eb] text-slate-500'
                   }`}>
                   {isApplying ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -157,7 +157,7 @@ export const ThankYouEditorPanel = ({
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-bold text-white mb-0.5">{layout.name}</h4>
+                  <h4 className="text-sm font-bold text-slate-900 mb-0.5">{layout.name}</h4>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{layout.industry}</p>
                 </div>
               </div>
@@ -174,7 +174,7 @@ export const ThankYouEditorPanel = ({
 
         {filteredLayouts.length === 0 && (
           <div className="text-center py-10">
-            <p className="text-sm text-slate-600">No templates found</p>
+            <p className="text-sm text-slate-500">No templates found</p>
           </div>
         )}
       </div>

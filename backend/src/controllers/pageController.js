@@ -633,7 +633,9 @@ exports.createPage = async (req, res, next) => {
           // Pass figma image if available
           figmaImage: figmaImage || null,
           // Pass scraped data from project (contains images/videos from website)
-          scrapedData: project.scrapedData || {}
+          scrapedData: project.scrapedData || {},
+          scrapedFonts: project.websiteProfile?.fonts || project.scrapedData?.fonts || null,
+          scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null
         };
 
         const generatedResult = await AIService.generateLandingPageContent(aiInput);

@@ -1,4 +1,4 @@
-// Master Template — Finance Elite 02
+// Master Template — PROJECT_NAME_PLACEHOLDER
 // Institutional Grade Corporate Design — Focused on Trust, Clarity, and Professionalism
 // Inspired by Global Investment Banks and Asset Management Firms
 
@@ -271,7 +271,7 @@ export const finance02Html = `
         <p>Connect with our senior advisors for a comprehensive analysis of your global financial objectives.</p>
         <div style="margin-top: 2rem;">
           <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Corporate HQ</h4>
-          <p style="color: var(--slate); font-size: 0.9rem;">Wall Street, New York, NY 10005</p>
+          <p style="color: var(--slate); font-size: 0.9rem;">ADDRESS_PLACEHOLDER</p>
         </div>
       </div>
       <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">

@@ -1293,7 +1293,7 @@ export const healthcare04Html = `
     <div class="hc4-container">
       <div class="hc4-topbar-left">
         <span><i class="fas fa-envelope"></i> CONTACT_PLACEHOLDER</span>
-        <span><i class="fas fa-phone-alt"></i> +1 (555) 123-4567</span>
+        <span><i class="fas fa-phone-alt"></i> PHONE_PLACEHOLDER</span>
         <span><i class="far fa-clock"></i> Mon - Sat: 8:00 AM - 9:00 PM</span>
       </div>
       <div class="hc4-topbar-right">
@@ -1356,7 +1356,7 @@ export const healthcare04Html = `
       <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80" alt="Doctor Contact">
       <div class="hc4-overlap-text">
         <h3>For Your Family Care Service.</h3>
-        <p>Call Us Directly: <span>+1 (555) 123-4567</span></p>
+        <p>Call Us Directly: <span>PHONE_PLACEHOLDER</span></p>
       </div>
     </div>
     <button class="hc4-overlap-btn">BOOK APPOINTMENT <i class="fas fa-arrow-right"></i></button>
@@ -1375,7 +1375,7 @@ export const healthcare04Html = `
       </div>
       <div class="hc4-about-text">
         <span class="hc4-section-badge">WHO WE ARE</span>
-        <h2 class="hc4-section-title">Welcome to Elite Healthcare</h2>
+        <h2 class="hc4-section-title">Welcome to PROJECT_NAME_PLACEHOLDER</h2>
         <p>Providing the best medical services for your family. We combine advanced medical technology with compassionate care to ensure swift and effective recovery for all our patients.</p>
         <ul class="hc4-about-list">
           <li><i class="fas fa-check-circle"></i> Experienced Staff & Professional Doctors</li>
@@ -1812,7 +1812,7 @@ export const healthcare04Html = `
             </li>
             <li>
               <i class="fas fa-phone-alt"></i>
-              <span>+1 (555) 123-4567</span>
+              <span>PHONE_PLACEHOLDER</span>
             </li>
             <li>
               <i class="fas fa-envelope"></i>

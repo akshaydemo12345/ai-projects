@@ -4,13 +4,12 @@ import { toast } from 'sonner';
 import grapesjs from 'grapesjs';
 import type { Editor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
-// @ts-ignore
 import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
-import Pickr from '@simonwep/pickr';
-import '@simonwep/pickr/dist/themes/monolith.min.css';
+
+
 import './grapes-custom.css';
 import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
@@ -120,7 +119,7 @@ const GrapesEditor = () => {
   const [metaDesc, setMetaDesc] = useState('');
   const [noIndex, setNoIndex] = useState(false);
   const [noFollow, setNoFollow] = useState(false);
-  const [themePrimary, setThemePrimary] = useState('#7c3aed');
+  const [themePrimary, setThemePrimary] = useState('#818cf8');
   const [themeSecondary, setThemeSecondary] = useState('#6366f1');
   // Custom Color Picker
   const [colorPicker, setColorPicker] = useState<{
@@ -148,10 +147,7 @@ const GrapesEditor = () => {
   const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
-  const cpObserverRef = useRef<MutationObserver | null>(null);
-  const pickrInstanceRef = useRef<Pickr | null>(null);
-  const pickrContainerRef = useRef<HTMLDivElement | null>(null);
-  const pickrCurrentFieldRef = useRef<{ fieldEl: HTMLElement | null; cssProperty: string }>({ fieldEl: null, cssProperty: '' });
+
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [extractedTemplateScripts, setExtractedTemplateScripts] = useState<string>('');
@@ -162,7 +158,7 @@ const GrapesEditor = () => {
       setMetaDesc(page.metaDescription || '');
       setNoIndex(page.noIndex || false);
       setNoFollow(page.noFollow || false);
-      setThemePrimary(page.primaryColor || '#7c3aed');
+      setThemePrimary(page.primaryColor || '#818cf8');
       setThemeSecondary(page.secondaryColor || '#6366f1');
       setSiteStatus(page.status || 'draft');
 
@@ -179,7 +175,7 @@ const GrapesEditor = () => {
 
         if (rawHtml) {
           // Match ALL script tags (both inline and src-based)
-          const allScriptMatches = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+          const allScriptMatches: string[] = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
           // Filter out only tailwind CDN + tailwind config scripts (they are re-added on publish)
           const filteredScripts = allScriptMatches.filter(s => {
             if (s.includes('cdn.tailwindcss.com')) return false;
@@ -270,6 +266,8 @@ const GrapesEditor = () => {
       }
     }
 
+    let extractedScripts: {src: string, innerHTML: string}[] = [];
+
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
       console.log('📄 Full HTML structure detected. Extracting components...');
@@ -284,20 +282,19 @@ const GrapesEditor = () => {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
 
-        // Extract Links and Scripts for Canvas Injection
-        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
-        const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.outerHTML);
+        // Extract scripts to be injected AFTER setComponents
+        extractedScripts = Array.from(doc.querySelectorAll('script')).map(scriptEl => ({
+          src: scriptEl.src,
+          innerHTML: scriptEl.innerHTML
+        }));
 
+        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
+        
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           links.forEach(linkHtml => {
             if (!canvasDoc.head.innerHTML.includes(linkHtml)) {
               canvasDoc.head.insertAdjacentHTML('beforeend', linkHtml);
-            }
-          });
-          scripts.forEach(scriptHtml => {
-            if (!canvasDoc.body.innerHTML.includes(scriptHtml)) {
-              canvasDoc.body.insertAdjacentHTML('beforeend', scriptHtml);
             }
           });
         }
@@ -341,7 +338,7 @@ const GrapesEditor = () => {
       const canvasDoc = editor.Canvas.getDocument();
 
       // ─── Placeholder Replacement (Dynamic) ───
-      const primaryColor = currentPage.primaryColor || '#7c3aed';
+      const primaryColor = currentPage.primaryColor || '#818cf8';
       const secondaryColor = currentPage.secondaryColor || '#6366f1';
 
       let pRgb = "124, 58, 237";
@@ -485,6 +482,23 @@ const GrapesEditor = () => {
             el.classList.add('in-view');
           });
 
+          // ── BLOCK all form submissions in editor to prevent page reload / red borders ──
+          document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }, true);
+
+          // ── Remove native HTML5 validation in editor (prevents red borders from required fields) ──
+          document.querySelectorAll('form').forEach(function(form) {
+            form.setAttribute('novalidate', 'novalidate');
+          });
+
+          // ── Remove red border inline styles left over from any validation scripts ──
+          document.querySelectorAll('input, textarea, select').forEach(function(el) {
+            el.style.border = '';
+          });
+
           document.addEventListener('click', function(e) {
             // Handle details/summary toggle
             const summary = e.target.closest('summary');
@@ -495,6 +509,38 @@ const GrapesEditor = () => {
                   details.removeAttribute('open');
                 } else {
                   details.setAttribute('open', '');
+                }
+              }
+            }
+
+            // ── Handle AI-generated Accordion / FAQ (accordion-header + accordion-content) ──
+            const accHeader = e.target.closest('.accordion-header');
+            if (accHeader) {
+              const item = accHeader.closest('.accordion-item');
+              if (item) {
+                const content = item.querySelector('.accordion-content');
+                const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
+                const isOpen = content && !content.classList.contains('hidden');
+
+                // Close all other accordion items
+                document.querySelectorAll('.accordion-item').forEach(function(otherItem) {
+                  if (otherItem !== item) {
+                    const otherContent = otherItem.querySelector('.accordion-content');
+                    const otherIcon = otherItem.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
+                    if (otherContent) otherContent.classList.add('hidden');
+                    if (otherIcon) { otherIcon.classList.remove('rotate-180'); otherIcon.classList.remove('fa-minus'); otherIcon.classList.add('fa-plus'); }
+                  }
+                });
+
+                // Toggle this item
+                if (content) {
+                  if (isOpen) {
+                    content.classList.add('hidden');
+                    if (icon) { icon.classList.remove('rotate-180'); icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  } else {
+                    content.classList.remove('hidden');
+                    if (icon) { icon.classList.add('rotate-180'); icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
                 }
               }
             }
@@ -591,22 +637,28 @@ const GrapesEditor = () => {
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
-      const configHTML = `
-      <script>
-        tailwind.config = {
-          theme: {
-            extend: {
-              colors: {
-                primary: 'var(--primary)',
-                secondary: 'var(--secondary)',
-                accent: 'var(--accent)'
+      // ─── Apply Tailwind config into canvas frame so it actually executes in the editor ───
+      if (canvasDoc) {
+        let twScript = canvasDoc.getElementById('tw-config');
+        if (!twScript) {
+          twScript = canvasDoc.createElement('script');
+          twScript.id = 'tw-config';
+          canvasDoc.head.appendChild(twScript);
+        }
+        twScript.innerHTML = `
+          tailwind.config = {
+            theme: {
+              extend: {
+                colors: {
+                  primary: 'var(--primary)',
+                  secondary: 'var(--secondary)',
+                  accent: 'var(--accent)'
+                }
               }
             }
           }
-        }
-      </script>
-      `;
-      dbContent = configHTML + dbContent;
+        `;
+      }
 
       editor.setComponents(dbContent);
       // ── Hide loader after canvas has had time to render CSS/fonts ──
@@ -620,6 +672,16 @@ const GrapesEditor = () => {
             cDoc.querySelectorAll('.animate-up, .animate-fade').forEach((el: Element) => {
               el.classList.add('in-view');
             });
+            
+            // Execute extracted scripts safely AFTER components are set
+            if (extractedScripts && extractedScripts.length > 0) {
+              extractedScripts.forEach(scriptData => {
+                const newScript = cDoc.createElement('script');
+                if (scriptData.src) newScript.src = scriptData.src;
+                newScript.innerHTML = scriptData.innerHTML;
+                cDoc.body.appendChild(newScript);
+              });
+            }
           }
         } catch (e) { /* ignore */ }
         setIsCanvasLoading(false);
@@ -679,7 +741,7 @@ const GrapesEditor = () => {
     // ─── Style GrapesJS Modal Header Only ───
     const style = document.createElement('style');
     style.innerHTML = `
-      .gjs-mdl-header { background-color: #1e1e2d !important; border-bottom: 1px solid #2a2a3e !important; padding: 15px 20px !important; }
+      .gjs-mdl-header { background-color: #1f2937 !important; border-bottom: 1px solid #1f2937 !important; padding: 15px 20px !important; }
       .gjs-mdl-title { color: #f8fafc !important; font-weight: bold !important; font-size: 16px !important; }
       .gjs-mdl-btn-close { color: #94a3b8 !important; }
       .gjs-mdl-content { background-color: #111827 !important; padding: 0 !important; }
@@ -754,43 +816,250 @@ const GrapesEditor = () => {
       },
       panels: { defaults: [] },
       selectorManager: {
-        componentFirst: true,
+        componentFirst: false,
         appendTo: '#selectors-container',
       },
       styleManager: {
         appendTo: '#styles-container',
         sectors: [
-          { name: 'Layout', open: true, buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'gap'] },
-          { name: 'Spacing', open: false, buildProps: ['margin', 'padding'] },
-          { name: 'Size', open: false, buildProps: ['width', 'min-width', 'max-width', 'height', 'min-height', 'max-height'] },
-          { name: 'Position', open: false, buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'] },
           {
-            name: 'Typography',
+            id: 'layout',
+            name: 'Layout',
             open: false,
+            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content'],
+          },
+          {
+            id: 'size',
+            name: 'Size',
+            open: false,
+            buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height'],
+          },
+          {
+            id: 'space',
+            name: 'Space',
+            open: false,
+            buildProps: ['padding', 'margin'],
+          },
+          {
+            id: 'position',
+            name: 'Position',
+            open: false,
+            buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'],
             properties: [
               {
-                property: 'font-family',
-                name: 'Font Family',
+                property: 'position',
                 type: 'select',
-                list: [
-                  { id: 'Inter', name: 'Inter' },
-                  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
-                  { id: 'Montserrat', name: 'Montserrat' },
-                  { id: 'Playfair Display', name: 'Playfair Display' },
-                  { id: 'Dancing Script', name: 'Dancing Script' },
-                  { id: 'DM Serif Display', name: 'DM Serif Display' },
-                  { id: 'Manrope', name: 'Manrope' },
-                  { id: 'Outfit', name: 'Outfit' },
+                default: 'static',
+                options: [
+                  { id: 'static', name: 'Static' },
+                  { id: 'relative', name: 'Relative' },
+                  { id: 'absolute', name: 'Absolute' },
+                  { id: 'fixed', name: 'Fixed' },
+                  { id: 'sticky', name: 'Sticky' }
                 ]
-              },
-              'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform'
+              }
             ]
           },
-          { name: 'Background', open: false, buildProps: ['background-color', 'background', 'background-image', 'background-repeat', 'background-position', 'background-size'] },
-          { name: 'Border', open: false, buildProps: ['border', 'border-radius', 'outline'] },
-          { name: 'Shadow', open: false, buildProps: ['box-shadow', 'text-shadow'] },
-          { name: 'Effects', open: false, buildProps: ['opacity', 'transform', 'transition', 'cursor', 'overflow'] },
-        ],
+          {
+            id: 'typography',
+            name: 'Typography',
+            open: false,
+            buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
+            properties: [
+              {
+                property: 'text-align',
+                type: 'select',
+                default: 'left',
+                options: [
+                  { id: 'left', name: 'Left' },
+                  { id: 'center', name: 'Center' },
+                  { id: 'right', name: 'Right' },
+                  { id: 'justify', name: 'Justify' }
+                ]
+              },
+              {
+                property: 'text-decoration',
+                type: 'select',
+                default: 'none',
+                options: [
+                  { id: 'none', name: 'None' },
+                  { id: 'underline', name: 'Underline' },
+                  { id: 'overline', name: 'Overline' },
+                  { id: 'line-through', name: 'Line-through' }
+                ]
+              },
+              {
+                property: 'text-transform',
+                type: 'select',
+                default: 'none',
+                options: [
+                  { id: 'none', name: 'None' },
+                  { id: 'capitalize', name: 'Capitalize' },
+                  { id: 'uppercase', name: 'Uppercase' },
+                  { id: 'lowercase', name: 'Lowercase' }
+                ]
+              },
+              {
+                property: 'vertical-align',
+                type: 'select',
+                default: 'baseline',
+                options: [
+                  { id: 'baseline', name: 'Baseline' },
+                  { id: 'top', name: 'Top' },
+                  { id: 'middle', name: 'Middle' },
+                  { id: 'bottom', name: 'Bottom' }
+                ]
+              },
+              {
+                property: 'direction',
+                type: 'select',
+                default: 'ltr',
+                options: [
+                  { id: 'ltr', name: 'LTR' },
+                  { id: 'rtl', name: 'RTL' }
+                ]
+              }
+            ]
+          },
+          {
+            id: 'background',
+            name: 'Background',
+            open: false,
+            buildProps: ['background-color', 'background-image', 'background-clip'],
+            properties: [
+              {
+                property: 'background-clip',
+                name: 'Clip',
+                type: 'select',
+                default: 'border-box',
+                options: [
+                  { id: 'border-box', name: 'Border Box' },
+                  { id: 'padding-box', name: 'Padding Box' },
+                  { id: 'content-box', name: 'Content Box' },
+                  { id: 'text', name: 'Text' }
+                ]
+              }
+            ]
+          },
+          {
+            id: 'border',
+            name: 'Border',
+            open: false,
+            buildProps: ['border-radius', 'border'],
+          },
+          {
+            id: 'effects',
+            name: 'Effects',
+            open: false,
+            buildProps: [
+              'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter', 
+              'transition', 'transform', 'transform-origin', 'overflow', 'backface-visibility', 'transform-style'
+            ],
+            properties: [
+              {
+                property: 'opacity',
+                type: 'slider',
+                min: 0,
+                max: 1,
+                step: 0.01,
+                default: '1'
+              },
+              { extend: 'box-shadow' },
+              { extend: 'text-shadow' },
+              { extend: 'transition' },
+              { extend: 'transform' },
+              {
+                property: 'filter',
+                type: 'stack',
+                layerSeparator: ' ',
+                properties: [
+                  { name: 'Value', property: 'filter-value', type: 'text', default: 'blur(5px)' }
+                ]
+              },
+              {
+                property: 'backdrop-filter',
+                type: 'stack',
+                layerSeparator: ' ',
+                properties: [
+                  { name: 'Value', property: 'backdrop-filter-value', type: 'text', default: 'blur(5px)' }
+                ]
+              },
+              {
+                property: 'mix-blend-mode',
+                name: 'Blend mode',
+                type: 'select',
+                default: 'normal',
+                options: [
+                  { id: 'normal', name: 'Normal' },
+                  { id: 'multiply', name: 'Multiply' },
+                  { id: 'screen', name: 'Screen' },
+                  { id: 'overlay', name: 'Overlay' },
+                  { id: 'darken', name: 'Darken' },
+                  { id: 'lighten', name: 'Lighten' },
+                  { id: 'color-dodge', name: 'Color Dodge' },
+                  { id: 'color-burn', name: 'Color Burn' },
+                  { id: 'hard-light', name: 'Hard Light' },
+                  { id: 'soft-light', name: 'Soft Light' },
+                  { id: 'difference', name: 'Difference' },
+                  { id: 'exclusion', name: 'Exclusion' },
+                  { id: 'hue', name: 'Hue' },
+                  { id: 'saturation', name: 'Saturation' },
+                  { id: 'color', name: 'Color' },
+                  { id: 'luminosity', name: 'Luminosity' }
+                ]
+              },
+              {
+                property: 'cursor',
+                type: 'select',
+                default: 'auto',
+                options: [
+                  { id: 'auto', name: 'Auto' },
+                  { id: 'default', name: 'Default' },
+                  { id: 'pointer', name: 'Pointer' },
+                  { id: 'wait', name: 'Wait' },
+                  { id: 'text', name: 'Text' },
+                  { id: 'move', name: 'Move' },
+                  { id: 'help', name: 'Help' },
+                  { id: 'not-allowed', name: 'Not Allowed' },
+                  { id: 'crosshair', name: 'Crosshair' },
+                  { id: 'grab', name: 'Grab' },
+                  { id: 'grabbing', name: 'Grabbing' }
+                ]
+              },
+              {
+                property: 'overflow',
+                type: 'select',
+                default: 'visible',
+                options: [
+                  { id: 'visible', name: 'Visible' },
+                  { id: 'hidden', name: 'Hidden' },
+                  { id: 'scroll', name: 'Scroll' },
+                  { id: 'auto', name: 'Auto' }
+                ]
+              },
+              {
+                property: 'backface-visibility',
+                name: 'Backface',
+                type: 'select',
+                default: 'visible',
+                options: [
+                  { id: 'visible', name: 'Visible' },
+                  { id: 'hidden', name: 'Hidden' }
+                ]
+              },
+              {
+                property: 'transform-style',
+                name: 'Children transform',
+                type: 'select',
+                default: 'flat',
+                options: [
+                  { id: 'flat', name: 'Flat' },
+                  { id: 'preserve-3d', name: 'Preserve-3D' }
+                ]
+              }
+            ]
+          }
+        ]
       },
       traitManager: { appendTo: '#traits-container' },
       layerManager: { appendTo: '#layers-container' },
@@ -807,43 +1076,24 @@ const GrapesEditor = () => {
           droppable: false,
           editable: false,
           resizable: true,
-          stylable: true,
+          // Explicitly allow all style properties
+          stylable: [
+            'color', 'font-size', 'width', 'height',
+            'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+            'display', 'opacity', 'cursor', 'background-color',
+            'border', 'border-radius', 'text-align',
+            'position', 'top', 'right', 'bottom', 'left', 'z-index',
+            'transform', 'transition', 'box-shadow',
+          ],
           traits: [
             {
               type: 'button',
               text: 'Select Icon',
               full: true,
               command: 'open-icon-picker',
-            },
-            {
-              type: 'color',
-              label: 'Icon Color',
-              name: 'color',
-              changeProp: true,
-            },
-            {
-              type: 'number',
-              label: 'Icon Size (px)',
-              name: 'fontSize',
-              changeProp: true,
             }
           ]
-        },
-        init() {
-          this.on('change:color', this.handleColorChange);
-          this.on('change:fontSize', this.handleSizeChange);
-        },
-        handleColorChange() {
-          const color = this.get('color');
-          if (color) {
-            this.addStyle({ color: color });
-          }
-        },
-        handleSizeChange() {
-          const size = this.get('fontSize');
-          if (size) {
-            this.addStyle({ 'font-size': size + 'px' });
-          }
         }
       }
     });
@@ -854,10 +1104,10 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'placeholder', 'type', 'required',
+            'id', 'name', 'placeholder', 'type', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; font-family: inherit;' }
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; font-family: inherit;' }
         }
       }
     });
@@ -868,10 +1118,10 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'textarea',
           traits: [
-            'id', 'name', 'placeholder', 'required',
+            'id', 'name', 'placeholder', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; min-height: 100px; font-family: inherit;' }
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; min-height: 100px; font-family: inherit;' }
         }
       }
     });
@@ -882,7 +1132,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'select',
           traits: [
-            'id', 'name', 'required',
+            'id', 'name', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' },
             {
               type: 'options',
@@ -890,7 +1140,7 @@ const GrapesEditor = () => {
               name: 'options',
             }
           ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
+          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
         }
       }
     });
@@ -906,7 +1156,7 @@ const GrapesEditor = () => {
           const parts = opt.split(':');
           const val = parts[0]?.trim();
           const name = parts[1]?.trim() || val;
-          return { tagName: 'option', attributes: { value: val }, content: name };
+          return { tagName: 'option', attributes: { id: val }, content: name };
         });
 
         if (options.length > 0) {
@@ -923,7 +1173,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'value', 'checked', 'required',
+            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
@@ -937,7 +1187,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'value', 'checked', 'required',
+            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
@@ -952,7 +1202,7 @@ const GrapesEditor = () => {
             'name', 'type',
             { type: 'text', label: 'Label Text', name: 'text' }
           ],
-          attributes: { style: 'background: #7c3aed; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
+          attributes: { style: 'background: #818cf8; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
         }
       }
     });
@@ -1008,18 +1258,18 @@ const GrapesEditor = () => {
         container.style.backgroundColor = '#161622';
         container.style.padding = '20px';
         container.style.borderRadius = '12px';
-        container.style.color = '#e2e8f0';
+        container.style.color = '#e5e7eb';
 
         container.innerHTML = `
           <div style="padding: 0 0 16px;">
             <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px;">Paste your HTML/Shortcode below and click "Save Changes"</p>
             <textarea id="custom-html-edit-input" rows="12" placeholder="&lt;div&gt;Your HTML here...&lt;/div&gt;"
-              style="width:100%; background:#0a0a14; color:#e2e8f0; border:1px solid #2a2a3e; border-radius:8px; padding:12px; font-family:'Fira Code',monospace; font-size:13px; outline:none; resize:vertical; box-sizing:border-box;"
+              style="width:100%; background:#0f172a; color:#e5e7eb; border:1px solid #1f2937; border-radius:8px; padding:12px; font-family:'Fira Code',monospace; font-size:13px; outline:none; resize:vertical; box-sizing:border-box;"
             >${currentCode}</textarea>
           </div>
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
-            <button id="custom-code-edit-cancel" style="background:#1e1e2d; color:#94a3b8; border:1px solid #2a2a3e; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px;">Cancel</button>
-            <button id="custom-code-edit-save" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px; font-weight:700;">Save Changes</button>
+            <button id="custom-code-edit-cancel" style="background:#1f2937; color:#94a3b8; border:1px solid #1f2937; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px;">Cancel</button>
+            <button id="custom-code-edit-save" style="background:linear-gradient(135deg,#818cf8,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-size:13px; font-weight:700;">Save Changes</button>
           </div>
         `;
 
@@ -1061,9 +1311,9 @@ const GrapesEditor = () => {
         const container = document.createElement('div');
         container.className = 'icon-picker-container';
         container.innerHTML = `
-          <div style="padding: 10px; margin-bottom: 15px; background: #1a1a2e; border-radius: 8px;">
+          <div style="padding: 10px; margin-bottom: 15px; background: #111827; border-radius: 8px;">
             <input type="text" id="icon-search" placeholder="Search icons..." 
-              style="width: 100%; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; color: #fff; border-radius: 6px; outline: none;">
+              style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #1f2937; color: #fff; border-radius: 6px; outline: none;">
           </div>
           <div id="icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 5px;">
           </div>
@@ -1139,7 +1389,7 @@ const GrapesEditor = () => {
           grid.innerHTML = '';
           icons.filter(i => i.includes(filter)).forEach(icon => {
             const btn = document.createElement('button');
-            btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; color: #e2e8f0; cursor: pointer; transition: all 0.2s;';
+            btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #111827; border: 1px solid #1f2937; border-radius: 8px; color: #e5e7eb; cursor: pointer; transition: all 0.2s;';
             btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
             btn.onclick = () => {
               const classModels = selected.getClasses();
@@ -1152,8 +1402,8 @@ const GrapesEditor = () => {
               selected.setClass(filteredClasses);
               modal.close();
             };
-            btn.onmouseenter = () => { btn.style.background = '#2a2a3e'; btn.style.borderColor = '#7c3aed'; };
-            btn.onmouseleave = () => { btn.style.background = '#1a1a2e'; btn.style.borderColor = '#2a2a3e'; };
+            btn.onmouseenter = () => { btn.style.background = '#1f2937'; btn.style.borderColor = '#818cf8'; };
+            btn.onmouseleave = () => { btn.style.background = '#111827'; btn.style.borderColor = '#1f2937'; };
             grid.appendChild(btn);
           });
         };
@@ -1171,6 +1421,78 @@ const GrapesEditor = () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
+      // Restore custom font options in Typography sector
+      try {
+        const styleManager = editor.StyleManager;
+        const fontProp = styleManager.getProperty('Typography', 'font-family');
+        if (fontProp) {
+          fontProp.set('options', [
+            { id: 'Inter', name: 'Inter' },
+            { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
+            { id: 'Montserrat', name: 'Montserrat' },
+            { id: 'Playfair Display', name: 'Playfair Display' },
+            { id: 'Dancing Script', name: 'Dancing Script' },
+            { id: 'DM Serif Display', name: 'DM Serif Display' },
+            { id: 'Manrope', name: 'Manrope' },
+            { id: 'Outfit', name: 'Outfit' },
+          ]);
+        }
+      } catch (e) {
+        console.warn('Could not set custom fonts in style manager', e);
+      }
+
+      // ── Remove min value constraints on spacing/position to allow negative values ──
+      try {
+        const styleManager = editor.StyleManager;
+        
+        // Padding and Margin are composite properties
+        ['padding', 'margin'].forEach(propName => {
+          // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
+          const prop = styleManager.getProperty('Space', propName) as any;
+          if (prop && typeof prop.getProperties === 'function') {
+            prop.getProperties().forEach((p: any) => {
+              p.set('min', ''); // Remove the minimum limit
+            });
+          }
+        });
+
+        // Top, Right, Bottom, Left are regular properties under Position
+        ['top', 'right', 'bottom', 'left'].forEach(propName => {
+          const prop = styleManager.getProperty('Position', propName);
+          if (prop) {
+            prop.set('min', ''); // Remove the minimum limit
+          }
+        });
+      } catch (e) {
+        console.warn('Could not update min constraints for spacing properties', e);
+      }
+
+      // ── Cleanup legacy inline styles from icons so Style Manager works ──
+      try {
+        const wrapper = editor.getWrapper();
+        if (wrapper) {
+          // Find all icons and remove inline color/font-size to let Style Manager take over
+          const icons = wrapper.findType('icon');
+          icons.forEach((icon: any) => {
+            const style = icon.getStyle();
+            let changed = false;
+            if (style.color === 'var(--primary)' || style.color === '#818cf8') {
+              delete style.color;
+              changed = true;
+            }
+            if (style['font-size'] === '32px') {
+              delete style['font-size'];
+              changed = true;
+            }
+            if (changed) {
+              icon.setStyle(style);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Could not cleanup legacy icon styles', e);
+      }
+
       // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
       try {
         const canvasDoc = editor.Canvas.getDocument();
@@ -1182,6 +1504,12 @@ const GrapesEditor = () => {
               margin: 0 !important;
               padding: 0 !important;
               overflow-x: hidden;
+            }
+            /* FORCE ALL ANIMATED ELEMENTS TO BE VISIBLE IN THE EDITOR */
+            [data-aos], .fade-up, .opacity-0 {
+              opacity: 1 !important;
+              transform: none !important;
+              visibility: visible !important;
             }
           `;
           canvasDoc.head.appendChild(resetStyle);
@@ -1207,31 +1535,24 @@ const GrapesEditor = () => {
         }
       });
 
-      // ── Canvas click: icon picker on EVERY click on an icon ──
+
+      // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
       setTimeout(() => {
         try {
           const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
           const frameDoc = frameEl?.contentDocument;
           if (frameDoc) {
             frameDoc.addEventListener('click', () => {
-              // Wait a bit for GrapesJS selection to settle
               setTimeout(() => {
                 const selected = editor.getSelected();
                 if (!selected) return;
-
                 const type = selected.get('type');
-                const tagName = (selected.get('tagName') || '').toLowerCase();
-                const classModels = selected.getClasses();
-                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
-
-                const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
-                const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
-
-                if (isIcon) {
-                  editor.runCommand('open-icon-picker');
-                } else if (isCustomCode) {
+                const classes = selected.getClasses ? selected.getClasses() : [];
+                const isCustomCode = type === 'custom-code' || (Array.isArray(classes) && classes.includes('gjs-custom-code'));
+                if (isCustomCode) {
                   editor.runCommand('open-custom-code-editor');
                 }
+                // NOTE: Icon picker is opened on double-click only (component:dblclick below)
               }, 50);
             }, true);
           }
@@ -1250,6 +1571,21 @@ const GrapesEditor = () => {
             editor.runCommand('open-custom-code-editor');
           }, 100);
         }
+      });
+
+      // ─── Auto-reveal animated components when dragged to canvas ───
+      editor.on('component:add', (model) => {
+        const makeVisible = (comp: any) => {
+          const classes = comp.getClasses ? comp.getClasses() : [];
+          if (classes.includes('animate-up') || classes.includes('animate-fade')) {
+            comp.addClass('in-view');
+          }
+          const components = comp.components();
+          if (components && components.length) {
+            components.forEach((child: any) => makeVisible(child));
+          }
+        };
+        makeVisible(model);
       });
 
       editor.on('component:dblclick', (model) => {
@@ -1271,7 +1607,7 @@ const GrapesEditor = () => {
         content: {
           type: 'icon',
           classes: ['fas', 'fa-star'],
-          style: { 'font-size': '32px', 'color': 'var(--primary)', 'display': 'inline-block' }
+          style: { 'display': 'inline-block' }
         }
       });
 
@@ -1281,7 +1617,7 @@ const GrapesEditor = () => {
         content: {
           type: 'custom-code',
           classes: ['gjs-custom-code'],
-          content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+          content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #818cf8; border-radius: 8px; text-align: center; color: #818cf8; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
         }
       });
 
@@ -1353,7 +1689,7 @@ const GrapesEditor = () => {
                 text: 'Add Option',
                 command: (ed: any, trait: any) => {
                   const model = trait.target;
-                  model.components().add({ type: 'option', content: 'New Option', attributes: { value: 'new' } });
+                  model.components().add({ type: 'option', content: 'New Option', attributes: { id: 'new' } });
                 }
               }
             ],
@@ -1440,7 +1776,7 @@ const GrapesEditor = () => {
             const type = String(model.get('embedType') || 'html').toUpperCase();
             if (!code) {
               this.el.innerHTML = `
-                <div style="padding: 40px 24px; border: 2px dashed #e2e8f0; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif; pointer-events: none;">
+                <div style="padding: 40px 24px; border: 2px dashed #e5e7eb; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif; pointer-events: none;">
                   <div style="font-size: 40px; margin-bottom: 16px; filter: grayscale(1);">🔌</div>
                   <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 16px;">Form Embed Module</div>
                   <div style="font-size: 13px; max-width: 300px; margin: 0 auto; line-height: 1.5;">Paste your HubSpot, Jotform, or Typeform code in the <b>Properties</b> panel on the right.</div>
@@ -1529,7 +1865,7 @@ const GrapesEditor = () => {
       applyContentToEditor(editor);
       contentAppliedRef.current = true;
       // Set up custom color picker injection after load
-      setTimeout(() => injectCustomColorPickers(editor), 500);
+      setTimeout(() => setupEditorEvents(editor), 500);
 
       // ─── Add Native GrapesJS Custom Blocks ───
       const bm = editor.BlockManager;
@@ -1607,8 +1943,8 @@ const GrapesEditor = () => {
           type: 'select',
           style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
           components: [
-            { type: 'option', content: 'Option 1', attributes: { value: '1' } },
-            { type: 'option', content: 'Option 2', attributes: { value: '2' } }
+            { type: 'option', content: 'Option 1', attributes: { id: '1' } },
+            { type: 'option', content: 'Option 2', attributes: { id: '2' } }
           ]
         }
       });
@@ -1776,10 +2112,6 @@ const GrapesEditor = () => {
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
 
     return () => {
-      if (cpObserverRef.current) {
-        cpObserverRef.current.disconnect();
-        cpObserverRef.current = null;
-      }
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
@@ -1787,163 +2119,9 @@ const GrapesEditor = () => {
     };
   }, [pageId, projectLoading, pageLoading]);
 
-  // ─── Custom Color Picker Injection (Pickr-based) ───
-  const injectCustomColorPickers = (editor: Editor) => {
-    const container = document.getElementById('styles-container');
-    if (!container) return;
-
-    // Create a persistent Pickr container div if not already exists
-    if (!pickrContainerRef.current) {
-      const div = document.createElement('div');
-      div.id = 'pickr-global-container';
-      div.style.cssText = 'position:fixed;z-index:999999;pointer-events:none;';
-      document.body.appendChild(div);
-      pickrContainerRef.current = div;
-
-      // Create a button element for Pickr to attach to
-      const btn = document.createElement('button');
-      btn.id = 'pickr-anchor-btn';
-      btn.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
-      document.body.appendChild(btn);
-
-      const toHex6 = (hex: string): string => {
-        if (!hex) return '#000000';
-        if (hex.startsWith('#') && hex.length === 9) return hex.slice(0, 7);
-        if (hex.startsWith('#') && hex.length === 7) return hex;
-        if (hex.startsWith('#') && hex.length === 4) {
-          const [, r, g, b] = hex;
-          return `#${r}${r}${g}${g}${b}${b}`;
-        }
-        return hex.length === 6 ? `#${hex}` : '#000000';
-      };
-
-      const pickr = Pickr.create({
-        el: btn,
-        theme: 'monolith',
-        default: '#7c3aed',
-        useAsButton: true,
-        components: {
-          preview: true,
-          opacity: false,
-          hue: true,
-          interaction: { hex: true, input: true, save: true },
-        },
-      });
-
-      // Live update as user drags
-      pickr.on('change', (color: Pickr.HSVaColor) => {
-        const hex = toHex6(color.toHEXA().toString());
-        applyPickrColor(hex);
-      });
-
-      pickr.on('save', (color: Pickr.HSVaColor) => {
-        const hex = toHex6(color.toHEXA().toString());
-        applyPickrColor(hex);
-        pickr.hide();
-      });
-
-      pickrInstanceRef.current = pickr;
-    }
-
-    const applyPickrColor = (hex: string) => {
-      const { fieldEl, cssProperty } = pickrCurrentFieldRef.current;
-      // Update visual swatch in GrapesJS
-      if (fieldEl) {
-        const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
-        if (swatch) swatch.style.background = hex;
-        // Trigger GrapesJS hidden input change — use InputEvent for React/GrapesJS compat
-        const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
-        if (hiddenInput) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-          if (nativeInputValueSetter) nativeInputValueSetter.call(hiddenInput, hex);
-          hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }
-      // Apply directly to selected GrapesJS component
-      if (editorRef.current && cssProperty) {
-        const selected = editorRef.current.getSelected();
-        if (selected) selected.addStyle({ [cssProperty]: hex });
-      }
-    };
-
-    const processFields = () => {
-      const fields = container.querySelectorAll<HTMLElement>('.gjs-field-colorp:not([data-cp-injected])');
-      fields.forEach((fieldEl) => {
-        fieldEl.setAttribute('data-cp-injected', 'true');
-        const swatch = fieldEl.querySelector<HTMLElement>('.gjs-field-color-picker, .gjs-checker-bg');
-        if (!swatch) return;
-
-        swatch.style.cursor = 'pointer';
-
-        swatch.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          const pickr = pickrInstanceRef.current;
-          if (!pickr) return;
-
-          // Read current color
-          const hiddenInput = fieldEl.querySelector<HTMLInputElement>('input');
-          const rawColor = hiddenInput?.value || swatch.style.background || '#000000';
-          const hexColor = normalizeToHex(rawColor);
-
-          // Detect CSS property from label
-          const propWrapper = fieldEl.closest<HTMLElement>('.gjs-sm-property');
-          const labelEl = propWrapper?.querySelector('.gjs-sm-label');
-          const labelText = (labelEl?.textContent || '').trim().toLowerCase();
-          const cssProperty = resolveCssProp(labelText, propWrapper);
-
-          // Save context for applyPickrColor
-          pickrCurrentFieldRef.current = { fieldEl, cssProperty };
-
-          // Position Pickr anchor near the swatch
-          const rect = swatch.getBoundingClientRect();
-          const anchorBtn = document.getElementById('pickr-anchor-btn');
-          if (anchorBtn) {
-            anchorBtn.style.left = `${rect.left}px`;
-            anchorBtn.style.top = `${rect.bottom + 4}px`;
-            anchorBtn.style.pointerEvents = 'auto';
-          }
-
-          // Set color and show
-          try { pickr.setColor(hexColor); } catch { }
-          pickr.show();
-
-          // Reposition Pickr popup to left of sidebar after it opens
-          setTimeout(() => {
-            const popup = document.querySelector<HTMLElement>('.pcr-app');
-            if (popup) {
-              popup.style.position = 'fixed';
-              popup.style.zIndex = '999999';
-              const pickerW = popup.offsetWidth || 250;
-              let x = rect.left - pickerW - 10;
-              let y = rect.top;
-              if (x < 10) { x = rect.left; y = rect.bottom + 6; }
-              if (y + (popup.offsetHeight || 300) > window.innerHeight - 10)
-                y = window.innerHeight - (popup.offsetHeight || 300) - 10;
-              if (y < 10) y = 10;
-              popup.style.left = `${x}px`;
-              popup.style.top = `${y}px`;
-            }
-          }, 30);
-        });
-      });
-    };
-
-    // Initial scan
-    processFields();
-
-    // Watch for new fields (e.g. when sector opens)
-    if (cpObserverRef.current) cpObserverRef.current.disconnect();
-    const obs = new MutationObserver(processFields);
-    obs.observe(container, { childList: true, subtree: true });
-    cpObserverRef.current = obs;
-
-    // Also re-inject when component is selected
-    editor.on('component:selected', (model) => {
-      setTimeout(processFields, 200);
-
+  // ─── Setup Editor Events (Tabs & Labels) ───
+  const setupEditorEvents = (editor: Editor) => {
+    editor.on('component:selected', (model: any) => {
       const tagName = model.get('tagName') || 'div';
       const classes = model.getClasses();
       const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
@@ -1955,10 +2133,6 @@ const GrapesEditor = () => {
       // 1. Handle UI Tab Switching
       if (isCustomCode) {
         setRightTab('traits');
-      } else if (isIcon) {
-        // Do NOT switch tabs automatically
-      } else {
-        // Elements selected - stay in current tab for better UX
       }
 
       setActiveComponent(model);
@@ -1973,18 +2147,12 @@ const GrapesEditor = () => {
       setSelectedLabel(readableName);
     });
 
-
-
-
     editor.on('component:deselected', () => {
       setSelectedLabel('Body');
     });
-
-    editor.on('styleManager:sector:open', () => setTimeout(processFields, 150));
   };
 
-  // ─── Apply color from custom picker (legacy stub — Pickr handles it inline) ───
-  const applyColorFromPicker = (_hex: string) => { };
+
 
   // ─── Branding Sync (Reactive to Sidebar) ───
   useEffect(() => {
@@ -2121,28 +2289,36 @@ const GrapesEditor = () => {
   const switchMode = async (newMode: 'landing' | 'thank-you') => {
     if (newMode === mode) return;
 
-    // 1. Save current editor state into memory/local page state and persist to DB
+    // 1. Save current editor state into memory/local page state so it isn't lost on switch
     if (editorRef.current) {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
-      const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+      const templateStyleTag = canvasDoc.getElementById('template-styles');
+      
+      const templateCss = templateStyleTag?.innerHTML || '';
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+
+      // Extract scripts to ensure they aren't lost
+      let canvasScripts = '';
+      try {
+        if (canvasDoc) canvasScripts = extractCanvasScripts(canvasDoc);
+      } catch (e) {
+        console.warn('Failed to extract scripts from canvas:', e);
+      }
+      const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
+      const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
       if (page) {
         if (mode === 'landing') {
-          page.landingPageContent = html;
+          page.landingPageContent = htmlWithScripts;
           page.landingPageStyles = globalCss + '\n' + css;
         } else {
-          page.thankYouPageContent = html;
+          page.thankYouPageContent = htmlWithScripts;
           page.thankYouPageStyles = globalCss + '\n' + css;
         }
-      }
-      try {
-        await handleSave();
-      } catch (e) {
-        console.error('Auto-save failed on switchMode:', e);
       }
     }
 
@@ -2584,7 +2760,7 @@ const GrapesEditor = () => {
     if (!selected) {
       setChatMessages(prev => [...prev,
       { role: 'user', content: val },
-      { role: 'ai', content: '⚠️ Pehle canvas mein koi element select karo, phir apna command likho.' }
+      { role: 'ai', content: '⚠️ Please select an element on the canvas first, then write your command.' }
       ]);
       return;
     }
@@ -2658,9 +2834,9 @@ const GrapesEditor = () => {
           summary: changeSummary
         };
         setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
-        toast.success('✨ AI ne change apply kar diya!');
+        toast.success('✨ AI changes applied successfully!');
       } else {
-        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo.';
+        aiResponse = '🤔 AI provided a response but no changes were made. Please be more specific.';
       }
 
       setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
@@ -2669,7 +2845,7 @@ const GrapesEditor = () => {
       const errMsg = err?.message || 'Unknown error';
       setChatMessages(prev => [...prev, {
         role: 'ai',
-        content: `❌ Error: ${errMsg}\n\nApna API key check karo (⚙️ icon pe click karo).`
+        content: `❌ Error: ${errMsg}\n\nPlease check your API key (click on the ⚙️ icon).`
       }]);
     } finally {
       if (el) el.classList.remove('ai-pulse-active');
@@ -2681,7 +2857,7 @@ const GrapesEditor = () => {
 
   if (projectLoading || pageLoading || !page || !project) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a2e]">
+      <div className="h-screen w-screen flex items-center justify-center bg-[#111827]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           <p className="text-white font-medium">Loading Editor...</p>
@@ -2696,17 +2872,17 @@ const GrapesEditor = () => {
       {/* ═══════════════ TOP BAR ═══════════════ */}
       <div style={{
         height: 54, flexShrink: 0,
-        background: '#0f0f1a', borderBottom: '1px solid #1e1e2d',
+        background: '#ffffff', borderBottom: '1px solid #dedede',
         display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
-        zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+        zIndex: 100, boxShadow: 'rgba(0, 0, 0, 0.3) 0px 2px 10px'
       }}>
         {/* Logo & Page Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
             {project?.name?.charAt(0).toUpperCase() || 'G'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
+            <span style={{ color: '#111827', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
             <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
@@ -2718,9 +2894,9 @@ const GrapesEditor = () => {
           onClick={() => navigate(`/dashboard/projects/${projId}`)}
           style={{
             ...outlineBtn,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: '#60a5fa',
+            background: 'rgba(0,0,0,0.05)',
+            border: '1px solid rgba(0,0,0,0.1)',
+            color: '#3b82f6',
             padding: '6px 12px',
             fontSize: 11,
             fontWeight: 700,
@@ -2730,12 +2906,12 @@ const GrapesEditor = () => {
           }}
           title="Back to Dashboard"
         >
-          <ArrowLeft size={14} /> Back to Pages
+          <ArrowLeft size={14} /> Back
         </button>
 
 
         {/* Mode Switcher */}
-        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+        <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 8, padding: 2, border: '1px solid #e5e7eb', margin: '0 10px' }}>
           <TBtn title="Edit Landing Page" active={mode === 'landing'} onClick={() => switchMode('landing')}>
             <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Landing Page</span>
           </TBtn>
@@ -2747,7 +2923,7 @@ const GrapesEditor = () => {
         <Sep />
 
         {/* Device Switcher (Centered look) */}
-        <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 8, padding: 2, border: '1px solid #2a2a3e', margin: '0 10px' }}>
+        <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 8, padding: 2, border: '1px solid #e5e7eb', margin: '0 10px' }}>
           <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
           <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
           <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
@@ -2765,8 +2941,8 @@ const GrapesEditor = () => {
             style={{
               ...outlineBtn,
               background: !hasSaved ? 'rgba(52,211,153,0.05)' : 'rgba(52,211,153,0.1)',
-              border: !hasSaved ? '1px solid rgba(52,211,153,0.1)' : '1px solid rgba(52,211,153,0.3)',
-              color: !hasSaved ? '#34d399' : '#34d399',
+              border: !hasSaved ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(52,211,153,0.5)',
+              color: '#059669',
               padding: '7px 14px',
               opacity: !hasSaved ? 0.5 : 1,
               cursor: !hasSaved ? 'not-allowed' : 'pointer'
@@ -2778,7 +2954,7 @@ const GrapesEditor = () => {
 
           {/* Status Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
+            <span style={{ color: '#111827', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
             <select
               value={siteStatus}
               onChange={(e) => {
@@ -2796,7 +2972,7 @@ const GrapesEditor = () => {
                 }
               }}
               style={{
-                background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e8f0',
+                background: '#f9fafb', border: '1px solid #d1d5db', color: '#111827',
                 borderRadius: 6, padding: '4px 24px 4px 10px', fontSize: 11, fontWeight: 700, outline: 'none', cursor: 'pointer',
                 appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\'/%3E%3C/svg%3E")',
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center'
@@ -2816,26 +2992,25 @@ const GrapesEditor = () => {
               }
               handlePreview();
             }}
-            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }}
+            style={{ ...outlineBtn, background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#111827', padding: '7px 14px' }}
             title="Live Preview"
           >
-            <EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span>
+            <EyeIcon />
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
+            style={{ ...outlineBtn, background: '#111827', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
             title="Save Changes"
           >
             {isSaving ? <SpinnerIcon /> : <SaveIcon />}
-            <span style={{ marginLeft: 6 }}>{isSaving ? 'Saving...' : 'Save'}</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
           <button onClick={handlePublish} disabled={isPublishing} style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
+            background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #818cf8, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
             padding: '7px 22px', fontSize: 13, fontWeight: 800, cursor: isPublishing ? 'not-allowed' : 'pointer',
             boxShadow: isPublishing ? 'none' : '0 4px 15px rgba(124,58,237,0.4)',
             transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
@@ -2849,33 +3024,42 @@ const GrapesEditor = () => {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* ══ DUAL-COLUMN LEFT SIDEBAR ══ */}
-        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #1e1e2d' }}>
+        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #dedede' }}>
           {/* Vertical Toolbar (Narrow) */}
           <div style={{
-            width: 58, flexShrink: 0, background: '#0b0b18',
+            width: 58, flexShrink: 0, background: '#fff',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '16px 0', gap: 18, borderRight: '1px solid #1e1e30'
+            padding: '16px 0px', gap: 18, borderRight: '1px solid #dedede'
           }}>
             <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+            
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 8 }}>
+              <NavIcon active={false} onClick={() => navigate(`/dashboard/projects/${projId}`)} title="Go back to Project">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </NavIcon>
+            </div>
           </div>
 
           {/* Panel Content (Dynamic) */}
           <div style={{
             width: isSidebarOpen ? 280 : 0,
             opacity: isSidebarOpen ? 1 : 0,
-            flexShrink: 0, background: '#12121e',
+            flexShrink: 0, background: '#fff',
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderRight: isSidebarOpen ? '1px solid #1e1e2d' : 'none'
+            borderRight: isSidebarOpen ? '1px solid #e5e7eb' : 'none'
           }}>
-            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280, backgroundColor: '#fff' }}>
+              <span style={{ color: '#000', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
               </span>
-              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#000', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
             </div>
 
             <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
@@ -2889,7 +3073,7 @@ const GrapesEditor = () => {
                     const added = editor.addComponents({
                       type: 'icon',
                       classes: ['fas', 'fa-star'],
-                      style: { 'font-size': '32px', 'color': '#7c3aed', 'display': 'inline-block', 'cursor': 'pointer' }
+                      style: { 'display': 'inline-block', 'cursor': 'pointer' }
                     });
                     if (added && added[0]) {
                       editor.select(added[0]);
@@ -2902,7 +3086,7 @@ const GrapesEditor = () => {
                     const added = editor.addComponents({
                       type: 'custom-code',
                       classes: ['gjs-custom-code'],
-                      content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #7c3aed; border-radius: 8px; text-align: center; color: #a78bfa; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+                      content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #818cf8; border-radius: 8px; text-align: center; color: #818cf8; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
                     });
                     if (added && added[0]) {
                       editor.select(added[0]);
@@ -2943,38 +3127,38 @@ const GrapesEditor = () => {
             </div>
 
             {/* Layers */}
-            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
+            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '10px', background: '#fff' }} />
 
 
             {/* AI Panel - Full Featured */}
             <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden', minWidth: 280 }}>
 
               {/* ── AI Panel Header Tabs ── */}
-              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #1e1e2d', background: '#0a0a14', padding: '0 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', padding: '0 12px' }}>
                 <button
                   onClick={() => setShowHistory(false)}
-                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#64748b' : '#a78bfa', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #7c3aed', transition: 'all 0.2s' }}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#6b7280' : '#4f46e5', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #6366f1', transition: 'all 0.2s' }}
                 >✨ AI Chat</button>
                 <button
                   onClick={() => setShowHistory(true)}
-                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#a78bfa' : '#64748b', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #7c3aed' : 'none', transition: 'all 0.2s', position: 'relative' }}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#4f46e5' : '#6b7280', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #6366f1' : 'none', transition: 'all 0.2s', position: 'relative' }}
                 >
                   🕐 History
-                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#7c3aed', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
+                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#6366f1', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
                 </button>
                 <button
                   onClick={() => setShowApiKeyInput(v => !v)}
                   title="API Key Settings"
-                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(124,58,237,0.2)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#64748b', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
+                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(99,102,241,0.1)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#6b7280', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
                 >⚙️</button>
               </div>
 
               {/* ── API Key Settings ── */}
               {showApiKeyInput && (
-                <div style={{ padding: '12px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d' }}>
+                <div style={{ padding: '12px 14px', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <span style={{ fontSize: 12 }}>🤖</span>
-                    <span style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
+                    <span style={{ fontSize: 10, color: '#4f46e5', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input
@@ -2982,7 +3166,7 @@ const GrapesEditor = () => {
                       value={aiApiKey}
                       onChange={e => setAiApiKey(e.target.value)}
                       placeholder="sk-ant-api03-..."
-                      style={{ flex: 1, background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
+                      style={{ flex: 1, background: '#f9fafb', border: '1px solid #d1d5db', color: '#000', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
                     />
                     <button
                       onClick={() => {
@@ -2997,22 +3181,22 @@ const GrapesEditor = () => {
                         }
                         setShowApiKeyInput(false);
                       }}
-                      style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >Save</button>
                   </div>
                   <div style={{ fontSize: 10, color: aiApiKey ? '#10b981' : '#f97316', marginTop: 6 }}>
                     {aiApiKey ? '✅ Claude AI active (claude-3-5-haiku)' : '⚠️ Demo mode — limited commands only'}
                   </div>
-                  <div style={{ fontSize: 9, color: '#4a4a6a', marginTop: 4 }}>Key is stored locally in your browser only.</div>
+                  <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 4 }}>Key is stored locally in your browser only.</div>
                 </div>
               )}
 
               {/* ── HISTORY TAB ── */}
               {showHistory ? (
-                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, background: '#fff' }}>
                   {aiHistory.length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                      <span style={{ fontSize: 10, color: '#64748b' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
+                      <span style={{ fontSize: 10, color: '#6b7280' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
                       <button
                         onClick={() => { setAiHistory([]); localStorage.removeItem(`ai_history_${pageId}`); }}
                         style={{ fontSize: 10, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
@@ -3023,7 +3207,7 @@ const GrapesEditor = () => {
                     <div
                       style={{
                         textAlign: 'center',
-                        color: '#4a4a6a',
+                        color: '#6b7280',
                         fontSize: 13,
                         padding: '32px 0',
                         lineHeight: 1.6,
@@ -3036,12 +3220,12 @@ const GrapesEditor = () => {
                     </div>
                   ) : (
                     aiHistory.map(h => (
-                      <div key={h.id} style={{ background: '#1a1a2e', borderRadius: 10, border: '1px solid #2a2a3e', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div key={h.id} style={{ background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 9, color: '#64748b', fontWeight: 700 }}>🕐 {h.timestamp}</span>
-                          <span style={{ fontSize: 9, background: 'rgba(124,58,237,0.2)', color: '#a78bfa', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
+                          <span style={{ fontSize: 9, color: '#6b7280', fontWeight: 700 }}>🕐 {h.timestamp}</span>
+                          <span style={{ fontSize: 9, background: 'rgba(99,102,241,0.1)', color: '#4f46e5', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#e2e8f0', fontStyle: 'italic' }}>"{h.prompt}"</div>
+                        <div style={{ fontSize: 12, color: '#111827', fontStyle: 'italic' }}>"{h.prompt}"</div>
                         <div style={{ fontSize: 11, color: '#10b981' }}>✅ {h.summary}</div>
                       </div>
                     ))
@@ -3052,15 +3236,15 @@ const GrapesEditor = () => {
                   {/* ── CHAT TAB ── */}
 
                   {/* Selection Context Bar */}
-                  <div style={{ padding: '8px 14px', background: '#0d0d1a', borderBottom: '1px solid #1e1e2d', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ padding: '8px 14px', background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeComponent ? '#10b981' : '#f97316', boxShadow: activeComponent ? '0 0 6px #10b981' : '0 0 6px #f97316', flexShrink: 0 }} />
-                    <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: '#4b5563', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {activeComponent ? `🎯 ${selectedLabel}` : '⬅️ Select an element on canvas'}
                     </span>
                     <button
                       onClick={() => { setChatMessages([WELCOME_MSG]); localStorage.removeItem(`ai_chat_messages_${pageId}`); }}
-                      title="Chat clear karo"
-                      style={{ fontSize: 11, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
+                      title="Clear chat"
+                      style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
                     >🗑️</button>
                     <span style={{ fontSize: 9, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                       🤖 Claude AI
@@ -3068,21 +3252,21 @@ const GrapesEditor = () => {
                   </div>
 
                   {/* Chat Messages */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: '#fff' }}>
                     {chatMessages.map((msg, i) => (
                       <div key={i} style={{ display: 'flex', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-end' }}>
                         {msg.role === 'ai' && (
-                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>✨</div>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, color: '#fff' }}>✨</div>
                         )}
                         <div style={{
                           maxWidth: '80%',
-                          background: msg.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#6366f1)' : '#1a1a2e',
-                          color: '#e2e8f0',
+                          background: msg.role === 'user' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : '#f3f4f6',
+                          color: msg.role === 'user' ? '#fff' : '#111827',
                           borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                           padding: '9px 12px',
                           fontSize: 12,
                           lineHeight: 1.6,
-                          border: msg.role === 'ai' ? '1px solid #2a2a3e' : 'none',
+                          border: msg.role === 'ai' ? '1px solid #e5e7eb' : 'none',
                           whiteSpace: 'pre-line',
                           wordBreak: 'break-word'
                         }}>
@@ -3092,10 +3276,10 @@ const GrapesEditor = () => {
                     ))}
                     {chatLoading && (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✨</div>
-                        <div style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff' }}>✨</div>
+                        <div style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
                           {[0, 1, 2].map(d => (
-                            <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', animation: `bounce 1.2s ${d * 0.2}s infinite` }} />
+                            <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', animation: `bounce 1.2s ${d * 0.2}s infinite` }} />
                           ))}
                         </div>
                       </div>
@@ -3104,8 +3288,8 @@ const GrapesEditor = () => {
                   </div>
 
                   {/* Input Area */}
-                  <div style={{ padding: '12px 14px', borderTop: '1px solid #1e1e2d', background: '#0a0a14' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${chatInput.trim() ? '#7c3aed' : '#2a2a3e'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}>
+                  <div style={{ padding: '12px 14px', borderTop: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                    <div style={{ background: '#fff', border: `1px solid ${chatInput.trim() ? '#6366f1' : '#d1d5db'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
                       <textarea
                         ref={aiInputRef}
                         value={chatInput}
@@ -3116,15 +3300,15 @@ const GrapesEditor = () => {
                             processAiChat();
                           }
                         }}
-                        placeholder="How can I help you'"
-                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
+                        placeholder="How can I help you..."
+                        style={{ background: 'transparent', border: 'none', color: '#000', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
                       />
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#4a4a6a', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
+                        <span style={{ color: '#9ca3af', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
                         <button
                           onClick={processAiChat}
                           disabled={chatLoading || !chatInput.trim()}
-                          style={{ background: chatLoading || !chatInput.trim() ? '#2a2a3e' : 'linear-gradient(135deg,#7c3aed,#6366f1)', color: chatLoading || !chatInput.trim() ? '#64748b' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
+                          style={{ background: chatLoading || !chatInput.trim() ? '#e5e7eb' : 'linear-gradient(135deg,#818cf8,#6366f1)', color: chatLoading || !chatInput.trim() ? '#9ca3af' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
                         >
                           {chatLoading ? '...' : <><SparklesIcon /> Send</>}
                         </button>
@@ -3137,15 +3321,15 @@ const GrapesEditor = () => {
 
             {/* SEO Panel */}
             <div style={{ flex: 1, display: leftTab === 'seo' ? 'flex' : 'none', flexDirection: 'column', padding: 20, gap: 20 }}>
-              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
-                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Page Meta Title</label>
-                <input type="text" value={pageTitle} onChange={e => setPageTitle(e.target.value)} placeholder="Enter page title..." style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
+              <div style={{ borderBottom: '1px solid #1f2937', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#9ca3af', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Page Meta Title</label>
+                <input type="text" value={pageTitle} onChange={e => setPageTitle(e.target.value)} placeholder="Enter page title..." style={{ width: '100%', background: '#0f172a', border: '1px solid #1f2937', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
               </div>
-              <div style={{ borderBottom: '1px solid #1e1e2d', paddingBottom: 20 }}>
-                <label style={{ display: 'block', color: '#cbd5e1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Meta Description</label>
-                <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} placeholder="Enter SEO description..." rows={5} style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3e', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', resize: 'none' }} />
+              <div style={{ borderBottom: '1px solid #1f2937', paddingBottom: 20 }}>
+                <label style={{ display: 'block', color: '#9ca3af', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>Meta Description</label>
+                <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} placeholder="Enter SEO description..." rows={5} style={{ width: '100%', background: '#0f172a', border: '1px solid #1f2937', color: '#fff', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', resize: 'none' }} />
               </div>
-              <button onClick={() => { updatePageMutation.mutate({ metaTitle: pageTitle, metaDescription: metaDesc }); toast.success('SEO Settings Saved'); }} style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Update Settings</button>
+              <button onClick={() => { updatePageMutation.mutate({ metaTitle: pageTitle, metaDescription: metaDesc }); toast.success('SEO Settings Saved'); }} style={{ background: 'linear-gradient(135deg, #818cf8, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Update Settings</button>
             </div>
 
             {/* Thank You Panel */}
@@ -3254,7 +3438,7 @@ const GrapesEditor = () => {
         </div>
 
         {/* ══ CANVAS (light grey bg) ══ */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e2e8f0' }}>
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e5e7eb' }}>
           <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
           {/* ── CSS Loading Overlay — shown while template CSS/fonts load ── */}
           {isCanvasLoading && (
@@ -3269,10 +3453,10 @@ const GrapesEditor = () => {
               <div style={{
                 width: 44, height: 44, borderRadius: '50%',
                 border: '3px solid rgba(124,58,237,0.15)',
-                borderTop: '3px solid #7c3aed',
+                borderTop: '3px solid #818cf8',
                 animation: 'spin 0.8s linear infinite',
               }} />
-              <p style={{ color: '#7c3aed', fontWeight: 700, fontSize: 13, letterSpacing: 0.3, margin: 0 }}>
+              <p style={{ color: '#818cf8', fontWeight: 700, fontSize: 13, letterSpacing: 0.3, margin: 0 }}>
                 Loading template...
               </p>
               <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
@@ -3281,12 +3465,12 @@ const GrapesEditor = () => {
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}
-        <div style={{
-          width: 280, flexShrink: 0, background: '#0f0f1a',
-          borderLeft: '1px solid #1e1e2d', display: 'flex', flexDirection: 'column',
+        <div className="gjs-editor gjs-one-bg" style={{
+          width: 280, flexShrink: 0, background: '#ffffff',
+          borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column',
         }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', padding: '0 10px', borderBottom: '1px solid #1e1e2d', height: 48, alignItems: 'center', background: '#0a0a14' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
             <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
@@ -3298,10 +3482,10 @@ const GrapesEditor = () => {
       {/* ═══════════════ AI PROMPT MODAL ═══════════════ */}
       {aiOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 520, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+          <div style={{ width: 520, background: '#111827', borderRadius: 16, border: '1px solid #1f2937', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
             {/* Header */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <SparklesIcon />
               </div>
               <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>AI Section Generator</span>
@@ -3322,7 +3506,7 @@ const GrapesEditor = () => {
                     key={q}
                     onClick={() => setAiPrompt(q)}
                     style={{
-                      background: '#252540', color: '#a5b4fc', border: '1px solid #2a2a3e',
+                      background: '#252540', color: '#a5b4fc', border: '1px solid #1f2937',
                       borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer',
                     }}
                   >{q}</button>
@@ -3335,7 +3519,7 @@ const GrapesEditor = () => {
                 placeholder="e.g., Create a hero section with a lead capture form for a roofing company..."
                 rows={4}
                 style={{
-                  width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e',
+                  width: '100%', background: '#111128', color: '#e5e7eb', border: '1px solid #1f2937',
                   borderRadius: 8, padding: 14, fontSize: 13, fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
@@ -3348,7 +3532,7 @@ const GrapesEditor = () => {
                   onClick={handleAiGenerate}
                   disabled={aiLoading || !aiPrompt.trim()}
                   style={{
-                    flex: 2, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff',
+                    flex: 2, background: 'linear-gradient(135deg,#818cf8,#6366f1)', color: '#fff',
                     border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     opacity: (aiLoading || !aiPrompt.trim()) ? 0.5 : 1,
                   }}
@@ -3364,8 +3548,8 @@ const GrapesEditor = () => {
       {/* ═══════════════ EDIT COMPONENT AI MODAL ═══════════════ */}
       {editAiOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 440, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 440, background: '#111827', borderRadius: 16, border: '1px solid #1f2937', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
                 <SparklesIcon />
               </div>
@@ -3387,19 +3571,19 @@ const GrapesEditor = () => {
                 rows={3}
                 autoFocus
                 style={{
-                  width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e',
+                  width: '100%', background: '#111128', color: '#e5e7eb', border: '1px solid #1f2937',
                   borderRadius: 8, padding: 14, fontSize: 13, fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
                 <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Submit with <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#cbd5e1', fontSize: 11, fontFamily: 'inherit' }}>Ctrl</kbd> + <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#cbd5e1', fontSize: 11, fontFamily: 'inherit' }}>↵</kbd>
+                  Submit with <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#9ca3af', fontSize: 11, fontFamily: 'inherit' }}>Ctrl</kbd> + <kbd style={{ background: '#252540', padding: '2px 6px', borderRadius: 4, border: '1px solid #475569', color: '#9ca3af', fontSize: 11, fontFamily: 'inherit' }}>↵</kbd>
                 </span>
                 <button
                   onClick={handleEditAiGenerate}
                   disabled={aiLoading || !editAiPrompt.trim()}
                   style={{
-                    background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff',
+                    background: 'linear-gradient(135deg,#818cf8,#6366f1)', color: '#fff',
                     border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                     opacity: (aiLoading || !editAiPrompt.trim()) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 6
                   }}
@@ -3415,8 +3599,8 @@ const GrapesEditor = () => {
       {/* ═══════════════ SEO MODAL ═══════════════ */}
       {seoOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 480, background: '#1a1a2e', borderRadius: 16, border: '1px solid #2a2a3e', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 480, background: '#111827', borderRadius: 16, border: '1px solid #1f2937', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,.4)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#10b981,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                 <SettingsIcon />
               </div>
@@ -3432,7 +3616,7 @@ const GrapesEditor = () => {
                   value={pageTitle}
                   onChange={e => setPageTitle(e.target.value)}
                   placeholder="E.g. My Awesome Landing Page"
-                  style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', background: '#111128', color: '#e5e7eb', border: '1px solid #1f2937', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div style={{ marginBottom: 24 }}>
@@ -3442,15 +3626,15 @@ const GrapesEditor = () => {
                   onChange={e => setMetaDesc(e.target.value)}
                   placeholder="Brief description of your page for search engines..."
                   rows={4}
-                  style={{ width: '100%', background: '#111128', color: '#e2e8f0', border: '1px solid #2a2a3e', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                  style={{ width: '100%', background: '#111128', color: '#e5e7eb', border: '1px solid #1f2937', borderRadius: 8, padding: '12px 14px', fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
                 />
               </div>
               <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e5e7eb', fontSize: 13, cursor: 'pointer' }}>
                   <input type="checkbox" checked={noIndex} onChange={e => setNoIndex(e.target.checked)} style={{ cursor: 'pointer' }} />
                   Hide from search engines (noindex)
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0', fontSize: 13, cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e5e7eb', fontSize: 13, cursor: 'pointer' }}>
                   <input type="checkbox" checked={noFollow} onChange={e => setNoFollow(e.target.checked)} style={{ cursor: 'pointer' }} />
                   Do not follow links (nofollow)
                 </label>
@@ -3480,11 +3664,11 @@ const GrapesEditor = () => {
       {/* ═══════════════ PUBLISH SUCCESS MODAL ═══════════════ */}
       {publishModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-          <div style={{ width: 500, background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: 20, border: '1px solid rgba(124,58,237,0.4)', overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.6)', animation: 'publishPop 0.35s cubic-bezier(0.34,1.56,0.64,1)' }}>
+          <div style={{ width: 500, background: 'linear-gradient(145deg, #111827, #16213e)', borderRadius: 20, border: '1px solid rgba(124,58,237,0.4)', overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.6)', animation: 'publishPop 0.35s cubic-bezier(0.34,1.56,0.64,1)' }}>
             {/* Top gradient banner */}
-            <div style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #06b6d4 100%)', padding: '32px 32px 28px', textAlign: 'center', position: 'relative' }}>
+            <div style={{ background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #06b6d4 100%)', padding: '32px 32px 28px', textAlign: 'center', position: 'relative' }}>
               {/* Confetti dots */}
-              {['#fbbf24', '#34d399', '#f87171', '#60a5fa', '#a78bfa'].map((c, i) => (
+              {['#fbbf24', '#34d399', '#f87171', '#60a5fa', '#818cf8'].map((c, i) => (
                 <div key={i} style={{ position: 'absolute', width: 8, height: 8, borderRadius: '50%', background: c, top: `${10 + i * 14}%`, left: `${8 + i * 16}%`, opacity: 0.8 }} />
               ))}
               {['#f87171', '#34d399', '#fbbf24'].map((c, i) => (
@@ -3524,13 +3708,13 @@ const GrapesEditor = () => {
                         setTimeout(() => {
                           btn.innerHTML = originalContent;
                           btn.style.background = 'rgba(124,58,237,0.2)';
-                          btn.style.color = '#a78bfa';
+                          btn.style.color = '#818cf8';
                         }, 2000);
                       } else {
                         toast.error('Failed to copy. Please copy manually.');
                       }
                     }}
-                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
+                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', color: '#818cf8', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
                   >
                     <Copy size={12} />
                     Copy
@@ -3551,7 +3735,7 @@ const GrapesEditor = () => {
                     setSiteStatus('published');
                     toast.success('Site successfully published and status updated!');
                   }}
-                  style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
+                  style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #818cf8, #6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
                 >
                   Done
                 </button>
@@ -3567,33 +3751,33 @@ const GrapesEditor = () => {
       {/* ═══════════════ CODE VIEW MODAL ═══════════════ */}
       {codeView && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.9)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ height: 48, background: '#1a1a2e', borderBottom: '1px solid #2a2a3e', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10 }}>
+          <div style={{ height: 48, background: '#111827', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10 }}>
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Code Editor</span>
             <div style={{ flex: 1 }} />
-            <button onClick={applyCode} style={{ ...modalBtn, background: '#7c3aed' }}>Apply Code</button>
+            <button onClick={applyCode} style={{ ...modalBtn, background: '#818cf8' }}>Apply Code</button>
             <button onClick={downloadHtml} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
             <button onClick={() => setCodeView(false)} style={{ ...modalBtn, background: '#374151' }}>Close</button>
           </div>
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #2a2a3e' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #1f2937' }}>
               <div style={{ padding: '8px 14px', background: '#0f0f1e', color: '#818cf8', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>HTML</div>
               <textarea
                 value={htmlCode} onChange={e => setHtmlCode(e.target.value)}
-                style={{ flex: 1, background: '#0a0a16', color: '#e2e8f0', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
+                style={{ flex: 1, background: '#0a0a16', color: '#e5e7eb', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '8px 14px', background: '#0f0f1e', color: '#22d3ee', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>CSS</div>
               <textarea
                 value={cssCode} onChange={e => setCssCode(e.target.value)}
-                style={{ flex: 1, background: '#0a0a16', color: '#e2e8f0', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
+                style={{ flex: 1, background: '#0a0a16', color: '#e5e7eb', border: 'none', padding: 16, fontFamily: '"Fira Code",monospace', fontSize: 12, resize: 'none', outline: 'none', lineHeight: 1.7 }}
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Pickr is now used directly — no custom color picker panel needed */}
+
     </div>
   );
 };
@@ -3654,49 +3838,53 @@ const blendWithWhiteBlack = (hex: string, ratio: number): string => {
   return '#' + [blend(r), blend(g), blend(b)].map(n => n.toString(16).padStart(2, '0')).join('');
 };
 
-const Sep = () => <div style={{ width: 1, height: 20, background: '#2a2a3e', margin: '0 2px' }} />;
+const Sep = () => <div style={{ width: 1, height: 20, background: '#e5e7eb', margin: '0 2px' }} />;
 
 const TBtn = ({ children, onClick, title, active = false }: { children: React.ReactNode; onClick: () => void; title?: string; active?: boolean }) => (
   <button title={title} onClick={onClick} style={{
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: active ? 'rgba(124,58,237,0.2)' : 'transparent',
-    color: active ? '#a78bfa' : '#94a3b8',
+    background: active ? '#fff' : 'transparent',
+    color: active ? '#4f46e5' : '#64748b',
+    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
     border: 'none', borderRadius: 5, padding: '5px 8px', cursor: 'pointer',
     transition: 'all .12s', minWidth: 30, height: 30,
   }}
-    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#252540'; (e.currentTarget as HTMLButtonElement).style.color = '#e2e8f0'; } }}
-    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
+    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#e5e7eb'; (e.currentTarget as HTMLButtonElement).style.color = '#111827'; } }}
+    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#64748b'; } }}
   >{children}</button>
 );
 const TabButton = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
   <button onClick={onClick} style={{
-    padding: '12px 16px', fontSize: 11, fontWeight: 700, border: 'none',
-    background: 'none', cursor: 'pointer', letterSpacing: 0.5,
-    color: active ? '#fff' : '#64748b',
-    borderBottom: `2px solid ${active ? '#7c3aed' : 'transparent'}`,
+    flex: 1, padding: '0 16px', height: '100%', fontSize: 13, fontWeight: 500, border: 'none',
+    background: 'none', cursor: 'pointer', letterSpacing: 0,
+    color: active ? '#818cf8' : '#4b5563',
+    borderBottom: `2px solid ${active ? '#818cf8' : 'transparent'}`,
     transition: 'all .2s',
-    textTransform: 'uppercase'
+    textTransform: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 0
   }}>{children}</button>
 );
 
-const NavIcon = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
-  <button onClick={onClick} style={{
+const NavIcon = ({ children, active, onClick, title }: { children: React.ReactNode; active: boolean; onClick: () => void; title?: string }) => (
+  <button onClick={onClick} title={title} style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-    color: active ? '#a78bfa' : '#94a3b8', transition: 'all .2s'
+    color: active ? '#6366f1' : '#000000', transition: 'all .2s'
   }}>
-    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(124,58,237,0.1)' : 'transparent' }}>
-      {children[0]}
+    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(99,102,241,0.1)' : 'transparent' }}>
+      {Array.isArray(children) ? children[0] : children}
     </div>
-    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{children[1]}</span>
   </button>
 );
 
 /* ── Styles ── */
 const outlineBtn: React.CSSProperties = {
   display: 'flex', alignItems: 'center', background: 'transparent',
-  border: '1px solid #2a2a3e', borderRadius: 7, padding: '6px 12px',
-  fontSize: 13, fontWeight: 500, color: '#e2e8f0', cursor: 'pointer',
+  border: '1px solid #1f2937', borderRadius: 7, padding: '6px 12px',
+  fontSize: 13, fontWeight: 500, color: '#e5e7eb', cursor: 'pointer',
 };
 const modalBtn: React.CSSProperties = {
   color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px',
@@ -3798,7 +3986,7 @@ function buildPublishHtml(
   scripts: string,
   opts: { title?: string; desc?: string; primaryColor?: string; secondaryColor?: string }
 ): string {
-  const primary = opts.primaryColor || '#7c3aed';
+  const primary = opts.primaryColor || '#818cf8';
   const secondary = opts.secondaryColor || '#6366f1';
   const title = (opts.title || 'Landing Page').replace(/"/g, '&quot;');
   const desc = (opts.desc || '').replace(/"/g, '&quot;');

@@ -848,7 +848,7 @@ export const healthcare02Html = `
       <h4>Contact</h4>
       <ul class="v2-footer-contact">
         <li><span class="material-symbols-outlined">location_on</span><span>14 Harley Street, London W1G 9PH</span></li>
-        <li><span class="material-symbols-outlined">phone</span><span>+44 20 7946 0000</span></li>
+        <li><span class="material-symbols-outlined">phone</span><span>PHONE_PLACEHOLDER</span></li>
         <li><span class="material-symbols-outlined">mail</span><span>care@vitacare.co.uk</span></li>
         <li><span class="material-symbols-outlined">schedule</span><span>Mon–Sat: 8am – 8pm</span></li>
       </ul>
