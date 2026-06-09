@@ -399,7 +399,7 @@ export const finance01Html = `
   <section class="testimonial">
     <div class="container">
       <div class="test-box">
-        <p>"Finova transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the numbers that move our business forward."</p>
+        <p>"PROJECT_NAME_PLACEHOLDER transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the numbers that move our business forward."</p>
         <div class="test-meta">
           <h4>Marcus Chen</h4>
           <span>CFO, Helix Ventures</span>
@@ -432,8 +432,8 @@ export const finance01Html = `
        <div class="logo" style="color: #fff; font-size: 1.5rem; letter-spacing: 2px;">LOGO_PLACEHOLDER</div>
        <p style="color: #94a3b8; line-height: 1.8;">Premium finance consulting for ambitious businesses. Trusted by founders, CFOs and boards across 40+ countries.</p>
        <div style="margin-top: 2rem; color: #fff;">
-          <p>+1 (208) 555-0112</p>
-          <p>hello@finova.com</p>
+          <p>PHONE_PLACEHOLDER</p>
+          <p>EMAIL_PLACEHOLDER</p>
        </div>
     </div>
     <div class="foot-col">
