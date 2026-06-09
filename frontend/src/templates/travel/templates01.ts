@@ -618,14 +618,14 @@ export const travel01Html = `
                 <label>Email Address</label>
                 <div class="lead-field-inner">
                   <i class="fa-solid fa-envelope"></i>
-                  <input type="email" name="email" placeholder="you@email.com" required>
+                  <input type="email" name="email" placeholder="EMAIL_PLACEHOLDER" required>
                 </div>
               </div>
               <div class="lead-field">
                 <label>Phone Number</label>
                 <div class="lead-field-inner">
                   <i class="fa-solid fa-phone"></i>
-                  <input type="tel" name="phone" placeholder="+1 234 567 890" required>
+                  <input type="tel" name="phone" placeholder="PHONE_PLACEHOLDER" required>
                 </div>
               </div>
               <div class="lead-form-submit-wrap">
@@ -724,7 +724,7 @@ export const travel01Html = `
             <i class="fa-solid fa-phone"></i>
             <div>
               <div style="font-size: 0.8rem; color: var(--gray);">Call Us Anytime</div>
-              +1 234 567 890
+              PHONE_PLACEHOLDER
             </div>
           </div>
         </div>

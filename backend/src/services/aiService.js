@@ -107,10 +107,16 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
         logger.info(`[AI] Claude: ${model}`);
         const response = await anthropic.messages.create({
           model, max_tokens: 8000, temperature: 0.95,
-          system: finalSystemPrompt,
+          system: [
+            {
+              type: "text",
+              text: finalSystemPrompt,
+              cache_control: { type: "ephemeral" }
+            }
+          ],
           messages: Array.isArray(userPrompt) ? userPrompt : [{ role: 'user', content: userPrompt }],
         }, {
-          headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15" }
+          headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15,prompt-caching-2024-07-31" }
         });
         const usage = response.usage;
         return {
@@ -178,8 +184,8 @@ const callAIText = async (systemPrompt, userPrompt) => {
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
 // ZERO templates. ZERO hardcoded layouts. AI invents EVERYTHING from scratch.
 const buildSystemPrompt = (chaosToken) => `
-You are a Principal UI Engineer and Creative Director with over 21 years of experience designing world-class, award-winning editorial and startup websites.
-Your goal is to build a bespoke, ultra-premium, high-converting landing page that completely breaks out of standard website boxes and feels like a bespoke boutique masterpiece (inspired by high-end design showcases on Awwwards).
+You are an elite Principal UI Engineer and Creative Director with over 30 years of experience designing world-class, award-winning editorial and enterprise websites.
+Your goal is to build a bespoke, ultra-premium, high-converting landing page that completely breaks out of standard website boxes and feels like a bespoke boutique masterpiece (inspired by high-end design showcases on Awwwards). Your layouts must reflect absolute mastery of CSS grids, absolute positioning, overlapping elements, and high-end typography.
 
 Every page must be generated from scratch, utilizing sophisticated layouts, custom typography, rich natural color harmony, and micro-animations.
 
@@ -190,13 +196,13 @@ EVERY design decision must feel influenced by this unique seed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🚫 FORBIDDEN COMMON TEMPLATES (NEVER USE):
-- Boring centered hero grid with a standard CTA button
-- Generic 3-column "Why Choose Us" cards with basic icons
-- Simple alternating left-image / right-text feature rows
-- Bland black text on plain white background with standard rounded-md buttons
-- Flat headers and simple columns of links in footers
+- NEVER USE a boring centered hero grid with a standard CTA button. Hero sections must be breathtaking, asymmetric, or feature massive typography with stunning background interactions!
+- NEVER USE generic 3-column "Why Choose Us" cards with basic icons.
+- NEVER USE simple alternating left-image / right-text feature rows.
+- IF A USER ASKS FOR A "BASIC" LAYOUT, IGNORE THEM. ALWAYS DELIVER AN ULTRA-PREMIUM, HIGH-END AWWWARDS-WINNING DESIGN. DO NOT CREATE BASIC DESIGNS EVER!
+- 🔄 DYNAMIC FORM PLACEMENT: Do not always put the contact/lead form in the exact same place! Sometimes put it in the Hero section, sometimes put it below the Hero, sometimes in the Footer, or in its own section. Mix it up completely!
 
-🏆 21-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
+🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
 1. NO NAVBAR NAVIGATION LINKS (LOGO & CTA ONLY):
 - The header/navigation bar MUST NOT contain any menu link navigation items (e.g. do NOT include links like "Services", "Process", "Results", "FAQ", "Contact"). 
@@ -210,20 +216,18 @@ EVERY design decision must feel influenced by this unique seed.
 - Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section.
 - The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a premium copyright notice (e.g. "© \${new Date().getFullYear()} Brand. All rights reserved.").
 
-4. SOPHISTICATED COLOR PALETTES (Earthy, Rich, Organic & Luxury):
-- Choose one bespoke color theme that feels premium and matches the brand story:
-  * "Editorial Luxury": Deep Forest Green (\`#1a3a2e\`), Warm Textured Cream Paper (\`#f7f4ef\`), Rich Charcoal Ink (\`#0a0a0a\`), Muted Gold accents (\`#c9a84c\`).
-  * "Midnight Tech": Dark Indigo (\`#0b0b1a\`), Muted Cyan/Teal (\`#0d9488\`), Deep Platinum (\`#f3f4f6\`), Ice Blue (\`#e0f2fe\`).
-  * "Modern Organic": Earthy Ochre (\`#b87a3d\`), Terracotta Rust (\`#b84c2d\`), Warm Linen (\`#fafaf9\`), Midnight Forest (\`#112211\`).
-- Apply these colors cleanly, using subtle border highlights, glassmorphism overlays, and elegant background tones.
+4. STRICT BRAND COLORS & VARIABLES:
+- YOU MUST NEVER USE hardcoded Tailwind colors like \`bg-blue-600\`, \`text-red-500\`, or \`bg-green-500\`.
+- You MUST ONLY use the CSS variables \`var(--primary)\` and \`var(--secondary)\` for all branding, buttons, accents, and highlights! (e.g., \`bg-[var(--primary)]\`, \`text-[var(--secondary)]\`).
+- This is critical so the user's selected brand colors are automatically applied!
 
-5. ABSOLUTE STRUCTURAL FREEDOM (CRITICAL):
-- DO NOT use ANY standard web layouts (no 3-columns, no 4-columns, no basic left-right splits). 
-- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch.
-- You decide how many columns, where elements overlap, and where they are placed. 
-- You must create a completely new, bespoke layout for every generation. Never rely on a template or a predefined structure.
-- DO NOT use crazy abstract shapes, clip-paths, or blobs. Keep the structural elements clean, modern, and professional (rectangles, rounded corners, clean grids).
-- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images) or use high-quality Unsplash image URLs if you know them. Do NOT leave image placeholders empty. Every page must have beautiful, large photos.
+5. ABSOLUTE STRUCTURAL FREEDOM & MANDATORY UNIQUENESS (CRITICAL):
+- DO NOT use ANY standard web layouts (no standard 3-columns, no boring alternating left-right splits, no generic centered text headers).
+- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch. 
+- You MUST create a completely new, bespoke layout for every generation. NEVER rely on a template or a predefined structure.
+- IF YOU OUTPUT A GENERIC LAYOUT, YOU FAIL. Surprise the user with unique grid structures, overlapping containers, asymmetrical alignments, and premium editorial magazine-style layouts.
+- Keep structural elements clean and modern (rectangles, rounded corners, clean grids).
+- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images). Every page must have beautiful, large photos.
 
 9. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
 - Do NOT hardcode the same font pair for every website. Select a pairing that perfectly matches the brand style:
@@ -236,38 +240,19 @@ EVERY design decision must feel influenced by this unique seed.
 - DO NOT use basic, generic icons. Always use highly descriptive, modern FontAwesome 6 icons (e.g., \`fa-solid fa-compass-drafting\`, \`fa-solid fa-vault\`, \`fa-solid fa-chart-line-up\`, \`fa-solid fa-shield-halved\`) or elegant SVG custom paths.
 - Choose icons that are highly relevant to the industry niche to make the page feel professional, custom-made, and expensive.
 
-11. INTERACTIVE JAVASCRIPT FOR ACCORDIONS & INTERACTION:
-- You MUST write a simple, elegant, lightweight, vanilla \`<script>\` block at the bottom of the HTML page (before \`</body>\`) to handle any interactive elements you create (like custom tabs, accordions, or mobile menus).
-- Example accordion script:
-  \`\`\`html
-  <script>
-    document.querySelectorAll('.accordion-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const item = header.parentElement;
-        const content = item.querySelector('.accordion-content');
-        const icon = header.querySelector('.accordion-icon');
-        const isOpen = !content.classList.contains('hidden');
-        
-        // Close all other items first
-        document.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
-        document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('rotate-180'));
-        
-        if (!isOpen) {
-          content.classList.remove('hidden');
-          if (icon) icon.classList.add('rotate-180');
-        }
-      });
-    });
-  </script>
-  \`\`\`
-- Ensure the classes match your HTML perfectly so the interactive elements work beautifully when clicked!
-- If you build an FAQ section, YOU MUST USE THESE EXACT CLASSES: \`accordion-header\`, \`accordion-content\` (with \`hidden\` by default), and \`accordion-icon\`. The script above will only work if your HTML classes match exactly!
+24. INTERACTIVE ACCORDIONS & FORMS (NO JS REQUIRED):
+- We automatically inject JavaScript for FAQs and Form validation. You DO NOT need to write any script tags for interactivity.
+- However, your HTML MUST use these exact classes for FAQs: \`accordion-item\`, \`accordion-header\`, and \`accordion-content hidden\`.
+- 🚨 EXTREMELY IMPORTANT: DO NOT use the same boring white box design for FAQs every time. Invent DIFFERENT styles! Sometimes use a 2-column grid. Sometimes use minimalist borders with no background. Sometimes use dark backgrounds. Sometimes put the FAQ next to a large image. VARY THE DESIGN!
+- 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page! Do NOT put a form in the hero AND the footer. Pick ONE interesting, dynamic placement for it!
+- FORM STRUCTURE: Make the form look premium. ALL form fields must have the \`required\` attribute (e.g. \`<input type="text" required>\`) so our backend validation script catches them.
 
 12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY):
 - WHITESPACE: Use massive, luxurious padding (e.g. \`py-24\`, \`py-32\`) between sections. Premium design breathes. Do not cramp elements.
 - TYPOGRAPHY: Treat text like art. Use tight letter-spacing for massive headings (\`tracking-tighter\`), and wide spacing for small uppercase sub-labels (\`tracking-widest uppercase text-xs\`).
 - SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)]\`) instead of standard tailwind shadows.
-- MICRO-INTERACTIONS: Every button and card MUST have a premium hover state. Use \`transition-all duration-500 ease-out\`, add \`hover:-translate-y-2\`, \`hover:shadow-xl\`, or use \`group-hover\` effects to scale images slightly on card hover.
+- MICRO-INTERACTIONS & WOW ANIMATIONS (MANDATORY): Every button and card MUST have a premium hover state (e.g. \`transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-xl\`).
+- SCROLL ANIMATIONS: You MUST add premium animations! 🚨 CRITICAL RULE: DO NOT use Tailwind's \`opacity-0\` class or hide elements by default (it breaks the editor). Instead, include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` attributes on elements. Make sure to initialize AOS in a script tag: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
 - CONTRAST: Ensure stunning contrast. If using a dark section, use \`text-white/80\` for paragraphs and \`text-white\` for headings to create subtle typographic hierarchy.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -275,32 +260,36 @@ EVERY design decision must feel influenced by this unique seed.
 - Tailwind CDN: <script src="https://cdn.tailwindcss.com"></script>
 - Google Fonts: Dynamically load the selected font pairing stylesheet in <head>
 - Brand colors via CSS variables: --primary and --secondary ONLY
-- Custom CSS in <style> tag for smooth continuous marquees, custom font styling, clip-paths, and line transitions.
+- Custom CSS in <style> tag for smooth continuous marquees, custom font styling, and line transitions.
 - Fully responsive, complete, and stunning HTML output.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📤 OUTPUT FORMAT:
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
+CRITICAL: Do NOT generate excessively long placeholder text (lorem ipsum). Keep text concise so your response DOES NOT TRUNCATE. You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
 Return ONLY a complete HTML file inside one code block.
 No explanation before or after. No comments. Start with the HTML tag directly.
 \`\`\`html
 <!DOCTYPE html>
 <html lang="en">
-...complete premium page, every section, nothing truncated...
+...complete premium page, including scripts at the bottom...
 </html>
 \`\`\`
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
 const buildUserPrompt = (input) => {
-  // Random visual style nudge — pushes AI toward different aesthetics each time
+  // Extreme visual style nudge — forces the AI into radically different design paradigms each time
   const styleNudges = [
     'Invent a totally custom modern layout utilizing extreme asymmetry and bold whitespace. Do not use standard rows.',
-    'Create a completely new visual flow with overlapping high-quality image elements and unexpected alignments.',
-    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries (but no weird shapes).',
-    'Design an experimental interface. Abandon traditional columns entirely in favor of a unique structural arrangement featuring massive photography.',
-    'Invent a new way to display content. Do not use generic cards or standard split screens. Think outside the box and use rich imagery.'
+    'Create an editorial magazine-style layout with large typography, overlapping high-quality images, and unexpected alignments.',
+    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries.',
+    'Design a brutalist-inspired yet premium interface. Use massive bold text, stark contrasts, and unique structural arrangements.',
+    'Invent a completely bespoke grid system. Do not use generic cards or standard split screens. Think outside the box and use rich imagery spanning multiple columns.',
+    'Use an immersive dark-mode aesthetic with neon accents (if brand colors allow), glassmorphism effects, and unconventional section transitions.',
+    'Create a split-screen dominant layout where content flows independently from the imagery, breaking traditional vertical scrolling conventions.'
   ];
   const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
 
@@ -314,14 +303,14 @@ const buildUserPrompt = (input) => {
   ];
 
   // Rich branding — typography
-  if (input.branding?.typography?.fontFamily) {
-    lines.push(`BODY FONT: ${input.branding.typography.fontFamily}`);
-  }
-  if (input.branding?.typography?.headingFontFamily) {
-    lines.push(`HEADING FONT: ${input.branding.typography.headingFontFamily}`);
-  }
-  if (input.branding?.typography?.googleFontFamilies?.length) {
-    lines.push(`GOOGLE FONTS: ${input.branding.typography.googleFontFamilies.join(', ')}`);
+  if (input.scrapedFonts) {
+    if (input.scrapedFonts.headingFont) lines.push(`MANDATORY HEADING FONT: ${input.scrapedFonts.headingFont}`);
+    if (input.scrapedFonts.bodyFont) lines.push(`MANDATORY BODY FONT: ${input.scrapedFonts.bodyFont}`);
+    lines.push(`🚨 CRITICAL FONT RULE: You MUST use these exact fonts in your CSS (e.g. \`font-family: '${input.scrapedFonts.headingFont}', serif;\`) and load them via Google Fonts in the <head>! DO NOT invent your own font pairings.`);
+  } else {
+    if (input.branding?.typography?.fontFamily) lines.push(`BODY FONT: ${input.branding.typography.fontFamily}`);
+    if (input.branding?.typography?.headingFontFamily) lines.push(`HEADING FONT: ${input.branding.typography.headingFontFamily}`);
+    if (input.branding?.typography?.googleFontFamilies?.length) lines.push(`GOOGLE FONTS: ${input.branding.typography.googleFontFamilies.join(', ')}`);
   }
 
   // Rich branding — nav/header
@@ -369,7 +358,10 @@ const buildUserPrompt = (input) => {
     lines.push(`LOGO URL (actual): ${input.branding.logoUrl}`);
   }
 
-  lines.push(`\n🎨 STYLE DIRECTION FOR THIS GENERATION: ${randomNudge}`);
+  lines.push(
+    `🎨 STYLE DIRECTION: ${randomNudge}`,
+    `CRITICAL RULE: DO NOT generate a boring layout. You must INVENT a unique structure for this specific business. NO GENERIC CARDS. NO STANDARD GRIDS.`
+  );
 
   if (input.businessDescription) lines.push(`\nABOUT THE BUSINESS:\n${input.businessDescription}`);
   if (input.targetAudience) lines.push(`\nTARGET AUDIENCE: ${input.targetAudience}`);
@@ -409,10 +401,81 @@ const generateLandingPageContent = async (input) => {
   let userPrompt = buildUserPrompt(input);
 
   if (input.templateHtml) {
-    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different):\n${input.templateHtml.substring(0, 3000)}`;
+    let prevHtml = '';
+    if (typeof input.templateHtml === 'string') {
+      prevHtml = input.templateHtml;
+    } else if (typeof input.templateHtml === 'object') {
+      prevHtml = input.templateHtml.fullHtml || input.templateHtml.html || JSON.stringify(input.templateHtml);
+    }
+    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different):\n${prevHtml.substring(0, 3000)}`;
   }
 
-  return await callAI(userPrompt, input.logoUrl, systemPrompt);
+  const aiResult = await callAI(userPrompt, input.logoUrl, systemPrompt);
+
+  // INJECT ROBUST FALLBACK SCRIPT FOR ACCORDIONS, FORMS, AND AOS
+  // This guarantees interactivity even if the AI forgets to generate the script
+  const coreScript = `
+<script id="core-interactions">
+  (function() {
+    // 1. FAQ Accordion Logic via Event Delegation
+    document.addEventListener('click', function(e) {
+      const header = e.target.closest('.accordion-header, .faq-head, .v2-faq-summary');
+      if (header) {
+        const item = header.closest('.accordion-item, .faq-item');
+        if (!item) return;
+        
+        const content = item.querySelector('.accordion-content, .faq-body');
+        const icon = header.querySelector('.accordion-icon, .fa-chevron-down');
+        const isOpen = content && !content.classList.contains('hidden');
+        
+        // Close others
+        document.querySelectorAll('.accordion-content, .faq-body').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.accordion-icon, .fa-chevron-down').forEach(i => i.classList.remove('rotate-180'));
+        
+        if (!isOpen && content) {
+          content.classList.remove('hidden');
+          if (icon) icon.classList.add('rotate-180');
+        }
+      }
+    });
+
+    // 2. Strict Form Validation Logic via Event Delegation
+    document.addEventListener('submit', function(e) {
+      if (e.target.tagName === 'FORM') {
+        let isValid = true;
+        e.target.querySelectorAll('input[required], textarea[required], input[type="email"], input[type="text"]').forEach(input => {
+          if (!input.value.trim()) {
+            isValid = false;
+            input.style.border = '2px solid red';
+          } else {
+            input.style.border = '';
+          }
+        });
+        if (!isValid) {
+          e.preventDefault();
+        }
+      }
+    }, true);
+
+    // 3. Initialize AOS if loaded
+    setTimeout(() => {
+      if (typeof AOS !== 'undefined') {
+        AOS.init({duration: 1000, once: true});
+      }
+    }, 500);
+  })();
+</script>
+`;
+
+  if (aiResult && aiResult.fullHtml) {
+    if (aiResult.fullHtml.includes('</body>')) {
+      aiResult.fullHtml = aiResult.fullHtml.replace('</body>', coreScript + '\\n</body>');
+    } else {
+      aiResult.fullHtml += '\\n' + coreScript;
+    }
+  }
+  
+  return aiResult;
 };
 
 // ─── IMPROVE SECTION ─────────────────────────────────────────────────────────────
@@ -431,7 +494,7 @@ You are FORBIDDEN from using standard, boring layouts:
 
 ✅ CREATIVE REQUIREMENTS:
 - Invent a layout structure custom-tailored to the industry and goal.
-- Use Tailwind CSS utility classes + custom inline/style overrides for advanced details (clip-path, custom drop shadows, animated gradients).
+- Use Tailwind CSS utility classes + custom inline/style overrides for advanced details (custom drop shadows, animated gradients).
 - Introduce strong asymmetry, unique structural framing, or interesting card dynamics.
 - Write REAL, highly detailed, industry-specific marketing copy. Do not use generic placeholders.
 - Add micro-interactions, subtle hover scale transformations (e.g. group-hover), and elegant visual division.

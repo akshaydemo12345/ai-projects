@@ -165,7 +165,8 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
         if (pageDoc) {
           const project = await Project.findById(pageDoc.projectId);
-          if (project && project.preSlug) {
+          if (project && project.preSlug && !previewToken) {
+            // Require preSlug for live access, but allow it if preview token is present
             pageDoc = null;
           }
         }
