@@ -79,10 +79,10 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
   };
 
   return (
-    <div className="w-full flex-shrink-0 flex flex-col bg-[#0a0a14] text-sm h-full font-sans select-none" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="w-full flex-shrink-0 flex flex-col bg-[#fff] text-sm h-full font-sans select-none" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
       {/* Search Bar */}
-      <div className="px-3 py-3 border-b border-[#1e1e2d] bg-[#0a0a14]">
+      <div className="px-3 py-3 border-b border-[#e5e7eb] bg-[#fff]">
         <div className="relative">
           <Search className="absolute left-2.5 top-[8px] text-[#71717a]" size={14} />
           <input
@@ -90,13 +90,13 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#05050a] border border-[#1e1e2d] hover:border-[#3f3f46] focus:border-[#a78bfa] rounded-[4px] py-1.5 pl-8 pr-3 text-[13px] focus:outline-none text-[#e4e4e7] placeholder:text-[#71717a] transition-colors"
+            className="w-full bg-[#f9fafb] border border-[#d1d5db] hover:border-[#9ca3af] focus:border-[#6366f1] rounded-[4px] py-1.5 pl-8 pr-3 text-[13px] focus:outline-none text-[#000000] placeholder:text-[#9ca3af] transition-colors"
           />
         </div>
       </div>
 
       {/* Accordion Categories */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#161616] custom-scroll">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#fff] custom-scroll">
         {CATEGORIES.map(category => {
           const blocks = category.blocks.filter(b => b.label.toLowerCase().includes(searchQuery.toLowerCase()));
           if (blocks.length === 0) return null;
@@ -104,22 +104,22 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
           const isExpanded = expandedCats[category.name];
 
           return (
-            <div key={category.name} className="border-b border-[#2a2a2a]">
+            <div key={category.name} className="border-b border-[#e5e7eb]">
               <button
                 onClick={() => toggleCat(category.name)}
-                className="flex items-center justify-between w-full px-3 py-2.5 text-left bg-[#0f0f1a] hover:bg-[#161622] transition-colors group"
+                className="flex items-center justify-between w-full px-3 py-2.5 text-left bg-[#fff] hover:bg-[#f9fafb] transition-colors group"
               >
-                <span className="font-medium text-[#d4d4d8] text-[13px]">
+                <span className="font-medium text-[#000000] text-[13px]">
                   {category.name}
                 </span>
                 {isExpanded ?
-                  <ChevronDown size={14} className="text-[#a1a1aa] group-hover:text-[#d4d4d8] transition-colors" /> :
-                  <ChevronRight size={14} className="text-[#a1a1aa] group-hover:text-[#d4d4d8] transition-colors" />
+                  <ChevronDown size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" /> :
+                  <ChevronRight size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" />
                 }
               </button>
 
               {isExpanded && (
-                <div className="p-3 bg-[#0a0a14]">
+                <div className="p-3 bg-[#fff]">
                   {category.isGrid ? (
                     <div className="grid grid-cols-2 gap-[6px]">
                       {blocks.map(block => (
@@ -128,12 +128,12 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
                           draggable
                           onDragStart={(e) => onDragStart(block.id, e)}
                           onClick={() => onAdd(block.id)}
-                          className="flex flex-col items-center justify-center py-4 px-2 aspect-[1.3] bg-transparent border border-[#2a2a2a] rounded-[4px] cursor-grab active:cursor-grabbing hover:bg-[#1e1e1e] hover:border-[#3f3f46] transition-all group"
+                          className="flex flex-col items-center justify-center py-4 px-2 aspect-[1.3] bg-transparent border border-[#e5e7eb] rounded-[4px] cursor-grab active:cursor-grabbing hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-all group"
                         >
                           <div className="h-[28px] flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
                             {block.icon}
                           </div>
-                          <span className="text-[11px] mt-1 text-[#a1a1aa] group-hover:text-[#d4d4d8] text-center leading-tight">
+                          <span className="text-[11px] mt-1 text-[#4b5563] group-hover:text-[#111827] text-center leading-tight">
                             {block.label}
                           </span>
                         </div>
@@ -152,10 +152,10 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
                           {/* Layout wireframe rendering */}
                           <div className="w-full h-[22px] flex gap-[4px]">
                             {block.layoutCols?.map((col: number, idx: number) => (
-                              <div key={idx} style={{ flex: col }} className="border border-[#71717a] group-hover:border-[#a1a1aa] bg-transparent rounded-[1px] transition-colors" />
+                              <div key={idx} style={{ flex: col }} className="border border-[#d1d5db] group-hover:border-[#9ca3af] bg-transparent rounded-[1px] transition-colors" />
                             ))}
                           </div>
-                          <span className="text-[11px] text-[#8b8b93] group-hover:text-[#a1a1aa] text-center transition-colors">
+                          <span className="text-[11px] text-[#6b7280] group-hover:text-[#111827] text-center transition-colors">
                             {block.label}
                           </span>
                         </div>
@@ -170,8 +170,8 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
       </div>
 
       {/* Bottom Fixed Button */}
-      <div className="px-3 py-3 border-t border-[#1e1e2d] bg-[#0a0a14]">
-        <button className="flex items-center justify-center w-full gap-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-medium py-2 rounded-[4px] transition-colors text-[13px]">
+      <div className="px-3 py-3 border-t border-[#e5e7eb] bg-[#fff]">
+        <button className="flex items-center justify-center w-full gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium py-2 rounded-[4px] transition-colors text-[13px]">
           <Plus size={16} />
           <span>Add more blocks</span>
         </button>
