@@ -26,12 +26,45 @@ const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 gap-1.5 text-xs">
-          <Eye className="h-3.5 w-3.5" /> Preview
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onSave} className="text-white/60 hover:text-white hover:bg-white/10 gap-1.5 text-xs">
-          <Save className="h-3.5 w-3.5" /> Save
-        </Button>
+        <button 
+          title="Live Preview"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            background: "rgb(243, 244, 246)",
+            border: "1px solid rgb(229, 231, 235)",
+            borderRadius: "7px",
+            padding: "7px",
+            fontSize: "13px",
+            justifyContent: "center",
+            fontWeight: 500,
+            color: "rgb(17, 24, 39)",
+            cursor: "pointer",
+            gap: "6px"
+          }}
+        >
+          <Eye style={{ width: "15px", height: "15px" }} /> Preview
+        </button>
+        <button 
+          title="Save Changes"
+          onClick={onSave}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            background: "rgb(17, 24, 39)",
+            border: "none",
+            borderRadius: "7px",
+            padding: "7px",
+            fontSize: "23px",
+            fontWeight: 500,
+            color: "rgb(255, 255, 255)",
+            cursor: "pointer",
+            opacity: 1,
+            gap: "6px"
+          }}
+        >
+          <Save style={{ width: "15px", height: "15px" }} /> Save
+        </button>
         <Link to="/dashboard/published">
           <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs px-4">Publish</Button>
         </Link>
