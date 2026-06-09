@@ -750,7 +750,7 @@ const GrapesEditor = () => {
       },
       panels: { defaults: [] },
       selectorManager: {
-        componentFirst: true,
+        componentFirst: false,
         appendTo: '#selectors-container',
       },
       styleManager: {
@@ -1010,7 +1010,16 @@ const GrapesEditor = () => {
           droppable: false,
           editable: false,
           resizable: true,
-          stylable: true,
+          // Explicitly allow all style properties
+          stylable: [
+            'color', 'font-size', 'width', 'height',
+            'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+            'display', 'opacity', 'cursor', 'background-color',
+            'border', 'border-radius', 'text-align',
+            'position', 'top', 'right', 'bottom', 'left', 'z-index',
+            'transform', 'transition', 'box-shadow',
+          ],
           traits: [
             {
               type: 'button',
@@ -1454,31 +1463,23 @@ const GrapesEditor = () => {
       });
 
 
-      // ── Canvas click: icon picker on EVERY click on an icon ──
+      // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
       setTimeout(() => {
         try {
           const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
           const frameDoc = frameEl?.contentDocument;
           if (frameDoc) {
             frameDoc.addEventListener('click', () => {
-              // Wait a bit for GrapesJS selection to settle
               setTimeout(() => {
                 const selected = editor.getSelected();
                 if (!selected) return;
-
                 const type = selected.get('type');
-                const tagName = (selected.get('tagName') || '').toLowerCase();
-                const classModels = selected.getClasses();
-                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
-
-                const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
-                const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
-
-                if (isIcon) {
-                  editor.runCommand('open-icon-picker');
-                } else if (isCustomCode) {
+                const classes = selected.getClasses ? selected.getClasses() : [];
+                const isCustomCode = type === 'custom-code' || (Array.isArray(classes) && classes.includes('gjs-custom-code'));
+                if (isCustomCode) {
                   editor.runCommand('open-custom-code-editor');
                 }
+                // NOTE: Icon picker is opened on double-click only (component:dblclick below)
               }, 50);
             }, true);
           }
