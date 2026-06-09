@@ -108,6 +108,19 @@ const PublicLandingPage = () => {
     e.preventDefault();
     e.stopImmediatePropagation();
     
+    // Validate required fields
+    var isValid = true;
+    f.querySelectorAll('input[required], textarea[required]').forEach(function(input) {
+      if (!input.value.trim()) {
+        isValid = false;
+        input.style.border = '2px solid red';
+      } else {
+        input.style.border = '';
+      }
+    });
+    
+    if (!isValid) return;
+
     if(f.getAttribute("data-submitting")==="true") return;
     f.setAttribute("data-submitting","true");
 
@@ -197,7 +210,20 @@ const PublicLandingPage = () => {
     // ─── Also replace any remaining var(--primary) references with real color fallback ───
     const BRAND_COLOR = BRAND_PRIMARY;
 
+    let extractedTitle = res.metaTitle || res.title || 'Your Brand';
+    let extractedFavicon = '';
+    
+    if (res.content && res.content.fullHtml) {
+      const titleMatch = res.content.fullHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      if (titleMatch) extractedTitle = titleMatch[1].trim();
+      
+      const faviconMatch = res.content.fullHtml.match(/<link[^>]*rel="icon"[^>]*href="([^"]*)"[^>]*>/i);
+      if (faviconMatch) extractedFavicon = `<link rel="icon" href="${faviconMatch[1]}"/>`;
+    }
+
     const coreDependencies = `
+      <title>${extractedTitle}</title>
+      ${extractedFavicon}
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_PRIMARY}', secondary: '${BRAND_SECONDARY}' } } } };
@@ -310,17 +336,36 @@ const PublicLandingPage = () => {
               });
             });
 
-            // ─── Custom FAQ toggles (e.g. Travel template) ───
+            // ─── Custom FAQ toggles (e.g. Travel template & AI generation) ───
             document.addEventListener('click', function(e) {
-              const faqHead = e.target.closest('.faq-head, .v2-faq-summary');
+              const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .accordion-header');
               if (faqHead && !faqHead.closest('details')) {
-                const item = faqHead.parentElement;
-                if (item && item.classList.contains('faq-item')) {
-                  const allItems = document.querySelectorAll('.faq-item');
+                const item = faqHead.closest('.faq-item, .accordion-item');
+                if (item) {
+                  const allItems = document.querySelectorAll('.faq-item, .accordion-item');
+                  
+                  const content = item.querySelector('.faq-body, .accordion-content');
+                  const icon = faqHead.querySelector('.accordion-icon, .fa-chevron-down');
+                  const isOpen = content && !content.classList.contains('hidden');
+
                   allItems.forEach(function(el) {
-                    if (el !== item) el.classList.remove('active');
+                    if (el !== item) {
+                      el.classList.remove('active');
+                      const c = el.querySelector('.faq-body, .accordion-content');
+                      if (c) c.classList.add('hidden');
+                      const i = el.querySelector('.accordion-icon, .fa-chevron-down');
+                      if (i) i.classList.remove('rotate-180');
+                    }
                   });
                   item.classList.toggle('active');
+                  
+                  if (!isOpen && content) {
+                    content.classList.remove('hidden');
+                    if (icon) icon.classList.add('rotate-180');
+                  } else if (isOpen && content) {
+                    content.classList.add('hidden');
+                    if (icon) icon.classList.remove('rotate-180');
+                  }
                 }
               }
 

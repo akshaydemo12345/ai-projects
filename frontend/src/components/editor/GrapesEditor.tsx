@@ -266,6 +266,8 @@ const GrapesEditor = () => {
       }
     }
 
+    let extractedScripts: {src: string, innerHTML: string}[] = [];
+
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
       console.log('📄 Full HTML structure detected. Extracting components...');
@@ -280,20 +282,19 @@ const GrapesEditor = () => {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
 
-        // Extract Links and Scripts for Canvas Injection
-        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
-        const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.outerHTML);
+        // Extract scripts to be injected AFTER setComponents
+        extractedScripts = Array.from(doc.querySelectorAll('script')).map(scriptEl => ({
+          src: scriptEl.src,
+          innerHTML: scriptEl.innerHTML
+        }));
 
+        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
+        
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           links.forEach(linkHtml => {
             if (!canvasDoc.head.innerHTML.includes(linkHtml)) {
               canvasDoc.head.insertAdjacentHTML('beforeend', linkHtml);
-            }
-          });
-          scripts.forEach(scriptHtml => {
-            if (!canvasDoc.body.innerHTML.includes(scriptHtml)) {
-              canvasDoc.body.insertAdjacentHTML('beforeend', scriptHtml);
             }
           });
         }
@@ -587,22 +588,28 @@ const GrapesEditor = () => {
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
-      const configHTML = `
-      <script>
-        tailwind.config = {
-          theme: {
-            extend: {
-              colors: {
-                primary: 'var(--primary)',
-                secondary: 'var(--secondary)',
-                accent: 'var(--accent)'
+      // ─── Apply Tailwind config into canvas frame so it actually executes in the editor ───
+      if (canvasDoc) {
+        let twScript = canvasDoc.getElementById('tw-config');
+        if (!twScript) {
+          twScript = canvasDoc.createElement('script');
+          twScript.id = 'tw-config';
+          canvasDoc.head.appendChild(twScript);
+        }
+        twScript.innerHTML = `
+          tailwind.config = {
+            theme: {
+              extend: {
+                colors: {
+                  primary: 'var(--primary)',
+                  secondary: 'var(--secondary)',
+                  accent: 'var(--accent)'
+                }
               }
             }
           }
-        }
-      </script>
-      `;
-      dbContent = configHTML + dbContent;
+        `;
+      }
 
       editor.setComponents(dbContent);
       // ── Hide loader after canvas has had time to render CSS/fonts ──
@@ -616,6 +623,16 @@ const GrapesEditor = () => {
             cDoc.querySelectorAll('.animate-up, .animate-fade').forEach((el: Element) => {
               el.classList.add('in-view');
             });
+            
+            // Execute extracted scripts safely AFTER components are set
+            if (extractedScripts && extractedScripts.length > 0) {
+              extractedScripts.forEach(scriptData => {
+                const newScript = cDoc.createElement('script');
+                if (scriptData.src) newScript.src = scriptData.src;
+                newScript.innerHTML = scriptData.innerHTML;
+                cDoc.body.appendChild(newScript);
+              });
+            }
           }
         } catch (e) { /* ignore */ }
         setIsCanvasLoading(false);
@@ -1398,6 +1415,12 @@ const GrapesEditor = () => {
               padding: 0 !important;
               overflow-x: hidden;
             }
+            /* FORCE ALL ANIMATED ELEMENTS TO BE VISIBLE IN THE EDITOR */
+            [data-aos], .fade-up, .opacity-0 {
+              opacity: 1 !important;
+              transform: none !important;
+              visibility: visible !important;
+            }
           `;
           canvasDoc.head.appendChild(resetStyle);
         }
@@ -1466,6 +1489,21 @@ const GrapesEditor = () => {
             editor.runCommand('open-custom-code-editor');
           }, 100);
         }
+      });
+
+      // ─── Auto-reveal animated components when dragged to canvas ───
+      editor.on('component:add', (model) => {
+        const makeVisible = (comp: any) => {
+          const classes = comp.getClasses ? comp.getClasses() : [];
+          if (classes.includes('animate-up') || classes.includes('animate-fade')) {
+            comp.addClass('in-view');
+          }
+          const components = comp.components();
+          if (components && components.length) {
+            components.forEach((child: any) => makeVisible(child));
+          }
+        };
+        makeVisible(model);
       });
 
       editor.on('component:dblclick', (model) => {
