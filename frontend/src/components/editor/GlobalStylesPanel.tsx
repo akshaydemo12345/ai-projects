@@ -401,35 +401,35 @@ button, .btn, [class*="btn-"] {
   }, [styles.Colors.primary.value, styles.Colors.secondary.value, onBrandingColorsChange]);
 
   return (
-    <div className="w-full flex-shrink-0 flex flex-col bg-[#0a0a14] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="w-full flex-shrink-0 flex flex-col bg-[#fff] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {Object.entries(styles).map(([category, properties]) => (
-        <div key={category} className="border-b border-[#1e1e2d]">
+        <div key={category} className="border-b border-[#e5e7eb]">
           <button
             onClick={() => toggleSection(category)}
-            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#0f0f1a] hover:bg-[#161622] transition-colors group"
+            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#fff] hover:bg-[#f9fafb] transition-colors group"
           >
-            <span className="font-semibold text-[#cbd5e1] text-[12px] uppercase tracking-wide">
+            <span className="font-semibold text-[#000000] text-[12px] uppercase tracking-wide">
               {category}
             </span>
             {expanded[category] ?
-              <ChevronDown size={14} className="text-[#64748b] group-hover:text-[#94a3b8] transition-colors" /> :
-              <ChevronRight size={14} className="text-[#64748b] group-hover:text-[#94a3b8] transition-colors" />
+              <ChevronDown size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" /> :
+              <ChevronRight size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" />
             }
           </button>
 
           {expanded[category] && (
-            <div className="p-4 bg-[#0a0a14] flex flex-col gap-3">
+            <div className="p-4 bg-[#fff] flex flex-col gap-3">
               {Object.entries(properties).map(([key, prop]) => (
                 <div key={key} className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-[#818cf8] flex items-center gap-1">
+                    <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
                       {prop.label}
                     </span>
 
                     {/* Controls Rendering */}
-                    <div className={`flex bg-[#0a0a14] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
-                      ? 'border-violet-500 shadow-[0_0_10px_rgba(124,58,237,0.3)] bg-violet-500/10'
-                      : 'border-[#2a2a3e] hover:border-[#4f46e5]'
+                    <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
+                      ? 'border-[#6366f1] shadow-[0_0_10px_rgba(99,102,241,0.15)] bg-[#6366f1]/5'
+                      : 'border-[#d1d5db] hover:border-[#6366f1]'
                       }`}>
 
                       {prop.type === 'color' && (
@@ -443,39 +443,39 @@ button, .btn, [class*="btn-"] {
                             type="text"
                             value={prop.value}
                             onChange={(e) => handleUpdate(category, key, e.target.value)}
-                            className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-2 py-0.5 focus:outline-none"
+                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-2 py-0.5 focus:outline-none"
                           />
                         </>
                       )}
 
                       {prop.type === 'number' && (
                         <>
-                          <div className="px-1.5 text-[#64748b] flex flex-col justify-center gap-[1px]">
-                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-transparent border-b-[#94a3b8] cursor-pointer hover:border-b-[#c0caf5]"></div>
-                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-transparent border-t-[#94a3b8] cursor-pointer hover:border-t-[#c0caf5]"></div>
+                          <div className="px-1.5 text-[#6b7280] flex flex-col justify-center gap-[1px]">
+                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-transparent border-b-[#9ca3af] cursor-pointer hover:border-b-[#6366f1]"></div>
+                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-transparent border-t-[#9ca3af] cursor-pointer hover:border-t-[#6366f1]"></div>
                           </div>
                           <input
                             type="number"
                             step="0.1"
                             value={prop.value}
                             onChange={(e) => handleUpdate(category, key, String(parseFloat(e.target.value) || 0))}
-                            className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-1 py-0.5 focus:outline-none"
+                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-1 py-0.5 focus:outline-none"
                           />
-                          {prop.unit && <span className="text-[10px] text-[#64748b] pr-2">{prop.unit}</span>}
+                          {prop.unit && <span className="text-[10px] text-[#6b7280] pr-2">{prop.unit}</span>}
                         </>
                       )}
 
                       {prop.type === 'font' && (
                         <div className="flex items-center w-full min-w-[160px]">
-                          <Type size={12} className="text-[#64748b] ml-1.5" />
+                          <Type size={12} className="text-[#6b7280] ml-1.5" />
                           <select
                             value={prop.value}
                             onChange={(e) => handleUpdate(category, key, e.target.value)}
-                            className="bg-transparent border-none text-[#e2e8f0] text-[12px] w-full px-2 py-0.5 focus:outline-none appearance-none cursor-pointer"
+                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-2 py-0.5 focus:outline-none appearance-none cursor-pointer"
                             style={{ fontFamily: prop.value }}
                           >
                             {DEFAULT_FONTS.map(f => (
-                              <option key={f} value={f} className="bg-[#1a1a2e] text-white" style={{ fontFamily: f }}>{f}</option>
+                              <option key={f} value={f} className="bg-[#fff] text-[#000000]" style={{ fontFamily: f }}>{f}</option>
                             ))}
                           </select>
                         </div>
