@@ -23,9 +23,12 @@
  */
 
 const cheerio = require('cheerio');
+const axios = require('axios');
 const logger = require('../utils/logger');
 const { openPage } = require('../utils/puppeteerFetch');
-const Vibrant = require('node-vibrant/node');
+// node-vibrant v4: named export { Vibrant }  — v3: default export
+// This one-liner handles both versions correctly
+const { Vibrant = require('node-vibrant/node') } = require('node-vibrant/node');
 
 /** Promise-based sleep — replaces page.waitForTimeout (removed in Puppeteer v22+) */
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -73,10 +76,15 @@ const extractColorsFromSvgMarkup = (svgMarkup) => {
 };
 
 /**
- * Extract dominant colors specifically from the logo image
- * Returns primary logo color and secondary logo color
+ * Extract dominant colors specifically from the logo image.
+ * Uses axios for the HTTP fetch (no Puppeteer page required) so this works
+ * from any call context — scrape pipeline, branding extract-from-website, etc.
+ *
+ * @param {string} logoUrl   Absolute URL or data URI of the logo
+ * @param {object} _page     Unused (kept for signature compatibility)
+ * @param {string} baseUrl   Base URL for resolving relative paths
  */
-const extractLogoColors = async (logoUrl, page, baseUrl) => {
+const extractLogoColors = async (logoUrl, page, baseUrl, isFavicon = false) => {
     if (!logoUrl) return { primary: null, secondary: null, palette: [], source: null };
 
     try {
@@ -84,45 +92,77 @@ const extractLogoColors = async (logoUrl, page, baseUrl) => {
         let isSvg = false;
         let svgMarkup = null;
 
-        // Handle data URI logos (inline SVG or base64)
+        // ── 1. Data URI (inline SVG or base64 raster) ──
         if (logoUrl.startsWith('data:image/')) {
             const match = logoUrl.match(/^data:([^;]+);base64,(.*)$/);
             if (match) {
-                const mimeType = match[1];
-                isSvg = mimeType.includes('svg');
+                isSvg = match[1].includes('svg');
                 imageBuffer = Buffer.from(match[2], 'base64');
-                if (isSvg) {
-                    svgMarkup = imageBuffer.toString('utf8');
-                }
+                if (isSvg) svgMarkup = imageBuffer.toString('utf8');
             }
         }
-        // Handle HTTP URLs
-        else if (logoUrl.startsWith('http')) {
-            // Use Puppeteer's page to fetch the image
-            const imageData = await page.evaluate(async (url) => {
-                try {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    return new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
-                } catch (err) {
-                    return null;
-                }
-            }, logoUrl);
+        // ── 2. HTTP/HTTPS URL ──
+        else {
+            // Resolve relative URLs
+            let resolvedUrl = logoUrl;
+            if (!logoUrl.startsWith('http') && baseUrl) {
+                try { resolvedUrl = new URL(logoUrl, baseUrl).toString(); } catch (_) { }
+            }
 
-            if (imageData) {
-                const match = imageData.match(/^data:([^;]+);base64,(.*)$/);
-                if (match) {
-                    const mimeType = match[1];
-                    isSvg = mimeType.includes('svg') || logoUrl.toLowerCase().includes('.svg');
-                    imageBuffer = Buffer.from(match[2], 'base64');
-                    if (isSvg) {
-                        svgMarkup = imageBuffer.toString('utf8');
+            // ── 2a. Try axios first (fast, no browser overhead) ──
+            let axiosFailed = false;
+            try {
+                const resp = await axios.get(resolvedUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 8000,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+                        'Accept': 'image/*,*/*',
+                        'Referer': baseUrl || resolvedUrl,
+                    },
+                    maxRedirects: 5,
+                });
+                imageBuffer = Buffer.from(resp.data);
+                const contentType = (resp.headers['content-type'] || '').toLowerCase();
+                isSvg = contentType.includes('svg') || resolvedUrl.toLowerCase().includes('.svg');
+                if (isSvg) svgMarkup = imageBuffer.toString('utf8');
+            } catch (fetchErr) {
+                logger.warn(`[LogoColors] axios fetch failed for ${resolvedUrl}: ${fetchErr.message}`);
+                axiosFailed = true;
+            }
+
+            // ── 2b. axios failed — use Puppeteer page to fetch (same session, cookies, anti-bot bypass) ──
+            if (axiosFailed && page) {
+                try {
+                    logger.info(`[LogoColors] Retrying via Puppeteer page.evaluate: ${resolvedUrl}`);
+                    const b64 = await page.evaluate(async (url) => {
+                        try {
+                            const res = await fetch(url, { credentials: 'include' });
+                            if (!res.ok) return null;
+                            const buf = await res.arrayBuffer();
+                            const bytes = new Uint8Array(buf);
+                            let bin = '';
+                            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                            return btoa(bin);
+                        } catch (e) { return null; }
+                    }, resolvedUrl);
+
+                    if (b64) {
+                        imageBuffer = Buffer.from(b64, 'base64');
+                        isSvg = resolvedUrl.toLowerCase().includes('.svg');
+                        if (isSvg) svgMarkup = imageBuffer.toString('utf8');
+                        logger.info(`[LogoColors] Puppeteer fetch succeeded for ${resolvedUrl} (${imageBuffer.length} bytes)`);
+                    } else {
+                        logger.warn(`[LogoColors] Puppeteer fetch returned null for ${resolvedUrl}`);
+                        return { primary: null, secondary: null, palette: [], source: null };
                     }
+                } catch (pageErr) {
+                    logger.warn(`[LogoColors] Puppeteer fetch failed for ${resolvedUrl}: ${pageErr.message}`);
+                    return { primary: null, secondary: null, palette: [], source: null };
                 }
+            } else if (axiosFailed) {
+                // No page available and axios failed — nothing we can do
+                return { primary: null, secondary: null, palette: [], source: null };
             }
         }
 
@@ -131,79 +171,132 @@ const extractLogoColors = async (logoUrl, page, baseUrl) => {
             return { primary: null, secondary: null, palette: [], source: null };
         }
 
-        // For SVG, extract fill/stroke colors directly
+        // ── 3. SVG: extract fill/stroke colors directly, optionally via Vibrant ──
         if (isSvg && svgMarkup) {
             const svgColors = extractColorsFromSvgMarkup(svgMarkup);
-            logger.info(`[LogoColors] SVG direct colors extracted: ${svgColors.slice(0, 3).join(', ')}`);
+            logger.info(`[LogoColors] SVG direct colors: ${svgColors.slice(0, 3).join(', ')}`);
 
             if (svgColors.length > 0) {
-                // Also try Vibrant on rendered SVG for additional colors
+                // Try rendering SVG → PNG → Vibrant for richer palette
                 try {
-                    // Need to render SVG to PNG first
                     const { Resvg } = require('@resvg/resvg-js');
                     const resvg = new Resvg(svgMarkup, { fitTo: { mode: 'width', value: 256 } });
                     const pngBuffer = resvg.render().asPng();
                     const palette = await Vibrant.from(pngBuffer).getPalette();
                     const vibrantColors = Object.values(palette)
-                        .filter(swatch => swatch && swatch.hex)
+                        .filter(s => s && s.hex)
                         .sort((a, b) => (b.population || 0) - (a.population || 0))
-                        .map(swatch => swatch.hex.toUpperCase());
+                        .map(s => s.hex.toUpperCase());
 
-                    // Merge: SVG-native first, then Vibrant colors
                     const merged = [...svgColors];
                     for (const vc of vibrantColors) {
-                        if (!merged.some(c => c.toLowerCase() === vc.toLowerCase())) {
-                            merged.push(vc);
-                        }
+                        if (!merged.some(c => c.toLowerCase() === vc.toLowerCase())) merged.push(vc);
                     }
-                    return {
-                        primary: merged[0] || null,
-                        secondary: merged[1] || null,
-                        palette: merged.slice(0, 5),
-                        source: 'svg-direct'
-                    };
-                } catch (renderErr) {
-                    logger.debug(`[LogoColors] SVG render failed: ${renderErr.message}`);
-                    return {
-                        primary: svgColors[0] || null,
-                        secondary: svgColors[1] || null,
-                        palette: svgColors.slice(0, 5),
-                        source: 'svg-direct'
-                    };
+                    return { primary: merged[0] || null, secondary: merged[1] || null, palette: merged.slice(0, 5), source: 'svg-direct' };
+                } catch (_) {
+                    return { primary: svgColors[0] || null, secondary: svgColors[1] || null, palette: svgColors.slice(0, 5), source: 'svg-direct' };
                 }
             }
         }
 
-        // For raster images, use Vibrant
+        // ── 4. Raster image (PNG / JPEG / WebP / ICO …) ──
+        const sharp = require('sharp');
+
+        const isIco = (logoUrl || '').toLowerCase().includes('.ico');
+        const useFaviconPath = isFavicon || isIco;
+
+        // ── 4a. Favicon / ICO path — pixel frequency counting via sharp raw pixels ──
+        // Vibrant.js uses k-means clustering and FAILS on small icons (16–64px).
+        // Direct pixel frequency counting is reliable for favicons.
+        if (useFaviconPath) {
+            try {
+                // Convert to raw RGBA pixels — handles ICO multi-frame, WebP, PNG, etc.
+                const { data, info } = await sharp(imageBuffer)
+                    .resize(64, 64, { fit: 'inside', withoutEnlargement: true })
+                    .ensureAlpha()
+                    .raw()
+                    .toBuffer({ resolveWithObject: true });
+
+                // Count pixel colors, skip transparent/near-transparent pixels
+                const colorCount = {};
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+                    if (a < 30) continue; // skip transparent
+                    // Quantize to reduce near-identical colors (round to nearest 8)
+                    const rq = Math.round(r / 8) * 8;
+                    const gq = Math.round(g / 8) * 8;
+                    const bq = Math.round(b / 8) * 8;
+                    const hex = '#' + [rq, gq, bq].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('').toUpperCase();
+                    colorCount[hex] = (colorCount[hex] || 0) + 1;
+                }
+
+                // Sort by frequency
+                const sorted = Object.entries(colorCount)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([hex]) => hex);
+
+                // Try non-neutral colors first; if none, accept anything except pure white/black
+                const nonNeutral = sorted.filter(c => !isNeutralHex(c));
+                let colors = nonNeutral.length > 0
+                    ? nonNeutral
+                    : sorted.filter(c => c !== '#FFFFFF' && c !== '#000000' && c !== '#FEFEFE' && c !== '#F8F8F8');
+
+                // Deduplicate visually similar colors (within 20 units per channel)
+                const deduplicated = [];
+                for (const hex of colors) {
+                    const r1 = parseInt(hex.slice(1, 3), 16);
+                    const g1 = parseInt(hex.slice(3, 5), 16);
+                    const b1 = parseInt(hex.slice(5, 7), 16);
+                    const isSimilar = deduplicated.some(h => {
+                        const r2 = parseInt(h.slice(1, 3), 16);
+                        const g2 = parseInt(h.slice(3, 5), 16);
+                        const b2 = parseInt(h.slice(5, 7), 16);
+                        return Math.abs(r1 - r2) < 20 && Math.abs(g1 - g2) < 20 && Math.abs(b1 - b2) < 20;
+                    });
+                    if (!isSimilar) deduplicated.push(hex);
+                    if (deduplicated.length >= 5) break;
+                }
+
+                logger.info(`[LogoColors] Favicon pixel colors: ${deduplicated.slice(0, 3).join(', ')}`);
+                if (deduplicated.length > 0) {
+                    return {
+                        primary: deduplicated[0] || null,
+                        secondary: deduplicated[1] || null,
+                        palette: deduplicated.slice(0, 5),
+                        source: 'favicon-pixel',
+                    };
+                }
+                logger.warn('[LogoColors] Favicon pixel extraction yielded no colors, falling back to Vibrant');
+            } catch (pixelErr) {
+                logger.warn(`[LogoColors] Favicon pixel extraction failed: ${pixelErr.message}, falling back to Vibrant`);
+            }
+        }
+
+        // ── 4b. Standard raster path — Vibrant (good for large logos/photos) ──
         try {
-            const sharp = require('sharp');
             const resizedBuffer = await sharp(imageBuffer)
                 .resize(250, 250, { fit: 'inside', withoutEnlargement: true })
+                .flatten({ background: '#FFFFFF' })
                 .png()
                 .toBuffer();
 
             const palette = await Vibrant.from(resizedBuffer).maxColorCount(64).getPalette();
             const colors = Object.values(palette)
-                .filter(swatch => swatch && swatch.hex)
+                .filter(s => s && s.hex)
                 .sort((a, b) => (b.population || 0) - (a.population || 0))
-                .map(swatch => swatch.hex.toUpperCase())
-                .filter(color => color && !isNeutralHex(color));
+                .map(s => s.hex.toUpperCase())
+                .filter(c => c && !isNeutralHex(c));
 
-            logger.info(`[LogoColors] Raster colors extracted: ${colors.slice(0, 3).join(', ')}`);
-
-            return {
-                primary: colors[0] || null,
-                secondary: colors[1] || null,
-                palette: colors.slice(0, 5),
-                source: 'vibrant'
-            };
+            const colorSource = useFaviconPath ? 'favicon-vibrant' : 'vibrant';
+            logger.info(`[LogoColors] Vibrant colors (${colorSource}): ${colors.slice(0, 3).join(', ')}`);
+            return { primary: colors[0] || null, secondary: colors[1] || null, palette: colors.slice(0, 5), source: colorSource };
         } catch (vibrantErr) {
-            logger.warn(`[LogoColors] Vibrant extraction failed: ${vibrantErr.message}`);
+            logger.warn(`[LogoColors] Vibrant failed: ${vibrantErr.message}`);
             return { primary: null, secondary: null, palette: [], source: null };
         }
 
     } catch (err) {
-        logger.warn(`[LogoColors] Failed to extract logo colors: ${err.message}`);
+        logger.warn(`[LogoColors] Unexpected error: ${err.message}`);
         return { primary: null, secondary: null, palette: [], source: null };
     }
 };
@@ -540,9 +633,16 @@ const IN_BROWSER_EXTRACTOR = async () => {
         } else if (el.tagName === 'SVG') {
             // Inline <svg> — serialize to base64 data URI with proper UTF-8 handling
             const svgHtml = el.outerHTML;
-            // Fix: Proper UTF-8 to base64 conversion
+            // Fix: Use a chunk-based approach to avoid call stack overflow on large SVGs.
+            // btoa(String.fromCharCode(...largeUint8Array)) blows the stack when the array
+            // has tens of thousands of entries; iterate in chunks instead.
             const utf8Bytes = new TextEncoder().encode(svgHtml);
-            const base64 = btoa(String.fromCharCode(...utf8Bytes));
+            let binary = '';
+            const CHUNK = 8192;
+            for (let i = 0; i < utf8Bytes.length; i += CHUNK) {
+                binary += String.fromCharCode(...utf8Bytes.subarray(i, i + CHUNK));
+            }
+            const base64 = btoa(binary);
             logoUrl = `data:image/svg+xml;base64,${base64}`;
             logoFormat = 'svg-inline';
             break;
@@ -1070,10 +1170,53 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         }
 
         // ── Extract Logo Colors ──
+        // Priority: real logo → favicon fallback.
+        // page object passed so Puppeteer fetch can be used if axios is blocked.
         let logoColors = { primary: null, secondary: null, palette: [], source: null };
-        if (identity.logoUrl && page) {
-            logoColors = await extractLogoColors(identity.logoUrl, page, baseUrl);
-            logger.info(`[Scraper] Logo colors extracted: primary=${logoColors.primary}, secondary=${logoColors.secondary}, source=${logoColors.source}`);
+
+        const logoSourceUrl = identity.logoSource !== 'favicon-fallback' ? identity.logoUrl : null;
+        const faviconFallback = identity.faviconUrl || null;
+
+        if (logoSourceUrl) {
+            // ── Case 1: Real logo found ──
+            try {
+                logoColors = await extractLogoColors(logoSourceUrl, page, baseUrl, false);
+                logger.info(`[Scraper] Logo colors extracted: primary=${logoColors.primary}, secondary=${logoColors.secondary}, source=${logoColors.source}`);
+            } catch (logoErr) {
+                logger.warn(`[Scraper] Logo color extraction failed (non-fatal): ${logoErr.message}`);
+            }
+        }
+
+        // ── Case 2: Logo extraction failed or no logo — try favicon ──
+        if (!logoColors.primary && faviconFallback) {
+            try {
+                logger.info(`[Scraper] Attempting color extraction from favicon: ${faviconFallback}`);
+                const favColors = await extractLogoColors(faviconFallback, page, baseUrl, true);
+                if (favColors.primary) {
+                    logoColors = favColors;
+                    logger.info(`[Scraper] Favicon colors extracted: primary=${logoColors.primary}, secondary=${logoColors.secondary}, source=${logoColors.source}`);
+                } else {
+                    logger.warn('[Scraper] Favicon color extraction returned no colors');
+                }
+            } catch (favErr) {
+                logger.warn(`[Scraper] Favicon color extraction failed (non-fatal): ${favErr.message}`);
+            }
+        }
+
+        // ── Case 3: Last resort — pull primary color from CSS/page palette ──
+        if (!logoColors.primary) {
+            const pagePalette = buildPalette(raw);
+            if (pagePalette.primary) {
+                logoColors = {
+                    primary: pagePalette.primary,
+                    secondary: pagePalette.secondary || null,
+                    palette: pagePalette.palette || [],
+                    source: 'css-fallback',
+                };
+                logger.info(`[Scraper] Using CSS page color as fallback: primary=${logoColors.primary}`);
+            } else {
+                logger.warn('[Scraper] No colors extracted from logo, favicon, or CSS');
+            }
         }
 
         // Colors with exact extraction
@@ -1457,4 +1600,4 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
     };
 };
 
-module.exports = { scrapeWebsiteStructure, buildWebsiteProfile };
+module.exports = { scrapeWebsiteStructure, buildWebsiteProfile, extractLogoColorsFromUrl: extractLogoColors };

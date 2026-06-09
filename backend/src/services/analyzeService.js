@@ -225,7 +225,8 @@ const findBestLogo = async ($, baseUrl, faviconUrl = null) => {
 
     if (isLogo) {
       const svgMarkup = $.html(el);
-      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgMarkup).toString('base64')}`;
+      // Fix: explicitly encode as UTF-8 to handle non-ASCII characters in SVG content
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgMarkup, 'utf8').toString('base64')}`;
       if (!seen.has(dataUrl)) {
         candidates.push({ src: dataUrl, score: 95, priority: 2 });
         seen.add(dataUrl);

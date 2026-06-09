@@ -493,7 +493,7 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
       const linkColor = mostFrequent(sampleColors(linkSelectors, 'color', 50));
       const borderColor = mostFrequent(sampleColors(['*'], 'border-color', 50));
 
-      // Logo extraction
+      // Logo extraction — img tags first, then SVG
       const logoEl = findFirstVisible([
         'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]',
         'header img', 'nav img', '.navbar img', '.site-header img',
@@ -509,14 +509,37 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
         ];
         return candidates.find(s => s && !s.startsWith('data:')) || null;
       };
-      const logoUrl = getRealSrc(logoEl);
+      let logoUrl = getRealSrc(logoEl);
 
-      // Favicon extraction
+      // SVG logo fallback: inline SVG or <img src="*.svg"> in header/nav
+      if (!logoUrl) {
+        // Try inline <svg> inside header/nav
+        const svgEl = document.querySelector(
+          'header svg, nav svg, .navbar svg, .site-header svg, .brand svg, a[href="/"] svg'
+        );
+        if (svgEl) {
+          // Serialize SVG to a data URI so it can be used as an image src
+          const svgStr = svgEl.outerHTML;
+          logoUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+        }
+      }
+      if (!logoUrl) {
+        // Try <img> with .svg extension anywhere in header/nav
+        const svgImgEl = document.querySelector(
+          'header img[src$=".svg"], nav img[src$=".svg"], .navbar img[src$=".svg"], .site-header img[src$=".svg"]'
+        );
+        logoUrl = getRealSrc(svgImgEl) || null;
+      }
+
+      // Favicon extraction — prefer higher-res icons
       const faviconEl =
+        document.querySelector('link[rel="apple-touch-icon"]') ||
+        document.querySelector('link[rel="icon"][sizes="32x32"]') ||
+        document.querySelector('link[rel="icon"][sizes="16x16"]') ||
         document.querySelector('link[rel="icon"]') ||
-        document.querySelector('link[rel="shortcut icon"]') ||
-        document.querySelector('link[rel="apple-touch-icon"]');
-      const favicon = faviconEl ? faviconEl.href : (window.location.origin + '/favicon.ico');
+        document.querySelector('link[rel="shortcut icon"]');
+      // Only use /favicon.ico as fallback (will be verified server-side)
+      const favicon = faviconEl ? faviconEl.href : null;
 
       // Font extraction — Google Fonts links + computed font-family on body/headings
       const googleFontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
@@ -780,12 +803,40 @@ const fetchAndExtractBranding = async (websiteUrl) => {
         .find(s => s && !s.startsWith('data:')) || null;
     };
     const domLogoEl = document.querySelector('img.logo, img[alt*="logo" i], img[id*="logo" i], header img, nav img');
-    const domLogoUrl = getRealImgSrc(domLogoEl);
+    let domLogoUrl = getRealImgSrc(domLogoEl);
+
+    // SVG logo fallback from DOM
+    if (!domLogoUrl) {
+      const svgImgEl = document.querySelector(
+        'header img[src$=".svg"], nav img[src$=".svg"], .navbar img[src$=".svg"]'
+      );
+      domLogoUrl = getRealImgSrc(svgImgEl) || null;
+    }
+    if (!domLogoUrl) {
+      const svgEl = document.querySelector('header svg, nav svg, .navbar svg, .site-header svg');
+      if (svgEl) {
+        domLogoUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgEl.outerHTML);
+      }
+    }
 
     // Extract favicon from DOM as fallback
-    const domFavicon =
-      document.querySelector('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')?.href ||
-      null;
+    const domFaviconEl = document.querySelector(
+      'link[rel="apple-touch-icon"], link[rel="icon"][sizes="32x32"], link[rel="icon"], link[rel="shortcut icon"]'
+    );
+    let domFavicon = domFaviconEl?.href || null;
+
+    // If no favicon found in DOM, try /favicon.ico and verify it exists
+    if (!domFavicon) {
+      const faviconIcoUrl = new URL('/favicon.ico', url).toString();
+      try {
+        const faviconCheck = await axios.head(faviconIcoUrl, { timeout: 5000 });
+        if (faviconCheck.status >= 200 && faviconCheck.status < 400) {
+          domFavicon = faviconIcoUrl;
+        }
+      } catch (_) {
+        // favicon.ico does not exist, leave as null
+      }
+    }
 
     const branding = {
       logo: computedBranding?.logoUrl || domLogoUrl || null,
