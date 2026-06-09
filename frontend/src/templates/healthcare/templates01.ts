@@ -935,15 +935,15 @@ Absolutely. We reserve specific slots daily for emergency cases. If you're exper
 <ul class="footer-contact font-body-md">
 <li>
 <span class="material-symbols-outlined text-primary" style="font-size: 14px;">location_on</span>
-<span>123 Dental Way, London, UK</span>
+<span>ADDRESS_PLACEHOLDER</span>
 </li>
 <li>
 <span class="material-symbols-outlined text-primary" style="font-size: 14px;">phone</span>
-<span>+44 20 7946 0000</span>
+<span>PHONE_PLACEHOLDER</span>
 </li>
 <li>
 <span class="material-symbols-outlined text-primary" style="font-size: 14px;">mail</span>
-<span>hello@luminadental.com</span>
+<span>EMAIL_PLACEHOLDER</span>
 </li>
 </ul>
 </div>

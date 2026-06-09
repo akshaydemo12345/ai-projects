@@ -182,16 +182,38 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
 
-    // 1. Update H1
+    // 0. Inject Logo directly into template logo containers
+    if (logoUrl) {
+      const logoContainers = doc.querySelectorAll(".logo, .site-logo, .brand, .navbar-brand");
+      logoContainers.forEach(container => {
+        container.innerHTML = `<img src="${logoUrl}" id="page-logo" alt="Logo" style="max-height: 40px; max-width: 200px; width: auto; object-fit: contain;">`;
+      });
+    }
+
+    // 1. Update H1 and Subtitle
     const h1 = doc.querySelector("h1");
     if (h1) {
-      h1.textContent = pageTitle;
+      h1.textContent = project?.websiteProfile?.content?.hero?.title || pageTitle;
       h1.style.position = "relative";
       h1.style.zIndex = "10";
+
+      const subtitle = project?.websiteProfile?.content?.hero?.subtitle;
+      if (subtitle) {
+        let p = h1.nextElementSibling;
+        while (p && p.tagName !== 'P' && p.tagName !== 'DIV') {
+          p = p.nextElementSibling;
+        }
+        if (p && p.tagName === 'P') {
+          p.textContent = subtitle;
+        } else if (h1.parentElement) {
+          const parentP = h1.parentElement.querySelector("p");
+          if (parentP) parentP.textContent = subtitle;
+        }
+      }
     }
 
     // 2. Main description
-    const descText = project?.description || project?.scrapedData?.description || project?.scrapedData?.about || project?.scrapedData?.summary;
+    const descText = project?.websiteProfile?.identity?.description || project?.description || project?.scrapedData?.description || project?.scrapedData?.about || project?.scrapedData?.summary;
     const allParagraphs = Array.from(doc.querySelectorAll("p")).filter(
       p => !p.closest("footer") && !p.closest("form") && p.textContent && p.textContent.trim().length > 20
     );
@@ -200,7 +222,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     }
 
     // 3. Inject Services
-    const services = project?.scrapedData?.services || [];
+    const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
         h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card")
@@ -219,12 +241,18 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
               if (p) p.textContent = service.description;
             }
           }
+        } else {
+          // Remove extra hardcoded service item
+          const parent = heading.closest(".service-card, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
+          if (parent) {
+            parent.remove();
+          }
         }
       });
     }
 
     // 4. Inject Testimonials
-    const testimonials = project?.scrapedData?.testimonials || [];
+    const testimonials = project?.websiteProfile?.content?.testimonials?.length ? project.websiteProfile.content.testimonials : (project?.scrapedData?.testimonials || []);
     if (testimonials.length > 0) {
       const testiCards = Array.from(doc.querySelectorAll(".testi-card, [class*='testimonial']"));
       testiCards.forEach((card, idx) => {
@@ -235,12 +263,14 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
 
           const tAuthor = card.querySelector(".author-name, h4, .name");
           if (tAuthor && (t.author || t.name)) tAuthor.textContent = t.author || t.name;
+        } else {
+          card.remove();
         }
       });
     }
 
     // 5. Inject FAQs
-    const faqs = project?.scrapedData?.faq || project?.scrapedData?.faqs || [];
+    const faqs = project?.websiteProfile?.content?.faqs?.length ? project.websiteProfile.content.faqs : (project?.scrapedData?.faq || project?.scrapedData?.faqs || []);
     if (faqs.length > 0) {
       const faqItems = Array.from(doc.querySelectorAll("details, .faq-item, .v2-faq-item"));
       faqItems.forEach((item, idx) => {
@@ -256,6 +286,8 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
           if (body && faq.answer) {
             body.textContent = faq.answer;
           }
+        } else {
+          item.remove();
         }
       });
     }
@@ -272,16 +304,17 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     }
 
     // 7. Inject Form / CTA
+    const ctaText = project?.websiteProfile?.content?.hero?.ctaText || project?.websiteProfile?.content?.ctas?.[0]?.title || project?.scrapedData?.cta || project?.scrapedData?.forms?.[0]?.title;
     const formHeading = doc.querySelector("form")?.previousElementSibling;
-    if (formHeading && (formHeading.tagName === 'H2' || formHeading.tagName === 'H3')) {
-      formHeading.textContent = project?.scrapedData?.cta || project?.scrapedData?.forms?.[0]?.title || "Contact Us";
+    if (formHeading && (formHeading.tagName === 'H2' || formHeading.tagName === 'H3' || formHeading.tagName === 'H4')) {
+      formHeading.textContent = ctaText || "Contact Us";
     }
 
-    const formInnerTitle = doc.querySelector("form .booking-title, form h2, form h3");
-    if (formInnerTitle && project?.scrapedData?.forms?.[0]?.title) {
+    const formInnerTitle = doc.querySelector("form .booking-title, form h2, form h3, form h4");
+    if (formInnerTitle && ctaText) {
       formInnerTitle.childNodes.forEach(node => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
-          node.textContent = ` ${project.scrapedData.forms[0].title} `;
+          node.textContent = ` ${ctaText} `;
         }
       });
     }
@@ -498,7 +531,7 @@ const CreatePagePage = () => {
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
 
   const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
-    const brightness = await getImageAverageBrightness(img.src);
+    const brightness = getImageAverageBrightness(img);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
 
@@ -881,6 +914,14 @@ const CreatePagePage = () => {
           isAiTemplatePath = true;
           toast.info(`AI selected ${detectedCategory} template for you!`);
         }
+      } else {
+        // Fallback: pick a generic template structure so AI generation still runs
+        const defaultTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === "finance" || t.tag.toLowerCase() === "travel");
+        if (defaultTemplates.length > 0) {
+          const randomIndex = Math.floor(Math.random() * defaultTemplates.length);
+          finalTemplateId = defaultTemplates[randomIndex].id;
+          isAiTemplatePath = true;
+        }
       }
     }
 
@@ -941,19 +982,53 @@ const CreatePagePage = () => {
         }
       }
 
-      const finalLogo = logoUrl || project.logoUrl;
+      const finalLogo = logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo;
       const logoHtml = finalLogo
-        ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
+        ? `<img src="${finalLogo}" id="page-logo" alt="Logo" style="max-height: 40px; max-width: 200px; width: auto; object-fit: contain;">`
         : `<span style="color: ${primaryColor}">${project.name}</span>`;
 
       // ─── FINAL BRANDING INJECTION ───
+      const themeData = project.websiteProfile?.theme || project.scrapedData?.theme || {};
+      const fontsData = project.websiteProfile?.fonts || project.scrapedData?.fonts || {};
+
+      const headerBg = themeData.header?.background || "#ffffff";
+      const headerText = themeData.header?.text || "var(--text-dark, #1f1f1f)";
+      const footerBg = themeData.footer?.background || "#111111";
+      const footerText = themeData.footer?.text || "rgba(255, 255, 255, 0.7)";
+
+      const btnPrimaryBg = themeData.buttons?.primaryBg || "var(--primary)";
+      const btnPrimaryText = themeData.buttons?.primaryText || "#ffffff";
+      const btnSecondaryBg = themeData.buttons?.secondaryBg || "transparent";
+      const btnSecondaryText = themeData.buttons?.secondaryText || "var(--text-dark, #1f1f1f)";
+
+      const bodyFont = fontsData.bodyFont ? `'${fontsData.bodyFont}', sans-serif` : "var(--font-body-md, 'Inter', sans-serif)";
+      const headingFont = fontsData.headingFont ? `'${fontsData.headingFont}', serif` : "var(--font-h1, 'DM Serif Display', serif)";
+
       const brandingCss = `
 :root {
   --primary: ${primaryColor || "#6366f1"};
   --secondary: ${secondaryColor || "#4f46e5"};
   --primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")};
   --secondary-rgb: ${hexToRgbStr(secondaryColor || "#4f46e5")};
+  
+  --header-bg: ${headerBg};
+  --header-text: ${headerText};
+  --footer-bg: ${footerBg};
+  --footer-text: ${footerText};
 }
+
+body, p, a, span, li, input, select, textarea { font-family: ${bodyFont} !important; }
+h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFont} !important; }
+
+/* Only override header/footer colors if they don't explicitly rely on var(--primary) */
+.header, header, .site-header, .p3-site-header { background-color: var(--header-bg); color: var(--header-text); }
+.header a, header a, .site-header a, .nav-menu a { color: var(--header-text); }
+
+.footer, footer, .site-footer { background-color: var(--footer-bg); color: var(--footer-text); }
+.footer p, footer p, .footer a, footer a, .site-footer p, .site-footer a, .footer-bottom p { color: var(--footer-text); }
+.footer-title { color: var(--footer-text); opacity: 0.9; }
+
+/* Removed forceful button overrides so the template's var(--primary) handles the UI selected color naturally */
 `;
       enrichedStyles = brandingCss + "\n" + enrichedStyles;
 
@@ -1064,13 +1139,14 @@ const CreatePagePage = () => {
       // This ensures CSS, JS, and interactive features (FAQ accordion, etc.) work after publish.
       const primaryCol = primaryColor || "#6366f1";
       const secondaryCol = secondaryColor || "#4f46e5";
+      const faviconUrl = project?.websiteProfile?.identity?.favicon || project?.scrapedData?.favicon;
       const fullTemplateHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${pageName.trim() || project.name}</title>
-  <meta name="description" content="${project.description || ''}"/>
+  <meta name="description" content="${project.description || ''}"/>${faviconUrl ? `\n  <link rel="icon" href="${faviconUrl}"/>` : ''}
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -1078,6 +1154,7 @@ const CreatePagePage = () => {
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  ${fontsData?.googleFonts?.length ? `<link href="https://fonts.googleapis.com/css2?family=${fontsData.googleFonts.map(f => f.replace(/ /g, '+')).join('&family=')}:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>` : ''}
   <style>
     :root{--primary:${primaryCol};--secondary:${secondaryCol};--accent:${secondaryCol};--gold:${primaryCol};--forest:${primaryCol};--btn-bg:${primaryCol};--btn-text:#ffffff;--button-gradient:linear-gradient(135deg,${primaryCol},${secondaryCol});}
     *,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;min-height:100vh;}
@@ -1089,8 +1166,8 @@ ${enrichedContent}
 </body>
 </html>`;
 
-      // Use injected HTML from preview if available; otherwise fall back to enrichedContent
-      const finalHtml = previewTemplate?.html || enrichedContent;
+      // Always use the newly enriched content so all dynamic placeholders, themes, and logic take effect
+      const finalHtml = enrichedContent;
       basePayload = {
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
@@ -1118,7 +1195,7 @@ ${enrichedContent}
       noIndexNoFollow,
       primaryColor,
       secondaryColor,
-      logoUrl,
+      logoUrl: logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo, // <-- Fix: ensure DB saves the scraped logo
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
       industry: project?.category || project?.industry || "Service",
       subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
