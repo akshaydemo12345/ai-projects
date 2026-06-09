@@ -482,6 +482,23 @@ const GrapesEditor = () => {
             el.classList.add('in-view');
           });
 
+          // ── BLOCK all form submissions in editor to prevent page reload / red borders ──
+          document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }, true);
+
+          // ── Remove native HTML5 validation in editor (prevents red borders from required fields) ──
+          document.querySelectorAll('form').forEach(function(form) {
+            form.setAttribute('novalidate', 'novalidate');
+          });
+
+          // ── Remove red border inline styles left over from any validation scripts ──
+          document.querySelectorAll('input, textarea, select').forEach(function(el) {
+            el.style.border = '';
+          });
+
           document.addEventListener('click', function(e) {
             // Handle details/summary toggle
             const summary = e.target.closest('summary');
@@ -492,6 +509,38 @@ const GrapesEditor = () => {
                   details.removeAttribute('open');
                 } else {
                   details.setAttribute('open', '');
+                }
+              }
+            }
+
+            // ── Handle AI-generated Accordion / FAQ (accordion-header + accordion-content) ──
+            const accHeader = e.target.closest('.accordion-header');
+            if (accHeader) {
+              const item = accHeader.closest('.accordion-item');
+              if (item) {
+                const content = item.querySelector('.accordion-content');
+                const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
+                const isOpen = content && !content.classList.contains('hidden');
+
+                // Close all other accordion items
+                document.querySelectorAll('.accordion-item').forEach(function(otherItem) {
+                  if (otherItem !== item) {
+                    const otherContent = otherItem.querySelector('.accordion-content');
+                    const otherIcon = otherItem.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
+                    if (otherContent) otherContent.classList.add('hidden');
+                    if (otherIcon) { otherIcon.classList.remove('rotate-180'); otherIcon.classList.remove('fa-minus'); otherIcon.classList.add('fa-plus'); }
+                  }
+                });
+
+                // Toggle this item
+                if (content) {
+                  if (isOpen) {
+                    content.classList.add('hidden');
+                    if (icon) { icon.classList.remove('rotate-180'); icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  } else {
+                    content.classList.remove('hidden');
+                    if (icon) { icon.classList.add('rotate-180'); icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
                 }
               }
             }
@@ -1398,8 +1447,9 @@ const GrapesEditor = () => {
         
         // Padding and Margin are composite properties
         ['padding', 'margin'].forEach(propName => {
-          const prop = styleManager.getProperty('Space', propName);
-          if (prop && prop.getProperties) {
+          // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
+          const prop = styleManager.getProperty('Space', propName) as any;
+          if (prop && typeof prop.getProperties === 'function') {
             prop.getProperties().forEach((p: any) => {
               p.set('min', ''); // Remove the minimum limit
             });
@@ -3818,8 +3868,8 @@ const TabButton = ({ children, active, onClick }: { children: React.ReactNode; a
   }}>{children}</button>
 );
 
-const NavIcon = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
-  <button onClick={onClick} style={{
+const NavIcon = ({ children, active, onClick, title }: { children: React.ReactNode; active: boolean; onClick: () => void; title?: string }) => (
+  <button onClick={onClick} title={title} style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
     color: active ? '#6366f1' : '#000000', transition: 'all .2s'
