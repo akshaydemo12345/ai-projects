@@ -188,7 +188,7 @@ export const travel04Html = `
             </div>
             <div class="form-group">
               <label>Email</label>
-              <input type="email" name="email_address" placeholder="you@email.com">
+              <input type="email" name="email_address" placeholder="EMAIL_PLACEHOLDER">
             </div>
             <div class="form-group">
               <label>City</label>

@@ -196,7 +196,7 @@ export const travel03Html = `
       </div>
       <div class="form-field full">
         <label>Email Address</label>
-        <input type="email" name="email_address" placeholder="you@email.com" required>
+        <input type="email" name="email_address" placeholder="EMAIL_PLACEHOLDER" required>
       </div>
       <button type="submit" class="btn-primary">Request Private Inquiry</button>
     </form>
@@ -357,7 +357,7 @@ export const travel03Html = `
     <div class="footer-grid">
       <div class="footer-brand">
         <div class="footer-logo">LOGO_PLACEHOLDER</div>
-        <p style="opacity:0.6;font-size:0.9rem">Etheria Journeys is a collective of travel designers, spiritual mentors, and nature lovers dedicated to the art of the retreat.</p>
+        <p style="opacity:0.6;font-size:0.9rem">PROJECT_NAME_PLACEHOLDER is a collective of travel designers, spiritual mentors, and nature lovers dedicated to the art of the retreat.</p>
       </div>
       <div class="footer-col">
         <h5>Explore</h5>

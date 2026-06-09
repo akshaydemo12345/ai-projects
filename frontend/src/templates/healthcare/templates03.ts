@@ -220,7 +220,7 @@ input, select, textarea { font-family: inherit; }
 }
 .p3-mini-card .icon { font-size: 24px; color: var(--p3-primary-mid); }
 .p3-mini-card .val { font-family: var(--p3-font-display); font-size: 26px; font-weight: 700; color: var(--p3-secondary); }
-.p3-mini-card .lbl { font-size: 13px; color: var(--p3-light-text); font-weight: 600; }
+.p3-mini-card .lbl { font-size: 13px;  font-weight: 600; }
 @media (max-width: 768px) {
   .p3-hero-mini-cards { grid-template-columns: repeat(2, 1fr); padding: 0; margin-top: 24px; }
   .p3-hero-img-main { aspect-ratio: 16/9; }
