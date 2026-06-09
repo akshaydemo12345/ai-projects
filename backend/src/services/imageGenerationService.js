@@ -57,7 +57,7 @@ async function generateGetImgUrl(
             height,
             steps: 4,
             output_format: 'jpeg',
-            response_format: 'b64'
+            response_format: 'url'
           })
         }
       );
@@ -426,7 +426,7 @@ async function replacePlaceholdersInHtml(
     /**
      * REGEX FOR ANY REMAINING STOCK URLS (e.g. background-image)
      */
-    const stockRegex = /(https?:\/\/(?:images\.unsplash\.com|source\.unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)[^'"\s\)\>]*)/gi;
+    const stockRegex = /(https?:\/\/(?:[a-zA-Z0-9-]+\.)*(?:unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)[^'"\s\)\>]*)/gi;
 
     let match;
     const remainingUrls = [];
