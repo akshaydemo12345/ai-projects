@@ -3,28 +3,11 @@
 /**
  * puppeteerFetch.js
  * -----------------
- * Shared Puppeteer-based page fetcher — replaces the former axios + cheerio
- * pattern used throughout the scraping pipeline.
- *
- * Why Puppeteer instead of axios + cheerio?
- *  - Executes JavaScript, so dynamically-rendered content (React/Vue SPAs,
- *    lazy-loaded images, CSS-in-JS colour variables) is fully available.
- *  - Handles redirects, HSTS, and cookie-consent banners automatically.
- *  - Returns both the final HTML *and* a live `page` handle so callers can
- *    query the DOM directly via evaluate() without re-parsing.
- *
- * Usage (one-shot – caller gets HTML string):
- *   const { html, finalUrl } = await fetchPageHtml(url);
- *
- * Usage (advanced – caller gets a live page handle):
- *   const { browser, page, finalUrl } = await openPage(url);
- *   // … do work …
- *   await browser.close();
+ * Shared Puppeteer-based page fetcher - uses full puppeteer package
+ * No external dependencies required
  */
 
 const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
 
 const DEFAULT_TIMEOUT = 45_000;
 
@@ -38,46 +21,15 @@ const LAUNCH_ARGS = [
     '--no-first-run',
     '--no-zygote',
     '--single-process',
+    '--hide-scrollbars',
+    '--mute-audio',
+    '--disable-logging',
+    '--log-level=3',
 ];
 
 /**
- * Resolve the Chrome/Chromium executable path.
- * Priority:
- *   1. PUPPETEER_EXECUTABLE_PATH env var (set this in your .env for production)
- *   2. Puppeteer's own downloaded browser (works after `npm install puppeteer`)
- *   3. Common system paths (linux servers, Docker images)
- */
-const resolveChromePath = () => {
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        return process.env.PUPPETEER_EXECUTABLE_PATH;
-    }
-
-    // Puppeteer ≥ 20 stores the browser in its own cache
-    try {
-        const execPath = puppeteer.executablePath();
-        if (execPath && fs.existsSync(execPath)) return execPath;
-    } catch (_) { }
-
-    // Common system paths
-    const candidates = [
-        '/usr/bin/google-chrome',
-        '/usr/bin/google-chrome-stable',
-        '/usr/bin/chromium-browser',
-        '/usr/bin/chromium',
-        '/snap/bin/chromium',
-    ];
-    for (const p of candidates) {
-        if (fs.existsSync(p)) return p;
-    }
-
-    return undefined; // Let Puppeteer decide
-};
-
-const CHROME_PATH = resolveChromePath();
-
-/**
- * Open a new browser + page, navigate to `url`, and wait for the network to
- * settle.  Caller MUST call `browser.close()`.
+ * Open a new browser + page, navigate to URL
+ * Caller MUST call browser.close()
  *
  * @param {string} url
  * @param {{ timeout?: number, waitUntil?: string }} [opts]
@@ -86,51 +38,93 @@ const CHROME_PATH = resolveChromePath();
 const openPage = async (url, opts = {}) => {
     const { timeout = DEFAULT_TIMEOUT, waitUntil = 'networkidle2' } = opts;
 
-    const launchOpts = {
-        headless: 'new',
-        args: LAUNCH_ARGS,
-    };
-    if (CHROME_PATH) launchOpts.executablePath = CHROME_PATH;
+    console.log(`🚀 Launching browser for: ${url}`);
 
-    const browser = await puppeteer.launch(launchOpts);
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: LAUNCH_ARGS,
+        });
+        console.log('✅ Browser launched successfully');
+    } catch (launchErr) {
+        console.error('❌ Failed to launch browser:', launchErr.message);
+
+        // Retry with minimal arguments
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+        console.log('✅ Browser launched with minimal args');
+    }
 
     try {
         const page = await browser.newPage();
 
-        // Realistic viewport + UA so sites serve full desktop HTML
+        // Realistic viewport
         await page.setViewport({ width: 1440, height: 900 });
+
+        // Realistic user agent
         await page.setUserAgent(
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
             '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
         );
 
-        // Block heavy binary assets we never need – keeps loads fast
+        // Set default timeout
+        page.setDefaultTimeout(timeout);
+
+        // Block unnecessary assets for faster loading
         await page.setRequestInterception(true);
         page.on('request', (req) => {
             const type = req.resourceType();
-            if (['media', 'font', 'websocket'].includes(type)) {
+            if (['media', 'font', 'websocket', 'images'].includes(type)) {
                 req.abort();
             } else {
                 req.continue();
             }
         });
 
-        await page.goto(url, { waitUntil, timeout });
+        console.log(`🌐 Navigating to: ${url}`);
 
-        // Try to dismiss GDPR / cookie banners so they don't obscure content
+        // Navigate with retry logic
+        let lastError;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                await page.goto(url, { waitUntil, timeout });
+                lastError = null;
+                break;
+            } catch (navErr) {
+                lastError = navErr;
+                console.warn(`Navigation attempt ${attempt} failed: ${navErr.message}`);
+                if (attempt === 1 && waitUntil === 'networkidle2') {
+                    // Retry with domcontentloaded
+                    console.log('Retrying with domcontentloaded...');
+                    await page.goto(url, { waitUntil: 'domcontentloaded', timeout });
+                    lastError = null;
+                    break;
+                }
+            }
+        }
+
+        if (lastError) {
+            throw lastError;
+        }
+
+        // Dismiss cookie banners
         await dismissConsentBanners(page).catch(() => { });
 
         const finalUrl = page.url();
+        console.log(`✅ Page loaded: ${finalUrl}`);
+
         return { browser, page, finalUrl };
     } catch (err) {
-        await browser.close();
+        await browser.close().catch(() => { });
         throw err;
     }
 };
 
 /**
- * Navigate to `url`, grab the fully-rendered HTML, then close the browser.
- * Use this when you only need the HTML string.
+ * Fetch HTML only, then close browser
  *
  * @param {string} url
  * @param {{ timeout?: number }} [opts]
@@ -142,13 +136,12 @@ const fetchPageHtml = async (url, opts = {}) => {
         const html = await page.content();
         return { html, finalUrl };
     } finally {
-        await browser.close();
+        await browser.close().catch(() => { });
     }
 };
 
 /**
- * Click away common cookie / consent banners.
- * Non-fatal — errors are swallowed by the caller.
+ * Click cookie/consent banners
  *
  * @param {import('puppeteer').Page} page
  */
@@ -162,18 +155,47 @@ const dismissConsentBanners = async (page) => {
         'button[class*="consent"]',
         '[aria-label*="Accept"]',
         '[aria-label*="agree"]',
+        '[aria-label*="Accept all"]',
+        '[aria-label*="Accept cookies"]',
+        '.accept-cookies',
+        '.cookie-accept',
+        '#accept-cookies',
+        '#cookie-accept',
+        '.cookie-consent-accept',
+        'button:contains("Accept")',
+        'button:contains("OK")',
+        'button:contains("Allow")',
     ];
 
     for (const sel of acceptSelectors) {
         try {
             const el = await page.$(sel);
-            if (el) {
+            if (el && await el.isVisible()) {
                 await el.click();
-                await new Promise(r => setTimeout(r, 300));
+                console.log(`✅ Clicked consent banner: ${sel}`);
+                await new Promise(r => setTimeout(r, 500));
                 break;
             }
-        } catch (_) { }
+        } catch (_) {
+            // Selector not found or not clickable, continue
+        }
     }
 };
 
-module.exports = { openPage, fetchPageHtml };
+/**
+ * Close browser safely
+ *
+ * @param {import('puppeteer').Browser} browser
+ */
+const closeBrowser = async (browser) => {
+    if (browser) {
+        try {
+            await browser.close();
+            console.log('🔒 Browser closed');
+        } catch (err) {
+            console.warn('Error closing browser:', err.message);
+        }
+    }
+};
+
+module.exports = { openPage, fetchPageHtml, closeBrowser };

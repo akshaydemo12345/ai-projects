@@ -531,15 +531,18 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
         logoUrl = getRealSrc(svgImgEl) || null;
       }
 
-      // Favicon extraction — prefer higher-res icons
+      // Favicon extraction — prefer higher-res icons, fall back to meta tags
       const faviconEl =
         document.querySelector('link[rel="apple-touch-icon"]') ||
         document.querySelector('link[rel="icon"][sizes="32x32"]') ||
         document.querySelector('link[rel="icon"][sizes="16x16"]') ||
         document.querySelector('link[rel="icon"]') ||
         document.querySelector('link[rel="shortcut icon"]');
-      // Only use /favicon.ico as fallback (will be verified server-side)
-      const favicon = faviconEl ? faviconEl.href : null;
+      const favicon =
+        faviconEl?.href ||
+        document.querySelector('meta[name="msapplication-TileImage"]')?.content ||
+        document.querySelector('meta[property="og:image"]')?.content ||
+        null;
 
       // Font extraction — Google Fonts links + computed font-family on body/headings
       const googleFontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
@@ -715,16 +718,75 @@ const fetchAndExtractBranding = async (websiteUrl) => {
 
     console.log('Fetching branding from:', url);
 
-    // Fetch the website with a timeout
-    const response = await axios.get(url, {
-      timeout: 10000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124',
-      },
-      maxRedirects: 5,
-    });
+    // Fetch the website — try multiple User-Agents to bypass bot detection
+    let html = null;
+    const uaList = [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    ];
+    for (const ua of uaList) {
+      try {
+        const response = await axios.get(url, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          maxRedirects: 5,
+        });
+        html = response.data;
+        break;
+      } catch (axiosErr) {
+        const status = axiosErr.response?.status;
+        // 403/429/503 = bot-blocked, try next UA; other errors rethrow after loop
+        if (![403, 429, 503].includes(status)) throw axiosErr;
+        console.warn(`axios blocked (${status}) with UA, trying next...`);
+      }
+    }
 
-    const html = response.data;
+    // If all axios attempts blocked, fall through to Playwright-only path
+    if (!html) {
+      console.warn('All axios attempts blocked — using Playwright-only extraction');
+      const computedBranding = await extractComputedBrandingFromWebsite(url).catch(() => null);
+      const logo = computedBranding?.logoUrl || null;
+
+      // Favicon fallback chain when scraping is fully blocked:
+      // 1. Whatever Playwright managed to find
+      // 2. Google's favicon service (reliable, no auth needed)
+      // 3. DuckDuckGo's favicon service
+      const parsedOrigin = new URL(url);
+      const domain = parsedOrigin.hostname;
+      const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      const ddgFaviconUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+
+      let favicon = computedBranding?.favicon || null;
+      if (!favicon) {
+        // Pick whichever service responds with an actual image (not a placeholder 1x1)
+        for (const svcUrl of [googleFaviconUrl, ddgFaviconUrl]) {
+          try {
+            const check = await axios.get(svcUrl, { responseType: 'arraybuffer', timeout: 6000, maxRedirects: 5 });
+            if (check.status === 200 && check.data.length > 500) {
+              favicon = svcUrl;
+              break;
+            }
+          } catch (_) { /* try next */ }
+        }
+      }
+
+      return {
+        success: true,
+        message: 'Branding extracted via Playwright (axios blocked)',
+        data: {
+          ...getDefaultBranding(),
+          logo,
+          logoUrl: logo,
+          favicon,
+          computedBranding,
+        },
+      };
+    }
 
     // Build a DOM for richer extraction
     const dom = new jsdom(html, { url });
@@ -823,9 +885,13 @@ const fetchAndExtractBranding = async (websiteUrl) => {
     const domFaviconEl = document.querySelector(
       'link[rel="apple-touch-icon"], link[rel="icon"][sizes="32x32"], link[rel="icon"], link[rel="shortcut icon"]'
     );
-    let domFavicon = domFaviconEl?.href || null;
+    let domFavicon =
+      domFaviconEl?.href ||
+      document.querySelector('meta[name="msapplication-TileImage"]')?.content ||
+      document.querySelector('meta[property="og:image"]')?.content ||
+      null;
 
-    // If no favicon found in DOM, try /favicon.ico and verify it exists
+    // If still no favicon found, try /favicon.ico, then Google favicon service
     if (!domFavicon) {
       const faviconIcoUrl = new URL('/favicon.ico', url).toString();
       try {
@@ -833,9 +899,17 @@ const fetchAndExtractBranding = async (websiteUrl) => {
         if (faviconCheck.status >= 200 && faviconCheck.status < 400) {
           domFavicon = faviconIcoUrl;
         }
-      } catch (_) {
-        // favicon.ico does not exist, leave as null
-      }
+      } catch (_) { /* not found */ }
+    }
+    if (!domFavicon) {
+      const domain = new URL(url).hostname;
+      const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      try {
+        const check = await axios.get(googleFaviconUrl, { responseType: 'arraybuffer', timeout: 6000, maxRedirects: 5 });
+        if (check.status === 200 && check.data.length > 500) {
+          domFavicon = googleFaviconUrl;
+        }
+      } catch (_) { /* ignore */ }
     }
 
     const branding = {
@@ -1021,11 +1095,11 @@ const fetchAndExtractBranding = async (websiteUrl) => {
  */
 const getDefaultBranding = () => {
   return {
-    logo: '',
-    logoUrl: '',
-    favicon: '',
-    companyName: '',
-    tagline: '',
+    logo: null,
+    logoUrl: null,
+    favicon: null,
+    companyName: null,
+    tagline: null,
     colors: {
       primary: '#7c3aed',
       secondary: '#6366f1',
