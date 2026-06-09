@@ -56,8 +56,8 @@ const createPageSchema = z.object({
 }).transform(data => ({
   ...data,
   title: data.title || data.name || 'Untitled Page',
-  slug: data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
-  finalSlug: data.prefix ? `${data.prefix}-${(data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')}` : (data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')
+  slug: data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
+  finalSlug: data.prefix ? `${data.prefix}-${(data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')}` : (data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')
 })).refine(data => data.title.length > 0, {
   message: "Title or name is required",
   path: ["title"]
@@ -123,7 +123,7 @@ const leadSchema = z.object({
 
 // ─── Helper: Unique slug generator ────────────────────────────────────────────
 const generateUniqueSlug = async (base, projectId, excludeId = null) => {
-  const slug = base.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   let uniqueSlug = slug;
   let counter = 1;
   const query = { projectId, slug: uniqueSlug };
