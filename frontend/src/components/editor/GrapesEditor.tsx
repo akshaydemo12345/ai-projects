@@ -267,6 +267,8 @@ const GrapesEditor = () => {
     }
 
     let extractedScripts: {src: string, innerHTML: string}[] = [];
+    let extractedBodyStyle: string | null = null;
+    let extractedBodyClass: string | null = null;
 
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
@@ -307,12 +309,9 @@ const GrapesEditor = () => {
         }
         dbContent = bodyHtml;
 
-        // Apply body style to wrapper
-        const bodyStyle = doc.body.getAttribute('style');
-        if (bodyStyle) {
-          // @ts-ignore
-          editor.getWrapper().addStyle(parseInlineStyle(bodyStyle));
-        }
+        // Save body style and classes to apply AFTER setComponents
+        extractedBodyStyle = doc.body.getAttribute('style');
+        extractedBodyClass = doc.body.getAttribute('class');
       } catch (e) {
         console.error('❌ Failed to parse full HTML, using raw fallback:', e);
       }
@@ -431,6 +430,10 @@ const GrapesEditor = () => {
         brandingTag.id = 'branding-vars';
         canvasDoc.head.appendChild(brandingTag); // append at END so it wins cascade
         brandingTag.innerHTML = `
+        /* Editor Image Safeguards */
+        /* Editor Image Safeguards */
+        .flex img, [class*="flex"] img { flex-shrink: 0 !important; }
+        img { max-width: 100%; object-fit: cover; }
         :root { 
           --primary: ${primaryColor}; 
           --secondary: ${secondaryColor}; 
@@ -585,6 +588,65 @@ const GrapesEditor = () => {
             } else {
               document.querySelectorAll('.dropdown-toggle, .dropdown-menu').forEach(el => el.classList.remove('active'));
             }
+
+            // ── Pure CSS Peer Checked Accordions / Checkboxes ──
+            const label = e.target.closest('label');
+            if (label) {
+               const forAttr = label.getAttribute('for');
+               const input = forAttr ? document.getElementById(forAttr) : label.querySelector('input');
+               if (input && (input.type === 'radio' || input.type === 'checkbox')) {
+                  if (input.type === 'radio' && input.name) {
+                     document.querySelectorAll('input[type="radio"][name="'+input.name+'"]').forEach(r => r.checked = false);
+                  }
+                  input.checked = !input.checked;
+               }
+            }
+
+            // ── Universal AI FAQ Toggle Fallback ──
+            // Catch-all for AI generated FAQs, Accordions, and Dropdowns
+            const faqContainer = e.target.closest('.faq-item, .accordion-item, [class*="faq"], [class*="accordion"]');
+            const headerBtn = e.target.closest('button, .faq-header, .accordion-header, [data-accordion-target], summary');
+            
+            if (headerBtn && !headerBtn.closest('summary')) {
+              const expanded = headerBtn.getAttribute('aria-expanded');
+              if (expanded !== null) {
+                const isExpanded = expanded === 'true';
+                headerBtn.setAttribute('aria-expanded', !isExpanded);
+                const controlsId = headerBtn.getAttribute('aria-controls');
+                const content = controlsId ? document.getElementById(controlsId) : headerBtn.nextElementSibling;
+                if (content) {
+                  content.classList.toggle('hidden');
+                  const icon = headerBtn.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.toggle('rotate-180');
+                     if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                     else if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  }
+                }
+              } else {
+                 const content = headerBtn.nextElementSibling;
+                 if (content && (content.tagName === 'DIV' || content.tagName === 'P')) {
+                    content.classList.toggle('hidden');
+                    const icon = headerBtn.querySelector('svg, i');
+                    if (icon) icon.classList.toggle('rotate-180');
+                 }
+              }
+            } else if (faqContainer && !headerBtn) {
+               // If clicked inside a faq container but not a button, toggle the hidden content
+               const contentElements = Array.from(faqContainer.children).filter(child => child.classList.contains('hidden') || child.classList.contains('faq-content') || child.classList.contains('accordion-content'));
+               const visibleElements = Array.from(faqContainer.children).filter(child => !child.classList.contains('hidden') && child.tagName !== 'BUTTON');
+               
+               let targetContent = contentElements[0];
+               if (!targetContent && visibleElements.length > 1) {
+                   targetContent = visibleElements[visibleElements.length - 1]; // Assume last element is content
+               }
+               
+               if (targetContent && !targetContent.contains(e.target)) {
+                  targetContent.classList.toggle('hidden');
+                  const icon = faqContainer.querySelector('svg, i');
+                  if (icon) icon.classList.toggle('rotate-180');
+               }
+            }
           }, true);
         `;
         canvasDoc.body.appendChild(interactionScript);
@@ -661,6 +723,21 @@ const GrapesEditor = () => {
       }
 
       editor.setComponents(dbContent);
+
+      // ── Apply Extracted Body Classes & Styles to Wrapper ──
+      const wrapper = editor.getWrapper();
+      if (wrapper) {
+        if (extractedBodyClass) {
+          extractedBodyClass.split(' ').filter(Boolean).forEach(c => wrapper.addClass(c));
+        }
+        if (extractedBodyStyle) {
+          try {
+            // @ts-ignore
+            if (typeof parseInlineStyle !== 'undefined') wrapper.addStyle(parseInlineStyle(extractedBodyStyle));
+          } catch(e) {}
+        }
+      }
+
       // ── Hide loader after canvas has had time to render CSS/fonts ──
       // Re-add js-enabled + in-view after setComponents so animations & tabs work in editor
       setTimeout(() => {
@@ -673,14 +750,24 @@ const GrapesEditor = () => {
               el.classList.add('in-view');
             });
             
-            // Execute extracted scripts safely AFTER components are set
+            // Execute extracted scripts safely AFTER components are set (Sequentially to avoid race conditions like Swiper.js)
             if (extractedScripts && extractedScripts.length > 0) {
-              extractedScripts.forEach(scriptData => {
+              const loadScript = (index: number) => {
+                if (index >= extractedScripts.length) return;
+                const scriptData = extractedScripts[index];
                 const newScript = cDoc.createElement('script');
-                if (scriptData.src) newScript.src = scriptData.src;
-                newScript.innerHTML = scriptData.innerHTML;
-                cDoc.body.appendChild(newScript);
-              });
+                if (scriptData.src) {
+                  newScript.src = scriptData.src;
+                  newScript.onload = () => loadScript(index + 1);
+                  newScript.onerror = () => loadScript(index + 1);
+                  cDoc.body.appendChild(newScript);
+                } else {
+                  newScript.innerHTML = scriptData.innerHTML;
+                  cDoc.body.appendChild(newScript);
+                  loadScript(index + 1);
+                }
+              };
+              loadScript(0);
             }
           }
         } catch (e) { /* ignore */ }
@@ -1420,6 +1507,75 @@ const GrapesEditor = () => {
     editor.on('load', () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
+
+      // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
+      try {
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc) {
+          canvasDoc.addEventListener('click', (e: any) => {
+            let accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
+            let item, content, icon;
+
+            // Fallback for generic tailwind accordions (e.g. older generated pages)
+            if (!accHeader) {
+              const genericHeader = e.target.closest('.cursor-pointer, [cursor="pointer"]');
+              if (genericHeader && genericHeader.parentElement) {
+                const sibling = genericHeader.nextElementSibling;
+                if (sibling && (sibling.classList.contains('hidden') || genericHeader.querySelector('svg, i'))) {
+                  accHeader = genericHeader;
+                  item = genericHeader.parentElement;
+                  content = sibling;
+                  icon = genericHeader.querySelector('svg, i');
+                }
+              }
+            }
+
+            if (accHeader) {
+              if (!item) item = accHeader.closest('.accordion-item, .faq-item, .border-b, [class*="border"]');
+              if (!item) return;
+              
+              if (!content) content = item.querySelector('.accordion-content, .faq-body, .faq-answer') || accHeader.nextElementSibling;
+              if (!content) return;
+              
+              if (!icon) icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg');
+              
+              const isOpen = !content.classList.contains('hidden');
+              
+              // Close all others first
+              canvasDoc.querySelectorAll('.accordion-content, .faq-body, .faq-answer').forEach((c: any) => {
+                if (c !== content) {
+                  c.classList.add('hidden');
+                  const comp = editor.DomComponents.getWrapper()?.find(`[id="${c.id}"]`)[0];
+                  if (comp) comp.addClass('hidden');
+                }
+              });
+              
+              // Open this one if it was closed, or close if open
+              if (!isOpen) {
+                content.classList.remove('hidden');
+                const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
+                if (comp) comp.removeClass('hidden');
+
+                if (icon) {
+                  icon.classList.add('rotate-180');
+                  if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                }
+              } else {
+                content.classList.add('hidden');
+                const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
+                if (comp) comp.addClass('hidden');
+                
+                if (icon) {
+                  icon.classList.remove('rotate-180');
+                  if (icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                }
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to inject editor canvas FAQ logic', err);
+      }
 
       // Restore custom font options in Typography sector
       try {

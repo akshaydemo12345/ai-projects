@@ -56,8 +56,8 @@ const createPageSchema = z.object({
 }).transform(data => ({
   ...data,
   title: data.title || data.name || 'Untitled Page',
-  slug: data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
-  finalSlug: data.prefix ? `${data.prefix}-${(data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')}` : (data.slug || data.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')
+  slug: data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
+  finalSlug: data.prefix ? `${data.prefix}-${(data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')}` : (data.slug || data.name?.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled')
 })).refine(data => data.title.length > 0, {
   message: "Title or name is required",
   path: ["title"]
@@ -123,7 +123,7 @@ const leadSchema = z.object({
 
 // ─── Helper: Unique slug generator ────────────────────────────────────────────
 const generateUniqueSlug = async (base, projectId, excludeId = null) => {
-  const slug = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = base.toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '');
   let uniqueSlug = slug;
   let counter = 1;
   const query = { projectId, slug: uniqueSlug };
@@ -138,7 +138,7 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
 
 const normalizeSlug = (value) => {
   if (!value) return '';
-  return value.toString().trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return value.toString().trim().toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '');
 };
 
 const checkPageExistsOnExternalWebsite = async (project, slug) => {
@@ -150,7 +150,7 @@ const checkPageExistsOnExternalWebsite = async (project, slug) => {
   if (!baseUrl.startsWith('http')) {
     baseUrl = 'https://' + baseUrl;
   }
-  baseUrl = baseUrl.replace(/\/+$|\s+/g, '');
+  baseUrl = baseUrl.replace(/\/+$|[\s\S]+/g, '');
   const checkUrl = `${baseUrl}/${slug}`;
   logger.info(`Checking if page exists on external website: ${checkUrl}`);
   try {
@@ -549,11 +549,8 @@ exports.createPage = async (req, res, next) => {
           // If the random URL does NOT return 200, it means the site handles 404s properly.
           // Therefore, the 200 on our checkUrl means the page ACTUALLY exists.
           if (!catchAllResponse || catchAllResponse.status !== 200) {
-            return res.status(400).json({
-              success: false,
-              message: `Page already exists on website`,
-              data: {}
-            });
+            // Auto-resolve by appending random string instead of throwing 400 and losing AI generation
+            uniqueSlug = uniqueSlug + '-' + crypto.randomBytes(3).toString('hex');
           }
         }
       } catch (err) {
@@ -774,6 +771,24 @@ exports.createPage = async (req, res, next) => {
         );
         page.landingPageContent = result.html;
         generatedImageCount += result.imageCount || 0;
+
+        // Re-extract updated CSS to fix stock images in CSS rules
+        const styleRegex = new RegExp('<style[^>]*>([\\\\s\\\\S]*?)<\\\\/style>', 'gi');
+        const styleMatches = page.landingPageContent.match(styleRegex);
+        if (styleMatches) {
+          const tagRegex = new RegExp('<\\\\/?style[^>]*>', 'gi');
+          const extractedCss = styleMatches.map(s => s.replace(tagRegex, '')).join('\n');
+          const brandingStyles = `
+:root {
+  --primary: ${page.primaryColor};
+  --secondary: ${page.secondaryColor};
+  --accent: ${page.secondaryColor};
+  --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
+}
+`;
+          page.styles = brandingStyles + extractedCss;
+          page.landingPageStyles = page.styles;
+        }
       }
     } catch (imgErr) {
       logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
