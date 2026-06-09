@@ -57,7 +57,7 @@ export const normalizeLogoUrl = (url?: string | null): string | undefined => {
   }
 
   // Already a valid data URI
-  if (/^data:image\/[a-zA-Z]+;base64,/.test(normalized)) {
+  if (/^data:image\/[a-zA-Z0-9+]+;base64,/.test(normalized)) {
     return normalized;
   }
 
@@ -66,9 +66,17 @@ export const normalizeLogoUrl = (url?: string | null): string | undefined => {
     return normalized;
   }
 
-  // Raw base64 string without prefix
+  // Raw base64 string without prefix — detect SVG vs raster
   if (/^[A-Za-z0-9+/=\s]+$/.test(normalized) && normalized.length > 100) {
-    return `data:image/png;base64,${normalized.replace(/\s+/g, '')}`;
+    try {
+      const decoded = atob(normalized.replace(/\s+/g, ''));
+      const mimeType = decoded.trimStart().startsWith('<svg') || decoded.includes('<svg ')
+        ? 'image/svg+xml'
+        : 'image/png';
+      return `data:${mimeType};base64,${normalized.replace(/\s+/g, '')}`;
+    } catch {
+      return `data:image/png;base64,${normalized.replace(/\s+/g, '')}`;
+    }
   }
 
   // Relative path or fallback string - leave it as-is for the browser to resolve
