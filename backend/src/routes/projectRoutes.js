@@ -40,6 +40,13 @@ router.put('/:id/branding', projectController.updateBranding);
  */
 router.post('/:id/branding/extract-from-website', projectController.extractBrandingFromWebsite);
 
+/**
+ * @route   POST /projects/:id/branding/extract-logo-colors
+ * @desc    Extract colors from the project logo image and store in websiteProfile.logoColors
+ * Body: { logoUrl?: string }  — if omitted, uses the logo stored in websiteProfile.identity.logoUrl
+ */
+router.post('/:id/branding/extract-logo-colors', projectController.extractLogoColors);
+
 // ─── Nested Landing Page Routes ──────────────────────────────────────────────
 
 /**

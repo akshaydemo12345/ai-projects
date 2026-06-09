@@ -319,13 +319,16 @@ exports.extractProject = async (req, res, next) => {
       status: 'success',
       data: {
         websiteProfile,
+        // Logo-specific colors (extracted directly from logo image via Vibrant / SVG)
+        logoColors: websiteProfile?.logoColors || { primary: null, secondary: null, palette: [], source: null },
         // Legacy fields for compatibility
         projectName: websiteProfile?.identity?.name || '',
         projectDesc: websiteProfile?.identity?.description || '',
         projectLogo: websiteProfile?.identity?.logoUrl || '',
         favicon: websiteProfile?.identity?.favicon || '',
-        primaryColor: websiteProfile?.colors?.primary || '',
-        secondaryColor: websiteProfile?.colors?.secondary || '',
+        // primaryColor / secondaryColor: prefer logo-extracted colors, fall back to page-wide colors
+        primaryColor: websiteProfile?.logoColors?.primary || websiteProfile?.colors?.primary || '',
+        secondaryColor: websiteProfile?.logoColors?.secondary || websiteProfile?.colors?.secondary || '',
         accentColor: websiteProfile?.colors?.accent || '',
         colors: websiteProfile?.colors?.palette || [],
         services: (websiteProfile?.content?.services || []).map(s => s.title),

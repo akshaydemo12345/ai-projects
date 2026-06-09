@@ -501,16 +501,39 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
   // ─── DYNAMIC REPLACEMENTS: Logo & Branding ──────────────────────────────
   const finalLogo = page.logoUrl || '';
   if (finalLogo) {
-    // 1. Replace known placeholders
-    finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, finalLogo);
-    finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, finalLogo);
-    finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, finalLogo);
+    // Detect if logoUrl is raw SVG markup (not a data URI or regular URL)
+    const isRawSvgMarkup = /^<svg[\s\S]*<\/svg>$/i.test(finalLogo.trim());
 
-    // 2. Attribute-agnostic logo replacement
+    // Convert raw SVG markup to a proper data URI for use in <img src="">
+    const logoSrcValue = isRawSvgMarkup
+      ? `data:image/svg+xml;base64,${Buffer.from(finalLogo, 'utf8').toString('base64')}`
+      : finalLogo;
+
+    // 1. Replace known placeholders
+    finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, logoSrcValue);
+    finalHtml = finalHtml.replace(/https:\/\/i\.ibb\.co\/vzB7pLq\/Logo\.png/g, logoSrcValue);
+    finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, logoSrcValue);
+
+    // 2. Attribute-agnostic logo replacement for <img id="page-logo">
+    // If logoUrl is raw SVG markup, replace the <img> entirely with an inline <svg> element
+    // so browsers render it correctly (an <img src="<svg...>"> is invalid HTML).
     finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
+      if (isRawSvgMarkup) {
+        // Inject SVG inline; preserve id and any class/style attributes from the original <img>
+        const combined = (p1 + p2).trim();
+        const classMatch = combined.match(/class="([^"]*)"/i);
+        const styleMatch = combined.match(/style="([^"]*)"/i);
+        const extraAttrs = [
+          'id="page-logo"',
+          classMatch ? `class="${classMatch[1]}"` : '',
+          styleMatch ? `style="${styleMatch[1]}"` : '',
+        ].filter(Boolean).join(' ');
+        // Insert extra attrs into the opening <svg ...> tag
+        return finalLogo.trim().replace(/^<svg/i, `<svg ${extraAttrs}`);
+      }
       const combined = p1 + p2;
       const updated = combined.replace(/src="[^"]*"/gi, '');
-      return `<img src="${finalLogo}"${updated} id="page-logo">`;
+      return `<img src="${logoSrcValue}"${updated} id="page-logo">`;
     });
   }
 
@@ -1443,18 +1466,18 @@ exports.handleFormSubmission = async (req, res, next) => {
                   <div class="data-card">
                     <table width="100%" cellpadding="0" cellspacing="0">
                       ${Object.entries(leadData).map(([key, value]) => {
-                        if (value !== undefined && value !== null && typeof value === 'object') {
-                          return '';
-                        }
-                        const displayValue = (value === undefined || value === null || value === '') ? 'Not provided' : String(value);
-                        return `
+            if (value !== undefined && value !== null && typeof value === 'object') {
+              return '';
+            }
+            const displayValue = (value === undefined || value === null || value === '') ? 'Not provided' : String(value);
+            return `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                           <div class="label">${key.replace(/_/g, ' ')}</div>
                           <div class="value">${displayValue}</div>
                         </td>
                       </tr>`;
-                      }).join('')}
+          }).join('')}
                       ${Object.entries(utm).map(([key, value]) => value ? `
                       <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
