@@ -26,6 +26,7 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const logger = require('../utils/logger');
 const { openPage } = require('../utils/puppeteerFetch');
+const Anthropic = (() => { try { return require('@anthropic-ai/sdk'); } catch { return null; } })();
 // node-vibrant v4: named export { Vibrant }  — v3: default export
 // This one-liner handles both versions correctly
 const { Vibrant = require('node-vibrant/node') } = require('node-vibrant/node');
@@ -315,7 +316,7 @@ const INDUSTRY_MAP = [
     { industry: 'Real Estate', sub: 'Residential Properties', kws: ['residential', 'apartment', 'house for sale', 'property', 'real estate', 'buy home'] },
     { industry: 'Real Estate', sub: 'Commercial Properties', kws: ['commercial real estate', 'office space', 'retail space', 'commercial property'] },
     { industry: 'E-Commerce', sub: 'Fashion & Apparel', kws: ['clothing', 'fashion', 'apparel', 'dress', 'outfit', 'wear'] },
-    { industry: 'E-Commerce', sub: 'Electronics', kws: ['electronics', 'gadget', 'smartphone', 'laptop', 'tech store'] },
+    { industry: 'E-Commerce', sub: 'Electronics', kws: ['electronics store', 'buy electronics', 'online electronics shop', 'gadget store', 'tech store', 'buy smartphone', 'buy laptop online'] },
     { industry: 'Food & Beverage', sub: 'Restaurant', kws: ['restaurant', 'menu', 'dining', 'eat', 'cuisine', 'food delivery', 'order food'] },
     { industry: 'Food & Beverage', sub: 'Organic Food', kws: ['organic food', 'natural food', 'vegan', 'plant-based', 'healthy eating'] },
     { industry: 'Education', sub: 'Online Learning', kws: ['online course', 'e-learning', 'edtech', 'tutorial', 'certification', 'lms'] },
@@ -324,13 +325,15 @@ const INDUSTRY_MAP = [
     { industry: 'Finance', sub: 'Insurance', kws: ['insurance', 'policy', 'premium', 'claim', 'coverage', 'insurer'] },
     { industry: 'Travel & Tourism', sub: 'Travel Agency', kws: ['travel agency', 'tour package', 'holiday', 'vacation', 'tour operator'] },
     { industry: 'Travel & Tourism', sub: 'Hotel & Hospitality', kws: ['hotel', 'resort', 'stay', 'accommodation', 'hospitality', 'lodging'] },
+    { industry: 'Technology', sub: 'Consumer Electronics', kws: ['iphone', 'ipad', 'macbook', 'imac', 'airpods', 'apple watch', 'galaxy', 'pixel phone', 'smartwatch', 'tablet', 'laptop', 'desktop computer', 'consumer electronics', 'wearable', 'earbuds', 'headphones', 'smart home', 'home automation'] },
+    { industry: 'Technology', sub: 'Hardware & Devices', kws: ['processor', 'chip', 'semiconductor', 'gpu', 'cpu', 'motherboard', 'graphics card', 'ram', 'ssd', 'hardware', 'computer parts'] },
     { industry: 'Technology', sub: 'IT Services', kws: ['it services', 'software development', 'web development', 'digital agency', 'tech consulting'] },
     { industry: 'Fitness & Wellness', sub: 'Gym & Fitness', kws: ['gym', 'fitness', 'workout', 'yoga', 'crossfit', 'personal training'] },
     { industry: 'Legal', sub: 'Law Firm', kws: ['law firm', 'attorney', 'lawyer', 'legal services', 'advocate'] },
     { industry: 'Nonprofit', sub: 'NGO', kws: ['ngo', 'nonprofit', 'charity', 'donation', 'foundation', 'social cause'] },
 ];
 
-const classifyIndustry = (textCorpus) => {
+const classifyIndustryByKeywords = (textCorpus) => {
     const lower = (textCorpus || '').toLowerCase();
     const scores = {};
     for (const entry of INDUSTRY_MAP) {
@@ -341,9 +344,41 @@ const classifyIndustry = (textCorpus) => {
         }
     }
     const sorted = Object.entries(scores).sort((a, b) => b[1].score - a[1].score);
-    if (sorted.length === 0) return { industry: 'General', subIndustry: 'Business' };
+    if (sorted.length === 0) return null;
     const [industry, { sub }] = sorted[0];
-    return { industry, subIndustry: sub };
+    return { industry, subIndustry: sub, score: sorted[0][1].score };
+};
+
+const classifyIndustryWithAI = async (textCorpus) => {
+    if (!Anthropic) return null;
+    try {
+        const client = new Anthropic();
+        const subMap = INDUSTRY_MAP.map(e => e.industry + ' > ' + e.sub).join(', ');
+        const snippet = (textCorpus || '').slice(0, 800);
+        const prompt = 'Classify this website into one industry category.\n\nWebsite text:\n' + snippet + '\n\nAvailable categories (industry > subIndustry):\n' + subMap + '\n\nRespond ONLY with valid JSON: {"industry": "...", "subIndustry": "..."}. No explanation.';
+        const msg = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 80,
+            messages: [{ role: 'user', content: prompt }],
+        });
+        const text = ((msg.content && msg.content[0] && msg.content[0].text) || '').trim().replace(/```[a-z]*/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(text);
+        if (parsed.industry && parsed.subIndustry) return parsed;
+    } catch (e) {
+        logger.warn('[Industry] AI classify failed: ' + e.message);
+    }
+    return null;
+};
+
+const classifyIndustry = async (textCorpus) => {
+    const kwResult = classifyIndustryByKeywords(textCorpus);
+    if (kwResult && kwResult.score >= 2) {
+        return { industry: kwResult.industry, subIndustry: kwResult.subIndustry };
+    }
+    const aiResult = await classifyIndustryWithAI(textCorpus);
+    if (aiResult) return aiResult;
+    if (kwResult) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry };
+    return { industry: 'General', subIndustry: 'Business' };
 };
 
 // ─── Colour helpers (Node-side, post Puppeteer extraction) ────────────────────
@@ -589,13 +624,22 @@ const IN_BROWSER_EXTRACTOR = async () => {
     };
 
     const LOGO_SELECTORS = [
+        // ── Tier 1: Explicit logo-named SVGs (highest confidence, catches Apple-style inline SVG logos) ──
+        'svg.logo', 'svg[class*="logo" i]', 'svg[id*="logo" i]',
+        '.logo svg', '.navbar-brand svg', '.site-logo svg', '.header-logo svg', '.brand svg',
+        'a[href="/"] svg',
+        // Generic header/nav SVG — catches bare SVG logos in header/nav (Apple, etc.)
+        'header svg', 'nav svg', '.navbar svg', '.site-header svg',
+        // ── Tier 2: Explicit logo-named IMGs ──
         'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]', 'img[class*="logo" i]',
         'img[src*="logo" i]',
-        '.logo img', 'header img', 'nav img', '.navbar img', '.site-header img',
-        'a[href="/"] img', '.brand img', '.navbar-brand img',
-        'svg.logo', 'svg[class*="logo" i]', '.logo svg', '.navbar-brand svg',
-        'header svg[class*="logo"]', 'a[href="/"] svg',
-        '.logo', '.navbar-brand', '.site-logo', '.header-logo', 'a.logo',
+        '.logo img', '.navbar-brand img', '.site-logo img', '.header-logo img',
+        'a.logo', '.logo', '.navbar-brand', '.site-logo', '.header-logo',
+        '.brand img',
+        'a[href="/"] img',
+        // ── Tier 3: Generic header/nav IMG — only after all named+SVG checks ──
+        'header img', 'nav img', '.navbar img', '.site-header img',
+        // ── Tier 4: Last resort ──
         'meta[property="og:image"]',
     ];
 
@@ -609,6 +653,13 @@ const IN_BROWSER_EXTRACTOR = async () => {
         if (el.tagName === 'IMG') {
             const src = getRealSrc(el);
             const absSrc = toAbs(src);
+
+            // FIX: also handle data: URIs that toAbs() drops (e.g. Apple's inline SVG logo)
+            if (!absSrc && src && src.startsWith('data:image/')) {
+                logoUrl = src;
+                logoFormat = src.startsWith('data:image/svg') ? 'svg-inline' : 'data-uri';
+                break;
+            }
 
             // Check if it's an SVG file
             if (absSrc && (absSrc.toLowerCase().includes('.svg') || absSrc.toLowerCase().includes('.svg?'))) {
@@ -1151,7 +1202,9 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         const identity = {
             name: cleanStr(raw.pageTitle || raw.ogTitle || ''),
             description: cleanStr(raw.metaDesc || ''),
-            logoUrl: raw.logoUrl ? toAbsUrl(raw.logoUrl, baseUrl) || raw.logoUrl : '',
+            logoUrl: raw.logoUrl
+                ? (raw.logoUrl.startsWith('data:') ? raw.logoUrl : (toAbsUrl(raw.logoUrl, baseUrl) || raw.logoUrl))
+                : '',
             faviconUrl: raw.favicon ? toAbsUrl(raw.favicon, baseUrl) || raw.favicon
                 : `${new URL(baseUrl).origin}/favicon.ico`,
             logoFormat: raw.logoFormat || detectLogoFormat(raw.logoUrl),
@@ -1295,7 +1348,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
             seo.metaKeywords.join(' '),
             raw.textCorpusSample || '',
         ].join(' ');
-        const { industry, subIndustry } = classifyIndustry(textCorpus);
+        const { industry, subIndustry } = await classifyIndustry(textCorpus);
 
         const formFields = extractFormFieldsFromHtml(html);
         const durationMs = Date.now() - startedAt;

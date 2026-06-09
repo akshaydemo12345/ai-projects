@@ -42,17 +42,14 @@ function fetchImageBuffer(rawUrl, redirectsLeft = 5) {
             rawUrl,
             {
                 headers: {
-                    // Mimic a real browser so servers don't block bot UA
                     'User-Agent': 'Mozilla/5.0 (compatible; ImageBrightnessBot/1.0)',
                     'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
                 },
                 timeout: 8000,
             },
             (res) => {
-                // Follow redirects (301/302/307/308)
                 if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
                     req.destroy();
-                    // Resolve relative redirect URLs against the original
                     const redirectUrl = new URL(res.headers.location, rawUrl).href;
                     return resolve(fetchImageBuffer(redirectUrl, redirectsLeft - 1));
                 }
@@ -62,7 +59,6 @@ function fetchImageBuffer(rawUrl, redirectsLeft = 5) {
                     return reject(new Error(`HTTP ${res.statusCode}`));
                 }
 
-                // Guard: only accept image content types
                 const ct = (res.headers['content-type'] || '').toLowerCase();
                 if (!ct.startsWith('image/') && !ct.startsWith('application/octet-stream')) {
                     req.destroy();
@@ -82,21 +78,16 @@ function fetchImageBuffer(rawUrl, redirectsLeft = 5) {
 }
 
 /**
- * GET /api/utils/image-brightness?url=<encoded-image-url>
+ * GET /api/utils/image-proxy?url=<encoded-image-url>
  *
- * Returns JSON:  { brightness: 0.72 }  or  { brightness: null }
- *
- * The brightness value is the average Rec-709 luminosity (0 = black, 1 = white).
- * `null` means the image could not be fetched or analysed (e.g. CORS-only host,
- * non-image response, timeout). The frontend falls back to a neutral UI state.
- *
- * We use Jimp (pure-JS, no native deps) to decode the image pixels server-side.
- * If Jimp is not installed, we return null gracefully rather than crashing.
+ * Server-side image proxy — fetches any external image (favicon, logo, etc.)
+ * and pipes it back to the client with proper headers.
+ * Bypasses browser CORS / mixed-content restrictions on external image URLs.
+ * Cached for 24 h in the browser so repeat renders are instant.
  */
-exports.getImageBrightness = async (req, res) => {
+exports.imageProxy = async (req, res) => {
     const { url } = req.query;
 
-    // --- Input validation ---
     if (!url || typeof url !== 'string') {
         return res.status(400).json({ status: 'fail', message: 'url query param required' });
     }
@@ -108,7 +99,6 @@ exports.getImageBrightness = async (req, res) => {
         return res.status(400).json({ status: 'fail', message: 'Invalid URL' });
     }
 
-    // Only allow http/https — reject data URIs, file://, etc.
     if (!['http:', 'https:'].includes(parsed.protocol)) {
         return res.status(400).json({ status: 'fail', message: 'Only http/https URLs are allowed' });
     }
@@ -116,15 +106,61 @@ exports.getImageBrightness = async (req, res) => {
     try {
         const imageBuffer = await fetchImageBuffer(url);
 
-        // Attempt to decode with Jimp (installed as a dependency).
-        // Jimp is pure-JS, handles PNG/JPEG/GIF/BMP/WebP.
+        const ext = parsed.pathname.split('.').pop().toLowerCase().split('?')[0];
+        const mimeMap = {
+            png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+            gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
+            ico: 'image/x-icon', bmp: 'image/bmp', avif: 'image/avif',
+        };
+        const contentType = mimeMap[ext] || 'image/png';
+
+        res.set({
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=86400',
+            'Access-Control-Allow-Origin': '*',
+        });
+        return res.send(imageBuffer);
+    } catch (fetchErr) {
+        console.warn('[utilController] imageProxy fetch failed:', fetchErr.message, '| URL:', url);
+        return res.status(502).json({ status: 'fail', message: 'Could not fetch image' });
+    }
+};
+
+/**
+ * GET /api/utils/image-brightness?url=<encoded-image-url>
+ *
+ * Returns JSON:  { brightness: 0.72 }  or  { brightness: null }
+ *
+ * The brightness value is the average Rec-709 luminosity (0 = black, 1 = white).
+ * `null` means the image could not be fetched or analysed (e.g. CORS-only host,
+ * non-image response, timeout). The frontend falls back to a neutral UI state.
+ */
+exports.getImageBrightness = async (req, res) => {
+    const { url } = req.query;
+
+    if (!url || typeof url !== 'string') {
+        return res.status(400).json({ status: 'fail', message: 'url query param required' });
+    }
+
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return res.status(400).json({ status: 'fail', message: 'Invalid URL' });
+    }
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return res.status(400).json({ status: 'fail', message: 'Only http/https URLs are allowed' });
+    }
+
+    try {
+        const imageBuffer = await fetchImageBuffer(url);
+
         let brightness = null;
         try {
-            // Jimp v1+ uses named export { Jimp } and Jimp.fromBuffer(buffer)
             const { Jimp } = require('jimp');
             const image = await Jimp.fromBuffer(imageBuffer);
 
-            // Sample every Nth pixel for speed on large images
             const { width, height } = image.bitmap;
             const stride = Math.max(1, Math.floor(Math.sqrt((width * height) / 2000)));
             let total = 0;
@@ -143,14 +179,12 @@ exports.getImageBrightness = async (req, res) => {
 
             brightness = count > 0 ? total / count : null;
         } catch (decodeErr) {
-            // Jimp not installed or couldn't decode — return null (not a hard error)
             console.warn('[utilController] Image decode failed:', decodeErr.message);
             brightness = null;
         }
 
         return res.json({ brightness });
     } catch (fetchErr) {
-        // Image unreachable — not an application error, just return null
         console.warn('[utilController] Image fetch failed:', fetchErr.message, '| URL:', url);
         return res.json({ brightness: null });
     }

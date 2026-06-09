@@ -37,7 +37,7 @@ const subIndustryOptions: Record<string, string[]> = {
   Healthcare: ["Dentistry", "Medical Clinic", "Wellness Spa", "Fitness Studio", "Telehealth", "Physical Therapy", "Cosmetic Surgery"],
   "Real Estate": ["Residential", "Commercial", "Property Management", "Agent/Brokerage", "Vacation Rentals", "Land Development"],
   Finance: ["Accounting", "Investment", "Insurance", "Lending", "Crypto", "Wealth Management"],
-  Technology: ["AI", "IoT", "Cybersecurity", "Cloud", "Mobility", "Hardware"],
+  Technology: ["Consumer Electronics", "AI", "IoT", "Cybersecurity", "Cloud", "Mobility", "Hardware", "Software"],
   Consulting: ["Management", "HR", "IT", "Strategy", "Financial", "Legal"],
   Construction: ["Contractors", "Home Renovation", "Architecture", "Builders", "Remodeling", "Interior Design"],
   Hospitality: ["Hotels", "Restaurants", "Events", "Travel Agency", "Catering", "Resorts"],
@@ -98,7 +98,16 @@ const CreateProjectFlow = () => {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
-      // Compress image using canvas to reduce base64 payload size
+
+      // SVG files: skip canvas compression (canvas can't reliably handle SVG)
+      // Keep as-is to preserve vector quality
+      if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+        setLogoPreview(result);
+        setLogoBase64(result);
+        return;
+      }
+
+      // Raster images: compress using canvas
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -116,6 +125,11 @@ const CreateProjectFlow = () => {
         const compressed = canvas.toDataURL('image/webp', 0.85);
         setLogoPreview(compressed);
         setLogoBase64(compressed);
+      };
+      img.onerror = () => {
+        // Canvas fallback failed — use original
+        setLogoPreview(result);
+        setLogoBase64(result);
       };
       img.src = result;
     };
@@ -627,13 +641,42 @@ const CreateProjectFlow = () => {
                           className="max-h-full max-w-full object-contain"
                           onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
                           onError={(e) => {
-                            if (logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
-                              const proxyUrl = aiApi.proxyImage(logoPreview);
-                              if (e.currentTarget.src !== proxyUrl) {
-                                e.currentTarget.src = proxyUrl;
+                            const current = e.currentTarget;
+                            const src = logoPreview || '';
+
+                            // Step 1: If it's an HTTP URL, try proxy
+                            if (src.startsWith('http') && !src.startsWith('data:')) {
+                              const proxyUrl = aiApi.proxyImage(src);
+                              if (current.src !== proxyUrl) {
+                                current.src = proxyUrl;
                                 return;
                               }
                             }
+
+                            // Step 2: If it's an SVG data URI that failed, try re-encoding it
+                            if (src.startsWith('data:image/svg+xml')) {
+                              try {
+                                // Try URL-encoded SVG as fallback (some browsers prefer this over base64 for SVG)
+                                const base64Part = src.replace('data:image/svg+xml;base64,', '');
+                                const svgText = atob(base64Part);
+                                const encoded = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
+                                if (current.src !== encoded) {
+                                  current.src = encoded;
+                                  return;
+                                }
+                              } catch {
+                                // Decoding failed, fall through to favicon
+                              }
+                            }
+
+                            // Step 3: Fallback to favicon if available
+                            const faviconFallback = scrapedData?.favicon;
+                            if (faviconFallback && current.src !== faviconFallback) {
+                              current.src = faviconFallback;
+                              return;
+                            }
+
+                            // Step 4: Give up — clear the preview
                             setLogoPreview(null);
                             setLogoBase64(null);
                           }}

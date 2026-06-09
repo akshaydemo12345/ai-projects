@@ -101,6 +101,41 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   );
 };
 
+// ─── ProjectLogoIcon ─────────────────────────────────────────
+const ProjectLogoIcon = ({ project }: { project: any }) => {
+  const identity = project.websiteProfile?.identity;
+  const logoFormat: string = identity?.logoFormat || '';
+  const rawLogoUrl: string = identity?.logoUrl || project.logoUrl || '';
+  const faviconUrl: string = identity?.faviconUrl || identity?.favicon || '';
+
+  const isInlineLogo = rawLogoUrl.startsWith('data:') ||
+    logoFormat === 'svg-inline' || logoFormat === 'svg-url-to-datauri' || logoFormat === 'data-uri';
+
+  const [src, setSrc] = useState<string | null>(
+    isInlineLogo ? rawLogoUrl : (faviconUrl || null)
+  );
+  const [triedFavicon, setTriedFavicon] = useState(!isInlineLogo);
+
+  const handleError = () => {
+    if (!triedFavicon && faviconUrl) {
+      setTriedFavicon(true);
+      setSrc(faviconUrl);
+    } else {
+      setSrc(null);
+    }
+  };
+
+  if (!src) return <Globe className="h-5 w-5 text-primary" />;
+  return (
+    <img
+      src={src}
+      alt="logo"
+      className="h-6 w-6 object-contain"
+      onError={handleError}
+    />
+  );
+};
+
 // ─── Main Component ──────────────────────────────────────────
 const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -167,7 +202,6 @@ const ProjectsPage = () => {
     (sum: number, p: any) => sum + (p.publishedPageCount || 0), 0
   );
 
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-full">
@@ -190,7 +224,7 @@ const ProjectsPage = () => {
 
   return (
     <div className="flex-1 min-h-full flex flex-col" onClick={() => setMenuOpen(null)} style={{ background: "#f2f2f2" }}>
-      {/* ── Header Bar (White / slate-900) ── */}
+      {/* ── Header Bar ── */}
       <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900">
         <div>
           <h1 className="text-lg font-bold text-foreground">My Projects</h1>
@@ -271,34 +305,21 @@ const ProjectsPage = () => {
             </Button>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((project: any) => (
-              <div
-                key={project._id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-all group relative flex flex-col"
-              >
-                <div className="h-1.5 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      {/* Favicon with fallback to Globe */}
-                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0 overflow-hidden">
-                        {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
-                          <img
-                            src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
-                            alt="favicon"
-                            className="h-6 w-6 object-contain"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
-                          />
-                        ) : null}
-                        <Globe
-                          className="h-5 w-5 text-primary"
-                          style={(project.websiteProfile?.identity?.favicon || project.logoUrl) ? { display: 'none' } : undefined}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        {/* Website URL as primary bold title */}
-                        <div className="mt-0.5">
+          <>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((project: any) => (
+                <div
+                  key={project._id}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-all group relative flex flex-col"
+                >
+                  <div className="h-1.5 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0 overflow-hidden">
+                          <ProjectLogoIcon project={project} />
+                        </div>
+                        <div className="min-w-0">
                           <a
                             href={cleanUrl(project.websiteUrl)}
                             target="_blank"
@@ -311,95 +332,92 @@ const ProjectsPage = () => {
                               ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
                               : project.name}
                           </a>
-                        </div>
-                        {/* Industry chip — from websiteProfile, fallback to category */}
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
-                          {project.websiteProfile?.industry?.industry || project.industry || project.category || "General"}
-                        </span>
-                        {/* Project name as secondary info */}
-                        <div className="flex items-center gap-1 mt-2">
-                          <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                          <span className="text-xs text-muted-foreground truncate font-medium" title={project.name}>
-                            {project.name}
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                            {project.websiteProfile?.industry?.industry || project.industry || project.category || "General"}
                           </span>
+                          <div className="flex items-center gap-1 mt-2">
+                            <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                            <span className="text-xs text-muted-foreground truncate font-medium" title={project.name}>
+                              {project.name}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setMenuOpen(menuOpen === project._id ? null : project._id)}
+                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        {menuOpen === project._id && (
+                          <div className="absolute right-0 top-8 z-50 w-40 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                            <button
+                              onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                            >
+                              <LayoutDashboard className="h-3.5 w-3.5" /> Project Dashboard
+                            </button>
+                            <button
+                              onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                            >
+                              <Mail className="h-3.5 w-3.5" /> Email Settings
+                            </button>
+                            <button
+                              onClick={() => setEditingProject(project)}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
+                            >
+                              <Settings2 className="h-3.5 w-3.5" /> Project Settings
+                            </button>
+                            <button
+                              onClick={() => handleDelete(project._id)}
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => setMenuOpen(menuOpen === project._id ? null : project._id)}
-                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {menuOpen === project._id && (
-                        <div className="absolute right-0 top-8 z-50 w-40 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
-                          <button
-                            onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                          >
-                            <LayoutDashboard className="h-3.5 w-3.5" /> Project Dashboard
-                          </button>
-                          <button
-                            onClick={() => navigate(`/dashboard/mail-management?projectId=${project._id}`)}
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                          >
-                            <Mail className="h-3.5 w-3.5" /> Email Settings
-                          </button>
-                          <button
-                            onClick={() => setEditingProject(project)}
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted"
-                          >
-                            <Settings2 className="h-3.5 w-3.5" /> Project Settings
-                          </button>
-                          <button
-                            onClick={() => handleDelete(project._id)}
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" /> Delete
-                          </button>
+
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-semibold mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100/55 dark:border-slate-800/50">
+                      <span>Pages: <strong className="text-slate-800 dark:text-slate-200">{project.pageCount || 0}</strong></span>
+                      <span className="text-slate-200 dark:text-slate-700">|</span>
+                      <span>Leads: <strong className="text-slate-800 dark:text-slate-200">{project.leadCount || 0}</strong></span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/80">
+                      <div className="flex flex-wrap items-center justify-between w-full gap-2">
+                        <Button
+                          size="sm"
+                          className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all"
+                          onClick={() => navigate(`/dashboard/projects/${project._id}`)}
+                        >
+                          Go to Dashboard →
+                        </Button>
+                        <div className="flex flex-wrap items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-wide uppercase">
+                          {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-50 text-violet-600 border border-violet-100 px-1.5 py-0.5 rounded-md">PPC</span>}
+                          {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded-md">SEO</span>}
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-semibold mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100/55 dark:border-slate-800/50">
-                    <span>Pages: <strong className="text-slate-800 dark:text-slate-200">{project.pageCount || 0}</strong></span>
-                    <span className="text-slate-200 dark:text-slate-700">|</span>
-                    <span>Leads: <strong className="text-slate-800 dark:text-slate-200">{project.leadCount || 0}</strong></span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/80">
-                    <div className="flex flex-wrap items-center justify-between w-full gap-2">
-                      <Button
-                        size="sm"
-                        className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all"
-                        onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                      >
-                        Go to Dashboard →
-                      </Button>
-                      <div className="flex flex-wrap items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-wide uppercase">
-                        {project.pages?.some((p: any) => p.type === "ppc") && <span className="bg-violet-50 text-violet-600 border border-violet-100 px-1.5 py-0.5 rounded-md">PPC</span>}
-                        {project.pages?.some((p: any) => p.type === "seo") && <span className="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded-md">SEO</span>}
                       </div>
                     </div>
                   </div>
                 </div>
+              ))}
+              <div
+                onClick={() => navigate("/dashboard/projects/new")}
+                className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/30 flex flex-col items-center justify-center min-h-[220px] hover:border-primary/40 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer group"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white mb-3 group-hover:border-primary/40 transition-colors shadow-sm">
+                  <Plus className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
+                </div>
+                <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">
+                  New Project
+                </p>
               </div>
-            ))}
-
-            <div
-              onClick={() => navigate("/dashboard/projects/new")}
-              className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/30 flex flex-col items-center justify-center min-h-[220px] hover:border-primary/40 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer group"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white mb-3 group-hover:border-primary/40 transition-colors shadow-sm">
-                <Plus className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
-              </div>
-              <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">
-                New Project
-              </p>
             </div>
-          </div>
+          </>
         ) : (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -429,7 +447,6 @@ const ProjectsPage = () => {
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.pageCount || 0}</td>
                       <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 text-center font-bold">{project.leadCount || 0}</td>
-
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2 justify-end">
                           <Button
