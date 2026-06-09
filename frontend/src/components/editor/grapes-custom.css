@@ -286,7 +286,7 @@
   background-color: #f3f4f6 !important;
 }
 
-.gjs-editor .gjs-field input,
+.gjs-editor .gjs-field input:not([type="checkbox"]):not([type="radio"]),
 .gjs-editor .gjs-field select,
 .gjs-editor .gjs-field textarea {
   width: 100% !important;
@@ -341,7 +341,7 @@
 
 .gjs-editor .gjs-field-arrow-u,
 .gjs-editor .gjs-field-arrow-d {
-  height: 50% !important;
+  flex: 1 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -351,7 +351,11 @@
 }
 
 .gjs-editor .gjs-field-arrow-u {
-  border-bottom: 1px solid #d1d5db !important; /* Horizontal middle line (back to top element) */
+  margin-top: 2px !important;
+}
+
+.gjs-editor .gjs-field-arrow-d {
+  margin-bottom: 2px !important;
 }
 
 /* If arrows are drawn using CSS borders */
@@ -365,7 +369,7 @@
   margin: 0 !important;
   padding: 0 !important;
   border-style: solid !important;
-  border-width: 0 3px 3px 3px !important; /* Triangle pointing UP */
+  border-width: 0 4px 4px 4px !important; /* Triangle pointing UP */
   border-color: transparent transparent #000000 transparent !important;
 }
 
@@ -379,7 +383,7 @@
   margin: 0 !important;
   padding: 0 !important;
   border-style: solid !important;
-  border-width: 3px 3px 0 3px !important; /* Triangle pointing DOWN */
+  border-width: 4px 4px 0 4px !important; /* Triangle pointing DOWN */
   border-color: #000000 transparent transparent transparent !important;
 }
 
@@ -388,8 +392,8 @@
 .gjs-editor .gjs-field-arrows path {
   fill: #000000 !important;
   stroke: #000000 !important;
-  width: 8px !important;
-  height: 8px !important;
+  width: 10px !important;
+  height: auto !important;
   display: block !important;
   margin: auto !important;
 }
@@ -591,12 +595,11 @@ body {
   color: #4b5563 !important;
   font-size: 12px !important;
   font-weight: 500 !important;
-  width: 40% !important;
   flex-shrink: 0 !important;
 }
 
 .gjs-editor #traits-container .gjs-trt-trait .gjs-field {
-  width: 60% !important;
+  width: 100% !important;
   height: 32px !important;
   background-color: #ffffff !important;
   border: 1px solid #d1d5db !important;
@@ -1127,4 +1130,43 @@ body {
 .gjs-sm-sectors,
 .gjs-trt-traits {
   background-color: #ffffff !important;
+}
+
+.gjs-editor .gjs-label-wrp {
+  width: 50% !important;
+  min-width: 50% !important;
+}
+
+/* Fix for checkbox traits */
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox,
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field[data-type="checkbox"] {
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox input,
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"] {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  width: 16px !important;
+  height: 16px !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  position: relative !important;
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  z-index: 10 !important;
+}
+
+/* Hide grapesjs native fake checkbox if present */
+.gjs-editor #traits-container .gjs-trt-trait .gjs-chk-icon {
+  display: none !important;
 }
