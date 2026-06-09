@@ -767,28 +767,32 @@ const GrapesEditor = () => {
       },
       panels: { defaults: [] },
       selectorManager: {
-        componentFirst: true,
+        componentFirst: false,
         appendTo: '#selectors-container',
       },
       styleManager: {
         appendTo: '#styles-container',
         sectors: [
           {
+            id: 'layout',
             name: 'Layout',
             open: false,
             buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content'],
           },
           {
+            id: 'size',
             name: 'Size',
             open: false,
             buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height'],
           },
           {
+            id: 'space',
             name: 'Space',
             open: false,
             buildProps: ['padding', 'margin'],
           },
           {
+            id: 'position',
             name: 'Position',
             open: false,
             buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'],
@@ -808,6 +812,7 @@ const GrapesEditor = () => {
             ]
           },
           {
+            id: 'typography',
             name: 'Typography',
             open: false,
             buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
@@ -868,6 +873,7 @@ const GrapesEditor = () => {
             ]
           },
           {
+            id: 'background',
             name: 'Background',
             open: false,
             buildProps: ['background-color', 'background-image', 'background-clip'],
@@ -887,11 +893,13 @@ const GrapesEditor = () => {
             ]
           },
           {
-            name: 'Borders',
+            id: 'border',
+            name: 'Border',
             open: false,
             buildProps: ['border-radius', 'border'],
           },
           {
+            id: 'effects',
             name: 'Effects',
             open: false,
             buildProps: [
@@ -1019,43 +1027,24 @@ const GrapesEditor = () => {
           droppable: false,
           editable: false,
           resizable: true,
-          stylable: true,
+          // Explicitly allow all style properties
+          stylable: [
+            'color', 'font-size', 'width', 'height',
+            'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+            'display', 'opacity', 'cursor', 'background-color',
+            'border', 'border-radius', 'text-align',
+            'position', 'top', 'right', 'bottom', 'left', 'z-index',
+            'transform', 'transition', 'box-shadow',
+          ],
           traits: [
             {
               type: 'button',
               text: 'Select Icon',
               full: true,
               command: 'open-icon-picker',
-            },
-            {
-              type: 'color',
-              label: 'Icon Color',
-              name: 'color',
-              changeProp: true,
-            },
-            {
-              type: 'number',
-              label: 'Icon Size (px)',
-              name: 'fontSize',
-              changeProp: true,
             }
           ]
-        },
-        init() {
-          this.on('change:color', this.handleColorChange);
-          this.on('change:fontSize', this.handleSizeChange);
-        },
-        handleColorChange() {
-          const color = this.get('color');
-          if (color) {
-            this.addStyle({ color: color });
-          }
-        },
-        handleSizeChange() {
-          const size = this.get('fontSize');
-          if (size) {
-            this.addStyle({ 'font-size': size + 'px' });
-          }
         }
       }
     });
@@ -1066,7 +1055,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'placeholder', 'type', 'required',
+            'id', 'name', 'placeholder', 'type', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; font-family: inherit;' }
@@ -1080,7 +1069,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'textarea',
           traits: [
-            'id', 'name', 'placeholder', 'required',
+            'id', 'name', 'placeholder', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; min-height: 100px; font-family: inherit;' }
@@ -1094,7 +1083,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'select',
           traits: [
-            'id', 'name', 'required',
+            'id', 'name', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' },
             {
               type: 'options',
@@ -1135,7 +1124,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'value', 'checked', 'required',
+            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
@@ -1149,7 +1138,7 @@ const GrapesEditor = () => {
         defaults: {
           tagName: 'input',
           traits: [
-            'id', 'name', 'value', 'checked', 'required',
+            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
             { type: 'text', label: 'Label Text', name: 'data-label' }
           ],
           attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
@@ -1403,6 +1392,57 @@ const GrapesEditor = () => {
         console.warn('Could not set custom fonts in style manager', e);
       }
 
+      // ── Remove min value constraints on spacing/position to allow negative values ──
+      try {
+        const styleManager = editor.StyleManager;
+        
+        // Padding and Margin are composite properties
+        ['padding', 'margin'].forEach(propName => {
+          const prop = styleManager.getProperty('Space', propName);
+          if (prop && prop.getProperties) {
+            prop.getProperties().forEach((p: any) => {
+              p.set('min', ''); // Remove the minimum limit
+            });
+          }
+        });
+
+        // Top, Right, Bottom, Left are regular properties under Position
+        ['top', 'right', 'bottom', 'left'].forEach(propName => {
+          const prop = styleManager.getProperty('Position', propName);
+          if (prop) {
+            prop.set('min', ''); // Remove the minimum limit
+          }
+        });
+      } catch (e) {
+        console.warn('Could not update min constraints for spacing properties', e);
+      }
+
+      // ── Cleanup legacy inline styles from icons so Style Manager works ──
+      try {
+        const wrapper = editor.getWrapper();
+        if (wrapper) {
+          // Find all icons and remove inline color/font-size to let Style Manager take over
+          const icons = wrapper.findType('icon');
+          icons.forEach((icon: any) => {
+            const style = icon.getStyle();
+            let changed = false;
+            if (style.color === 'var(--primary)' || style.color === '#818cf8') {
+              delete style.color;
+              changed = true;
+            }
+            if (style['font-size'] === '32px') {
+              delete style['font-size'];
+              changed = true;
+            }
+            if (changed) {
+              icon.setStyle(style);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Could not cleanup legacy icon styles', e);
+      }
+
       // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
       try {
         const canvasDoc = editor.Canvas.getDocument();
@@ -1446,31 +1486,23 @@ const GrapesEditor = () => {
       });
 
 
-      // ── Canvas click: icon picker on EVERY click on an icon ──
+      // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
       setTimeout(() => {
         try {
           const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
           const frameDoc = frameEl?.contentDocument;
           if (frameDoc) {
             frameDoc.addEventListener('click', () => {
-              // Wait a bit for GrapesJS selection to settle
               setTimeout(() => {
                 const selected = editor.getSelected();
                 if (!selected) return;
-
                 const type = selected.get('type');
-                const tagName = (selected.get('tagName') || '').toLowerCase();
-                const classModels = selected.getClasses();
-                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
-
-                const isIcon = type === 'icon' || tagName === 'i' || classes.some((c: string) => c.startsWith('fa-') || c === 'fas' || c === 'fa');
-                const isCustomCode = type === 'custom-code' || classes.includes('gjs-custom-code');
-
-                if (isIcon) {
-                  editor.runCommand('open-icon-picker');
-                } else if (isCustomCode) {
+                const classes = selected.getClasses ? selected.getClasses() : [];
+                const isCustomCode = type === 'custom-code' || (Array.isArray(classes) && classes.includes('gjs-custom-code'));
+                if (isCustomCode) {
                   editor.runCommand('open-custom-code-editor');
                 }
+                // NOTE: Icon picker is opened on double-click only (component:dblclick below)
               }, 50);
             }, true);
           }
@@ -1525,7 +1557,7 @@ const GrapesEditor = () => {
         content: {
           type: 'icon',
           classes: ['fas', 'fa-star'],
-          style: { 'font-size': '32px', 'color': 'var(--primary)', 'display': 'inline-block' }
+          style: { 'display': 'inline-block' }
         }
       });
 
@@ -2207,28 +2239,36 @@ const GrapesEditor = () => {
   const switchMode = async (newMode: 'landing' | 'thank-you') => {
     if (newMode === mode) return;
 
-    // 1. Save current editor state into memory/local page state and persist to DB
+    // 1. Save current editor state into memory/local page state so it isn't lost on switch
     if (editorRef.current) {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
-      const brandingStyleTag = canvasDoc.getElementById('branding-vars-init');
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const brandingStyleTag = canvasDoc.getElementById('branding-vars');
+      const templateStyleTag = canvasDoc.getElementById('template-styles');
+      
+      const templateCss = templateStyleTag?.innerHTML || '';
+      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+
+      // Extract scripts to ensure they aren't lost
+      let canvasScripts = '';
+      try {
+        if (canvasDoc) canvasScripts = extractCanvasScripts(canvasDoc);
+      } catch (e) {
+        console.warn('Failed to extract scripts from canvas:', e);
+      }
+      const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
+      const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
 
       if (page) {
         if (mode === 'landing') {
-          page.landingPageContent = html;
+          page.landingPageContent = htmlWithScripts;
           page.landingPageStyles = globalCss + '\n' + css;
         } else {
-          page.thankYouPageContent = html;
+          page.thankYouPageContent = htmlWithScripts;
           page.thankYouPageStyles = globalCss + '\n' + css;
         }
-      }
-      try {
-        await handleSave();
-      } catch (e) {
-        console.error('Auto-save failed on switchMode:', e);
       }
     }
 
@@ -2945,6 +2985,15 @@ const GrapesEditor = () => {
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+            
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 8 }}>
+              <NavIcon active={false} onClick={() => navigate(`/dashboard/projects/${projId}`)} title="Go back to Project">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </NavIcon>
+            </div>
           </div>
 
           {/* Panel Content (Dynamic) */}
@@ -2974,7 +3023,7 @@ const GrapesEditor = () => {
                     const added = editor.addComponents({
                       type: 'icon',
                       classes: ['fas', 'fa-star'],
-                      style: { 'font-size': '32px', 'color': '#818cf8', 'display': 'inline-block', 'cursor': 'pointer' }
+                      style: { 'display': 'inline-block', 'cursor': 'pointer' }
                     });
                     if (added && added[0]) {
                       editor.select(added[0]);
