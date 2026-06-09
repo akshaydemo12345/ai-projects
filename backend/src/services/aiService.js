@@ -35,10 +35,18 @@ const cleanHTML = (raw) => {
   while ((match = regex.exec(raw)) !== null) {
     if (match[1]) matches.push(match[1].trim().replace(/```$/g, '').trim());
   }
-  if (matches.length > 0) return matches.join('\n');
+  if (matches.length > 0) return matches.join('\\n');
+  
   const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
   if (htmlMatch) return htmlMatch[1].trim();
-  return raw.replace(/```html/gi, '').replace(/```/g, '').trim();
+  
+  let cleaned = raw.replace(/```html/gi, '').replace(/```/g, '').trim();
+  // Strip conversational text before the first HTML tag if it exists
+  const firstTagIndex = cleaned.search(/<\w+/);
+  if (firstTagIndex > 0) {
+    cleaned = cleaned.substring(firstTagIndex);
+  }
+  return cleaned.trim();
 };
 
 // ─── PROCESS RESULT ──────────────────────────────────────────────────────────────
@@ -266,9 +274,13 @@ EVERY design decision must feel influenced by this unique seed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📤 OUTPUT FORMAT:
+📤 OUTPUT FORMAT & TOKEN LIMITS (CRITICAL):
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
-CRITICAL: Do NOT generate excessively long placeholder text (lorem ipsum). Keep text concise so your response DOES NOT TRUNCATE. You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
+CRITICAL TOKEN LIMIT: To prevent truncation, you MUST save output tokens! 
+- NEVER write massive inline SVG codes. ALWAYS use FontAwesome 6 classes (e.g., <i class="fa-solid fa-star"></i>).
+- Keep your HTML DOM structure clean and avoid excessively deep nested divs.
+- Do NOT generate excessively long placeholder text. Keep text punchy and concise.
+You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
 Return ONLY a complete HTML file inside one code block.
 No explanation before or after. No comments. Start with the HTML tag directly.
 \`\`\`html
