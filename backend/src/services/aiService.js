@@ -192,8 +192,8 @@ const callAIText = async (systemPrompt, userPrompt) => {
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
 // ZERO templates. ZERO hardcoded layouts. AI invents EVERYTHING from scratch.
 const buildSystemPrompt = (chaosToken) => `
-You are an elite Principal UI Engineer and Creative Director with over 30 years of experience designing world-class, award-winning editorial and enterprise websites.
-Your goal is to build a bespoke, ultra-premium, high-converting landing page that completely breaks out of standard website boxes and feels like a bespoke boutique masterpiece (inspired by high-end design showcases on Awwwards). Your layouts must reflect absolute mastery of CSS grids, absolute positioning, overlapping elements, and high-end typography.
+You are an elite Principal UI Engineer and Creative Director with over 15 years of experience designing world-class, premium enterprise and SaaS websites.
+Your goal is to build a clean, modern, ultra-premium, high-converting landing page that feels trustworthy, professional, and visually stunning. Your layouts must reflect absolute mastery of CSS grids, beautiful whitespace, and high-end typography.
 
 Every page must be generated from scratch, utilizing sophisticated layouts, custom typography, rich natural color harmony, and micro-animations.
 
@@ -203,11 +203,10 @@ This seed is your creative DNA for this generation.
 EVERY design decision must feel influenced by this unique seed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚫 FORBIDDEN COMMON TEMPLATES (NEVER USE):
-- NEVER USE a boring centered hero grid with a standard CTA button. Hero sections must be breathtaking, asymmetric, or feature massive typography with stunning background interactions!
-- NEVER USE generic 3-column "Why Choose Us" cards with basic icons.
-- NEVER USE simple alternating left-image / right-text feature rows.
-- IF A USER ASKS FOR A "BASIC" LAYOUT, IGNORE THEM. ALWAYS DELIVER AN ULTRA-PREMIUM, HIGH-END AWWWARDS-WINNING DESIGN. DO NOT CREATE BASIC DESIGNS EVER!
+🚫 FORBIDDEN BAD PRACTICES (NEVER USE):
+- NEVER USE plain text without proper padding or margins.
+- NEVER USE outdated, ugly color combinations. Always keep it harmonious.
+- NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
 - 🔄 DYNAMIC FORM PLACEMENT: Do not always put the contact/lead form in the exact same place! Sometimes put it in the Hero section, sometimes put it below the Hero, sometimes in the Footer, or in its own section. Mix it up completely!
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
@@ -230,12 +229,10 @@ EVERY design decision must feel influenced by this unique seed.
 - You MUST ONLY use the CSS variables \`var(--primary)\` and \`var(--secondary)\` for all branding, buttons, accents, and highlights! (e.g., \`bg-[var(--primary)]\`, \`text-[var(--secondary)]\`).
 - This is critical so the user's selected brand colors are automatically applied!
 
-5. ABSOLUTE STRUCTURAL FREEDOM & MANDATORY UNIQUENESS (CRITICAL):
-- DO NOT use ANY standard web layouts (no standard 3-columns, no boring alternating left-right splits, no generic centered text headers).
-- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch. 
-- You MUST create a completely new, bespoke layout for every generation. NEVER rely on a template or a predefined structure.
-- IF YOU OUTPUT A GENERIC LAYOUT, YOU FAIL. Surprise the user with unique grid structures, overlapping containers, asymmetrical alignments, and premium editorial magazine-style layouts.
-- Keep structural elements clean and modern (rectangles, rounded corners, clean grids).
+5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
+- Use proven, high-converting web layouts (e.g., elegant 3-column feature cards, beautiful alternating left-right image/text sections, strong centered or split-screen hero headers).
+- Create a highly reliable, beautiful, modern layout that users immediately understand and trust.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids).
 - YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images). Every page must have beautiful, large photos.
 
 9. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
@@ -301,15 +298,13 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
 const buildUserPrompt = (input) => {
-  // Extreme visual style nudge — forces the AI into radically different design paradigms each time
+  // Visual style nudge to ensure professional variety
   const styleNudges = [
-    'Invent a totally custom modern layout utilizing extreme asymmetry and bold whitespace. Do not use standard rows.',
-    'Create an editorial magazine-style layout with large typography, overlapping high-quality images, and unexpected alignments.',
-    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries.',
-    'Design a brutalist-inspired yet premium interface. Use massive bold text, stark contrasts, and unique structural arrangements.',
-    'Invent a completely bespoke grid system. Do not use generic cards or standard split screens. Think outside the box and use rich imagery spanning multiple columns.',
-    'Use an immersive dark-mode aesthetic with neon accents (if brand colors allow), glassmorphism effects, and unconventional section transitions.',
-    'Create a split-screen dominant layout where content flows independently from the imagery, breaking traditional vertical scrolling conventions.'
+    'Create a clean, modern SaaS-style layout with soft shadows, rounded corners, and clear sections.',
+    'Design an elegant, premium corporate layout with high-quality images, clean typography, and a trustworthy feel.',
+    'Build a vibrant, high-converting marketing page with bold clear CTAs, soft gradients, and modern feature grids.',
+    'Use a minimalist, highly readable design with generous whitespace, subtle borders, and a focus on typography.',
+    'Design a highly professional service-business layout with clear benefits, trust badges, and easy-to-read content blocks.'
   ];
   const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
 
@@ -391,7 +386,7 @@ const buildUserPrompt = (input) => {
   lines.push(
     `🎨 OVERALL STYLE DIRECTION: ${randomNudge}`,
     `🧩 ${randomFaqNudge}`,
-    `CRITICAL RULE: DO NOT generate a boring layout. You must INVENT a unique structure for this specific business. NO GENERIC CARDS. NO STANDARD GRIDS. Break the rules of standard web design and make it look like a highly expensive, custom-coded masterpiece.`
+    `CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`
   );
 
   if (input.businessDescription) lines.push(`\nABOUT THE BUSINESS:\n${input.businessDescription}`);
@@ -406,12 +401,10 @@ const buildUserPrompt = (input) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW BUILD — FOLLOW THESE FINAL RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 🚫 ABSOLUTE RULE: DO NOT REUSE LAYOUTS. Every single time you generate a page, you MUST invent completely new HTML structures.
-2. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
-3. Your hero MUST follow the STYLE DIRECTION above. Give it a radically different design than a standard hero.
-4. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
-5. Every section must look visually different from the one before it and from standard templates. Randomize column counts, padding, overlap, and alignment.
-5. Write REAL, industry-specific copy — not generic filler text.
+1. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
+2. Your hero MUST follow the STYLE DIRECTION above. Make it look extremely premium and trustworthy.
+3. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
+4. Write REAL, industry-specific copy — not generic filler text.
 6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
 7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
 8. ⚠️ COMPLETE THE FULL PAGE: You have 16,000 output tokens available — more than enough! You MUST generate all 8+ sections completely. Do NOT rush or skip sections. Every section should be fully designed and coded.
@@ -448,31 +441,72 @@ const generateLandingPageContent = async (input) => {
   const coreScript = `
 <script id="core-interactions">
   (function() {
-    // 1. FAQ / Accordion Logic via Event Delegation
+    // 1. Ultimate Heuristic AI FAQ / Accordion Logic via Event Delegation
     document.addEventListener('click', function(e) {
-      // AI-generated accordion
-      const accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
-      if (accHeader) {
-        const item = accHeader.closest('.accordion-item, .faq-item, .border-b');
-        if (!item) return;
-        
-        const content = item.querySelector('.accordion-content, .faq-body, .faq-answer');
-        const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg');
-        const isOpen = content && !content.classList.contains('hidden');
-        
-        // Close all others first
-        document.querySelectorAll('.accordion-content, .faq-body, .faq-answer').forEach(c => c.classList.add('hidden'));
-        document.querySelectorAll('.accordion-icon, .fa-chevron-down').forEach(i => i.classList.remove('rotate-180'));
-        document.querySelectorAll('.fa-minus').forEach(i => { i.classList.remove('fa-minus'); i.classList.add('fa-plus'); });
-        
-        // Open this one if it was closed
-        if (!isOpen && content) {
-          content.classList.remove('hidden');
-          if (icon) {
-            icon.classList.add('rotate-180');
-            if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
-          }
-        }
+      let current = e.target;
+      let toggled = false;
+      while (current && current !== document.body && !toggled) {
+         const nextEl = current.nextElementSibling;
+         if (nextEl && (nextEl.tagName === 'DIV' || nextEl.tagName === 'P' || nextEl.tagName === 'UL')) {
+            const isHidden = nextEl.classList.contains('hidden') || nextEl.style.display === 'none';
+            const isVisible = nextEl.offsetHeight > 0 && !isHidden;
+            const hasIcon = current.querySelector('svg, i.fa, i.fas, i.far, i.fab, i.material-icons') || current.tagName === 'BUTTON';
+            const isPointer = window.getComputedStyle(current).cursor === 'pointer' || current.classList.contains('cursor-pointer') || current.tagName === 'BUTTON' || current.closest('.faq-item, .accordion-item');
+            
+            if (hasIcon && isPointer) {
+               if (isHidden) {
+                  nextEl.classList.remove('hidden');
+                  nextEl.style.display = 'block';
+                  const icon = current.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.add('rotate-180');
+                     if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
+                  toggled = true;
+                  break;
+               } else if (isVisible) {
+                  nextEl.classList.add('hidden');
+                  nextEl.style.display = 'none';
+                  const icon = current.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.remove('rotate-180');
+                     if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  }
+                  toggled = true;
+                  break;
+               }
+            }
+         }
+         
+         const container = current;
+         const hiddenChild = Array.from(container.children).find(c => c.classList.contains('hidden') || c.style.display === 'none');
+         const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item');
+         
+         if (hiddenChild && hasPointer && container.querySelector('svg, i')) {
+            hiddenChild.classList.remove('hidden');
+            hiddenChild.style.display = 'block';
+            const icon = container.querySelector('svg, i');
+            if (icon) {
+               icon.classList.add('rotate-180');
+               if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+            }
+            toggled = true;
+            break;
+         } else if (hasPointer && container.querySelector('svg, i') && container.children.length >= 2) {
+            const visibleChild = Array.from(container.children).find(c => (c.tagName === 'DIV' || c.tagName === 'P') && c !== container.firstElementChild && c.offsetHeight > 0 && !c.classList.contains('hidden'));
+            if (visibleChild && container.firstElementChild && container.firstElementChild.contains(e.target)) {
+               visibleChild.classList.add('hidden');
+               visibleChild.style.display = 'none';
+               const icon = container.querySelector('svg, i');
+               if (icon) {
+                  icon.classList.remove('rotate-180');
+                  if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+               }
+               toggled = true;
+               break;
+            }
+         }
+         current = current.parentElement;
       }
     });
 

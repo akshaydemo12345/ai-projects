@@ -288,7 +288,13 @@ const GrapesEditor = () => {
         extractedScripts = Array.from(doc.querySelectorAll('script')).map(scriptEl => ({
           src: scriptEl.src,
           innerHTML: scriptEl.innerHTML
-        }));
+        })).filter(scriptData => {
+          // ── PREVENT MASSIVE LAG: Do not load Tailwind CDN twice! ──
+          // GrapesJS already loads it via canvas: { scripts: [...] }.
+          // Loading it again causes 3MB memory leak and sequential load delays.
+          if (scriptData.src && scriptData.src.includes('tailwindcss.com')) return false;
+          return true;
+        });
 
         const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
         
@@ -602,50 +608,76 @@ const GrapesEditor = () => {
                }
             }
 
-            // ── Universal AI FAQ Toggle Fallback ──
-            // Catch-all for AI generated FAQs, Accordions, and Dropdowns
-            const faqContainer = e.target.closest('.faq-item, .accordion-item, [class*="faq"], [class*="accordion"]');
-            const headerBtn = e.target.closest('button, .faq-header, .accordion-header, [data-accordion-target], summary');
-            
-            if (headerBtn && !headerBtn.closest('summary')) {
-              const expanded = headerBtn.getAttribute('aria-expanded');
-              if (expanded !== null) {
-                const isExpanded = expanded === 'true';
-                headerBtn.setAttribute('aria-expanded', !isExpanded);
-                const controlsId = headerBtn.getAttribute('aria-controls');
-                const content = controlsId ? document.getElementById(controlsId) : headerBtn.nextElementSibling;
-                if (content) {
-                  content.classList.toggle('hidden');
-                  const icon = headerBtn.querySelector('svg, i');
-                  if (icon) {
-                     icon.classList.toggle('rotate-180');
-                     if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
-                     else if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+            // ── Ultimate Heuristic AI FAQ Toggle Fallback ──
+            // Catch-all for AI generated FAQs, Accordions, and Dropdowns (no strict class names required)
+            let current = e.target;
+            let toggled = false;
+            while (current && current !== document.body && !toggled) {
+               const nextEl = current.nextElementSibling;
+               if (nextEl && (nextEl.tagName === 'DIV' || nextEl.tagName === 'P' || nextEl.tagName === 'UL')) {
+                  const isHidden = nextEl.classList.contains('hidden') || nextEl.style.display === 'none';
+                  const isVisible = nextEl.offsetHeight > 0 && !isHidden;
+                  
+                  const hasIcon = current.querySelector('svg, i.fa, i.fas, i.far, i.fab, i.material-icons') || current.tagName === 'BUTTON';
+                  const isPointer = window.getComputedStyle(current).cursor === 'pointer' || current.classList.contains('cursor-pointer') || current.tagName === 'BUTTON' || current.closest('.faq-item, .accordion-item');
+                  
+                  if (hasIcon && isPointer) {
+                     if (isHidden) {
+                        nextEl.classList.remove('hidden');
+                        nextEl.style.display = 'block';
+                        const icon = current.querySelector('svg, i');
+                        if (icon) {
+                           icon.classList.add('rotate-180');
+                           if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                        }
+                        toggled = true;
+                        break;
+                     } else if (isVisible) {
+                        nextEl.classList.add('hidden');
+                        nextEl.style.display = 'none';
+                        const icon = current.querySelector('svg, i');
+                        if (icon) {
+                           icon.classList.remove('rotate-180');
+                           if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                        }
+                        toggled = true;
+                        break;
+                     }
                   }
-                }
-              } else {
-                 const content = headerBtn.nextElementSibling;
-                 if (content && (content.tagName === 'DIV' || content.tagName === 'P')) {
-                    content.classList.toggle('hidden');
-                    const icon = headerBtn.querySelector('svg, i');
-                    if (icon) icon.classList.toggle('rotate-180');
-                 }
-              }
-            } else if (faqContainer && !headerBtn) {
-               // If clicked inside a faq container but not a button, toggle the hidden content
-               const contentElements = Array.from(faqContainer.children).filter(child => child.classList.contains('hidden') || child.classList.contains('faq-content') || child.classList.contains('accordion-content'));
-               const visibleElements = Array.from(faqContainer.children).filter(child => !child.classList.contains('hidden') && child.tagName !== 'BUTTON');
-               
-               let targetContent = contentElements[0];
-               if (!targetContent && visibleElements.length > 1) {
-                   targetContent = visibleElements[visibleElements.length - 1]; // Assume last element is content
                }
                
-               if (targetContent && !targetContent.contains(e.target)) {
-                  targetContent.classList.toggle('hidden');
-                  const icon = faqContainer.querySelector('svg, i');
-                  if (icon) icon.classList.toggle('rotate-180');
+               // Alternative case: clicking inside a container where a child is hidden
+               const container = current;
+               const hiddenChild = Array.from(container.children).find(c => c.classList.contains('hidden') || c.style.display === 'none');
+               const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item');
+               
+               if (hiddenChild && hasPointer && container.querySelector('svg, i')) {
+                  hiddenChild.classList.remove('hidden');
+                  hiddenChild.style.display = 'block';
+                  const icon = container.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.add('rotate-180');
+                     if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
+                  toggled = true;
+                  break;
+               } else if (hasPointer && container.querySelector('svg, i') && container.children.length >= 2) {
+                  // Closing case
+                  const visibleChild = Array.from(container.children).find(c => (c.tagName === 'DIV' || c.tagName === 'P') && c !== container.firstElementChild && c.offsetHeight > 0 && !c.classList.contains('hidden'));
+                  if (visibleChild && container.firstElementChild && container.firstElementChild.contains(e.target)) {
+                     visibleChild.classList.add('hidden');
+                     visibleChild.style.display = 'none';
+                     const icon = container.querySelector('svg, i');
+                     if (icon) {
+                        icon.classList.remove('rotate-180');
+                        if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                     }
+                     toggled = true;
+                     break;
+                  }
                }
+               
+               current = current.parentElement;
             }
           }, true);
         `;
@@ -750,24 +782,39 @@ const GrapesEditor = () => {
               el.classList.add('in-view');
             });
             
-            // Execute extracted scripts safely AFTER components are set (Sequentially to avoid race conditions like Swiper.js)
+            // Execute extracted scripts safely AFTER components are set (Parallel external, then inline to avoid race conditions)
             if (extractedScripts && extractedScripts.length > 0) {
-              const loadScript = (index: number) => {
-                if (index >= extractedScripts.length) return;
-                const scriptData = extractedScripts[index];
-                const newScript = cDoc.createElement('script');
-                if (scriptData.src) {
-                  newScript.src = scriptData.src;
-                  newScript.onload = () => loadScript(index + 1);
-                  newScript.onerror = () => loadScript(index + 1);
-                  cDoc.body.appendChild(newScript);
-                } else {
-                  newScript.innerHTML = scriptData.innerHTML;
-                  cDoc.body.appendChild(newScript);
-                  loadScript(index + 1);
-                }
+              const externalScripts = extractedScripts.filter(s => s.src);
+              const inlineScripts = extractedScripts.filter(s => !s.src);
+              
+              let loadedCount = 0;
+              let inlineRan = false;
+              const runInlineScripts = () => {
+                 if (inlineRan) return;
+                 inlineRan = true;
+                 inlineScripts.forEach(scriptData => {
+                    const newScript = cDoc.createElement('script');
+                    newScript.innerHTML = scriptData.innerHTML;
+                    cDoc.body.appendChild(newScript);
+                 });
               };
-              loadScript(0);
+              
+              if (externalScripts.length > 0) {
+                 // Fallback timeout just in case a CDN network request hangs
+                 setTimeout(runInlineScripts, 3000);
+                 
+                 externalScripts.forEach(scriptData => {
+                    const newScript = cDoc.createElement('script');
+                    newScript.src = scriptData.src;
+                    newScript.onload = newScript.onerror = () => {
+                       loadedCount++;
+                       if (loadedCount === externalScripts.length) runInlineScripts();
+                    };
+                    cDoc.body.appendChild(newScript);
+                 });
+              } else {
+                 runInlineScripts();
+              }
             }
           }
         } catch (e) { /* ignore */ }
