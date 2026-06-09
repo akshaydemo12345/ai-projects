@@ -266,16 +266,6 @@ const GrapesEditor = () => {
       }
     }
 
-    // Strip Tailwind CDN and config scripts early from dbContent to prevent infinite loops in GrapesJS canvas
-    if (dbContent) {
-      dbContent = dbContent.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
-        if (match.includes('cdn.tailwindcss.com') || match.includes('tailwind.config')) {
-          return '';
-        }
-        return match;
-      });
-    }
-
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
       console.log('📄 Full HTML structure detected. Extracting components...');
@@ -283,11 +273,9 @@ const GrapesEditor = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
 
-        // Extract Styles (Skip Tailwind CSS to prevent massive CSS strings freezing the editor)
+        // Extract Styles
         const styleTags = Array.from(doc.querySelectorAll('style'));
-        const extractedStyles = styleTags
-          .filter(s => !s.id.includes('tailwind') && !s.hasAttribute('data-tailwindcss') && !s.textContent?.includes('/* ! tailwindcss'))
-          .map(s => s.textContent).join('\n');
+        const extractedStyles = styleTags.map(s => s.textContent).join('\n');
         if (extractedStyles) {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
@@ -364,19 +352,13 @@ const GrapesEditor = () => {
       // Recover hardcoded hex colors to dynamic variables for existing/previously saved pages
       if (primaryColor) {
         const escapedColor = primaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(`(--[\\w-]+\\s*:\\s*)?${escapedColor}`, 'gi');
-        finalStyles = finalStyles.replace(regex, (match, prefix) => {
-          if (prefix && prefix.includes('primary')) return match;
-          return (prefix || '') + 'var(--primary)';
-        });
+        const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, 'var(--primary)');
       }
       if (secondaryColor) {
         const escapedColor = secondaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(`(--[\\w-]+\\s*:\\s*)?${escapedColor}`, 'gi');
-        finalStyles = finalStyles.replace(regex, (match, prefix) => {
-          if (prefix && prefix.includes('secondary')) return match;
-          return (prefix || '') + 'var(--secondary)';
-        });
+        const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, 'var(--secondary)');
       }
 
       // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
@@ -604,14 +586,6 @@ const GrapesEditor = () => {
         .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
-
-      // Strip Tailwind CDN and config scripts from dbContent to prevent infinite loops in GrapesJS canvas
-      dbContent = dbContent.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
-        if (match.includes('cdn.tailwindcss.com') || match.includes('tailwind.config')) {
-          return '';
-        }
-        return match;
-      });
 
       const configHTML = `
       <script>
