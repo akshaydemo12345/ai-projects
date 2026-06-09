@@ -239,11 +239,16 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [pageSlug, setPageSlug] = useState("");
   const [pageWebUrl, setPageWebUrl] = useState("");
 
-  // Per-page branding
-  const [primaryColor, setPrimaryColor] = useState(project.primaryColor || "#7c3aed");
-  const [secondaryColor, setSecondaryColor] = useState(project.secondaryColor || "#6366f1");
-  const [logoPreview, setLogoPreview] = useState<string | null>(project.logoUrl || null);
-  const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logoUrl);
+  // Per-page branding — websiteProfile.logoColors first, fallback to legacy fields
+  const [primaryColor, setPrimaryColor] = useState(
+    project.websiteProfile?.logoColors?.primary || project.websiteProfile?.colors?.primary || project.primaryColor || "#7c3aed"
+  );
+  const [secondaryColor, setSecondaryColor] = useState(
+    project.websiteProfile?.logoColors?.secondary || project.websiteProfile?.colors?.secondary || project.secondaryColor || "#6366f1"
+  );
+  const _initLogo = project.websiteProfile?.identity?.logoUrl || project.logoUrl;
+  const [logoPreview, setLogoPreview] = useState<string | null>(_initLogo || null);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(_initLogo);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [logoHeaderBgClass, setLogoHeaderBgClass] = useState<string>("rounded-2xl p-2 shadow-lg shadow-slate-900/20");
   const [logoHeaderBgColor, setLogoHeaderBgColor] = useState<string>("rgb(197, 197, 197)");
@@ -1420,7 +1425,13 @@ interface EditProjectModalProps {
 }
 
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
-  const [name, setName] = useState(project.name);
+  // "Website Name" = the scraped/display name (stored in project.name)
+  // Pre-fill from websiteUrl if name looks like a raw URL title
+  const [name, setName] = useState(
+    project.websiteUrl
+      ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+      : project.name
+  );
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || project.url || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
   const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
@@ -1441,8 +1452,8 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Project Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Awesome Project" />
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website Name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website URL (Client's Site)</label>
@@ -1521,7 +1532,7 @@ const ProjectDetailPage = () => {
     staleTime: 30_000,
   });
 
-  const displayCategory = project ? (project.category || project.industry || "General") : "General";
+  const displayCategory = project ? (project.websiteProfile?.industry?.industry || project.industry || project.category || "General") : "General";
   const isSwitching = !!(project && project._id !== id);
 
   const [createOpen, setCreateOpen] = useState(false); // kept for compatibility but unused
@@ -1738,9 +1749,19 @@ const ProjectDetailPage = () => {
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
 
-          <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: `linear-gradient(135deg, #7c3aed, #6366f1)` }}>
-            <Globe className="h-3.5 w-3.5 text-white" />
+          <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-slate-200 shadow-sm">
+            {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
+              <img
+                src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
+                alt="favicon"
+                className="h-5 w-5 object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
+              />
+            ) : null}
+            <Globe
+              className="h-3.5 w-3.5 text-primary"
+              style={(project.websiteProfile?.identity?.favicon || project.logoUrl) ? { display: 'none' } : undefined}
+            />
           </div>
 
           <Select
@@ -1754,7 +1775,10 @@ const ProjectDetailPage = () => {
           >
             <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
               <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
-                {project.name}
+                {(project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
+                  ? (project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
+                    .replace(/^https?:\/\//, '').replace(/\/$/, '')
+                  : project.name}
               </span>
             </SelectTrigger>
             <SelectContent>
@@ -1795,13 +1819,31 @@ const ProjectDetailPage = () => {
             </div>
           )}
           <a
-            href={cleanUrl(project.websiteUrl)}
+            href={cleanUrl(project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl hover:shadow-md hover:border-primary/30 group"
           >
-            <Globe className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
-            <span className="font-bold tracking-tight">{project.websiteUrl}</span>
+            <div className="h-5 w-5 flex items-center justify-center flex-shrink-0 overflow-hidden rounded">
+              {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
+                <img
+                  src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
+                  alt="favicon"
+                  className="h-4 w-4 object-contain"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
+                />
+              ) : null}
+              <Globe
+                className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors"
+                style={(project.websiteProfile?.identity?.favicon || project.logoUrl) ? { display: 'none' } : undefined}
+              />
+            </div>
+            <span className="font-bold tracking-tight">
+              {(project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
+                ? (project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
+                  .replace(/^https?:\/\//, '').replace(/\/$/, '')
+                : '—'}
+            </span>
           </a>
         </div>
       </div>

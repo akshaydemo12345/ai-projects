@@ -448,6 +448,61 @@ const LANDING_TEMPLATES: any[] = [
 
 
 const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
+
+// ─── websiteProfile-aware project data helpers ────────────────────────────────
+// Extracts data from the new `websiteProfile` shape first, falls back to legacy fields.
+const getProjectIndustry = (p: any): string =>
+  p?.websiteProfile?.industry?.industry || p?.industry || p?.category || "Service";
+
+const getProjectSubIndustry = (p: any): string =>
+  p?.websiteProfile?.industry?.subIndustry || p?.subIndustry || p?.scrapedData?.subIndustry || "Services";
+
+const getProjectLogoUrl = (p: any): string | undefined =>
+  p?.websiteProfile?.identity?.logoUrl || p?.logoUrl;
+
+const getProjectPrimaryColor = (p: any): string =>
+  p?.websiteProfile?.logoColors?.primary || p?.websiteProfile?.colors?.primary || p?.primaryColor || "#7c3aed";
+
+const getProjectSecondaryColor = (p: any): string =>
+  p?.websiteProfile?.logoColors?.secondary || p?.websiteProfile?.colors?.secondary || p?.secondaryColor || "#6366f1";
+
+const getProjectDescription = (p: any): string =>
+  p?.description ||
+  p?.websiteProfile?.content?.hero?.subtitle ||
+  p?.websiteProfile?.seo?.description ||
+  "Premium services";
+
+const getProjectPhone = (p: any): string =>
+  p?.websiteProfile?.content?.ctas?.[0]?.buttonText ||
+  p?.phone ||
+  p?.scrapedData?.phone ||
+  "+1 (800) 123-4567";
+
+const getProjectEmail = (p: any): string =>
+  p?.fromEmail ||
+  p?.contactEmail ||
+  p?.websiteProfile?.seo?.openGraph?.url ||
+  p?.scrapedData?.email ||
+  "contact@example.com";
+
+const getProjectAddress = (p: any): string =>
+  p?.scrapedData?.address ||
+  "123 Business Avenue, New York, NY";
+
+const getProjectScrapedData = (p: any) => ({
+  ...(p?.scrapedData || {}),
+  description: p?.description || p?.websiteProfile?.content?.hero?.subtitle || p?.websiteProfile?.seo?.description || p?.scrapedData?.description,
+  summary: p?.websiteProfile?.content?.hero?.subtitle || p?.scrapedData?.summary,
+  about: p?.websiteProfile?.content?.hero?.subtitle || p?.scrapedData?.about,
+  services: p?.websiteProfile?.content?.services || p?.scrapedData?.services || [],
+  testimonials: p?.websiteProfile?.content?.testimonials || p?.scrapedData?.testimonials || [],
+  faq: p?.websiteProfile?.content?.ctas || p?.scrapedData?.faq || p?.scrapedData?.faqs || [],
+  phone: getProjectPhone(p),
+  email: getProjectEmail(p),
+  address: getProjectAddress(p),
+});
+
+
 type CreationMethod = "ai" | "figma" | "template";
 
 // ─── CreatePagePage ───────────────────────────────────────────────────────────
@@ -496,6 +551,9 @@ const CreatePagePage = () => {
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+  // Whether the current primary/secondary colors were extracted from the logo
+  const isColorsFromLogo = !!(project?.websiteProfile?.logoColors?.source);
 
   const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
     const brightness = await getImageAverageBrightness(img.src);
@@ -591,11 +649,12 @@ const CreatePagePage = () => {
 
   useEffect(() => {
     if (project) {
-      setPrimaryColor(project.primaryColor || "#7c3aed");
-      setSecondaryColor(project.secondaryColor || "#6366f1");
-      if (project.logoUrl) {
-        setLogoPreview(project.logoUrl);
-        setLogoUrl(project.logoUrl);
+      setPrimaryColor(getProjectPrimaryColor(project));
+      setSecondaryColor(getProjectSecondaryColor(project));
+      const logo = getProjectLogoUrl(project);
+      if (logo) {
+        setLogoPreview(logo);
+        setLogoUrl(logo);
       }
     }
   }, [project]);
@@ -834,7 +893,7 @@ const CreatePagePage = () => {
     try {
       const res = await aiApi.generateDescription({
         pageName,
-        industry: project?.category || "Service",
+        industry: getProjectIndustry(project),
         projectDesc: project?.description,
         currentPrompt: aiPrompt.trim() || undefined
       });
@@ -865,7 +924,7 @@ const CreatePagePage = () => {
     // ─── AI TEMPLATE AUTO-SELECTION ───
     if (activeMethod === "ai") {
       const promptLower = aiPrompt.toLowerCase();
-      const projectCat = (project.category || "").toLowerCase();
+      const projectCat = getProjectIndustry(project).toLowerCase();
 
       let detectedCategory = "";
       if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
@@ -913,8 +972,8 @@ const CreatePagePage = () => {
         try {
           const generationRes = await aiApi.generate({
             businessName: project.name,
-            industry: project.category || "Service",
-            businessDescription: project.description || "Premium services",
+            industry: getProjectIndustry(project),
+            businessDescription: getProjectDescription(project),
             pageType: "lead generation",
             aiPrompt: aiPrompt,
             templateHtml: enrichedContent,
@@ -941,7 +1000,7 @@ const CreatePagePage = () => {
         }
       }
 
-      const finalLogo = logoUrl || project.logoUrl;
+      const finalLogo = logoUrl || getProjectLogoUrl(project);
       const logoHtml = finalLogo
         ? `<img src="${finalLogo}" alt="${project.name}" style="height: 40px; width: auto; object-fit: contain;">`
         : `<span style="color: ${primaryColor}">${project.name}</span>`;
@@ -959,10 +1018,10 @@ const CreatePagePage = () => {
 
       enrichedContent = enrichedContent.replace(/LOGO_PLACEHOLDER/g, logoHtml);
       enrichedContent = enrichedContent.replace(/PROJECT_NAME_PLACEHOLDER/g, project.name);
-      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, project.contactEmail || project.phone || "Contact Us");
-      enrichedContent = enrichedContent.replace(/PHONE_PLACEHOLDER/g, project.scrapedData?.phone || project.phone || "+1 (800) 123-4567");
-      enrichedContent = enrichedContent.replace(/EMAIL_PLACEHOLDER/g, project.scrapedData?.email || project.contactEmail || project.fromEmail || "contact@example.com");
-      enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, project.scrapedData?.address || "123 Business Avenue, New York, NY");
+      enrichedContent = enrichedContent.replace(/CONTACT_PLACEHOLDER/g, getProjectPhone(project));
+      enrichedContent = enrichedContent.replace(/PHONE_PLACEHOLDER/g, getProjectPhone(project));
+      enrichedContent = enrichedContent.replace(/EMAIL_PLACEHOLDER/g, getProjectEmail(project));
+      enrichedContent = enrichedContent.replace(/ADDRESS_PLACEHOLDER/g, getProjectAddress(project));
 
 
       // Replace any remaining placeholders in content (just in case) with CSS variables to keep them dynamic
@@ -991,15 +1050,16 @@ const CreatePagePage = () => {
         .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       // 1. Extract proper valid keywords for title and text
-      const industryText = project.category || "Business";
-      const subIndustryText = project.subIndustry || project.scrapedData?.subIndustry || "Services";
+      const industryText = getProjectIndustry(project);
+      const subIndustryText = getProjectSubIndustry(project);
       const pageTitle = project.name ? `${project.name} - ${industryText}` : `${industryText} ${subIndustryText} Services`;
 
       // 2. IMPORTANT: Leave Unsplash and template asset image placeholders intact!
       // The backend's Getimg.ai API will automatically replace them based on industry/sub-industry.
 
       // 3. Intelligently inject scraped data using the helper
-      enrichedContent = injectScrapedDataIntoTemplate(enrichedContent, project, pageTitle, subIndustryText, finalLogo);
+      const _mergedProject = { ...project, scrapedData: getProjectScrapedData(project), description: getProjectDescription(project) };
+      enrichedContent = injectScrapedDataIntoTemplate(enrichedContent, _mergedProject, pageTitle, subIndustryText, finalLogo);
 
       // 5. Light/Dark Text Contrast adjustment script (auto-adapts text color based on background image brightness)
       const colorScript = `
@@ -1070,7 +1130,7 @@ const CreatePagePage = () => {
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${pageName.trim() || project.name}</title>
-  <meta name="description" content="${project.description || ''}"/>
+  <meta name="description" content="${getProjectDescription(project)}"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -1095,7 +1155,7 @@ ${enrichedContent}
         name: pageName.trim(),
         slug: pageSlug.trim() || autoSlug(pageName),
         metaTitle: `${project.name} - ${pageName.trim()}`,
-        metaDescription: project.description || `Premium ${pageName.trim()} services by ${project.name}.`,
+        metaDescription: getProjectDescription(project) || `Premium ${pageName.trim()} services by ${project.name}.`,
         generationMethod: "template",
         // Store as object with fullHtml so editor and publisher both work correctly
         content: { fullHtml: fullTemplateHtml, html: finalHtml, fullCss: enrichedStyles },
@@ -1120,8 +1180,8 @@ ${enrichedContent}
       secondaryColor,
       logoUrl,
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
-      industry: project?.category || project?.industry || "Service",
-      subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
+      industry: getProjectIndustry(project),
+      subIndustry: getProjectSubIndustry(project),
       aiPrompt: activeMethod === "ai" ? aiPrompt : "",
       // Always use template generation on the frontend
       generationMethod: "template",
@@ -1254,7 +1314,15 @@ ${enrichedContent}
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Branding</p>
               <div className="flex items-center gap-4 flex-wrap">
                 <div>
-                  <p className="text-[11px] text-gray-600 mb-1 font-semibold">Primary</p>
+                  <p className="text-[11px] text-gray-600 mb-1 font-semibold flex items-center gap-1.5">
+                    Primary
+                    {isColorsFromLogo && project?.websiteProfile?.logoColors?.primary && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-1.5 py-px">
+                        <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
+                        From Logo
+                      </span>
+                    )}
+                  </p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
                     <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: primaryColor }} />
@@ -1262,7 +1330,15 @@ ${enrichedContent}
                   </div>
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-600 mb-1 font-semibold">Secondary</p>
+                  <p className="text-[11px] text-gray-600 mb-1 font-semibold flex items-center gap-1.5">
+                    Secondary
+                    {isColorsFromLogo && project?.websiteProfile?.logoColors?.secondary && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-1.5 py-px">
+                        <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
+                        From Logo
+                      </span>
+                    )}
+                  </p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
                     <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
                     <div className="h-5 w-5 rounded-full border border-gray-200 shadow-sm" style={{ background: secondaryColor }} />
@@ -1335,7 +1411,7 @@ ${enrichedContent}
                       <p className="text-sm font-semibold text-emerald-700">
                         Template: {LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.name}
                       </p>
-                      {project?.category && <AiGenerateButton industry={project.category} />}
+                      {project && <AiGenerateButton industry={getProjectIndustry(project)} />}
                       <button onClick={() => { setSelectedTemplate(null); setAiPrompt(""); }} className="ml-auto text-emerald-500 hover:text-emerald-700">
                         <X className="h-4 w-4" />
                       </button>
@@ -1622,7 +1698,7 @@ ${enrichedContent}
               const previewPrimary = primaryColor || "#6366f1";
               const previewSecondary = secondaryColor || "#4f46e5";
               const previewName = project?.name || "Your Brand";
-              const previewLogo = logoUrl || project?.logoUrl;
+              const previewLogo = logoUrl || getProjectLogoUrl(project);
 
               const brandingVars = `
                 :root {
@@ -1653,17 +1729,18 @@ ${enrichedContent}
                 : `<span style="font-weight:800;font-size:1.4rem;color:${previewPrimary};">${previewName}</span>`;
 
               // Replace ALL placeholders in HTML using the helper
-              const previewIndustryText = project?.category || "Business";
+              const previewIndustryText = getProjectIndustry(project);
               const previewSubIndustryText = project?.subIndustry || project?.scrapedData?.subIndustry || "Services";
               const previewPageTitle = project?.name ? `${project.name} - ${previewIndustryText}` : `${previewIndustryText} ${previewSubIndustryText} Services`;
-              tpHtml = injectScrapedDataIntoTemplate(tpHtml, project, previewPageTitle, previewSubIndustryText, previewLogo);
+              const _mergedPreviewProject = project ? { ...project, scrapedData: getProjectScrapedData(project), description: getProjectDescription(project) } : project;
+              tpHtml = injectScrapedDataIntoTemplate(tpHtml, _mergedPreviewProject, previewPageTitle, previewSubIndustryText, previewLogo);
 
               tpHtml = tpHtml
                 .replace(/PROJECT_NAME_PLACEHOLDER/g, previewName)
                 .replace(/LOGO_PLACEHOLDER/g, logoHtml)
-                .replace(/CONTACT_PLACEHOLDER/g, project?.contactEmail || project?.phone || "Contact Us")
+                .replace(/CONTACT_PLACEHOLDER/g, getProjectPhone(project))
                 .replace(/PHONE_PLACEHOLDER/g, project?.scrapedData?.phone || project?.phone || "+1 (800) 123-4567")
-                .replace(/EMAIL_PLACEHOLDER/g, project?.scrapedData?.email || project?.contactEmail || project?.fromEmail || "contact@example.com")
+                .replace(/EMAIL_PLACEHOLDER/g, getProjectEmail(project))
                 .replace(/ADDRESS_PLACEHOLDER/g, project?.scrapedData?.address || "123 Business Avenue, New York, NY")
                 .replace(/PRIMARY_COLOR_PLACEHOLDER/g, previewPrimary)
                 .replace(/SECONDARY_COLOR_PLACEHOLDER/g, previewSecondary)

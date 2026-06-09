@@ -61,7 +61,7 @@ exports.listProjects = async (req, res, next) => {
     // Only fields actually used by the frontend list views (ProjectsPage, LeadsPage sidebar)
     // Excludes: branding, scrapedData, themeSystem, business, colors, scrapeMeta, emailNotifications, etc.
     const projects = await Project.find({ userId: req.user._id })
-      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt')
+      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt websiteProfile.identity websiteProfile.industry websiteProfile.logoColors websiteProfile.colors websiteProfile.extraction')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit)
@@ -81,10 +81,31 @@ exports.listProjects = async (req, res, next) => {
       typesByProject[pid].push({ type: pt.type });
     }
 
-    const enriched = projects.map(p => ({
-      ...p,
-      pages: typesByProject[p._id.toString()] || [],
-    }));
+    const enriched = projects.map(p => {
+      // Resolve virtual fields that .lean() strips out
+      const websiteUrl = p.websiteUrl || p.url
+        || p.websiteProfile?.extraction?.sourceUrl
+        || p.websiteProfile?.extraction?.finalUrl
+        || null;
+      const industry = p.industry || p.websiteProfile?.industry?.industry || p.category || null;
+      const logoUrl = p.logoUrl || p.websiteProfile?.identity?.logoUrl || null;
+      const primaryColor = p.primaryColor
+        || p.websiteProfile?.logoColors?.primary
+        || p.websiteProfile?.colors?.primary || null;
+      const secondaryColor = p.secondaryColor
+        || p.websiteProfile?.logoColors?.secondary
+        || p.websiteProfile?.colors?.secondary || null;
+
+      return {
+        ...p,
+        websiteUrl,
+        industry,
+        logoUrl,
+        primaryColor,
+        secondaryColor,
+        pages: typesByProject[p._id.toString()] || [],
+      };
+    });
 
     const total = await Project.countDocuments({ userId: req.user._id });
 
@@ -134,9 +155,32 @@ exports.getProject = async (req, res, next) => {
       }
     }).catch(() => { });
 
+    // Resolve virtual fields stripped by .lean()
+    const websiteUrl = project.websiteUrl || project.url
+      || project.websiteProfile?.extraction?.sourceUrl
+      || project.websiteProfile?.extraction?.finalUrl
+      || null;
+    const industry = project.industry || project.websiteProfile?.industry?.industry || project.category || null;
+    const logoUrl = project.logoUrl || project.websiteProfile?.identity?.logoUrl || null;
+    const primaryColor = project.primaryColor
+      || project.websiteProfile?.logoColors?.primary
+      || project.websiteProfile?.colors?.primary || null;
+    const secondaryColor = project.secondaryColor
+      || project.websiteProfile?.logoColors?.secondary
+      || project.websiteProfile?.colors?.secondary || null;
+
     res.status(200).json({
       status: 'success',
-      data: { project },
+      data: {
+        project: {
+          ...project,
+          websiteUrl,
+          industry,
+          logoUrl,
+          primaryColor,
+          secondaryColor,
+        }
+      },
     });
   } catch (err) {
     next(err);
@@ -220,6 +264,12 @@ exports.updateProject = async (req, res, next) => {
       updateData.scrapeMeta.sourceUrl = normalizeDomain(req.body.websiteUrl);
     }
 
+    // If a new logo URL is being set, update identity.logoUrl and
+    // asynchronously re-extract logo colors into websiteProfile.logoColors.
+    if (req.body.logoUrl !== undefined) {
+      updateData['websiteProfile.identity.logoUrl'] = req.body.logoUrl || null;
+    }
+
     const project = await Project.findOneAndUpdate(
       { _id: id, userId: req.user._id },
       updateData,
@@ -228,6 +278,32 @@ exports.updateProject = async (req, res, next) => {
 
     if (!project) {
       return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    // Fire-and-forget: re-extract logo colors whenever logoUrl changes
+    if (req.body.logoUrl) {
+      const newLogoUrl = req.body.logoUrl;
+      const baseUrl = project.websiteProfile?.extraction?.sourceUrl || null;
+      setImmediate(async () => {
+        try {
+          const { extractLogoColorsFromUrl } = require('../services/structuredScrapeService');
+          const logoColors = await extractLogoColorsFromUrl(newLogoUrl, null, baseUrl);
+          await Project.findByIdAndUpdate(
+            id,
+            {
+              'websiteProfile.logoColors': {
+                primary: logoColors.primary || null,
+                secondary: logoColors.secondary || null,
+                palette: logoColors.palette || [],
+                source: logoColors.source || null,
+              },
+            },
+            { runValidators: false }
+          );
+        } catch (e) {
+          console.error('[updateProject] logo color extraction failed:', e.message);
+        }
+      });
     }
 
     res.status(200).json({
@@ -269,7 +345,7 @@ exports.getBranding = async (req, res, next) => {
   try {
     const { id } = req.params;
     const project = await Project.findOne({ _id: id, userId: req.user._id })
-      .select('websiteProfile.colors websiteProfile.theme websiteProfile.fonts websiteProfile.identity.logoUrl');
+      .select('websiteProfile.colors websiteProfile.theme websiteProfile.fonts websiteProfile.identity.logoUrl websiteProfile.logoColors');
 
     if (!project) {
       return res.status(404).json({ status: 'fail', message: 'Project not found' });
@@ -281,6 +357,12 @@ exports.getBranding = async (req, res, next) => {
       theme: project.websiteProfile?.theme || {},
       typography: project.websiteProfile?.fonts || {},
       logoUrl: project.websiteProfile?.identity?.logoUrl,
+      logoColors: project.websiteProfile?.logoColors || {
+        primary: null,
+        secondary: null,
+        palette: [],
+        source: null,
+      },
     };
 
     res.status(200).json({
@@ -320,6 +402,72 @@ exports.updateBranding = async (req, res, next) => {
       status: 'success',
       message: 'Branding updated successfully',
       data: { branding: project.branding },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// EXTRACT COLORS FROM LOGO IMAGE
+/**
+ * POST /projects/:id/branding/extract-logo-colors
+ * Body: { logoUrl?: string }
+ *
+ * Reads logoUrl from body (or falls back to the project's stored identity.logoUrl),
+ * runs color extraction, and persists the result into
+ * websiteProfile.logoColors  { primary, secondary, palette, source }.
+ */
+exports.extractLogoColors = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
+    }
+
+    // Load just the fields we need
+    const project = await Project.findOne({ _id: id, userId: req.user._id })
+      .select('websiteProfile.identity.logoUrl websiteProfile.extraction.sourceUrl');
+
+    if (!project) {
+      return res.status(404).json({ status: 'fail', message: 'Project not found' });
+    }
+
+    // Resolve the logo URL: prefer the one sent in the request body
+    const logoUrl = req.body.logoUrl || project.websiteProfile?.identity?.logoUrl;
+
+    if (!logoUrl) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'No logo URL provided and none found on the project. Supply logoUrl in the request body.',
+      });
+    }
+
+    // Pull in the shared color-extraction helper from structuredScrapeService
+    const { extractLogoColorsFromUrl } = require('../services/structuredScrapeService');
+    const baseUrl = project.websiteProfile?.extraction?.sourceUrl || null;
+    const logoColors = await extractLogoColorsFromUrl(logoUrl, null, baseUrl);
+
+    // Persist into websiteProfile.logoColors
+    const updated = await Project.findByIdAndUpdate(
+      id,
+      {
+        'websiteProfile.logoColors': {
+          primary: logoColors.primary || null,
+          secondary: logoColors.secondary || null,
+          palette: logoColors.palette || [],
+          source: logoColors.source || null,
+        },
+        updatedAt: Date.now(),
+      },
+      { new: true, runValidators: false }
+    ).select('websiteProfile.logoColors websiteProfile.identity.logoUrl');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Logo colors extracted and saved',
+      data: {
+        logoColors: updated.websiteProfile?.logoColors || {},
+      },
     });
   } catch (err) {
     next(err);

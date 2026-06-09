@@ -74,6 +74,7 @@ const CreateProjectFlow = () => {
   const [themeColor, setThemeColor] = useState("");
   const [primaryColor, setPrimaryColor] = useState("");
   const [secondaryColor, setSecondaryColor] = useState("");
+  const [logoColors, setLogoColors] = useState<{ primary: string | null; secondary: string | null; palette: string[]; source: string | null }>({ primary: null, secondary: null, palette: [], source: null });
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
   const [scrapedData, setScrapedData] = useState<any>({});
@@ -207,6 +208,9 @@ const CreateProjectFlow = () => {
       }
       if (meta.secondaryColor) {
         setSecondaryColor(meta.secondaryColor);
+      }
+      if (meta.logoColors) {
+        setLogoColors(meta.logoColors);
       }
       if (meta.colors) {
         setExtractedColors(meta.colors);
@@ -570,6 +574,12 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{primaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
+                        {logoColors.source && logoColors.primary && (
+                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
+                            From Logo
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -582,6 +592,12 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{secondaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
+                        {logoColors.source && logoColors.secondary && (
+                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
+                            From Logo
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

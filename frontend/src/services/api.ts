@@ -48,6 +48,23 @@ export interface Project {
   secondaryColor?: string;
   preSlug?: string;
   pages?: LandingPage[];
+  websiteProfile?: {
+    identity?: { favicon?: string; logoUrl?: string; logoFormat?: string; logoSource?: string; };
+    industry?: { industry?: string; subIndustry?: string; confidence?: number; };
+    logoColors?: { primary?: string; secondary?: string; palette?: string[]; source?: string; };
+    colors?: { primary?: string; secondary?: string; accent?: string; palette?: string[]; pagePrimary?: string; pageSecondary?: string; };
+    fonts?: { primaryFont?: string; headingFont?: string; bodyFont?: string; googleFonts?: string[]; };
+    content?: {
+      hero?: { title?: string; subtitle?: string; ctaText?: string; };
+      taglines?: string[];
+      services?: { title?: string; description?: string; icon?: string; }[];
+      features?: { title?: string; description?: string; icon?: string; }[];
+      testimonials?: { name?: string; company?: string; text?: string; rating?: number; }[];
+      ctas?: { title?: string; description?: string; buttonText?: string; }[];
+    };
+    seo?: { title?: string; description?: string; keywords?: string[]; };
+    extraction?: { sourceUrl?: string; finalUrl?: string; scrapedAt?: string; };
+  };
   stats?: {
     views: number;
     leads: number;

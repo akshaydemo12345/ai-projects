@@ -20,7 +20,11 @@ interface EditProjectModalProps {
 }
 
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
-  const [name, setName] = useState(project.name);
+  const [name, setName] = useState(
+    project.websiteUrl
+      ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+      : project.name
+  );
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
   const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
@@ -50,8 +54,8 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Project Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Awesome Project" />
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website Name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website URL (Client's Site)</label>
@@ -277,26 +281,47 @@ const ProjectsPage = () => {
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
-                        <Globe className="h-5 w-5 text-primary" />
+                      {/* Favicon with fallback to Globe */}
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0 overflow-hidden">
+                        {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
+                          <img
+                            src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
+                            alt="favicon"
+                            className="h-6 w-6 object-contain"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
+                          />
+                        ) : null}
+                        <Globe
+                          className="h-5 w-5 text-primary"
+                          style={(project.websiteProfile?.identity?.favicon || project.logoUrl) ? { display: 'none' } : undefined}
+                        />
                       </div>
                       <div className="min-w-0">
-
+                        {/* Website URL as primary bold title */}
                         <div className="mt-0.5">
-                          <h3 className="font-bold text-slate-900 dark:text-white text-base truncate">{project.name}</h3>
-                        </div>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
-                          {project.category || "General"}
-                        </span>
-                        <div className="flex items-center gap-1 mt-2">
-                          <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                          <a className="text-xs text-muted-foreground hover:text-primary transition-colors truncate font-medium"
+                          <a
+                            href={cleanUrl(project.websiteUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            href={cleanUrl(project.websiteUrl)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-bold text-slate-900 dark:text-white text-base truncate block hover:text-primary transition-colors"
+                            title={project.websiteUrl || project.name}
                           >
-                            {cleanUrl(project.websiteUrl)}
+                            {project.websiteUrl
+                              ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+                              : project.name}
                           </a>
+                        </div>
+                        {/* Industry chip — from websiteProfile, fallback to category */}
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
+                          {project.websiteProfile?.industry?.industry || project.industry || project.category || "General"}
+                        </span>
+                        {/* Project name as secondary info */}
+                        <div className="flex items-center gap-1 mt-2">
+                          <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                          <span className="text-xs text-muted-foreground truncate font-medium" title={project.name}>
+                            {project.name}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -460,4 +485,3 @@ const ProjectsPage = () => {
 };
 
 export default ProjectsPage;
-
