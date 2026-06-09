@@ -35,7 +35,7 @@ const cleanHTML = (raw) => {
   while ((match = regex.exec(raw)) !== null) {
     if (match[1]) matches.push(match[1].trim().replace(/```$/g, '').trim());
   }
-  if (matches.length > 0) return matches.join('\\n');
+  if (matches.length > 0) return matches.join('\n');
   
   const htmlMatch = raw.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i) || raw.match(/(<html[\s\S]*?<\/html>)/i);
   if (htmlMatch) return htmlMatch[1].trim();
@@ -93,7 +93,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
           { role: 'system', content: finalSystemPrompt },
           { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
         ],
-        max_tokens: 8000,
+        max_tokens: 16000,
         temperature: 0.95
       });
       const rawText = response.choices[0].message.content;
@@ -114,7 +114,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       try {
         logger.info(`[AI] Claude: ${model}`);
         const response = await anthropic.messages.create({
-          model, max_tokens: 8000, temperature: 0.95,
+          model, max_tokens: 16000, temperature: 0.95,
           system: [
             {
               type: "text",
@@ -276,7 +276,7 @@ EVERY design decision must feel influenced by this unique seed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📤 OUTPUT FORMAT & TOKEN LIMITS (CRITICAL):
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
-CRITICAL TOKEN LIMIT: To prevent truncation, you MUST save output tokens! 
+CRITICAL TOKEN LIMIT: You have a generous output budget of 16,000 tokens — use it well!
 - NEVER write massive inline SVG codes. ALWAYS use FontAwesome 6 classes (e.g., <i class="fa-solid fa-star"></i>).
 - Keep your HTML DOM structure clean and avoid excessively deep nested divs.
 - Do NOT generate excessively long placeholder text. Keep text punchy and concise.
@@ -395,7 +395,7 @@ NOW BUILD — FOLLOW THESE FINAL RULES:
 5. Write REAL, industry-specific copy — not generic filler text.
 6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
 7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
-8. ⚠️ AVOID TRUNCATION: Because you are generating 8+ sections, you MUST be extremely concise and efficient with your HTML/Tailwind code to stay under the output token limit. Compress your code where possible, avoid repetitive bloated classes if not needed, but keep the design stunning.
+8. ⚠️ COMPLETE THE FULL PAGE: You have 16,000 output tokens available — more than enough! You MUST generate all 8+ sections completely. Do NOT rush or skip sections. Every section should be fully designed and coded.
 9. The page must end with a beautiful custom Footer (containing the logo, contact info, and copyright), followed by your interaction script and the closing \`</html>\` tag. The footer layout must also be uniquely designed each time. Do NOT stop writing before finishing the footer and closing all HTML tags!
 `);
 
@@ -429,48 +429,62 @@ const generateLandingPageContent = async (input) => {
   const coreScript = `
 <script id="core-interactions">
   (function() {
-    // 1. FAQ Accordion Logic via Event Delegation
+    // 1. FAQ / Accordion Logic via Event Delegation
     document.addEventListener('click', function(e) {
-      const header = e.target.closest('.accordion-header, .faq-head, .v2-faq-summary');
-      if (header) {
-        const item = header.closest('.accordion-item, .faq-item');
+      // AI-generated accordion: .accordion-header / .accordion-content
+      const accHeader = e.target.closest('.accordion-header, .faq-head, .v2-faq-summary');
+      if (accHeader) {
+        const item = accHeader.closest('.accordion-item, .faq-item');
         if (!item) return;
         
         const content = item.querySelector('.accordion-content, .faq-body');
-        const icon = header.querySelector('.accordion-icon, .fa-chevron-down');
+        const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
         const isOpen = content && !content.classList.contains('hidden');
         
-        // Close others
+        // Close all others first
         document.querySelectorAll('.accordion-content, .faq-body').forEach(c => c.classList.add('hidden'));
         document.querySelectorAll('.accordion-icon, .fa-chevron-down').forEach(i => i.classList.remove('rotate-180'));
+        document.querySelectorAll('.fa-minus').forEach(i => { i.classList.remove('fa-minus'); i.classList.add('fa-plus'); });
         
+        // Open this one if it was closed
         if (!isOpen && content) {
           content.classList.remove('hidden');
-          if (icon) icon.classList.add('rotate-180');
+          if (icon) {
+            icon.classList.add('rotate-180');
+            if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+          }
         }
       }
     });
 
-    // 2. Strict Form Validation Logic via Event Delegation
-    document.addEventListener('submit', function(e) {
-      if (e.target.tagName === 'FORM') {
-        let isValid = true;
-        e.target.querySelectorAll('input[required], textarea[required], input[type="email"], input[type="text"]').forEach(input => {
-          if (!input.value.trim()) {
-            isValid = false;
-            input.style.border = '2px solid red';
-          } else {
-            input.style.border = '';
+    // 2. Form Validation — only on PUBLISHED page (not in editor iframe)
+    // Checks for GrapesJS editor context and skips if inside editor
+    var isInEditor = (window.self !== window.top) || document.body.classList.contains('gjs-dashed');
+    if (!isInEditor) {
+      document.addEventListener('submit', function(e) {
+        if (e.target.tagName === 'FORM') {
+          let isValid = true;
+          e.target.querySelectorAll('input[required], textarea[required]').forEach(function(input) {
+            if (!input.value.trim()) {
+              isValid = false;
+              input.style.outline = '2px solid #ef4444';
+              input.style.outlineOffset = '2px';
+              setTimeout(function() {
+                input.style.outline = '';
+                input.style.outlineOffset = '';
+              }, 3000);
+            }
+          });
+          if (!isValid) {
+            e.preventDefault();
+            e.stopPropagation();
           }
-        });
-        if (!isValid) {
-          e.preventDefault();
         }
-      }
-    }, true);
+      }, true);
+    }
 
     // 3. Initialize AOS if loaded
-    setTimeout(() => {
+    setTimeout(function() {
       if (typeof AOS !== 'undefined') {
         AOS.init({duration: 1000, once: true});
       }
@@ -479,11 +493,12 @@ const generateLandingPageContent = async (input) => {
 </script>
 `;
 
+
   if (aiResult && aiResult.fullHtml) {
     if (aiResult.fullHtml.includes('</body>')) {
-      aiResult.fullHtml = aiResult.fullHtml.replace('</body>', coreScript + '\\n</body>');
+      aiResult.fullHtml = aiResult.fullHtml.replace('</body>', coreScript + '\n</body>');
     } else {
-      aiResult.fullHtml += '\\n' + coreScript;
+      aiResult.fullHtml += '\n' + coreScript;
     }
   }
   
