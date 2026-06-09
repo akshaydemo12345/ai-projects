@@ -4,11 +4,11 @@ import { toast } from 'sonner';
 import grapesjs from 'grapesjs';
 import type { Editor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
-// @ts-ignore
 import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
+
 
 import './grapes-custom.css';
 import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
@@ -147,7 +147,7 @@ const GrapesEditor = () => {
   const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
-  const cpObserverRef = useRef<MutationObserver | null>(null);
+
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [extractedTemplateScripts, setExtractedTemplateScripts] = useState<string>('');
@@ -175,7 +175,7 @@ const GrapesEditor = () => {
 
         if (rawHtml) {
           // Match ALL script tags (both inline and src-based)
-          const allScriptMatches = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
+          const allScriptMatches: string[] = rawHtml.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
           // Filter out only tailwind CDN + tailwind config scripts (they are re-added on publish)
           const filteredScripts = allScriptMatches.filter(s => {
             if (s.includes('cdn.tailwindcss.com')) return false;
@@ -266,6 +266,16 @@ const GrapesEditor = () => {
       }
     }
 
+    // Strip Tailwind CDN and config scripts early from dbContent to prevent infinite loops in GrapesJS canvas
+    if (dbContent) {
+      dbContent = dbContent.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
+        if (match.includes('cdn.tailwindcss.com') || match.includes('tailwind.config')) {
+          return '';
+        }
+        return match;
+      });
+    }
+
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
       console.log('📄 Full HTML structure detected. Extracting components...');
@@ -273,9 +283,11 @@ const GrapesEditor = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(dbContent, 'text/html');
 
-        // Extract Styles
+        // Extract Styles (Skip Tailwind CSS to prevent massive CSS strings freezing the editor)
         const styleTags = Array.from(doc.querySelectorAll('style'));
-        const extractedStyles = styleTags.map(s => s.textContent).join('\n');
+        const extractedStyles = styleTags
+          .filter(s => !s.id.includes('tailwind') && !s.hasAttribute('data-tailwindcss') && !s.textContent?.includes('/* ! tailwindcss'))
+          .map(s => s.textContent).join('\n');
         if (extractedStyles) {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
@@ -352,13 +364,19 @@ const GrapesEditor = () => {
       // Recover hardcoded hex colors to dynamic variables for existing/previously saved pages
       if (primaryColor) {
         const escapedColor = primaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(`(?<!--primary\\s*:\\s*)(?<!--primary-dark\\s*:\\s*)(?<!--p3-primary\\s*:\\s*)(?<!--p3-primary-mid\\s*:\\s*)(?<!--primary-container\\s*:\\s*)(?<!--primary-temp\\s*:\\s*)${escapedColor}`, 'gi');
-        finalStyles = finalStyles.replace(regex, 'var(--primary)');
+        const regex = new RegExp(`(--[\\w-]+\\s*:\\s*)?${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, (match, prefix) => {
+          if (prefix && prefix.includes('primary')) return match;
+          return (prefix || '') + 'var(--primary)';
+        });
       }
       if (secondaryColor) {
         const escapedColor = secondaryColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(`(?<!--secondary\\s*:\\s*)${escapedColor}`, 'gi');
-        finalStyles = finalStyles.replace(regex, 'var(--secondary)');
+        const regex = new RegExp(`(--[\\w-]+\\s*:\\s*)?${escapedColor}`, 'gi');
+        finalStyles = finalStyles.replace(regex, (match, prefix) => {
+          if (prefix && prefix.includes('secondary')) return match;
+          return (prefix || '') + 'var(--secondary)';
+        });
       }
 
       // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
@@ -587,6 +605,14 @@ const GrapesEditor = () => {
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;font-size:1.5rem;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
+      // Strip Tailwind CDN and config scripts from dbContent to prevent infinite loops in GrapesJS canvas
+      dbContent = dbContent.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (match) => {
+        if (match.includes('cdn.tailwindcss.com') || match.includes('tailwind.config')) {
+          return '';
+        }
+        return match;
+      });
+
       const configHTML = `
       <script>
         tailwind.config = {
@@ -756,26 +782,31 @@ const GrapesEditor = () => {
       styleManager: {
         appendTo: '#styles-container',
         sectors: [
-          { 
-            name: 'Layout', 
-            open: true, 
-            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'gap', 'position', 'top', 'right', 'bottom', 'left', 'width', 'max-width', 'min-width', 'height', 'max-height', 'min-height', 'z-index'],
+          {
+            name: 'Layout',
+            open: false,
+            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content'],
+          },
+          {
+            name: 'Size',
+            open: false,
+            buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height'],
+          },
+          {
+            name: 'Space',
+            open: false,
+            buildProps: ['padding', 'margin'],
+          },
+          {
+            name: 'Position',
+            open: false,
+            buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'],
             properties: [
-              {
-                property: 'display',
-                type: 'select',
-                list: [
-                  { id: 'block', name: 'Block' },
-                  { id: 'flex', name: 'Flex' },
-                  { id: 'inline', name: 'Inline' },
-                  { id: 'inline-block', name: 'Inline Block' },
-                  { id: 'none', name: 'None' }
-                ]
-              },
               {
                 property: 'position',
                 type: 'select',
-                list: [
+                default: 'static',
+                options: [
                   { id: 'static', name: 'Static' },
                   { id: 'relative', name: 'Relative' },
                   { id: 'absolute', name: 'Absolute' },
@@ -785,36 +816,202 @@ const GrapesEditor = () => {
               }
             ]
           },
-          { name: 'Spacing', open: false, buildProps: ['margin', 'padding'] },
           {
             name: 'Typography',
             open: false,
+            buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
             properties: [
               {
-                property: 'font-family',
-                name: 'Font Family',
+                property: 'text-align',
                 type: 'select',
-                list: [
-                  { id: 'Inter', name: 'Inter' },
-                  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
-                  { id: 'Montserrat', name: 'Montserrat' },
-                  { id: 'Playfair Display', name: 'Playfair Display' },
-                  { id: 'Dancing Script', name: 'Dancing Script' },
-                  { id: 'DM Serif Display', name: 'DM Serif Display' },
-                  { id: 'Manrope', name: 'Manrope' },
-                  { id: 'Outfit', name: 'Outfit' },
+                default: 'left',
+                options: [
+                  { id: 'left', name: 'Left' },
+                  { id: 'center', name: 'Center' },
+                  { id: 'right', name: 'Right' },
+                  { id: 'justify', name: 'Justify' }
                 ]
               },
-              'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform'
+              {
+                property: 'text-decoration',
+                type: 'select',
+                default: 'none',
+                options: [
+                  { id: 'none', name: 'None' },
+                  { id: 'underline', name: 'Underline' },
+                  { id: 'overline', name: 'Overline' },
+                  { id: 'line-through', name: 'Line-through' }
+                ]
+              },
+              {
+                property: 'text-transform',
+                type: 'select',
+                default: 'none',
+                options: [
+                  { id: 'none', name: 'None' },
+                  { id: 'capitalize', name: 'Capitalize' },
+                  { id: 'uppercase', name: 'Uppercase' },
+                  { id: 'lowercase', name: 'Lowercase' }
+                ]
+              },
+              {
+                property: 'vertical-align',
+                type: 'select',
+                default: 'baseline',
+                options: [
+                  { id: 'baseline', name: 'Baseline' },
+                  { id: 'top', name: 'Top' },
+                  { id: 'middle', name: 'Middle' },
+                  { id: 'bottom', name: 'Bottom' }
+                ]
+              },
+              {
+                property: 'direction',
+                type: 'select',
+                default: 'ltr',
+                options: [
+                  { id: 'ltr', name: 'LTR' },
+                  { id: 'rtl', name: 'RTL' }
+                ]
+              }
             ]
           },
-          { name: 'Background', open: false, buildProps: ['background-color', 'background', 'background-image', 'background-repeat', 'background-position', 'background-size'] },
-          { name: 'Border', open: false, buildProps: ['border', 'border-radius', 'outline'] },
-          { name: 'Effects', open: false, buildProps: ['opacity', 'box-shadow', 'text-shadow', 'transform', 'transition', 'cursor', 'overflow'] },
-        ],
-      },
-      colorPicker: {
-        appendTo: '.gjs-editor.gjs-one-bg',
+          {
+            name: 'Background',
+            open: false,
+            buildProps: ['background-color', 'background-image', 'background-clip'],
+            properties: [
+              {
+                property: 'background-clip',
+                name: 'Clip',
+                type: 'select',
+                default: 'border-box',
+                options: [
+                  { id: 'border-box', name: 'Border Box' },
+                  { id: 'padding-box', name: 'Padding Box' },
+                  { id: 'content-box', name: 'Content Box' },
+                  { id: 'text', name: 'Text' }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Borders',
+            open: false,
+            buildProps: ['border-radius', 'border'],
+          },
+          {
+            name: 'Effects',
+            open: false,
+            buildProps: [
+              'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter', 
+              'transition', 'transform', 'transform-origin', 'overflow', 'backface-visibility', 'transform-style'
+            ],
+            properties: [
+              {
+                property: 'opacity',
+                type: 'slider',
+                min: 0,
+                max: 1,
+                step: 0.01,
+                default: '1'
+              },
+              { extend: 'box-shadow' },
+              { extend: 'text-shadow' },
+              { extend: 'transition' },
+              { extend: 'transform' },
+              {
+                property: 'filter',
+                type: 'stack',
+                layerSeparator: ' ',
+                properties: [
+                  { name: 'Value', property: 'filter-value', type: 'text', default: 'blur(5px)' }
+                ]
+              },
+              {
+                property: 'backdrop-filter',
+                type: 'stack',
+                layerSeparator: ' ',
+                properties: [
+                  { name: 'Value', property: 'backdrop-filter-value', type: 'text', default: 'blur(5px)' }
+                ]
+              },
+              {
+                property: 'mix-blend-mode',
+                name: 'Blend mode',
+                type: 'select',
+                default: 'normal',
+                options: [
+                  { id: 'normal', name: 'Normal' },
+                  { id: 'multiply', name: 'Multiply' },
+                  { id: 'screen', name: 'Screen' },
+                  { id: 'overlay', name: 'Overlay' },
+                  { id: 'darken', name: 'Darken' },
+                  { id: 'lighten', name: 'Lighten' },
+                  { id: 'color-dodge', name: 'Color Dodge' },
+                  { id: 'color-burn', name: 'Color Burn' },
+                  { id: 'hard-light', name: 'Hard Light' },
+                  { id: 'soft-light', name: 'Soft Light' },
+                  { id: 'difference', name: 'Difference' },
+                  { id: 'exclusion', name: 'Exclusion' },
+                  { id: 'hue', name: 'Hue' },
+                  { id: 'saturation', name: 'Saturation' },
+                  { id: 'color', name: 'Color' },
+                  { id: 'luminosity', name: 'Luminosity' }
+                ]
+              },
+              {
+                property: 'cursor',
+                type: 'select',
+                default: 'auto',
+                options: [
+                  { id: 'auto', name: 'Auto' },
+                  { id: 'default', name: 'Default' },
+                  { id: 'pointer', name: 'Pointer' },
+                  { id: 'wait', name: 'Wait' },
+                  { id: 'text', name: 'Text' },
+                  { id: 'move', name: 'Move' },
+                  { id: 'help', name: 'Help' },
+                  { id: 'not-allowed', name: 'Not Allowed' },
+                  { id: 'crosshair', name: 'Crosshair' },
+                  { id: 'grab', name: 'Grab' },
+                  { id: 'grabbing', name: 'Grabbing' }
+                ]
+              },
+              {
+                property: 'overflow',
+                type: 'select',
+                default: 'visible',
+                options: [
+                  { id: 'visible', name: 'Visible' },
+                  { id: 'hidden', name: 'Hidden' },
+                  { id: 'scroll', name: 'Scroll' },
+                  { id: 'auto', name: 'Auto' }
+                ]
+              },
+              {
+                property: 'backface-visibility',
+                name: 'Backface',
+                type: 'select',
+                default: 'visible',
+                options: [
+                  { id: 'visible', name: 'Visible' },
+                  { id: 'hidden', name: 'Hidden' }
+                ]
+              },
+              {
+                property: 'transform-style',
+                name: 'Children transform',
+                type: 'select',
+                default: 'flat',
+                options: [
+                  { id: 'flat', name: 'Flat' },
+                  { id: 'preserve-3d', name: 'Preserve-3D' }
+                ]
+              }
+            ]
+          }
+        ]
       },
       traitManager: { appendTo: '#traits-container' },
       layerManager: { appendTo: '#layers-container' },
@@ -930,7 +1127,7 @@ const GrapesEditor = () => {
           const parts = opt.split(':');
           const val = parts[0]?.trim();
           const name = parts[1]?.trim() || val;
-          return { tagName: 'option', attributes: { value: val }, content: name };
+          return { tagName: 'option', attributes: { id: val }, content: name };
         });
 
         if (options.length > 0) {
@@ -1195,6 +1392,26 @@ const GrapesEditor = () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
+      // Restore custom font options in Typography sector
+      try {
+        const styleManager = editor.StyleManager;
+        const fontProp = styleManager.getProperty('Typography', 'font-family');
+        if (fontProp) {
+          fontProp.set('options', [
+            { id: 'Inter', name: 'Inter' },
+            { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
+            { id: 'Montserrat', name: 'Montserrat' },
+            { id: 'Playfair Display', name: 'Playfair Display' },
+            { id: 'Dancing Script', name: 'Dancing Script' },
+            { id: 'DM Serif Display', name: 'DM Serif Display' },
+            { id: 'Manrope', name: 'Manrope' },
+            { id: 'Outfit', name: 'Outfit' },
+          ]);
+        }
+      } catch (e) {
+        console.warn('Could not set custom fonts in style manager', e);
+      }
+
       // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
       try {
         const canvasDoc = editor.Canvas.getDocument();
@@ -1230,6 +1447,7 @@ const GrapesEditor = () => {
           if (color) rte.exec('hiliteColor', color);
         }
       });
+
 
       // ── Canvas click: icon picker on EVERY click on an icon ──
       setTimeout(() => {
@@ -1377,7 +1595,7 @@ const GrapesEditor = () => {
                 text: 'Add Option',
                 command: (ed: any, trait: any) => {
                   const model = trait.target;
-                  model.components().add({ type: 'option', content: 'New Option', attributes: { value: 'new' } });
+                  model.components().add({ type: 'option', content: 'New Option', attributes: { id: 'new' } });
                 }
               }
             ],
@@ -1631,8 +1849,8 @@ const GrapesEditor = () => {
           type: 'select',
           style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
           components: [
-            { type: 'option', content: 'Option 1', attributes: { value: '1' } },
-            { type: 'option', content: 'Option 2', attributes: { value: '2' } }
+            { type: 'option', content: 'Option 1', attributes: { id: '1' } },
+            { type: 'option', content: 'Option 2', attributes: { id: '2' } }
           ]
         }
       });
@@ -1800,10 +2018,6 @@ const GrapesEditor = () => {
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
 
     return () => {
-      if (cpObserverRef.current) {
-        cpObserverRef.current.disconnect();
-        cpObserverRef.current = null;
-      }
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
@@ -1813,7 +2027,7 @@ const GrapesEditor = () => {
 
   // ─── Setup Editor Events (Tabs & Labels) ───
   const setupEditorEvents = (editor: Editor) => {
-    editor.on('component:selected', (model) => {
+    editor.on('component:selected', (model: any) => {
       const tagName = model.get('tagName') || 'div';
       const classes = model.getClasses();
       const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
@@ -2444,7 +2658,7 @@ const GrapesEditor = () => {
     if (!selected) {
       setChatMessages(prev => [...prev,
       { role: 'user', content: val },
-      { role: 'ai', content: '⚠️ Pehle canvas mein koi element select karo, phir apna command likho.' }
+      { role: 'ai', content: '⚠️ Please select an element on the canvas first, then write your command.' }
       ]);
       return;
     }
@@ -2518,9 +2732,9 @@ const GrapesEditor = () => {
           summary: changeSummary
         };
         setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
-        toast.success('✨ AI ne change apply kar diya!');
+        toast.success('✨ AI changes applied successfully!');
       } else {
-        aiResponse = '🤔 AI ne response diya par koi change nahi hua. Thoda aur specific bolo.';
+        aiResponse = '🤔 AI provided a response but no changes were made. Please be more specific.';
       }
 
       setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
@@ -2529,7 +2743,7 @@ const GrapesEditor = () => {
       const errMsg = err?.message || 'Unknown error';
       setChatMessages(prev => [...prev, {
         role: 'ai',
-        content: `❌ Error: ${errMsg}\n\nApna API key check karo (⚙️ icon pe click karo).`
+        content: `❌ Error: ${errMsg}\n\nPlease check your API key (click on the ⚙️ icon).`
       }]);
     } finally {
       if (el) el.classList.remove('ai-pulse-active');
@@ -2556,9 +2770,9 @@ const GrapesEditor = () => {
       {/* ═══════════════ TOP BAR ═══════════════ */}
       <div style={{
         height: 54, flexShrink: 0,
-        background: '#0f172a', borderBottom: '1px solid #1f2937',
+        background: '#ffffff', borderBottom: '1px solid #dedede',
         display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
-        zIndex: 100, boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+        zIndex: 100, boxShadow: 'rgba(0, 0, 0, 0.3) 0px 2px 10px'
       }}>
         {/* Logo & Page Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
@@ -2566,7 +2780,7 @@ const GrapesEditor = () => {
             {project?.name?.charAt(0).toUpperCase() || 'G'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
+            <span style={{ color: '#111827', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
             <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
@@ -2578,9 +2792,9 @@ const GrapesEditor = () => {
           onClick={() => navigate(`/dashboard/projects/${projId}`)}
           style={{
             ...outlineBtn,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: '#60a5fa',
+            background: 'rgba(0,0,0,0.05)',
+            border: '1px solid rgba(0,0,0,0.1)',
+            color: '#3b82f6',
             padding: '6px 12px',
             fontSize: 11,
             fontWeight: 700,
@@ -2590,12 +2804,12 @@ const GrapesEditor = () => {
           }}
           title="Back to Dashboard"
         >
-          <ArrowLeft size={14} /> Back to Pages
+          <ArrowLeft size={14} /> Back
         </button>
 
 
         {/* Mode Switcher */}
-        <div style={{ display: 'flex', background: '#111827', borderRadius: 8, padding: 2, border: '1px solid #1f2937', margin: '0 10px' }}>
+        <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 8, padding: 2, border: '1px solid #e5e7eb', margin: '0 10px' }}>
           <TBtn title="Edit Landing Page" active={mode === 'landing'} onClick={() => switchMode('landing')}>
             <LayoutIcon /><span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600 }}>Landing Page</span>
           </TBtn>
@@ -2607,7 +2821,7 @@ const GrapesEditor = () => {
         <Sep />
 
         {/* Device Switcher (Centered look) */}
-        <div style={{ display: 'flex', background: '#111827', borderRadius: 8, padding: 2, border: '1px solid #1f2937', margin: '0 10px' }}>
+        <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 8, padding: 2, border: '1px solid #e5e7eb', margin: '0 10px' }}>
           <TBtn title="Desktop" active={activeDevice === 'desktop'} onClick={() => switchDevice('desktop')}><DesktopIcon /></TBtn>
           <TBtn title="Tablet" active={activeDevice === 'tablet'} onClick={() => switchDevice('tablet')} ><TabletIcon /></TBtn>
           <TBtn title="Mobile" active={activeDevice === 'mobile'} onClick={() => switchDevice('mobile')} ><MobileIcon /></TBtn>
@@ -2625,8 +2839,8 @@ const GrapesEditor = () => {
             style={{
               ...outlineBtn,
               background: !hasSaved ? 'rgba(52,211,153,0.05)' : 'rgba(52,211,153,0.1)',
-              border: !hasSaved ? '1px solid rgba(52,211,153,0.1)' : '1px solid rgba(52,211,153,0.3)',
-              color: !hasSaved ? '#34d399' : '#34d399',
+              border: !hasSaved ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(52,211,153,0.5)',
+              color: '#059669',
               padding: '7px 14px',
               opacity: !hasSaved ? 0.5 : 1,
               cursor: !hasSaved ? 'not-allowed' : 'pointer'
@@ -2638,7 +2852,7 @@ const GrapesEditor = () => {
 
           {/* Status Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
+            <span style={{ color: '#111827', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status:</span>
             <select
               value={siteStatus}
               onChange={(e) => {
@@ -2656,7 +2870,7 @@ const GrapesEditor = () => {
                 }
               }}
               style={{
-                background: '#111827', border: '1px solid #1f2937', color: '#e5e7eb',
+                background: '#f9fafb', border: '1px solid #d1d5db', color: '#111827',
                 borderRadius: 6, padding: '4px 24px 4px 10px', fontSize: 11, fontWeight: 700, outline: 'none', cursor: 'pointer',
                 appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\'/%3E%3C/svg%3E")',
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center'
@@ -2676,19 +2890,18 @@ const GrapesEditor = () => {
               }
               handlePreview();
             }}
-            style={{ ...outlineBtn, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '7px 14px' }}
+            style={{ ...outlineBtn, background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#111827', padding: '7px 14px' }}
             title="Live Preview"
           >
-            <EyeIcon /> <span style={{ marginLeft: 6 }}>Preview</span>
+            <EyeIcon />
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            style={{ ...outlineBtn, background: '#1e293b', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
+            style={{ ...outlineBtn, background: '#111827', border: 'none', color: '#fff', padding: '7px 14px', opacity: isSaving ? 0.5 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
             title="Save Changes"
           >
             {isSaving ? <SpinnerIcon /> : <SaveIcon />}
-            <span style={{ marginLeft: 6 }}>{isSaving ? 'Saving...' : 'Save'}</span>
           </button>
         </div>
 
@@ -2709,12 +2922,12 @@ const GrapesEditor = () => {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* ══ DUAL-COLUMN LEFT SIDEBAR ══ */}
-        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #1f2937' }}>
+        <div style={{ display: 'flex', height: '100%', borderRight: '1px solid #dedede' }}>
           {/* Vertical Toolbar (Narrow) */}
           <div style={{
-            width: 58, flexShrink: 0, background: '#0b0b18',
+            width: 58, flexShrink: 0, background: '#fff',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '16px 0', gap: 18, borderRight: '1px solid #1e1e30'
+            padding: '16px 0px', gap: 18, borderRight: '1px solid #dedede'
           }}>
             <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
@@ -2726,16 +2939,16 @@ const GrapesEditor = () => {
           <div style={{
             width: isSidebarOpen ? 280 : 0,
             opacity: isSidebarOpen ? 1 : 0,
-            flexShrink: 0, background: '#12121e',
+            flexShrink: 0, background: '#fff',
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderRight: isSidebarOpen ? '1px solid #1f2937' : 'none'
+            borderRight: isSidebarOpen ? '1px solid #e5e7eb' : 'none'
           }}>
-            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280 }}>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280, backgroundColor: '#fff' }}>
+              <span style={{ color: '#000', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
               </span>
-              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#fff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#000', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
             </div>
 
             <div style={{ flex: 1, display: leftTab === 'blocks' ? 'flex' : 'none', overflow: 'hidden' }}>
@@ -2803,38 +3016,38 @@ const GrapesEditor = () => {
             </div>
 
             {/* Layers */}
-            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '0 10px' }} />
+            <div id="layers-container" style={{ flex: 1, overflowY: 'auto', display: leftTab === 'layers' ? 'block' : 'none', padding: '10px', background: '#fff' }} />
 
 
             {/* AI Panel - Full Featured */}
             <div style={{ flex: 1, display: leftTab === 'ai' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden', minWidth: 280 }}>
 
               {/* ── AI Panel Header Tabs ── */}
-              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #1f2937', background: '#0f172a', padding: '0 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', padding: '0 12px' }}>
                 <button
                   onClick={() => setShowHistory(false)}
-                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#64748b' : '#818cf8', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #818cf8', transition: 'all 0.2s' }}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#6b7280' : '#4f46e5', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? 'none' : '2px solid #6366f1', transition: 'all 0.2s' }}
                 >✨ AI Chat</button>
                 <button
                   onClick={() => setShowHistory(true)}
-                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#818cf8' : '#64748b', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #818cf8' : 'none', transition: 'all 0.2s', position: 'relative' }}
+                  style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', color: showHistory ? '#4f46e5' : '#6b7280', fontSize: 11, fontWeight: 700, cursor: 'pointer', borderBottom: showHistory ? '2px solid #6366f1' : 'none', transition: 'all 0.2s', position: 'relative' }}
                 >
                   🕐 History
-                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#818cf8', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
+                  {aiHistory.length > 0 && <span style={{ marginLeft: 4, background: '#6366f1', color: '#fff', borderRadius: 100, padding: '1px 6px', fontSize: 9 }}>{aiHistory.length}</span>}
                 </button>
                 <button
                   onClick={() => setShowApiKeyInput(v => !v)}
                   title="API Key Settings"
-                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(124,58,237,0.2)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#64748b', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
+                  style={{ padding: '6px 8px', background: showApiKeyInput ? 'rgba(99,102,241,0.1)' : 'none', border: 'none', color: aiApiKey ? '#10b981' : '#6b7280', cursor: 'pointer', borderRadius: 6, fontSize: 14 }}
                 >⚙️</button>
               </div>
 
               {/* ── API Key Settings ── */}
               {showApiKeyInput && (
-                <div style={{ padding: '12px 14px', background: '#0d0d1a', borderBottom: '1px solid #1f2937' }}>
+                <div style={{ padding: '12px 14px', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <span style={{ fontSize: 12 }}>🤖</span>
-                    <span style={{ fontSize: 10, color: '#818cf8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
+                    <span style={{ fontSize: 10, color: '#4f46e5', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Claude (Anthropic) API Key</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input
@@ -2842,7 +3055,7 @@ const GrapesEditor = () => {
                       value={aiApiKey}
                       onChange={e => setAiApiKey(e.target.value)}
                       placeholder="sk-ant-api03-..."
-                      style={{ flex: 1, background: '#111827', border: '1px solid #1f2937', color: '#fff', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
+                      style={{ flex: 1, background: '#f9fafb', border: '1px solid #d1d5db', color: '#000', borderRadius: 7, padding: '7px 10px', fontSize: 12, outline: 'none' }}
                     />
                     <button
                       onClick={() => {
@@ -2857,22 +3070,22 @@ const GrapesEditor = () => {
                         }
                         setShowApiKeyInput(false);
                       }}
-                      style={{ background: '#818cf8', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >Save</button>
                   </div>
                   <div style={{ fontSize: 10, color: aiApiKey ? '#10b981' : '#f97316', marginTop: 6 }}>
                     {aiApiKey ? '✅ Claude AI active (claude-3-5-haiku)' : '⚠️ Demo mode — limited commands only'}
                   </div>
-                  <div style={{ fontSize: 9, color: '#4a4a6a', marginTop: 4 }}>Key is stored locally in your browser only.</div>
+                  <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 4 }}>Key is stored locally in your browser only.</div>
                 </div>
               )}
 
               {/* ── HISTORY TAB ── */}
               {showHistory ? (
-                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, background: '#fff' }}>
                   {aiHistory.length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                      <span style={{ fontSize: 10, color: '#64748b' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
+                      <span style={{ fontSize: 10, color: '#6b7280' }}>{aiHistory.length} changes saved · reload pe bhi rahega ✅</span>
                       <button
                         onClick={() => { setAiHistory([]); localStorage.removeItem(`ai_history_${pageId}`); }}
                         style={{ fontSize: 10, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}
@@ -2883,7 +3096,7 @@ const GrapesEditor = () => {
                     <div
                       style={{
                         textAlign: 'center',
-                        color: '#4a4a6a',
+                        color: '#6b7280',
                         fontSize: 13,
                         padding: '32px 0',
                         lineHeight: 1.6,
@@ -2896,12 +3109,12 @@ const GrapesEditor = () => {
                     </div>
                   ) : (
                     aiHistory.map(h => (
-                      <div key={h.id} style={{ background: '#111827', borderRadius: 10, border: '1px solid #1f2937', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div key={h.id} style={{ background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 9, color: '#64748b', fontWeight: 700 }}>🕐 {h.timestamp}</span>
-                          <span style={{ fontSize: 9, background: 'rgba(124,58,237,0.2)', color: '#818cf8', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
+                          <span style={{ fontSize: 9, color: '#6b7280', fontWeight: 700 }}>🕐 {h.timestamp}</span>
+                          <span style={{ fontSize: 9, background: 'rgba(99,102,241,0.1)', color: '#4f46e5', padding: '2px 7px', borderRadius: 100 }}>{h.element}</span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#e5e7eb', fontStyle: 'italic' }}>"{h.prompt}"</div>
+                        <div style={{ fontSize: 12, color: '#111827', fontStyle: 'italic' }}>"{h.prompt}"</div>
                         <div style={{ fontSize: 11, color: '#10b981' }}>✅ {h.summary}</div>
                       </div>
                     ))
@@ -2912,15 +3125,15 @@ const GrapesEditor = () => {
                   {/* ── CHAT TAB ── */}
 
                   {/* Selection Context Bar */}
-                  <div style={{ padding: '8px 14px', background: '#0d0d1a', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ padding: '8px 14px', background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeComponent ? '#10b981' : '#f97316', boxShadow: activeComponent ? '0 0 6px #10b981' : '0 0 6px #f97316', flexShrink: 0 }} />
-                    <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: '#4b5563', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {activeComponent ? `🎯 ${selectedLabel}` : '⬅️ Select an element on canvas'}
                     </span>
                     <button
                       onClick={() => { setChatMessages([WELCOME_MSG]); localStorage.removeItem(`ai_chat_messages_${pageId}`); }}
-                      title="Chat clear karo"
-                      style={{ fontSize: 11, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
+                      title="Clear chat"
+                      style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px' }}
                     >🗑️</button>
                     <span style={{ fontSize: 9, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                       🤖 Claude AI
@@ -2928,21 +3141,21 @@ const GrapesEditor = () => {
                   </div>
 
                   {/* Chat Messages */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: '#fff' }}>
                     {chatMessages.map((msg, i) => (
                       <div key={i} style={{ display: 'flex', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-end' }}>
                         {msg.role === 'ai' && (
-                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>✨</div>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, color: '#fff' }}>✨</div>
                         )}
                         <div style={{
                           maxWidth: '80%',
-                          background: msg.role === 'user' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : '#111827',
-                          color: '#e5e7eb',
+                          background: msg.role === 'user' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : '#f3f4f6',
+                          color: msg.role === 'user' ? '#fff' : '#111827',
                           borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                           padding: '9px 12px',
                           fontSize: 12,
                           lineHeight: 1.6,
-                          border: msg.role === 'ai' ? '1px solid #1f2937' : 'none',
+                          border: msg.role === 'ai' ? '1px solid #e5e7eb' : 'none',
                           whiteSpace: 'pre-line',
                           wordBreak: 'break-word'
                         }}>
@@ -2952,8 +3165,8 @@ const GrapesEditor = () => {
                     ))}
                     {chatLoading && (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✨</div>
-                        <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff' }}>✨</div>
+                        <div style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '14px 14px 14px 4px', padding: '10px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
                           {[0, 1, 2].map(d => (
                             <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', animation: `bounce 1.2s ${d * 0.2}s infinite` }} />
                           ))}
@@ -2964,8 +3177,8 @@ const GrapesEditor = () => {
                   </div>
 
                   {/* Input Area */}
-                  <div style={{ padding: '12px 14px', borderTop: '1px solid #1f2937', background: '#0f172a' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${chatInput.trim() ? '#818cf8' : '#1f2937'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}>
+                  <div style={{ padding: '12px 14px', borderTop: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                    <div style={{ background: '#fff', border: `1px solid ${chatInput.trim() ? '#6366f1' : '#d1d5db'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
                       <textarea
                         ref={aiInputRef}
                         value={chatInput}
@@ -2976,15 +3189,15 @@ const GrapesEditor = () => {
                             processAiChat();
                           }
                         }}
-                        placeholder="How can I help you'"
-                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
+                        placeholder="How can I help you..."
+                        style={{ background: 'transparent', border: 'none', color: '#000', fontSize: 12, resize: 'none', outline: 'none', minHeight: 54, fontFamily: 'inherit', lineHeight: 1.5 }}
                       />
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#4a4a6a', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
+                        <span style={{ color: '#9ca3af', fontSize: 10 }}>Enter ↵ to send · Shift+Enter for newline</span>
                         <button
                           onClick={processAiChat}
                           disabled={chatLoading || !chatInput.trim()}
-                          style={{ background: chatLoading || !chatInput.trim() ? '#1f2937' : 'linear-gradient(135deg,#818cf8,#6366f1)', color: chatLoading || !chatInput.trim() ? '#64748b' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
+                          style={{ background: chatLoading || !chatInput.trim() ? '#e5e7eb' : 'linear-gradient(135deg,#818cf8,#6366f1)', color: chatLoading || !chatInput.trim() ? '#9ca3af' : '#fff', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
                         >
                           {chatLoading ? '...' : <><SparklesIcon /> Send</>}
                         </button>
@@ -3142,11 +3355,11 @@ const GrapesEditor = () => {
 
         {/* ══ RIGHT SIDEBAR ══ */}
         <div className="gjs-editor gjs-one-bg" style={{
-          width: 280, flexShrink: 0, background: '#0f172a',
-          borderLeft: '1px solid #1f2937', display: 'flex', flexDirection: 'column',
+          width: 280, flexShrink: 0, background: '#ffffff',
+          borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column',
         }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', padding: '0 10px', borderBottom: '1px solid #1f2937', height: 48, alignItems: 'center', background: '#0f172a' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
             <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
@@ -3514,28 +3727,33 @@ const blendWithWhiteBlack = (hex: string, ratio: number): string => {
   return '#' + [blend(r), blend(g), blend(b)].map(n => n.toString(16).padStart(2, '0')).join('');
 };
 
-const Sep = () => <div style={{ width: 1, height: 20, background: '#1f2937', margin: '0 2px' }} />;
+const Sep = () => <div style={{ width: 1, height: 20, background: '#e5e7eb', margin: '0 2px' }} />;
 
 const TBtn = ({ children, onClick, title, active = false }: { children: React.ReactNode; onClick: () => void; title?: string; active?: boolean }) => (
   <button title={title} onClick={onClick} style={{
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: active ? 'rgba(124,58,237,0.2)' : 'transparent',
-    color: active ? '#818cf8' : '#94a3b8',
+    background: active ? '#fff' : 'transparent',
+    color: active ? '#4f46e5' : '#64748b',
+    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
     border: 'none', borderRadius: 5, padding: '5px 8px', cursor: 'pointer',
     transition: 'all .12s', minWidth: 30, height: 30,
   }}
-    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#252540'; (e.currentTarget as HTMLButtonElement).style.color = '#e5e7eb'; } }}
-    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8'; } }}
+    onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = '#e5e7eb'; (e.currentTarget as HTMLButtonElement).style.color = '#111827'; } }}
+    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#64748b'; } }}
   >{children}</button>
 );
 const TabButton = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
   <button onClick={onClick} style={{
-    padding: '12px 16px', fontSize: 11, fontWeight: 700, border: 'none',
-    background: 'none', cursor: 'pointer', letterSpacing: 0.5,
-    color: active ? '#fff' : '#64748b',
+    flex: 1, padding: '0 16px', height: '100%', fontSize: 13, fontWeight: 500, border: 'none',
+    background: 'none', cursor: 'pointer', letterSpacing: 0,
+    color: active ? '#818cf8' : '#4b5563',
     borderBottom: `2px solid ${active ? '#818cf8' : 'transparent'}`,
     transition: 'all .2s',
-    textTransform: 'uppercase'
+    textTransform: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 0
   }}>{children}</button>
 );
 
@@ -3543,12 +3761,11 @@ const NavIcon = ({ children, active, onClick }: { children: React.ReactNode; act
   <button onClick={onClick} style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-    color: active ? '#818cf8' : '#94a3b8', transition: 'all .2s'
+    color: active ? '#6366f1' : '#000000', transition: 'all .2s'
   }}>
-    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(124,58,237,0.1)' : 'transparent' }}>
-      {children[0]}
+    <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(99,102,241,0.1)' : 'transparent' }}>
+      {Array.isArray(children) ? children[0] : children}
     </div>
-    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{children[1]}</span>
   </button>
 );
 

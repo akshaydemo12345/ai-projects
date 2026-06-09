@@ -545,7 +545,7 @@ footer { background: #111; color: #fff; padding: clamp(4rem, 8vw, 6rem) 0 2rem; 
 }
 
 @media (max-width: 768px) {
-  .nav-links { display: none; } /* Mobile Menu handle karne ke liye toggle add kar sakte hain */
+  .nav-links { display: none; } /* You can add a toggle to handle the Mobile Menu */
   .places-grid { grid-template-columns: 1fr; height: auto; border-radius: 20px; }
   .place-col { height: 350px; }
   .place-col:hover .place-info, .place-col.active .place-info { bottom: 30px; }
