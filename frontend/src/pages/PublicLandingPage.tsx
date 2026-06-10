@@ -108,14 +108,70 @@ const PublicLandingPage = () => {
     e.preventDefault();
     e.stopImmediatePropagation();
     
-    // Validate required fields
     var isValid = true;
     f.querySelectorAll('input[required], textarea[required]').forEach(function(input) {
+      if (!input.dataset.valSetup) {
+        input.dataset.valSetup = 'true';
+        input.addEventListener('input', function() {
+          if (input.value.trim()) {
+            input.style.outline = '2px solid #22c55e';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#22c55e';
+            if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+              input.nextElementSibling.style.display = 'none';
+            }
+          } else {
+            input.style.outline = '2px solid #ef4444';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#ef4444';
+            if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+              input.nextElementSibling.style.display = 'block';
+            }
+          }
+        });
+      }
+
       if (!input.value.trim()) {
         isValid = false;
-        input.style.border = '2px solid red';
+        input.style.outline = '2px solid #ef4444';
+        input.style.outlineOffset = '1px';
+        input.style.borderColor = '#ef4444';
+        
+        // Dynamically wrap input if it's a direct child of a grid/flex (fixes error placement)
+        if (!input.parentElement.classList.contains('val-wrapper')) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'val-wrapper';
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.width = '100%';
+            
+            var computed = window.getComputedStyle(input);
+            if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+            }
+            
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        }
+
+        if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
+          var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
+          var err = document.createElement('span');
+          err.className = 'val-error';
+          err.style.color = '#ef4444';
+          err.style.fontSize = '12px';
+          err.style.display = 'block';
+          err.style.marginTop = '4px';
+          err.textContent = fieldName + ' is required';
+          input.parentNode.insertBefore(err, input.nextSibling);
+        } else {
+          input.nextElementSibling.style.display = 'block';
+        }
       } else {
-        input.style.border = '';
+        input.style.outline = '2px solid #22c55e';
+        input.style.outlineOffset = '1px';
+        input.style.borderColor = '#22c55e';
       }
     });
     

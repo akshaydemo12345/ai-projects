@@ -682,15 +682,17 @@ const CreatePagePage = () => {
 
   useEffect(() => {
     if (project) {
-      setPrimaryColor(getProjectPrimaryColor(project));
-      setSecondaryColor(getProjectSecondaryColor(project));
+      // Only set initial branding if it hasn't been set yet or if the project ID changed
+      // to avoid overwriting user edits when React Query refetches in the background
+      setPrimaryColor(prev => prev === "#7c3aed" ? getProjectPrimaryColor(project) : prev);
+      setSecondaryColor(prev => prev === "#6366f1" ? getProjectSecondaryColor(project) : prev);
       const logo = getProjectLogoUrl(project);
-      if (logo) {
+      if (logo && !logoPreview) {
         setLogoPreview(logo);
         setLogoUrl(logo);
       }
     }
-  }, [project]);
+  }, [project?._id]);
 
   // Debounced background check for slug availability (checks local DB & external website)
   useEffect(() => {
@@ -1017,8 +1019,12 @@ const CreatePagePage = () => {
             businessDescription: getProjectDescription(project),
             pageType: "lead generation",
             aiPrompt: aiPrompt,
-            templateHtml: enrichedContent,
-            templateStyles: enrichedStyles
+            primaryColor: primaryColor,
+            secondaryColor: secondaryColor,
+            logoUrl: logoUrl,
+            // If it's a direct AI prompt, we don't pass the base template so the AI is forced to start from scratch
+            templateHtml: activeMethod === "ai" ? "" : enrichedContent,
+            templateStyles: activeMethod === "ai" ? "" : enrichedStyles
           });
 
           const aiResult = generationRes?.data?.content;
@@ -1064,7 +1070,7 @@ const CreatePagePage = () => {
       const headingFont = fontsData.headingFont ? `'${fontsData.headingFont}', serif` : "var(--font-h1, 'DM Serif Display', serif)";
 
       const brandingCss = `
-:root {
+:root, body {
   --primary: ${primaryColor || "#6366f1"};
   --secondary: ${secondaryColor || "#4f46e5"};
   --primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")};
