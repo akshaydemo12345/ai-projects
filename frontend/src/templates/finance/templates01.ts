@@ -226,18 +226,18 @@ export const finance01Html = `
 
   <!-- FLOATING HORIZONTAL FORM BAR -->
   <div class="container form-bar-container">
-    <form class="form-bar" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
+    <form class="form-bar">
       <div class="form-group">
         <label>Full Name</label>
-        <input type="text" name="full_name" placeholder="John Carter">
+        <input type="text" name="full_name" placeholder="John Carter" required>
       </div>
       <div class="form-group">
         <label>Email Address</label>
-        <input type="email" name="email_address" placeholder="you@company.com">
+        <input type="email" name="email_address" placeholder="you@company.com" required>
       </div>
       <div class="form-group">
         <label>Phone Number</label>
-        <input type="tel" name="phone" placeholder="+1 (555) 000-0000">
+        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" required>
       </div>
       <button type="submit" class="btn-submit">Get Started</button>
     </form>
@@ -413,11 +413,11 @@ export const finance01Html = `
     <div class="container">
       <span>GET IN TOUCH</span>
       <h2 style="margin-top: 1.5rem;">Ready to Talk Numbers?</h2>
-      <form class="contact-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
-        <input type="text" name="full_name" placeholder="Jane Doe">
-        <input type="email" name="email_address" placeholder="jane@company.com">
-        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="form-full">
-        <textarea name="message" placeholder="Tell us about your business..." rows="5" class="form-full"></textarea>
+      <form class="contact-form">
+        <input type="text" name="full_name" placeholder="Jane Doe" required>
+        <input type="email" name="email_address" placeholder="jane@company.com" required>
+        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="form-full" required>
+        <textarea name="message" placeholder="Tell us about your business..." rows="5" class="form-full" required></textarea>
         <div class="form-full" style="text-align: center;">
            <button type="submit" class="btn-send">Send Now</button>
         </div>
@@ -457,7 +457,7 @@ export const finance01Html = `
     <div class="foot-col">
        <h5>Newsletter</h5>
        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">Get monthly insights from our senior advisors.</p>
-       <form onsubmit="event.preventDefault(); alert('Subscribed successfully!'); this.reset();" style="display: flex; gap: 10px;">
+       <form style="display: flex; gap: 10px;">
           <input type="email" placeholder="Your email" style="background: #1e293b; border: none; padding: 0.8rem; border-radius: 4px; color: #fff; width: 100%;" required>
           <button type="submit" style="background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 0.8rem 1.2rem; border-radius: 4px;"><i class="fa-solid fa-paper-plane"></i></button>
        </form>
@@ -467,4 +467,99 @@ export const finance01Html = `
      <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
   </div>
 </footer>
+
+
+<script id="core-interactions">
+  (function() {
+    // Check if we are inside GrapesJS editor
+    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    
+    // Form Validation (runs everywhere so you can see red borders in editor)
+    document.addEventListener('submit', function(e) {
+      if (e.target.tagName === 'FORM') {
+        e.target.setAttribute('novalidate', 'true');
+        var isValid = true;
+        var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
+        
+        inputs.forEach(function(input) {
+          if (!input.dataset.valSetup) {
+            input.dataset.valSetup = 'true';
+            input.addEventListener('input', function() {
+              if (input.value.trim()) {
+                input.style.outline = '2px solid #22c55e';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#22c55e';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'none';
+                }
+              } else {
+                input.style.outline = '2px solid #ef4444';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#ef4444';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'block';
+                }
+              }
+            });
+          }
+
+          if (!input.value.trim() && input.hasAttribute('required')) {
+            isValid = false;
+            input.style.outline = '2px solid #ef4444';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#ef4444';
+            
+            if (!input.parentElement.classList.contains('val-wrapper')) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'val-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.width = '100%';
+                
+                var computed = window.getComputedStyle(input);
+                if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+                }
+                
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+            }
+
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
+              var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
+              var err = document.createElement('span');
+              err.className = 'val-error';
+              err.style.color = '#ef4444';
+              err.style.fontSize = '12px';
+              err.style.display = 'block';
+              err.style.marginTop = '4px';
+              err.style.fontWeight = '500';
+              err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
+              input.parentNode.insertBefore(err, input.nextSibling);
+            } else {
+              input.nextElementSibling.style.display = 'block';
+            }
+          }
+        });
+        
+        if (!isValid || isInEditor) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        } else if (!isInEditor) {
+          e.preventDefault();
+          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
+          if (btn) {
+            if(btn.innerText) btn.innerText = 'Sending...';
+            else btn.value = 'Sending...';
+          }
+          setTimeout(function() {
+            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+          }, 1000);
+        }
+      }
+    }, true);
+  })();
+</script>
+
 `
