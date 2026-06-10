@@ -59,9 +59,14 @@ const GrapesEditor = () => {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>('blocks');
+  const initialMode = searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing';
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
-  const [mode, setMode] = useState<'landing' | 'thank-you'>(searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing');
+  const [mode, setMode] = useState<'landing' | 'thank-you'>(initialMode);
+  
+  const modeRef = useRef(mode);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+
   // AI Prompt
   const [aiOpen, setAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -245,6 +250,13 @@ const GrapesEditor = () => {
     if (activeMode === 'thank-you') {
       dbContent = currentPage.thankYouPageContent || '';
       dbStyles = currentPage.thankYouPageStyles || '';
+      
+      // Treat known placeholders as completely empty so they don't flash on the screen
+      if (dbContent.includes('Landing Page is Ready') || dbContent.includes('Your request has been successfully submitted')) {
+        dbContent = '';
+        dbStyles = '';
+      }
+
       // Inject base template styles so components dragged into the Thank You page retain their design
       if (currentPage.styles) {
         dbStyles = currentPage.styles + '\n' + dbStyles;
@@ -826,41 +838,11 @@ const GrapesEditor = () => {
         setIsCanvasLoading(false);
       }, 1200);
     } else {
-      console.warn('⚠️ GrapesJS: Content empty or too short. Setting placeholder.');
-      // hide loader for empty case too
-      setTimeout(() => setIsCanvasLoading(false), 400);
-      if (mode === 'thank-you') {
-        editor.setComponents(`
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-          <style>
-            .material-symbols-outlined {
-              font-family: 'Material Symbols Outlined' !important;
-              font-weight: normal;
-              font-style: normal;
-              font-size: 24px;
-              line-height: 1;
-              letter-spacing: normal;
-              text-transform: none;
-              display: inline-block;
-              white-space: nowrap;
-              word-wrap: normal;
-              direction: ltr;
-              -webkit-font-smoothing: antialiased;
-            }
-          </style>
-          <section style="display: flex; min-height: 80vh; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; padding: 40px 20px; text-align: center; font-family: sans-serif;">
-            <div style="background: white; padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
-              <div style="width: 80px; height: 80px; background-color: var(--primary, #22c55e); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </div>
-              <h1 style="font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Thank You!</h1>
-              <p style="font-size: 18px; color: #64748b; margin-bottom: 32px; line-height: 1.6;">Your request has been successfully submitted. We will get back to you shortly.</p>
-              <a href="/" style="display: inline-block; background-color: var(--primary, #6366f1); color: white; padding: 14px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">Return to Home</a>
-            </div>
-          </section>
-        `);
-        setTimeout(() => setIsCanvasLoading(false), 400);
+      if (activeMode === 'thank-you') {
+        // Do not inject placeholder. The ThankYouEditorPanel will auto-fetch and apply the default template.
+        // Keep the loading overlay visible until onSelect completes. Add a 5s fallback just in case.
+        editor.setComponents('');
+        setTimeout(() => setIsCanvasLoading(false), 5000);
       } else {
         editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
           `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
@@ -3243,6 +3225,11 @@ const GrapesEditor = () => {
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+            {mode === 'thank-you' && (
+              <NavIcon active={isSidebarOpen && leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); } }}>
+                <SuccessIcon /><span>Templates</span>
+              </NavIcon>
+            )}
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 8 }}>
               <NavIcon active={false} onClick={() => navigate(`/dashboard/projects/${projId}`)} title="Go back to Project">
@@ -3542,16 +3529,29 @@ const GrapesEditor = () => {
 
             {/* Thank You Panel */}
             <div style={{ flex: 1, display: leftTab === 'thank-you' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden' }}>
-              <ThankYouEditorPanel
-                key={`${pageId}-${mode}`}
-                pageId={pageId || ''}
-                industry={page?.industry}
-                onSave={() => {
-                  toast.success('Thank You settings saved!');
-                  handleSave(); // 🚀 Also save the canvas HTML/CSS so they don't get out of sync!
-                  queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
-                }}
-                onSelect={async (html, css) => {
+              {leftTab === 'thank-you' && (
+                <ThankYouEditorPanel
+                  key={`${pageId}-${mode}`}
+                  pageId={pageId || ''}
+                  industry={page?.industry}
+                  isCanvasEmpty={
+                    !page?.thankYouPageContent || 
+                    page.thankYouPageContent.trim() === '' || 
+                    !page?.thankYouPageStyles || 
+                    page.thankYouPageStyles.trim() === '' ||
+                    page.thankYouPageContent.includes('Landing Page is Ready') ||
+                    page.thankYouPageContent.includes('Your request has been successfully submitted')
+                  }
+                  onSave={() => {
+                    toast.success('Thank You settings saved!');
+                    handleSave(); // 🚀 Also save the canvas HTML/CSS so they don't get out of sync!
+                    queryClient.invalidateQueries({ queryKey: ['page', projId, pageId] });
+                  }}
+                  onSelect={async (html, css) => {
+                    if (modeRef.current !== 'thank-you') {
+                      console.warn('Blocked Thank You template from applying in Landing mode');
+                      return;
+                    }
                   if (editorRef.current) {
                     console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
                     setIsCanvasLoading(true);
@@ -3625,10 +3625,10 @@ const GrapesEditor = () => {
                     try {
                       const canvasDoc = editorRef.current.Canvas.getDocument();
                       if (canvasDoc && finalCss) {
-                        let tplTag = canvasDoc.getElementById('ty-template-styles') as HTMLStyleElement | null;
+                        let tplTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
                         if (!tplTag) {
                           tplTag = canvasDoc.createElement('style');
-                          tplTag.id = 'ty-template-styles';
+                          tplTag.id = 'template-styles';
                           canvasDoc.head.appendChild(tplTag);
                         }
                         // Reset body margin/padding in canvas to prevent scrollbar/padding issues
@@ -3644,6 +3644,7 @@ const GrapesEditor = () => {
                   }
                 }}
               />
+              )}
             </div>
           </div>
         </div>

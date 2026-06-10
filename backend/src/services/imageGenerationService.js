@@ -141,12 +141,12 @@ async function generateGetImgUrl(
 
         const fileName = `ai_img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
         const filePath = path.join(uploadsDir, fileName);
-        
+
         fs.writeFileSync(filePath, compressedBuffer);
 
         const baseUrl = config.api.baseUrl.endsWith('/') ? config.api.baseUrl.slice(0, -1) : config.api.baseUrl;
         const fileUrl = `${baseUrl}/uploads/${fileName}`;
-        
+
         logger.info(`[getimg.ai] Image saved successfully to ${fileUrl}`);
         return fileUrl;
       } catch (err) {
@@ -304,7 +304,7 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = false;
+  const DISABLE_AI_IMAGES_FOR_TESTING = true;
   // 👆👆👆
 
   if (
