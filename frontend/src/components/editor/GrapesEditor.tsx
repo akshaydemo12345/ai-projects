@@ -266,7 +266,7 @@ const GrapesEditor = () => {
       }
     }
 
-    let extractedScripts: {src: string, innerHTML: string}[] = [];
+    let extractedScripts: { src: string, innerHTML: string }[] = [];
     let extractedBodyStyle: string | null = null;
     let extractedBodyClass: string | null = null;
 
@@ -297,7 +297,7 @@ const GrapesEditor = () => {
         });
 
         const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
-        
+
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           links.forEach(linkHtml => {
@@ -766,7 +766,7 @@ const GrapesEditor = () => {
           try {
             // @ts-ignore
             if (typeof parseInlineStyle !== 'undefined') wrapper.addStyle(parseInlineStyle(extractedBodyStyle));
-          } catch(e) {}
+          } catch (e) { }
         }
       }
 
@@ -781,39 +781,39 @@ const GrapesEditor = () => {
             cDoc.querySelectorAll('.animate-up, .animate-fade').forEach((el: Element) => {
               el.classList.add('in-view');
             });
-            
+
             // Execute extracted scripts safely AFTER components are set (Parallel external, then inline to avoid race conditions)
             if (extractedScripts && extractedScripts.length > 0) {
               const externalScripts = extractedScripts.filter(s => s.src);
               const inlineScripts = extractedScripts.filter(s => !s.src);
-              
+
               let loadedCount = 0;
               let inlineRan = false;
               const runInlineScripts = () => {
-                 if (inlineRan) return;
-                 inlineRan = true;
-                 inlineScripts.forEach(scriptData => {
-                    const newScript = cDoc.createElement('script');
-                    newScript.innerHTML = scriptData.innerHTML;
-                    cDoc.body.appendChild(newScript);
-                 });
+                if (inlineRan) return;
+                inlineRan = true;
+                inlineScripts.forEach(scriptData => {
+                  const newScript = cDoc.createElement('script');
+                  newScript.innerHTML = scriptData.innerHTML;
+                  cDoc.body.appendChild(newScript);
+                });
               };
-              
+
               if (externalScripts.length > 0) {
-                 // Fallback timeout just in case a CDN network request hangs
-                 setTimeout(runInlineScripts, 3000);
-                 
-                 externalScripts.forEach(scriptData => {
-                    const newScript = cDoc.createElement('script');
-                    newScript.src = scriptData.src;
-                    newScript.onload = newScript.onerror = () => {
-                       loadedCount++;
-                       if (loadedCount === externalScripts.length) runInlineScripts();
-                    };
-                    cDoc.body.appendChild(newScript);
-                 });
+                // Fallback timeout just in case a CDN network request hangs
+                setTimeout(runInlineScripts, 3000);
+
+                externalScripts.forEach(scriptData => {
+                  const newScript = cDoc.createElement('script');
+                  newScript.src = scriptData.src;
+                  newScript.onload = newScript.onerror = () => {
+                    loadedCount++;
+                    if (loadedCount === externalScripts.length) runInlineScripts();
+                  };
+                  cDoc.body.appendChild(newScript);
+                });
               } else {
-                 runInlineScripts();
+                runInlineScripts();
               }
             }
           }
@@ -1086,7 +1086,7 @@ const GrapesEditor = () => {
             name: 'Effects',
             open: false,
             buildProps: [
-              'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter', 
+              'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter',
               'transition', 'transform', 'transform-origin', 'overflow', 'backface-visibility', 'transform-style'
             ],
             properties: [
@@ -1580,14 +1580,14 @@ const GrapesEditor = () => {
             if (accHeader) {
               if (!item) item = accHeader.closest('.accordion-item, .faq-item, .border-b, [class*="border"]');
               if (!item) return;
-              
+
               if (!content) content = item.querySelector('.accordion-content, .faq-body, .faq-answer') || accHeader.nextElementSibling;
               if (!content) return;
-              
+
               if (!icon) icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg');
-              
+
               const isOpen = !content.classList.contains('hidden');
-              
+
               // Close all others first
               canvasDoc.querySelectorAll('.accordion-content, .faq-body, .faq-answer').forEach((c: any) => {
                 if (c !== content) {
@@ -1596,7 +1596,7 @@ const GrapesEditor = () => {
                   if (comp) comp.addClass('hidden');
                 }
               });
-              
+
               // Open this one if it was closed, or close if open
               if (!isOpen) {
                 content.classList.remove('hidden');
@@ -1611,7 +1611,7 @@ const GrapesEditor = () => {
                 content.classList.add('hidden');
                 const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
                 if (comp) comp.addClass('hidden');
-                
+
                 if (icon) {
                   icon.classList.remove('rotate-180');
                   if (icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
@@ -1647,7 +1647,7 @@ const GrapesEditor = () => {
       // ── Remove min value constraints on spacing/position to allow negative values ──
       try {
         const styleManager = editor.StyleManager;
-        
+
         // Padding and Margin are composite properties
         ['padding', 'margin'].forEach(propName => {
           // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
@@ -2500,7 +2500,7 @@ const GrapesEditor = () => {
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
-      
+
       const templateCss = templateStyleTag?.innerHTML || '';
       const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
 
@@ -3093,7 +3093,7 @@ const GrapesEditor = () => {
         <Sep />
 
         {/* Back Button */}
-        <button
+        {/* <button
           onClick={() => navigate(`/dashboard/projects/${projId}`)}
           style={{
             ...outlineBtn,
@@ -3110,7 +3110,7 @@ const GrapesEditor = () => {
           title="Back to Dashboard"
         >
           <ArrowLeft size={14} /> Back
-        </button>
+        </button> */}
 
 
         {/* Mode Switcher */}
@@ -3238,7 +3238,7 @@ const GrapesEditor = () => {
             <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
-            
+
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 8 }}>
               <NavIcon active={false} onClick={() => navigate(`/dashboard/projects/${projId}`)} title="Go back to Project">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

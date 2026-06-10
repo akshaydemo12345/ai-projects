@@ -14,7 +14,12 @@ const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
           <Zap className="h-3.5 w-3.5 text-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold text-white">{title}</span>
+        <span 
+          className="text-sm font-semibold text-white cursor-default" 
+          title={title}
+        >
+          {title ? (title.split(' ').length > 3 ? title.split(' ').slice(0, 3).join(' ') + '...' : title) : 'Untitled'}
+        </span>
         <div className="flex items-center gap-2 ml-2">
           <Star className="h-4 w-4 text-white/40 hover:text-yellow-400 cursor-pointer transition-colors" />
           <button className="text-white/40 hover:text-white/70 transition-colors">

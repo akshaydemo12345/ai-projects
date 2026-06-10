@@ -5,6 +5,9 @@ require('dotenv').config();
 const cheerio = require('cheerio');
 const sharp = require('sharp');
 const logger = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
+const config = require('../config');
 
 /**
  * API KEY
@@ -123,7 +126,7 @@ async function generateGetImgUrl(
      * BASE64 IMAGE
      */
     if (data?.image) {
-      logger.info(`[getimg.ai] Image generated successfully. Compressing with sharp...`);
+      logger.info(`[getimg.ai] Image generated successfully. Compressing with sharp and saving to disk...`);
       try {
         const buffer = Buffer.from(data.image, 'base64');
         const compressedBuffer = await sharp(buffer)
@@ -131,12 +134,24 @@ async function generateGetImgUrl(
           .webp({ quality: 60 }) // High compression to keep it in KBs
           .toBuffer();
 
-        const compressedBase64 = compressedBuffer.toString('base64');
-        logger.info(`[getimg.ai] Image compressed successfully. Size reduced.`);
-        return `data:image/webp;base64,${compressedBase64}`;
+        const uploadsDir = path.join(__dirname, '../../public/uploads');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const fileName = `ai_img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
+        const filePath = path.join(uploadsDir, fileName);
+        
+        fs.writeFileSync(filePath, compressedBuffer);
+
+        const baseUrl = config.api.baseUrl.endsWith('/') ? config.api.baseUrl.slice(0, -1) : config.api.baseUrl;
+        const fileUrl = `${baseUrl}/uploads/${fileName}`;
+        
+        logger.info(`[getimg.ai] Image saved successfully to ${fileUrl}`);
+        return fileUrl;
       } catch (err) {
-        logger.error(`[getimg.ai] Compression failed, using original: ${err.message}`);
-        return `data:image/webp;base64,${data.image}`;
+        logger.error(`[getimg.ai] Compression/Save failed: ${err.message}`);
+        return null;
       }
     }
 
