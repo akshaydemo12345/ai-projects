@@ -226,17 +226,33 @@
   order: 2 !important;
   margin-right: 0 !important;
   margin-left: 8px !important;
-  fill: #6b7280 !important;
+  fill: none !important;
+  background-color: #6b7280 !important;
+  width: 14px !important;
+  height: 14px !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
   transition: transform 0.2s ease !important;
 }
 
-/* Caret rotation: down when closed, up when open */
+.gjs-editor .gjs-sm-sector-title:hover .gjs-sm-sector-caret {
+  background-color: #000000 !important;
+}
+
+.gjs-editor .gjs-sm-sector-caret svg,
+.gjs-editor .gjs-sm-sector-caret path {
+  display: none !important;
+}
+
+/* Caret rotation: right when closed, down when open */
 .gjs-editor .gjs-sm-sector-caret {
   transform: rotate(0deg) !important;
 }
 
 .gjs-editor .gjs-sm-open .gjs-sm-sector-caret {
-  transform: rotate(180deg) !important;
+  transform: rotate(90deg) !important;
 }
 
 /* Properties Container */
@@ -939,14 +955,28 @@ body {
 }
 
 .gjs-editor .gs-cmp-accordion-handler-toggle svg {
-  width: 20px !important;
-  height: 20px !important;
-  transition: transform 0.2s !important;
-  fill: currentColor !important;
+  display: none !important;
 }
 
-.gjs-editor [aria-expanded="true"] .gs-cmp-accordion-handler-toggle svg {
-  transform: rotate(180deg) !important;
+.gjs-editor .gs-cmp-accordion-handler-toggle {
+  width: 14px !important;
+  height: 14px !important;
+  background-color: #6b7280 !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
+  transition: transform 0.2s !important;
+}
+
+.gjs-editor .gs-style-manager-sector-header:hover .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gs-cmp-accordion-handler:hover .gs-cmp-accordion-handler-toggle {
+  background-color: #000000 !important;
+}
+
+.gjs-editor [aria-expanded="true"] .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gjs-sm-sector.gjs-sm-open .gs-cmp-accordion-handler-toggle {
+  transform: rotate(90deg) !important;
 }
 
 .gjs-editor .gs-cmp-accordion,

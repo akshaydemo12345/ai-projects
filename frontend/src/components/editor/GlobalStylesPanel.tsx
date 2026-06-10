@@ -381,9 +381,9 @@ button, .btn, [class*="btn-"] {
         <div key={category} className="border-b border-[#e5e7eb]">
           <button
             onClick={() => toggleSection(category)}
-            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#fff] hover:bg-[#f9fafb] transition-colors group"
+            className="flex items-center justify-between w-full px-3 py-2 text-left bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors group"
           >
-            <span className="font-semibold text-[#000000] text-[12px] uppercase tracking-wide">
+            <span className="font-medium text-[#111827] text-[13px] capitalize">
               {category}
             </span>
             {expanded[category] ?
@@ -396,10 +396,9 @@ button, .btn, [class*="btn-"] {
             <div className="p-4 bg-[#fff] flex flex-col gap-3">
               {Object.entries(properties).map(([key, prop]) => (
                 <div key={key} className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
-                      {prop.label}
-                    </span>
+                  <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
+                    {prop.label}
+                  </span>
 
                     {/* Controls Rendering */}
                     <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
@@ -456,7 +455,6 @@ button, .btn, [class*="btn-"] {
                         </div>
                       )}
                     </div>
-                  </div>
                 </div>
               ))}
             </div>

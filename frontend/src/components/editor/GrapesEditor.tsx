@@ -3715,10 +3715,7 @@ const GrapesEditor = () => {
                   <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: 500, color: '#111827', marginLeft: '5px' }}>
                     Classes & States
                   </div>
-                  <div className="selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
-                    <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', color: '#111827' }}>
-                      <path fill="currentColor" d="M7,10L12,15L17,10H7Z"></path>
-                    </svg>
+                  <div className="gs-cmp-accordion-handler-toggle selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
                   </div>
                 </div>
               </summary>
@@ -3727,8 +3724,8 @@ const GrapesEditor = () => {
             
             <style dangerouslySetInnerHTML={{__html: `
               .selectors-accordion summary::-webkit-details-marker { display: none; }
-              .selectors-accordion[open] .selectors-arrow svg { transform: rotate(180deg); }
-              .selectors-arrow svg { transition: transform 0.2s; }
+              .selectors-accordion[open] .selectors-arrow { transform: rotate(90deg); }
+              .selectors-arrow { transition: transform 0.2s; }
               #selectors-container .gjs-clm-tags:nth-child(n+2) { display: none !important; }
             `}} />
           </div>
