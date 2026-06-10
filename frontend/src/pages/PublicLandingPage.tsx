@@ -107,6 +107,12 @@ const PublicLandingPage = () => {
     
     e.preventDefault();
     e.stopImmediatePropagation();
+
+    // Prevent actual API submission AND validation in preview mode
+    if (window.parent && window.parent.location.pathname.includes('/preview')) {
+      alert('Form submission is disabled in Preview Mode.');
+      return;
+    }
     
     var isValid = true;
     f.querySelectorAll('input[required], textarea[required]').forEach(function(input) {
