@@ -176,7 +176,7 @@ export const travel03Html = `
       <p class="kicker" style="color:var(--secondary)">Handcrafted Journeys for the Soul</p>
       <h1>The Art of<br/>Slowing Down.</h1>
     </div>
-    <form class="hero-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
+    <form class="hero-form">
       <h3>Begin Your Pause</h3>
       <div class="form-field full">
         <label>Full Name</label>
@@ -370,8 +370,8 @@ export const travel03Html = `
       <div class="footer-col">
         <h5>Connect</h5>
         <p style="opacity:0.6;font-size:0.9rem;margin-bottom:1.5rem">Receive our seasonal curations on mindful travel.</p>
-        <form style="display:flex;gap:1rem" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
-          <input type="email" placeholder="Email Address" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;color:#fff;border-radius:5px">
+        <form style="display:flex;gap:1rem">
+          <input type="email" placeholder="Email Address" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;color:#fff;border-radius:5px" required>
           <button type="submit" class="btn-primary" style="padding: 1rem 2rem; border-radius: 5px;">Join</button>
         </form>
       </div>
@@ -384,4 +384,99 @@ export const travel03Html = `
     </div>
   </div>
 </footer>
+
+
+<script id="core-interactions">
+  (function() {
+    // Check if we are inside GrapesJS editor
+    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    
+    // Form Validation (runs everywhere so you can see red borders in editor)
+    document.addEventListener('submit', function(e) {
+      if (e.target.tagName === 'FORM') {
+        e.target.setAttribute('novalidate', 'true');
+        var isValid = true;
+        var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
+        
+        inputs.forEach(function(input) {
+          if (!input.dataset.valSetup) {
+            input.dataset.valSetup = 'true';
+            input.addEventListener('input', function() {
+              if (input.value.trim()) {
+                input.style.outline = '2px solid #22c55e';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#22c55e';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'none';
+                }
+              } else {
+                input.style.outline = '2px solid #ef4444';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#ef4444';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'block';
+                }
+              }
+            });
+          }
+
+          if (!input.value.trim() && input.hasAttribute('required')) {
+            isValid = false;
+            input.style.outline = '2px solid #ef4444';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#ef4444';
+            
+            if (!input.parentElement.classList.contains('val-wrapper')) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'val-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.width = '100%';
+                
+                var computed = window.getComputedStyle(input);
+                if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+                }
+                
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+            }
+
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
+              var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
+              var err = document.createElement('span');
+              err.className = 'val-error';
+              err.style.color = '#ef4444';
+              err.style.fontSize = '12px';
+              err.style.display = 'block';
+              err.style.marginTop = '4px';
+              err.style.fontWeight = '500';
+              err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
+              input.parentNode.insertBefore(err, input.nextSibling);
+            } else {
+              input.nextElementSibling.style.display = 'block';
+            }
+          }
+        });
+        
+        if (!isValid || isInEditor) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        } else if (!isInEditor) {
+          e.preventDefault();
+          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
+          if (btn) {
+            if(btn.innerText) btn.innerText = 'Sending...';
+            else btn.value = 'Sending...';
+          }
+          setTimeout(function() {
+            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+          }, 1000);
+        }
+      }
+    }, true);
+  })();
+</script>
+
 `;

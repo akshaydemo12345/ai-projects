@@ -179,28 +179,28 @@ export const travel04Html = `
         <h1>Cities that never sleep, weekends that never end.</h1>
         <p>Curated 48-hour itineraries in the world's most electric cities. Hotels, food, hidden bars — all sorted.</p>
         
-        <form class="hero-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!'); this.reset();">
+        <form class="hero-form">
           <h3>// Book your weekend <span style="font-weight: 400; color: #64748b;">Plan your city break</span></h3>
           <div class="form-grid">
             <div class="form-group">
               <label>Name</label>
-              <input type="text" name="full_name" placeholder="Your name">
+              <input type="text" name="full_name" placeholder="Your name" required>
             </div>
             <div class="form-group">
               <label>Email</label>
-              <input type="email" name="email_address" placeholder="EMAIL_PLACEHOLDER">
+              <input type="email" name="email_address" placeholder="EMAIL_PLACEHOLDER" required>
             </div>
             <div class="form-group">
               <label>City</label>
-              <select name="city"><option>Pick a city</option><option>Tokyo</option><option>New York</option><option>London</option></select>
+              <select name="city" required><option>Pick a city</option><option>Tokyo</option><option>New York</option><option>London</option></select>
             </div>
             <div class="form-group">
               <label>Travelers</label>
-              <select name="travelers"><option>1 Traveler</option><option>2 Travelers</option></select>
+              <select name="travelers" required><option>1 Traveler</option><option>2 Travelers</option></select>
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label>Weekend Of</label>
-              <input type="date" name="travel_date">
+              <input type="date" name="travel_date" required>
             </div>
             <button type="submit" class="btn-submit">Plan My Weekend →</button>
           </div>
@@ -458,4 +458,99 @@ export const travel04Html = `
       </div>
     </div>
   </footer>
+
+
+<script id="core-interactions">
+  (function() {
+    // Check if we are inside GrapesJS editor
+    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    
+    // Form Validation (runs everywhere so you can see red borders in editor)
+    document.addEventListener('submit', function(e) {
+      if (e.target.tagName === 'FORM') {
+        e.target.setAttribute('novalidate', 'true');
+        var isValid = true;
+        var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
+        
+        inputs.forEach(function(input) {
+          if (!input.dataset.valSetup) {
+            input.dataset.valSetup = 'true';
+            input.addEventListener('input', function() {
+              if (input.value.trim()) {
+                input.style.outline = '2px solid #22c55e';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#22c55e';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'none';
+                }
+              } else {
+                input.style.outline = '2px solid #ef4444';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#ef4444';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'block';
+                }
+              }
+            });
+          }
+
+          if (!input.value.trim() && input.hasAttribute('required')) {
+            isValid = false;
+            input.style.outline = '2px solid #ef4444';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#ef4444';
+            
+            if (!input.parentElement.classList.contains('val-wrapper')) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'val-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.width = '100%';
+                
+                var computed = window.getComputedStyle(input);
+                if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+                }
+                
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+            }
+
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
+              var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
+              var err = document.createElement('span');
+              err.className = 'val-error';
+              err.style.color = '#ef4444';
+              err.style.fontSize = '12px';
+              err.style.display = 'block';
+              err.style.marginTop = '4px';
+              err.style.fontWeight = '500';
+              err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
+              input.parentNode.insertBefore(err, input.nextSibling);
+            } else {
+              input.nextElementSibling.style.display = 'block';
+            }
+          }
+        });
+        
+        if (!isValid || isInEditor) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        } else if (!isInEditor) {
+          e.preventDefault();
+          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
+          if (btn) {
+            if(btn.innerText) btn.innerText = 'Sending...';
+            else btn.value = 'Sending...';
+          }
+          setTimeout(function() {
+            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+          }, 1000);
+        }
+      }
+    }, true);
+  })();
+</script>
+
 `

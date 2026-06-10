@@ -11,6 +11,12 @@ const PreviewPage = () => {
         doc.open();
         doc.write(html);
         doc.close();
+
+        // Prevent form submissions in Preview Mode
+        doc.addEventListener('submit', (e) => {
+          e.preventDefault();
+          alert('Form submission is disabled in Preview Mode.');
+        });
       }
     }
   }, []);
