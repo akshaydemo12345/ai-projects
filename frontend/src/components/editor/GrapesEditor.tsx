@@ -19,6 +19,8 @@ import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
+import Pickr from "@simonwep/pickr";
+import "@simonwep/pickr/dist/themes/monolith.min.css";
 
 const hexToRgbStr = (hex: string) => {
   const c = hex.replace('#', '');
@@ -926,6 +928,161 @@ const GrapesEditor = () => {
     `;
     document.head.prepend(passiveScript);
 
+    const pickrColorPlugin = (ed: any) => {
+      ed.StyleManager.addType('pickr-color', {
+        create({ property, change }: any) {
+          const el = document.createElement('div');
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.width = '100%';
+          el.style.border = '1px solid #d1d5db';
+          el.style.borderRadius = '4px';
+          el.style.padding = '4px 6px';
+          el.style.backgroundColor = '#ffffff';
+          
+          const pickrBtn = document.createElement('div');
+          pickrBtn.className = 'custom-grapesjs-pickr';
+          pickrBtn.style.width = '18px';
+          pickrBtn.style.height = '18px';
+          pickrBtn.style.borderRadius = '3px';
+          pickrBtn.style.border = '1px solid rgba(0,0,0,0.1)';
+          pickrBtn.style.cursor = 'pointer';
+          pickrBtn.style.flexShrink = '0';
+          
+          const inputHex = document.createElement('input');
+          inputHex.type = 'text';
+          inputHex.style.width = '100%';
+          inputHex.style.marginLeft = '8px';
+          inputHex.style.border = 'none';
+          inputHex.style.background = 'transparent';
+          inputHex.style.color = '#111827';
+          inputHex.style.fontSize = '12px';
+          inputHex.style.outline = 'none';
+          
+          el.appendChild(pickrBtn);
+          el.appendChild(inputHex);
+
+          const applyUpdate = (val: string, partial: boolean) => {
+            if (change) {
+              change(val, { partial });
+            } else if (property && property.up) {
+              property.up({ value: val, partial });
+            }
+          };
+
+          const initPickr = () => {
+            if ((el as any).__pickr) return;
+            const initialVal = inputHex.value || '';
+            const pickr = Pickr.create({
+              el: pickrBtn,
+              theme: 'monolith',
+              default: initialVal || null,
+              useAsButton: true,
+              components: {
+                preview: true, opacity: false, hue: true,
+                interaction: { hex: true, input: true, save: true, clear: true }
+              }
+            });
+            
+            const toHex6 = (hex: string) => {
+              if (!hex) return '';
+              if (hex.startsWith('#') && hex.length === 9) return hex.slice(0, 7);
+              if (hex.startsWith('#') && hex.length === 7) return hex;
+              if (hex.startsWith('#') && hex.length === 4) {
+                const [, r, g, b] = hex;
+                return `#${r}${r}${g}${g}${b}${b}`;
+              }
+              return hex.length === 6 ? `#${hex}` : '';
+            };
+
+            pickr.on('change', (color: Pickr.HSVaColor) => {
+              const hex = toHex6(color.toHEXA().toString());
+              pickrBtn.style.backgroundColor = hex || 'transparent';
+              inputHex.value = hex;
+              applyUpdate(hex, true);
+            });
+            
+            pickr.on('save', (color: Pickr.HSVaColor) => {
+              const hex = color ? toHex6(color.toHEXA().toString()) : '';
+              pickrBtn.style.backgroundColor = hex || 'transparent';
+              inputHex.value = hex;
+              applyUpdate(hex, false);
+              pickr.hide();
+            });
+
+            pickr.on('clear', () => {
+              pickrBtn.style.backgroundColor = 'transparent';
+              inputHex.value = '';
+              applyUpdate('', false);
+              pickr.hide();
+            });
+
+            inputHex.addEventListener('change', (e: any) => {
+              const val = e.target.value;
+              const hex = toHex6(val);
+              if (hex) {
+                 pickr.setColor(hex);
+                 pickrBtn.style.backgroundColor = hex;
+                 applyUpdate(hex, false);
+              } else {
+                 pickr.setColor(null);
+                 pickrBtn.style.backgroundColor = 'transparent';
+                 applyUpdate('', false);
+              }
+            });
+
+            (el as any).__pickr = pickr;
+          };
+
+          setTimeout(() => {
+             if (el.offsetWidth > 0) initPickr();
+             else {
+               const observer = new IntersectionObserver((entries) => {
+                 if (entries[0].isIntersecting) {
+                   initPickr();
+                   observer.disconnect();
+                 }
+               });
+               observer.observe(el);
+             }
+          }, 50);
+
+          (el as any).__inputHex = inputHex;
+          (el as any).__pickrBtn = pickrBtn;
+
+          return el;
+        },
+        
+        emit({ elInput, property }: any) {
+          if (!elInput) return;
+          const val = property.getValue() || '';
+          if (elInput.__inputHex) elInput.__inputHex.value = val;
+          if (elInput.__pickrBtn) elInput.__pickrBtn.style.backgroundColor = val || 'transparent';
+          const pickr = elInput.__pickr;
+          if (pickr) {
+             if (val) pickr.setColor(val, true);
+             else pickr.setColor(null, true);
+          }
+        },
+
+        update({ elInput, property }: any) {
+          if (!elInput) return;
+          const val = property.getValue() || '';
+          if (elInput.__inputHex) elInput.__inputHex.value = val;
+          if (elInput.__pickrBtn) elInput.__pickrBtn.style.backgroundColor = val || 'transparent';
+          const pickr = elInput.__pickr;
+          if (pickr) {
+             if (val) pickr.setColor(val, true);
+             else pickr.setColor(null, true);
+          }
+        },
+
+        onUpdate(args: any) {
+          this.update(args);
+        }
+      });
+    };
+
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
@@ -938,7 +1095,7 @@ const GrapesEditor = () => {
           allowScripts: true
         }
       },
-      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
+      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin],
       pluginsOpts: {
         'grapesjs-preset-webpage': {
           blocksBasicOpts: { flexGrid: true },
@@ -1018,6 +1175,10 @@ const GrapesEditor = () => {
             buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
             properties: [
               {
+                property: 'color',
+                type: 'pickr-color',
+              },
+              {
                 property: 'text-align',
                 type: 'select',
                 default: 'left',
@@ -1078,6 +1239,10 @@ const GrapesEditor = () => {
             open: false,
             buildProps: ['background-color', 'background-image', 'background-clip'],
             properties: [
+              {
+                property: 'background-color',
+                type: 'pickr-color',
+              },
               {
                 property: 'background-clip',
                 name: 'Clip',
@@ -3092,11 +3257,10 @@ const GrapesEditor = () => {
         {/* Logo & Page Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
-            {project?.name?.charAt(0).toUpperCase() || 'G'}
+            {page?.name?.charAt(0).toUpperCase() || 'P'}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#111827', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
-            <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ color: '#111827', fontWeight: 700, fontSize: 14, letterSpacing: '-0.2px' }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
 
