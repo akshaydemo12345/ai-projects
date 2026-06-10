@@ -143,6 +143,7 @@ const GrapesEditor = () => {
 
   // UI Panels
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
   const [isEditorFullyLoaded, setIsEditorFullyLoaded] = useState(false);
@@ -3697,10 +3698,27 @@ const GrapesEditor = () => {
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}
-        <div className="gjs-editor gjs-one-bg" style={{
-          width: 280, flexShrink: 0, background: '#ffffff',
-          borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column',
-        }}>
+        <div style={{ position: 'relative', display: 'flex' }}>
+          <button
+            onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+            className="absolute top-6 z-50 h-6 w-6 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-sm hover:shadow hover:bg-gray-50 text-gray-500 hover:text-gray-900 transition-all duration-300 cursor-pointer"
+            style={{ left: isRightSidebarOpen ? '-12px' : '-36px' }}
+            title="Toggle Right Sidebar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+              <path d={isRightSidebarOpen ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"}></path>
+            </svg>
+          </button>
+          
+          <div className="gjs-editor gjs-one-bg" style={{
+            width: isRightSidebarOpen ? 280 : 0,
+            opacity: isRightSidebarOpen ? 1 : 0,
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            flexShrink: 0, background: '#ffffff',
+            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none', 
+            display: 'flex', flexDirection: 'column',
+          }}>
           {/* Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
@@ -3730,6 +3748,7 @@ const GrapesEditor = () => {
             `}} />
           </div>
           <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
+          </div>
         </div>
       </div>
 
