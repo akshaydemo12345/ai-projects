@@ -260,9 +260,21 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                   updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                   changed = true;
                 }
-                if (compStyle[prop].includes(oldRgb)) {
-                  updates[prop] = compStyle[prop].replace(new RegExp(oldRgb, 'g'), newRgb);
-                  changed = true;
+                
+                // Handle rgb() replacements with optional spaces
+                const rgbParts = oldRgb.split(',').map(s => s.trim());
+                if (rgbParts.length === 3) {
+                  const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
+                  const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
+                  
+                  if (rgbRegex.test(compStyle[prop])) {
+                    updates[prop] = compStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
+                    changed = true;
+                  }
+                  if (rgbaRegex.test(compStyle[prop])) {
+                    updates[prop] = compStyle[prop].replace(rgbaRegex, `rgba(${newRgb},`);
+                    changed = true;
+                  }
                 }
               }
             });
@@ -301,9 +313,20 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                 changedRule = true;
               }
-              if (newStyle[prop].includes(oldRgb)) {
-                newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
-                changedRule = true;
+              
+              const rgbParts = oldRgb.split(',').map(s => s.trim());
+              if (rgbParts.length === 3) {
+                const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
+                const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
+                
+                if (rgbRegex.test(newStyle[prop])) {
+                  newStyle[prop] = newStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
+                  changedRule = true;
+                }
+                if (rgbaRegex.test(newStyle[prop])) {
+                  newStyle[prop] = newStyle[prop].replace(rgbaRegex, `rgba(${newRgb},`);
+                  changedRule = true;
+                }
               }
             }
           });
@@ -326,7 +349,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
-    let css = ':root {\n';
+    let css = ':root, body {\n';
     Object.values(currentStyles).forEach(category => {
       Object.values(category).forEach(prop => {
         css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;

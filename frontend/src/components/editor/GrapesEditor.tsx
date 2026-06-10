@@ -2391,12 +2391,12 @@ const GrapesEditor = () => {
 
       // Update variables in real-time
       styleEl.innerHTML = `
-        :root {
-          --primary: ${themePrimary};
-          --secondary: ${themeSecondary};
-          --accent: ${themeSecondary};
-          --gold: ${themePrimary};
-          --btn-bg: ${themePrimary};
+        :root, body {
+          --primary: ${themePrimary} !important;
+          --secondary: ${themeSecondary} !important;
+          --accent: ${themeSecondary} !important;
+          --gold: ${themePrimary} !important;
+          --btn-bg: ${themePrimary} !important;
           --btn-text: #ffffff;
           --body-bg: #ffffff;
           --body-text: #0f172a;
