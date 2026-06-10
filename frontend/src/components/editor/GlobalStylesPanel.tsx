@@ -370,26 +370,7 @@ button, .btn, [class*="btn-"] {
       canvasDoc.head.appendChild(styleTag);
     }
 
-    // 2. Also patch GrapesJS internal CSS so it doesn't override our variables
-    //    Replace any existing :root block in GrapesJS CSS with our updated vars
-    try {
-      const existingCss = editor.getCss() || '';
-      // Build just the :root vars block from current styles
-      let rootBlock = ':root {\n';
-      Object.values(styles).forEach(cat => {
-        Object.values(cat).forEach(prop => {
-          rootBlock += `  ${prop.varName}: ${prop.value}${prop.unit || ''};\n`;
-        });
-      });
-      rootBlock += '}';
-
-      // Remove any old :root { ... } block from GrapesJS CSS
-      const stripped = existingCss.replace(/:root\s*\{[^}]*\}/g, '').trim();
-      // Prepend fresh :root block
-      editor.setStyle(rootBlock + '\n' + stripped);
-    } catch (e) {
-      // Silently ignore if CSS parsing fails
-    }
+    // (We intentionally DO NOT call editor.setStyle() here because the GrapesJS CSS parser drops modern features like color-mix. The injected styleTag above is sufficient for live editing and is captured during save.)
   }, [styles, editor]);
 
   useEffect(() => {

@@ -3594,8 +3594,8 @@ const GrapesEditor = () => {
                         console.error('Error parsing Thank You HTML:', e);
                       }
                     } else {
-                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
-                      const filteredScripts = scriptMatches.filter(s =>
+                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+                      const filteredScripts = scriptMatches.filter((s: string) =>
                         !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
                       );
                       if (filteredScripts.length > 0) {
@@ -3678,8 +3678,26 @@ const GrapesEditor = () => {
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
             <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
-          <div id="styles-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none' }} />
-          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none' }} />
+          <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
+            <div id="styles-container" />
+            <div className="gjs-sm-sector gjs-sm-open" style={{ borderBottom: 'none' }}>
+              <div className="gjs-sm-sector-title" onClick={(e) => {
+                const el = document.getElementById('selectors-body');
+                const title = e.currentTarget.parentElement;
+                if (title) title.classList.toggle('gjs-sm-open');
+                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+              }}>
+                <div className="gjs-sm-sector-label" style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>Classes & State</div>
+                <svg viewBox="0 0 24 24" className="gjs-sm-sector-caret" style={{ width: 14, height: 14 }}>
+                  <path fill="currentColor" d="M7,10L12,15L17,10H7Z"></path>
+                </svg>
+              </div>
+              <div id="selectors-body" className="gjs-sm-properties" style={{ display: 'block', padding: '12px', background: '#ffffff' }}>
+                <div id="selectors-container" />
+              </div>
+            </div>
+          </div>
+          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
         </div>
       </div>
 
