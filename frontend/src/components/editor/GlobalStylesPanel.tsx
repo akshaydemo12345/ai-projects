@@ -360,10 +360,41 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     css += `
+body {
+  background-color: var(--body-bg) !important;
+  color: var(--body-text) !important;
+  font-family: var(--body-font) !important;
+  font-size: var(--body-size) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+h1, .headline, .heading {
+  color: var(--heading-color) !important;
+  font-family: var(--heading-font) !important;
+  font-size: var(--heading-size) !important;
+  line-height: var(--heading-line-height) !important;
+}
+
+h2, h3, h4, h5, h6, .subheading, .subtitle {
+  color: var(--subheading-color) !important;
+  font-family: var(--subheading-font) !important;
+  font-size: var(--subheading-size) !important;
+  line-height: var(--subheading-line-height) !important;
+}
+
 button, .btn, [class*="btn-"] {
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
-  border-radius: var(--btn-radius);
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  border-radius: var(--btn-radius) !important;
+}
+
+form, .form-container, .form {
+  background-color: var(--form-bg) !important;
+}
+
+input, select, textarea, .input-field {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
 }
 `;
     return css;
