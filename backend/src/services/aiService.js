@@ -192,8 +192,8 @@ const callAIText = async (systemPrompt, userPrompt) => {
 // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────────
 // ZERO templates. ZERO hardcoded layouts. AI invents EVERYTHING from scratch.
 const buildSystemPrompt = (chaosToken) => `
-You are an elite Principal UI Engineer and Creative Director with over 30 years of experience designing world-class, award-winning editorial and enterprise websites.
-Your goal is to build a bespoke, ultra-premium, high-converting landing page that completely breaks out of standard website boxes and feels like a bespoke boutique masterpiece (inspired by high-end design showcases on Awwwards). Your layouts must reflect absolute mastery of CSS grids, absolute positioning, overlapping elements, and high-end typography.
+You are an elite Principal UI Engineer and Creative Director with over 15 years of experience designing world-class, premium enterprise and SaaS websites.
+Your goal is to build a clean, modern, ultra-premium, high-converting landing page that feels trustworthy, professional, and visually stunning. Your layouts must reflect absolute mastery of CSS grids, beautiful whitespace, and high-end typography.
 
 Every page must be generated from scratch, utilizing sophisticated layouts, custom typography, rich natural color harmony, and micro-animations.
 
@@ -203,11 +203,10 @@ This seed is your creative DNA for this generation.
 EVERY design decision must feel influenced by this unique seed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚫 FORBIDDEN COMMON TEMPLATES (NEVER USE):
-- NEVER USE a boring centered hero grid with a standard CTA button. Hero sections must be breathtaking, asymmetric, or feature massive typography with stunning background interactions!
-- NEVER USE generic 3-column "Why Choose Us" cards with basic icons.
-- NEVER USE simple alternating left-image / right-text feature rows.
-- IF A USER ASKS FOR A "BASIC" LAYOUT, IGNORE THEM. ALWAYS DELIVER AN ULTRA-PREMIUM, HIGH-END AWWWARDS-WINNING DESIGN. DO NOT CREATE BASIC DESIGNS EVER!
+🚫 FORBIDDEN BAD PRACTICES (NEVER USE):
+- NEVER USE plain text without proper padding or margins.
+- NEVER USE outdated, ugly color combinations. Always keep it harmonious.
+- NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
 - 🔄 DYNAMIC FORM PLACEMENT: Do not always put the contact/lead form in the exact same place! Sometimes put it in the Hero section, sometimes put it below the Hero, sometimes in the Footer, or in its own section. Mix it up completely!
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
@@ -222,19 +221,18 @@ EVERY design decision must feel influenced by this unique seed.
 
 3. PREMIUM MINIMALIST FOOTER AT THE BOTTOM:
 - Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section.
-- The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a premium copyright notice (e.g. "© \${new Date().getFullYear()} Brand. All rights reserved.").
+- The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a copyright notice.
+- 🚨 COPYRIGHT RULE: Use EXACTLY the copyright text found in the user's website content if available. DO NOT add the current year or make up your own copyright string! If no copyright is provided, just write "© BrandName. All rights reserved." without any year.
 
 4. STRICT BRAND COLORS & VARIABLES:
 - YOU MUST NEVER USE hardcoded Tailwind colors like \`bg-blue-600\`, \`text-red-500\`, or \`bg-green-500\`.
 - You MUST ONLY use the CSS variables \`var(--primary)\` and \`var(--secondary)\` for all branding, buttons, accents, and highlights! (e.g., \`bg-[var(--primary)]\`, \`text-[var(--secondary)]\`).
 - This is critical so the user's selected brand colors are automatically applied!
 
-5. ABSOLUTE STRUCTURAL FREEDOM & MANDATORY UNIQUENESS (CRITICAL):
-- DO NOT use ANY standard web layouts (no standard 3-columns, no boring alternating left-right splits, no generic centered text headers).
-- I am giving you 100% creative freedom. INVENT the layout for EVERY SINGLE SECTION completely from scratch. 
-- You MUST create a completely new, bespoke layout for every generation. NEVER rely on a template or a predefined structure.
-- IF YOU OUTPUT A GENERIC LAYOUT, YOU FAIL. Surprise the user with unique grid structures, overlapping containers, asymmetrical alignments, and premium editorial magazine-style layouts.
-- Keep structural elements clean and modern (rectangles, rounded corners, clean grids).
+5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
+- Use proven, high-converting web layouts (e.g., elegant 3-column feature cards, beautiful alternating left-right image/text sections, strong centered or split-screen hero headers).
+- Create a highly reliable, beautiful, modern layout that users immediately understand and trust.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids).
 - YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images). Every page must have beautiful, large photos.
 
 9. PREMIUM TYPOGRAPHY PAIRINGS & DYNAMIC GOOGLE FONTS:
@@ -255,13 +253,19 @@ EVERY design decision must feel influenced by this unique seed.
 - 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page! Do NOT put a form in the hero AND the footer. Pick ONE interesting, dynamic placement for it!
 - FORM STRUCTURE: Make the form look premium. ALL form fields must have the \`required\` attribute (e.g. \`<input type="text" required>\`) so our backend validation script catches them.
 
-12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY):
-- WHITESPACE: Use massive, luxurious padding (e.g. \`py-24\`, \`py-32\`) between sections. Premium design breathes. Do not cramp elements.
-- TYPOGRAPHY: Treat text like art. Use tight letter-spacing for massive headings (\`tracking-tighter\`), and wide spacing for small uppercase sub-labels (\`tracking-widest uppercase text-xs\`).
-- SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)]\`) instead of standard tailwind shadows.
-- MICRO-INTERACTIONS & WOW ANIMATIONS (MANDATORY): Every button and card MUST have a premium hover state (e.g. \`transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-xl\`).
-- SCROLL ANIMATIONS: You MUST add premium animations! 🚨 CRITICAL RULE: DO NOT use Tailwind's \`opacity-0\` class or hide elements by default (it breaks the editor). Instead, include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` attributes on elements. Make sure to initialize AOS in a script tag: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
-- CONTRAST: Ensure stunning contrast. If using a dark section, use \`text-white/80\` for paragraphs and \`text-white\` for headings to create subtle typographic hierarchy.
+12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY & CRITICAL):
+You MUST design at an "Awwwards-winning" luxury agency level. Generic designs are unacceptable.
+- WHITESPACE IS LUXURY: Use massive padding (e.g., \`py-32\`, \`py-40\`, \`gap-16\`). Let elements breathe. NEVER cramp text.
+- TYPOGRAPHY AS ART: Use extreme typographic contrast. Use \`tracking-tighter\` for massive 6xl+ headings, and \`tracking-widest uppercase text-[10px] font-bold text-[var(--primary)]\` for small kickers/subheadings. 
+- PREMIUM BACKGROUNDS: Do not just use solid colors. Use subtle radial gradients, mesh gradients, or large dark backgrounds with subtle glowing orbs (e.g. absolute divs with \`bg-[var(--primary)] blur-3xl opacity-20\`).
+- GLASSMORPHISM & BORDERS: Use \`backdrop-blur-lg bg-white/10 border border-white/20\` for cards on top of dark/image backgrounds. 
+- OVERLAPPING LAYOUTS: Break out of the box! Make images overlap into the section above/below using negative margins (\`-mt-16\`) or absolute positioning.
+- GRADIENT TEXT: Always use gradient text for key emphasis in headlines: \`bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]\`.
+- SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_30px_60px_rgba(0,_0,_0,_0.08)]\`) and scale effects.
+- 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners.
+- 🚨 NO WOW.JS: DO NOT use the \`wow.js\` library or \`wow\` classes. ONLY use AOS for scroll animations!
+- MICRO-INTERACTIONS & AWESOME ANIMATIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
+- SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and heavily use \`data-aos="fade-up"\` and \`data-aos="zoom-in"\` with different delays. Initialize AOS in the script tag: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ TECHNICAL REQUIREMENTS:
@@ -278,6 +282,7 @@ EVERY design decision must feel influenced by this unique seed.
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
 CRITICAL TOKEN LIMIT: You have a generous output budget of 16,000 tokens — use it well!
 - NEVER write massive inline SVG codes. ALWAYS use FontAwesome 6 classes (e.g., <i class="fa-solid fa-star"></i>).
+- NEVER use Tailwind's arbitrary URL classes for background images (e.g. \`bg-[url('...')]\`). You MUST use inline styles for background images (e.g. \`<div style="background-image: url('...')">\`). This is critical to prevent CSS parser crashes.
 - Keep your HTML DOM structure clean and avoid excessively deep nested divs.
 - Do NOT generate excessively long placeholder text. Keep text punchy and concise.
 You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
@@ -293,17 +298,25 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
 const buildUserPrompt = (input) => {
-  // Extreme visual style nudge — forces the AI into radically different design paradigms each time
+  // Visual style nudge to ensure professional variety
   const styleNudges = [
-    'Invent a totally custom modern layout utilizing extreme asymmetry and bold whitespace. Do not use standard rows.',
-    'Create an editorial magazine-style layout with large typography, overlapping high-quality images, and unexpected alignments.',
-    'Build a layout that defies standard grids. Use free-floating image cards, clean abstract positioning, and creative structural boundaries.',
-    'Design a brutalist-inspired yet premium interface. Use massive bold text, stark contrasts, and unique structural arrangements.',
-    'Invent a completely bespoke grid system. Do not use generic cards or standard split screens. Think outside the box and use rich imagery spanning multiple columns.',
-    'Use an immersive dark-mode aesthetic with neon accents (if brand colors allow), glassmorphism effects, and unconventional section transitions.',
-    'Create a split-screen dominant layout where content flows independently from the imagery, breaking traditional vertical scrolling conventions.'
+    'Create a clean, modern SaaS-style layout with soft shadows, rounded corners, and clear sections.',
+    'Design an elegant, premium corporate layout with high-quality images, clean typography, and a trustworthy feel.',
+    'Build a vibrant, high-converting marketing page with bold clear CTAs, soft gradients, and modern feature grids.',
+    'Use a minimalist, highly readable design with generous whitespace, subtle borders, and a focus on typography.',
+    'Design a highly professional service-business layout with clear benefits, trust badges, and easy-to-read content blocks.'
   ];
   const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
+
+  // Random FAQ layout constraints to prevent repetitive white-box accordion designs
+  const faqNudges = [
+    'FAQ DESIGN: Use a strict 2-column grid. No backgrounds on the items, just clean subtle bottom borders.',
+    'FAQ DESIGN: Place the FAQs in a narrow, elegant card floating over a large background image.',
+    'FAQ DESIGN: Use a completely dark, immersive background for the FAQ section with glowing border highlights on the active item.',
+    'FAQ DESIGN: Put the FAQ title and a massive image on the left half of the screen, and the accordion items stacked tightly on the right half.',
+    'FAQ DESIGN: Use a stark minimalist approach. Huge bold typography for the questions, no boxes, just pure text and subtle icons.'
+  ];
+  const randomFaqNudge = faqNudges[Math.floor(Math.random() * faqNudges.length)];
 
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
@@ -371,8 +384,9 @@ const buildUserPrompt = (input) => {
   }
 
   lines.push(
-    `🎨 STYLE DIRECTION: ${randomNudge}`,
-    `CRITICAL RULE: DO NOT generate a boring layout. You must INVENT a unique structure for this specific business. NO GENERIC CARDS. NO STANDARD GRIDS.`
+    `🎨 OVERALL STYLE DIRECTION: ${randomNudge}`,
+    `🧩 ${randomFaqNudge}`,
+    `CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`
   );
 
   if (input.businessDescription) lines.push(`\nABOUT THE BUSINESS:\n${input.businessDescription}`);
@@ -387,12 +401,10 @@ const buildUserPrompt = (input) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW BUILD — FOLLOW THESE FINAL RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 🚫 ABSOLUTE RULE: DO NOT REUSE LAYOUTS. Every single time you generate a page, you MUST invent completely new HTML structures.
-2. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
-3. Your hero MUST follow the STYLE DIRECTION above. Give it a radically different design than a standard hero.
-4. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
-5. Every section must look visually different from the one before it and from standard templates. Randomize column counts, padding, overlap, and alignment.
-5. Write REAL, industry-specific copy — not generic filler text.
+1. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
+2. Your hero MUST follow the STYLE DIRECTION above. Make it look extremely premium and trustworthy.
+3. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
+4. Write REAL, industry-specific copy — not generic filler text.
 6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
 7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
 8. ⚠️ COMPLETE THE FULL PAGE: You have 16,000 output tokens available — more than enough! You MUST generate all 8+ sections completely. Do NOT rush or skip sections. Every section should be fully designed and coded.
@@ -429,66 +441,180 @@ const generateLandingPageContent = async (input) => {
   const coreScript = `
 <script id="core-interactions">
   (function() {
-    // 1. FAQ / Accordion Logic via Event Delegation
+    // 1. Ultimate Heuristic AI FAQ / Accordion Logic via Event Delegation
     document.addEventListener('click', function(e) {
-      // AI-generated accordion: .accordion-header / .accordion-content
-      const accHeader = e.target.closest('.accordion-header, .faq-head, .v2-faq-summary');
-      if (accHeader) {
-        const item = accHeader.closest('.accordion-item, .faq-item');
-        if (!item) return;
-        
-        const content = item.querySelector('.accordion-content, .faq-body');
-        const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
-        const isOpen = content && !content.classList.contains('hidden');
-        
-        // Close all others first
-        document.querySelectorAll('.accordion-content, .faq-body').forEach(c => c.classList.add('hidden'));
-        document.querySelectorAll('.accordion-icon, .fa-chevron-down').forEach(i => i.classList.remove('rotate-180'));
-        document.querySelectorAll('.fa-minus').forEach(i => { i.classList.remove('fa-minus'); i.classList.add('fa-plus'); });
-        
-        // Open this one if it was closed
-        if (!isOpen && content) {
-          content.classList.remove('hidden');
-          if (icon) {
-            icon.classList.add('rotate-180');
-            if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
-          }
-        }
+      let current = e.target;
+      let toggled = false;
+      while (current && current !== document.body && !toggled) {
+         const nextEl = current.nextElementSibling;
+         if (nextEl && (nextEl.tagName === 'DIV' || nextEl.tagName === 'P' || nextEl.tagName === 'UL')) {
+            const isHidden = nextEl.classList.contains('hidden') || nextEl.style.display === 'none';
+            const isVisible = nextEl.offsetHeight > 0 && !isHidden;
+            const hasIcon = current.querySelector('svg, i.fa, i.fas, i.far, i.fab, i.material-icons') || current.tagName === 'BUTTON';
+            const isPointer = window.getComputedStyle(current).cursor === 'pointer' || current.classList.contains('cursor-pointer') || current.tagName === 'BUTTON' || current.closest('.faq-item, .accordion-item');
+            
+            if (hasIcon && isPointer) {
+               if (isHidden) {
+                  nextEl.classList.remove('hidden');
+                  nextEl.style.display = 'block';
+                  const icon = current.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.add('rotate-180');
+                     if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
+                  toggled = true;
+                  break;
+               } else if (isVisible) {
+                  nextEl.classList.add('hidden');
+                  nextEl.style.display = 'none';
+                  const icon = current.querySelector('svg, i');
+                  if (icon) {
+                     icon.classList.remove('rotate-180');
+                     if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  }
+                  toggled = true;
+                  break;
+               }
+            }
+         }
+         
+         const container = current;
+         const hiddenChild = Array.from(container.children).find(c => c.classList.contains('hidden') || c.style.display === 'none');
+         const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item');
+         
+         if (hiddenChild && hasPointer && container.querySelector('svg, i')) {
+            hiddenChild.classList.remove('hidden');
+            hiddenChild.style.display = 'block';
+            const icon = container.querySelector('svg, i');
+            if (icon) {
+               icon.classList.add('rotate-180');
+               if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+            }
+            toggled = true;
+            break;
+         } else if (hasPointer && container.querySelector('svg, i') && container.children.length >= 2) {
+            const visibleChild = Array.from(container.children).find(c => (c.tagName === 'DIV' || c.tagName === 'P') && c !== container.firstElementChild && c.offsetHeight > 0 && !c.classList.contains('hidden'));
+            if (visibleChild && container.firstElementChild && container.firstElementChild.contains(e.target)) {
+               visibleChild.classList.add('hidden');
+               visibleChild.style.display = 'none';
+               const icon = container.querySelector('svg, i');
+               if (icon) {
+                  icon.classList.remove('rotate-180');
+                  if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+               }
+               toggled = true;
+               break;
+            }
+         }
+         current = current.parentElement;
       }
     });
 
-    // 2. Form Validation — only on PUBLISHED page (not in editor iframe)
-    // Checks for GrapesJS editor context and skips if inside editor
-    var isInEditor = (window.self !== window.top) || document.body.classList.contains('gjs-dashed');
-    if (!isInEditor) {
-      document.addEventListener('submit', function(e) {
-        if (e.target.tagName === 'FORM') {
-          let isValid = true;
-          e.target.querySelectorAll('input[required], textarea[required]').forEach(function(input) {
-            if (!input.value.trim()) {
-              isValid = false;
-              input.style.outline = '2px solid #ef4444';
-              input.style.outlineOffset = '2px';
-              setTimeout(function() {
-                input.style.outline = '';
-                input.style.outlineOffset = '';
-              }, 3000);
-            }
-          });
-          if (!isValid) {
-            e.preventDefault();
-            e.stopPropagation();
+    // Check if we are inside GrapesJS editor (published pages don't have data-gjs-type)
+    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    
+    // 2. Form Validation (runs everywhere so you can see red borders in editor)
+    document.addEventListener('submit', function(e) {
+      if (e.target.tagName === 'FORM') {
+        e.target.setAttribute('novalidate', 'true'); // Disable native browser tooltips
+        var isValid = true;
+        var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
+        
+        inputs.forEach(function(input) {
+          if (!input.dataset.valSetup) {
+            input.dataset.valSetup = 'true';
+            input.addEventListener('input', function() {
+              if (input.value.trim()) {
+                input.style.outline = '2px solid #22c55e';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#22c55e';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'none';
+                }
+              } else {
+                input.style.outline = '2px solid #ef4444';
+                input.style.outlineOffset = '1px';
+                input.style.borderColor = '#ef4444';
+                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
+                  input.nextElementSibling.style.display = 'block';
+                }
+              }
+            });
           }
-        }
-      }, true);
-    }
 
-    // 3. Initialize AOS if loaded
-    setTimeout(function() {
-      if (typeof AOS !== 'undefined') {
-        AOS.init({duration: 1000, once: true});
+          if (!input.value.trim()) {
+            isValid = false;
+            input.style.outline = '2px solid #ef4444';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#ef4444';
+            
+            // Dynamically wrap input if it's a direct child of a grid/flex (fixes error placement)
+            if (!input.parentElement.classList.contains('val-wrapper')) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'val-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.width = '100%';
+                
+                var computed = window.getComputedStyle(input);
+                if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+                }
+                
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+            }
+
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
+              var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
+              var err = document.createElement('span');
+              err.className = 'val-error';
+              err.style.color = '#ef4444';
+              err.style.fontSize = '12px';
+              err.style.display = 'block';
+              err.style.marginTop = '4px';
+              err.style.fontWeight = '500';
+              err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
+              input.parentNode.insertBefore(err, input.nextSibling);
+            } else {
+              input.nextElementSibling.style.display = 'block';
+            }
+          } else {
+            input.style.outline = '2px solid #22c55e';
+            input.style.outlineOffset = '1px';
+            input.style.borderColor = '#22c55e';
+          }
+        });
+        
+        // Block submission if invalid OR if we are inside the editor (to prevent iframe redirect)
+        if (!isValid || isInEditor) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        } else if (!isInEditor) {
+          // If valid and in production, we show a success message!
+          e.preventDefault(); // Stop actual post so we can show message
+          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
+          var origText = btn ? (btn.innerText || btn.value) : '';
+          if (btn) {
+            if(btn.innerText) btn.innerText = 'Sending...';
+            else btn.value = 'Sending...';
+          }
+          setTimeout(function() {
+            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+          }, 1000);
+        }
       }
-    }, 500);
+    }, true);
+
+    // 3. Initialize AOS only on PUBLISHED page (not in editor)
+    if (!isInEditor) {
+      setTimeout(function() {
+        if (typeof AOS !== 'undefined') {
+          AOS.init({duration: 1000, once: true});
+        }
+      }, 500);
+    }
   })();
 </script>
 `;
