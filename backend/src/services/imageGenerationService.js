@@ -57,7 +57,7 @@ async function generateGetImgUrl(
             height,
             steps: 4,
             output_format: 'jpeg',
-            response_format: 'url'
+            response_format: 'b64'
           })
         }
       );

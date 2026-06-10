@@ -137,6 +137,24 @@ const PublicLandingPage = () => {
         input.style.outlineOffset = '1px';
         input.style.borderColor = '#ef4444';
         
+        // Dynamically wrap input if it's a direct child of a grid/flex (fixes error placement)
+        if (!input.parentElement.classList.contains('val-wrapper')) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'val-wrapper';
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.width = '100%';
+            
+            var computed = window.getComputedStyle(input);
+            if (window.getComputedStyle(input.parentElement).display === 'grid') {
+                wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
+                wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+            }
+            
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        }
+
         if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
           var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
           var err = document.createElement('span');
