@@ -930,7 +930,7 @@ const GrapesEditor = () => {
 
     const pickrColorPlugin = (ed: any) => {
       ed.StyleManager.addType('pickr-color', {
-        create({ property, change }: any) {
+        create({ property, change, updateValue }: any) {
           const el = document.createElement('div');
           el.style.display = 'flex';
           el.style.alignItems = 'center';
@@ -963,10 +963,21 @@ const GrapesEditor = () => {
           el.appendChild(inputHex);
 
           const applyUpdate = (val: string, partial: boolean) => {
-            if (change) {
-              change(val, { partial });
-            } else if (property && property.up) {
-              property.up({ value: val, partial });
+            try {
+              if (typeof change === 'function') {
+                change({ value: val, partial });
+                change(val, { partial });
+              }
+              if (typeof updateValue === 'function') {
+                updateValue(val, { partial });
+              }
+              if (property) {
+                if (typeof property.upValue === 'function') property.upValue(val, { partial });
+                if (typeof property.setValue === 'function') property.setValue(val, { partial });
+                if (typeof property.up === 'function') property.up({ value: val, partial });
+              }
+            } catch (e) {
+              console.error('Pickr update error:', e);
             }
           };
 
