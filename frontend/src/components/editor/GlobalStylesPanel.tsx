@@ -29,10 +29,6 @@ const INIT_STYLES: StyleConfig = {
   Colors: {
     primary: { label: 'Primary', type: 'color', varName: '--primary', value: '#fa0000' },
     secondary: { label: 'Secondary', type: 'color', varName: '--secondary', value: '#d1d1d1' },
-    accent: { label: 'Accent', type: 'color', varName: '--accent', value: '#edeeff' },
-    success: { label: 'Success', type: 'color', varName: '--success', value: '#00ff3c' },
-    warning: { label: 'Warning', type: 'color', varName: '--warning', value: '#e4ab00' },
-    error: { label: 'Error', type: 'color', varName: '--error', value: '#1c0003' },
   },
   Body: {
     bg: { label: 'Background', type: 'color', varName: '--body-bg', value: '#090808' },
