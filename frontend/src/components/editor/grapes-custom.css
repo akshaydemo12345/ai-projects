@@ -1270,9 +1270,20 @@ body {
   padding-bottom: 4px !important;
 }
 
-/* Hide duplicate Selector Managers */
-#selectors-container .gjs-clm-tags:nth-child(n+2) {
-  display: none !important;
+/* Native Selector Manager Layout */
+.gjs-editor #styles-container {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.gjs-editor #styles-container .gjs-sm-sectors {
+  order: 1 !important;
+}
+.gjs-editor #styles-container .gjs-clm-tags {
+  order: 2 !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 12px !important;
+  margin-top: 10px !important;
+  background: #ffffff !important;
 }
 
 /* Fix text colors and layout for Selected field */

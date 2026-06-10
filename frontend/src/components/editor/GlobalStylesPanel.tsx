@@ -109,18 +109,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
         }
       });
 
-      // 2. Computed Style Detection (Very Accurate)
-      if (el) {
-        const win = el.ownerDocument.defaultView;
-        if (win) {
-          const computed = win.getComputedStyle(el);
-          const textColor = computed.color;
-          const bgColor = computed.backgroundColor;
-
-          // Check if computed color matches any of our variables
-          // This is harder because computed is HEX/RGB, but we can check if the element has classes
-        }
-      }
+      // Removed unused Computed Style Detection to fix severe layout thrashing (click lag)
 
       // 3. PRIORITY MAPPING (Exclusive logic)
       const tagName = selected.get('tagName')?.toLowerCase();
@@ -172,14 +161,23 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       }
     };
 
-    editor.on('component:selected', updateSelectedVars);
-    editor.on('component:toggled', updateSelectedVars); // For deselection too
-    editor.on('component:styleUpdate', updateSelectedVars);
+    let debounceTimer: any;
+    const debouncedUpdate = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        updateSelectedVars();
+      }, 50); // Small delay to let GrapesJS UI update first
+    };
+
+    editor.on('component:selected', debouncedUpdate);
+    editor.on('component:toggled', debouncedUpdate); // For deselection too
+    editor.on('component:styleUpdate', debouncedUpdate);
 
     return () => {
-      editor.off('component:selected', updateSelectedVars);
-      editor.off('component:toggled', updateSelectedVars);
-      editor.off('component:styleUpdate', updateSelectedVars);
+      clearTimeout(debounceTimer);
+      editor.off('component:selected', debouncedUpdate);
+      editor.off('component:toggled', debouncedUpdate);
+      editor.off('component:styleUpdate', debouncedUpdate);
     };
   }, [editor]);
 
