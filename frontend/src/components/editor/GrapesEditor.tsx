@@ -972,6 +972,7 @@ const GrapesEditor = () => {
       panels: { defaults: [] },
       selectorManager: {
         componentFirst: false,
+        appendTo: '#selectors-container',
       },
       styleManager: {
         appendTo: '#styles-container',
@@ -3715,6 +3716,29 @@ const GrapesEditor = () => {
           </div>
           <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
             <div id="styles-container" />
+            
+            <details className="selectors-accordion" style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
+              <summary className="gs-style-manager-sector-header" style={{ listStyle: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: 500, color: '#111827', marginLeft: '5px' }}>
+                    Classes & States
+                  </div>
+                  <div className="selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
+                    <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', color: '#111827' }}>
+                      <path fill="currentColor" d="M7,10L12,15L17,10H7Z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </summary>
+              <div id="selectors-container" style={{ padding: '12px', background: '#fff' }} />
+            </details>
+            
+            <style dangerouslySetInnerHTML={{__html: `
+              .selectors-accordion summary::-webkit-details-marker { display: none; }
+              .selectors-accordion[open] .selectors-arrow svg { transform: rotate(180deg); }
+              .selectors-arrow svg { transition: transform 0.2s; }
+              #selectors-container .gjs-clm-tags:nth-child(n+2) { display: none !important; }
+            `}} />
           </div>
           <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
         </div>
