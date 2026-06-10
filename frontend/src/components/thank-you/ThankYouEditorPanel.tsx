@@ -8,13 +8,15 @@ interface ThankYouEditorPanelProps {
   industry?: string;
   onSave?: () => void;
   onSelect?: (html: string, css?: string) => void;
+  isCanvasEmpty?: boolean;
 }
 
 export const ThankYouEditorPanel = ({
   pageId,
   industry,
   onSave,
-  onSelect
+  onSelect,
+  isCanvasEmpty
 }: ThankYouEditorPanelProps) => {
   const [config, setConfig] = useState<ThankYouConfig>({
     layout: 'default',
@@ -32,7 +34,12 @@ export const ThankYouEditorPanel = ({
   const [selectedId, setSelectedId] = useState<string>('default');
 
   useEffect(() => {
-    loadData();
+    // Add a slight delay to ensure GrapesEditor's 500ms initial applyContentToEditor timeout 
+    // has finished clearing the canvas before we attempt to auto-apply the default layout.
+    const timer = setTimeout(() => {
+      loadData();
+    }, 600);
+    return () => clearTimeout(timer);
   }, [pageId]);
 
   // NOTE: Auto-sync on config change removed — handleLayoutChange directly calls onSelect
@@ -51,14 +58,12 @@ export const ThankYouEditorPanel = ({
         branding: {},
       };
       setConfig(savedConfig);
-      setSelectedId(savedConfig.layout || 'default');
+      const activeLayout = savedConfig.layout || 'default';
+      setSelectedId(activeLayout);
       setLayouts(layoutsData);
 
-      if (industry && (!savedConfig?.layout || savedConfig.layout === 'default')) {
-        const industryLayout = layoutsData.find((l: ThankYouLayout) => l.industry === industry);
-        if (industryLayout) {
-          handleLayoutChange(industryLayout.id, layoutsData);
-        }
+      if (isCanvasEmpty) {
+        handleLayoutChange(activeLayout, layoutsData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -91,6 +96,7 @@ export const ThankYouEditorPanel = ({
         await thankYouApi.updateConfig(pageId, newConfig);
         const html = await thankYouApi.preview({ ...newConfig, pageId });
         onSelect?.(html);
+        onSave?.(); // Automatically trigger save so the HTML/CSS persists
         toast.success(`${selectedLayout.name} applied!`);
       } catch (error) {
         console.error('Error applying layout:', error);
