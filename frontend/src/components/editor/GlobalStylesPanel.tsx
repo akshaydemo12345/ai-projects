@@ -109,18 +109,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
         }
       });
 
-      // 2. Computed Style Detection (Very Accurate)
-      if (el) {
-        const win = el.ownerDocument.defaultView;
-        if (win) {
-          const computed = win.getComputedStyle(el);
-          const textColor = computed.color;
-          const bgColor = computed.backgroundColor;
-
-          // Check if computed color matches any of our variables
-          // This is harder because computed is HEX/RGB, but we can check if the element has classes
-        }
-      }
+      // Removed unused Computed Style Detection to fix severe layout thrashing (click lag)
 
       // 3. PRIORITY MAPPING (Exclusive logic)
       const tagName = selected.get('tagName')?.toLowerCase();
@@ -172,14 +161,23 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       }
     };
 
-    editor.on('component:selected', updateSelectedVars);
-    editor.on('component:toggled', updateSelectedVars); // For deselection too
-    editor.on('component:styleUpdate', updateSelectedVars);
+    let debounceTimer: any;
+    const debouncedUpdate = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        updateSelectedVars();
+      }, 50); // Small delay to let GrapesJS UI update first
+    };
+
+    editor.on('component:selected', debouncedUpdate);
+    editor.on('component:toggled', debouncedUpdate); // For deselection too
+    editor.on('component:styleUpdate', debouncedUpdate);
 
     return () => {
-      editor.off('component:selected', updateSelectedVars);
-      editor.off('component:toggled', updateSelectedVars);
-      editor.off('component:styleUpdate', updateSelectedVars);
+      clearTimeout(debounceTimer);
+      editor.off('component:selected', debouncedUpdate);
+      editor.off('component:toggled', debouncedUpdate);
+      editor.off('component:styleUpdate', debouncedUpdate);
     };
   }, [editor]);
 
@@ -370,26 +368,7 @@ button, .btn, [class*="btn-"] {
       canvasDoc.head.appendChild(styleTag);
     }
 
-    // 2. Also patch GrapesJS internal CSS so it doesn't override our variables
-    //    Replace any existing :root block in GrapesJS CSS with our updated vars
-    try {
-      const existingCss = editor.getCss() || '';
-      // Build just the :root vars block from current styles
-      let rootBlock = ':root {\n';
-      Object.values(styles).forEach(cat => {
-        Object.values(cat).forEach(prop => {
-          rootBlock += `  ${prop.varName}: ${prop.value}${prop.unit || ''};\n`;
-        });
-      });
-      rootBlock += '}';
-
-      // Remove any old :root { ... } block from GrapesJS CSS
-      const stripped = existingCss.replace(/:root\s*\{[^}]*\}/g, '').trim();
-      // Prepend fresh :root block
-      editor.setStyle(rootBlock + '\n' + stripped);
-    } catch (e) {
-      // Silently ignore if CSS parsing fails
-    }
+    // (We intentionally DO NOT call editor.setStyle() here because the GrapesJS CSS parser drops modern features like color-mix. The injected styleTag above is sufficient for live editing and is captured during save.)
   }, [styles, editor]);
 
   useEffect(() => {

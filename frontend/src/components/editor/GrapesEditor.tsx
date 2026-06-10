@@ -330,7 +330,8 @@ const GrapesEditor = () => {
           console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
           bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
         }
-        dbContent = bodyHtml;
+        // Strip style tags from body so GrapesJS doesn't parse massive CSS rules into CssComposer
+        dbContent = bodyHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
         // Save body style and classes to apply AFTER setComponents
         extractedBodyStyle = doc.body.getAttribute('style');
@@ -416,9 +417,8 @@ const GrapesEditor = () => {
         templateStyleTag.innerHTML = finalStyles;
       }
 
-      // Also call setStyle so GrapesJS CSS composer is aware
-      try { editor.setStyle(finalStyles); } catch (e) { console.warn('setStyle warn:', e); }
-
+      // Intentionally skipping editor.setStyle(finalStyles) here because loading massive AI CSS into
+      // the CssComposer causes severe 2-5s freezes during both page load and component selection.
       // ─── Inject branding-vars AFTER template-styles so it wins the cascade ───
       if (canvasDoc) {
         // Ensure icon fonts and classes are always present for both Landing and Thank You pages
@@ -769,6 +769,20 @@ const GrapesEditor = () => {
             }
           }
         `;
+
+        let blockSubmitScript = canvasDoc.getElementById('block-submit');
+        if (!blockSubmitScript) {
+          blockSubmitScript = canvasDoc.createElement('script');
+          blockSubmitScript.id = 'block-submit';
+          canvasDoc.head.appendChild(blockSubmitScript);
+        }
+        blockSubmitScript.innerHTML = `
+          document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            alert('Form submission is disabled inside the Editor.');
+          }, true);
+        `;
       }
 
       editor.setComponents(dbContent);
@@ -836,7 +850,7 @@ const GrapesEditor = () => {
           }
         } catch (e) { /* ignore */ }
         setIsCanvasLoading(false);
-      }, 1200);
+      }, 200);
     } else {
       if (activeMode === 'thank-you') {
         // Do not inject placeholder. The ThankYouEditorPanel will auto-fetch and apply the default template.
@@ -896,6 +910,26 @@ const GrapesEditor = () => {
     `;
     document.head.appendChild(style);
 
+    // ── SILENCE CASH-DOM WARNINGS BY FORCING PASSIVE LISTENERS ──
+    const passiveScript = document.createElement('script');
+    passiveScript.innerHTML = `
+      (function() {
+        var originalAddEventListener = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function(type, listener, options) {
+          if (type === 'touchstart' || type === 'touchmove' || type === 'mousewheel') {
+            if (typeof options === 'boolean') {
+              options = { capture: options, passive: true };
+            } else if (!options || typeof options === 'object') {
+              options = options || {};
+              options.passive = true;
+            }
+          }
+          return originalAddEventListener.call(this, type, listener, options);
+        };
+      })();
+    `;
+    document.head.prepend(passiveScript);
+
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
@@ -938,7 +972,6 @@ const GrapesEditor = () => {
       panels: { defaults: [] },
       selectorManager: {
         componentFirst: false,
-        appendTo: '#selectors-container',
       },
       styleManager: {
         appendTo: '#styles-container',
@@ -2860,11 +2893,7 @@ const GrapesEditor = () => {
           }
           templateStyleTag.innerHTML += '\n/* AI Generated */\n' + extractedCss;
         }
-        // Also register with GrapesJS CSS composer
-        try {
-          const existingCss = editorRef.current.getCss() || '';
-          editorRef.current.setStyle(existingCss + '\n/* AI Generated */\n' + extractedCss);
-        } catch { }
+        // Intentionally skipping editorRef.current.setStyle to prevent massive click lag
       }
 
       if (selected) {
@@ -2921,10 +2950,7 @@ const GrapesEditor = () => {
           }
           templateStyleTag.innerHTML += '\n/* AI Edit */\n' + extractedCss;
         }
-        try {
-          const existingCss = editorRef.current.getCss() || '';
-          editorRef.current.setStyle(existingCss + '\n/* AI Edit */\n' + extractedCss);
-        } catch { }
+        // Intentionally skipping setStyle to prevent SelectorManager lag
       }
 
       selected.replaceWith(cleanHtml || improvedHtml);
@@ -3602,8 +3628,8 @@ const GrapesEditor = () => {
                         console.error('Error parsing Thank You HTML:', e);
                       }
                     } else {
-                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
-                      const filteredScripts = scriptMatches.filter(s =>
+                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+                      const filteredScripts = scriptMatches.filter((s: string) =>
                         !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
                       );
                       if (filteredScripts.length > 0) {
@@ -3611,14 +3637,15 @@ const GrapesEditor = () => {
                       }
                     }
 
-                    // Apply content — strip body{} rules to avoid iframe margin/padding issues
+                    // Apply content — strip body{} rules and style tags to avoid iframe margin issues and CssComposer lag
+                    finalHtml = finalHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
                     editorRef.current.setComponents(finalHtml);
                     if (finalCss) {
                       // ⚠️ Remove body margin/padding from template CSS to prevent iframe scroll issues
                       const cleanCss = finalCss
                         .replace(/body\s*\{[^}]*margin[^}]*\}/gi, '')
                         .replace(/body\s*\{[^}]*padding[^}]*\}/gi, '');
-                      editorRef.current.setStyle(cleanCss);
+                      // Intentionally skipping setStyle to avoid SelectorManager click lag
                     }
 
                     // Inject CSS directly into canvas iframe for reliable rendering
@@ -3640,7 +3667,7 @@ const GrapesEditor = () => {
                     } catch (e) { }
 
                     editorRef.current.refresh();
-                    setTimeout(() => setIsCanvasLoading(false), 1200);
+                    setTimeout(() => setIsCanvasLoading(false), 200);
                   }
                 }}
               />
@@ -3686,8 +3713,10 @@ const GrapesEditor = () => {
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
             <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
-          <div id="styles-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none' }} />
-          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none' }} />
+          <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
+            <div id="styles-container" />
+          </div>
+          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
         </div>
       </div>
 
@@ -4147,8 +4176,8 @@ function mergeScripts(canvasScripts: string, backupScripts: string): string {
 
   const addScripts = (html: string) => {
     if (!html) return;
-    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
-    matches.forEach(tag => {
+    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+    matches.forEach((tag: string) => {
       // Skip tailwind — added by renderer
       if (tag.includes('cdn.tailwindcss.com')) return;
       if (tag.includes('tailwind.config')) return;
