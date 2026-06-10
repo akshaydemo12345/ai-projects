@@ -260,9 +260,21 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                   updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                   changed = true;
                 }
-                if (compStyle[prop].includes(oldRgb)) {
-                  updates[prop] = compStyle[prop].replace(new RegExp(oldRgb, 'g'), newRgb);
-                  changed = true;
+                
+                // Handle rgb() replacements with optional spaces
+                const rgbParts = oldRgb.split(',').map(s => s.trim());
+                if (rgbParts.length === 3) {
+                  const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
+                  const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
+                  
+                  if (rgbRegex.test(compStyle[prop])) {
+                    updates[prop] = compStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
+                    changed = true;
+                  }
+                  if (rgbaRegex.test(compStyle[prop])) {
+                    updates[prop] = compStyle[prop].replace(rgbaRegex, `rgba(${newRgb},`);
+                    changed = true;
+                  }
                 }
               }
             });
@@ -301,9 +313,20 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                 changedRule = true;
               }
-              if (newStyle[prop].includes(oldRgb)) {
-                newStyle[prop] = newStyle[prop].replace(new RegExp(oldRgb, 'gi'), newRgb);
-                changedRule = true;
+              
+              const rgbParts = oldRgb.split(',').map(s => s.trim());
+              if (rgbParts.length === 3) {
+                const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
+                const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
+                
+                if (rgbRegex.test(newStyle[prop])) {
+                  newStyle[prop] = newStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
+                  changedRule = true;
+                }
+                if (rgbaRegex.test(newStyle[prop])) {
+                  newStyle[prop] = newStyle[prop].replace(rgbaRegex, `rgba(${newRgb},`);
+                  changedRule = true;
+                }
               }
             }
           });
@@ -326,7 +349,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
-    let css = ':root {\n';
+    let css = ':root, body {\n';
     Object.values(currentStyles).forEach(category => {
       Object.values(category).forEach(prop => {
         css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
@@ -337,10 +360,41 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     css += `
+body {
+  background-color: var(--body-bg) !important;
+  color: var(--body-text) !important;
+  font-family: var(--body-font) !important;
+  font-size: var(--body-size) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+h1, .headline, .heading {
+  color: var(--heading-color) !important;
+  font-family: var(--heading-font) !important;
+  font-size: var(--heading-size) !important;
+  line-height: var(--heading-line-height) !important;
+}
+
+h2, h3, h4, h5, h6, .subheading, .subtitle {
+  color: var(--subheading-color) !important;
+  font-family: var(--subheading-font) !important;
+  font-size: var(--subheading-size) !important;
+  line-height: var(--subheading-line-height) !important;
+}
+
 button, .btn, [class*="btn-"] {
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
-  border-radius: var(--btn-radius);
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  border-radius: var(--btn-radius) !important;
+}
+
+form, .form-container, .form {
+  background-color: var(--form-bg) !important;
+}
+
+input, select, textarea, .input-field {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
 }
 `;
     return css;
@@ -381,9 +435,9 @@ button, .btn, [class*="btn-"] {
         <div key={category} className="border-b border-[#e5e7eb]">
           <button
             onClick={() => toggleSection(category)}
-            className="flex items-center justify-between w-full px-4 py-3 text-left bg-[#fff] hover:bg-[#f9fafb] transition-colors group"
+            className="flex items-center justify-between w-full px-3 py-2 text-left bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors group"
           >
-            <span className="font-semibold text-[#000000] text-[12px] uppercase tracking-wide">
+            <span className="font-medium text-[#111827] text-[13px] capitalize">
               {category}
             </span>
             {expanded[category] ?
@@ -396,10 +450,9 @@ button, .btn, [class*="btn-"] {
             <div className="p-4 bg-[#fff] flex flex-col gap-3">
               {Object.entries(properties).map(([key, prop]) => (
                 <div key={key} className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
-                      {prop.label}
-                    </span>
+                  <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
+                    {prop.label}
+                  </span>
 
                     {/* Controls Rendering */}
                     <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
@@ -456,7 +509,6 @@ button, .btn, [class*="btn-"] {
                         </div>
                       )}
                     </div>
-                  </div>
                 </div>
               ))}
             </div>
