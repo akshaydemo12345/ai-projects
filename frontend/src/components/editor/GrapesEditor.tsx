@@ -764,6 +764,20 @@ const GrapesEditor = () => {
             }
           }
         `;
+
+        let blockSubmitScript = canvasDoc.getElementById('block-submit');
+        if (!blockSubmitScript) {
+          blockSubmitScript = canvasDoc.createElement('script');
+          blockSubmitScript.id = 'block-submit';
+          canvasDoc.head.appendChild(blockSubmitScript);
+        }
+        blockSubmitScript.innerHTML = `
+          document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            alert('Form submission is disabled inside the Editor.');
+          }, true);
+        `;
       }
 
       editor.setComponents(dbContent);
