@@ -52,19 +52,19 @@ a {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .hc4-topbar .hc4-container {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
 }
 .hc4-topbar-left {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 20px;
   flex-wrap: wrap;
 }
 .hc4-topbar-left span {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   color: rgba(255, 255, 255, 0.85);
@@ -73,7 +73,7 @@ a {
   color: var(--secondary);
 }
 .hc4-topbar-right {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 15px;
 }
 .hc4-topbar-right a {
@@ -95,12 +95,12 @@ a {
   z-index: 100;
 }
 .hc4-navbar .hc4-container {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
 }
 .hc4-logo {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   font-size: 26px;
@@ -113,7 +113,7 @@ a {
   color: var(--primary);
 }
 .hc4-nav-links {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 30px;
   list-style: none;
   margin: 0;
@@ -144,7 +144,7 @@ a {
   width: 100%;
 }
 .hc4-nav-actions {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 20px;
 }
@@ -159,8 +159,8 @@ a {
 }
 
 .hc4-btn-primary {
-  background: var(--primary);
-  color: var(--white);
+  background: var(--btn-bg, var(--primary));
+  color: var(--btn-text, var(--white));
   padding: 13px 30px;
   border-radius: 50px;
   font-weight: 600;
@@ -168,14 +168,14 @@ a {
   border: none;
   cursor: pointer;
   transition: 0.3s;
-  display: inline-flex;
+  display: inline-flex; flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 .hc4-btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(var(--p-rgb), 0.35);
-  background: var(--bg-dark);
+  background: var(--secondary) !important; color: var(--btn-text, var(--white)) !important;
 }
 
 .hc4-btn-secondary {
@@ -188,14 +188,14 @@ a {
   border: none;
   cursor: pointer;
   transition: 0.3s;
-  display: inline-flex;
+  display: inline-flex; flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 .hc4-btn-secondary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(3, 27, 78, 0.3);
-  background: var(--primary);
+  background: var(--btn-bg, var(--primary)) !important; color: var(--btn-text, var(--white)) !important;
 }
 
 /* HERO SECTION */
@@ -256,7 +256,7 @@ a {
   max-width: 580px;
 }
 .hc4-hero-buttons {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 15px;
   align-items: center;
 }
@@ -275,7 +275,7 @@ a {
 
 .hc4-hero-image-wrapper {
   position: relative;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   justify-content: center;
   align-items: center;
 }
@@ -309,7 +309,7 @@ a {
   padding: 16px 24px;
   border-radius: 20px;
   box-shadow: 0 12px 35px rgba(3, 27, 78, 0.15);
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 15px;
   z-index: 3;
@@ -325,7 +325,7 @@ a {
   background: var(--primary);
   color: var(--white);
   border-radius: 50%;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   font-size: 20px;
@@ -352,7 +352,7 @@ a {
   position: relative;
   z-index: 10;
   box-shadow: 0 20px 45px rgba(3, 27, 78, 0.25);
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   padding: 25px 45px;
   justify-content: space-between;
@@ -373,7 +373,7 @@ a {
   filter: blur(40px);
 }
 .hc4-overlap-left {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 20px;
 }
@@ -409,7 +409,7 @@ a {
   transition: 0.3s;
   border: none;
   cursor: pointer;
-  display: inline-flex;
+  display: inline-flex; flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -455,7 +455,7 @@ a {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   color: var(--white);
@@ -495,7 +495,7 @@ a {
   margin: 0 0 35px 0;
 }
 .hc4-about-list li {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 15px;
@@ -596,7 +596,7 @@ a {
   background: rgba(var(--p-rgb), 0.08);
   color: var(--primary);
   border-radius: 16px;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   font-size: 26px;
@@ -624,7 +624,7 @@ a {
   color: var(--primary);
   font-weight: 700;
   font-size: 14px;
-  display: inline-flex;
+  display: inline-flex; flex-wrap: wrap;
   align-items: center;
   gap: 5px;
 }
@@ -721,7 +721,7 @@ a {
   margin: 25px 0 35px 0;
 }
 .hc4-recovery-list li {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 15px;
   margin-bottom: 18px;
@@ -800,7 +800,7 @@ a {
 .hc4-accordion-wrapper {
   max-width: 900px;
   margin: 40px auto 0;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   flex-direction: column;
   gap: 15px;
 }
@@ -819,7 +819,7 @@ a {
 .hc4-accordion-header {
   padding: 20px 25px;
   cursor: pointer;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   font-size: 18px;
@@ -887,7 +887,7 @@ a {
   margin-bottom: 30px;
 }
 .hc4-tab-point {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   font-weight: 600;
@@ -1054,7 +1054,7 @@ select.hc4-input {
   line-height: 1.6;
 }
 .hc4-subscribe-form {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   background: var(--white);
   padding: 8px;
   border-radius: 50px;
@@ -1075,8 +1075,8 @@ select.hc4-input {
   color: var(--text-muted);
 }
 .hc4-subscribe-btn {
-  background: var(--bg-dark);
-  color: var(--white);
+  background: var(--btn-bg, var(--bg-dark));
+  color: var(--btn-text, var(--white));
   border: none;
   padding: 15px 35px;
   border-radius: 50px;
@@ -1086,8 +1086,8 @@ select.hc4-input {
   transition: 0.3s;
 }
 .hc4-subscribe-btn:hover {
-  background: var(--secondary);
-  color: var(--bg-dark);
+  background: var(--secondary) !important;
+  color: var(--btn-text, var(--white)) !important;
 }
 @media (max-width: 991px) {
   .hc4-subscribe-card {
@@ -1129,7 +1129,7 @@ select.hc4-input {
   font-size: 28px;
   font-weight: 800;
   color: var(--white);
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
@@ -1166,7 +1166,7 @@ select.hc4-input {
   padding-left: 6px;
 }
 .hc4-footer-socials {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 12px;
   margin-top: 25px;
 }
@@ -1176,7 +1176,7 @@ select.hc4-input {
   background: rgba(255, 255, 255, 0.08);
   color: var(--white);
   border-radius: 50%;
-  display: flex;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   transition: 0.3s;
@@ -1193,7 +1193,7 @@ select.hc4-input {
   margin: 0;
 }
 .hc4-footer-contact-list li {
-  display: flex;
+  display: flex; flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 18px;
@@ -1285,6 +1285,12 @@ select.hc4-input {
     padding: 30px;
   }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates04-1 { color: var(--white); }
+  .tpl-templates04-2 { background: var(--white); color: var(--bg-dark); }
+  .tpl-templates04-3 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
 export const healthcare04Html = `
@@ -1339,7 +1345,7 @@ export const healthcare04Html = `
         </div>
         <div class="hc4-hero-badge hc4-float-anim">
           <div class="hc4-hero-badge-icon hc4-pulse-anim">
-            <i data-feather="activity" class="feather-activity" style="color: var(--white);"></i>
+            <i data-feather="activity" class="feather-activity tpl-templates04-1"  ></i>
           </div>
           <div class="hc4-hero-badge-text">
             <h4>24/7 Service</h4>
@@ -1548,7 +1554,7 @@ export const healthcare04Html = `
   <section class="hc4-cta">
     <div class="hc4-container">
       <h2>Professional Medical Care Services<br>For Your Family</h2>
-      <button class="hc4-btn-primary" style="background: var(--white); color: var(--bg-dark);">MAKE AN APPOINTMENT</button>
+      <button class="hc4-btn-primary tpl-templates04-2"  >MAKE AN APPOINTMENT</button>
     </div>
   </section>
 
@@ -1909,7 +1915,7 @@ export const healthcare04Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates04-3" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
