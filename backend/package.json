@@ -18,7 +18,7 @@
     "color-convert": "^2.0.1",
     "compression": "^1.8.1",
     "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "firebase-admin": "^13.10.0",

@@ -633,75 +633,88 @@ const CreateProjectFlow = () => {
                   />
 
                   {logoPreview ? (
+                    <div className="space-y-3">
+                      {/* Logo display — full width, white bg, brand color */}
+                      <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center py-4 px-6 min-h-[72px] shadow-sm">
+                        {logoPreview.startsWith('data:image/svg+xml;base64,') ? (() => {
+                          try {
+                            const svgMarkup = atob(logoPreview.replace('data:image/svg+xml;base64,', ''));
+                            const svgColor = logoColors.primary || primaryColor || '#000000';
+                            return (
+                              <span
+                                className="flex items-center justify-center [&>svg]:max-h-10 [&>svg]:w-auto [&>svg]:max-w-full"
+                                style={{ color: svgColor }}
+                                dangerouslySetInnerHTML={{ __html: svgMarkup }}
+                              />
+                            );
+                          } catch {
+                            // fall through to <img>
+                          }
+                        })() : null}
+                        {!logoPreview.startsWith('data:image/svg+xml;base64,') && (
+                          <img
+                            src={logoPreview}
+                            alt="Logo preview"
+                            className="max-h-10 max-w-full object-contain"
+                            onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
+                            onError={(e) => {
+                              const current = e.currentTarget;
+                              const src = logoPreview || '';
+                              if (src.startsWith('http') && !src.startsWith('data:')) {
+                                const proxyUrl = aiApi.proxyImage(src);
+                                if (current.src !== proxyUrl) { current.src = proxyUrl; return; }
+                              }
+                              const faviconFallback = scrapedData?.favicon;
+                              if (faviconFallback && current.src !== faviconFallback) { current.src = faviconFallback; return; }
+                              setLogoPreview(null);
+                              setLogoBase64(null);
+                            }}
+                          />
+                        )}
+                      </div>
+                      {/* Actions row */}
+                      <div className="flex items-center justify-between px-1">
+                        <p className="text-[11px] text-muted-foreground">Detected from website</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            className="text-[11px] text-primary hover:text-primary/80 font-bold px-2.5 py-1 rounded-lg border border-primary/20 hover:bg-primary/5 transition-all"
+                          >
+                            Change
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeLogo}
+                            className="text-[11px] text-slate-500 hover:text-destructive font-semibold px-2.5 py-1 rounded-lg border border-slate-200 hover:border-destructive/20 hover:bg-destructive/5 transition-all"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : scrapedData?.favicon ? (
+                    /* Auto-detected favicon — show as logo suggestion */
                     <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
-                      <div className={`h-16 w-16 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md ring-1 ring-slate-200 dark:ring-slate-700 p-1.5 ${logoPreviewBgClass}`}>
+                      <div className="h-16 w-16 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md ring-1 ring-slate-200 dark:ring-slate-700 p-1.5 bg-white">
                         <img
-                          src={logoPreview}
-                          alt="Logo preview"
+                          src={scrapedData.favicon}
+                          alt="Detected favicon"
                           className="max-h-full max-w-full object-contain"
-                          onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
-                          onError={(e) => {
-                            const current = e.currentTarget;
-                            const src = logoPreview || '';
-
-                            // Step 1: If it's an HTTP URL, try proxy
-                            if (src.startsWith('http') && !src.startsWith('data:')) {
-                              const proxyUrl = aiApi.proxyImage(src);
-                              if (current.src !== proxyUrl) {
-                                current.src = proxyUrl;
-                                return;
-                              }
-                            }
-
-                            // Step 2: If it's an SVG data URI that failed, try re-encoding it
-                            if (src.startsWith('data:image/svg+xml')) {
-                              try {
-                                // Try URL-encoded SVG as fallback (some browsers prefer this over base64 for SVG)
-                                const base64Part = src.replace('data:image/svg+xml;base64,', '');
-                                const svgText = atob(base64Part);
-                                const encoded = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
-                                if (current.src !== encoded) {
-                                  current.src = encoded;
-                                  return;
-                                }
-                              } catch {
-                                // Decoding failed, fall through to favicon
-                              }
-                            }
-
-                            // Step 3: Fallback to favicon if available
-                            const faviconFallback = scrapedData?.favicon;
-                            if (faviconFallback && current.src !== faviconFallback) {
-                              current.src = faviconFallback;
-                              return;
-                            }
-
-                            // Step 4: Give up — clear the preview
-                            setLogoPreview(null);
-                            setLogoBase64(null);
-                          }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Logo Uploaded</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Ready to use in templates</p>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Favicon Detected</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Upload a custom logo to override</p>
                       </div>
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => logoInputRef.current?.click()}
-                          className="text-[11px] text-primary hover:text-primary/80 font-bold px-2.5 py-1 rounded-lg border border-primary/20 hover:bg-primary/5 transition-all text-center"
-                        >
-                          Change
-                        </button>
-                        <button
-                          type="button"
-                          onClick={removeLogo}
-                          className="text-[11px] text-slate-500 hover:text-destructive font-semibold px-2 py-1 rounded-lg border border-slate-200 hover:border-destructive/20 hover:bg-destructive/5 transition-all flex items-center justify-center"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="text-[11px] text-primary hover:text-primary/80 font-bold px-2.5 py-1 rounded-lg border border-primary/20 hover:bg-primary/5 transition-all text-center"
+                      >
+                        Upload
+                      </button>
                     </div>
                   ) : (
                     <button
