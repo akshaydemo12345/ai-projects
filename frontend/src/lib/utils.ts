@@ -56,9 +56,23 @@ export const normalizeLogoUrl = (url?: string | null): string | undefined => {
     normalized = `https:${normalized}`;
   }
 
-  // Already a valid data URI
+  // Already a valid base64 data URI
   if (/^data:image\/[a-zA-Z0-9+]+;base64,/.test(normalized)) {
     return normalized;
+  }
+
+  // Percent-encoded SVG data URI: data:image/svg+xml,%3Csvg... or data:image/svg+xml;charset=utf-8,%3Csvg...
+  // Browsers cannot reliably render these in <img src>; decode and re-encode as base64.
+  if (/^data:image\/svg\+xml(?:;charset=[^,;]*)?,(?:%3C|<)/i.test(normalized)) {
+    try {
+      const payload = normalized.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, '');
+      const svgText = decodeURIComponent(payload);
+      // btoa requires Latin1; use encodeURIComponent escape trick for full Unicode support
+      const b64 = btoa(unescape(encodeURIComponent(svgText)));
+      return `data:image/svg+xml;base64,${b64}`;
+    } catch {
+      return normalized;
+    }
   }
 
   // Already an absolute URL

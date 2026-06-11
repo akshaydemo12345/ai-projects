@@ -344,6 +344,18 @@ const extractComputedBrandingFromWebsite = async (websiteUrl) => {
       '--disable-gpu',
       '--disable-extensions',
       '--blink-settings=imagesEnabled=false',   // skip image downloads — faster
+
+      // 🔥 low-resource server fixes (aligned with puppeteerFetch.js)
+      '--single-process',
+      '--no-zygote',
+      '--renderer-process-limit=1',
+      '--memory-pressure-off',
+
+      // stability improvements
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=IsolateOrigins,site-per-process',
     ],
   });
 

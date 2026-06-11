@@ -331,29 +331,6 @@ projectSchema.virtual('themeSystem').get(function () {
   return this.websiteProfile?.theme || {};
 });
 
-projectSchema.virtual('brandingData').get(function () {
-  // Map websiteProfile to old brandingData shape for backward compatibility
-  const wp = this.websiteProfile || {};
-  return {
-    identity: wp.identity,
-    logoColors: wp.logoColors,
-    colors: wp.colors,
-    themeSystem: wp.theme,
-    typography: wp.fonts,
-    images: wp.images,
-    videos: wp.videos,
-    content: wp.content,
-    forms: wp.forms,
-    seo: wp.seo,
-    sections: wp.sections?.map(s => s.type).filter(Boolean) || [],
-    industry: wp.industry?.industry,
-    subIndustry: wp.industry?.subIndustry,
-    sourceUrl: wp.extraction?.sourceUrl,
-    scrapedAt: wp.extraction?.scrapedAt,
-    durationMs: wp.extraction?.durationMs || 0,
-  };
-});
-
 // Business virtuals (keep for backward compatibility)
 projectSchema.virtual('business').get(function () {
   const wp = this.websiteProfile || {};
