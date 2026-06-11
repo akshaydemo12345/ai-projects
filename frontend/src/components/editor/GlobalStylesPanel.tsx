@@ -6,6 +6,7 @@ interface GlobalStylesPanelProps {
   editor: Editor | null;
   initialPrimary?: string;
   initialSecondary?: string;
+  initialStylesCss?: string;
   onBrandingColorsChange?: (colors: { primary: string; secondary: string }) => void;
 }
 
@@ -31,20 +32,20 @@ const INIT_STYLES: StyleConfig = {
     secondary: { label: 'Secondary', type: 'color', varName: '--secondary', value: '#d1d1d1' },
   },
   Body: {
-    bg: { label: 'Background', type: 'color', varName: '--body-bg', value: '#090808' },
-    text: { label: 'Color', type: 'color', varName: '--body-text', value: '#ffffff' },
+    bg: { label: 'Background', type: 'color', varName: '--body-bg', value: '#ffffff00' },
+    text: { label: 'Color', type: 'color', varName: '--body-text', value: '#0f172a' },
     fontSize: { label: 'Font Size', type: 'number', varName: '--body-size', value: '1', unit: 'rem' },
     lineHeight: { label: 'Line Height', type: 'number', varName: '--body-line-height', value: '1.75', unit: '' },
     fontFamily: { label: 'Font Family', type: 'font', varName: '--body-font', value: 'Geist Mono' },
   },
   Heading: {
-    color: { label: 'Color', type: 'color', varName: '--heading-color', value: '#ffffff' },
+    color: { label: 'Color', type: 'color', varName: '--heading-color', value: '#0f172a' },
     fontSize: { label: 'Font Size', type: 'number', varName: '--heading-size', value: '3', unit: 'rem' },
     lineHeight: { label: 'Line Height', type: 'number', varName: '--heading-line-height', value: '1.2', unit: '' },
     fontFamily: { label: 'Font Family', type: 'font', varName: '--heading-font', value: 'Righteous' },
   },
   Subheading: {
-    color: { label: 'Color', type: 'color', varName: '--subheading-color', value: '#d1d1d1' },
+    color: { label: 'Color', type: 'color', varName: '--subheading-color', value: '#475569' },
     fontSize: { label: 'Font Size', type: 'number', varName: '--subheading-size', value: '2', unit: 'rem' },
     lineHeight: { label: 'Line Height', type: 'number', varName: '--subheading-line-height', value: '1.5', unit: '' },
     fontFamily: { label: 'Font Family', type: 'font', varName: '--subheading-font', value: 'Inter' },
@@ -55,7 +56,7 @@ const INIT_STYLES: StyleConfig = {
     radius: { label: 'Radius', type: 'number', varName: '--btn-radius', value: '8', unit: 'px' },
   },
   Forms: {
-    bg: { label: 'Form Background', type: 'color', varName: '--form-bg', value: '#ffffff' },
+    bg: { label: 'Form Background', type: 'color', varName: '--form-bg', value: '#ffffff00' },
     inputBg: { label: 'Input Background', type: 'color', varName: '--input-bg', value: '#ffffff' },
     inputText: { label: 'Input Text Color', type: 'color', varName: '--input-text', value: '#0f172a' },
     inputBorder: { label: 'Input Border', type: 'color', varName: '--input-border', value: '#cbd5e1' },
@@ -63,7 +64,7 @@ const INIT_STYLES: StyleConfig = {
   }
 };
 
-const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandingColorsChange }: GlobalStylesPanelProps) => {
+const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialStylesCss, onBrandingColorsChange }: GlobalStylesPanelProps) => {
   const [styles, setStyles] = useState<StyleConfig>(INIT_STYLES);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     Colors: true, Body: true, Heading: false, Subheading: false, Buttons: false, Forms: false
@@ -177,6 +178,76 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
     };
   }, [editor]);
 
+const parseCssVariables = (cssStr: string) => {
+  const vars: Record<string, string> = {};
+  if (!cssStr) return vars;
+  
+  const regex = /--([a-zA-Z0-9-]+)\s*:\s*([^;!}\n]+)(?:\s*!important)?\s*;/g;
+  let match;
+  while ((match = regex.exec(cssStr)) !== null) {
+    const name = '--' + match[1].trim();
+    const value = match[2].trim();
+    vars[name] = value;
+  }
+  return vars;
+};
+
+  // Sync initial variables from the saved CSS stylesheet
+  useEffect(() => {
+    if (!initialStylesCss) return;
+    
+    const parsedVars = parseCssVariables(initialStylesCss);
+    if (Object.keys(parsedVars).length === 0) return;
+
+    setStyles(prev => {
+      const next = JSON.parse(JSON.stringify(prev)); // Deep copy
+      let changed = false;
+
+      Object.keys(next).forEach(cat => {
+        Object.keys(next[cat]).forEach(key => {
+          const varName = next[cat][key].varName;
+          if (parsedVars[varName] !== undefined) {
+            let rawValue = parsedVars[varName].trim();
+            
+            // Check if it ends with unit (px, rem, em, %)
+            const unitMatch = rawValue.match(/^([\d.-]+)(px|rem|em|%|)$/);
+            if (unitMatch && next[cat][key].type === 'number') {
+              next[cat][key].value = unitMatch[1];
+              next[cat][key].unit = unitMatch[2];
+            } else {
+              next[cat][key].value = rawValue;
+            }
+            changed = true;
+          }
+        });
+      });
+
+      // Fallback for --btn-bg if not explicitly set in CSS
+      if (!parsedVars['--btn-bg']) {
+        const primaryColor = parsedVars['--primary'] || initialPrimary;
+        if (primaryColor) {
+          next.Buttons.bg.value = primaryColor;
+          changed = true;
+        }
+      }
+      // Fallback for --btn-text if not explicitly set in CSS
+      if (!parsedVars['--btn-text']) {
+        next.Buttons.text.value = '#ffffff';
+        changed = true;
+      }
+      // Fallback for --subheading-color if not explicitly set in CSS
+      if (!parsedVars['--subheading-color']) {
+        const secondaryColor = parsedVars['--secondary'] || initialSecondary;
+        if (secondaryColor) {
+          next.Subheading.color.value = secondaryColor;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [initialStylesCss]);
+
   // Sync initial colors from the project settings
   useEffect(() => {
     setStyles(prev => {
@@ -184,19 +255,25 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
       let changed = false;
       if (initialPrimary && newStyles.Colors.primary.value !== initialPrimary) {
         newStyles.Colors.primary = { ...newStyles.Colors.primary, value: initialPrimary };
-        newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialPrimary };
+        // Only override button bg if it hasn't been set by initialStylesCss
+        if (!initialStylesCss) {
+          newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialPrimary };
+        }
         prevColorsRef.current.primary = initialPrimary;
         changed = true;
       }
       if (initialSecondary && newStyles.Colors.secondary.value !== initialSecondary) {
         newStyles.Colors.secondary = { ...newStyles.Colors.secondary, value: initialSecondary };
-        newStyles.Subheading.color = { ...newStyles.Subheading.color, value: initialSecondary };
+        // Only override subheading color if it hasn't been set by initialStylesCss
+        if (!initialStylesCss) {
+          newStyles.Subheading.color = { ...newStyles.Subheading.color, value: initialSecondary };
+        }
         prevColorsRef.current.secondary = initialSecondary;
         changed = true;
       }
       return changed ? newStyles : prev;
     });
-  }, [initialPrimary, initialSecondary]);
+  }, [initialPrimary, initialSecondary, initialStylesCss]);
 
   const toggleSection = (cat: string) => {
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -231,9 +308,9 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
           return;
         }
 
-        // Only run the heavy CSS replacement if the new value is a valid 7-character hex code.
+        // Only run the heavy CSS replacement if the new value is a valid 7 or 9 character hex code.
         // This prevents intermediate typing states (like "#" or "#ff") from corrupting the stylesheet.
-        if (!val || val.length !== 7 || !val.startsWith('#')) {
+        if (!val || (val.length !== 7 && val.length !== 9) || !val.startsWith('#')) {
           return;
         }
 
@@ -349,43 +426,89 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
   };
 
   const generateCSS = (currentStyles: StyleConfig) => {
+    const primaryHex = currentStyles.Colors.primary.value || '#fa0000';
+    const secondaryHex = currentStyles.Colors.secondary.value || '#d1d1d1';
+
+    const hexToRgbStr = (hex: string): string => {
+      const cleaned = hex.replace('#', '');
+      const r = parseInt(cleaned.substring(0, 2), 16) || 0;
+      const g = parseInt(cleaned.substring(2, 4), 16) || 0;
+      const b = parseInt(cleaned.substring(4, 6), 16) || 0;
+      return `${r}, ${g}, ${b}`;
+    };
+
+    const primaryRgb = hexToRgbStr(primaryHex);
+    const secondaryRgb = hexToRgbStr(secondaryHex);
+
     let css = ':root, body {\n';
     Object.values(currentStyles).forEach(category => {
       Object.values(category).forEach(prop => {
         css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
       });
     });
+    css += `  --primary-rgb: ${primaryRgb} !important;\n`;
+    css += `  --secondary-rgb: ${secondaryRgb} !important;\n`;
     css += '}\n\n';
 
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     css += `
 body {
-  background-color: var(--body-bg);
-  color: var(--body-text);
-  font-family: var(--body-font);
-  font-size: var(--body-size);
-  line-height: var(--body-line-height);
+  background-color: var(--body-bg) !important;
+  color: var(--body-text) !important;
+  font-family: var(--body-font) !important;
+  font-size: var(--body-size) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+h1, h2, .headline, .heading {
+  color: var(--heading-color);
+  font-family: var(--heading-font);
 }
 
 h1, .headline, .heading {
-  color: var(--heading-color);
-  font-family: var(--heading-font);
   font-size: var(--heading-size);
   line-height: var(--heading-line-height);
 }
 
-h2, h3, h4, h5, h6, .subheading, .subtitle {
+h3, h4, h5, h6, .subheading, .subtitle {
   color: var(--subheading-color);
   font-family: var(--subheading-font);
+}
+
+.subheading, .subtitle {
   font-size: var(--subheading-size);
   line-height: var(--subheading-line-height);
 }
 
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+}
+.material-icons, .material-icons-outlined {
+  font-family: 'Material Icons' !important;
+}
+
+a:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]) {
+  color: var(--primary);
+  transition: color 0.3s ease;
+}
+a:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]):hover {
+  color: var(--secondary) !important;
+}
+
 button, .btn, [class*="btn-"] {
+  border-radius: var(--btn-radius);
+}
+
+.btn-primary, .btn-yellow, .btn-green, .btn-signup, .btn-search, .btn-view-all, .btn-book, .btn-quote, .btn-submit, .btn-final, .btn-theme, .btn-blue, .btn-cta-1, .p3-btn-primary, .btn-hero, .btn-about, .v2-btn-primary, .v2-btn, .hc4-btn-primary, .hc4-btn-secondary, .hc4-overlap-btn, .hc4-subscribe-btn, button {
   background-color: var(--btn-bg);
   color: var(--btn-text);
-  border-radius: var(--btn-radius);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-yellow:hover, .btn-green:hover, .btn-signup:hover, .btn-search:hover, .btn-view-all:hover, .btn-book:hover, .btn-quote:hover, .btn-submit:hover, .btn-final:hover, .btn-theme:hover, .btn-blue:hover, .btn-cta-1:hover, .p3-btn-primary:hover, .btn-hero:hover, .btn-about:hover, .v2-btn-primary:hover, .v2-btn:hover, .hc4-btn-primary:hover, .hc4-btn-secondary:hover, .hc4-overlap-btn:hover, .hc4-subscribe-btn:hover, button:hover {
+  background-color: var(--secondary) !important;
+  color: var(--btn-text) !important;
 }
 
 form, .form-container, .form {
@@ -414,8 +537,15 @@ input, select, textarea, .input-field {
         styleTag.id = 'global-theme-styles';
       }
       styleTag.innerHTML = css;
-      // Always append to end of head to ensure it overrides GrapesEditor branding-vars
-      canvasDoc.head.appendChild(styleTag);
+      
+      // Find the GrapesJS dynamic styles tag (it contains user's style manager manual edits)
+      const gjsStyleTag = canvasDoc.querySelector('style[data-gjs="styles"]');
+      if (gjsStyleTag && gjsStyleTag.parentNode) {
+        // Insert global-theme-styles BEFORE GrapesJS dynamic stylesheet so user's manual class/ID changes override global styles
+        gjsStyleTag.parentNode.insertBefore(styleTag, gjsStyleTag);
+      } else {
+        canvasDoc.head.appendChild(styleTag);
+      }
     }
 
     // (We intentionally DO NOT call editor.setStyle() here because the GrapesJS CSS parser drops modern features like color-mix. The injected styleTag above is sufficient for live editing and is captured during save.)
@@ -431,12 +561,14 @@ input, select, textarea, .input-field {
 
   return (
     <div className="w-full flex-shrink-0 flex flex-col bg-[#fff] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      {Object.entries(styles).map(([category, properties]) => (
-        <div key={category} className="border-b border-[#e5e7eb]">
-          <button
-            onClick={() => toggleSection(category)}
-            className="flex items-center justify-between w-full px-3 py-2 text-left bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors group"
-          >
+      {Object.entries(styles).map(([category, properties]) => {
+        if (category === 'Heading') return null;
+        return (
+          <div key={category} className="border-b border-[#e5e7eb]">
+            <button
+              onClick={() => toggleSection(category)}
+              className="flex items-center justify-between w-full px-3 py-2 text-left bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors group"
+            >
             <span className="font-medium text-[#111827] text-[13px] capitalize">
               {category}
             </span>
@@ -514,7 +646,8 @@ input, select, textarea, .input-field {
             </div>
           )}
         </div>
-      ))}
+      );
+    })}
     </div>
   );
 };

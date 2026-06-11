@@ -466,19 +466,6 @@ const GrapesEditor = () => {
           --accent: ${secondaryColor};
           --gold: ${primaryColor};
           --forest: ${primaryColor};
-          --btn-bg: ${primaryColor};
-          --btn-text: #ffffff;
-          --body-bg: #ffffff;
-          --body-text: #0f172a;
-          --heading-color: #0f172a;
-          --subheading-color: #475569;
-          --midnight: #0a1128;
-          --ivory: #f8f9fa;
-          --ink: #0c4a6e;
-          --soft: #ffffff;
-          --bg: #1a0f08;
-          --cream: #f4ead5;
-          --muted: #a89580;
           --button-gradient: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
         }
         
@@ -963,13 +950,26 @@ const GrapesEditor = () => {
           inputHex.style.color = '#111827';
           inputHex.style.fontSize = '12px';
           inputHex.style.outline = 'none';
-          
           el.appendChild(pickrBtn);
           el.appendChild(inputHex);
 
           const applyUpdate = (val: string, partial: boolean) => {
              // Pass to emit()
              change({ value: val, partial });
+          };
+
+          const toHexAny = (hex: string) => {
+            if (!hex) return '';
+            if (hex.startsWith('#') && (hex.length === 9 || hex.length === 7)) return hex;
+            if (hex.startsWith('#') && hex.length === 5) {
+              const [, r, g, b, a] = hex;
+              return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+            }
+            if (hex.startsWith('#') && hex.length === 4) {
+              const [, r, g, b] = hex;
+              return `#${r}${r}${g}${g}${b}${b}`;
+            }
+            return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : '';
           };
 
           const initPickr = () => {
@@ -981,31 +981,20 @@ const GrapesEditor = () => {
               default: initialVal || null,
               useAsButton: true,
               components: {
-                preview: true, opacity: false, hue: true,
+                preview: true, opacity: true, hue: true,
                 interaction: { hex: true, input: true, save: true, clear: true }
               }
             });
-            
-            const toHex6 = (hex: string) => {
-              if (!hex) return '';
-              if (hex.startsWith('#') && hex.length === 9) return hex.slice(0, 7);
-              if (hex.startsWith('#') && hex.length === 7) return hex;
-              if (hex.startsWith('#') && hex.length === 4) {
-                const [, r, g, b] = hex;
-                return `#${r}${r}${g}${g}${b}${b}`;
-              }
-              return hex.length === 6 ? `#${hex}` : '';
-            };
 
             pickr.on('change', (color: Pickr.HSVaColor) => {
-              const hex = color ? toHex6(color.toHEXA().toString()) : '';
+              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
               pickrBtn.style.backgroundColor = hex || 'transparent';
               inputHex.value = hex;
               applyUpdate(hex, true);
             });
             
             pickr.on('save', (color: Pickr.HSVaColor) => {
-              const hex = color ? toHex6(color.toHEXA().toString()) : '';
+              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
               pickrBtn.style.backgroundColor = hex || 'transparent';
               inputHex.value = hex;
               applyUpdate(hex, false);
@@ -1021,7 +1010,7 @@ const GrapesEditor = () => {
 
             inputHex.addEventListener('change', (e: any) => {
               const val = e.target.value;
-              const hex = toHex6(val);
+              const hex = toHexAny(val);
               if (hex) {
                  pickr.setColor(hex);
                  pickrBtn.style.backgroundColor = hex;
@@ -1114,7 +1103,7 @@ const GrapesEditor = () => {
       },
       panels: { defaults: [] },
       selectorManager: {
-        componentFirst: false,
+        componentFirst: true,
         appendTo: '#selectors-container',
       },
       styleManager: {
@@ -2552,19 +2541,7 @@ const GrapesEditor = () => {
           --secondary: ${themeSecondary} !important;
           --accent: ${themeSecondary} !important;
           --gold: ${themePrimary} !important;
-          --btn-bg: ${themePrimary} !important;
-          --btn-text: #ffffff;
-          --body-bg: #ffffff;
-          --body-text: #0f172a;
-          --heading-color: #0f172a;
-          --subheading-color: #475569;
-          --midnight: #0a1128;
-          --ivory: #f8f9fa;
-          --ink: #0c4a6e;
-          --soft: #ffffff;
-          --bg: #1a0f08;
-          --cream: #f4ead5;
-          --muted: #a89580;
+          --forest: ${themePrimary} !important;
           --button-gradient: linear-gradient(135deg, ${themePrimary}, ${themeSecondary});
         }
       `;
@@ -2612,7 +2589,7 @@ const GrapesEditor = () => {
 
     const templateCss = templateStyleTag?.innerHTML || '';
 
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
     const styleData = globalCss + '\n' + css;
 
@@ -2674,7 +2651,7 @@ const GrapesEditor = () => {
       const templateStyleTag = canvasDoc.getElementById('template-styles');
 
       const templateCss = templateStyleTag?.innerHTML || '';
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
       // Extract scripts to ensure they aren't lost
       let canvasScripts = '';
@@ -2777,7 +2754,7 @@ const GrapesEditor = () => {
           .replace(/var\\(--primary\\)/g, themePrimary)
           .replace(/var\\(--secondary\\)/g, themeSecondary);
 
-        globalCssForDownload = (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '') + '\\n' + cleanTemplateCss;
+        globalCssForDownload = cleanTemplateCss + '\\n' + (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '');
       }
     } catch (e) {
       console.warn('Failed to extract scripts or styles from canvas for download:', e);
@@ -2940,7 +2917,7 @@ const GrapesEditor = () => {
 
       const templateCss = templateStyleTag?.innerHTML || '';
 
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
       const styleData = globalCss + '\n' + css;
 
       // Extract scripts from canvas using unified helper, then merge with backup
@@ -3491,6 +3468,7 @@ const GrapesEditor = () => {
                 editor={editorInstance}
                 initialPrimary={page?.primaryColor}
                 initialSecondary={page?.secondaryColor}
+                initialStylesCss={mode === 'landing' ? page?.landingPageStyles : page?.thankYouPageStyles}
                 onBrandingColorsChange={({ primary, secondary }) => {
                   setThemePrimary(primary);
                   setThemeSecondary(secondary);
