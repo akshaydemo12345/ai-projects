@@ -930,7 +930,7 @@ const GrapesEditor = () => {
 
     const pickrColorPlugin = (ed: any) => {
       ed.StyleManager.addType('pickr-color', {
-        create({ property, change, updateValue }: any) {
+        create({ props, change }: any) {
           const el = document.createElement('div');
           el.style.display = 'flex';
           el.style.alignItems = 'center';
@@ -963,22 +963,8 @@ const GrapesEditor = () => {
           el.appendChild(inputHex);
 
           const applyUpdate = (val: string, partial: boolean) => {
-            try {
-              if (typeof change === 'function') {
-                change({ value: val, partial });
-                change(val, { partial });
-              }
-              if (typeof updateValue === 'function') {
-                updateValue(val, { partial });
-              }
-              if (property) {
-                if (typeof property.upValue === 'function') property.upValue(val, { partial });
-                if (typeof property.setValue === 'function') property.setValue(val, { partial });
-                if (typeof property.up === 'function') property.up({ value: val, partial });
-              }
-            } catch (e) {
-              console.error('Pickr update error:', e);
-            }
+             // Pass to emit()
+             change({ value: val, partial });
           };
 
           const initPickr = () => {
@@ -1007,7 +993,7 @@ const GrapesEditor = () => {
             };
 
             pickr.on('change', (color: Pickr.HSVaColor) => {
-              const hex = toHex6(color.toHEXA().toString());
+              const hex = color ? toHex6(color.toHEXA().toString()) : '';
               pickrBtn.style.backgroundColor = hex || 'transparent';
               inputHex.value = hex;
               applyUpdate(hex, true);
@@ -1064,32 +1050,20 @@ const GrapesEditor = () => {
           return el;
         },
         
-        emit({ elInput, property }: any) {
-          if (!elInput) return;
-          const val = property.getValue() || '';
-          if (elInput.__inputHex) elInput.__inputHex.value = val;
-          if (elInput.__pickrBtn) elInput.__pickrBtn.style.backgroundColor = val || 'transparent';
-          const pickr = elInput.__pickr;
+        emit({ updateStyle }: any, { value, partial }: any) {
+          updateStyle(value, { partial });
+        },
+
+        update({ value, el }: any) {
+          if (!el) return;
+          const val = value || '';
+          if (el.__inputHex) el.__inputHex.value = val;
+          if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
+          const pickr = el.__pickr;
           if (pickr) {
              if (val) pickr.setColor(val, true);
              else pickr.setColor(null, true);
           }
-        },
-
-        update({ elInput, property }: any) {
-          if (!elInput) return;
-          const val = property.getValue() || '';
-          if (elInput.__inputHex) elInput.__inputHex.value = val;
-          if (elInput.__pickrBtn) elInput.__pickrBtn.style.backgroundColor = val || 'transparent';
-          const pickr = elInput.__pickr;
-          if (pickr) {
-             if (val) pickr.setColor(val, true);
-             else pickr.setColor(null, true);
-          }
-        },
-
-        onUpdate(args: any) {
-          this.update(args);
         }
       });
     };
