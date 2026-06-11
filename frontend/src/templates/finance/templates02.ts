@@ -52,16 +52,16 @@ h1, h2, h3 {
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.nav-inner { display: flex; justify-content: space-between; align-items: center; }
+.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
 
-.nav-links { display: flex; gap: 3rem; align-items: center; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 3rem; align-items: center; }
 .nav-links a { text-decoration: none; color: #fff; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
 .nav-links a:hover { opacity: 1; }
 
 .btn-nav {
-  background: var(--primary) !important;
-  color: #fff !important;
+  background: var(--btn-bg, var(--primary)) ;
+  color: var(--btn-text, #fff) ;
   padding: 0.9rem 2.5rem;
   font-weight: 700;
   text-decoration: none;
@@ -74,8 +74,8 @@ h1, h2, h3 {
 .hero {
   height: 90vh;
   min-height: 800px;
-  background: var(--secondary) !important;
-  display: flex;
+  background: var(--secondary) ;
+  display: flex; flex-wrap: wrap;
   align-items: center;
   position: relative;
   color: #fff;
@@ -108,8 +108,8 @@ h1, h2, h3 {
   font-weight: 300;
 }
 
-.hero-btns { display: flex; gap: 1.5rem; }
-.btn-hero-primary { background: var(--primary) !important; color: #fff !important; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
+.hero-btns { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.btn-hero-primary { background: var(--btn-bg, var(--primary)) ; color: var(--btn-text, #fff) ; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
 .btn-hero-outline { border: 1px solid #fff; color: #fff; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
 .btn-hero-outline:hover { background: #fff; color: var(--secondary); }
 
@@ -135,7 +135,7 @@ h1, h2, h3 {
   gap: 1.5rem;
 }
 
-.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-group { display: flex; flex-wrap: wrap; flex-direction: column; gap: 0.5rem; }
 .form-group.full { grid-column: span 2; }
 .form-group label { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--slate); letter-spacing: 1px; }
 .form-group input, .form-group select {
@@ -150,8 +150,8 @@ h1, h2, h3 {
 
 .btn-form {
   grid-column: span 2;
-  background: var(--primary);
-  color: #fff;
+  background: var(--btn-bg, var(--primary));
+  color: var(--btn-text, #fff);
   padding: 1.2rem;
   border: none;
   font-weight: 700;
@@ -159,11 +159,11 @@ h1, h2, h3 {
   letter-spacing: 2px;
   cursor: pointer;
 }
-.btn-form:hover { background: var(--primary); }
+.btn-form:hover { background: var(--secondary) !important; color: var(--btn-text, #fff) !important; }
 
 /* TRUST SECTION */
 .trust-logos { padding: 4rem 0; border-bottom: 1px solid var(--border); }
-.logo-flex { display: flex; justify-content: space-between; align-items: center; opacity: 1; filter: grayscale(0); color: #000; }
+.logo-flex { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; opacity: 1; filter: grayscale(0); color: #000; }
 .logo-flex img { height: 30px; }
 
 /* SERVICES GRID */
@@ -202,7 +202,7 @@ h1, h2, h3 {
 .global-item p { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 0.8rem; color: var(--slate); }
 
 /* CORE VALUES */
-.values-section { background: var(--primary) !important; color: #fff; text-align: center; }
+.values-section { background: var(--primary) ; color: #fff; text-align: center; }
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
 .value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
 .value-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
@@ -232,6 +232,25 @@ h1, h2, h3 {
   .form-group.full { grid-column: span 1; }
   .btn-form { grid-column: span 1; }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates02-1 { background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)); }
+  .tpl-templates02-2 { color: var(--gold); }
+  .tpl-templates02-3 { color: var(--slate); }
+  .tpl-templates02-4 { color: #000; }
+  .tpl-templates02-5 { color: var(--gold); }
+  .tpl-templates02-6 { background: #f8fafc; }
+  .tpl-templates02-7 { color: var(--gold); }
+  .tpl-templates02-8 { color: var(--slate); }
+  .tpl-templates02-9 { background: var(--gold); }
+  .tpl-templates02-10 { background: var(--gold); }
+  .tpl-templates02-11 { background: var(--gold); }
+  .tpl-templates02-12 { color: SECONDARY_COLOR_PLACEHOLDER; border-bottom: 2px solid var(--gold); }
+  .tpl-templates02-13 { color: var(--gold); }
+  .tpl-templates02-14 { color: #fff; }
+  .tpl-templates02-15 { color: var(--gold); }
+  .tpl-templates02-16 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
 export const finance02Html = `
@@ -239,7 +258,7 @@ export const finance02Html = `
 
 <nav class="nav">
   <div class="container nav-inner">
-    <div class="logo" style="display: flex; align-items: center; gap: 1rem;">
+    <div class="logo" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
       <span style="font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">LOGO_PLACEHOLDER</span>
     </div>
   </div>
@@ -248,7 +267,7 @@ export const finance02Html = `
 <section class="hero">
   <div class="hero-overlay" style="overflow: hidden;">
     <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Hero Background">
-    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)); z-index: 2;"></div>
+    <div class="tpl-templates02-1" style="position: absolute; inset: 0; z-index: 2"></div>
   </div>
   <div class="container">
     <div class="hero-content">
@@ -266,12 +285,12 @@ export const finance02Html = `
   <div class="form-section">
     <div class="form-grid">
       <div class="form-text">
-        <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px;">Inquiry</span>
+        <span class="tpl-templates02-2" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px">Inquiry</span>
         <h2>Begin Your Consultation</h2>
         <p>Connect with our senior advisors for a comprehensive analysis of your global financial objectives.</p>
         <div style="margin-top: 2rem;">
           <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Corporate HQ</h4>
-          <p style="color: var(--slate); font-size: 0.9rem;">ADDRESS_PLACEHOLDER</p>
+          <p class="tpl-templates02-3" style="font-size: 0.9rem">ADDRESS_PLACEHOLDER</p>
         </div>
       </div>
       <form class="contact-form">
@@ -303,7 +322,7 @@ export const finance02Html = `
 
 <div class="container">
   <div class="trust-logos">
-    <div class="logo-flex" style="color: #000;">
+    <div class="logo-flex tpl-templates02-4"  >
       <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">GOLDMAN SACHS</span>
       <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">JP MORGAN</span>
       <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">MORGAN STANLEY</span>
@@ -314,7 +333,7 @@ export const finance02Html = `
 
 <section class="section-padding container" id="services">
   <div style="text-align: center; margin-bottom: 6rem;">
-    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Areas of Expertise</span>
+    <span class="tpl-templates02-5" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Areas of Expertise</span>
     <h2 style="font-size: 3.5rem; margin-top: 1.5rem;">Unrivaled Financial <br>Intelligence</h2>
   </div>
 
@@ -337,21 +356,21 @@ export const finance02Html = `
   </div>
 </section>
 
-<section class="section-padding" style="background: #f8fafc;" id="about">
+<section class="section-padding tpl-templates02-6"   id="about">
   <div class="container expertise-block">
     <div class="expertise-img" style="position: relative; overflow: hidden;">
       <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" alt="Expertise Background">
     </div>
     <div class="expertise-content">
-      <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px;">Our Heritage</span>
+      <span class="tpl-templates02-7" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px">Our Heritage</span>
       <h2 style="font-size: 3rem; margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
-      <p style="color: var(--slate); font-size: 1.1rem; margin-bottom: 2rem;">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
-      <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
-        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Institutional Risk Management</li>
-        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Global Market Access</li>
-        <li style="display: flex; gap: 1rem; align-items: center; font-weight: 700;"><div style="width: 20px; height: 1px; background: var(--gold);"></div> Discreet Advisory Services</li>
+      <p class="tpl-templates02-8" style="font-size: 1.1rem; margin-bottom: 2rem">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
+      <ul style="list-style: none; display: flex; flex-wrap: wrap; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
+        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-9" style="width: 20px; height: 1px"></div> Institutional Risk Management</li>
+        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-10" style="width: 20px; height: 1px"></div> Global Market Access</li>
+        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-11" style="width: 20px; height: 1px"></div> Discreet Advisory Services</li>
       </ul>
-      <a href="#contact" style="color: SECONDARY_COLOR_PLACEHOLDER; font-weight: 800; text-decoration: none; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">View Our Report</a>
+      <a href="#contact" class="tpl-templates02-12" style="font-weight: 800; text-decoration: none; padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem">View Our Report</a>
     </div>
   </div>
 </section>
@@ -375,8 +394,8 @@ export const finance02Html = `
 
 <section class="section-padding values-section">
   <div class="container">
-    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Philosophy</span>
-    <h2 style="font-size: 3rem; color: #fff; margin-top: 1.5rem;">The Pillars of Our Success</h2>
+    <span class="tpl-templates02-13" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Philosophy</span>
+    <h2 class="tpl-templates02-14" style="font-size: 3rem; margin-top: 1.5rem">The Pillars of Our Success</h2>
     <div class="values-grid">
       <div class="value-card">
         <i class="fa-solid fa-shield-halved"></i>
@@ -400,7 +419,7 @@ export const finance02Html = `
 
 <section class="section-padding cta-minimal">
   <div class="container">
-    <span style="font-weight: 700; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 3px;">Next Steps</span>
+    <span class="tpl-templates02-15" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Next Steps</span>
     <h2 style="margin: 1.5rem 0 3rem;">Ready to Secure Your <br>Financial Future?</h2>
     <a href="#contact" class="btn-cta-dark">Request an Introduction</a>
   </div>
@@ -409,7 +428,7 @@ export const finance02Html = `
 <footer class="footer">
   <div class="container footer-grid">
     <div>
-      <div class="footer-logo" style="display: flex; align-items: center; gap: 1rem;">
+      <div class="footer-logo" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
         <span style="font-size: 1.1rem; font-weight: 800; letter-spacing: 1px;">LOGO_PLACEHOLDER</span>
       </div>
       <p class="footer-p">A global investment and advisory firm dedicated to the preservation and expansion of institutional and private wealth.</p>
@@ -530,7 +549,7 @@ export const finance02Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates02-16" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
