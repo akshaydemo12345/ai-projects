@@ -1,13 +1,13 @@
 export const saasHeroStyles = `
   .saas-container { margin: 0; font-family: 'Inter', sans-serif; color: #1e293b; background: #fff; scroll-behavior: smooth; }
-  .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 8%; background: #fff; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #f1f5f9; }
+  .navbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 15px 8%; background: #fff; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #f1f5f9; }
   .logo { font-size: 24px; font-weight: 800; color: #6366f1; }
-  .nav-links { display: flex; gap: 30px; list-style: none; align-items: center; }
+  .nav-links { display: flex; flex-wrap: wrap; gap: 30px; list-style: none; align-items: center; }
   .nav-links a { text-decoration: none; color: #64748b; font-weight: 600; font-size: 15px; transition: 0.3s; }
   .nav-links a:hover { color: #6366f1; }
   .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: #6366f1; }
   
-  .hero { padding: 100px 8%; display: flex; align-items: center; gap: 50px; background: #f8fafc; }
+  .hero { padding: 100px 8%; display: flex; flex-wrap: wrap; align-items: center; gap: 50px; background: #f8fafc; }
   .hero-content { flex: 1; }
   .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.2; margin-bottom: 25px; }
   .hero p { font-size: 18px; color: #64748b; margin-bottom: 40px; line-height: 1.7; }
@@ -15,8 +15,8 @@ export const saasHeroStyles = `
   .hero-form { flex: 1; max-width: 450px; background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
   .hero-form h3 { font-size: 24px; font-weight: 800; margin-bottom: 20px; text-align: center; }
   .hero-form input { width: 100%; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px; outline: none; }
-  .btn-primary { width: 100%; padding: 16px; background: #6366f1; color: #fff; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; }
-  .btn-primary:hover { background: PRIMARY_COLOR_PLACEHOLDER; }
+  .btn-primary { width: 100%; padding: 16px; background: var(--btn-bg, #6366f1); color: var(--btn-text, #fff); border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; }
+  .btn-primary:hover { background: var(--secondary, PRIMARY_COLOR_PLACEHOLDER) !important; color: var(--btn-text, #fff) !important; }
 
   .features { padding: 100px 8%; text-align: center; }
   .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 60px; }
@@ -24,7 +24,7 @@ export const saasHeroStyles = `
   .feat-card:hover { border-color: #6366f1; transform: translateY(-5px); }
   .feat-card i { font-size: 28px; margin-bottom: 20px; display: block; }
   
-  .content-section { padding: 100px 8%; display: flex; align-items: center; gap: 80px; }
+  .content-section { padding: 100px 8%; display: flex; flex-wrap: wrap; align-items: center; gap: 80px; }
   .content-img { flex: 1; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
   .content-text { flex: 1; }
   
@@ -41,7 +41,7 @@ export const saasHeroStyles = `
   @media (max-width: 968px) {
     .navbar { padding: 10px 5%; }
     .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #fff; flex-direction: column; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); gap: 20px; }
-    .nav-links.active { display: flex; }
+    .nav-links.active { display: flex; flex-wrap: wrap; }
     .mobile-toggle { display: block; }
     .nav-links .btn-primary { display: block; width: 100%; }
 
@@ -95,6 +95,13 @@ export const saasHeroStyles = `
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-saasHero-1 { background: #fff; color: #6366f1; }
+  .tpl-saasHero-2 { color: #64748b; }
+  .tpl-saasHero-3 { color: #94a3b8; }
+  .tpl-saasHero-4 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
 export const saasHeroHtml = `
@@ -114,7 +121,7 @@ export const saasHeroHtml = `
       <div class="hero-content">
         <h1>Transform Your Business Operations.</h1>
         <p>The all-in-one platform to manage your team, projects, and clients with insane efficiency. Join 2,000+ growing businesses.</p>
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
            <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_of_the_Google.svg" style="height: 20px; opacity: 0.5;" />
            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" style="height: 20px; opacity: 0.5;" />
         </div>
@@ -186,7 +193,7 @@ export const saasHeroHtml = `
       <div class="cta-box">
         <h2>Ready to grow your business?</h2>
         <p>Join thousands of businesses already scaling with BizFlow.</p>
-        <button class="btn-primary" style="background: #fff; color: #6366f1; width: auto; padding: 18px 40px; margin-top: 20px;">Get Started for Free</button>
+        <button class="btn-primary tpl-saasHero-1"  style="width: auto; padding: 18px 40px; margin-top: 20px">Get Started for Free</button>
       </div>
     </div>
 
@@ -194,7 +201,7 @@ export const saasHeroHtml = `
       <div class="footer-grid">
         <div class="footer-col">
           <div class="logo">BizFlow</div>
-          <p style="color: #64748b; margin-top: 20px;">The modern business operating system.</p>
+          <p class="tpl-saasHero-2" style="margin-top: 20px">The modern business operating system.</p>
         </div>
         <div class="footer-col">
           <h4>Solution</h4>
@@ -212,7 +219,7 @@ export const saasHeroHtml = `
           <p>Terms</p>
         </div>
       </div>
-      <p style="text-align: center; color: #94a3b8; font-size: 14px;">© 2026 BizFlow Inc.</p>
+      <p class="tpl-saasHero-3" style="text-align: center; font-size: 14px">© 2026 BizFlow Inc.</p>
     </footer>
 
     <div id="loader" class="page-loader">
@@ -311,7 +318,7 @@ export const saasHeroHtml = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-saasHero-4" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
