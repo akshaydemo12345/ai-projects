@@ -505,7 +505,7 @@
 }
 
 /* Fix for overall layout scrolling when color picker opens */
-body {
+body:has(.gjs-editor) {
   overflow: hidden !important;
 }
 
