@@ -361,40 +361,40 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, onBrandin
 
     css += `
 body {
-  background-color: var(--body-bg) !important;
-  color: var(--body-text) !important;
-  font-family: var(--body-font) !important;
-  font-size: var(--body-size) !important;
-  line-height: var(--body-line-height) !important;
+  background-color: var(--body-bg);
+  color: var(--body-text);
+  font-family: var(--body-font);
+  font-size: var(--body-size);
+  line-height: var(--body-line-height);
 }
 
 h1, .headline, .heading {
-  color: var(--heading-color) !important;
-  font-family: var(--heading-font) !important;
-  font-size: var(--heading-size) !important;
-  line-height: var(--heading-line-height) !important;
+  color: var(--heading-color);
+  font-family: var(--heading-font);
+  font-size: var(--heading-size);
+  line-height: var(--heading-line-height);
 }
 
 h2, h3, h4, h5, h6, .subheading, .subtitle {
-  color: var(--subheading-color) !important;
-  font-family: var(--subheading-font) !important;
-  font-size: var(--subheading-size) !important;
-  line-height: var(--subheading-line-height) !important;
+  color: var(--subheading-color);
+  font-family: var(--subheading-font);
+  font-size: var(--subheading-size);
+  line-height: var(--subheading-line-height);
 }
 
 button, .btn, [class*="btn-"] {
-  background-color: var(--btn-bg) !important;
-  color: var(--btn-text) !important;
-  border-radius: var(--btn-radius) !important;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: var(--btn-radius);
 }
 
 form, .form-container, .form {
-  background-color: var(--form-bg) !important;
+  background-color: var(--form-bg);
 }
 
 input, select, textarea, .input-field {
-  background-color: var(--input-bg) !important;
-  color: var(--input-text) !important;
+  background-color: var(--input-bg);
+  color: var(--input-text);
 }
 `;
     return css;
