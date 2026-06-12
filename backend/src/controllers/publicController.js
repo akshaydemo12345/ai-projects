@@ -1772,6 +1772,12 @@ exports.verifyPlugin = async (req, res, next) => {
       'title slug content seo template domain publishedAt'
     );
 
+    // If verification succeeded and hasn't been set, set it to true
+    if (!project.isVerified) {
+      project.isVerified = true;
+      await Project.updateOne({ _id: project._id }, { $set: { isVerified: true } });
+    }
+
     const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
 
     const preSlug = (project.preSlug || "").replace(/^\/+|\/+$/g, '');
