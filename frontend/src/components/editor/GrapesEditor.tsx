@@ -383,22 +383,19 @@ const GrapesEditor = () => {
         finalStyles = finalStyles.replace(regex, 'var(--secondary)');
       }
 
-      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      // 1. Replace the actual variable definitions in :root first with the HEX values for base to avoid circular references
       finalStyles = finalStyles
         .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor}`)
         .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor}`)
-        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor}`)
-        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor}`)
-        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor}`)
-        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor}`)
-        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor}`);
+        .replace(/--primary-rgb\s*:\s*PRIMARY_RGB_PLACEHOLDER/g, `--primary-rgb: ${pRgb}`)
+        .replace(/--secondary-rgb\s*:\s*SECONDARY_RGB_PLACEHOLDER/g, `--secondary-rgb: ${sRgb}`);
 
       // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
       finalStyles = finalStyles
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, 'var(--primary-rgb)')
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, 'var(--secondary-rgb)')
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
