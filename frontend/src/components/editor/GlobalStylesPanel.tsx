@@ -178,24 +178,24 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     };
   }, [editor]);
 
-const parseCssVariables = (cssStr: string) => {
-  const vars: Record<string, string> = {};
-  if (!cssStr) return vars;
-  
-  const regex = /--([a-zA-Z0-9-]+)\s*:\s*([^;!}\n]+)(?:\s*!important)?\s*;/g;
-  let match;
-  while ((match = regex.exec(cssStr)) !== null) {
-    const name = '--' + match[1].trim();
-    const value = match[2].trim();
-    vars[name] = value;
-  }
-  return vars;
-};
+  const parseCssVariables = (cssStr: string) => {
+    const vars: Record<string, string> = {};
+    if (!cssStr) return vars;
+
+    const regex = /--([a-zA-Z0-9-]+)\s*:\s*([^;!}\n]+)(?:\s*!important)?\s*;/g;
+    let match;
+    while ((match = regex.exec(cssStr)) !== null) {
+      const name = '--' + match[1].trim();
+      const value = match[2].trim();
+      vars[name] = value;
+    }
+    return vars;
+  };
 
   // Sync initial variables from the saved CSS stylesheet
   useEffect(() => {
     if (!initialStylesCss) return;
-    
+
     const parsedVars = parseCssVariables(initialStylesCss);
     if (Object.keys(parsedVars).length === 0) return;
 
@@ -208,7 +208,7 @@ const parseCssVariables = (cssStr: string) => {
           const varName = next[cat][key].varName;
           if (parsedVars[varName] !== undefined) {
             let rawValue = parsedVars[varName].trim();
-            
+
             // Check if it ends with unit (px, rem, em, %)
             const unitMatch = rawValue.match(/^([\d.-]+)(px|rem|em|%|)$/);
             if (unitMatch && next[cat][key].type === 'number') {
@@ -337,13 +337,13 @@ const parseCssVariables = (cssStr: string) => {
                   updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                   changed = true;
                 }
-                
+
                 // Handle rgb() replacements with optional spaces
                 const rgbParts = oldRgb.split(',').map(s => s.trim());
                 if (rgbParts.length === 3) {
                   const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
                   const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
-                  
+
                   if (rgbRegex.test(compStyle[prop])) {
                     updates[prop] = compStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
                     changed = true;
@@ -390,12 +390,12 @@ const parseCssVariables = (cssStr: string) => {
                 newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
                 changedRule = true;
               }
-              
+
               const rgbParts = oldRgb.split(',').map(s => s.trim());
               if (rgbParts.length === 3) {
                 const rgbRegex = new RegExp(`rgb\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*\\)`, 'gi');
                 const rgbaRegex = new RegExp(`rgba\\(\\s*${rgbParts[0]}\\s*,\\s*${rgbParts[1]}\\s*,\\s*${rgbParts[2]}\\s*,`, 'gi');
-                
+
                 if (rgbRegex.test(newStyle[prop])) {
                   newStyle[prop] = newStyle[prop].replace(rgbRegex, `rgb(${newRgb})`);
                   changedRule = true;
@@ -488,12 +488,12 @@ h3, h4, h5, h6, .subheading, .subtitle {
   font-family: 'Material Icons' !important;
 }
 
-a:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]) {
+a:where(:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]):not(.cta-button)) {
   color: var(--primary);
   transition: color 0.3s ease;
 }
-a:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]):hover {
-  color: var(--secondary) !important;
+a:where(:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]):not(.cta-button)):hover {
+  color: var(--secondary);
 }
 
 button, .btn, [class*="btn-"] {
@@ -537,7 +537,7 @@ input, select, textarea, .input-field {
         styleTag.id = 'global-theme-styles';
       }
       styleTag.innerHTML = css;
-      
+
       // Find the GrapesJS dynamic styles tag (it contains user's style manager manual edits)
       const gjsStyleTag = canvasDoc.querySelector('style[data-gjs="styles"]');
       if (gjsStyleTag && gjsStyleTag.parentNode) {
@@ -569,22 +569,22 @@ input, select, textarea, .input-field {
               onClick={() => toggleSection(category)}
               className="flex items-center justify-between w-full px-3 py-2 text-left bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors group"
             >
-            <span className="font-medium text-[#111827] text-[13px] capitalize">
-              {category}
-            </span>
-            {expanded[category] ?
-              <ChevronDown size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" /> :
-              <ChevronRight size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" />
-            }
-          </button>
+              <span className="font-medium text-[#111827] text-[13px] capitalize">
+                {category}
+              </span>
+              {expanded[category] ?
+                <ChevronDown size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" /> :
+                <ChevronRight size={14} className="text-[#6b7280] group-hover:text-[#000000] transition-colors" />
+              }
+            </button>
 
-          {expanded[category] && (
-            <div className="p-4 bg-[#fff] flex flex-col gap-3">
-              {Object.entries(properties).map(([key, prop]) => (
-                <div key={key} className="flex flex-col gap-1.5">
-                  <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
-                    {prop.label}
-                  </span>
+            {expanded[category] && (
+              <div className="p-4 bg-[#fff] flex flex-col gap-3">
+                {Object.entries(properties).map(([key, prop]) => (
+                  <div key={key} className="flex flex-col gap-1.5">
+                    <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
+                      {prop.label}
+                    </span>
 
                     {/* Controls Rendering */}
                     <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
@@ -641,13 +641,13 @@ input, select, textarea, .input-field {
                         </div>
                       )}
                     </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

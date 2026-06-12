@@ -19,6 +19,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const formRoutes = require('./routes/formRoutes');
 const thankYouRoutes = require('./routes/thankYouRoutes');
+const utilRoutes = require('./routes/utilRoutes');
 // const proxyRoutes = require('./routes/proxyRoutes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { sanitizeInput } = require('./middleware/sanitizeInput');
@@ -107,6 +108,7 @@ app.use('/admin', adminRoutes);
 app.use('/api/leads', compression(), leadRoutes);
 app.use('/api/forms', compression(), formRoutes);
 app.use('/api/thank-you', compression(), thankYouRoutes);
+app.use('/api/utils', utilRoutes);
 
 // 4. Proxy Engine (Isolated Prefix) - Must be BEFORE public catch-all
 // app.use('/api/v1/proxy', rateLimiter({ windowMs: 60000, max: 100 }), proxyRoutes);
