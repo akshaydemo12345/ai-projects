@@ -88,15 +88,15 @@ const projectSchema = new mongoose.Schema({
   // All scraped/analyzed data is stored here. No more duplicates.
   websiteProfile: {
     // 1. Project Identity
-    identity: {
-      name: String,
-      description: String,
-      logoUrl: String,
-      favicon: String,
-      // Logo metadata — set during scrape
-      logoFormat: String,   // e.g. 'png', 'svg-inline', 'svg-url', 'webp', 'favicon-fallback'
-      logoSource: String,   // 'scraped' | 'favicon-fallback'
-    },
+  identity: {
+    name: String,
+    description: String,
+    logoUrl: String,
+    logoSvgMarkup: String,     // ← new field
+    favicon: String,
+    logoFormat: String,
+      logoSource: String,
+  },
 
     // 2. Logo-Specific Colors (extracted directly from logo image)
     logoColors: {
@@ -329,29 +329,6 @@ projectSchema.virtual('logoColors').get(function () {
 
 projectSchema.virtual('themeSystem').get(function () {
   return this.websiteProfile?.theme || {};
-});
-
-projectSchema.virtual('brandingData').get(function () {
-  // Map websiteProfile to old brandingData shape for backward compatibility
-  const wp = this.websiteProfile || {};
-  return {
-    identity: wp.identity,
-    logoColors: wp.logoColors,
-    colors: wp.colors,
-    themeSystem: wp.theme,
-    typography: wp.fonts,
-    images: wp.images,
-    videos: wp.videos,
-    content: wp.content,
-    forms: wp.forms,
-    seo: wp.seo,
-    sections: wp.sections?.map(s => s.type).filter(Boolean) || [],
-    industry: wp.industry?.industry,
-    subIndustry: wp.industry?.subIndustry,
-    sourceUrl: wp.extraction?.sourceUrl,
-    scrapedAt: wp.extraction?.scrapedAt,
-    durationMs: wp.extraction?.durationMs || 0,
-  };
 });
 
 // Business virtuals (keep for backward compatibility)
