@@ -148,13 +148,21 @@
       color: white;
       font-weight: 600;
     }
-  </style>
+  
+    /* Force typography to inherit color so it overrides landing page styles but respects editor changes */
+    .hero-section h1,
+    .hero-section h2,
+    .hero-section h3,
+    .hero-section p {
+      color: inherit;
+    }
+</style>
 </head>
 <body class="bg-gray-50">
   <!-- Header -->
   <header class="bg-white py-6 header-shadow relative z-10">
     <div class="container mx-auto px-6 flex justify-between items-center">
-      <div class="text-2xl font-black text-gray-900 tracking-tighter">
+      <div class="text-2xl font-black  tracking-tighter">
         {{#logoUrl}}
           <img src="{{logoUrl}}" alt="{{businessName}}" class="h-8">
         {{/logoUrl}}
@@ -179,7 +187,7 @@
       
       <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight">{{heading}}</h1>
       
-      <p class="text-lg md:text-2xl text-gray-300 mb-6 max-w-2xl mx-auto leading-relaxed font-light">
+      <p class="text-lg md:text-2xl  mb-6 max-w-2xl mx-auto leading-relaxed font-light">
         {{subheading}}
       </p>
 
@@ -190,7 +198,7 @@
       {{/offerText}}
 
       <div>
-        <a href="{{ctaUrl}}" class="cta-button">
+        <a href="{{ctaUrl}}" class="cta-button" >
           <svg class="h-4 w-4 flex-shrink-0 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
           </svg>
