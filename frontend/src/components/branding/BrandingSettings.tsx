@@ -1,25 +1,90 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Copy, CheckCircle2, Palette, Zap, Eye } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { projectsApi, type Branding } from "@/services/api";
+import { projectsApi, type Branding, type Project } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PickrColorInput } from "@/components/ui/PickrColorInput";
+
+type WebsiteProfile = Project["websiteProfile"];
 
 interface BrandingSettingsProps {
   projectId: string;
   initialBranding?: Branding;
   onBrandingUpdated?: (branding: Branding) => void;
+  websiteProfile?: WebsiteProfile;
 }
 
-export function BrandingSettings({ projectId, initialBranding, onBrandingUpdated }: BrandingSettingsProps) {
+/**
+ * Converts any logoUrl variant into a safe displayable string:
+ *  - Regular URL  → returned as-is
+ *  - data:…;base64,…  → returned as-is (already valid for <img src>)
+ *  - data:image/svg+xml,%3Csvg…  → decoded, re-encoded as base64 data URI
+ *  - Raw <svg>…</svg> markup → encoded as base64 data URI
+ *
+ * Returns { src, isSvg, svgMarkup } so callers can choose between
+ * <img src={src}> and dangerouslySetInnerHTML for inline SVG rendering.
+ */
+function useLogoDisplay(rawUrl: string | undefined): {
+  src: string | null;
+  isSvg: boolean;
+  svgMarkup: string | null;
+} {
+  return useMemo(() => {
+    if (!rawUrl) return { src: null, isSvg: false, svgMarkup: null };
+
+    // 1. Raw SVG markup
+    if (/^<svg[\s\S]*<\/svg>$/i.test(rawUrl.trim())) {
+      return { src: null, isSvg: true, svgMarkup: rawUrl.trim() };
+    }
+
+    // 2. Percent-encoded SVG data URI: data:image/svg+xml,%3Csvg...
+    if (/^data:image\/svg\+xml(?:;charset=[^,;]*)?,(?:%3C|<)/i.test(rawUrl)) {
+      try {
+        const payload = rawUrl.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, '');
+        const svgMarkup = decodeURIComponent(payload);
+        // Return both inline markup AND a blob URL for <img> fallback
+        const blob = new Blob([svgMarkup], { type: 'image/svg+xml' });
+        const src = URL.createObjectURL(blob);
+        return { src, isSvg: true, svgMarkup };
+      } catch {
+        return { src: rawUrl, isSvg: false, svgMarkup: null };
+      }
+    }
+
+    // 3. Base64 SVG data URI — decode for inline use
+    if (/^data:image\/svg\+xml;base64,/i.test(rawUrl)) {
+      try {
+        const b64 = rawUrl.replace(/^data:image\/svg\+xml;base64,/i, '');
+        const svgMarkup = atob(b64);
+        return { src: rawUrl, isSvg: true, svgMarkup };
+      } catch {
+        return { src: rawUrl, isSvg: false, svgMarkup: null };
+      }
+    }
+
+    // 4. Any other data URI or regular URL
+    return { src: rawUrl, isSvg: false, svgMarkup: null };
+  }, [rawUrl]);
+}
+
+export function BrandingSettings({ projectId, initialBranding, onBrandingUpdated, websiteProfile }: BrandingSettingsProps) {
   const [branding, setBranding] = useState<Branding>(initialBranding || getDefaultBranding());
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Resolve logo — handles raw SVG markup, percent-encoded data URIs, base64 data URIs, and regular URLs
+  const rawLogoUrl = websiteProfile?.identity?.logoUrl;
+  const { src: logoSrc, isSvg: logoIsSvg, svgMarkup: logoSvgMarkup } = useLogoDisplay(rawLogoUrl);
+
+  // Scraped brand colors from websiteProfile
+  const scrapedPrimary = websiteProfile?.logoColors?.primary || websiteProfile?.colors?.primary;
+  const scrapedSecondary = websiteProfile?.logoColors?.secondary || websiteProfile?.colors?.secondary;
+  const scrapedPalette = websiteProfile?.logoColors?.palette || websiteProfile?.colors?.palette || [];
 
   useEffect(() => {
     if (initialBranding) {
@@ -133,6 +198,125 @@ export function BrandingSettings({ projectId, initialBranding, onBrandingUpdated
 
         {/* Colors Tab */}
         <TabsContent value="colors" className="space-y-4">
+          {/* ── Brand Colors (from scraped websiteProfile) ─────────────── */}
+          {(logoSrc || logoSvgMarkup || scrapedPrimary || scrapedSecondary) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Brand Colors</CardTitle>
+                <CardDescription>Detected from your website — click a swatch to apply it</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Logo preview */}
+                {(logoSvgMarkup || logoSrc) && (
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 max-w-[160px] rounded border border-gray-200 flex items-center justify-center bg-white overflow-hidden flex-shrink-0 px-2">
+                      {logoSvgMarkup ? (
+                        /* Render SVG inline so currentColor and relative sizes resolve correctly */
+                        <span
+                          className="flex items-center h-full"
+                          style={{ maxHeight: "36px" }}
+                          dangerouslySetInnerHTML={{ __html: logoSvgMarkup }}
+                        />
+                      ) : (
+                        <img
+                          src={logoSrc!}
+                          alt="Brand logo"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-500">Detected logo</span>
+                  </div>
+                )}
+
+                {/* Favicon preview */}
+                {websiteProfile?.identity?.favicon && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded border border-gray-200 flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                      <img
+                        src={websiteProfile.identity.favicon}
+                        alt="Favicon"
+                        className="w-6 h-6 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-500">Detected favicon</span>
+                  </div>
+                )}
+
+                {/* Primary scraped color */}
+                {scrapedPrimary && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      title={`Apply ${scrapedPrimary} as primary`}
+                      onClick={() => handleColorChange("colors.primary", scrapedPrimary)}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow ring-1 ring-gray-200 flex-shrink-0 hover:scale-110 transition-transform"
+                      style={{ backgroundColor: scrapedPrimary }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Primary</p>
+                      <p className="text-xs font-mono text-gray-400">{scrapedPrimary}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto text-xs"
+                      onClick={() => handleColorChange("colors.primary", scrapedPrimary)}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                )}
+
+                {/* Secondary scraped color */}
+                {scrapedSecondary && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      title={`Apply ${scrapedSecondary} as secondary`}
+                      onClick={() => handleColorChange("colors.secondary", scrapedSecondary)}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow ring-1 ring-gray-200 flex-shrink-0 hover:scale-110 transition-transform"
+                      style={{ backgroundColor: scrapedSecondary }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Secondary</p>
+                      <p className="text-xs font-mono text-gray-400">{scrapedSecondary}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto text-xs"
+                      onClick={() => handleColorChange("colors.secondary", scrapedSecondary)}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                )}
+
+                {/* Full palette swatches */}
+                {scrapedPalette.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Palette</p>
+                    <div className="flex flex-wrap gap-2">
+                      {scrapedPalette.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          title={color}
+                          onClick={() => copyToClipboard(color, `palette-${color}`)}
+                          className="w-7 h-7 rounded border-2 border-white shadow ring-1 ring-gray-200 hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Click a swatch to copy its hex value</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Color Palette</CardTitle>
