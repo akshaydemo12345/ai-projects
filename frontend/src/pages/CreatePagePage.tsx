@@ -170,7 +170,7 @@ const generateAiPage = (
     secondaryColor: branding.secondary,
     logoUrl: branding.logo,
     accentColor: "#6366f1",
-    generationMethod: "ai" as const,
+    generationMethod: "ai" as LandingPage["generationMethod"],
     aiPrompt: prompt,
     content: dummyHtml,
   };
@@ -952,39 +952,116 @@ const CreatePagePage = () => {
     setShowLoader(true);
     setIsComplete(false);
 
+    // ─── PURE AI PATH: Always call real Claude API when method is "ai" ───
+    if (activeMethod === "ai") {
+      try {
+        // ── Build websiteContent from scraped project data so Claude uses real business info ──
+        const sd = project?.scrapedData || {};
+        const scrapedLines: string[] = [];
+        if (sd.about) scrapedLines.push(`About: ${sd.about}`);
+        if (sd.summary) scrapedLines.push(`Summary: ${sd.summary}`);
+        if (sd.description) scrapedLines.push(`Description: ${sd.description}`);
+        if (sd.phone) scrapedLines.push(`Phone: ${sd.phone}`);
+        if (sd.email) scrapedLines.push(`Email: ${sd.email}`);
+        if (sd.address) scrapedLines.push(`Address: ${sd.address}`);
+        if (Array.isArray(sd.services) && sd.services.length > 0) {
+          const svcList = sd.services
+            .map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || '')))
+            .filter(Boolean).join(', ');
+          scrapedLines.push(`Services: ${svcList}`);
+        }
+        if (Array.isArray(sd.testimonials) && sd.testimonials.length > 0) {
+          const testiList = sd.testimonials
+            .slice(0, 3)
+            .map((t: any) => `"${t.text || t.content || ''}" — ${t.author || t.name || 'Client'}`)
+            .join(' | ');
+          scrapedLines.push(`Testimonials: ${testiList}`);
+        }
+        if (Array.isArray(sd.faq) && sd.faq.length > 0) {
+          const faqList = sd.faq
+            .slice(0, 4)
+            .map((f: any) => `Q: ${f.question} A: ${f.answer}`)
+            .join(' | ');
+          scrapedLines.push(`FAQs: ${faqList}`);
+        }
+        const websiteContent = scrapedLines.join('\n');
+
+        // Merge project services with scraped services (deduplicated)
+        const allServices = [
+          ...(project?.services || []),
+          ...(Array.isArray(sd.services)
+            ? sd.services.map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || ''))).filter(Boolean)
+            : [])
+        ].filter((v, i, a) => a.indexOf(v) === i);
+
+        const generationRes = await aiApi.generate({
+          businessName: project.name,
+          industry: project.category || project.industry || "Service",
+          businessDescription: project.description || sd.about || sd.summary || "",
+          pageType: "lead generation",
+          aiPrompt: aiPrompt,
+          primaryColor: primaryColor || "#7c3aed",
+          secondaryColor: secondaryColor || "#6366f1",
+          logoUrl: logoUrl || project.logoUrl,
+          targetAudience: sd.targetAudience || "",
+          ctaText: "Get Started Free",
+          services: allServices.slice(0, 10),
+          keywords: project?.keywords || [],
+          websiteContent: websiteContent || undefined,
+        });
+
+        const aiResult = generationRes?.data?.content;
+        if (!aiResult?.fullHtml) throw new Error("AI response missing HTML.");
+
+        const primaryCol = primaryColor || "#6366f1";
+        const secondaryCol = secondaryColor || "#4f46e5";
+        const brandingCss = `:root{--primary:${primaryCol};--secondary:${secondaryCol};--primary-rgb:${hexToRgbStr(primaryCol)};--secondary-rgb:${hexToRgbStr(secondaryCol)};}`;
+        const fullAiHtml = aiResult.fullHtml.includes('<!DOCTYPE') ? aiResult.fullHtml : `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${pageName.trim() || project.name}</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>${brandingCss}\n${aiResult.fullCss || ""}</style>
+</head>
+<body>${aiResult.fullHtml}</body>
+</html>`;
+
+        createPageMutation.mutate({
+          name: pageName.trim(),
+          slug: pageSlug.trim() || autoSlug(pageName),
+          metaTitle: `${project.name} - ${pageName.trim()}`,
+          metaDescription: project.description || `${pageName.trim()} by ${project.name}.`,
+          noIndexNoFollow,
+          primaryColor,
+          secondaryColor,
+          logoUrl,
+          industry: project?.category || project?.industry || "Service",
+          subIndustry: project?.subIndustry || "Services",
+          aiPrompt,
+          generationMethod: "ai" as LandingPage["generationMethod"],
+          accentColor: "#6366f1",
+          type: "ppc",
+          status: "draft",
+          content: { fullHtml: fullAiHtml, html: aiResult.fullHtml, fullCss: aiResult.fullCss || "" },
+          styles: aiResult.fullCss || "",
+          landingPageContent: fullAiHtml,
+          landingPageStyles: aiResult.fullCss || "",
+        });
+      } catch (err: any) {
+        toast.error(err.message || "AI generation failed. Please try again.");
+        setShowLoader(false);
+        setIsComplete(false);
+      }
+      return;
+    }
+
     let basePayload: Partial<LandingPage> = {};
     let finalTemplateId = selectedTemplate;
     let isAiTemplatePath = false;
-
-    // ─── AI TEMPLATE AUTO-SELECTION ───
-    if (activeMethod === "ai") {
-      const promptLower = aiPrompt.toLowerCase();
-      const projectCat = getProjectIndustry(project).toLowerCase();
-
-      let detectedCategory = "";
-      if (promptLower.includes("health") || promptLower.includes("dental") || promptLower.includes("medical") || projectCat.includes("health")) detectedCategory = "Healthcare";
-      else if (promptLower.includes("travel") || promptLower.includes("tour") || promptLower.includes("safari") || projectCat.includes("travel")) detectedCategory = "Travel";
-      else if (promptLower.includes("finance") || promptLower.includes("bank") || promptLower.includes("money") || projectCat.includes("finance")) detectedCategory = "Finance";
-      else if (promptLower.includes("law") || promptLower.includes("legal") || promptLower.includes("attorney") || promptLower.includes("advocate") || projectCat.includes("law")) detectedCategory = "Law Firm";
-
-      if (detectedCategory) {
-        const categoryTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === detectedCategory.toLowerCase());
-        if (categoryTemplates.length > 0) {
-          const randomIndex = Math.floor(Math.random() * categoryTemplates.length);
-          finalTemplateId = categoryTemplates[randomIndex].id;
-          isAiTemplatePath = true;
-          toast.info(`AI selected ${detectedCategory} template for you!`);
-        }
-      } else {
-        // Fallback: pick a generic template structure so AI generation still runs
-        const defaultTemplates = LANDING_TEMPLATES.filter(t => t.tag.toLowerCase() === "finance" || t.tag.toLowerCase() === "travel");
-        if (defaultTemplates.length > 0) {
-          const randomIndex = Math.floor(Math.random() * defaultTemplates.length);
-          finalTemplateId = defaultTemplates[randomIndex].id;
-          isAiTemplatePath = true;
-        }
-      }
-    }
 
     if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
@@ -1023,8 +1100,8 @@ const CreatePagePage = () => {
             secondaryColor: secondaryColor,
             logoUrl: logoUrl,
             // If it's a direct AI prompt, we don't pass the base template so the AI is forced to start from scratch
-            templateHtml: activeMethod === "ai" ? "" : enrichedContent,
-            templateStyles: activeMethod === "ai" ? "" : enrichedStyles
+            templateHtml: (activeMethod as string) === "ai" ? "" : enrichedContent,
+            templateStyles: (activeMethod as string) === "ai" ? "" : enrichedStyles
           });
 
           const aiResult = generationRes?.data?.content;
@@ -1112,22 +1189,20 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
       enrichedContent = enrichedContent.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
 
       // Clean up placeholders in styles
-      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      // 1. Replace the actual variable definitions in :root first with the HEX values for base to avoid circular references
+      // But for template specific variables, map them to var(--primary) so they sync with the editor
       enrichedStyles = enrichedStyles
         .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor || "#6366f1"}`)
         .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor || "#4f46e5"}`)
-        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor || "#6366f1"}`)
-        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor || "#6366f1"}`)
-        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor || "#6366f1"}`)
-        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor || "#6366f1"}`)
-        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor || "#6366f1"}`);
+        .replace(/--primary-rgb\s*:\s*PRIMARY_RGB_PLACEHOLDER/g, `--primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")}`)
+        .replace(/--secondary-rgb\s*:\s*SECONDARY_RGB_PLACEHOLDER/g, `--secondary-rgb: ${hexToRgbStr(secondaryColor || "#4f46e5")}`);
 
       // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
       enrichedStyles = enrichedStyles
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"))
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"))
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, 'var(--primary-rgb)')
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, 'var(--secondary-rgb)')
         .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       // 1. Extract proper valid keywords for title and text
@@ -1251,7 +1326,10 @@ ${enrichedContent}
         aiPrompt: aiPrompt
       };
     } else {
-      basePayload = generateAiPage(aiPrompt, project, { primary: primaryColor, secondary: secondaryColor, logo: logoUrl });
+      toast.error("Please select a template to continue.");
+      setShowLoader(false);
+      setIsComplete(false);
+      return;
     }
 
     createPageMutation.mutate({
@@ -1263,9 +1341,9 @@ ${enrichedContent}
       secondaryColor,
       logoUrl: logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo, // <-- Fix: ensure DB saves the scraped logo
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
-      industry: getProjectIndustry(project),
-      subIndustry: getProjectSubIndustry(project),
-      aiPrompt: activeMethod === "ai" ? aiPrompt : "",
+      industry: project?.category || project?.industry || "Service",
+      subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
+      aiPrompt: "",
       // Always use template generation on the frontend
       generationMethod: "template",
       accentColor: "#6366f1",
@@ -1466,7 +1544,7 @@ ${enrichedContent}
             {activeMethod === "ai" && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-gray-600">Describe your page *</label>
+                  <label className="text-xs font-semibold text-gray-700">Describe your page *</label>
                   <button
                     onClick={handleGenerateMagicPrompt}
                     disabled={!pageName.trim() || isGeneratingPrompt}
@@ -1477,10 +1555,21 @@ ${enrichedContent}
                 </div>
                 <textarea
                   value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners..."
-                  className="w-full min-h-[130px] border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                  onChange={(e) => { setAiPrompt(e.target.value); if (e.target.value.trim()) setMethodError(""); }}
+                  placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners who need emergency roof repairs. Include trust badges, before/after photos, a quote form and real testimonials..."
+                  className={`w-full min-h-[150px] border rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none ${methodError && activeMethod === 'ai'
+                    ? 'border-red-400 bg-red-50/20 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                    : 'border-gray-200 bg-gray-50 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100'
+                    }`}
                 />
+                {methodError && activeMethod === 'ai' && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <span>⚠️</span> {methodError}
+                  </p>
+                )}
+                <p className="text-[10px] text-gray-400 leading-relaxed">
+                  💡 <strong>Tip:</strong> The more detail you provide (industry, audience, services, tone), the better Claude generates your page.
+                </p>
               </section>
             )}
 
@@ -1515,8 +1604,8 @@ ${enrichedContent}
               </button>
               <button
                 onClick={handleCreate}
-                disabled={createPageMutation.isPending || !pageName.trim()}
-                className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50"
+                disabled={createPageMutation.isPending || !pageName.trim() || (activeMethod === 'ai' && !aiPrompt.trim()) || (activeMethod === 'template' && !selectedTemplate)}
+                className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
               >
                 {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate with AI</>}

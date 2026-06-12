@@ -220,7 +220,7 @@ input, select, textarea { font-family: inherit; }
 }
 .p3-mini-card .icon { font-size: 24px; color: var(--p3-primary-mid); }
 .p3-mini-card .val { font-family: var(--p3-font-display); font-size: 26px; font-weight: 700; color: var(--p3-secondary); }
-.p3-mini-card .lbl { font-size: 13px;  font-weight: 600; }
+.p3-mini-card .lbl { font-size: 13px;  font-weight: 600; color: var(--p3-muted); }
 @media (max-width: 768px) {
   .p3-hero-mini-cards { grid-template-columns: repeat(2, 1fr); padding: 0; margin-top: 24px; }
   .p3-hero-img-main { aspect-ratio: 16/9; }
@@ -319,7 +319,7 @@ input, select, textarea { font-family: inherit; }
 .p3-doctor-info { padding: 20px; display: flex; flex-wrap: wrap; flex-direction: column; gap: 6px; }
 .p3-doctor-name { font-size: 17px; font-weight: 700; }
 .p3-doctor-spec { font-size: 13px; color: var(--p3-primary-mid); font-weight: 600; }
-.p3-doctor-exp { font-size: 12px; color: var(--p3-light-text); }
+.p3-doctor-exp { font-size: 12px; color: var(--p3-muted); }
 .p3-doctor-book { margin-top: 12px; display: block; text-align: center; padding: 10px; border-radius: var(--p3-r-sm); background: var(--p3-secondary); font-size: 14px; font-weight: 600; transition: background 0.2s; color: #fff; }
 .p3-doctor-book:hover { background: var(--p3-primary); color: #fff; }
 
@@ -403,7 +403,7 @@ input, select, textarea { font-family: inherit; }
 .p3-footer-links a:hover { color: #fff; }
 .p3-footer-contact-list { display: flex; flex-wrap: wrap; flex-direction: column; gap: 12px; }
 .p3-footer-contact-list li { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.55); }
-.p3-footer-contact-list li span.material-symbols-outlined { font-size: 16px; color: var(--p3-accent); flex-shrink: 0; margin-top: 2px; }
+.p3-footer-contact-list li span.material-symbols-outlined { font-size: 16px; color: rgba(255,255,255,0.7); flex-shrink: 0; margin-top: 2px; }
 .p3-footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.06);
   padding: 20px 1.5rem; max-width: 1200px; margin: 0 auto;
@@ -1002,6 +1002,14 @@ export const healthcare03Html = `
         });
         
         if (!isValid || isInEditor) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (isInEditor) {
+            var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+          }
           e.preventDefault();
           e.stopImmediatePropagation();
         } else if (!isInEditor) {

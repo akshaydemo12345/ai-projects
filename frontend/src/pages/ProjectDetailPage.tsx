@@ -15,7 +15,7 @@ import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses, cleanProjectName, getDifferentiatedProjectName } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -142,8 +142,8 @@ const generateAiPage = (prompt: string, project: Project, branding: { primary: s
   return {
     name: prompt.slice(0, 50).trim() || "AI Generated Page",
     slug: autoSlug(prompt.slice(0, 40).trim() || "ai-page") + "-" + Date.now().toString(36),
-    metaTitle: `${project.name} — ${prompt.slice(0, 30)}`,
-    metaDescription: `${prompt.slice(0, 120)} | ${project.name}`,
+    metaTitle: `${cleanProjectName(project.name)} — ${prompt.slice(0, 30)}`,
+    metaDescription: `${prompt.slice(0, 120)} | ${cleanProjectName(project.name)}`,
     primaryColor: branding.primary,
     secondaryColor: branding.secondary,
     logoUrl: branding.logo,
@@ -159,7 +159,7 @@ const generateAnalyzedPage = (url: string, project: Project, branding: { primary
   return {
     name: `${domain} Style Page`,
     slug: autoSlug(domain) + "-" + Date.now().toString(36),
-    metaTitle: `Inspired by ${domain} | ${project.name}`,
+    metaTitle: `Inspired by ${domain} | ${cleanProjectName(project.name)}`,
     metaDescription: `A page inspired by ${domain}'s layout and structure.`,
     primaryColor: branding.primary,
     secondaryColor: branding.secondary,
@@ -1427,11 +1427,7 @@ interface EditProjectModalProps {
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
   // "Website Name" = the scraped/display name (stored in project.name)
   // Pre-fill from websiteUrl if name looks like a raw URL title
-  const [name, setName] = useState(
-    project.websiteUrl
-      ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-      : project.name
-  );
+  const [name, setName] = useState(cleanProjectName(project.name) || "");
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || project.url || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
   const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
@@ -1775,16 +1771,13 @@ const ProjectDetailPage = () => {
           >
             <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
               <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
-                {(project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
-                  ? (project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
-                    .replace(/^https?:\/\//, '').replace(/\/$/, '')
-                  : project.name}
+                {getDifferentiatedProjectName(project, cachedProjects)}
               </span>
             </SelectTrigger>
             <SelectContent>
               {(cachedProjects as any[]).map((p: any) => (
                 <SelectItem key={p._id} value={p._id}>
-                  {p.name}
+                  {getDifferentiatedProjectName(p, cachedProjects)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1882,7 +1875,7 @@ const ProjectDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-3 items-start">
 
           {/* ─── Left Side: Landing Pages List ─── */}
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
+          <div className="rounded-2xl border border-border bg-card shadow-sm  flex flex-col">
             {/* Section Header */}
             <div className="px-6 py-4 border-b border-border flex flex-wrap items-center justify-between bg-card gap-4">
               <div className="flex items-center gap-3">
@@ -1938,7 +1931,7 @@ const ProjectDetailPage = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto flex-1 overflow-y-auto custom-scrollbar">
+            <div className="flex-1">
               <div className="min-w-[700px]">
                 {/* Table Header */}
                 {pages.length > 0 && (

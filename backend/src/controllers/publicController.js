@@ -475,7 +475,7 @@ const buildLeadCaptureScript = (page) => {
  * Shared helper to render a high-converting landing page from AI-generated content.
  * Always injects the lead capture script so forms work on WordPress, custom domains, etc.
  */
-const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
+const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl = '') => {
   const apiBaseUrl = (config.api?.baseUrl || process.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
   const { title, content, seo, metaTitle, metaDescription } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
@@ -505,10 +505,31 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     // Detect if logoUrl is raw SVG markup (not a data URI or regular URL)
     const isRawSvgMarkup = /^<svg[\s\S]*<\/svg>$/i.test(finalLogo.trim());
 
-    // Convert raw SVG markup to a proper data URI for use in <img src="">
-    const logoSrcValue = isRawSvgMarkup
-      ? `data:image/svg+xml;base64,${Buffer.from(finalLogo, 'utf8').toString('base64')}`
-      : finalLogo;
+    // Detect percent-encoded SVG data URI: data:image/svg+xml,%3Csvg...
+    const isPercentEncodedSvgDataUri =
+      /^data:image\/svg\+xml(?:;charset=[^,;]*)?,%3C/i.test(finalLogo);
+
+    // Detect plain base64 SVG data URI: data:image/svg+xml;base64,...
+    const isBase64SvgDataUri =
+      /^data:image\/svg\+xml;base64,/i.test(finalLogo);
+
+    let logoSrcValue;
+    if (isRawSvgMarkup) {
+      // Raw <svg>…</svg> string — encode to base64 data URI for <img src>
+      logoSrcValue = `data:image/svg+xml;base64,${Buffer.from(finalLogo, 'utf8').toString('base64')}`;
+    } else if (isPercentEncodedSvgDataUri) {
+      // Percent-encoded data URI (e.g. from Airbnb/inline SVG scrape):
+      // decode it, then re-encode as base64 so <img src=""> works reliably.
+      try {
+        const svgString = decodeURIComponent(finalLogo.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, ''));
+        logoSrcValue = `data:image/svg+xml;base64,${Buffer.from(svgString, 'utf8').toString('base64')}`;
+      } catch (_) {
+        logoSrcValue = finalLogo; // fallback — use as-is
+      }
+    } else {
+      // Regular URL or already-valid base64 data URI — use as-is
+      logoSrcValue = finalLogo;
+    }
 
     // 1. Replace known placeholders
     finalHtml = finalHtml.replace(/https:\/\/via\.placeholder\.com\/[^\s"'>]+/g, logoSrcValue);
@@ -516,10 +537,18 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     finalHtml = finalHtml.replace(/https:\/\/picsum\.photos\/seed\/saaslogo\/[^\s"'>]+/g, logoSrcValue);
 
     // 2. Attribute-agnostic logo replacement for <img id="page-logo">
-    // If logoUrl is raw SVG markup, replace the <img> entirely with an inline <svg> element
+    // For SVG logos: replace the <img> entirely with an inline <svg> element
     // so browsers render it correctly (an <img src="<svg...>"> is invalid HTML).
+    const svgMarkupForInline = isRawSvgMarkup
+      ? finalLogo.trim()
+      : (isPercentEncodedSvgDataUri
+        ? (() => { try { return decodeURIComponent(finalLogo.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, '')); } catch (_) { return null; } })()
+        : (isBase64SvgDataUri
+          ? (() => { try { return Buffer.from(finalLogo.replace(/^data:image\/svg\+xml;base64,/i, ''), 'base64').toString('utf8'); } catch (_) { return null; } })()
+          : null));
+
     finalHtml = finalHtml.replace(/<img([^>]*)id="page-logo"([^>]*)>/gi, (match, p1, p2) => {
-      if (isRawSvgMarkup) {
+      if (svgMarkupForInline) {
         // Inject SVG inline; preserve id and any class/style attributes from the original <img>
         const combined = (p1 + p2).trim();
         const classMatch = combined.match(/class="([^"]*)"/i);
@@ -530,7 +559,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
           styleMatch ? `style="${styleMatch[1]}"` : '',
         ].filter(Boolean).join(' ');
         // Insert extra attrs into the opening <svg ...> tag
-        return finalLogo.trim().replace(/^<svg/i, `<svg ${extraAttrs}`);
+        return svgMarkupForInline.replace(/^<svg/i, `<svg ${extraAttrs}`);
       }
       const combined = p1 + p2;
       const updated = combined.replace(/src="[^"]*"/gi, '');
@@ -666,6 +695,8 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
     `<script src="https://unpkg.com/lucide@latest"><\/script>`,
     `<script src="https://cdn.tailwindcss.com"></script>`,
     `<script type="application/ld+json">${JSON.stringify(schemaOrg)}</script>`,
+    // Favicon — use scraped favicon if available
+    faviconUrl ? `<link rel="icon" href="${faviconUrl}"><link rel="apple-touch-icon" href="${faviconUrl}">` : '',
   ].filter(Boolean).join('\n    ');
 
 
@@ -726,6 +757,11 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false) => {
       // Force inject Base URL for assets
       if (!html.includes('<base ')) {
         html = html.replace(/<head>/i, `<head>\n  <base href="${apiBaseUrl}/">`);
+      }
+
+      // Inject favicon if available and not already present
+      if (faviconUrl && !html.includes('rel="icon"') && !html.includes("rel='icon'")) {
+        html = html.replace(/<\/head>/i, `  <link rel="icon" href="${faviconUrl}">\n  <link rel="apple-touch-icon" href="${faviconUrl}">\n</head>`);
       }
 
       // Force inject SEO and Performance tags
@@ -1173,6 +1209,13 @@ exports.getPublicPageHTML = async (req, res, next) => {
       ? `http${req.secure ? 's' : ''}://${requestHost}/?page=${page._id}`
       : '';
 
+    // ── Resolve favicon from project websiteProfile ────────────────────────
+    let resolvedFavicon = '';
+    if (page.projectId) {
+      const _proj = await Project.findById(page.projectId).select('websiteProfile').lean();
+      resolvedFavicon = _proj?.websiteProfile?.identity?.favicon || '';
+    }
+
     res.setHeader('Content-Type', 'text/html');
 
     if (isThankYou) {
@@ -1183,13 +1226,13 @@ exports.getPublicPageHTML = async (req, res, next) => {
           styles: page.thankYouPageStyles,
           title: `${page.title || 'Landing Page'} - Thank You`
         };
-        return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl, true));
+        return res.status(200).send(renderFullHTML(tyPageMock, canonicalUrl, true, resolvedFavicon));
       }
       req.params.pageSlug = normalizedSlug;
       return require('./thankYouController').renderThankYouPage(req, res, next);
     }
 
-    res.status(200).send(renderFullHTML(page, canonicalUrl, isThankYou));
+    res.status(200).send(renderFullHTML(page, canonicalUrl, isThankYou, resolvedFavicon));
   } catch (err) {
     console.error('❌ Public Page Error:', err);
     next(err);
@@ -2009,7 +2052,12 @@ exports.getDynamicPage = async (req, res, next) => {
       }
     }
 
-    const html = renderFullHTML(page, `https://${domain}/${cleanSlug}`);
+    const _domainProj = page.projectId
+      ? await Project.findById(page.projectId).select('websiteProfile').lean()
+      : null;
+    const domainFavicon = _domainProj?.websiteProfile?.identity?.favicon || '';
+
+    const html = renderFullHTML(page, `https://${domain}/${cleanSlug}`, false, domainFavicon);
 
     res.status(200).json({
       status: 'success',
