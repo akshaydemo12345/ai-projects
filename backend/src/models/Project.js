@@ -26,6 +26,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

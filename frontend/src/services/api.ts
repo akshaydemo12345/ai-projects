@@ -41,6 +41,7 @@ export interface Project {
   apiToken: string;
   userId: string;
   isDeleted: boolean;
+  isVerified?: boolean;
   createdAt: string;
   updatedAt: string;
   logoUrl?: string;
