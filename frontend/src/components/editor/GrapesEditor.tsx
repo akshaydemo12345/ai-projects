@@ -3094,13 +3094,17 @@ const GrapesEditor = () => {
     
     // Revert the component
     let targetComp = null;
-    try {
-      editor.getWrapper().onAll((comp: any) => {
-        if (comp.getId() === data.selectedId) targetComp = comp;
-      });
-    } catch(e) {
-      console.error(e);
-    }
+    const findComponentById = (component: any, targetId: string): any => {
+      if (!component) return null;
+      if (component.getId() === targetId) return component;
+      const children = component.components().models;
+      for (let i = 0; i < children.length; i++) {
+        const found = findComponentById(children[i], targetId);
+        if (found) return found;
+      }
+      return null;
+    };
+    targetComp = findComponentById(editor.getWrapper(), data.selectedId);
     
     if (!targetComp) {
       // Fallback: try to just use currently selected
