@@ -1,37 +1,23 @@
 'use strict';
 
 /**
- * structuredScrapeService.js  —  v7 (Cheerio + node-fetch, Puppeteer-free)
+ * structuredScrapeService.js  —  v7.1 (Cheerio + node-fetch, Puppeteer-free)
  *
- * Uses node-fetch (primary) + axios (fallback) to fetch pages, then Cheerio
- * for DOM extraction.  No browser process required.
- *
- * Extraction groups (identical to v5):
- *   1. Identity    (name, description, logo, favicon)
- *   2. Colors      (primary / secondary / accent / full palette / exact CSS vars)
- *   3. Logo Colors (extracted specifically from logo image)
- *   4. ThemeSystem (per-component computed colours)
- *   5. Typography  (Google Fonts, computed font families)
- *   6. Images      (rich — url, alt, section, dimensions)
- *   7. Videos      (YouTube / Vimeo / html5)
- *   8. Content     (hero, services, features, testimonials, CTAs, taglines)
- *   9. Forms       (fields with name / label / type / placeholder / required)
- *  10. SEO         (title, description, keywords, OG, Twitter)
- *  11. Sections    (detected page section types)
- *  12. Industry    (keyword-based + AI classification)
- *
- * Package fallback strategy:
- *   HTTP fetch  → node-fetch → axios
- *   Image fetch → node-fetch → axios
- *   SVG render  → @resvg/resvg-js (optional)
- *   Color algo  → node-vibrant → sharp pixel-count → skip
+ * Enhanced extraction:
+ *   - Smarter brand name (OG site_name + title stripping)
+ *   - Services/features fallback using semantic sections
+ *   - Font extraction from CSS variables and <style> body rules
+ *   - Color harvesting from all <style> hex values
+ *   - Testimonials with schema.org support & rating extraction
+ *   - Hero CTA fallback inside .hero sections
+ *   - Industry confidence score & source
+ *   - Merged forms from Cheerio + formExtractor
  */
 
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 
 // ── Optional package loaders ─────────────────────────────────────────────────
-
 const loadOptional = (name) => {
     try { return require(name); } catch { return null; }
 };
@@ -42,20 +28,16 @@ const sharpLib = loadOptional('sharp');
 const resvgLib = loadOptional('@resvg/resvg-js');
 const Anthropic = loadOptional('@anthropic-ai/sdk');
 
-// node-vibrant v4 named export vs v3 default
 let VibrantLib = null;
 try {
     const v = require('node-vibrant/node');
     VibrantLib = v.Vibrant || v;
-} catch { /* vibrant unavailable — pixel counting fallback */ }
+} catch { /* vibrant unavailable */ }
 
-const { extractFormFields: extractFormFieldsFromHtml } =
-    require('../utils/formExtractor');
+const { extractFormFields: extractFormFieldsFromHtml } = require('../utils/formExtractor');
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
-
-const DEFAULT_UA =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
     '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 const DEFAULT_HEADERS = {
@@ -66,12 +48,7 @@ const DEFAULT_HEADERS = {
     'Upgrade-Insecure-Requests': '1',
 };
 
-/**
- * Fetch a URL and return { html, finalUrl }.
- * Primary: node-fetch   Fallback: axios
- */
-const fetchHtml = async (url, timeoutMs = 30_000) => {
-    // ── node-fetch ──
+const fetchHtml = async (url, timeoutMs = 30000) => {
     if (nodeFetch) {
         try {
             const controller = new AbortController();
@@ -95,7 +72,6 @@ const fetchHtml = async (url, timeoutMs = 30_000) => {
         }
     }
 
-    // ── axios fallback ──
     if (axios) {
         const res = await axios.get(url, {
             timeout: timeoutMs,
@@ -112,11 +88,7 @@ const fetchHtml = async (url, timeoutMs = 30_000) => {
     throw new Error('No HTTP client available (install node-fetch or axios)');
 };
 
-/**
- * Fetch binary (image) data as a Buffer.
- * Primary: node-fetch   Fallback: axios
- */
-const fetchBinary = async (url, referer = '', timeoutMs = 10_000) => {
+const fetchBinary = async (url, referer = '', timeoutMs = 10000) => {
     const headers = {
         'User-Agent': DEFAULT_UA,
         Accept: 'image/*,*/*',
@@ -152,8 +124,6 @@ const fetchBinary = async (url, referer = '', timeoutMs = 10_000) => {
     throw new Error('No HTTP client available for binary fetch');
 };
 
-// ── Generic helpers ───────────────────────────────────────────────────────────
-
 const toAbsUrl = (src, base) => {
     if (!src || src.startsWith('data:')) return null;
     if (src.startsWith('http')) return src;
@@ -162,11 +132,9 @@ const toAbsUrl = (src, base) => {
 };
 
 const cleanStr = (s) => (s || '').trim().replace(/\s+/g, ' ');
-
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ── Industry classification ───────────────────────────────────────────────────
-
 const INDUSTRY_MAP = [
     { industry: 'Beauty & Personal Care', sub: 'Natural Skincare', kws: ['skincare', 'beauty', 'cosmetic', 'serum', 'moisturizer', 'natural skin', 'organic beauty', 'skin care'] },
     { industry: 'Beauty & Personal Care', sub: 'Hair Care', kws: ['shampoo', 'conditioner', 'hair oil', 'hair care', 'hair growth'] },
@@ -218,8 +186,7 @@ const classifyIndustryWithAI = async (textCorpus) => {
         const client = new Anthropic();
         const subMap = INDUSTRY_MAP.map(e => e.industry + ' > ' + e.sub).join(', ');
         const snippet = (textCorpus || '').slice(0, 800);
-        const prompt =
-            'Classify this website into one industry category.\n\nWebsite text:\n' + snippet +
+        const prompt = 'Classify this website into one industry category.\n\nWebsite text:\n' + snippet +
             '\n\nAvailable categories (industry > subIndustry):\n' + subMap +
             '\n\nRespond ONLY with valid JSON: {"industry": "...", "subIndustry": "..."}. No explanation.';
         const msg = await client.messages.create({
@@ -230,7 +197,7 @@ const classifyIndustryWithAI = async (textCorpus) => {
         const text = ((msg.content && msg.content[0] && msg.content[0].text) || '').trim()
             .replace(/```[a-z]*/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(text);
-        if (parsed.industry && parsed.subIndustry) return parsed;
+        if (parsed.industry && parsed.subIndustry) return { ...parsed, score: 1, source: 'ai' };
     } catch (e) {
         logger.warn('[Industry] AI classify failed: ' + e.message);
     }
@@ -239,15 +206,14 @@ const classifyIndustryWithAI = async (textCorpus) => {
 
 const classifyIndustry = async (textCorpus) => {
     const kwResult = classifyIndustryByKeywords(textCorpus);
-    if (kwResult && kwResult.score >= 2) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry };
+    if (kwResult && kwResult.score >= 2) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords' };
     const aiResult = await classifyIndustryWithAI(textCorpus);
     if (aiResult) return aiResult;
-    if (kwResult) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry };
-    return { industry: 'General', subIndustry: 'Business' };
+    if (kwResult) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords-low' };
+    return { industry: 'General', subIndustry: 'Business', score: 0, source: 'default' };
 };
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
-
 const isNeutralHex = (hex) => {
     if (!hex || hex.length < 7) return true;
     const r = parseInt(hex.slice(1, 3), 16);
@@ -283,15 +249,10 @@ const normaliseCssColor = (raw) => {
     return null;
 };
 
-/**
- * Extract fill/stroke hex colors directly from raw SVG markup
- */
 const extractColorsFromSvgMarkup = (svgMarkup) => {
     const colors = new Set();
     if (!svgMarkup) return [];
-    // Match fill/stroke in attribute form: fill="#abc" or fill="rgb(...)"
     const attrRe = /(?:fill|stroke)="([^"]+)"/gi;
-    // Match fill/stroke in style form: fill: #abc or fill: rgb(...)
     const styleRe = /(?:fill|stroke)\s*:\s*([^;}"'\s][^;}"']*)/gi;
     let m;
     while ((m = attrRe.exec(svgMarkup)) !== null) {
@@ -305,17 +266,7 @@ const extractColorsFromSvgMarkup = (svgMarkup) => {
     return Array.from(colors);
 };
 
-// ── Logo color extraction (Cheerio-side, no browser page needed) ─────────────
-
-/**
- * Extract dominant colors from a logo URL or data URI.
- * Uses node-fetch (primary) → axios (fallback) for HTTP images.
- *
- * @param {string}  logoUrl    Absolute URL or data URI
- * @param {*}       _page      Unused (kept for API compat with v5)
- * @param {string}  baseUrl    Base URL for relative paths
- * @param {boolean} isFavicon  Use favicon pixel-counting path
- */
+// ── Logo color extraction (unchanged, but kept for completeness) ─────────────
 const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => {
     if (!logoUrl) return { primary: null, secondary: null, palette: [], source: null };
 
@@ -324,7 +275,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
         let isSvg = false;
         let svgMarkup = null;
 
-        // ── 1. Data URI ──
         if (logoUrl.startsWith('data:image/')) {
             const match = logoUrl.match(/^data:([^;]+);base64,(.*)$/);
             if (match) {
@@ -332,9 +282,7 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                 imageBuffer = Buffer.from(match[2], 'base64');
                 if (isSvg) svgMarkup = imageBuffer.toString('utf8');
             }
-        }
-        // ── 2. HTTP/HTTPS ──
-        else {
+        } else {
             let resolvedUrl = logoUrl;
             if (!logoUrl.startsWith('http') && baseUrl) {
                 try { resolvedUrl = new URL(logoUrl, baseUrl).toString(); } catch (_) { }
@@ -344,7 +292,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                 imageBuffer = await fetchBinary(resolvedUrl, baseUrl);
                 const urlLower = resolvedUrl.toLowerCase();
                 isSvg = urlLower.includes('.svg') || urlLower.includes('image/svg');
-                // Also sniff the buffer — SVGs start with '<svg' or '<?xml'
                 if (!isSvg && imageBuffer.length > 4) {
                     const head = imageBuffer.slice(0, 100).toString('utf8');
                     isSvg = head.includes('<svg') || head.includes('<?xml');
@@ -358,11 +305,8 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
 
         if (!imageBuffer) return { primary: null, secondary: null, palette: [], source: null };
 
-        // ── 3. SVG — direct color extraction ──
         if (isSvg && svgMarkup) {
             const svgColors = extractColorsFromSvgMarkup(svgMarkup);
-            logger.info(`[LogoColors] SVG direct colors: ${svgColors.slice(0, 3).join(', ')}`);
-
             if (svgColors.length > 0) {
                 if (resvgLib && sharpLib && VibrantLib) {
                     try {
@@ -374,7 +318,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                             .filter(s => s && s.hex)
                             .sort((a, b) => (b.population || 0) - (a.population || 0))
                             .map(s => s.hex.toUpperCase());
-
                         const merged = [...svgColors];
                         for (const vc of vibrantColors) {
                             if (!merged.some(c => c.toLowerCase() === vc.toLowerCase())) merged.push(vc);
@@ -386,7 +329,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
             }
         }
 
-        // ── 4a. Favicon / ICO → pixel frequency counting ──
         const isIco = (logoUrl || '').toLowerCase().includes('.ico');
         const useFaviconPath = isFavicon || isIco;
 
@@ -411,11 +353,7 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
 
                 const sorted = Object.entries(colorCount).sort((a, b) => b[1] - a[1]).map(([hex]) => hex);
                 const nonNeutral = sorted.filter(c => !isNeutralHex(c));
-                let colors = nonNeutral.length > 0
-                    ? nonNeutral
-                    : sorted.filter(c => !['#FFFFFF', '#000000', '#FEFEFE', '#F8F8F8'].includes(c));
-
-                // Deduplicate visually similar colours
+                let colors = nonNeutral.length > 0 ? nonNeutral : sorted.filter(c => !['#FFFFFF', '#000000', '#FEFEFE', '#F8F8F8'].includes(c));
                 const deduped = [];
                 for (const hex of colors) {
                     const r1 = parseInt(hex.slice(1, 3), 16);
@@ -430,18 +368,14 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                     if (!isSim) deduped.push(hex);
                     if (deduped.length >= 5) break;
                 }
-
                 if (deduped.length > 0) {
-                    logger.info(`[LogoColors] Favicon pixel colors: ${deduped.slice(0, 3).join(', ')}`);
                     return { primary: deduped[0] || null, secondary: deduped[1] || null, palette: deduped.slice(0, 5), source: 'favicon-pixel' };
                 }
-                logger.warn('[LogoColors] Favicon pixel extraction yielded no colors, falling back to Vibrant');
             } catch (e) {
                 logger.warn(`[LogoColors] Favicon pixel extraction failed: ${e.message}`);
             }
         }
 
-        // ── 4b. Raster → Vibrant ──
         if (VibrantLib && sharpLib) {
             try {
                 const resized = await sharpLib(imageBuffer)
@@ -456,13 +390,11 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                     .map(s => s.hex.toUpperCase())
                     .filter(c => c && !isNeutralHex(c));
                 const source = useFaviconPath ? 'favicon-vibrant' : 'vibrant';
-                logger.info(`[LogoColors] Vibrant colors (${source}): ${colors.slice(0, 3).join(', ')}`);
                 return { primary: colors[0] || null, secondary: colors[1] || null, palette: colors.slice(0, 5), source };
             } catch (e) {
                 logger.warn(`[LogoColors] Vibrant failed: ${e.message}`);
             }
         }
-
         return { primary: null, secondary: null, palette: [], source: null };
     } catch (err) {
         logger.warn(`[LogoColors] Unexpected error: ${err.message}`);
@@ -471,7 +403,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
 };
 
 // ── Section keywords ──────────────────────────────────────────────────────────
-
 const SECTION_KEYWORDS = {
     hero: ['hero', 'banner', 'jumbotron', 'masthead', 'splash', 'top-section'],
     about: ['about', 'who-we-are', 'our-story', 'mission', 'vision'],
@@ -485,11 +416,7 @@ const SECTION_KEYWORDS = {
 };
 
 // ── Cheerio-based extractor ───────────────────────────────────────────────────
-// Mirrors every extraction group from the v5 IN_BROWSER_EXTRACTOR
-
 const extractWithCheerio = ($, html, baseUrl) => {
-
-    // ── helpers ──
     const getText = (el) => cleanStr($(el).text());
     const getAttr = (el, a) => ($(el).attr(a) || '').trim();
 
@@ -511,7 +438,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         return toAbsUrl(src, baseUrl);
     };
 
-    // ── section detection helper ──
     const getSectionForEl = ($el) => {
         let cur = $el.parent();
         for (let i = 0; i < 8 && cur.length; i++) {
@@ -524,17 +450,13 @@ const extractWithCheerio = ($, html, baseUrl) => {
         return 'unknown';
     };
 
-    // ─────────────────────────────────────────────────────────
     // 1. Identity
-    // ─────────────────────────────────────────────────────────
     const pageTitle = cleanStr($('title').first().text());
-    const metaDesc =
-        $('meta[name="description"]').attr('content') ||
-        $('meta[property="og:description"]').attr('content') || '';
+    const metaDesc = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
     const ogTitle = $('meta[property="og:title"]').attr('content') || '';
+    const ogSiteName = $('meta[property="og:site_name"]').attr('content') || '';
 
     const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw)(\?.*)?$/i;
-
     const isSupportedImageSrc = (src) => {
         if (!src) return false;
         if (src.startsWith('data:image/')) return true;
@@ -548,16 +470,11 @@ const extractWithCheerio = ($, html, baseUrl) => {
 
     const LOGO_SELECTORS = [
         'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]', 'img[class*="logo" i]',
-        'img[src*="logo" i]',
-        '.logo img', '.navbar-brand img', '.site-logo img', '.header-logo img',
-        'a.logo img', '.brand img',
-        'a[href="/"] img',
-        'header img', 'nav img', '.navbar img', '.site-header img',
+        'img[src*="logo" i]', '.logo img', '.navbar-brand img', '.site-logo img', '.header-logo img',
+        'a.logo img', '.brand img', 'a[href="/"] img', 'header img', 'nav img', '.navbar img', '.site-header img',
         'meta[property="og:image"]',
     ];
 
-    // ── Inline SVG logo detection (checked before <img> selectors) ──
-    // Many modern sites embed the logo as an inline <svg> inside header/nav.
     const INLINE_SVG_CONTAINERS = [
         '[role="banner"] svg', 'header svg', 'nav svg',
         '[class*="logo"] svg', '[id*="logo"] svg',
@@ -572,7 +489,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         const el = $(sel).first();
         if (!el.length) continue;
         const markup = $.html(el);
-        // Require at least one visible shape element — skip degenerate/icon-only SVGs
         const hasShape = /<(path|rect|circle|ellipse|polygon|use|image)/i.test(markup);
         const w = parseInt(el.attr('width') || '0', 10);
         const h = parseInt(el.attr('height') || '0', 10);
@@ -590,7 +506,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         for (const sel of LOGO_SELECTORS) {
             const el = $(sel).first();
             if (!el.length) continue;
-
             if (el.is('meta')) {
                 const content = el.attr('content');
                 const abs = toAbs(content);
@@ -612,21 +527,13 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     }
 
-    // Favicon
     const faviconSelectors = [
-        'link[rel="icon"][sizes="any"]',
-        'link[rel="icon"][type="image/svg+xml"]',
-        'link[rel="icon"][sizes="192x192"]',
-        'link[rel="icon"][sizes="128x128"]',
-        'link[rel="icon"][sizes="64x64"]',
-        'link[rel="icon"][sizes="48x48"]',
-        'link[rel="icon"][sizes="32x32"]',
-        'link[rel="icon"][sizes="16x16"]',
-        'link[rel="shortcut icon"]',
-        'link[rel="icon"]',
-        'link[rel="apple-touch-icon"]',
-        'link[rel="apple-touch-icon-precomposed"]',
-        'meta[name="msapplication-TileImage"]',
+        'link[rel="icon"][sizes="any"]', 'link[rel="icon"][type="image/svg+xml"]',
+        'link[rel="icon"][sizes="192x192"]', 'link[rel="icon"][sizes="128x128"]',
+        'link[rel="icon"][sizes="64x64"]', 'link[rel="icon"][sizes="48x48"]',
+        'link[rel="icon"][sizes="32x32"]', 'link[rel="icon"][sizes="16x16"]',
+        'link[rel="shortcut icon"]', 'link[rel="icon"]', 'link[rel="apple-touch-icon"]',
+        'link[rel="apple-touch-icon-precomposed"]', 'meta[name="msapplication-TileImage"]',
     ];
 
     let favicon = null;
@@ -639,16 +546,11 @@ const extractWithCheerio = ($, html, baseUrl) => {
     }
     if (!favicon) favicon = new URL(baseUrl).origin + '/favicon.ico';
     favicon = toAbs(favicon);
-
     if (!logoUrl && favicon) { logoUrl = favicon; logoFormat = 'favicon-fallback'; }
 
-    // ─────────────────────────────────────────────────────────
-    // 2. Colors — parse <style> / inline styles / meta tags
-    //    (Cheerio cannot run computed CSS; we extract static declarations)
-    // ─────────────────────────────────────────────────────────
-
+    // 2. Colors — collect CSS variables + inline styles + all hex values from <style>
     const cssVariables = {};
-    const metaColors = {};
+    const allBgs = [], allTexts = [];
     const cssVarRegex = /--([a-zA-Z][a-zA-Z0-9-]*)\s*:\s*([^;}{]+)/g;
 
     $('style').each((_, el) => {
@@ -658,16 +560,22 @@ const extractWithCheerio = ($, html, baseUrl) => {
         while ((m = cssVarRegex.exec(cssText)) !== null) {
             cssVariables[m[1]] = m[2].trim();
         }
+        // Harvest hex colors directly from CSS (e.g. .bg-primary { color: #abc123; })
+        const hexRe = /#([0-9a-fA-F]{6})\b/g;
+        let hexMatch;
+        while ((hexMatch = hexRe.exec(cssText)) !== null) {
+            allBgs.push('#' + hexMatch[1]);
+        }
     });
 
     const metaTheme = $('meta[name="theme-color"]').attr('content');
     const metaMsTile = $('meta[name="msapplication-TileColor"]').attr('content');
     const metaOgColor = $('meta[property="og:color"]').attr('content');
+    const metaColors = {};
     if (metaTheme) metaColors.themeColor = metaTheme;
     if (metaMsTile) metaColors.msTileColor = metaMsTile;
     if (metaOgColor) metaColors.ogColor = metaOgColor;
 
-    // Extract inline-style background/foreground colors from key elements
     const extractInlineBg = (sel) => {
         const el = $(sel).first();
         if (!el.length) return null;
@@ -683,7 +591,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         return m ? normaliseCssColor(m[1].trim()) : null;
     };
 
-    // Attempt to get primary color from CSS vars
     let exactPrimary = null, exactSecondary = null;
     const primaryVarNames = ['primary', 'brand', 'theme', 'main', 'color-primary', 'brand-primary'];
     const secondaryVarNames = ['secondary', 'accent', 'color-secondary', 'brand-secondary'];
@@ -693,8 +600,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (!exactSecondary && secondaryVarNames.some(p => lower.includes(p))) exactSecondary = normaliseCssColor(colorValue);
     }
 
-    // Collect color hints from HTML attributes (data-color, bg-color class names, etc.)
-    const allBgs = [], allTexts = [];
     $('[style]').each((_, el) => {
         const style = $(el).attr('style') || '';
         const bg = style.match(/background(?:-color)?\s*:\s*([^;]+)/i);
@@ -703,41 +608,57 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (fg) allTexts.push(fg[1].trim());
     });
 
+    // data-* color attributes
+    $('[data-color], [data-bg-color], [data-background-color]').each((_, el) => {
+        const c = $(el).attr('data-color') || $(el).attr('data-bg-color') || $(el).attr('data-background-color');
+        if (c) allBgs.push(c);
+    });
+
     const themeColors = {
-        button: {
-            bg: extractInlineBg('.btn-primary, .button-primary, .cta-btn, .wp-block-button__link, .btn, button') ||
-                normaliseCssColor($('.btn-primary,.btn,.button').first().attr('style')?.match(/background[^;]*/)?.[0]),
-            text: extractInlineColor('.btn-primary, .btn, button'),
-        },
-        header: {
-            bg: extractInlineBg('header, .header, .site-header, .main-header, nav, .navbar'),
-            text: extractInlineColor('header, .header, nav, .navbar'),
-        },
-        footer: {
-            bg: extractInlineBg('footer, .footer, .site-footer'),
-            text: extractInlineColor('footer, .footer, .site-footer'),
-        },
-        hero: {
-            bg: extractInlineBg('.hero, .banner, .hero-section, .hero-banner'),
-        },
+        button: { bg: extractInlineBg('.btn-primary, .button-primary, .cta-btn, .wp-block-button__link, .btn, button'), text: extractInlineColor('.btn-primary, .btn, button') },
+        header: { bg: extractInlineBg('header, .header, .site-header, .main-header, nav, .navbar'), text: extractInlineColor('header, .header, nav, .navbar') },
+        footer: { bg: extractInlineBg('footer, .footer, .site-footer'), text: extractInlineColor('footer, .footer, .site-footer') },
+        hero: { bg: extractInlineBg('.hero, .banner, .hero-section, .hero-banner') },
         page: { bg: extractInlineBg('body') },
         exact: { cssVariables, meta: metaColors, elements: {} },
     };
 
-    // ─────────────────────────────────────────────────────────
-    // 3. Typography
-    // ─────────────────────────────────────────────────────────
+    // 3. Typography — now extracted from CSS variables, body style, and <style> rules
+    let bodyFontFamily = null, headingFontFamily = null, bodyFontSize = null;
+
+    // CSS variables
+    for (const [varName, val] of Object.entries(cssVariables)) {
+        const lower = varName.toLowerCase();
+        if (!bodyFontFamily && (lower.includes('font-body') || lower.includes('body-font') || lower === 'font-family')) {
+            bodyFontFamily = val.split(',')[0].trim().replace(/['"]/g, '');
+        }
+        if (!headingFontFamily && (lower.includes('font-heading') || lower.includes('heading-font'))) {
+            headingFontFamily = val.split(',')[0].trim().replace(/['"]/g, '');
+        }
+    }
+
+    const bodyStyle = $('body').attr('style') || '';
+    const bodyFontMatch = bodyStyle.match(/font-family\s*:\s*([^;]+)/i);
+    if (!bodyFontFamily && bodyFontMatch) bodyFontFamily = bodyFontMatch[1].split(',')[0].trim().replace(/['"]/g, '');
+
+    $('style').each((_, el) => {
+        const css = $(el).html() || '';
+        const bodyRule = css.match(/body\s*\{([^}]+)\}/i);
+        if (bodyRule) {
+            const ffm = bodyRule[1].match(/font-family\s*:\s*([^;]+)/i);
+            if (!bodyFontFamily && ffm) bodyFontFamily = ffm[1].split(',')[0].trim().replace(/['"]/g, '');
+            const fsm = bodyRule[1].match(/font-size\s*:\s*([^;]+)/i);
+            if (!bodyFontSize && fsm) bodyFontSize = fsm[1].trim();
+        }
+    });
 
     const googleFontLinks = $('link[href*="fonts.googleapis.com"]').map((_, el) => $(el).attr('href')).get();
-
-    // Also catch Google Fonts loaded via @import inside <style> blocks
     $('style').each((_, el) => {
         const css = $(el).html() || '';
         const importRe = /@import\s+url\(['"]?(https?:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)/gi;
         let im;
         while ((im = importRe.exec(css)) !== null) googleFontLinks.push(im[1]);
     });
-
     const googleFontFamilies = [...new Set(googleFontLinks.flatMap(href => {
         try {
             const fp = new URL(href).searchParams.get('family');
@@ -745,16 +666,9 @@ const extractWithCheerio = ($, html, baseUrl) => {
         } catch { return []; }
     }))];
 
-    const bodyFontFamily = null; // computed style unavailable in Cheerio
-    const headingFontFamily = null;
-    const bodyFontSize = null;
+    if (!bodyFontFamily && googleFontFamilies.length) bodyFontFamily = googleFontFamilies[0];
 
-    // ─────────────────────────────────────────────────────────
     // 4. Images
-    // ─────────────────────────────────────────────────────────
-
-    // ── UNWANTED: test only the URL *pathname*, not the hostname.
-    // CDN subdomains like "icons.cloudfront.net" would otherwise poison every image.
     const isUnwantedUrl = (absUrl) => {
         try {
             const { pathname } = new URL(absUrl);
@@ -778,31 +692,21 @@ const extractWithCheerio = ($, html, baseUrl) => {
         seenImgUrls.add(url);
     });
 
-    // ── Inline <svg> elements — captured with a synthetic URL so consumers
-    //    know the logo/hero is an embedded SVG rather than an external file.
     $('svg').each((idx, el) => {
         const $el = $(el);
         const w = parseInt($el.attr('width') || '0', 10);
         const h = parseInt($el.attr('height') || '0', 10);
-        if ((w > 0 && w < 24) || (h > 0 && h < 24)) return;  // skip tiny icons
+        if ((w > 0 && w < 24) || (h > 0 && h < 24)) return;
         const hasVisibleContent = $el.find('path, rect, circle, ellipse, polygon, use, image').length > 0;
         if (!hasVisibleContent) return;
         const syntheticUrl = `inline-svg:${idx}`;
         if (seenImgUrls.has(syntheticUrl)) return;
         const alt = cleanStr($el.attr('aria-label') || $el.attr('title') || '');
         const markup = $.html($el);
-        images.push({
-            url: syntheticUrl,
-            alt,
-            width: w || null,
-            height: h || null,
-            section: getSectionForEl($el),
-            markup,          // raw SVG source for downstream consumers
-        });
+        images.push({ url: syntheticUrl, alt, width: w || null, height: h || null, section: getSectionForEl($el), markup });
         seenImgUrls.add(syntheticUrl);
     });
 
-    // ── Background images from inline styles ──
     $('[style*="background"]').each((_, el) => {
         const style = $(el).attr('style') || '';
         const m = style.match(/url\(['"]?([^'")\s]+)['"]?\)/);
@@ -814,10 +718,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
         seenImgUrls.add(url);
     });
 
-    // ─────────────────────────────────────────────────────────
     // 5. Videos
-    // ─────────────────────────────────────────────────────────
-
     const videos = [];
     $('video').each((_, el) => {
         const src = toAbs($(el).attr('src'));
@@ -836,10 +737,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     });
 
-    // ─────────────────────────────────────────────────────────
     // 6. Content
-    // ─────────────────────────────────────────────────────────
-
     let heroHeading = '', heroSubheading = '';
     const heroSels = ['.hero h1', '.banner h1', '[class*="hero"] h1', 'header h1', 'main h1', 'h1'];
     for (const sel of heroSels) {
@@ -859,6 +757,20 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (h && !services.find(s => s.title === h)) services.push({ title: h, description: d || '' });
         if (services.length >= 15) return false;
     });
+    // Fallback for services using sections + h3/h4 pairs
+    if (services.length === 0) {
+        $('section, .section, [id*="service" i], [id*="what-we-do" i]').each((_, sec) => {
+            $(sec).find('h3, h4').each((__, heading) => {
+                const h = cleanStr($(heading).text());
+                const d = cleanStr($(heading).next('p').text() || $(heading).parent().find('p').first().text());
+                if (h && h.length > 3 && !services.find(s => s.title === h)) {
+                    services.push({ title: h, description: d || '' });
+                }
+                if (services.length >= 12) return false;
+            });
+            if (services.length >= 12) return false;
+        });
+    }
 
     const features = [];
     $('[class*="feature" i], [class*="Feature"]').each((_, el) => {
@@ -867,15 +779,31 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (h && !features.find(f => f.title === h)) features.push({ title: h, description: d || '' });
         if (features.length >= 15) return false;
     });
+    if (features.length === 0) {
+        $('section, .section, [id*="feature" i], [id*="benefit" i]').each((_, sec) => {
+            $(sec).find('h3, h4').each((__, heading) => {
+                const h = cleanStr($(heading).text());
+                const d = cleanStr($(heading).next('p').text() || $(heading).parent().find('p').first().text());
+                if (h && h.length > 3 && !features.find(f => f.title === h)) {
+                    features.push({ title: h, description: d || '' });
+                }
+                if (features.length >= 12) return false;
+            });
+            if (features.length >= 12) return false;
+        });
+    }
 
     const testimonials = [];
-    $('[class*="testimonial" i], [class*="review" i], [class*="feedback" i]').each((_, el) => {
-        const text = cleanStr($(el).find('p, blockquote, [class*="text" i], [class*="content" i]').first().text());
-        const author = cleanStr($(el).find('[class*="author" i], [class*="name" i], [class*="person" i], cite').first().text());
-        const company = cleanStr($(el).find('[class*="company" i], [class*="org" i], [class*="designation" i]').first().text());
-        const rating = null;
+    $('[class*="testimonial" i], [class*="review" i], [class*="feedback" i], [itemtype*="Review"], [itemtype*="Testimonial"]').each((_, el) => {
+        const text = cleanStr($(el).find('[itemprop="reviewBody"], [itemprop="description"], p, blockquote, [class*="text" i], [class*="content" i]').first().text());
+        const author = cleanStr($(el).find('[itemprop="author"], [itemprop="name"], [class*="author" i], [class*="name" i], [class*="person" i], cite, strong').first().text());
+        const company = cleanStr($(el).find('[itemprop="worksFor"], [class*="company" i], [class*="org" i], [class*="designation" i], [class*="role" i]').first().text());
+        const ratingEl = $(el).find('[aria-label*="star" i], [data-rating], [class*="star" i], [class*="rating" i]').first();
+        const ratingRaw = ratingEl.attr('data-rating') || ratingEl.attr('aria-label') || '';
+        const ratingMatch = ratingRaw.match(/(\d+(\.\d+)?)/);
+        const rating = ratingMatch ? parseFloat(ratingMatch[1]) : null;
         if (text && text.length > 20 && !testimonials.find(t => t.text === text)) {
-            testimonials.push({ text, name: author || 'Anonymous', company: company || '', rating });
+            testimonials.push({ text, name: author || '', company: company || '', rating });
         }
         if (testimonials.length >= 10) return false;
     });
@@ -889,6 +817,17 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
         if (ctaTexts.length >= 10) return false;
     });
+    // Hero CTA fallback
+    if (ctaTexts.length === 0) {
+        const heroSel = '.hero, .banner, [class*="hero"], [id*="hero"], header';
+        $(heroSel).find('a[href], button').each((_, el) => {
+            const txt = cleanStr($(el).text());
+            if (txt.length > 2 && txt.length < 60 && !ctaTexts.includes(txt)) {
+                ctaTexts.push(txt);
+            }
+            if (ctaTexts.length >= 6) return false;
+        });
+    }
 
     const taglines = [];
     $('[class*="tagline" i], [class*="headline" i], [class*="slogan" i], [class*="subheading" i]').each((_, el) => {
@@ -904,10 +843,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (sectionHeadings.length >= 25) return false;
     });
 
-    // ─────────────────────────────────────────────────────────
-    // 7. Forms
-    // ─────────────────────────────────────────────────────────
-
+    // 7. Forms (Cheerio)
     const forms = [];
     $('form').each((_, formEl) => {
         const fields = [];
@@ -930,10 +866,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     });
 
-    // ─────────────────────────────────────────────────────────
     // 8. SEO
-    // ─────────────────────────────────────────────────────────
-
     const seoMeta = {};
     $('meta').each((_, el) => {
         const prop = $(el).attr('property') || '';
@@ -949,10 +882,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
     });
     const canonical = $('link[rel="canonical"]').attr('href') || baseUrl;
 
-    // ─────────────────────────────────────────────────────────
     // 9. Detected sections
-    // ─────────────────────────────────────────────────────────
-
     const foundSections = new Set();
     $('section, article, div[id], div[class], header, footer, nav, main').each((_, el) => {
         const combined = (($(el).attr('class') || '') + ' ' + ($(el).attr('id') || '')).toLowerCase();
@@ -962,7 +892,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
     });
 
     return {
-        pageTitle, metaDesc, ogTitle,
+        pageTitle, metaDesc, ogTitle, ogSiteName,
         logoUrl, logoFormat, favicon,
         themeColors, allBgs, allTexts, allBorders: [],
         googleFontFamilies, bodyFontFamily, headingFontFamily, bodyFontSize,
@@ -976,11 +906,9 @@ const extractWithCheerio = ($, html, baseUrl) => {
     };
 };
 
-// ── Post-process extracted data ───────────────────────────────────────────────
-
+// ── Post-process colours ──────────────────────────────────────────────────────
 const buildPalette = (raw) => {
     const { themeColors, allBgs, allTexts, allBorders } = raw;
-
     const exactColors = themeColors?.exact || {};
     const cssVars = exactColors.cssVariables || {};
     const metaCols = exactColors.meta || {};
@@ -1022,31 +950,20 @@ const buildPalette = (raw) => {
     return { primary, secondary, accent, palette, exact: { cssVariables: cssVars, meta: metaCols } };
 };
 
-// ── Main export ───────────────────────────────────────────────────────────────
-
-/**
- * scrapeWebsiteStructure
- *
- * Fetches the URL with node-fetch (primary) / axios (fallback),
- * extracts all 12 data groups via Cheerio, and returns the same
- * output shape as v5.
- */
+// ── Main export: scrapeWebsiteStructure ───────────────────────────────────────
 const scrapeWebsiteStructure = async (websiteUrl) => {
     const startedAt = Date.now();
-
     logger.info(`[Scraper] Starting Cheerio scrape for ${websiteUrl}`);
 
-    // ── Fetch HTML ──
     let html, finalUrl;
     try {
-        ({ html, finalUrl } = await fetchHtml(websiteUrl, 30_000));
+        ({ html, finalUrl } = await fetchHtml(websiteUrl, 30000));
     } catch (err) {
         logger.warn(`[Scraper] First attempt failed (${err.message}), retrying with alternate UA…`);
-        // Some sites block the default Chrome UA — try a generic curl-like UA
         const origUA = DEFAULT_HEADERS['User-Agent'];
         DEFAULT_HEADERS['User-Agent'] = 'curl/8.4.0';
         try {
-            ({ html, finalUrl } = await fetchHtml(websiteUrl, 20_000));
+            ({ html, finalUrl } = await fetchHtml(websiteUrl, 20000));
         } finally {
             DEFAULT_HEADERS['User-Agent'] = origUA;
         }
@@ -1054,11 +971,17 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
 
     const $ = cheerio.load(html);
     const baseUrl = finalUrl || websiteUrl;
-
-    // ── Run Cheerio extractor ──
     const raw = extractWithCheerio($, html, baseUrl);
 
-    // ── Logo detection format helper ──
+    // Identity – with improved brand name extraction
+    const rawTitle = cleanStr(raw.pageTitle || raw.ogTitle || '');
+    const siteName = raw.ogSiteName || '';
+    const cleanedTitle = rawTitle
+        .replace(/\s*[\|–—\-:]{1,2}\s*.{0,60}$/, '')
+        .replace(/\s*[\|–—\-:]{1,2}\s*.{0,60}$/, '')
+        .trim();
+    const identityName = siteName || cleanedTitle || '';
+
     const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw)(\?.*)?$/i;
     const detectLogoFormat = (url) => {
         if (!url) return null;
@@ -1068,72 +991,50 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         return m ? m[1].toLowerCase() : 'unknown';
     };
 
-    // ── Identity ──
     const identity = {
-        name: cleanStr(raw.pageTitle || raw.ogTitle || ''),
+        name: identityName,
         description: cleanStr(raw.metaDesc || ''),
-        logoUrl: raw.logoUrl
-            ? (raw.logoUrl.startsWith('data:') ? raw.logoUrl : (toAbsUrl(raw.logoUrl, baseUrl) || raw.logoUrl))
-            : '',
-        faviconUrl: raw.favicon
-            ? (toAbsUrl(raw.favicon, baseUrl) || raw.favicon)
-            : `${new URL(baseUrl).origin}/favicon.ico`,
+        logoUrl: raw.logoUrl ? (raw.logoUrl.startsWith('data:') ? raw.logoUrl : (toAbsUrl(raw.logoUrl, baseUrl) || raw.logoUrl)) : '',
+        faviconUrl: raw.favicon ? (toAbsUrl(raw.favicon, baseUrl) || raw.favicon) : `${new URL(baseUrl).origin}/favicon.ico`,
         logoFormat: raw.logoFormat || detectLogoFormat(raw.logoUrl),
         logoSource: raw.logoUrl ? (raw.logoFormat === 'favicon-fallback' ? 'favicon-fallback' : 'scraped') : null,
     };
-
-    if (identity.logoUrl) {
-        logger.info(`[Scraper] Logo found — format: ${identity.logoFormat} → ${identity.logoUrl.slice(0, 120)}`);
-    }
-
     if (!identity.logoUrl && identity.faviconUrl) {
         identity.logoUrl = identity.faviconUrl;
         identity.logoFormat = detectLogoFormat(identity.faviconUrl) || 'favicon-ico';
         identity.logoSource = 'favicon-fallback';
-        logger.info(`[Scraper] Logo not found — using favicon: ${identity.faviconUrl}`);
     }
 
-    // ── Logo Colors ──
-    // node-fetch / axios used internally by extractLogoColors
+    // Logo Colors
     let logoColors = { primary: null, secondary: null, palette: [], source: null };
-
     const logoSourceUrl = identity.logoSource !== 'favicon-fallback' ? identity.logoUrl : null;
     const faviconFallback = identity.faviconUrl || null;
 
     if (logoSourceUrl) {
         try {
             logoColors = await extractLogoColors(logoSourceUrl, null, baseUrl, false);
-            logger.info(`[Scraper] Logo colors: primary=${logoColors.primary}, source=${logoColors.source}`);
         } catch (e) {
             logger.warn(`[Scraper] Logo color extraction failed: ${e.message}`);
         }
     }
-
     if (!logoColors.primary && faviconFallback) {
         try {
-            logger.info(`[Scraper] Trying favicon colors: ${faviconFallback}`);
             const favColors = await extractLogoColors(faviconFallback, null, baseUrl, true);
-            if (favColors.primary) {
-                logoColors = favColors;
-                logger.info(`[Scraper] Favicon colors: primary=${logoColors.primary}`);
-            }
+            if (favColors.primary) logoColors = favColors;
         } catch (e) {
             logger.warn(`[Scraper] Favicon color extraction failed: ${e.message}`);
         }
     }
-
     if (!logoColors.primary) {
         const pagePalette = buildPalette(raw);
         if (pagePalette.primary) {
             logoColors = { primary: pagePalette.primary, secondary: pagePalette.secondary || null, palette: pagePalette.palette || [], source: 'css-fallback' };
-            logger.info(`[Scraper] Using CSS color as fallback: primary=${logoColors.primary}`);
         }
     }
 
-    // ── Colors ──
     const colors = buildPalette(raw);
 
-    // ── ThemeSystem ──
+    // ThemeSystem
     const tc = raw.themeColors;
     const norm = normaliseCssColor;
     const themeSystem = {
@@ -1150,13 +1051,13 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         exactElements: {},
     };
 
-    // ── Typography ──
+    // Typography
     const typography = {
-        primaryFont: raw.googleFontFamilies[0] || null,
-        headingFont: raw.googleFontFamilies[1] || raw.googleFontFamilies[0] || null,
-        bodyFont: null,
+        primaryFont: raw.bodyFontFamily || raw.googleFontFamilies[0] || null,
+        headingFont: raw.headingFontFamily || raw.googleFontFamilies[1] || raw.googleFontFamilies[0] || null,
+        bodyFont: raw.bodyFontFamily || null,
         googleFontFamilies: raw.googleFontFamilies,
-        bodyFontSize: null,
+        bodyFontSize: raw.bodyFontSize || null,
     };
 
     const images = (raw.images || []).map(img => ({
@@ -1201,16 +1102,19 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         raw.textCorpusSample || '',
     ].join(' ');
 
-    const { industry, subIndustry } = await classifyIndustry(textCorpus);
+    const { industry, subIndustry, score: industryScore, source: industrySource } = await classifyIndustry(textCorpus);
 
-    const formFields = extractFormFieldsFromHtml(html);
+    // Merge forms from Cheerio + formExtractor
+    const formFieldsFromExtractor = extractFormFieldsFromHtml(html);
+    const mergedForms = [...forms];
+    if (Array.isArray(formFieldsFromExtractor) && formFieldsFromExtractor.length > 0) {
+        for (const ff of formFieldsFromExtractor) {
+            const isDupe = mergedForms.some(f => f.action && f.action === ff.action);
+            if (!isDupe) mergedForms.push(ff);
+        }
+    }
+
     const durationMs = Date.now() - startedAt;
-
-    if (!identity.logoUrl) logger.warn('[Scraper] logo URL not found');
-    if (!identity.name) logger.warn('[Scraper] project name not found');
-    if (!colors.primary) logger.warn('[Scraper] primary colour not found');
-    if (images.length === 0) logger.warn('[Scraper] no images extracted');
-    if (sections.length === 0) logger.warn('[Scraper] no sections detected');
     logger.info(`[Scraper] Completed in ${durationMs}ms — ${images.length} images, ${videos.length} videos, ${sections.length} sections`);
 
     return {
@@ -1222,12 +1126,14 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         images,
         videos,
         content,
-        forms,
-        formFields,
+        forms: mergedForms,
+        formFields: formFieldsFromExtractor,
         seo,
         sections,
         industry,
         subIndustry,
+        industryScore,
+        industrySource,
         scrapedAt: new Date().toISOString(),
         sourceUrl: websiteUrl,
         finalUrl: finalUrl || websiteUrl,
@@ -1263,8 +1169,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
 };
 
 /**
- * buildWebsiteProfile — identical to v5; maps scrapeWebsiteStructure output
- * into the Project.websiteProfile shape.
+ * buildWebsiteProfile – maps scraped data into Project.websiteProfile shape
  */
 const buildWebsiteProfile = (scraped, themeData = null) => {
     if (!scraped) return null;
@@ -1272,8 +1177,9 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
     const {
         identity = {}, colors = {}, logoColors = {}, themeSystem = {},
         typography = {}, images = [], videos = [], content = {},
-        forms = {}, seo = {}, sections = [],
-        industry, subIndustry, scrapedAt, sourceUrl, finalUrl,
+        forms = [], seo = {}, sections = [],
+        industry, subIndustry, industryScore, industrySource,
+        scrapedAt, sourceUrl, finalUrl,
     } = scraped;
 
     const primaryColor = logoColors.primary || colors.primary || '';
@@ -1289,21 +1195,18 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             logoSource: identity.logoSource || null,
             favicon: identity.faviconUrl || identity.favicon || '',
         },
-
         logoColors: {
             primary: logoColors.primary || null,
             secondary: logoColors.secondary || null,
             palette: logoColors.palette || [],
             source: logoColors.source || null,
         },
-
         industry: {
             industry: industry || '',
             subIndustry: subIndustry || '',
-            confidence: null,
-            detectedFrom: [],
+            confidence: industryScore || null,
+            detectedFrom: industrySource ? [industrySource] : [],
         },
-
         colors: {
             primary: primaryColor,
             secondary: secondaryColor,
@@ -1312,7 +1215,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             pagePrimary: colors.primary || '',
             pageSecondary: colors.secondary || '',
         },
-
         theme: (() => {
             const p = primaryColor;
             const sec = secondaryColor;
@@ -1360,7 +1262,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 footer: { background: footerBg, text: footerText },
             };
         })(),
-
         fonts: {
             primaryFont: typography.primaryFont || '',
             headingFont: typography.headingFont || '',
@@ -1368,7 +1269,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             bodyFont: typography.bodyFont || '',
             bodyFontSize: typography.bodyFontSize || '',
         },
-
         images: (Array.isArray(images) ? images : []).map(img => ({
             url: img.url || '',
             alt: img.alt || '',
@@ -1377,7 +1277,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             height: img.height || null,
             ...(img.markup ? { markup: img.markup } : {}),
         })),
-
         videos: (Array.isArray(videos) ? videos : []).map(vid => ({
             url: vid.url || '',
             platform: vid.platform || '',
@@ -1385,7 +1284,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             poster: vid.poster || '',
             section: vid.section || '',
         })),
-
         content: {
             hero: {
                 title: content.heroHeading || '',
@@ -1399,7 +1297,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             ctas: (Array.isArray(content.ctaTexts) ? content.ctaTexts : []).map(text => ({ title: '', description: '', buttonText: text })),
             sectionHeadings: Array.isArray(content.sectionHeadings) ? content.sectionHeadings : [],
         },
-
         forms: (Array.isArray(forms) ? forms : [])
             .filter(f => Array.isArray(f.fields) && f.fields.length > 0)
             .map((f, i) => ({
@@ -1412,7 +1309,6 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                     required: !!field.required,
                 })),
             })),
-
         seo: {
             title: seo.title || '',
             description: seo.metaDescription || '',
@@ -1432,19 +1328,17 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 image: seo.twitterCard?.image || '',
             },
         },
-
         sections: (Array.isArray(sections) ? sections : []).map((s, idx) => ({
             type: typeof s === 'string' ? s : (s.type || ''),
             enabled: true,
             order: idx,
             data: typeof s === 'object' ? (s.data || null) : null,
         })),
-
         extraction: {
             sourceUrl: sourceUrl || '',
             finalUrl: finalUrl || sourceUrl || '',
             scrapedAt: scrapedAt ? new Date(scrapedAt) : new Date(),
-            extractionVersion: '6.0',
+            extractionVersion: '7.1',
             durationMs: scraped.durationMs || 0,
         },
     };

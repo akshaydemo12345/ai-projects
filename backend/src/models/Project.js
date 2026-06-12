@@ -88,15 +88,15 @@ const projectSchema = new mongoose.Schema({
   // All scraped/analyzed data is stored here. No more duplicates.
   websiteProfile: {
     // 1. Project Identity
-    identity: {
-      name: String,
-      description: String,
-      logoUrl: String,
-      favicon: String,
-      // Logo metadata — set during scrape
-      logoFormat: String,   // e.g. 'png', 'svg-inline', 'svg-url', 'webp', 'favicon-fallback'
-      logoSource: String,   // 'scraped' | 'favicon-fallback'
-    },
+  identity: {
+    name: String,
+    description: String,
+    logoUrl: String,
+    logoSvgMarkup: String,     // ← new field
+    favicon: String,
+    logoFormat: String,
+      logoSource: String,
+  },
 
     // 2. Logo-Specific Colors (extracted directly from logo image)
     logoColors: {
