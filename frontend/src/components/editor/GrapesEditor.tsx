@@ -81,7 +81,7 @@ const GrapesEditor = () => {
 
   const WELCOME_MSG = { role: 'ai' as const, content: "Hi! How can I help you today? 😊" };
 
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>(() => {
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string, undoData?: any }[]>(() => {
     try {
       const saved = localStorage.getItem(`ai_chat_messages_${pageId}`);
       return saved ? JSON.parse(saved) : [WELCOME_MSG];
@@ -3088,11 +3088,71 @@ const GrapesEditor = () => {
   };
 
   // ─── AI Chat Processor (Real GPT API) ───
-  const processAiChat = async () => {
-    if (!chatInput.trim() || chatLoading || !editorRef.current) return;
+  const handleAiUndo = (data: any, msgIndex: number) => {
+    if (!editorRef.current || !data || !data.selectedId) return;
+    const editor = editorRef.current;
+    
+    // Revert the component
+    let targetComp = null;
+    try {
+      editor.getWrapper().onAll((comp: any) => {
+        if (comp.getId() === data.selectedId) targetComp = comp;
+      });
+    } catch(e) {
+      console.error(e);
+    }
+    
+    if (!targetComp) {
+      // Fallback: try to just use currently selected
+      targetComp = activeComponent || editor.getSelected();
+    }
+    
+    if (targetComp) {
+      const state = data.before;
+      const action = data.action;
+      if ((action === 'style' || action === 'both') && state.css) {
+        targetComp.setStyle(state.css);
+      }
+      if ((action === 'text' || action === 'both') && state.text) {
+        if (targetComp.get('type') !== 'wrapper') targetComp.components(state.text);
+      }
+      if (action === 'html' && state.html) {
+        targetComp.replaceWith(state.html);
+      }
+    }
+    
+    // Put prompt back into text box
+    if (data.prompt) {
+      setChatInput(data.prompt);
+      setTimeout(() => {
+        if (aiInputRef.current) {
+           aiInputRef.current.focus();
+           aiInputRef.current.value = data.prompt;
+        }
+      }, 50);
+    }
 
-    const val = chatInput.trim();
-    setChatInput('');
+    // Remove this message and the previous user message from chat
+    setChatMessages(prev => {
+      const newMsgs = [...prev];
+      // remove the AI message
+      newMsgs.splice(msgIndex, 1);
+      // remove the preceding user message if it matches the prompt
+      if (msgIndex - 1 >= 0 && newMsgs[msgIndex - 1].role === 'user') {
+        newMsgs.splice(msgIndex - 1, 1);
+      }
+      return newMsgs;
+    });
+    
+    toast.success('Reverted! Prompt moved to input.');
+  };
+
+  const processAiChat = async (overrideVal?: string | React.MouseEvent) => {
+    const isString = typeof overrideVal === 'string';
+    const val = (isString ? overrideVal : chatInput).trim();
+    if (!val || chatLoading || !editorRef.current) return;
+
+    if (!isString) setChatInput('');
 
     const selected = activeComponent || editorRef.current.getSelected();
     if (!selected) {
@@ -3130,6 +3190,8 @@ const GrapesEditor = () => {
       const parsed = res.data || {};
 
       // Apply changes to the selected component
+      editorRef.current.UndoManager.stop();
+      editorRef.current.UndoManager.start();
       let changeApplied = false;
       let changeSummary = parsed.summary || 'AI change applied';
 
@@ -3137,6 +3199,10 @@ const GrapesEditor = () => {
       const aiText = parsed.text || parsed.content || parsed.text_content;
       const aiHtml = parsed.html || parsed.modified_html || parsed.new_html;
       const action = parsed.action || (aiHtml ? 'html' : aiCss ? 'style' : aiText ? 'text' : 'both');
+      
+      const beforeHtml = selected.toHTML();
+      const beforeCss = selected.getStyle();
+      const beforeText = selected.components().models.map(m => m.get('content')).join('');
 
       if ((action === 'style' || action === 'both') && aiCss && Object.keys(aiCss).length > 0) {
         // Convert camelCase to kebab-case for GrapesJS
@@ -3157,8 +3223,14 @@ const GrapesEditor = () => {
         }
       }
 
+      let finalSelectedId = selected.getId();
       if (action === 'html' && aiHtml) {
-        selected.replaceWith(aiHtml);
+        const newComps = selected.replaceWith(aiHtml);
+        if (newComps && newComps.length > 0) {
+           finalSelectedId = newComps[0].getId();
+        } else if (newComps && !Array.isArray(newComps)) {
+           finalSelectedId = newComps.getId();
+        }
         changeApplied = true;
       }
 
@@ -3172,12 +3244,20 @@ const GrapesEditor = () => {
           summary: changeSummary
         };
         setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
+        editorRef.current.UndoManager.stop();
         toast.success('✨ AI changes applied successfully!');
       } else {
         aiResponse = '🤔 AI provided a response but no changes were made. Please be more specific.';
       }
 
-      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+      const undoData = {
+        action,
+        selectedId: finalSelectedId,
+        prompt: val,
+        before: { html: beforeHtml, css: beforeCss, text: beforeText },
+        after: { html: aiHtml, css: aiCss, text: aiText }
+      };
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse, undoData }]);
     } catch (err: any) {
       console.error('AI Chat Error:', err);
       const errMsg = err?.message || 'Unknown error';
@@ -3614,6 +3694,19 @@ const GrapesEditor = () => {
                           wordBreak: 'break-word'
                         }}>
                           {msg.content}
+                          {msg.role === 'ai' && msg.content.includes('✅ Done!') && (
+                            <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                              <button 
+                                onClick={() => msg.undoData && handleAiUndo(msg.undoData, i)} 
+                                style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 12px', fontSize: 12, color: '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                                Undo
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -3630,8 +3723,17 @@ const GrapesEditor = () => {
                     <div ref={chatEndRef} />
                   </div>
 
+                  {/* Quick Ideas */}
+                  <div style={{ padding: '8px 14px 0', background: '#f9fafb' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {['Make it Dark Mode', 'Change to blue theme', 'Make text larger', 'Fix spelling'].map(s => (
+                        <button key={s} onClick={() => processAiChat(s)} disabled={chatLoading} style={{ fontSize: 10, border: '1px solid #e5e7eb', borderRadius: 100, padding: '4px 10px', background: '#fff', cursor: chatLoading ? 'not-allowed' : 'pointer', color: '#4b5563', transition: 'all 0.2s' }}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Input Area */}
-                  <div style={{ padding: '12px 14px', borderTop: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                  <div style={{ padding: '8px 14px 12px', borderTop: 'none', background: '#f9fafb' }}>
                     <div style={{ background: '#fff', border: `1px solid ${chatInput.trim() ? '#6366f1' : '#d1d5db'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
                       <textarea
                         ref={aiInputRef}
