@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi } from "@/services/api";
 import { toast } from "sonner";
-import { copyToClipboard, cleanUrl } from "@/lib/utils";
+import { copyToClipboard, cleanUrl, cleanProjectName, getDifferentiatedProjectName } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 // ─── Edit Project Modal ──────────────────────────────────────
@@ -20,11 +20,7 @@ interface EditProjectModalProps {
 }
 
 const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) => {
-  const [name, setName] = useState(
-    project.websiteUrl
-      ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-      : project.name
-  );
+  const [name, setName] = useState(cleanProjectName(project.name) || "");
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
   const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
@@ -320,26 +316,22 @@ const ProjectsPage = () => {
                           <ProjectLogoIcon project={project} />
                         </div>
                         <div className="min-w-0">
-                          <a
-                            href={cleanUrl(project.websiteUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="font-bold text-slate-900 dark:text-white text-base truncate block hover:text-primary transition-colors"
-                            title={project.websiteUrl || project.name}
+                          <div
+                            className="font-bold text-slate-900 dark:text-white text-base truncate block transition-colors"
+                            title={project.name}
                           >
-                            {project.websiteUrl
-                              ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-                              : project.name}
-                          </a>
+                            {getDifferentiatedProjectName(project, projects)}
+                          </div>
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${categoryColors[project.category] || "bg-slate-100 text-slate-600"}`}>
                             {project.websiteProfile?.industry?.industry || project.industry || project.category || "General"}
                           </span>
                           <div className="flex items-center gap-1 mt-2">
                             <ExternalLink className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                            <span className="text-xs text-muted-foreground truncate font-medium" title={project.name}>
-                              {project.name}
-                            </span>
+                            <a className="text-xs text-muted-foreground truncate font-medium" href={cleanUrl(project.websiteUrl)} target="_blank" rel="noopener noreferrer" title={project.websiteUrl}>
+                              {project.websiteUrl
+                                ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+                                : ""}
+                            </a>
                           </div>
                         </div>
                       </div>
@@ -436,8 +428,14 @@ const ProjectsPage = () => {
                     <tr key={project._id} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-5 py-4">
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{project.name}</p>
-                          <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>{project.websiteUrl || "No URL"}</a>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white" title={project.name}>
+                            {getDifferentiatedProjectName(project, projects)}
+                          </p>
+                          <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>
+                            {project.websiteUrl
+                              ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+                              : "No URL"}
+                          </a>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-center">

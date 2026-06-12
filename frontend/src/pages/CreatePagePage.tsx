@@ -1100,8 +1100,8 @@ const CreatePagePage = () => {
             secondaryColor: secondaryColor,
             logoUrl: logoUrl,
             // If it's a direct AI prompt, we don't pass the base template so the AI is forced to start from scratch
-            templateHtml: activeMethod === "ai" ? "" : enrichedContent,
-            templateStyles: activeMethod === "ai" ? "" : enrichedStyles
+            templateHtml: (activeMethod as string) === "ai" ? "" : enrichedContent,
+            templateStyles: (activeMethod as string) === "ai" ? "" : enrichedStyles
           });
 
           const aiResult = generationRes?.data?.content;
