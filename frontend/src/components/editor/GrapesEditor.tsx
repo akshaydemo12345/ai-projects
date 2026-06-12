@@ -2901,6 +2901,12 @@ const GrapesEditor = () => {
   // ─── Publish ───
   const handlePublish = async () => {
     if (!editorRef.current) return;
+    
+    if (!project?.isVerified) {
+      toast.error('first verfiy plugin or script then page will publish');
+      return;
+    }
+
     setIsPublishing(true);
 
     try {
@@ -3301,6 +3307,12 @@ const GrapesEditor = () => {
               value={siteStatus}
               onChange={(e) => {
                 const val = e.target.value as any;
+                if (val === 'published' && !project?.isVerified) {
+                  toast.error('first verfiy plugin or script then page will publish');
+                  // Revert the select element visually
+                  e.target.value = siteStatus;
+                  return;
+                }
                 setSiteStatus(val);
                 // 🚀 Actually update the database!
                 updatePageMutation.mutate({ status: val });
