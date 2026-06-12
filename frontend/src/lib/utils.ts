@@ -56,9 +56,23 @@ export const normalizeLogoUrl = (url?: string | null): string | undefined => {
     normalized = `https:${normalized}`;
   }
 
-  // Already a valid data URI
-  if (/^data:image\/[a-zA-Z]+;base64,/.test(normalized)) {
+  // Already a valid base64 data URI
+  if (/^data:image\/[a-zA-Z0-9+]+;base64,/.test(normalized)) {
     return normalized;
+  }
+
+  // Percent-encoded SVG data URI: data:image/svg+xml,%3Csvg... or data:image/svg+xml;charset=utf-8,%3Csvg...
+  // Browsers cannot reliably render these in <img src>; decode and re-encode as base64.
+  if (/^data:image\/svg\+xml(?:;charset=[^,;]*)?,(?:%3C|<)/i.test(normalized)) {
+    try {
+      const payload = normalized.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, '');
+      const svgText = decodeURIComponent(payload);
+      // btoa requires Latin1; use encodeURIComponent escape trick for full Unicode support
+      const b64 = btoa(unescape(encodeURIComponent(svgText)));
+      return `data:image/svg+xml;base64,${b64}`;
+    } catch {
+      return normalized;
+    }
   }
 
   // Already an absolute URL
@@ -66,9 +80,17 @@ export const normalizeLogoUrl = (url?: string | null): string | undefined => {
     return normalized;
   }
 
-  // Raw base64 string without prefix
+  // Raw base64 string without prefix — detect SVG vs raster
   if (/^[A-Za-z0-9+/=\s]+$/.test(normalized) && normalized.length > 100) {
-    return `data:image/png;base64,${normalized.replace(/\s+/g, '')}`;
+    try {
+      const decoded = atob(normalized.replace(/\s+/g, ''));
+      const mimeType = decoded.trimStart().startsWith('<svg') || decoded.includes('<svg ')
+        ? 'image/svg+xml'
+        : 'image/png';
+      return `data:${mimeType};base64,${normalized.replace(/\s+/g, '')}`;
+    } catch {
+      return `data:image/png;base64,${normalized.replace(/\s+/g, '')}`;
+    }
   }
 
   // Relative path or fallback string - leave it as-is for the browser to resolve
@@ -128,3 +150,88 @@ export const getLogoPreviewContainerClasses = (brightness: number | null): strin
     ? "border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950"
     : "border border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-700";
 };
+
+/**
+ * Shortens a project title by removing tagline/description suffixes.
+ * E.g., "Airbnb: Holiday Rentals, Cabins..." -> "Airbnb"
+ * E.g., "Stripe | Payment Processing" -> "Stripe"
+ */
+export function cleanProjectName(name?: string): string {
+  if (!name) return "";
+
+  // If there's a colon, we can split by it because colons are almost never part of a brand name itself.
+  if (name.includes(":")) {
+    const parts = name.split(":");
+    if (parts[0].trim()) {
+      return parts[0].trim();
+    }
+  }
+
+  // Define regex for separators that have surrounding spaces:
+  // - " - " (dash)
+  // - " — " (em dash)
+  // - " – " (en dash)
+  // - " | " or "|" (pipe)
+  // - " · " or " • " (dots)
+  // - " ~ " (tilde)
+  const separators = [
+    /\s+-\s+/,      // " - "
+    /\s+—\s+/,      // " — "
+    /\s+–\s+/,      // " – "
+    /\s*\|\s*/,     // " | " or "|" with optional space (e.g. "Brand|Description")
+    /\s+·\s+/,      // " · "
+    /\s+•\s+/,      // " • "
+    /\s+~\s+/       // " ~ "
+  ];
+
+  let cleaned = name;
+  for (const sep of separators) {
+    const parts = cleaned.split(sep);
+    if (parts[0].trim()) {
+      cleaned = parts[0].trim();
+    }
+  }
+
+  return cleaned.trim();
+}
+
+/**
+ * Returns a domain name from a URL.
+ */
+export function getDomainFromUrl(url?: string): string {
+  if (!url) return "";
+  try {
+    let clean = url.trim();
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = "https://" + clean;
+    }
+    const parsed = new URL(clean);
+    return parsed.hostname.replace(/^www\./i, "");
+  } catch {
+    return url.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split('/')[0] || "";
+  }
+}
+
+/**
+ * Returns a shortened project name, but appends its domain in parentheses if
+ * another project shares the same shortened name.
+ */
+export function getDifferentiatedProjectName(project: any, allProjects: any[]): string {
+  if (!project) return "";
+  const shortName = cleanProjectName(project.name);
+  if (!allProjects || allProjects.length <= 1) {
+    return shortName;
+  }
+
+  const hasDuplicate = allProjects.some(p => 
+    p._id !== project._id && 
+    cleanProjectName(p.name).toLowerCase() === shortName.toLowerCase()
+  );
+
+  if (hasDuplicate) {
+    const domain = getDomainFromUrl(project.websiteUrl || project.url);
+    return domain ? `${shortName} (${domain})` : shortName;
+  }
+
+  return shortName;
+}
