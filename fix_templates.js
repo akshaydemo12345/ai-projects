@@ -1,143 +1,31 @@
 const fs = require('fs');
 const path = require('path');
 
-const templatesDir = path.join(__dirname, 'frontend/src/templates');
+const modalHtml = `var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);`;
 
-function walkDir(dir, callback) {
-    fs.readdirSync(dir).forEach(f => {
-        let dirPath = path.join(dir, f);
-        let isDirectory = fs.statSync(dirPath).isDirectory();
-        isDirectory ? walkDir(dirPath, callback) : callback(path.join(dir, f));
-    });
-}
-
-const coreScript = `
-<script id="core-interactions">
-  (function() {
-    // Check if we are inside GrapesJS editor
-    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
-    
-    // Form Validation (runs everywhere so you can see red borders in editor)
-    document.addEventListener('submit', function(e) {
-      if (e.target.tagName === 'FORM') {
-        e.target.setAttribute('novalidate', 'true');
-        var isValid = true;
-        var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
-        
-        inputs.forEach(function(input) {
-          if (!input.dataset.valSetup) {
-            input.dataset.valSetup = 'true';
-            input.addEventListener('input', function() {
-              if (input.value.trim()) {
-                input.style.outline = '2px solid #22c55e';
-                input.style.outlineOffset = '1px';
-                input.style.borderColor = '#22c55e';
-                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
-                  input.nextElementSibling.style.display = 'none';
-                }
-              } else {
-                input.style.outline = '2px solid #ef4444';
-                input.style.outlineOffset = '1px';
-                input.style.borderColor = '#ef4444';
-                if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
-                  input.nextElementSibling.style.display = 'block';
-                }
-              }
-            });
-          }
-
-          if (!input.value.trim() && input.hasAttribute('required')) {
-            isValid = false;
-            input.style.outline = '2px solid #ef4444';
-            input.style.outlineOffset = '1px';
-            input.style.borderColor = '#ef4444';
-            
-            if (!input.parentElement.classList.contains('val-wrapper')) {
-                var wrapper = document.createElement('div');
-                wrapper.className = 'val-wrapper';
-                wrapper.style.display = 'flex';
-                wrapper.style.flexDirection = 'column';
-                wrapper.style.width = '100%';
-                
-                var computed = window.getComputedStyle(input);
-                if (window.getComputedStyle(input.parentElement).display === 'grid') {
-                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
-                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
-                }
-                
-                input.parentNode.insertBefore(wrapper, input);
-                wrapper.appendChild(input);
-            }
-
-            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('val-error')) {
-              var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
-              var err = document.createElement('span');
-              err.className = 'val-error';
-              err.style.color = '#ef4444';
-              err.style.fontSize = '12px';
-              err.style.display = 'block';
-              err.style.marginTop = '4px';
-              err.style.fontWeight = '500';
-              err.textContent = '*' + fieldName.replace(/\*$/, '').trim() + ' is required';
-              input.parentNode.insertBefore(err, input.nextSibling);
-            } else {
-              input.nextElementSibling.style.display = 'block';
-            }
-          }
-        });
-        
-        if (!isValid || isInEditor) {
+const replacement = `if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
-        } else if (!isInEditor) {
-          e.preventDefault();
-          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
-          if (btn) {
-            if(btn.innerText) btn.innerText = 'Sending...';
-            else btn.value = 'Sending...';
-          }
-          setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
-          }, 1000);
-        }
+          if (isValid && isInEditor) {
+            ${modalHtml}
+          }`;
+
+function traverseDir(dir) {
+  fs.readdirSync(dir).forEach(file => {
+    let fullPath = path.join(dir, file);
+    if (fs.lstatSync(fullPath).isDirectory()) {
+       traverseDir(fullPath);
+    } else if (fullPath.endsWith('.ts')) {
+      let content = fs.readFileSync(fullPath, 'utf8');
+      if (content.includes('if (!isValid || isInEditor) {') && !content.includes('preview-mode-modal')) {
+        content = content.replace(/if \(!isValid \|\| isInEditor\) \{/g, replacement);
+        fs.writeFileSync(fullPath, content);
+        console.log('Fixed', fullPath);
       }
-    }, true);
-  })();
-</script>
-`;
-
-walkDir(templatesDir, (filePath) => {
-    if (filePath.endsWith('.ts')) {
-        let content = fs.readFileSync(filePath, 'utf8');
-        
-        // 1. Remove ALL inline onsubmit attributes
-        content = content.replace(/\s+onsubmit="[^"]*"/g, '');
-        content = content.replace(/\s+onsubmit='[^']*'/g, '');
-        
-        // 2. Add 'required' to all input/textarea/select elements that don't have it
-        content = content.replace(/<(input|textarea|select)([^>]*?)>/gi, (match, tag, attrs) => {
-            if (attrs.includes('type="submit"') || attrs.includes('type="button"') || attrs.includes('type="hidden"')) {
-                return match;
-            }
-            if (!attrs.includes('required')) {
-                return `<${tag}${attrs} required>`;
-            }
-            return match;
-        });
-
-        // 3. Append the core script at the end of the HTML string (before the closing backtick)
-        // Find the last </footer>\n` or </main>\n` or just the end of the string
-        if (!content.includes('id="core-interactions"')) {
-            // Usually the file ends with </footer>\n`
-            content = content.replace(/<\/footer>\n`/gi, `</footer>\n${coreScript}\n\``);
-            // Fallback for files that don't have footer
-            if (!content.includes('</footer>')) {
-                 content = content.replace(/<\/div>\n`/gi, `</div>\n${coreScript}\n\``);
-                 content = content.replace(/<\/section>\n`/gi, `</section>\n${coreScript}\n\``);
-            }
-        }
-        
-        fs.writeFileSync(filePath, content);
-        console.log('Updated', filePath);
     }
-});
+  });
+}
+traverseDir('frontend/src/templates');

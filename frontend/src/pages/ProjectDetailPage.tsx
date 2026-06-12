@@ -1875,7 +1875,7 @@ const ProjectDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-3 items-start">
 
           {/* ─── Left Side: Landing Pages List ─── */}
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-2xl border border-border bg-card shadow-sm  flex flex-col">
             {/* Section Header */}
             <div className="px-6 py-4 border-b border-border flex flex-wrap items-center justify-between bg-card gap-4">
               <div className="flex items-center gap-3">

@@ -1189,22 +1189,20 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
       enrichedContent = enrichedContent.replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"));
 
       // Clean up placeholders in styles
-      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      // 1. Replace the actual variable definitions in :root first with the HEX values for base to avoid circular references
+      // But for template specific variables, map them to var(--primary) so they sync with the editor
       enrichedStyles = enrichedStyles
         .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor || "#6366f1"}`)
         .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor || "#4f46e5"}`)
-        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor || "#6366f1"}`)
-        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor || "#6366f1"}`)
-        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor || "#6366f1"}`)
-        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor || "#6366f1"}`)
-        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor || "#6366f1"}`);
+        .replace(/--primary-rgb\s*:\s*PRIMARY_RGB_PLACEHOLDER/g, `--primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")}`)
+        .replace(/--secondary-rgb\s*:\s*SECONDARY_RGB_PLACEHOLDER/g, `--secondary-rgb: ${hexToRgbStr(secondaryColor || "#4f46e5")}`);
 
       // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
       enrichedStyles = enrichedStyles
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, hexToRgbStr(primaryColor || "#6366f1"))
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, hexToRgbStr(secondaryColor || "#4f46e5"))
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, 'var(--primary-rgb)')
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, 'var(--secondary-rgb)')
         .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo || "");
 
       // 1. Extract proper valid keywords for title and text
