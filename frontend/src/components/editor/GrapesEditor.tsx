@@ -19,6 +19,8 @@ import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
+import Pickr from "@simonwep/pickr";
+import "@simonwep/pickr/dist/themes/monolith.min.css";
 
 const hexToRgbStr = (hex: string) => {
   const c = hex.replace('#', '');
@@ -79,7 +81,7 @@ const GrapesEditor = () => {
 
   const WELCOME_MSG = { role: 'ai' as const, content: "Hi! How can I help you today? 😊" };
 
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>(() => {
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string, undoData?: any }[]>(() => {
     try {
       const saved = localStorage.getItem(`ai_chat_messages_${pageId}`);
       return saved ? JSON.parse(saved) : [WELCOME_MSG];
@@ -143,6 +145,7 @@ const GrapesEditor = () => {
 
   // UI Panels
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   // Editor instance in state so GlobalStylesPanel re-renders when editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
   const [isEditorFullyLoaded, setIsEditorFullyLoaded] = useState(false);
@@ -325,7 +328,8 @@ const GrapesEditor = () => {
           console.warn('⚠️ Body was empty after parsing, using raw content fallback.');
           bodyHtml = dbContent.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>/gi, '');
         }
-        dbContent = bodyHtml;
+        // Strip style tags from body so GrapesJS doesn't parse massive CSS rules into CssComposer
+        dbContent = bodyHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
         // Save body style and classes to apply AFTER setComponents
         extractedBodyStyle = doc.body.getAttribute('style');
@@ -379,22 +383,19 @@ const GrapesEditor = () => {
         finalStyles = finalStyles.replace(regex, 'var(--secondary)');
       }
 
-      // 1. Replace the actual variable definitions in :root first with the HEX values to avoid circular references
+      // 1. Replace the actual variable definitions in :root first with the HEX values for base to avoid circular references
       finalStyles = finalStyles
         .replace(/--primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary: ${primaryColor}`)
         .replace(/--secondary\s*:\s*SECONDARY_COLOR_PLACEHOLDER/g, `--secondary: ${secondaryColor}`)
-        .replace(/--primary-dark\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-dark: ${primaryColor}`)
-        .replace(/--p3-primary\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary: ${primaryColor}`)
-        .replace(/--p3-primary-mid\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--p3-primary-mid: ${primaryColor}`)
-        .replace(/--primary-container\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-container: ${primaryColor}`)
-        .replace(/--primary-temp\s*:\s*PRIMARY_COLOR_PLACEHOLDER/g, `--primary-temp: ${primaryColor}`);
+        .replace(/--primary-rgb\s*:\s*PRIMARY_RGB_PLACEHOLDER/g, `--primary-rgb: ${pRgb}`)
+        .replace(/--secondary-rgb\s*:\s*SECONDARY_RGB_PLACEHOLDER/g, `--secondary-rgb: ${sRgb}`);
 
       // 2. Replace any other placeholders in styles with CSS variables to keep them dynamic
       finalStyles = finalStyles
         .replace(/PRIMARY_COLOR_PLACEHOLDER/g, 'var(--primary)')
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, 'var(--secondary)')
-        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
-        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, 'var(--primary-rgb)')
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, 'var(--secondary-rgb)')
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
@@ -411,9 +412,8 @@ const GrapesEditor = () => {
         templateStyleTag.innerHTML = finalStyles;
       }
 
-      // Also call setStyle so GrapesJS CSS composer is aware
-      try { editor.setStyle(finalStyles); } catch (e) { console.warn('setStyle warn:', e); }
-
+      // Intentionally skipping editor.setStyle(finalStyles) here because loading massive AI CSS into
+      // the CssComposer causes severe 2-5s freezes during both page load and component selection.
       // ─── Inject branding-vars AFTER template-styles so it wins the cascade ───
       if (canvasDoc) {
         // Ensure icon fonts and classes are always present for both Landing and Thank You pages
@@ -458,19 +458,6 @@ const GrapesEditor = () => {
           --accent: ${secondaryColor};
           --gold: ${primaryColor};
           --forest: ${primaryColor};
-          --btn-bg: ${primaryColor};
-          --btn-text: #ffffff;
-          --body-bg: #ffffff;
-          --body-text: #0f172a;
-          --heading-color: #0f172a;
-          --subheading-color: #475569;
-          --midnight: #0a1128;
-          --ivory: #f8f9fa;
-          --ink: #0c4a6e;
-          --soft: #ffffff;
-          --bg: #1a0f08;
-          --cream: #f4ead5;
-          --muted: #a89580;
           --button-gradient: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
         }
         
@@ -764,6 +751,20 @@ const GrapesEditor = () => {
             }
           }
         `;
+
+        let blockSubmitScript = canvasDoc.getElementById('block-submit');
+        if (!blockSubmitScript) {
+          blockSubmitScript = canvasDoc.createElement('script');
+          blockSubmitScript.id = 'block-submit';
+          canvasDoc.head.appendChild(blockSubmitScript);
+        }
+        blockSubmitScript.innerHTML = `
+          document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            alert('Form submission is disabled inside the Editor.');
+          }, true);
+        `;
       }
 
       editor.setComponents(dbContent);
@@ -831,7 +832,7 @@ const GrapesEditor = () => {
           }
         } catch (e) { /* ignore */ }
         setIsCanvasLoading(false);
-      }, 1200);
+      }, 200);
     } else {
       if (activeMode === 'thank-you') {
         // Do not inject placeholder. The ThankYouEditorPanel will auto-fetch and apply the default template.
@@ -891,6 +892,168 @@ const GrapesEditor = () => {
     `;
     document.head.appendChild(style);
 
+    // ── SILENCE CASH-DOM WARNINGS BY FORCING PASSIVE LISTENERS ──
+    const passiveScript = document.createElement('script');
+    passiveScript.innerHTML = `
+      (function() {
+        var originalAddEventListener = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function(type, listener, options) {
+          if (type === 'touchstart' || type === 'touchmove' || type === 'mousewheel') {
+            if (typeof options === 'boolean') {
+              options = { capture: options, passive: true };
+            } else if (!options || typeof options === 'object') {
+              options = options || {};
+              options.passive = true;
+            }
+          }
+          return originalAddEventListener.call(this, type, listener, options);
+        };
+      })();
+    `;
+    document.head.prepend(passiveScript);
+
+    const pickrColorPlugin = (ed: any) => {
+      ed.StyleManager.addType('pickr-color', {
+        create({ props, change }: any) {
+          const el = document.createElement('div');
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.width = '100%';
+          el.style.border = '1px solid #d1d5db';
+          el.style.borderRadius = '4px';
+          el.style.padding = '4px 6px';
+          el.style.backgroundColor = '#ffffff';
+          
+          const pickrBtn = document.createElement('div');
+          pickrBtn.className = 'custom-grapesjs-pickr';
+          pickrBtn.style.width = '18px';
+          pickrBtn.style.height = '18px';
+          pickrBtn.style.borderRadius = '3px';
+          pickrBtn.style.border = '1px solid rgba(0,0,0,0.1)';
+          pickrBtn.style.cursor = 'pointer';
+          pickrBtn.style.flexShrink = '0';
+          
+          const inputHex = document.createElement('input');
+          inputHex.type = 'text';
+          inputHex.style.width = '100%';
+          inputHex.style.marginLeft = '8px';
+          inputHex.style.border = 'none';
+          inputHex.style.background = 'transparent';
+          inputHex.style.color = '#111827';
+          inputHex.style.fontSize = '12px';
+          inputHex.style.outline = 'none';
+          el.appendChild(pickrBtn);
+          el.appendChild(inputHex);
+
+          const applyUpdate = (val: string, partial: boolean) => {
+             // Pass to emit()
+             change({ value: val, partial });
+          };
+
+          const toHexAny = (hex: string) => {
+            if (!hex) return '';
+            if (hex.startsWith('#') && (hex.length === 9 || hex.length === 7)) return hex;
+            if (hex.startsWith('#') && hex.length === 5) {
+              const [, r, g, b, a] = hex;
+              return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+            }
+            if (hex.startsWith('#') && hex.length === 4) {
+              const [, r, g, b] = hex;
+              return `#${r}${r}${g}${g}${b}${b}`;
+            }
+            return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : '';
+          };
+
+          const initPickr = () => {
+            if ((el as any).__pickr) return;
+            const initialVal = inputHex.value || '';
+            const pickr = Pickr.create({
+              el: pickrBtn,
+              theme: 'monolith',
+              default: initialVal || null,
+              useAsButton: true,
+              components: {
+                preview: true, opacity: true, hue: true,
+                interaction: { hex: true, input: true, save: true, clear: true }
+              }
+            });
+
+            pickr.on('change', (color: Pickr.HSVaColor) => {
+              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+              pickrBtn.style.backgroundColor = hex || 'transparent';
+              inputHex.value = hex;
+              applyUpdate(hex, true);
+            });
+            
+            pickr.on('save', (color: Pickr.HSVaColor) => {
+              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+              pickrBtn.style.backgroundColor = hex || 'transparent';
+              inputHex.value = hex;
+              applyUpdate(hex, false);
+              pickr.hide();
+            });
+
+            pickr.on('clear', () => {
+              pickrBtn.style.backgroundColor = 'transparent';
+              inputHex.value = '';
+              applyUpdate('', false);
+              pickr.hide();
+            });
+
+            inputHex.addEventListener('change', (e: any) => {
+              const val = e.target.value;
+              const hex = toHexAny(val);
+              if (hex) {
+                 pickr.setColor(hex);
+                 pickrBtn.style.backgroundColor = hex;
+                 applyUpdate(hex, false);
+              } else {
+                 pickr.setColor(null);
+                 pickrBtn.style.backgroundColor = 'transparent';
+                 applyUpdate('', false);
+              }
+            });
+
+            (el as any).__pickr = pickr;
+          };
+
+          setTimeout(() => {
+             if (el.offsetWidth > 0) initPickr();
+             else {
+               const observer = new IntersectionObserver((entries) => {
+                 if (entries[0].isIntersecting) {
+                   initPickr();
+                   observer.disconnect();
+                 }
+               });
+               observer.observe(el);
+             }
+          }, 50);
+
+          (el as any).__inputHex = inputHex;
+          (el as any).__pickrBtn = pickrBtn;
+
+          return el;
+        },
+        
+        emit({ updateStyle }: any, { value, partial }: any) {
+          updateStyle(value, { partial });
+        },
+
+        update({ value, el }: any) {
+          if (!el) return;
+          const val = value || '';
+          if (el.__inputHex) el.__inputHex.value = val;
+          if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
+          const pickr = el.__pickr;
+          if (pickr) {
+             if (val) pickr.setColor(val, true);
+             else pickr.setColor(null, true);
+          }
+        }
+      });
+    };
+
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
@@ -903,7 +1066,7 @@ const GrapesEditor = () => {
           allowScripts: true
         }
       },
-      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic],
+      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin],
       pluginsOpts: {
         'grapesjs-preset-webpage': {
           blocksBasicOpts: { flexGrid: true },
@@ -932,7 +1095,7 @@ const GrapesEditor = () => {
       },
       panels: { defaults: [] },
       selectorManager: {
-        componentFirst: false,
+        componentFirst: true,
         appendTo: '#selectors-container',
       },
       styleManager: {
@@ -982,6 +1145,10 @@ const GrapesEditor = () => {
             open: false,
             buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
             properties: [
+              {
+                property: 'color',
+                type: 'pickr-color',
+              },
               {
                 property: 'text-align',
                 type: 'select',
@@ -1043,6 +1210,10 @@ const GrapesEditor = () => {
             open: false,
             buildProps: ['background-color', 'background-image', 'background-clip'],
             properties: [
+              {
+                property: 'background-color',
+                type: 'pickr-color',
+              },
               {
                 property: 'background-clip',
                 name: 'Clip',
@@ -2357,24 +2528,12 @@ const GrapesEditor = () => {
 
       // Update variables in real-time
       styleEl.innerHTML = `
-        :root {
-          --primary: ${themePrimary};
-          --secondary: ${themeSecondary};
-          --accent: ${themeSecondary};
-          --gold: ${themePrimary};
-          --btn-bg: ${themePrimary};
-          --btn-text: #ffffff;
-          --body-bg: #ffffff;
-          --body-text: #0f172a;
-          --heading-color: #0f172a;
-          --subheading-color: #475569;
-          --midnight: #0a1128;
-          --ivory: #f8f9fa;
-          --ink: #0c4a6e;
-          --soft: #ffffff;
-          --bg: #1a0f08;
-          --cream: #f4ead5;
-          --muted: #a89580;
+        :root, body {
+          --primary: ${themePrimary} !important;
+          --secondary: ${themeSecondary} !important;
+          --accent: ${themeSecondary} !important;
+          --gold: ${themePrimary} !important;
+          --forest: ${themePrimary} !important;
           --button-gradient: linear-gradient(135deg, ${themePrimary}, ${themeSecondary});
         }
       `;
@@ -2422,7 +2581,7 @@ const GrapesEditor = () => {
 
     const templateCss = templateStyleTag?.innerHTML || '';
 
-    const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
     const styleData = globalCss + '\n' + css;
 
@@ -2484,7 +2643,7 @@ const GrapesEditor = () => {
       const templateStyleTag = canvasDoc.getElementById('template-styles');
 
       const templateCss = templateStyleTag?.innerHTML || '';
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
       // Extract scripts to ensure they aren't lost
       let canvasScripts = '';
@@ -2519,6 +2678,7 @@ const GrapesEditor = () => {
     // 3. Update Sidebar Tab
     if (newMode === 'thank-you') {
       setLeftTab('thank-you');
+      setIsSidebarOpen(true);
     } else if (leftTab === 'thank-you') {
       setLeftTab('blocks');
     }
@@ -2587,7 +2747,7 @@ const GrapesEditor = () => {
           .replace(/var\\(--primary\\)/g, themePrimary)
           .replace(/var\\(--secondary\\)/g, themeSecondary);
 
-        globalCssForDownload = (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '') + '\\n' + cleanTemplateCss;
+        globalCssForDownload = cleanTemplateCss + '\\n' + (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '');
       }
     } catch (e) {
       console.warn('Failed to extract scripts or styles from canvas for download:', e);
@@ -2750,7 +2910,7 @@ const GrapesEditor = () => {
 
       const templateCss = templateStyleTag?.innerHTML || '';
 
-      const globalCss = (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + templateCss;
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
       const styleData = globalCss + '\n' + css;
 
       // Extract scripts from canvas using unified helper, then merge with backup
@@ -2855,11 +3015,7 @@ const GrapesEditor = () => {
           }
           templateStyleTag.innerHTML += '\n/* AI Generated */\n' + extractedCss;
         }
-        // Also register with GrapesJS CSS composer
-        try {
-          const existingCss = editorRef.current.getCss() || '';
-          editorRef.current.setStyle(existingCss + '\n/* AI Generated */\n' + extractedCss);
-        } catch { }
+        // Intentionally skipping editorRef.current.setStyle to prevent massive click lag
       }
 
       if (selected) {
@@ -2916,10 +3072,7 @@ const GrapesEditor = () => {
           }
           templateStyleTag.innerHTML += '\n/* AI Edit */\n' + extractedCss;
         }
-        try {
-          const existingCss = editorRef.current.getCss() || '';
-          editorRef.current.setStyle(existingCss + '\n/* AI Edit */\n' + extractedCss);
-        } catch { }
+        // Intentionally skipping setStyle to prevent SelectorManager lag
       }
 
       selected.replaceWith(cleanHtml || improvedHtml);
@@ -2935,11 +3088,75 @@ const GrapesEditor = () => {
   };
 
   // ─── AI Chat Processor (Real GPT API) ───
-  const processAiChat = async () => {
-    if (!chatInput.trim() || chatLoading || !editorRef.current) return;
+  const handleAiUndo = (data: any, msgIndex: number) => {
+    if (!editorRef.current || !data || !data.selectedId) return;
+    const editor = editorRef.current;
+    
+    // Revert the component
+    let targetComp = null;
+    const findComponentById = (component: any, targetId: string): any => {
+      if (!component) return null;
+      if (component.getId() === targetId) return component;
+      const children = component.components().models;
+      for (let i = 0; i < children.length; i++) {
+        const found = findComponentById(children[i], targetId);
+        if (found) return found;
+      }
+      return null;
+    };
+    targetComp = findComponentById(editor.getWrapper(), data.selectedId);
+    
+    if (!targetComp) {
+      // Fallback: try to just use currently selected
+      targetComp = activeComponent || editor.getSelected();
+    }
+    
+    if (targetComp) {
+      const state = data.before;
+      const action = data.action;
+      if ((action === 'style' || action === 'both') && state.css) {
+        targetComp.setStyle(state.css);
+      }
+      if ((action === 'text' || action === 'both') && state.text) {
+        if (targetComp.get('type') !== 'wrapper') targetComp.components(state.text);
+      }
+      if (action === 'html' && state.html) {
+        targetComp.replaceWith(state.html);
+      }
+    }
+    
+    // Put prompt back into text box
+    if (data.prompt) {
+      setChatInput(data.prompt);
+      setTimeout(() => {
+        if (aiInputRef.current) {
+           aiInputRef.current.focus();
+           aiInputRef.current.value = data.prompt;
+        }
+      }, 50);
+    }
 
-    const val = chatInput.trim();
-    setChatInput('');
+    // Remove this message and the previous user message from chat
+    setChatMessages(prev => {
+      const newMsgs = [...prev];
+      // remove the AI message
+      newMsgs.splice(msgIndex, 1);
+      // remove the preceding user message if it matches the prompt
+      if (msgIndex - 1 >= 0 && newMsgs[msgIndex - 1].role === 'user') {
+        newMsgs.splice(msgIndex - 1, 1);
+      }
+      return newMsgs;
+    });
+    
+    toast.success('Reverted! Prompt moved to input.');
+  };
+
+  const processAiChat = async (overrideVal?: string | React.MouseEvent) => {
+    const isString = typeof overrideVal === 'string';
+    const val = (isString ? overrideVal : chatInput).trim();
+    if (!val || chatLoading || !editorRef.current) return;
+
+    if (!isString) setChatInput('');
 
     const selected = activeComponent || editorRef.current.getSelected();
     if (!selected) {
@@ -2977,6 +3194,8 @@ const GrapesEditor = () => {
       const parsed = res.data || {};
 
       // Apply changes to the selected component
+      editorRef.current.UndoManager.stop();
+      editorRef.current.UndoManager.start();
       let changeApplied = false;
       let changeSummary = parsed.summary || 'AI change applied';
 
@@ -2984,6 +3203,10 @@ const GrapesEditor = () => {
       const aiText = parsed.text || parsed.content || parsed.text_content;
       const aiHtml = parsed.html || parsed.modified_html || parsed.new_html;
       const action = parsed.action || (aiHtml ? 'html' : aiCss ? 'style' : aiText ? 'text' : 'both');
+      
+      const beforeHtml = selected.toHTML();
+      const beforeCss = selected.getStyle();
+      const beforeText = selected.components().models.map(m => m.get('content')).join('');
 
       if ((action === 'style' || action === 'both') && aiCss && Object.keys(aiCss).length > 0) {
         // Convert camelCase to kebab-case for GrapesJS
@@ -3004,8 +3227,14 @@ const GrapesEditor = () => {
         }
       }
 
+      let finalSelectedId = selected.getId();
       if (action === 'html' && aiHtml) {
-        selected.replaceWith(aiHtml);
+        const newComps = selected.replaceWith(aiHtml);
+        if (newComps && newComps.length > 0) {
+           finalSelectedId = newComps[0].getId();
+        } else if (newComps && !Array.isArray(newComps)) {
+           finalSelectedId = newComps.getId();
+        }
         changeApplied = true;
       }
 
@@ -3019,12 +3248,20 @@ const GrapesEditor = () => {
           summary: changeSummary
         };
         setAiHistory(prev => [historyEntry, ...prev].slice(0, 30));
+        editorRef.current.UndoManager.stop();
         toast.success('✨ AI changes applied successfully!');
       } else {
         aiResponse = '🤔 AI provided a response but no changes were made. Please be more specific.';
       }
 
-      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+      const undoData = {
+        action,
+        selectedId: finalSelectedId,
+        prompt: val,
+        before: { html: beforeHtml, css: beforeCss, text: beforeText },
+        after: { html: aiHtml, css: aiCss, text: aiText }
+      };
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse, undoData }]);
     } catch (err: any) {
       console.error('AI Chat Error:', err);
       const errMsg = err?.message || 'Unknown error';
@@ -3064,11 +3301,10 @@ const GrapesEditor = () => {
         {/* Logo & Page Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20 }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#818cf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
-            {project?.name?.charAt(0).toUpperCase() || 'G'}
+            {page?.name?.charAt(0).toUpperCase() || 'P'}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#111827', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px' }}>{project?.name || 'Grapes Studio'}</span>
-            <span style={{ color: '#64748b', fontSize: 10, fontWeight: 500 }}>{page?.name || 'Untitled Page'}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ color: '#111827', fontWeight: 700, fontSize: 14, letterSpacing: '-0.2px' }}>{page?.name || 'Untitled Page'}</span>
           </div>
         </div>
 
@@ -3216,12 +3452,12 @@ const GrapesEditor = () => {
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             padding: '16px 0px', gap: 18, borderRight: '1px solid #dedede'
           }}>
-            <NavIcon active={isSidebarOpen && leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
-            <NavIcon active={isSidebarOpen && leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
+            <NavIcon title="Blocks" active={leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
+            <NavIcon title="Theme Options" active={leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
+            <NavIcon title="Layer Manager" active={leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
+            <NavIcon title="AI Assistant" active={leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
             {mode === 'thank-you' && (
-              <NavIcon active={isSidebarOpen && leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); } }}>
+              <NavIcon title="Templates" active={leftTab === 'thank-you'} onClick={() => { if (leftTab === 'thank-you') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('thank-you'); setIsSidebarOpen(true); } }}>
                 <SuccessIcon /><span>Templates</span>
               </NavIcon>
             )}
@@ -3309,6 +3545,7 @@ const GrapesEditor = () => {
                 editor={editorInstance}
                 initialPrimary={page?.primaryColor}
                 initialSecondary={page?.secondaryColor}
+                initialStylesCss={mode === 'landing' ? page?.landingPageStyles : page?.thankYouPageStyles}
                 onBrandingColorsChange={({ primary, secondary }) => {
                   setThemePrimary(primary);
                   setThemeSecondary(secondary);
@@ -3461,6 +3698,19 @@ const GrapesEditor = () => {
                           wordBreak: 'break-word'
                         }}>
                           {msg.content}
+                          {msg.role === 'ai' && msg.content.includes('✅ Done!') && (
+                            <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                              <button 
+                                onClick={() => msg.undoData && handleAiUndo(msg.undoData, i)} 
+                                style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 12px', fontSize: 12, color: '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                                Undo
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -3477,8 +3727,17 @@ const GrapesEditor = () => {
                     <div ref={chatEndRef} />
                   </div>
 
+                  {/* Quick Ideas */}
+                  <div style={{ padding: '8px 14px 0', background: '#f9fafb' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {['Make it Dark Mode', 'Change to blue theme', 'Make text larger', 'Fix spelling'].map(s => (
+                        <button key={s} onClick={() => processAiChat(s)} disabled={chatLoading} style={{ fontSize: 10, border: '1px solid #e5e7eb', borderRadius: 100, padding: '4px 10px', background: '#fff', cursor: chatLoading ? 'not-allowed' : 'pointer', color: '#4b5563', transition: 'all 0.2s' }}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Input Area */}
-                  <div style={{ padding: '12px 14px', borderTop: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                  <div style={{ padding: '8px 14px 12px', borderTop: 'none', background: '#f9fafb' }}>
                     <div style={{ background: '#fff', border: `1px solid ${chatInput.trim() ? '#6366f1' : '#d1d5db'}`, borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
                       <textarea
                         ref={aiInputRef}
@@ -3594,8 +3853,8 @@ const GrapesEditor = () => {
                         console.error('Error parsing Thank You HTML:', e);
                       }
                     } else {
-                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
-                      const filteredScripts = scriptMatches.filter(s =>
+                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+                      const filteredScripts = scriptMatches.filter((s: string) =>
                         !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
                       );
                       if (filteredScripts.length > 0) {
@@ -3603,14 +3862,15 @@ const GrapesEditor = () => {
                       }
                     }
 
-                    // Apply content — strip body{} rules to avoid iframe margin/padding issues
+                    // Apply content — strip body{} rules and style tags to avoid iframe margin issues and CssComposer lag
+                    finalHtml = finalHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
                     editorRef.current.setComponents(finalHtml);
                     if (finalCss) {
                       // ⚠️ Remove body margin/padding from template CSS to prevent iframe scroll issues
                       const cleanCss = finalCss
                         .replace(/body\s*\{[^}]*margin[^}]*\}/gi, '')
                         .replace(/body\s*\{[^}]*padding[^}]*\}/gi, '');
-                      editorRef.current.setStyle(cleanCss);
+                      // Intentionally skipping setStyle to avoid SelectorManager click lag
                     }
 
                     // Inject CSS directly into canvas iframe for reliable rendering
@@ -3632,7 +3892,7 @@ const GrapesEditor = () => {
                     } catch (e) { }
 
                     editorRef.current.refresh();
-                    setTimeout(() => setIsCanvasLoading(false), 1200);
+                    setTimeout(() => setIsCanvasLoading(false), 200);
                   }
                 }}
               />
@@ -3669,17 +3929,57 @@ const GrapesEditor = () => {
         </div>
 
         {/* ══ RIGHT SIDEBAR ══ */}
-        <div className="gjs-editor gjs-one-bg" style={{
-          width: 280, flexShrink: 0, background: '#ffffff',
-          borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column',
-        }}>
+        <div style={{ position: 'relative', display: 'flex' }}>
+          <button
+            onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+            className="absolute top-6 z-50 h-6 w-6 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-sm hover:shadow hover:bg-gray-50 text-gray-500 hover:text-gray-900 transition-all duration-300 cursor-pointer"
+            style={{ left: isRightSidebarOpen ? '-12px' : '-36px' }}
+            title="Toggle Right Sidebar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+              <path d={isRightSidebarOpen ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"}></path>
+            </svg>
+          </button>
+          
+          <div className="gjs-editor gjs-one-bg" style={{
+            width: isRightSidebarOpen ? 280 : 0,
+            opacity: isRightSidebarOpen ? 1 : 0,
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            flexShrink: 0, background: '#ffffff',
+            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none', 
+            display: 'flex', flexDirection: 'column',
+          }}>
           {/* Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
             <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
             <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
           </div>
-          <div id="styles-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none' }} />
-          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none' }} />
+          <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
+            <div id="styles-container" />
+            
+            <details className="selectors-accordion" style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
+              <summary className="gs-style-manager-sector-header" style={{ listStyle: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: 500, color: '#111827', marginLeft: '5px' }}>
+                    Classes & States
+                  </div>
+                  <div className="gs-cmp-accordion-handler-toggle selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
+                  </div>
+                </div>
+              </summary>
+              <div id="selectors-container" style={{ padding: '12px', background: '#fff' }} />
+            </details>
+            
+            <style dangerouslySetInnerHTML={{__html: `
+              .selectors-accordion summary::-webkit-details-marker { display: none; }
+              .selectors-accordion[open] .selectors-arrow { transform: rotate(90deg); }
+              .selectors-arrow { transition: transform 0.2s; }
+              #selectors-container .gjs-clm-tags:nth-child(n+2) { display: none !important; }
+            `}} />
+          </div>
+          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
+          </div>
         </div>
       </div>
 
@@ -4073,13 +4373,16 @@ const TabButton = ({ children, active, onClick }: { children: React.ReactNode; a
 );
 
 const NavIcon = ({ children, active, onClick, title }: { children: React.ReactNode; active: boolean; onClick: () => void; title?: string }) => (
-  <button onClick={onClick} title={title} style={{
+  <button onClick={onClick} className="group relative" style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
     color: active ? '#6366f1' : '#000000', transition: 'all .2s'
   }}>
     <div style={{ padding: 8, borderRadius: 8, background: active ? 'rgba(99,102,241,0.1)' : 'transparent' }}>
       {Array.isArray(children) ? children[0] : children}
+    </div>
+    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-md">
+      {title || (Array.isArray(children) ? children[1] : null)}
     </div>
   </button>
 );
@@ -4109,7 +4412,7 @@ const ZapIcon = () => (
 const TrashIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>;
 const EyeIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
 const SaveIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
-const SparklesIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" /></svg>;
+const SparklesIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" /></svg>;
 const SettingsIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
 const RocketIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></svg>;
 const GridIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>;
@@ -4139,8 +4442,8 @@ function mergeScripts(canvasScripts: string, backupScripts: string): string {
 
   const addScripts = (html: string) => {
     if (!html) return;
-    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [];
-    matches.forEach(tag => {
+    const matches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+    matches.forEach((tag: string) => {
       // Skip tailwind — added by renderer
       if (tag.includes('cdn.tailwindcss.com')) return;
       if (tag.includes('tailwind.config')) return;
