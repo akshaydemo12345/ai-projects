@@ -298,9 +298,11 @@ const GrapesEditor = () => {
         if (extractedStyles) {
           dbStyles = (dbStyles || '') + '\n' + extractedStyles;
         }
+        styleTags.forEach(s => s.remove());
 
         // Extract scripts to be injected AFTER setComponents
-        extractedScripts = Array.from(doc.querySelectorAll('script')).map(scriptEl => ({
+        const scriptTags = Array.from(doc.querySelectorAll('script'));
+        extractedScripts = scriptTags.map(scriptEl => ({
           src: scriptEl.src,
           innerHTML: scriptEl.innerHTML
         })).filter(scriptData => {
@@ -310,8 +312,10 @@ const GrapesEditor = () => {
           if (scriptData.src && scriptData.src.includes('tailwindcss.com')) return false;
           return true;
         });
+        scriptTags.forEach(s => s.remove());
 
-        const links = Array.from(doc.querySelectorAll('link')).map(l => l.outerHTML);
+        const linkElements = Array.from(doc.querySelectorAll('link'));
+        const links = linkElements.map(l => l.outerHTML);
 
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
@@ -321,6 +325,7 @@ const GrapesEditor = () => {
             }
           });
         }
+        linkElements.forEach(l => l.remove());
 
         // Take body content or fallback to full text if body is somehow empty
         let bodyHtml = doc.body.innerHTML.trim();
@@ -2896,6 +2901,12 @@ const GrapesEditor = () => {
   // ─── Publish ───
   const handlePublish = async () => {
     if (!editorRef.current) return;
+    
+    if (!project?.isVerified) {
+      toast.error('first verfiy plugin or script then page will publish');
+      return;
+    }
+
     setIsPublishing(true);
 
     try {
@@ -3380,6 +3391,12 @@ const GrapesEditor = () => {
               value={siteStatus}
               onChange={(e) => {
                 const val = e.target.value as any;
+                if (val === 'published' && !project?.isVerified) {
+                  toast.error('first verfiy plugin or script then page will publish');
+                  // Revert the select element visually
+                  e.target.value = siteStatus;
+                  return;
+                }
                 setSiteStatus(val);
                 // 🚀 Actually update the database!
                 updatePageMutation.mutate({ status: val });
@@ -3830,8 +3847,10 @@ const GrapesEditor = () => {
                         const doc = parser.parseFromString(html, 'text/html');
 
                         // Extract styles
-                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                        const styleElements = Array.from(doc.querySelectorAll('style'));
+                        const styleTags = styleElements.map(s => s.textContent).join('\n');
                         if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+                        styleElements.forEach(s => s.remove());
 
                         // Backup scripts
                         const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
@@ -3847,6 +3866,7 @@ const GrapesEditor = () => {
                         if (newBackupScripts) {
                           setExtractedTemplateScripts(newBackupScripts);
                         }
+                        allTemplateScripts.forEach(s => s.remove());
 
                         finalHtml = doc.body.innerHTML;
                       } catch (e) {
