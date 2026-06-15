@@ -44,9 +44,9 @@ a{color:inherit;text-decoration:none}
 }
 
 /* 1. HERO */
-.hero{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;overflow:hidden}
+.hero{position:relative;height:100vh;display: flex; flex-wrap: wrap;align-items:center;justify-content:center;text-align:center;color:#fff;overflow:hidden}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scale(1.1);animation:slow-pan 20s infinite alternate}
-.hero-overlay{position:absolute;inset:0;background-color:var(--primary) !important;background-image:linear-gradient(to bottom, rgba(10,17,40,0.2), var(--primary)) !important;opacity:0.5;z-index:1}
+.hero-overlay{position:absolute;inset:0;background-color: var(--primary) ;background-image: linear-gradient(to bottom, rgba(10,17,40,0.2), var(--primary)) ;opacity:0.5;z-index:1}
 .hero-content{position:relative;z-index:2;max-width:1200px;display:grid;grid-template-columns:1fr 400px;gap:6rem;align-items:center;text-align:left}
 .hero-text h1{font-family:var(--serif);font-size:clamp(3rem,6vw,6rem);font-weight:400;line-height:1;margin-bottom:2rem;letter-spacing:-.02em}
 .hero-text p.kicker{font-size:1rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--primary);margin-bottom:1.5rem;font-weight:600}
@@ -82,7 +82,7 @@ a{color:inherit;text-decoration:none}
 .dest-card{position:relative;height:550px;border-radius:20px;overflow:hidden;cursor:pointer}
 .dest-card img{width:100%;height:100%;object-fit:cover;transition:transform 1s cubic-bezier(0.2,0.8,0.2,1)}
 .dest-card:hover img{transform:scale(1.1)}
-.dest-card-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, transparent 40%, rgba(10,17,40,0.9));display:flex;flex-direction:column;justify-content:flex-end;padding:3rem;color:#fff}
+.dest-card-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, transparent 40%, rgba(10,17,40,0.9));display: flex; flex-wrap: wrap;flex-direction:column;justify-content:flex-end;padding:3rem;color:#fff}
 .dest-card h3{font-family:var(--serif);font-size:2rem;margin-bottom:0.5rem}
 .dest-card span{font-size:0.8rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary)}
 
@@ -101,7 +101,7 @@ a{color:inherit;text-decoration:none}
 .des-img-wrap{position:relative}
 .des-img{height:750px;width:100%;border-radius:20px;overflow:hidden;box-shadow:30px 30px 0 var(--secondary)}
 .des-img img{width:100%;height:100%;object-fit:cover}
-.des-badge{position:absolute;bottom:4rem;right:-3rem;background:var(--midnight);color:var(--primary);padding:2.5rem;border-radius:50%;width:180px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);z-index:2;animation:float 6s ease-in-out infinite}
+.des-badge{position:absolute;bottom:4rem;right:-3rem;background:var(--midnight);color:var(--primary);padding:2.5rem;border-radius:50%;width:180px;height:180px;display: flex; flex-wrap: wrap;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);z-index:2;animation:float 6s ease-in-out infinite}
 .des-badge strong{font-family:var(--serif);font-size:2.5rem;line-height:1}
 .des-badge span{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase}
 
@@ -115,11 +115,11 @@ a{color:inherit;text-decoration:none}
 
 /* 6. RETREATS */
 .retreats{padding:10rem 0}
-.ret-list{display:flex;gap:4rem;overflow-x:auto;padding:2rem 0;scrollbar-width:none}
+.ret-list{display: flex; flex-wrap: wrap;gap:4rem;overflow-x:auto;padding:2rem 0;scrollbar-width:none}
 .ret-card{min-width:450px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:3rem;border-radius:30px}
 .ret-card h3{font-family:var(--serif);font-size:2.2rem;margin-bottom:1.5rem;color:var(--primary)}
 .ret-card ul{list-style:none;margin-bottom:2rem}
-.ret-card li{margin-bottom:1rem;opacity:0.8;display:flex;align-items:center;gap:1rem}
+.ret-card li{margin-bottom:1rem;opacity:0.8;display: flex; flex-wrap: wrap;align-items:center;gap:1rem}
 .ret-card li::before{content:"✧";color:var(--primary)}
 
 /* 7. ECHOES */
@@ -134,7 +134,7 @@ footer{padding:8rem 0 4rem}
 .footer-col h5{font-size:0.8rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary);margin-bottom:2.5rem}
 .footer-col a{display:block;margin-bottom:1rem;opacity:0.6;transition:opacity 0.3s}
 .footer-col a:hover{opacity:1;color:var(--primary)}
-.footer-bottom{display:flex;justify-content:space-between;padding-top:3rem;border-top:1px solid rgba(255,255,255,0.1);font-size:0.8rem;opacity:0.5}
+.footer-bottom{display: flex; flex-wrap: wrap;justify-content:space-between;padding-top:3rem;border-top:1px solid rgba(255,255,255,0.1);font-size:0.8rem;opacity:0.5}
 
 @keyframes slow-pan { from { transform: scale(1.1) translateX(-2%); } to { transform: scale(1.1) translateX(2%); } }
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);} 40% {transform: translateY(-10px) translateX(-50%);} 60% {transform: translateY(-5px) translateX(-50%);} }
@@ -157,13 +157,29 @@ footer{padding:8rem 0 4rem}
   .ret-card { min-width: 300px; }
   .footer-bottom { flex-direction: column; gap: 2rem; }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates03-1 { color: #fff; }
+  .tpl-templates03-2 { color: var(--secondary); }
+  .tpl-templates03-3 { color: var(--primary); }
+  .tpl-templates03-4 { border-bottom: 1px solid var(--primary); color: var(--primary); }
+  .tpl-templates03-5 { color: var(--primary); }
+  .tpl-templates03-6 { background: var(--secondary); color: #fff; }
+  .tpl-templates03-7 { color: var(--primary); }
+  .tpl-templates03-8 { color: var(--primary); }
+  .tpl-templates03-9 { color: var(--primary); }
+  .tpl-templates03-10 { color: var(--primary); }
+  .tpl-templates03-11 { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 5px; }
+  .tpl-templates03-12 { border-radius: 5px; }
+  .tpl-templates03-13 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
 export const travel03Html = `
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 
-<header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:2rem 0;color:#fff">
-  <div class="container" style="display:flex;justify-content:space-between;align-items:center">
+<header class="tpl-templates03-1" style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 2rem 0">
+  <div class="container" style="display: flex; flex-wrap: wrap;justify-content:space-between;align-items:center">
     <a href="#" class="logo" style="font-family:var(--serif);font-size:1.8rem;letter-spacing:2px">LOGO_PLACEHOLDER</a>
   </div>
 </header>
@@ -173,7 +189,7 @@ export const travel03Html = `
   <div class="hero-overlay"></div>
   <div class="container hero-content">
     <div class="hero-text">
-      <p class="kicker" style="color:var(--secondary)">Handcrafted Journeys for the Soul</p>
+      <p class="kicker tpl-templates03-2"  >Handcrafted Journeys for the Soul</p>
       <h1>The Art of<br/>Slowing Down.</h1>
     </div>
     <form class="hero-form">
@@ -207,10 +223,10 @@ export const travel03Html = `
 <section class="philosophy bg-dark">
   <div class="container philo-grid">
     <div class="philo-text">
-      <p style="color:var(--primary);letter-spacing:3px;margin-bottom:1rem">OUR PHILOSOPHY</p>
+      <p class="tpl-templates03-3" style="letter-spacing: 3px; margin-bottom: 1rem">OUR PHILOSOPHY</p>
       <h2>Travel that transforms.</h2>
       <p>We believe travel should be more than just visiting a place. It should be a pause, a breath, and a return to oneself. Our retreats are designed to silence the noise and amplify the soul.</p>
-      <a href="#" style="border-bottom:1px solid var(--primary);padding-bottom:5px;color:var(--primary);font-size:0.9rem">Learn More</a>
+      <a href="#" class="tpl-templates03-4" style="padding-bottom: 5px; font-size: 0.9rem">Learn More</a>
     </div>
     <div class="philo-img">
       <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=800" alt="Zen Spa Interior">
@@ -221,7 +237,7 @@ export const travel03Html = `
 <section class="destinations" id="destinations">
   <div class="container">
     <div class="dest-head">
-      <p style="color:var(--primary);letter-spacing:3px;margin-bottom:1rem">SACRED LANDS</p>
+      <p class="tpl-templates03-5" style="letter-spacing: 3px; margin-bottom: 1rem">SACRED LANDS</p>
       <h2>Signature Destinations</h2>
     </div>
     <div class="dest-grid">
@@ -289,10 +305,10 @@ export const travel03Html = `
       </div>
     </div>
     <div class="des-text">
-      <span class="tag" style="background:var(--secondary);color:#fff">CURATED BY HUMAN SOUL</span>
+      <span class="tag tpl-templates03-6"  >CURATED BY HUMAN SOUL</span>
       <h2>Anya Varma.</h2>
       <p>I don't just book trips; I design chapters of your life story. With a deep connection to the lands I serve, every journey is a bespoke masterpiece of discovery, luxury, and silence.</p>
-      <div style="display:flex;gap:3rem;margin-bottom:3rem">
+      <div style="display: flex; flex-wrap: wrap;gap:3rem;margin-bottom:3rem">
         <div><strong style="display:block;font-size:1.5rem;font-family:var(--serif)">50+</strong><span style="font-size:0.7rem;letter-spacing:1px;opacity:0.6">COUNTRIES EXPLORED</span></div>
         <div><strong style="display:block;font-size:1.5rem;font-family:var(--serif)">2k+</strong><span style="font-size:0.7rem;letter-spacing:1px;opacity:0.6">SOULS TRANSFORMED</span></div>
       </div>
@@ -305,7 +321,7 @@ export const travel03Html = `
 <section class="retreats bg-dark" id="retreats">
   <div class="container">
     <div class="dest-head">
-      <p style="color:var(--primary);letter-spacing:3px;margin-bottom:1rem">CURRENT CURATIONS</p>
+      <p class="tpl-templates03-7" style="letter-spacing: 3px; margin-bottom: 1rem">CURRENT CURATIONS</p>
       <h2>Featured Retreats</h2>
     </div>
     <div class="ret-list">
@@ -317,7 +333,7 @@ export const travel03Html = `
           <li>Sacred Valley Hiking</li>
           <li>Himalayan Spa Rituals</li>
         </ul>
-        <a href="#" style="color:var(--primary);font-weight:600">View Journey →</a>
+        <a href="#" class="tpl-templates03-8" style="font-weight: 600">View Journey →</a>
       </div>
       <div class="ret-card">
         <h3>Liquid Mind</h3>
@@ -327,7 +343,7 @@ export const travel03Html = `
           <li>Floating Sound Baths</li>
           <li>Coral Restoration</li>
         </ul>
-        <a href="#" style="color:var(--primary);font-weight:600">View Journey →</a>
+        <a href="#" class="tpl-templates03-9" style="font-weight: 600">View Journey →</a>
       </div>
       <div class="ret-card">
         <h3>Desert Stillness</h3>
@@ -337,7 +353,7 @@ export const travel03Html = `
           <li>Dead Sea Floating</li>
           <li>Wadi Rum Trekking</li>
         </ul>
-        <a href="#" style="color:var(--primary);font-weight:600">View Journey →</a>
+        <a href="#" class="tpl-templates03-10" style="font-weight: 600">View Journey →</a>
       </div>
     </div>
   </div>
@@ -370,15 +386,15 @@ export const travel03Html = `
       <div class="footer-col">
         <h5>Connect</h5>
         <p style="opacity:0.6;font-size:0.9rem;margin-bottom:1.5rem">Receive our seasonal curations on mindful travel.</p>
-        <form style="display:flex;gap:1rem">
-          <input type="email" placeholder="Email Address" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;color:#fff;border-radius:5px" required>
-          <button type="submit" class="btn-primary" style="padding: 1rem 2rem; border-radius: 5px;">Join</button>
+        <form style="display: flex; flex-wrap: wrap;gap:1rem">
+          <input type="email" placeholder="Email Address" class="tpl-templates03-11" style="flex: 1; padding: 1rem" required>
+          <button type="submit" class="btn-primary tpl-templates03-12"  style="padding: 1rem 2rem">Join</button>
         </form>
       </div>
     </div>
     <div class="footer-bottom">
       <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
-      <div style="display:flex;gap:2rem">
+      <div style="display: flex; flex-wrap: wrap;gap:2rem">
         <a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">Pinterest</a>
       </div>
     </div>
@@ -463,6 +479,14 @@ export const travel03Html = `
         if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
+          if (isInEditor) {
+            var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
         } else if (!isInEditor) {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
@@ -471,7 +495,7 @@ export const travel03Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates03-13" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
