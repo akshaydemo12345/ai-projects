@@ -4,7 +4,7 @@ const { z } = require('zod');
 const { generateLandingPageContent } = require('../services/aiService');
 const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
-const { scrapeWebsiteStructure, buildWebsiteProfile } = require('../services/structuredScrapeService');
+const { scrapeWebsiteStructure, buildWebsiteProfile, SiteBlockedError } = require('../services/structuredScrapeService');
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
@@ -339,6 +339,13 @@ exports.extractProject = async (req, res, next) => {
     });
   } catch (err) {
     console.error('[aiController] extractProject failed:', err.message);
+    if (err.code === 'SITE_BLOCKED') {
+      return res.status(422).json({
+        status: 'fail',
+        code: 'SITE_BLOCKED',
+        message: `This website is blocking automated access. Please fill in your project details manually.`,
+      });
+    }
     next(err);
   }
 };
@@ -371,6 +378,13 @@ exports.structuredScrape = async (req, res, next) => {
     });
   } catch (err) {
     console.error('Structured scrape error:', err.message);
+    if (err.code === 'SITE_BLOCKED') {
+      return res.status(422).json({
+        status: 'fail',
+        code: 'SITE_BLOCKED',
+        message: `This website is blocking automated access. Please fill in your project details manually.`,
+      });
+    }
     next(err);
   }
 };
@@ -446,14 +460,50 @@ exports.editorChat = async (req, res, next) => {
  */
 exports.generateDescription = async (req, res, next) => {
   try {
-    const { pageName, industry, projectDesc, currentPrompt } = req.body;
+    // ui-state colors/fonts override scraped data — always sent from frontend live form
+    const {
+      pageName, industry, projectDesc, currentPrompt, projectId,
+      // live UI overrides (user may have changed these after scraping)
+      uiPrimaryColor, uiSecondaryColor, uiAccentColor,
+      uiBodyFont, uiHeadingFont,
+    } = req.body;
 
     if (!pageName || !industry) {
       return res.status(400).json({ status: 'fail', message: 'pageName and industry are required' });
     }
 
+    // Always fetch fresh scraped data from DB — never trust client-cached copies
+    let websiteProfile = null;
+    let scrapedData = null;
+    if (projectId) {
+      try {
+        const proj = await Project.findById(projectId)
+          .select('websiteProfile scrapedData')
+          .lean();
+        if (proj) {
+          websiteProfile = proj.websiteProfile || null;
+          scrapedData = proj.scrapedData || null;
+        }
+      } catch (_) { /* non-fatal — proceed without scraped context */ }
+    }
+
+    // Merge live UI color/font overrides on top of scraped values
+    // so the prompt reflects exactly what the user currently has set
+    const uiOverrides = {
+      primaryColor:   uiPrimaryColor   || null,
+      secondaryColor: uiSecondaryColor || null,
+      accentColor:    uiAccentColor    || null,
+      bodyFont:       uiBodyFont       || null,
+      headingFont:    uiHeadingFont    || null,
+    };
+
     const { generateDescriptionSuggestion } = require('../services/aiService');
-    const suggestion = await generateDescriptionSuggestion({ pageName, industry, projectDesc, currentPrompt });
+    const suggestion = await generateDescriptionSuggestion({
+      pageName, industry, projectDesc, currentPrompt,
+      websiteProfile,
+      scrapedData,
+      uiOverrides,
+    });
 
     return res.status(200).json({
       status: 'success',

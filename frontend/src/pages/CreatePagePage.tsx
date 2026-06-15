@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
-  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search
+  Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search, Globe
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
-import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { getImageAverageBrightness, getLogoPreviewContainerClasses, normalizeLogoUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { PickrColorInput } from "@/components/ui/PickrColorInput";
 import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/templates01";
@@ -679,6 +679,7 @@ const CreatePagePage = () => {
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [createdPage, setCreatedPage] = useState<any>(null);
+  const [faviconBroken, setFaviconBroken] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -754,33 +755,20 @@ const CreatePagePage = () => {
 
     setIsVerifyingSlug(true);
     try {
-      const response = await pagesApi.verifySlug(id!, { slug: normalizedSlug });
+      await pagesApi.verifySlug(id!, { slug: normalizedSlug });
       setSlugError("");
       setIsSlugVerified(true);
-
-      // Provide feedback based on what was checked
-      if (!silent) {
-        const message = response?.data?.externalCheckMessage || 'unknown';
-        if (message === 'checked on your website') {
-          toast.success(`✓ Slug "${normalizedSlug}" verified on your website`);
-        } else if (message === 'internal database only') {
-          toast.success(`✓ Slug "${normalizedSlug}" is available (website URL not configured - checked database only)`);
-        } else {
-          toast.success(`✓ Slug "${normalizedSlug}" is available`);
-        }
-      }
+      // Success is shown via the green checkmark icon in the input — no toast
       return false;
     } catch (err: any) {
       const errorMsg = err.message || "This URL slug is unavailable.";
-      setSlugError(errorMsg);
-      setIsSlugVerified(false);
-      if (!silent) {
-        if (errorMsg.includes("already exists on website")) {
-          toast.error(`✗ Page already exists on your website`);
-        } else {
-          toast.error(errorMsg);
-        }
+      // Show error inline in the input field only — no toast
+      if (errorMsg.includes("already exists on website")) {
+        setSlugError("This URL slug already exists on your live website. Please choose a different one.");
+      } else {
+        setSlugError(errorMsg);
       }
+      setIsSlugVerified(false);
       return true;
     } finally {
       setIsVerifyingSlug(false);
@@ -930,7 +918,10 @@ const CreatePagePage = () => {
         pageName,
         industry: getProjectIndustry(project),
         projectDesc: project?.description,
-        currentPrompt: aiPrompt.trim() || undefined
+        currentPrompt: aiPrompt.trim() || undefined,
+        projectId: id,
+        uiPrimaryColor: primaryColor,
+        uiSecondaryColor: secondaryColor,
       });
       const suggestionText = typeof res.data.suggestion === 'object'
         ? res.data.suggestion.suggestion
@@ -1376,7 +1367,22 @@ ${enrichedContent}
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
         <span className="text-gray-300">/</span>
-        {project && <span className="text-sm text-gray-400 truncate max-w-[160px]">{project.name}</span>}
+        {project && (
+          <span className="flex items-center gap-2 text-sm text-gray-400 truncate max-w-[160px]">
+            {/* Favicon: use state to track load failure so Globe fallback renders correctly */}
+            {!faviconBroken && (project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
+              <img
+                src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
+                alt="favicon"
+                className="h-6 w-6 rounded object-contain flex-shrink-0"
+                onError={() => setFaviconBroken(true)}
+              />
+            ) : (
+              <Globe className="h-6 w-6 flex-shrink-0 text-gray-400" />
+            )}
+            {project.name}
+          </span>
+        )}
         <span className="text-gray-300">/</span>
         <span className="text-sm font-semibold text-gray-800">Create New Page</span>
       </div>
@@ -1386,9 +1392,9 @@ ${enrichedContent}
         <div className="flex flex-col overflow-y-auto border-r border-gray-100 transition-all duration-300 w-full md:w-[52%] lg:w-[55%]">
           <div className="px-4 pt-10 pb-6 border-b border-gray-50">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-md"
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
-                <Sparkles className="h-5 w-5 text-white" />
+                <Sparkles className="h-7 w-7 text-white" />
               </div>
               <div className="flex-1">
                 <h1 className="text-xl font-black text-gray-900">Create New Page</h1>
@@ -1514,7 +1520,14 @@ ${enrichedContent}
                   <label htmlFor="logo-upload" className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all">
                     {logoPreview ? (
                       <span className={`h-5 w-5 rounded-lg flex items-center justify-center overflow-hidden shadow-lg ring-1 ring-slate-600 ${logoPreviewBgClass}`}>
-                        <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)} />
+                        <img src={normalizeLogoUrl(logoPreview) || logoPreview} alt="Logo" className="h-full w-full object-contain" onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)} onError={(e) => {
+                          const currentSrc = e.currentTarget.src || '';
+                          if (currentSrc.startsWith('http') && !currentSrc.includes('/proxy-image')) {
+                            e.currentTarget.src = aiApi.proxyImage(logoPreview!);
+                            return;
+                          }
+                          e.currentTarget.style.display = 'none';
+                        }} />
                       </span>
                     ) : (
                       <Upload className="h-4 w-4 text-gray-400" />

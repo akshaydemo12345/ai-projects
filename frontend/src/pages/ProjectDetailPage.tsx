@@ -1751,7 +1751,16 @@ const ProjectDetailPage = () => {
                 src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
                 alt="favicon"
                 className="h-5 w-5 object-contain"
-                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
+                onError={(e) => {
+                  const cur = e.currentTarget;
+                  const currentSrc = cur.src || '';
+                  if (currentSrc.startsWith('http') && !currentSrc.includes('/proxy-image')) {
+                    cur.src = aiApi.proxyImage(project.websiteProfile?.identity?.favicon || project.logoUrl!);
+                    return;
+                  }
+                  cur.style.display = 'none';
+                  (cur.nextSibling as HTMLElement)?.removeAttribute('style');
+                }}
               />
             ) : null}
             <Globe
@@ -1823,7 +1832,16 @@ const ProjectDetailPage = () => {
                   src={project.websiteProfile?.identity?.favicon || project.logoUrl!}
                   alt="favicon"
                   className="h-4 w-4 object-contain"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('style'); }}
+                  onError={(e) => {
+                    const cur = e.currentTarget;
+                    const currentSrc = cur.src || '';
+                    if (currentSrc.startsWith('http') && !currentSrc.includes('/proxy-image')) {
+                      cur.src = aiApi.proxyImage(project.websiteProfile?.identity?.favicon || project.logoUrl!);
+                      return;
+                    }
+                    cur.style.display = 'none';
+                    (cur.nextSibling as HTMLElement)?.removeAttribute('style');
+                  }}
                 />
               ) : null}
               <Globe
