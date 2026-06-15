@@ -12,11 +12,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Navigation */
 .nav { padding: 1.25rem 0; background: #fff; position: relative; z-index: 100; }
-.nav-inner { display: flex; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-.nav-links { display: flex; gap: 2.5rem; }
+.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 2.5rem; }
 .nav-links a { color: #4b5563; font-size: 0.9rem; font-weight: 600; }
-.btn-primary { background-color: var(--primary); color: #fff; padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
+.btn-primary { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #fff); padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
 
 /* Hero Section with Exact Curved Shape */
 .hero { position: relative; padding: 6rem 0 15rem; background: #f8fafc; overflow: hidden; }
@@ -32,7 +32,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .hero-text span { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; opacity: 0.8; }
 .hero-text h1 { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin: 1.5rem 0; }
 .hero-text p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 3.5rem; max-width: 500px; line-height: 1.7; }
-.hero-btns { display: flex; gap: 1.5rem; }
+.hero-btns { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .btn-hero-white { background-color: #fff; color: var(--primary); padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: none; }
 .btn-hero-outline { border: 1.5px solid #fff; color: #fff; padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; background: transparent; }
 
@@ -43,9 +43,9 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
     position: absolute; bottom: 30px; left: -30px; 
     background: #fff; padding: 1rem 1.5rem; border-radius: 12px; 
     box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-    display: flex; align-items: center; gap: 12px; 
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px; 
 }
-.hero-badge .icon { width: 32px; height: 32px; background-color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; }
+.hero-badge .icon { width: 32px; height: 32px; background-color: var(--primary); border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; }
 .hero-badge span { font-size: 0.75rem; font-weight: 800; color: #111; }
 
 /* Floating Horizontal Form Bar */
@@ -61,7 +61,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .form-group:nth-child(3) { border-right: none; }
 .form-group label { display: block; font-size: 0.6rem; text-transform: uppercase; color: #000; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
 .form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #000; }
-.btn-submit { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 3rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+.btn-submit { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #fff); border: none; padding: 1.25rem 3rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
 
 /* About Section */
 .about { padding: 12rem 0; }
@@ -91,10 +91,10 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .srv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
 .srv-card { background: #fff; padding: 4rem 2.5rem; border-radius: 20px; text-align: left; border: 1px solid #f1f5f9; transition: 0.4s; }
 .srv-card:hover { transform: translateY(-15px); border-color: var(--primary); box-shadow: 0 40px 80px rgba(0,0,0,0.05); }
-.srv-icon-box { width: 50px; height: 50px; background-color: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 2rem; }
+.srv-icon-box { width: 50px; height: 50px; background-color: #eff6ff; color: var(--primary); border-radius: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 2rem; }
 .srv-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; }
 .srv-card p { font-size: 0.95rem; color: #64748b; margin-bottom: 2rem; line-height: 1.6; }
-.srv-link { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.srv-link { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 /* Why Choose Us - Large Portrait Image */
 .why { background: #0f172a; color: #fff; padding: 12rem 0; }
@@ -103,7 +103,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .why-img-box img { width: 100%; height: 100%; object-fit: cover; }
 .why-text h2 { font-size: 3.2rem; font-weight: 800; margin-bottom: 2rem; }
 .why-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 4rem; }
-.why-list-item h5 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 12px; }
+.why-list-item h5 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .why-list-item h5::before { content: ''; width: 8px; height: 8px; background-color: PRIMARY_COLOR_PLACEHOLDER; border-radius: 50%; }
 .why-list-item p { color: #94a3b8; font-size: 0.95rem; }
 
@@ -115,7 +115,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Projects / Case Studies */
 .cases { padding: 12rem 0; }
-.cases-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6rem; }
+.cases-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 6rem; }
 .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
 .case-card { background: var(--primary); padding: 4rem 3rem; border-radius: 20px; color: #fff; position: relative; transition: 0.4s; }
 .case-card span { font-size: 0.7rem; opacity: 0.6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
@@ -124,7 +124,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Consultation Banner */
 .cta-banner { background-color: var(--primary); padding: 6rem 0; color: #fff; }
-.cta-inner { display: flex; justify-content: space-between; align-items: center; }
+.cta-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .cta-inner h2 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; }
 
 /* Testimonial Section */
@@ -140,7 +140,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .contact-form { max-width: 850px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; }
 .form-full { grid-column: span 2; }
 .contact-form input, .contact-form textarea { width: 100%; padding: 1.25rem; border: 1px solid #000; border-radius: 8px; font-family: inherit; font-size: 1rem; color: #000; }
-.btn-send { background-color: var(--primary); color: #fff; border: none; padding: 1.25rem 4rem; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-top: 2rem; }
+.btn-send { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #fff); border: none; padding: 1.25rem 4rem; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-top: 2rem; }
 
 /* Footer */
 footer { background: #0f172a; color: #fff; padding: 10rem 0 5rem; }
@@ -185,6 +185,22 @@ footer { background: #0f172a; color: #fff; padding: 10rem 0 5rem; }
     .test-box { padding: 3rem 2rem; }
     .test-box p { font-size: 1.2rem; }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates01-1 { color: #2a58e8; }
+  .tpl-templates01-2 { color: #2a58e8; }
+  .tpl-templates01-3 { color: #2a58e8; }
+  .tpl-templates01-4 { color: #2a58e8; border-bottom: 2px solid #2a58e8; }
+  .tpl-templates01-5 { border-radius: 4px; }
+  .tpl-templates01-6 { color: #fff; }
+  .tpl-templates01-7 { color: #94a3b8; }
+  .tpl-templates01-8 { color: #fff; }
+  .tpl-templates01-9 { color: #94a3b8; }
+  .tpl-templates01-10 { background: #1e293b; border: none; border-radius: 4px; color: #fff; }
+  .tpl-templates01-11 { background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; border-radius: 4px; }
+  .tpl-templates01-12 { border-top: 1px solid rgba(255,255,255,0.05); color: #4b5563; }
+  .tpl-templates01-13 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `
 
 export const finance01Html = `
@@ -277,7 +293,7 @@ export const finance01Html = `
   <!-- SERVICES GRID -->
   <section class="services" id="services">
     <div class="container">
-      <span style="color: #2a58e8; font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">WHAT WE'RE OFFERING</span>
+      <span class="tpl-templates01-1" style="font-weight: 800; font-size: 0.8rem; letter-spacing: 2px">WHAT WE'RE OFFERING</span>
       <h2 style="margin-top: 1.5rem;">We Solve Finance Problems <br>With Strategy</h2>
       <div class="srv-grid">
         <div class="srv-card">
@@ -315,7 +331,7 @@ export const finance01Html = `
         <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&q=80&w=600" alt="Strategic Partnership">
       </div>
       <div class="why-text">
-        <span style="color: #2a58e8; font-weight: 800;">WHY CHOOSE US</span>
+        <span class="tpl-templates01-2" style="font-weight: 800">WHY CHOOSE US</span>
         <h2 style="margin-top: 1.5rem;">Our Mission, Values <br>and Motto</h2>
         <p>We believe great finance is invisible — it removes friction, illuminates decisions and quietly compounds.</p>
         <div class="why-list">
@@ -347,10 +363,10 @@ export const finance01Html = `
     <div class="container">
       <div class="cases-head">
         <div>
-          <span style="color: #2a58e8; font-weight: 800;">OUR LATEST PROJECTS</span>
+          <span class="tpl-templates01-3" style="font-weight: 800">OUR LATEST PROJECTS</span>
           <h2 style="font-size: 3rem; font-weight: 800; margin-top: 1.5rem;">Incredible Client Stories</h2>
         </div>
-        <a href="#" style="color: #2a58e8; font-weight: 800; border-bottom: 2px solid #2a58e8;">View All Cases</a>
+        <a href="#" class="tpl-templates01-4" style="font-weight: 800">View All Cases</a>
       </div>
       <div class="case-grid">
         <div class="case-card">
@@ -391,7 +407,7 @@ export const finance01Html = `
   <section class="cta-banner">
     <div class="container cta-inner">
        <h2>Get a Free Expert Consultation <br>For Your Business</h2>
-       <a href="#" class="btn-hero-white" style="border-radius: 4px; padding: 1.25rem 4rem;">Book A Call</a>
+       <a href="#" class="btn-hero-white tpl-templates01-5"  style="padding: 1.25rem 4rem">Book A Call</a>
     </div>
   </section>
 
@@ -429,9 +445,9 @@ export const finance01Html = `
 <footer>
   <div class="container foot-grid">
     <div class="foot-col">
-       <div class="logo" style="color: #fff; font-size: 1.5rem; letter-spacing: 2px;">LOGO_PLACEHOLDER</div>
-       <p style="color: #94a3b8; line-height: 1.8;">Premium finance consulting for ambitious businesses. Trusted by founders, CFOs and boards across 40+ countries.</p>
-       <div style="margin-top: 2rem; color: #fff;">
+       <div class="logo tpl-templates01-6"  style="font-size: 1.5rem; letter-spacing: 2px">LOGO_PLACEHOLDER</div>
+       <p class="tpl-templates01-7" style="line-height: 1.8">Premium finance consulting for ambitious businesses. Trusted by founders, CFOs and boards across 40+ countries.</p>
+       <div class="tpl-templates01-8" style="margin-top: 2rem">
           <p>PHONE_PLACEHOLDER</p>
           <p>EMAIL_PLACEHOLDER</p>
        </div>
@@ -456,14 +472,14 @@ export const finance01Html = `
     </div>
     <div class="foot-col">
        <h5>Newsletter</h5>
-       <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem;">Get monthly insights from our senior advisors.</p>
-       <form style="display: flex; gap: 10px;">
-          <input type="email" placeholder="Your email" style="background: #1e293b; border: none; padding: 0.8rem; border-radius: 4px; color: #fff; width: 100%;" required>
-          <button type="submit" style="background-color: PRIMARY_COLOR_PLACEHOLDER; color: #fff; border: none; padding: 0.8rem 1.2rem; border-radius: 4px;"><i class="fa-solid fa-paper-plane"></i></button>
+       <p class="tpl-templates01-9" style="font-size: 0.85rem; margin-bottom: 1.5rem">Get monthly insights from our senior advisors.</p>
+       <form style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <input type="email" placeholder="Your email" class="tpl-templates01-10" style="padding: 0.8rem; width: 100%" required>
+          <button type="submit" class="tpl-templates01-11" style="padding: 0.8rem 1.2rem"><i class="fa-solid fa-paper-plane"></i></button>
        </form>
     </div>
   </div>
-  <div class="container" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: #4b5563; font-size: 0.85rem;">
+  <div class="container tpl-templates01-12"  style="margin-top: 5rem; padding-top: 3rem; text-align: center; font-size: 0.85rem">
      <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
   </div>
 </footer>
@@ -546,6 +562,14 @@ export const finance01Html = `
         if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
+          if (isInEditor) {
+            var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
         } else if (!isInEditor) {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
@@ -554,7 +578,7 @@ export const finance01Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates01-13" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }

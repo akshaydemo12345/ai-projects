@@ -15,15 +15,16 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Navigation */
 .nav { position: absolute; top: 0; left: 0; right: 0; z-index: 100; padding: 2.5rem 0; }
-.nav-inner { display: flex; justify-content: space-between; align-items: center; }
+.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
-.nav-links { display: flex; gap: 3rem; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 3rem; }
 .nav-links a { color: #fff; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
 .nav-links a:hover { color: var(--primary); opacity: 1; }
-.btn-primary { border: 1px solid var(--primary); color: var(--primary); padding: 0.8rem 1.8rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; background: transparent; cursor: pointer; }
+.btn-primary { border: 1px solid var(--btn-bg, var(--primary)); color: var(--btn-bg, var(--primary)); padding: 0.8rem 1.8rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; background: transparent; cursor: pointer; transition: all 200ms; }
+.btn-primary:hover { background-color: var(--btn-bg, var(--primary)) !important; color: var(--btn-text, #fff) !important; }
 
 /* Hero Section */
-.hero { position: relative; min-height: 100vh; display: flex; align-items: center; padding: 12rem 0 10rem; background: #000; }
+.hero { position: relative; min-height: 100vh; display: flex; flex-wrap: wrap; align-items: center; padding: 12rem 0 10rem; background: #000; }
 .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; }
 .hero-content { position: relative; z-index: 10; max-width: 850px; }
 .hero h1 { font-size: clamp(3.5rem, 8vw, 6rem); font-weight: 700; line-height: 1.05; margin-bottom: 2rem; color: #fff; }
@@ -35,7 +36,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .form-field:last-of-type { border-right: none; }
 .form-field label { display: block; font-size: 0.65rem; text-transform: uppercase; color: var(--primary); font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 1px; }
 .form-field input, .form-field select { background: transparent; border: none; outline: none; color: #fff; width: 100%; font-size: 0.95rem; font-weight: 500; }
-.btn-submit { background-color: var(--primary); color: #000; border: none; padding: 1rem 2.5rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
+.btn-submit { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); border: none; padding: 1rem 2.5rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
 
 /* Offerings Section */
 .offerings { padding: 10rem 0; background: #050505; }
@@ -49,7 +50,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .off-icon { font-size: 2rem; color: var(--primary); margin-bottom: 2.5rem; }
 .off-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
 .off-card p { color: #666; font-size: 0.95rem; margin-bottom: 3rem; }
-.off-link { color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 0.75rem; letter-spacing: 1px; }
+.off-link { color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; letter-spacing: 1px; }
 
 /* Stats Bar */
 .stats-bar { padding: 8rem 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -84,11 +85,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Final CTA Section */
 .cta-section { padding: 10rem 0; background: #050505; position: relative; overflow: hidden; }
-.cta-trust-bar { display: flex; gap: 4rem; margin-bottom: 4rem; opacity: 0.6; }
-.trust-item { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
+.cta-trust-bar { display: flex; flex-wrap: wrap; gap: 4rem; margin-bottom: 4rem; opacity: 0.6; }
+.trust-item { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
 .cta-section h2 { font-size: 4.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 2rem; }
 .cta-section p { font-size: 1.25rem; color: #666; margin-bottom: 4rem; max-width: 600px; }
-.btn-final { background-color: var(--primary); color: #000; padding: 1.25rem 3.5rem; border-radius: 4px; font-weight: 800; display: inline-block; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; border: none; cursor: pointer; }
+.btn-final { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); padding: 1.25rem 3.5rem; border-radius: 4px; font-weight: 800; display: inline-block; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; border: none; cursor: pointer; }
 
 /* Footer */
 footer { padding: 10rem 0 5rem; background: #000; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -97,7 +98,7 @@ footer { padding: 10rem 0 5rem; background: #000; border-top: 1px solid rgba(255
 .foot-col h5 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: #fff; margin-bottom: 2.5rem; }
 .foot-links a { display: block; color: #555; font-size: 0.9rem; margin-bottom: 1.2rem; transition: 0.3s; }
 .foot-links a:hover { color: PRIMARY_COLOR_PLACEHOLDER; }
-.foot-social { display: flex; gap: 1.5rem; margin-top: 1rem; color: #555; font-size: 1.2rem; }
+.foot-social { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1rem; color: #555; font-size: 1.2rem; }
 
 @media (max-width: 1024px) {
   .hero-form-bar { grid-template-columns: 1fr 1fr; }
@@ -114,6 +115,14 @@ footer { padding: 10rem 0 5rem; background: #000; border-top: 1px solid rgba(255
   .cta-section h2 { font-size: 2.2rem; }
   .nav-links { display: none; }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates03-1 { color: #fff; border-bottom: 1px solid PRIMARY_COLOR_PLACEHOLDER; }
+  .tpl-templates03-2 { color: #666; }
+  .tpl-templates03-3 { color: #666; }
+  .tpl-templates03-4 { border-top: 1px solid rgba(255,255,255,0.05); color: #444; }
+  .tpl-templates03-5 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `
 
 export const finance03Html = `
@@ -136,7 +145,7 @@ export const finance03Html = `
         <h1>Smart Financial <br>Solutions for <br>Your Future</h1>
         <p>Bespoke loans, strategic investments, and elite financial planning tailored for high-net-worth individuals and growing enterprises.</p>
         <div style="margin-top: 3rem;">
-           <a href="#services" style="color: #fff; border-bottom: 1px solid PRIMARY_COLOR_PLACEHOLDER; padding-bottom: 8px; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px;">Explore Solutions</a>
+           <a href="#services" class="tpl-templates03-1" style="padding-bottom: 8px; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px">Explore Solutions</a>
         </div>
       </div>
       
@@ -222,7 +231,7 @@ export const finance03Html = `
       <div style="text-align: center;">
         <span class="section-tag">✦ The Aureum Standard</span>
         <h2 style="font-size: 3rem; font-weight: 700;">Defined by precision, protected by expertise.</h2>
-        <p style="color: #666; margin-top: 1rem;">Delivered with absolute discretion.</p>
+        <p class="tpl-templates03-2" style="margin-top: 1rem">Delivered with absolute discretion.</p>
       </div>
       
       <div class="std-grid">
@@ -255,7 +264,7 @@ export const finance03Html = `
     <div class="container">
       <div style="text-align: center;">
          <h2 style="font-size: 3rem; font-weight: 700;">Streamlined Journey</h2>
-         <p style="color: #666; margin-top: 1rem;">From application to disbursement, excellence at every step.</p>
+         <p class="tpl-templates03-3" style="margin-top: 1rem">From application to disbursement, excellence at every step.</p>
       </div>
       <div class="journey-grid">
         <div class="step-card">
@@ -369,7 +378,7 @@ export const finance03Html = `
       </div>
     </div>
   </div>
-  <div class="container" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: #444; font-size: 0.8rem;">
+  <div class="container tpl-templates03-4"  style="margin-top: 5rem; padding-top: 3rem; text-align: center; font-size: 0.8rem">
     <p>© 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
   </div>
 </footer>
@@ -452,6 +461,14 @@ export const finance03Html = `
         if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
+          if (isInEditor) {
+            var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
         } else if (!isInEditor) {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
@@ -460,7 +477,7 @@ export const finance03Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates03-5" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }

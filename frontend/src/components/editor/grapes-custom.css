@@ -226,17 +226,33 @@
   order: 2 !important;
   margin-right: 0 !important;
   margin-left: 8px !important;
-  fill: #6b7280 !important;
+  fill: none !important;
+  background-color: #6b7280 !important;
+  width: 14px !important;
+  height: 14px !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
   transition: transform 0.2s ease !important;
 }
 
-/* Caret rotation: down when closed, up when open */
+.gjs-editor .gjs-sm-sector-title:hover .gjs-sm-sector-caret {
+  background-color: #000000 !important;
+}
+
+.gjs-editor .gjs-sm-sector-caret svg,
+.gjs-editor .gjs-sm-sector-caret path {
+  display: none !important;
+}
+
+/* Caret rotation: right when closed, down when open */
 .gjs-editor .gjs-sm-sector-caret {
   transform: rotate(0deg) !important;
 }
 
 .gjs-editor .gjs-sm-open .gjs-sm-sector-caret {
-  transform: rotate(180deg) !important;
+  transform: rotate(90deg) !important;
 }
 
 /* Properties Container */
@@ -489,7 +505,7 @@
 }
 
 /* Fix for overall layout scrolling when color picker opens */
-body {
+body:has(.gjs-editor) {
   overflow: hidden !important;
 }
 
@@ -939,14 +955,28 @@ body {
 }
 
 .gjs-editor .gs-cmp-accordion-handler-toggle svg {
-  width: 20px !important;
-  height: 20px !important;
-  transition: transform 0.2s !important;
-  fill: currentColor !important;
+  display: none !important;
 }
 
-.gjs-editor [aria-expanded="true"] .gs-cmp-accordion-handler-toggle svg {
-  transform: rotate(180deg) !important;
+.gjs-editor .gs-cmp-accordion-handler-toggle {
+  width: 14px !important;
+  height: 14px !important;
+  background-color: #6b7280 !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
+  transition: transform 0.2s !important;
+}
+
+.gjs-editor .gs-style-manager-sector-header:hover .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gs-cmp-accordion-handler:hover .gs-cmp-accordion-handler-toggle {
+  background-color: #000000 !important;
+}
+
+.gjs-editor [aria-expanded="true"] .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gjs-sm-sector.gjs-sm-open .gs-cmp-accordion-handler-toggle {
+  transform: rotate(90deg) !important;
 }
 
 .gjs-editor .gs-cmp-accordion,
@@ -1169,4 +1199,178 @@ body {
 /* Hide grapesjs native fake checkbox if present */
 .gjs-editor #traits-container .gjs-trt-trait .gjs-chk-icon {
   display: none !important;
+}
+
+/* FORCE SELECTOR MANAGER LIGHT THEME */
+.gjs-editor .gjs-clm-tags {
+  background: transparent !important;
+  color: #111827 !important;
+}
+.gjs-editor .gjs-clm-tags * {
+  color: #111827 !important;
+}
+.gjs-editor .gjs-clm-header {
+  padding-bottom: 8px !important;
+}
+.gjs-editor .gjs-clm-header-status {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #111827 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+.gjs-editor .gjs-clm-states {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  height: 32px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 24px 0 8px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 12px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.gjs-editor .gjs-clm-states:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+.gjs-editor .gjs-clm-sel {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0 8px !important;
+  height: 32px !important;
+  align-items: center !important;
+}
+.gjs-editor .gjs-clm-sel-b {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.gjs-editor .gjs-clm-sel-b input {
+  color: #111827 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  height: 100% !important;
+}
+.gjs-editor .gjs-clm-btn-add {
+  background: #ffffff !important;
+  color: #6366f1 !important;
+  border: none !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+.gjs-editor .gjs-clm-tags .gjs-sm-label {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  margin-top: 10px !important;
+  margin-bottom: 4px !important;
+}
+.gjs-editor .gjs-clm-tag {
+  background: #e0e7ff !important;
+  color: #4f46e5 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  border: 1px solid #c7d2fe !important;
+}
+.gjs-editor .gjs-clm-tag * {
+  color: #4f46e5 !important;
+}
+.gjs-editor .gjs-clm-tag-close {
+  color: #4f46e5 !important;
+  margin-left: 6px !important;
+  cursor: pointer !important;
+}
+.gjs-editor .gjs-clm-tags-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Native Selector Manager Layout */
+.gjs-editor #styles-container {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.gjs-editor #styles-container .gjs-sm-sectors {
+  order: 1 !important;
+}
+.gjs-editor #styles-container .gjs-clm-tags {
+  order: 2 !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 12px !important;
+  margin-top: 10px !important;
+  background: #ffffff !important;
+}
+
+/* Fix text colors and layout for Selected field */
+.gjs-editor .gjs-clm-header-status,
+.gjs-editor .gjs-clm-tags .gjs-sm-label,
+.gjs-editor .gjs-clm-tags .gjs-clm-label,
+.gjs-editor .gjs-clm-tags > div:first-child > div:first-child,
+.gjs-editor .gjs-clm-tags > div:last-child > div:first-child {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt,
+.gjs-editor .gjs-clm-select,
+.gjs-editor .gjs-clm-sel-row,
+.gjs-editor .gjs-clm-tags > div:last-child {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  margin-top: 10px !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-sm-label,
+.gjs-editor .gjs-clm-tags-pt .gjs-clm-label,
+.gjs-editor .gjs-clm-tags > div:last-child > div:first-child {
+  margin-bottom: 8px !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-field,
+.gjs-editor .gjs-clm-select .gjs-field,
+.gjs-editor .gjs-clm-tags > div:last-child .gjs-field {
+  width: 100% !important;
+  height: 32px !important;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.gjs-editor .gjs-clm-tags-pt .gjs-field:focus-within,
+.gjs-editor .gjs-clm-select .gjs-field:focus-within,
+.gjs-editor .gjs-clm-tags > div:last-child .gjs-field:focus-within {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+.gjs-editor .gjs-clm-tags-pt .gjs-field input,
+.gjs-editor .gjs-clm-select .gjs-field input,
+.gjs-editor .gjs-clm-tags > div:last-child .gjs-field input {
+  color: #111827 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  width: 100% !important;
+  border: none !important;
+  outline: none !important;
 }

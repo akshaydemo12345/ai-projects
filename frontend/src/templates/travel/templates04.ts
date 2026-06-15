@@ -15,13 +15,13 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Navigation */
 .nav { padding: 1.5rem 0; background: #fff; border-bottom: 1px solid #f3f4f6; position: sticky; top: 0; z-index: 1000; }
-.nav-inner { display: flex; justify-content: space-between; align-items: center; }
+.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #000; }
-.nav-links { display: flex; gap: 2rem; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 2rem; }
 .nav-links a { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: capitalize; }
 .nav-links a:hover { color: var(--primary); }
-.nav-right { display: flex; align-items: center; gap: 2rem; }
-.btn-primary { background: var(--primary); color: #000; padding: 0.6rem 1.4rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer; }
+.nav-right { display: flex; flex-wrap: wrap; align-items: center; gap: 2rem; }
+.btn-primary { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); padding: 0.6rem 1.4rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer; }
 
 /* Hero Section */
 .hero { padding: 6rem 0 10rem; background: #fafafa; }
@@ -36,7 +36,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .form-group label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 0.5rem; letter-spacing: 0.5px; }
 .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; font-weight: 600; }
-.btn-submit { grid-column: span 2; background: var(--primary); color: #000; border: none; padding: 1.2rem; border-radius: 6px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
+.btn-submit { grid-column: span 2; background: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); border: none; padding: 1.2rem; border-radius: 6px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
 
 /* Hero Visual */
 .hero-visual { position: relative; }
@@ -45,11 +45,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .weather-badge { position: absolute; top: 30px; right: 30px; background: #fff; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
 .weather-badge h4 { font-size: 1.5rem; font-weight: 800; }
 .weather-badge span { font-size: 0.7rem; color: #94a3b8; font-weight: 700; }
-.location-badge { position: absolute; bottom: 30px; left: 30px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 0.8rem 1.5rem; border-radius: 30px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.location-badge { position: absolute; bottom: 30px; left: 30px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 0.8rem 1.5rem; border-radius: 30px; font-size: 0.8rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
 /* Brands Bar */
 .brands { padding: 4rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
-.brand-grid { display: flex; justify-content: space-between; align-items: center; opacity: 0.4; }
+.brand-grid { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; opacity: 0.4; }
 .brand-grid span { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #64748b; }
 
 /* Trending Section */
@@ -63,11 +63,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .trend-card:hover { transform: translateY(-10px); box-shadow: 0 30px 60px rgba(0,0,0,0.05); }
 .trend-img { position: relative; height: 100%; }
 .trend-img img { width: 100%; height: 100%; object-fit: cover; }
-.trend-num { position: absolute; top: 15px; left: 15px; background: #000; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; }
-.trend-info { padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+.trend-num { position: absolute; top: 15px; left: 15px; background: #000; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; }
+.trend-info { padding: 2.5rem; display: flex; flex-wrap: wrap; flex-direction: column; justify-content: space-between; }
 .trend-info h3 { font-size: 1.5rem; margin-bottom: 1rem; }
 .trend-info p { color: #64748b; font-size: 0.9rem; margin-bottom: 2rem; }
-.trend-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 1.5rem; margin-top: 1rem; padding-top: 1.5rem; }
+.trend-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 1.5rem; margin-top: 1rem; padding-top: 1.5rem; }
 .price { font-weight: 800; font-size: 1.1rem; }
 .price span { font-size: 0.7rem; color: #94a3b8; margin-right: 5px; }
 .btn-view { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
@@ -84,15 +84,15 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Footer */
 footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem; }
-.foot-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4rem; margin-bottom: 3rem; }
-.foot-links { display: flex; gap: 2rem; }
+.foot-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4rem; margin-bottom: 3rem; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 2rem; }
 .foot-links a { font-size: 0.8rem; color: #94a3b8; font-weight: 600; }
-.foot-social { display: flex; gap: 1rem; }
-.social-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+.foot-social { display: flex; flex-wrap: wrap; gap: 1rem; }
+.social-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 0.8rem; }
 
 /* Creative Vibe Panels */
 .vibes { padding: 10rem 0; background: #fff; }
-.vibe-container { display: flex; gap: 1rem; height: 500px; margin-top: 4rem; }
+.vibe-container { display: flex; flex-wrap: wrap; gap: 1rem; height: 500px; margin-top: 4rem; }
 .vibe-panel { flex: 1; border-radius: 20px; overflow: hidden; position: relative; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; background: #111; }
 .vibe-panel:hover { flex: 2; }
 .vibe-panel::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1; transition: 0.3s; }
@@ -154,6 +154,27 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
   .foot-top { flex-direction: column; gap: 3rem; text-align: center; }
   .foot-links { flex-direction: column; gap: 1.5rem; }
 }
+
+
+  /* Extracted Template Inline Styles */
+  .tpl-templates04-1 { background: var(--primary); color: #000; }
+  .tpl-templates04-2 { color: #64748b; }
+  .tpl-templates04-3 { color: #00ff00; }
+  .tpl-templates04-4 { color: #64748b; }
+  .tpl-templates04-5 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
+  .tpl-templates04-6 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
+  .tpl-templates04-7 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
+  .tpl-templates04-8 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
+  .tpl-templates04-9 { background: #eaff00; color: #000; }
+  .tpl-templates04-10 { background: #fff; color: #000; }
+  .tpl-templates04-11 { border-top: 1px solid #e2e8f0; }
+  .tpl-templates04-12 { color: #64748b; }
+  .tpl-templates04-13 { color: #64748b; }
+  .tpl-templates04-14 { color: #64748b; }
+  .tpl-templates04-15 { color: #eaff00; }
+  .tpl-templates04-16 { color: #fff; }
+  .tpl-templates04-17 { color: #64748b; }
+  .tpl-templates04-18 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `
 
 export const travel04Html = `
@@ -164,7 +185,7 @@ export const travel04Html = `
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
     <div class="nav-right">
-       <a href="#" class="btn-primary" style="background: var(--primary); color: #000;">Sign in</a>
+       <a href="#" class="btn-primary tpl-templates04-1"  >Sign in</a>
        <a href="#contact" class="btn-primary">Get Started</a>
     </div>
   </div>
@@ -180,7 +201,7 @@ export const travel04Html = `
         <p>Curated 48-hour itineraries in the world's most electric cities. Hotels, food, hidden bars — all sorted.</p>
         
         <form class="hero-form">
-          <h3>// Book your weekend <span style="font-weight: 400; color: #64748b;">Plan your city break</span></h3>
+          <h3>// Book your weekend <span class="tpl-templates04-2" style="font-weight: 400">Plan your city break</span></h3>
           <div class="form-grid">
             <div class="form-group">
               <label>Name</label>
@@ -216,8 +237,8 @@ export const travel04Html = `
            <span>Tokyo — Clear Night</span>
         </div>
         <div class="location-badge">
-           <i class="fa-solid fa-circle" style="color: #00ff00; font-size: 0.5rem;"></i>
-           <span>Tokyo Weekend <span style="color: #64748b; font-weight: 400;">Sat—Sun • From $450</span></span>
+           <i class="fa-solid fa-circle tpl-templates04-3"  style="font-size: 0.5rem"></i>
+           <span>Tokyo Weekend <span class="tpl-templates04-4" style="font-weight: 400">Sat—Sun • From $450</span></span>
            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; margin-left: 10px;"></i>
         </div>
       </div>
@@ -249,7 +270,7 @@ export const travel04Html = `
             <div class="trend-num">01</div>
           </div>
           <div class="trend-info">
-             <h3>New York <span style="font-size: 0.6rem; color: #ff4400; font-weight: 800; border: 1px solid #ff4400; padding: 2px 4px; border-radius: 2px; vertical-align: middle; margin-left: 10px;">USA</span></h3>
+             <h3>New York <span class="tpl-templates04-5" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">USA</span></h3>
              <p>Skyline, slices, and the Brooklyn after-hours scene.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $580</div>
@@ -264,7 +285,7 @@ export const travel04Html = `
             <div class="trend-num">02</div>
           </div>
           <div class="trend-info">
-             <h3>London <span style="font-size: 0.6rem; color: #ff4400; font-weight: 800; border: 1px solid #ff4400; padding: 2px 4px; border-radius: 2px; vertical-align: middle; margin-left: 10px;">UK</span></h3>
+             <h3>London <span class="tpl-templates04-6" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">UK</span></h3>
              <p>Markets, museums, and pubs that have outlasted empires.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $420</div>
@@ -279,7 +300,7 @@ export const travel04Html = `
             <div class="trend-num">03</div>
           </div>
           <div class="trend-info">
-             <h3>Singapore <span style="font-size: 0.6rem; color: #ff4400; font-weight: 800; border: 1px solid #ff4400; padding: 2px 4px; border-radius: 2px; vertical-align: middle; margin-left: 10px;">SG</span></h3>
+             <h3>Singapore <span class="tpl-templates04-7" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">SG</span></h3>
              <p>Hawker stalls by night. Infinity pools by morning.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $800</div>
@@ -294,7 +315,7 @@ export const travel04Html = `
             <div class="trend-num">04</div>
           </div>
           <div class="trend-info">
-             <h3>Rome <span style="font-size: 0.6rem; color: #ff4400; font-weight: 800; border: 1px solid #ff4400; padding: 2px 4px; border-radius: 2px; vertical-align: middle; margin-left: 10px;">IT</span></h3>
+             <h3>Rome <span class="tpl-templates04-8" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">IT</span></h3>
              <p>2,000 years of history, one perfect cacio e pepe.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $510</div>
@@ -318,7 +339,7 @@ export const travel04Html = `
            <div class="vibe-content">
               <h3>The Night Owl</h3>
               <p>Underground jazz, neon alleys, and sunrise breakfasts. We know where the lights stay on.</p>
-              <a href="#" class="btn-hero-white" style="background: #eaff00; color: #000; padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Nightlife</a>
+              <a href="#" class="btn-hero-white tpl-templates04-9"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Nightlife</a>
            </div>
            </div>
           </div>
@@ -329,7 +350,7 @@ export const travel04Html = `
            <div class="vibe-content">
               <h3>The Culture Vulture</h3>
               <p>Hidden galleries, Brutalist landmarks, and centuries of stories told in stone.</p>
-              <a href="#" class="btn-hero-white" style="background: #fff; color: #000; padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Arts</a>
+              <a href="#" class="btn-hero-white tpl-templates04-10"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Arts</a>
            </div>
            </div>
           </div>
@@ -358,18 +379,18 @@ export const travel04Html = `
            <h2>A weekend <br>without <br>a single <span>wasted</span> second.</h2>
            <p style="margin-bottom: 3rem;">Our itineraries are built by architects, chefs, and night-shift poets. Every minute matters.</p>
            
-           <div style="border-top: 1px solid #e2e8f0; padding-top: 3rem;">
+           <div class="tpl-templates04-11" style="padding-top: 3rem">
               <div style="margin-bottom: 2rem;">
                  <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ Skip-the-line Access</h4>
-                 <p style="font-size: 0.85rem; color: #64748b;">We handle all reservations and priority entries before you even land.</p>
+                 <p class="tpl-templates04-12" style="font-size: 0.85rem">We handle all reservations and priority entries before you even land.</p>
               </div>
               <div style="margin-bottom: 2rem;">
                  <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ Curated Secret Maps</h4>
-                 <p style="font-size: 0.85rem; color: #64748b;">Get a digital map with offline markers for spots that don't appear on Google.</p>
+                 <p class="tpl-templates04-13" style="font-size: 0.85rem">Get a digital map with offline markers for spots that don't appear on Google.</p>
               </div>
               <div>
                  <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ 24/7 City Concierge</h4>
-                 <p style="font-size: 0.85rem; color: #64748b;">One WhatsApp text away from a table at the city's most exclusive rooftop.</p>
+                 <p class="tpl-templates04-14" style="font-size: 0.85rem">One WhatsApp text away from a table at the city's most exclusive rooftop.</p>
               </div>
            </div>
         </div>
@@ -411,7 +432,7 @@ export const travel04Html = `
   <!-- HOW IT WORKS -->
   <section class="how" id="how">
     <div class="container">
-      <span class="section-tag" style="color: #eaff00;">// how it works</span>
+      <span class="section-tag tpl-templates04-15"  >// how it works</span>
       <h2>Three steps. One unforgettable weekend.</h2>
       
       <div class="step-grid">
@@ -439,7 +460,7 @@ export const travel04Html = `
   <footer>
     <div class="container">
       <div class="foot-top">
-         <div class="logo" style="color: #fff; font-size: 1.5rem; letter-spacing: 2px;">LOGO_PLACEHOLDER</div>
+         <div class="logo tpl-templates04-16"  style="font-size: 1.5rem; letter-spacing: 2px">LOGO_PLACEHOLDER</div>
          <div class="foot-links">
             <a href="#">Cities</a>
             <a href="#">Guides</a>
@@ -448,8 +469,8 @@ export const travel04Html = `
             <a href="#">Privacy</a>
          </div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-         <p style="font-size: 0.7rem; color: #64748b;">© 2026 metro.travel - built for the weekend</p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+         <p class="tpl-templates04-17" style="font-size: 0.7rem">© 2026 metro.travel - built for the weekend</p>
          <div class="foot-social">
             <div class="social-icon"><i class="fa-brands fa-instagram"></i></div>
             <div class="social-icon"><i class="fa-brands fa-twitter"></i></div>
@@ -537,6 +558,14 @@ export const travel04Html = `
         if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
+          if (isInEditor) {
+            var existingModal = document.getElementById("preview-mode-modal");
+            if (existingModal) existingModal.remove();
+            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
         } else if (!isInEditor) {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
@@ -545,7 +574,7 @@ export const travel04Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates04-18" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
