@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Search, Globe, TrendingUp, Users, Zap, LayoutGrid, List,
@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectsApi } from "@/services/api";
+import { projectsApi, aiApi } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, cleanProjectName, getDifferentiatedProjectName } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
@@ -97,39 +97,44 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   );
 };
 
-// ─── ProjectLogoIcon ─────────────────────────────────────────
+// ─── ProjectLogoIcon ─────────────────────────────
 const ProjectLogoIcon = ({ project }: { project: any }) => {
   const identity = project.websiteProfile?.identity;
-  const logoFormat: string = identity?.logoFormat || '';
-  const rawLogoUrl: string = identity?.logoUrl || project.logoUrl || '';
-  const faviconUrl: string = identity?.faviconUrl || identity?.favicon || '';
+  // Favicon-first: favicon -> favicon-proxy -> logo -> logo-proxy -> Globe
+  const faviconUrl: string = identity?.favicon || identity?.faviconUrl || '';
+  const logoUrl: string = identity?.logoUrl || project.logoUrl || '';
 
-  const isInlineLogo = rawLogoUrl.startsWith('data:') ||
-    logoFormat === 'svg-inline' || logoFormat === 'svg-url-to-datauri' || logoFormat === 'data-uri';
-
-  const [src, setSrc] = useState<string | null>(
-    isInlineLogo ? rawLogoUrl : (faviconUrl || null)
+  const [src, setSrc] = useState<string | null>(faviconUrl || logoUrl || null);
+  const [stage, setStage] = useState<'favicon' | 'favicon-proxy' | 'logo' | 'logo-proxy' | 'none'>(
+    faviconUrl ? 'favicon' : logoUrl ? 'logo' : 'none'
   );
-  const [triedFavicon, setTriedFavicon] = useState(!isInlineLogo);
+
+  // Re-sync when project data arrives after async query resolves
+  useEffect(() => {
+    setSrc(faviconUrl || logoUrl || null);
+    setStage(faviconUrl ? 'favicon' : logoUrl ? 'logo' : 'none');
+  }, [faviconUrl, logoUrl]);
 
   const handleError = () => {
-    if (!triedFavicon && faviconUrl) {
-      setTriedFavicon(true);
-      setSrc(faviconUrl);
-    } else {
-      setSrc(null);
+    if (stage === 'favicon') {
+      if (faviconUrl.startsWith('http') && !faviconUrl.includes('/proxy-image')) {
+        setStage('favicon-proxy'); setSrc(aiApi.proxyImage(faviconUrl)); return;
+      }
+      if (logoUrl) { setStage('logo'); setSrc(logoUrl); return; }
     }
+    if (stage === 'favicon-proxy') {
+      if (logoUrl) { setStage('logo'); setSrc(logoUrl); return; }
+    }
+    if (stage === 'logo') {
+      if (logoUrl.startsWith('http') && !logoUrl.includes('/proxy-image')) {
+        setStage('logo-proxy'); setSrc(aiApi.proxyImage(logoUrl)); return;
+      }
+    }
+    setStage('none'); setSrc(null);
   };
 
-  if (!src) return <Globe className="h-5 w-5 text-primary" />;
-  return (
-    <img
-      src={src}
-      alt="logo"
-      className="h-6 w-6 object-contain"
-      onError={handleError}
-    />
-  );
+  if (!src || stage === 'none') return <Globe className="h-5 w-5 text-primary" />;
+  return <img src={src} alt="favicon" className="h-6 w-6 object-contain" onError={handleError} />;
 };
 
 // ─── Main Component ──────────────────────────────────────────
@@ -427,15 +432,20 @@ const ProjectsPage = () => {
                   {filtered.map((project: any) => (
                     <tr key={project._id} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-5 py-4">
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white" title={project.name}>
-                            {getDifferentiatedProjectName(project, projects)}
-                          </p>
-                          <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>
-                            {project.websiteUrl
-                              ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-                              : "No URL"}
-                          </a>
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0 overflow-hidden">
+                            <ProjectLogoIcon project={project} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate" title={project.name}>
+                              {getDifferentiatedProjectName(project, projects)}
+                            </p>
+                            <a className="text-xs text-slate-400 hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer" href={cleanUrl(project.websiteUrl)}>
+                              {project.websiteUrl
+                                ? project.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+                                : "No URL"}
+                            </a>
+                          </div>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-center">
