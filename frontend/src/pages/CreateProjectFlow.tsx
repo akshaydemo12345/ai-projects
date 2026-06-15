@@ -281,7 +281,14 @@ const CreateProjectFlow = () => {
 
       toast.success("Website analyzed successfully.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to analyze website");
+      const code = (err as any).code;
+      if (code === 'SITE_BLOCKED') {
+        toast.error("Website blocked access", {
+          duration: 6000,
+        });
+      } else {
+        toast.error(err.message || "Failed to analyze website");
+      }
     } finally {
       setIsAnalyzing(false);
     }
