@@ -61,7 +61,7 @@ exports.listProjects = async (req, res, next) => {
     // Only fields actually used by the frontend list views (ProjectsPage, LeadsPage sidebar)
     // Excludes: branding, scrapedData, themeSystem, business, colors, scrapeMeta, emailNotifications, etc.
     const projects = await Project.find({ userId: req.user._id })
-      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt websiteProfile.identity websiteProfile.industry websiteProfile.logoColors websiteProfile.colors websiteProfile.extraction')
+      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken isVerified logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt websiteProfile.identity websiteProfile.industry websiteProfile.logoColors websiteProfile.colors websiteProfile.extraction')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit)
@@ -130,7 +130,7 @@ exports.getProject = async (req, res, next) => {
     }
 
     const project = await Project.findOne({ _id: id, userId: req.user._id })
-      .select('_id name description preSlug apiToken pageCount leadCount publishedPageCount createdAt updatedAt websiteProfile')
+      .select('_id name description preSlug apiToken isVerified pageCount leadCount publishedPageCount createdAt updatedAt websiteProfile')
       .lean();
 
     if (!project) {
