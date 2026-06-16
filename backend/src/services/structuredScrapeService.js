@@ -488,8 +488,9 @@ const extractWithCheerio = ($, html, baseUrl) => {
     };
 
     // FIX 3: Logo selectors reordered specific→generic.
-    // Previously 'header img' and 'a[href="/"] img' were too early (any header image
-    // would win), and 'meta[property="og:image"]' was last despite being very reliable.
+    // 'meta[property="og:image"]' is intentionally placed LAST — it frequently points
+    // to a promotional social-share banner, not the company logo. Only use it as a
+    // true last resort after all DOM-based selectors are exhausted.
     const LOGO_SELECTORS = [
         // 1. Highest confidence — explicit logo class/id/alt/src markers
         'img[class*="logo" i]',
@@ -503,18 +504,18 @@ const extractWithCheerio = ($, html, baseUrl) => {
         '.site-logo img',
         '.header-logo img',
         '.brand-logo img',
-        // 3. Structured data — very reliable
-        'meta[property="og:image"]',
-        // 4. Common CMS/framework patterns
+        // 3. Common CMS/framework patterns
         'a.logo img',
         '.brand img',
         '.site-header img',
         '.main-header img',
-        // 5. Last resort generic fallbacks
+        // 4. Generic fallbacks
         'a[href="/"] img',
         'header img',
         'nav img',
         '.navbar img',
+        // 5. og:image last — often a social banner, not the actual logo
+        'meta[property="og:image"]',
     ];
 
     const INLINE_SVG_CONTAINERS = [
@@ -554,10 +555,31 @@ const extractWithCheerio = ($, html, baseUrl) => {
             if (el.is('meta')) {
                 const content = el.attr('content');
                 const abs = toAbs(content);
-                if (abs && isSupportedImageSrc(abs)) { logoUrl = abs; logoFormat = 'og-image'; break; }
+                // og:image is our last resort — reject it if it looks like a banner
+                // (wide aspect from explicit attributes, or URL keywords like /og/, /social/, /share/, /banner/)
+                if (abs && isSupportedImageSrc(abs)) {
+                    const bannerPathRe = /\/(og[-_]?image|social[-_]share|share[-_]image|og-banner|banner|meta[-_]img|preview[-_]img|twitter[-_]card|og\/|social\/)/i;
+                    const w = 0, h = 0; // og:image has no DOM size attributes
+                    if (!bannerPathRe.test(abs)) {
+                        logoUrl = abs; logoFormat = 'og-image'; break;
+                    }
+                    logger.info(`[Scraper] Skipping og:image banner: ${abs}`);
+                }
             } else {
                 const src = getRealSrc(el);
                 const absSrc = toAbs(src);
+
+                // Reject images whose explicit dimensions look like a horizontal banner (width:height > 3.5)
+                const isBannerDimension = (() => {
+                    const w = parseInt(el.attr('width') || '0', 10);
+                    const h = parseInt(el.attr('height') || '0', 10);
+                    return w > 0 && h > 0 && (w / h) > 3.5;
+                })();
+                if (isBannerDimension) {
+                    logger.info(`[Scraper] Skipping banner-shaped image via "${sel}"`);
+                    continue;
+                }
+
                 if (!absSrc && src && src.startsWith('data:image/')) {
                     logoUrl = src;
                     logoFormat = src.startsWith('data:image/svg') ? 'svg-inline' : 'data-uri';
