@@ -28,7 +28,12 @@ import { useState, useEffect } from "react";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
-  v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  v
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const hexToRgbStr = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -715,7 +720,7 @@ const CreatePagePage = () => {
 
     const timer = setTimeout(async () => {
       await verifySlugAvailability(normalizedSlug, true);
-    }, 600);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [pageSlug, projectPages]);
