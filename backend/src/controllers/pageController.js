@@ -121,9 +121,21 @@ const leadSchema = z.object({
   message: z.string().optional(),
 });
 
+const normalizeSlug = (value) => {
+  if (!value) return '';
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 // ─── Helper: Unique slug generator ────────────────────────────────────────────
 const generateUniqueSlug = async (base, projectId, excludeId = null) => {
-  const slug = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = normalizeSlug(base) || 'untitled';
   let uniqueSlug = slug;
   let counter = 1;
   const query = { projectId, slug: uniqueSlug };
@@ -136,84 +148,63 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
   return uniqueSlug;
 };
 
-const normalizeSlug = (value) => {
-  if (!value) return '';
-  return value.toString().trim().toLowerCase().replace(/[\s\S]+/g, '-').replace(/[^a-z0-9-]/g, '');
+// Fast HEAD-first fetch with GET fallback, short timeout so live "as-you-type" checks stay snappy.
+const fastFetch = async (url, timeoutMs) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    try {
+      return await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
+    } catch (headErr) {
+      // Some servers reject HEAD - fall back to GET
+      logger.debug(`HEAD failed for ${url}, trying GET: ${headErr?.message}`);
+      return await fetch(url, { method: 'GET', signal: controller.signal, redirect: 'follow' });
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
-const checkPageExistsOnExternalWebsite = async (project, slug) => {
+// Returns { exists: boolean, verified: boolean }.
+// verified=false means the external site could not be reached - caller must NOT block on this.
+const checkPageExistsOnExternalWebsite = async (project, slug, { timeoutMs = 2500 } = {}) => {
   if (!project?.websiteUrl || !slug) {
     logger.debug(`Skipping external website check: websiteUrl=${!!project?.websiteUrl}, slug=${!!slug}`);
-    return false;
+    return { exists: false, verified: false };
   }
   let baseUrl = project.websiteUrl;
   if (!baseUrl.startsWith('http')) {
     baseUrl = 'https://' + baseUrl;
   }
-  baseUrl = baseUrl.replace(/\/+$|[\s\S]+/g, '');
+  baseUrl = baseUrl.trim().replace(/\/+$/g, '');
   const checkUrl = `${baseUrl}/${slug}`;
+  const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
   logger.info(`Checking if page exists on external website: ${checkUrl}`);
+
   try {
-    // HEAD request (no body = faster) with 10s timeout to handle slow/redirecting sites
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    let checkResponse;
-    try {
-      checkResponse = await fetch(checkUrl, {
-        method: 'HEAD',
-        signal: controller.signal,
-        redirect: 'follow',
-      });
-    } catch (headErr) {
-      // Some servers reject HEAD - fall back to GET
-      logger.debug(`HEAD failed for ${checkUrl}, trying GET: ${headErr?.message}`);
-      checkResponse = await fetch(checkUrl, {
-        method: 'GET',
-        signal: controller.signal,
-        redirect: 'follow',
-      });
-    }
-    clearTimeout(timeoutId);
+    // Run the slug check and the catch-all probe in parallel - cuts latency roughly in half.
+    const [checkResponse, catchAllResponse] = await Promise.all([
+      fastFetch(checkUrl, timeoutMs),
+      fastFetch(randomUrl, timeoutMs).catch(() => null),
+    ]);
 
     logger.debug(`External website check response for ${checkUrl}: status=${checkResponse.status}`);
 
     if (checkResponse.status === 200) {
-      // Catch-all check: detect sites that return 200 for ANY URL (e.g. WordPress catch-all)
-      const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
-      const catchAllController = new AbortController();
-      const catchAllTimeout = setTimeout(() => catchAllController.abort(), 10000);
-      let catchAllResponse = null;
-      try {
-        catchAllResponse = await fetch(randomUrl, {
-          method: 'HEAD',
-          signal: catchAllController.signal,
-          redirect: 'follow',
-        });
-      } catch (_headErr2) {
-        try {
-          catchAllResponse = await fetch(randomUrl, {
-            method: 'GET',
-            signal: catchAllController.signal,
-            redirect: 'follow',
-          });
-        } catch (_getErr2) {
-          catchAllResponse = null;
-        }
-      }
-      clearTimeout(catchAllTimeout);
-
-      logger.debug(`Catch-all check for ${randomUrl}: status=${catchAllResponse?.status}`);
-
       if (!catchAllResponse || catchAllResponse.status !== 200) {
         logger.warn(`Page slug "${slug}" exists on website ${baseUrl} (returned 200, catch-all confirmed)`);
-        return true;
+        return { exists: true, verified: true };
       }
       logger.debug(`Site has catch-all routing enabled, random URL also returned 200`);
+      return { exists: false, verified: true };
     }
+
+    return { exists: false, verified: true };
   } catch (err) {
+    // Site unreachable, timed out, DNS failure, etc. - never block creation on this.
     logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err?.message || err });
+    return { exists: false, verified: false };
   }
-  return false;
 };
 
 // Helper: Ensure project ownership
@@ -270,7 +261,7 @@ exports.verifyPageSlug = async (req, res, next) => {
   try {
     const { projectId } = req.params;
     const { name, slug, prefix } = req.body || {};
-
+    console.log(`Verifying page slug: projectId=${projectId}, name=${name}, slug=${slug}, prefix=${prefix}`);
     if (!projectId) {
       return res.status(400).json({ success: false, message: 'Project ID is required in URL', data: {} });
     }
@@ -299,14 +290,16 @@ exports.verifyPageSlug = async (req, res, next) => {
       });
     }
 
-    // Check if page exists on external website if websiteUrl is configured
+    // Check if page exists on external website if websiteUrl is configured.
+    // External check is best-effort and NEVER blocks creation if the site is unreachable.
     let checkedExternal = false;
     let externalCheckMessage = '';
 
     if (project.websiteUrl) {
-      checkedExternal = true;
-      const pageExistsOnWebsite = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
-      if (pageExistsOnWebsite) {
+      const { exists: existsOnWebsite, verified } = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
+      checkedExternal = verified;
+
+      if (verified && existsOnWebsite) {
         logger.info(`Page slug "${normalizedSlug}" already exists on website "${project.websiteUrl}"`);
         return res.status(400).json({
           success: false,
@@ -314,7 +307,10 @@ exports.verifyPageSlug = async (req, res, next) => {
           data: {}
         });
       }
-      externalCheckMessage = 'checked on your website';
+
+      externalCheckMessage = verified
+        ? 'checked on your website'
+        : 'website could not be reached, only checked internally';
     } else {
       logger.debug(`Skipping external website check: project.websiteUrl not configured for project ${projectId}`);
       externalCheckMessage = 'internal database only';
@@ -518,43 +514,12 @@ exports.createPage = async (req, res, next) => {
     // 5. Slug Generation (use finalSlug if provided)
     const uniqueSlug = finalSlug ? await generateUniqueSlug(finalSlug, projectId) : await generateUniqueSlug(slug || title, projectId);
 
-    // 5.5 Check if page already exists on the external website
+    // 5.5 Check if page already exists on the external website (best-effort, non-blocking)
     if (project.websiteUrl) {
-      let baseUrl = project.websiteUrl;
-      if (!baseUrl.startsWith('http')) {
-        baseUrl = 'https://' + baseUrl;
-      }
-      baseUrl = baseUrl.replace(/\/+$/, '');
-      const checkUrl = `${baseUrl}/${uniqueSlug}`;
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const checkResponse = await fetch(checkUrl, {
-          method: 'GET',
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (checkResponse.status === 200) {
-          // Verify if the site uses catch-all routing by fetching a random URL
-          const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
-          const catchAllController = new AbortController();
-          const catchAllTimeout = setTimeout(() => catchAllController.abort(), 5000);
-          const catchAllResponse = await fetch(randomUrl, {
-            method: 'GET',
-            signal: catchAllController.signal
-          }).catch(() => null);
-          clearTimeout(catchAllTimeout);
-
-          // If the random URL does NOT return 200, it means the site handles 404s properly.
-          // Therefore, the 200 on our checkUrl means the page ACTUALLY exists.
-          if (!catchAllResponse || catchAllResponse.status !== 200) {
-            // Auto-resolve by appending random string instead of throwing 400 and losing AI generation
-            uniqueSlug = uniqueSlug + '-' + crypto.randomBytes(3).toString('hex');
-          }
-        }
-      } catch (err) {
-        logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
+      const { exists: existsOnWebsite, verified } = await checkPageExistsOnExternalWebsite(project, uniqueSlug);
+      if (verified && existsOnWebsite) {
+        // Auto-resolve by appending random string instead of throwing 400 and losing AI generation
+        uniqueSlug = uniqueSlug + '-' + crypto.randomBytes(3).toString('hex');
       }
     }
 
@@ -910,34 +875,12 @@ exports.updatePage = async (req, res, next) => {
 
       const project = await Project.findById(currentPage.projectId);
       if (project && project.websiteUrl) {
-        let baseUrl = project.websiteUrl;
-        if (!baseUrl.startsWith('http')) {
-          baseUrl = 'https://' + baseUrl;
-        }
-        baseUrl = baseUrl.replace(/\/+$/, '');
-        const checkUrl = `${baseUrl}/${uniqueSlug}`;
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          const checkResponse = await fetch(checkUrl, { method: 'GET', signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (checkResponse.status === 200) {
-            // Verify if the site uses catch-all routing by fetching a random URL
-            const randomUrl = `${baseUrl}/pagecraft-test-404-${Date.now()}`;
-            const catchAllController = new AbortController();
-            const catchAllTimeout = setTimeout(() => catchAllController.abort(), 5000);
-            const catchAllResponse = await fetch(randomUrl, { method: 'GET', signal: catchAllController.signal }).catch(() => null);
-            clearTimeout(catchAllTimeout);
-
-            if (!catchAllResponse || catchAllResponse.status !== 200) {
-              return res.status(400).json({
-                status: 'fail',
-                message: `Page already exists on website`
-              });
-            }
-          }
-        } catch (err) {
-          logger.warn(`Could not verify if page exists on external website: ${checkUrl}`, { error: err.message });
+        const { exists: existsOnWebsite, verified } = await checkPageExistsOnExternalWebsite(project, uniqueSlug);
+        if (verified && existsOnWebsite) {
+          return res.status(400).json({
+            status: 'fail',
+            message: `Page already exists on website`
+          });
         }
       }
 
