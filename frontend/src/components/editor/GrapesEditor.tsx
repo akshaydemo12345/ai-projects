@@ -8,6 +8,8 @@ import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 // @ts-ignore
 import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
 import JSZip from 'jszip';
+// Swiper v12 — named export
+import { Swiper as SwiperClass } from 'swiper/bundle';
 
 
 import './grapes-custom.css';
@@ -65,7 +67,7 @@ const GrapesEditor = () => {
   const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
   const [mode, setMode] = useState<'landing' | 'thank-you'>(initialMode);
-  
+
   const modeRef = useRef(mode);
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
@@ -253,7 +255,7 @@ const GrapesEditor = () => {
     if (activeMode === 'thank-you') {
       dbContent = currentPage.thankYouPageContent || '';
       dbStyles = currentPage.thankYouPageStyles || '';
-      
+
       // Treat known placeholders as completely empty so they don't flash on the screen
       if (dbContent.includes('Landing Page is Ready') || dbContent.includes('Your request has been successfully submitted')) {
         dbContent = '';
@@ -284,6 +286,28 @@ const GrapesEditor = () => {
     let extractedScripts: { src: string, innerHTML: string }[] = [];
     let extractedBodyStyle: string | null = null;
     let extractedBodyClass: string | null = null;
+
+    // ── SANITIZE CORRUPTED SWIPER DOM ──
+    try {
+      const p = new DOMParser();
+      const d = p.parseFromString(dbContent, 'text/html');
+      d.querySelectorAll('.swiper-slide-duplicate').forEach(el => el.remove());
+      d.querySelectorAll('.swiper-slide').forEach(s => {
+        const el = s as HTMLElement;
+        if (el.style) {
+          el.style.height = '';
+          el.style.opacity = '';
+          el.style.transform = '';
+          el.style.width = '';
+          el.style.margin = '';
+        }
+        el.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+        el.removeAttribute('data-swiper-slide-index');
+      });
+      d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
+      d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
+      dbContent = d.body.innerHTML;
+    } catch(e) {}
 
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
@@ -419,7 +443,7 @@ const GrapesEditor = () => {
         // Ensure icon fonts and classes are always present for both Landing and Thank You pages
         const fontLinks = `
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         `;
         if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
           canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
@@ -794,6 +818,15 @@ const GrapesEditor = () => {
             cDoc.querySelectorAll('.animate-up, .animate-fade').forEach((el: Element) => {
               el.classList.add('in-view');
             });
+            cDoc.querySelectorAll('.reveal').forEach((el: Element) => el.classList.add('in'));
+
+            // Show final counter numbers instead of '0' in the editor
+            cDoc.querySelectorAll('[data-count]').forEach((el: Element) => {
+              const target = el.getAttribute('data-count');
+              if (target && (el.textContent?.trim() === '0' || el.textContent?.trim() === '0+')) {
+                el.textContent = target + (parseInt(target, 10) >= 100 ? '+' : '');
+              }
+            });
 
             // Execute extracted scripts safely AFTER components are set (Parallel external, then inline to avoid race conditions)
             if (extractedScripts && extractedScripts.length > 0) {
@@ -923,7 +956,7 @@ const GrapesEditor = () => {
           el.style.borderRadius = '4px';
           el.style.padding = '4px 6px';
           el.style.backgroundColor = '#ffffff';
-          
+
           const pickrBtn = document.createElement('div');
           pickrBtn.className = 'custom-grapesjs-pickr';
           pickrBtn.style.width = '18px';
@@ -932,7 +965,7 @@ const GrapesEditor = () => {
           pickrBtn.style.border = '1px solid rgba(0,0,0,0.1)';
           pickrBtn.style.cursor = 'pointer';
           pickrBtn.style.flexShrink = '0';
-          
+
           const inputHex = document.createElement('input');
           inputHex.type = 'text';
           inputHex.style.width = '100%';
@@ -946,8 +979,8 @@ const GrapesEditor = () => {
           el.appendChild(inputHex);
 
           const applyUpdate = (val: string, partial: boolean) => {
-             // Pass to emit()
-             change({ value: val, partial });
+            // Pass to emit()
+            change({ value: val, partial });
           };
 
           const toHexAny = (hex: string) => {
@@ -984,7 +1017,7 @@ const GrapesEditor = () => {
               inputHex.value = hex;
               applyUpdate(hex, true);
             });
-            
+
             pickr.on('save', (color: Pickr.HSVaColor) => {
               const hex = color ? toHexAny(color.toHEXA().toString()) : '';
               pickrBtn.style.backgroundColor = hex || 'transparent';
@@ -1004,13 +1037,13 @@ const GrapesEditor = () => {
               const val = e.target.value;
               const hex = toHexAny(val);
               if (hex) {
-                 pickr.setColor(hex);
-                 pickrBtn.style.backgroundColor = hex;
-                 applyUpdate(hex, false);
+                pickr.setColor(hex);
+                pickrBtn.style.backgroundColor = hex;
+                applyUpdate(hex, false);
               } else {
-                 pickr.setColor(null);
-                 pickrBtn.style.backgroundColor = 'transparent';
-                 applyUpdate('', false);
+                pickr.setColor(null);
+                pickrBtn.style.backgroundColor = 'transparent';
+                applyUpdate('', false);
               }
             });
 
@@ -1018,16 +1051,16 @@ const GrapesEditor = () => {
           };
 
           setTimeout(() => {
-             if (el.offsetWidth > 0) initPickr();
-             else {
-               const observer = new IntersectionObserver((entries) => {
-                 if (entries[0].isIntersecting) {
-                   initPickr();
-                   observer.disconnect();
-                 }
-               });
-               observer.observe(el);
-             }
+            if (el.offsetWidth > 0) initPickr();
+            else {
+              const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                  initPickr();
+                  observer.disconnect();
+                }
+              });
+              observer.observe(el);
+            }
           }, 50);
 
           (el as any).__inputHex = inputHex;
@@ -1035,7 +1068,7 @@ const GrapesEditor = () => {
 
           return el;
         },
-        
+
         emit({ updateStyle }: any, { value, partial }: any) {
           updateStyle(value, { partial });
         },
@@ -1047,13 +1080,627 @@ const GrapesEditor = () => {
           if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
           const pickr = el.__pickr;
           if (pickr) {
-             if (val) pickr.setColor(val, true);
-             else pickr.setColor(null, true);
+            if (val) pickr.setColor(val, true);
+            else pickr.setColor(null, true);
           }
         }
       });
     };
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // customSwiperPlugin — drop-in replacement for the existing function
+    // Fixes:
+    //   1. Accordion headers now reliably toggle (class-based, survives re-renders)
+    //   2. Swiper traits (Pagination Type, Slides Per View, etc.) actually apply
+    //   3. MutationObserver re-applies collapsed state after every panel refresh
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // customSwiperPlugin — fully fixed accordion + swiper traits
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    const customSwiperPlugin = (editor: Editor) => {
+
+      // ── Inject accordion-collapsed CSS once ──
+      if (!document.getElementById('accordion-collapsed-style')) {
+        const s = document.createElement('style');
+        s.id = 'accordion-collapsed-style';
+        s.innerHTML = `.gjs-trt-trait__wrp.accordion-collapsed { display: none !important; }`;
+        document.head.appendChild(s);
+      }
+
+      // ── Custom trait type: accordion-header ──
+      editor.TraitManager.addType('accordion-header', {
+        createLabel() { return ''; },
+        createInput({ trait }: any) {
+          const el = document.createElement('div');
+          el.style.cssText = 'width:100%; display:block;';
+          el.innerHTML = `
+    <div class="trait-accordion-header" data-open="false"
+      style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+             padding:12px 14px;background:#ffffff;border-bottom:1px solid #e2e8f0;
+             font-weight:600;font-size:13px;color:#0f172a;width:100%;
+             box-sizing:border-box;user-select:none;">
+      <span>${trait.get('label')}</span>
+      <svg class="accordion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        style="flex-shrink:0;transition:transform 0.2s;transform:rotate(0deg);pointer-events:none;">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </div>
+  `;
+          return el;
+        },
+        onEvent({ elInput }: any) { }
+      });
+
+      // ════════════════════════════════════════════════
+      // ACCORDION HELPERS
+      // ════════════════════════════════════════════════
+
+      const getWrapperEl = (header: HTMLElement): HTMLElement | null => {
+        let node: HTMLElement | null = header;
+        while (node) {
+          if (
+            node.classList.contains('gjs-trt-trait__wrp') ||
+            node.classList.contains('gjs-trt-trait-container') ||
+            (node.parentElement && node.parentElement.classList.contains('gjs-trt-traits'))
+          ) {
+            return node;
+          }
+          node = node.parentElement as HTMLElement | null;
+        }
+        return null;
+      };
+
+      const getSiblingWrappers = (wrapperEl: HTMLElement): HTMLElement[] => {
+        const result: HTMLElement[] = [];
+        let next = wrapperEl.nextElementSibling as HTMLElement | null;
+        while (next) {
+          if (next.querySelector('.trait-accordion-header')) break;
+          result.push(next);
+          next = next.nextElementSibling as HTMLElement | null;
+        }
+        return result;
+      };
+
+      const applyAccordionState = (header: HTMLElement) => {
+        const isOpen = header.dataset.open === 'true';
+        const icon = header.querySelector('.accordion-icon') as HTMLElement | null;
+        if (icon) icon.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+
+        const wrapperEl = getWrapperEl(header);
+        if (!wrapperEl) return;
+
+        getSiblingWrappers(wrapperEl).forEach(sibling => {
+          if (isOpen) {
+            sibling.classList.remove('accordion-collapsed');
+          } else {
+            sibling.classList.add('accordion-collapsed');
+          }
+        });
+      };
+
+      // LAYER 1 — capture-phase click
+      const accordionClickHandler = (e: MouseEvent) => {
+        const header = (e.target as Element).closest('.trait-accordion-header') as HTMLElement | null;
+        if (!header) return;
+        e.stopImmediatePropagation();
+        header.dataset.open = header.dataset.open === 'true' ? 'false' : 'true';
+        applyAccordionState(header);
+      };
+      document.addEventListener('click', accordionClickHandler, true);
+
+      // LAYER 2 — initialize all headers (collapsed by default)
+      const initAllAccordionHeaders = () => {
+        document.querySelectorAll<HTMLElement>('.trait-accordion-header').forEach(header => {
+          if (!header.dataset.open) header.dataset.open = 'false';
+          applyAccordionState(header);
+        });
+      };
+
+      // LAYER 3 — MutationObserver: re-apply state whenever traits panel changes
+      let debounce: ReturnType<typeof setTimeout>;
+      const observer = new MutationObserver(() => {
+        clearTimeout(debounce);
+        debounce = setTimeout(initAllAccordionHeaders, 150);
+      });
+
+      setTimeout(() => {
+        const target =
+          document.querySelector('#traits-container') ||
+          document.querySelector('.gjs-trt-traits') ||
+          document.body;
+        observer.observe(target, { childList: true, subtree: true });
+        initAllAccordionHeaders();
+      }, 500);
+
+      // ════════════════════════════════════════════════
+      // SWIPER BLOCK + COMPONENTS
+      // ════════════════════════════════════════════════
+
+      editor.BlockManager.add('swiper-slider', {
+        label: '<i class="fa fa-arrows-h"></i><br/>Swiper Slider',
+        category: 'Basic',
+        content: `
+  <div data-gjs-type="swiper-container"
+       class="swiper-container my-swiper relative overflow-hidden bg-gray-100 min-h-[300px]"
+       data-navigation="true"
+       data-pagination="bullets"
+       style="--swiper-navigation-color:#000;--swiper-pagination-color:#000;">
+    <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+      <div data-gjs-type="swiper-slide" class="swiper-slide p-10 flex flex-col items-center justify-center bg-gray-200 min-h-[300px] w-full">Slide 1</div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide p-10 flex flex-col items-center justify-center bg-gray-300 min-h-[300px] w-full">Slide 2</div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide p-10 flex flex-col items-center justify-center bg-gray-400 min-h-[300px] w-full">Slide 3</div>
+    </div>
+    <div data-gjs-type="swiper-pagination" class="swiper-pagination absolute bottom-4 left-0 w-full flex justify-center gap-2"></div>
+    <div data-gjs-type="swiper-button-prev" class="swiper-button-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/50 rounded-full flex items-center justify-center cursor-pointer !text-black !scale-75" style="z-index:10;"></div>
+    <div data-gjs-type="swiper-button-next" class="swiper-button-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/50 rounded-full flex items-center justify-center cursor-pointer !text-black !scale-75" style="z-index:10;"></div>
+  </div>
+`
+      });
+
+      // ─── SWIPER: Grid Slider Block (3 columns, cards layout) ───
+      editor.BlockManager.add('swiper-grid', {
+        label: '<i class="fa fa-th"></i><br/>Grid Slider',
+        category: 'Basic',
+        content: `
+  <div data-gjs-type="swiper-container"
+       class="swiper-container my-swiper relative overflow-hidden bg-white py-8"
+       data-slides-per-view="3"
+       data-space-between="24"
+       data-navigation="true"
+       data-pagination="bullets"
+       style="--swiper-navigation-color:#6366f1;--swiper-pagination-color:#6366f1;">
+    <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+      <div data-gjs-type="swiper-slide" class="swiper-slide" style="width:calc(33.333% - 16px)">
+        <div style="background:#f9fafb;border-radius:12px;padding:24px;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:12px;height:100%;">
+          <div style="width:100%;height:160px;background:linear-gradient(135deg,#6366f1,#818cf8);border-radius:8px;"></div>
+          <h3 style="font-size:18px;font-weight:700;color:#111827;margin:0;">Grid Item 1</h3>
+          <p style="font-size:14px;color:#6b7280;margin:0;line-height:1.6;">Description for this grid item. Add your content here.</p>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide" style="width:calc(33.333% - 16px)">
+        <div style="background:#f9fafb;border-radius:12px;padding:24px;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:12px;height:100%;">
+          <div style="width:100%;height:160px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);border-radius:8px;"></div>
+          <h3 style="font-size:18px;font-weight:700;color:#111827;margin:0;">Grid Item 2</h3>
+          <p style="font-size:14px;color:#6b7280;margin:0;line-height:1.6;">Description for this grid item. Add your content here.</p>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide" style="width:calc(33.333% - 16px)">
+        <div style="background:#f9fafb;border-radius:12px;padding:24px;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:12px;height:100%;">
+          <div style="width:100%;height:160px;background:linear-gradient(135deg,#ec4899,#f472b6);border-radius:8px;"></div>
+          <h3 style="font-size:18px;font-weight:700;color:#111827;margin:0;">Grid Item 3</h3>
+          <p style="font-size:14px;color:#6b7280;margin:0;line-height:1.6;">Description for this grid item. Add your content here.</p>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide" style="width:calc(33.333% - 16px)">
+        <div style="background:#f9fafb;border-radius:12px;padding:24px;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:12px;height:100%;">
+          <div style="width:100%;height:160px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:8px;"></div>
+          <h3 style="font-size:18px;font-weight:700;color:#111827;margin:0;">Grid Item 4</h3>
+          <p style="font-size:14px;color:#6b7280;margin:0;line-height:1.6;">Description for this grid item. Add your content here.</p>
+        </div>
+      </div>
+    </div>
+    <div data-gjs-type="swiper-pagination" class="swiper-pagination" style="position:relative;margin-top:20px;text-align:center;"></div>
+    <div data-gjs-type="swiper-button-prev" class="swiper-button-prev" style="color:#6366f1;"></div>
+    <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#6366f1;"></div>
+  </div>
+`
+      });
+
+      // ─── SWIPER: Card Slider Block (image + text cards) ───
+      editor.BlockManager.add('swiper-cards', {
+        label: '<i class="fa fa-id-card"></i><br/>Card Slider',
+        category: 'Basic',
+        content: `
+  <div data-gjs-type="swiper-container"
+       class="swiper-container my-swiper relative overflow-hidden bg-gray-50 py-10"
+       data-slides-per-view="1"
+       data-navigation="true"
+       data-pagination="fraction"
+       data-effect="slide"
+       style="--swiper-navigation-color:#111827;--swiper-pagination-color:#111827;">
+    <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="display:flex;align-items:center;justify-content:center;padding:40px 80px;gap:60px;min-height:400px;">
+        <div style="flex:0 0 45%;height:300px;background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:16px;overflow:hidden;">
+          <img src="https://picsum.photos/seed/card1/600/400" alt="Slide Image" style="width:100%;height:100%;object-fit:cover;"/>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+          <span style="font-size:12px;font-weight:600;color:#6366f1;text-transform:uppercase;letter-spacing:2px;">Category</span>
+          <h2 style="font-size:32px;font-weight:800;color:#111827;margin:0;line-height:1.2;">Card Title One</h2>
+          <p style="font-size:16px;color:#4b5563;margin:0;line-height:1.7;">This is a beautifully designed card slide. Add your description text here. This layout is perfect for showcasing features, testimonials, or portfolio items.</p>
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;background:#6366f1;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;width:fit-content;">Learn More →</a>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="display:flex;align-items:center;justify-content:center;padding:40px 80px;gap:60px;min-height:400px;">
+        <div style="flex:0 0 45%;height:300px;background:linear-gradient(135deg,#065f46,#059669);border-radius:16px;overflow:hidden;">
+          <img src="https://picsum.photos/seed/card2/600/400" alt="Slide Image" style="width:100%;height:100%;object-fit:cover;"/>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+          <span style="font-size:12px;font-weight:600;color:#059669;text-transform:uppercase;letter-spacing:2px;">Category</span>
+          <h2 style="font-size:32px;font-weight:800;color:#111827;margin:0;line-height:1.2;">Card Title Two</h2>
+          <p style="font-size:16px;color:#4b5563;margin:0;line-height:1.7;">Second slide with a different color scheme. Customize the image, title, description, and button to match your content.</p>
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;background:#059669;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;width:fit-content;">Learn More →</a>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="display:flex;align-items:center;justify-content:center;padding:40px 80px;gap:60px;min-height:400px;">
+        <div style="flex:0 0 45%;height:300px;background:linear-gradient(135deg,#7c2d12,#dc2626);border-radius:16px;overflow:hidden;">
+          <img src="https://picsum.photos/seed/card3/600/400" alt="Slide Image" style="width:100%;height:100%;object-fit:cover;"/>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+          <span style="font-size:12px;font-weight:600;color:#dc2626;text-transform:uppercase;letter-spacing:2px;">Category</span>
+          <h2 style="font-size:32px;font-weight:800;color:#111827;margin:0;line-height:1.2;">Card Title Three</h2>
+          <p style="font-size:16px;color:#4b5563;margin:0;line-height:1.7;">Third slide. Each slide can have its own unique design, image, and call to action button to drive conversions.</p>
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;background:#dc2626;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;width:fit-content;">Learn More →</a>
+        </div>
+      </div>
+    </div>
+    <div data-gjs-type="swiper-pagination" class="swiper-pagination" style="position:absolute;bottom:20px;width:100%;text-align:center;font-size:14px;font-weight:600;color:#111827;"></div>
+    <div data-gjs-type="swiper-button-prev" class="swiper-button-prev" style="color:#111827;background:rgba(255,255,255,0.9);border-radius:50%;width:44px;height:44px;z-index:10;"></div>
+    <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#111827;background:rgba(255,255,255,0.9);border-radius:50%;width:44px;height:44px;z-index:10;"></div>
+  </div>
+`
+      });
+
+      // ─── SWIPER: Hero Slider Block (full-width hero with background image) ───
+      editor.BlockManager.add('swiper-hero', {
+        label: '<i class="fa fa-image"></i><br/>Hero Slider',
+        category: 'Basic',
+        content: `
+  <div data-gjs-type="swiper-container"
+       class="swiper-container my-swiper relative overflow-hidden"
+       data-slides-per-view="1"
+       data-navigation="true"
+       data-pagination="bullets"
+       data-autoplay="true"
+       data-autoplay-delay="4000"
+       data-effect="fade"
+       style="--swiper-navigation-color:#fff;--swiper-pagination-color:#fff;min-height:500px;">
+    <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="position:relative;min-height:500px;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4f46e5 100%);display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;color:#fff;padding:40px;max-width:700px;">
+          <span style="font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;opacity:0.8;display:block;margin-bottom:16px;">Welcome to Our Platform</span>
+          <h1 style="font-size:52px;font-weight:900;margin:0 0 20px;line-height:1.1;">Hero Slide One</h1>
+          <p style="font-size:18px;opacity:0.85;margin:0 0 32px;line-height:1.7;">Powerful hero section with full-width background. Perfect for landing pages, portfolios, and product showcases.</p>
+          <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+            <a href="#" style="background:#fff;color:#4f46e5;padding:14px 32px;border-radius:8px;font-weight:700;font-size:16px;text-decoration:none;">Get Started</a>
+            <a href="#" style="border:2px solid rgba(255,255,255,0.6);color:#fff;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none;">Learn More</a>
+          </div>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="position:relative;min-height:500px;background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#059669 100%);display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;color:#fff;padding:40px;max-width:700px;">
+          <span style="font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;opacity:0.8;display:block;margin-bottom:16px;">Discover More</span>
+          <h1 style="font-size:52px;font-weight:900;margin:0 0 20px;line-height:1.1;">Hero Slide Two</h1>
+          <p style="font-size:18px;opacity:0.85;margin:0 0 32px;line-height:1.7;">Each hero slide can have its own gradient background, headline, and call-to-action buttons. Customize freely.</p>
+          <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+            <a href="#" style="background:#fff;color:#059669;padding:14px 32px;border-radius:8px;font-weight:700;font-size:16px;text-decoration:none;">Get Started</a>
+            <a href="#" style="border:2px solid rgba(255,255,255,0.6);color:#fff;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none;">Learn More</a>
+          </div>
+        </div>
+      </div>
+      <div data-gjs-type="swiper-slide" class="swiper-slide w-full" style="position:relative;min-height:500px;background:linear-gradient(135deg,#450a0a 0%,#7f1d1d 50%,#dc2626 100%);display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;color:#fff;padding:40px;max-width:700px;">
+          <span style="font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;opacity:0.8;display:block;margin-bottom:16px;">Take Action</span>
+          <h1 style="font-size:52px;font-weight:900;margin:0 0 20px;line-height:1.1;">Hero Slide Three</h1>
+          <p style="font-size:18px;opacity:0.85;margin:0 0 32px;line-height:1.7;">Third hero slide. Use autoplay to automatically cycle through slides and keep your visitors engaged.</p>
+          <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+            <a href="#" style="background:#fff;color:#dc2626;padding:14px 32px;border-radius:8px;font-weight:700;font-size:16px;text-decoration:none;">Get Started</a>
+            <a href="#" style="border:2px solid rgba(255,255,255,0.6);color:#fff;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none;">Learn More</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-gjs-type="swiper-pagination" class="swiper-pagination" style="position:absolute;bottom:24px;width:100%;text-align:center;z-index:10;"></div>
+    <div data-gjs-type="swiper-button-prev" class="swiper-button-prev" style="color:#fff;z-index:10;"></div>
+    <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#fff;z-index:10;"></div>
+  </div>
+`
+      });
+
+      // ── reinitSwiper: destroy old instance and create new one in the canvas ──
+      const reinitSwiper = (component: any, retryCount = 0) => {
+        const canvasWin = editor.Canvas.getWindow() as any;
+
+        // If Swiper not loaded yet, retry up to 10 times (5 seconds)
+        if (typeof canvasWin.Swiper === 'undefined') {
+          if (retryCount < 10) {
+            setTimeout(() => reinitSwiper(component, retryCount + 1), 500);
+          } else {
+            console.warn('Swiper: CDN script not loaded after retries');
+          }
+          return;
+        }
+
+        const el = component.getEl() as HTMLElement | null;
+        if (!el) return;
+
+        // Destroy old swiper instance
+        if ((el as any).__swiper) {
+          try { (el as any).__swiper.destroy(true, true); } catch (_) { }
+          (el as any).__swiper = null;
+        }
+
+        // --- CRITICAL CLEANUP ---
+        el.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+        el.querySelectorAll('.swiper-slide-duplicate').forEach((dup) => dup.remove());
+        el.querySelectorAll('.swiper-slide').forEach((s: any) => {
+          s.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+          s.removeAttribute('data-swiper-slide-index');
+          s.style.opacity = '';
+          s.style.transform = '';
+          s.style.width = '';
+          s.style.margin = '';
+        });
+        el.querySelectorAll('.swiper-wrapper').forEach((w: any) => {
+          w.removeAttribute('style');
+          w.style.transform = '';
+        });
+        const paginationEl = el.querySelector('.swiper-pagination');
+        if (paginationEl) paginationEl.innerHTML = '';
+        // -------------------------
+
+        const attrs = component.getAttributes();
+        // Read from attrs first, fallback to dataset (data-* on HTML element)
+        const bool = (k: string) => {
+          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          return v !== undefined && v !== null && String(v) !== 'false';
+        };
+        const num = (k: string, fb: number) => {
+          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          return parseInt(String(v ?? fb), 10) || fb;
+        };
+        const str = (k: string, fb: string) => {
+          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          return v !== undefined ? String(v) : fb;
+        };
+
+        const props: any = {
+          observer: false, // Turned OFF to prevent infinite loop fights with GrapesJS MutationObserver
+          observeParents: false,
+          observeSlideChildren: false,
+          direction: bool('vertical') ? 'vertical' : 'horizontal',
+          loop: false, // CRITICAL: Forced to false in editor to prevent Swiper from cloning slides and triggering infinite GrapesJS re-renders
+          freeMode: bool('freeMode'),
+          autoHeight: bool('autoHeight'),
+          initialSlide: num('initialSlide', 0),
+          speed: num('speed', 300),
+          effect: str('effect', 'slide'),
+          parallax: bool('parallax'),
+          slidesPerView: num('slidesPerView', 1),
+          spaceBetween: num('spaceBetween', 0),
+          slidesPerGroup: num('slidesPerGroup', 1),
+          centeredSlides: bool('centeredSlides'),
+          rewind: bool('rewind'),
+          keyboard: bool('keyboard') ? { enabled: true } : false,
+          mousewheel: bool('mousewheel'),
+          grabCursor: bool('grabCursor'),
+          lazy: bool('lazy') ? { loadPrevNext: true } : false,
+        };
+
+        if (bool('autoplay')) {
+          props.autoplay = {
+            delay: num('autoplayDelay', 3000),
+            disableOnInteraction: bool('autoplayDisableOnInteraction'),
+            pauseOnMouseEnter: bool('autoplayPauseOnMouseEnter'),
+            reverseDirection: bool('autoplayReverseDirection'),
+          };
+        } else {
+          props.autoplay = false;
+        }
+
+        if (bool('navigation')) {
+          props.navigation = {
+            nextEl: el.querySelector('.swiper-button-next'),
+            prevEl: el.querySelector('.swiper-button-prev'),
+          };
+        }
+
+        const paginationType = str('pagination', '');
+        if (paginationType) {
+          props.pagination = {
+            el: el.querySelector('.swiper-pagination'),
+            type: paginationType,
+            dynamicBullets: bool('dynamicBullets'),
+            clickable: (attrs['clickableBullets'] !== undefined || el.dataset['clickableBullets'] !== undefined) ? bool('clickableBullets') : true,
+          };
+        }
+
+        if (bool('scrollbar')) {
+          props.scrollbar = { el: el.querySelector('.swiper-scrollbar'), hide: true };
+        }
+
+        props.breakpoints = {};
+        if (bool('mobileBreakpoint')) props.breakpoints[480] = { slidesPerView: 1, spaceBetween: 10 };
+        if (bool('tabletBreakpoint')) props.breakpoints[768] = { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 };
+
+        try {
+          (el as any).__swiper = new canvasWin.Swiper(el, props);
+          console.log('✅ Swiper reinit OK — slidesPerView:', props.slidesPerView, 'effect:', props.effect);
+        } catch (err) {
+          console.warn('Swiper reinit error:', err);
+        }
+      };
+
+
+      const SWIPER_TRAIT_NAMES = [
+        'vertical', 'loop', 'freeMode', 'autoHeight', 'navigation', 'initialSlide', 'speed', 'effect',
+        'autoplay', 'autoplayDelay', 'autoplayDisableOnInteraction', 'autoplayPauseOnMouseEnter',
+        'autoplayReverseDirection', 'pagination', 'dynamicBullets', 'clickableBullets', 'scrollbar',
+        'parallax', 'mobileBreakpoint', 'tabletBreakpoint', 'slidesPerView', 'spaceBetween',
+        'slidesPerGroup', 'centeredSlides', 'rewind', 'keyboard', 'mousewheel', 'grabCursor', 'lazy',
+      ];
+
+      editor.Components.addType('swiper-container', {
+        extend: 'default',
+        isComponent: el => {
+          if (el.classList && el.classList.contains('swiper-container')) {
+            return { type: 'swiper-container' };
+          }
+        },
+        model: {
+          defaults: {
+            name: 'Swiper Slider',
+            traits: [
+              { type: 'checkbox', name: 'vertical', label: 'Vertical', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'loop', label: 'Loop', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'freeMode', label: 'Free Mode', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'autoHeight', label: 'Auto Height', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'navigation', label: 'Navigation', valueTrue: 'true', valueFalse: 'false', value: 'true' },
+              { type: 'number', name: 'initialSlide', label: 'Initial Slide', value: 0 },
+              { type: 'number', name: 'speed', label: 'Speed (ms)', value: 300 },
+
+              { type: 'accordion-header', name: 'hdr-effects', label: 'Effects' },
+              {
+                type: 'select', name: 'effect', label: 'Effect Type',
+                options: [
+                  { id: 'slide', name: 'Slide' },
+                  { id: 'fade', name: 'Fade' },
+                  { id: 'cube', name: 'Cube' },
+                  { id: 'coverflow', name: 'Coverflow' },
+                  { id: 'flip', name: 'Flip' },
+                ]
+              },
+
+              { type: 'accordion-header', name: 'hdr-autoplay', label: 'Autoplay' },
+              { type: 'checkbox', name: 'autoplay', label: 'Enable Autoplay', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'number', name: 'autoplayDelay', label: 'Autoplay Delay (ms)', value: 3000 },
+              { type: 'checkbox', name: 'autoplayDisableOnInteraction', label: 'Disable on Interaction', valueTrue: 'true', valueFalse: 'false', value: 'true' },
+              { type: 'checkbox', name: 'autoplayPauseOnMouseEnter', label: 'Pause on Hover', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'autoplayReverseDirection', label: 'Reverse Direction', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-pagination', label: 'Pagination' },
+              {
+                type: 'select', name: 'pagination', label: 'Pagination Type',
+                options: [
+                  { id: 'bullets', name: 'Bullets' },
+                  { id: 'fraction', name: 'Fraction' },
+                  { id: 'progressbar', name: 'Progressbar' },
+                ]
+              },
+              { type: 'checkbox', name: 'dynamicBullets', label: 'Dynamic Bullets', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'clickableBullets', label: 'Clickable Bullets', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-scrollbar', label: 'Scrollbar' },
+              { type: 'checkbox', name: 'scrollbar', label: 'Enable Scrollbar', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-parallax', label: 'Parallax' },
+              { type: 'checkbox', name: 'parallax', label: 'Enable Parallax', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-responsive', label: 'Responsive' },
+              { type: 'checkbox', name: 'mobileBreakpoint', label: 'Enable Mobile Breakpoint', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'tabletBreakpoint', label: 'Enable Tablet Breakpoint', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-extra', label: 'Extra' },
+              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1 },
+              { type: 'number', name: 'spaceBetween', label: 'Space Between', value: 0 },
+
+              { type: 'accordion-header', name: 'hdr-layout', label: 'Layout' },
+              { type: 'number', name: 'slidesPerGroup', label: 'Slides Per Group', value: 1 },
+              { type: 'checkbox', name: 'centeredSlides', label: 'Centered Slides', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'rewind', label: 'Rewind', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-controls', label: 'Controls' },
+              { type: 'checkbox', name: 'keyboard', label: 'Keyboard Control', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'mousewheel', label: 'Mousewheel Control', valueTrue: 'true', valueFalse: 'false' },
+              { type: 'checkbox', name: 'grabCursor', label: 'Grab Cursor', valueTrue: 'true', valueFalse: 'false' },
+
+              { type: 'accordion-header', name: 'hdr-lazy', label: 'Lazy Loading' },
+              { type: 'checkbox', name: 'lazy', label: 'Lazy Load Images', valueTrue: 'true', valueFalse: 'false' },
+            ] as any,
+          },
+
+          init() {
+            // Nuke any legacy script saved in the DB that causes infinite MutationObserver loops
+            this.set('script', '');
+            
+            (this as any).triggerReinit = () => reinitSwiper(this);
+            (this as any)._lastSwiperTraits = '';
+
+            this.on('change:attributes', () => {
+              const attrs = this.getAttributes();
+              
+              // Only reinit if a Swiper-related trait actually changed
+              const currentTraits = SWIPER_TRAIT_NAMES.reduce((acc, name) => {
+                acc[name] = attrs[name];
+                return acc;
+              }, {} as any);
+              const currentTraitsStr = JSON.stringify(currentTraits);
+              
+              if ((this as any)._lastSwiperTraits === currentTraitsStr) {
+                return; // Prevent infinite loops from DOM mutations syncing back
+              }
+              (this as any)._lastSwiperTraits = currentTraitsStr;
+
+              const el = this.getEl() as HTMLElement | null;
+              if (el) {
+                SWIPER_TRAIT_NAMES.forEach(name => {
+                  const val = attrs[name];
+                  if (val !== undefined && val !== null) {
+                    el.dataset[name] = String(val);
+                  } else {
+                    delete el.dataset[name]; // Clean up dataset if trait is removed
+                  }
+                });
+              }
+              reinitSwiper(this);
+            });
+
+            // Initialize Swiper on component mount
+            setTimeout(() => (this as any).triggerReinit(), 500);
+          }
+        }
+      });
+
+      editor.Components.addType('swiper-wrapper', {
+        isComponent: el => el.classList && el.classList.contains('swiper-wrapper'),
+        model: {
+          defaults: {
+            name: 'Swiper Wrapper',
+            draggable: '[data-gjs-type="swiper-container"]',
+            droppable: '[data-gjs-type="swiper-slide"]',
+            selectable: false,
+            hoverable: false,
+          }
+        }
+      });
+
+      editor.Components.addType('swiper-slide', {
+        isComponent: el => el.classList && el.classList.contains('swiper-slide'),
+        model: {
+          defaults: {
+            name: 'Swiper Slide',
+            draggable: '[data-gjs-type="swiper-wrapper"]',
+            droppable: true,
+          }
+        }
+      });
+
+      editor.Components.addType('swiper-pagination', {
+        isComponent: el => el.classList && el.classList.contains('swiper-pagination'),
+        model: { 
+          defaults: { name: 'Pagination', selectable: false, hoverable: false, droppable: false },
+          init() { this.set('script', ''); }
+        }
+      });
+
+      editor.Components.addType('swiper-button-prev', {
+        isComponent: el => el.classList && el.classList.contains('swiper-button-prev'),
+        model: { 
+          defaults: { name: 'Prev Button', selectable: false, hoverable: false, droppable: false },
+          init() { this.set('script', ''); }
+        }
+      });
+
+      editor.Components.addType('swiper-button-next', {
+        isComponent: el => el.classList && el.classList.contains('swiper-button-next'),
+        model: { 
+          defaults: { name: 'Next Button', selectable: false, hoverable: false, droppable: false },
+          init() { this.set('script', ''); }
+        }
+      });
+    };
     const editor = grapesjs.init({
       container: '#gjs',
       height: '100%',
@@ -1066,7 +1713,7 @@ const GrapesEditor = () => {
           allowScripts: true
         }
       },
-      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin],
+      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin, customSwiperPlugin],
       pluginsOpts: {
         'grapesjs-preset-webpage': {
           blocksBasicOpts: { flexGrid: true },
@@ -1077,10 +1724,10 @@ const GrapesEditor = () => {
       canvas: {
         styles: [
           'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Public+Sans:wght@300;400;600;700&display=swap',
-          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
           'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
           'https://fonts.googleapis.com/icon?family=Material+Icons',
+          // Swiper CSS is injected directly via npm package (see SwiperBundle injection below)
         ],
         scripts: [
           'https://cdn.tailwindcss.com',
@@ -1105,13 +1752,27 @@ const GrapesEditor = () => {
             id: 'layout',
             name: 'Layout',
             open: false,
-            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content'],
+            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content', 'gap', 'row-gap', 'column-gap'],
           },
           {
             id: 'size',
             name: 'Size',
             open: false,
-            buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height'],
+            buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height', 'object-fit', 'object-position'],
+            properties: [
+              {
+                property: 'object-fit',
+                type: 'select',
+                default: 'fill',
+                options: [
+                  { id: 'fill', name: 'Fill' },
+                  { id: 'contain', name: 'Contain' },
+                  { id: 'cover', name: 'Cover' },
+                  { id: 'none', name: 'None' },
+                  { id: 'scale-down', name: 'Scale-down' }
+                ]
+              }
+            ]
           },
           {
             id: 'space',
@@ -1208,16 +1869,21 @@ const GrapesEditor = () => {
             id: 'background',
             name: 'Background',
             open: false,
-            buildProps: ['background-color', 'background-image', 'background-clip'],
+            buildProps: ['background-color', 'background-image', 'background-repeat', 'background-position', 'background-attachment', 'background-size', 'background-clip'],
             properties: [
               {
                 property: 'background-color',
                 type: 'pickr-color',
               },
+              { property: 'background-repeat', name: 'Bg Repeat' },
+              { property: 'background-position', name: 'Bg Position' },
+              { property: 'background-attachment', name: 'Bg Attach' },
+              { property: 'background-size', name: 'Bg Size' },
               {
                 property: 'background-clip',
                 name: 'Clip',
                 type: 'select',
+                full: true,
                 default: 'border-box',
                 options: [
                   { id: 'border-box', name: 'Border Box' },
@@ -1246,6 +1912,7 @@ const GrapesEditor = () => {
               {
                 property: 'opacity',
                 type: 'slider',
+                full: true,
                 min: 0,
                 max: 1,
                 step: 0.01,
@@ -1275,6 +1942,7 @@ const GrapesEditor = () => {
                 property: 'mix-blend-mode',
                 name: 'Blend mode',
                 type: 'select',
+                full: true,
                 default: 'normal',
                 options: [
                   { id: 'normal', name: 'Normal' },
@@ -1298,6 +1966,7 @@ const GrapesEditor = () => {
               {
                 property: 'cursor',
                 type: 'select',
+                full: true,
                 default: 'auto',
                 options: [
                   { id: 'auto', name: 'Auto' },
@@ -1708,6 +2377,100 @@ const GrapesEditor = () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
+      // ── Inject Swiper (npm package) into canvas iframe window ──
+      // This makes window.Swiper available inside the canvas so the
+      // component script can use it without loading any CDN
+      try {
+        const canvasWin = editor.Canvas.getWindow() as any;
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasWin && !canvasWin.Swiper) {
+          // SwiperClass is the constructor — inject directly into canvas window
+          canvasWin.Swiper = SwiperClass;
+          console.log('✅ Swiper injected into canvas window:', typeof SwiperClass);
+        }
+        // Also inject Swiper CSS into canvas <head>
+        if (canvasDoc && !canvasDoc.getElementById('swiper-bundle-css')) {
+          const swiperStyle = canvasDoc.createElement('style');
+          swiperStyle.id = 'swiper-bundle-css';
+          // Inline the essential Swiper CSS so no network request is needed
+          swiperStyle.innerHTML = `
+            .swiper{margin-left:auto;margin-right:auto;position:relative;overflow:hidden;list-style:none;padding:0;z-index:1;display:block}
+            .swiper-vertical>.swiper-wrapper{flex-direction:column}
+            .swiper-wrapper{position:relative;width:100%;height:100%;z-index:1;display:flex;transition-property:transform;transition-timing-function:var(--swiper-wrapper-transition-timing-function,initial);box-sizing:content-box}
+            .swiper-android .swiper-slide,.swiper-ios .swiper-slide,.swiper-wrapper{transform:translateZ(0)}
+            .swiper-horizontal>.swiper-wrapper{flex-direction:row}
+            .swiper-slide{flex-shrink:0;width:100%;height:100%;position:relative;transition-property:transform}
+            .swiper-slide-invisible-blank{visibility:hidden}
+            .swiper-autoheight,.swiper-autoheight .swiper-slide{height:auto}
+            .swiper-autoheight .swiper-wrapper{align-items:flex-start;transition-property:transform,height}
+            .swiper-backface-hidden .swiper-slide{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}
+            .swiper-3d.swiper-css-mode .swiper-wrapper{perspective:1200px}
+            .swiper-3d .swiper-wrapper{transform-style:preserve-3d}
+            .swiper-3d{perspective:1200px}
+            .swiper-3d .swiper-cube-shadow,.swiper-3d .swiper-slide,.swiper-3d .swiper-slide-shadow,.swiper-3d .swiper-slide-shadow-bottom,.swiper-3d .swiper-slide-shadow-left,.swiper-3d .swiper-slide-shadow-right,.swiper-3d .swiper-slide-shadow-top{transform-style:preserve-3d}
+            .swiper-3d .swiper-slide-shadow,.swiper-3d .swiper-slide-shadow-bottom,.swiper-3d .swiper-slide-shadow-left,.swiper-3d .swiper-slide-shadow-right,.swiper-3d .swiper-slide-shadow-top{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:10}
+            .swiper-3d .swiper-slide-shadow{background:rgba(0,0,0,.15)}
+            .swiper-3d .swiper-slide-shadow-left{background-image:linear-gradient(to left,rgba(0,0,0,.5),rgba(0,0,0,0))}
+            .swiper-3d .swiper-slide-shadow-right{background-image:linear-gradient(to right,rgba(0,0,0,.5),rgba(0,0,0,0))}
+            .swiper-3d .swiper-slide-shadow-top{background-image:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0))}
+            .swiper-3d .swiper-slide-shadow-bottom{background-image:linear-gradient(to bottom,rgba(0,0,0,.5),rgba(0,0,0,0))}
+            .swiper-css-mode>.swiper-wrapper{overflow:auto;scrollbar-width:none;-ms-overflow-style:none}
+            .swiper-css-mode>.swiper-wrapper::-webkit-scrollbar{display:none}
+            .swiper-css-mode>.swiper-wrapper>.swiper-slide{scroll-snap-align:start start}
+            .swiper-css-mode.swiper-horizontal>.swiper-wrapper{scroll-snap-type:x mandatory}
+            .swiper-css-mode.swiper-vertical>.swiper-wrapper{scroll-snap-type:y mandatory}
+            .swiper-css-mode.swiper-free-mode>.swiper-wrapper{scroll-snap-type:none}
+            .swiper-css-mode.swiper-free-mode>.swiper-wrapper>.swiper-slide{scroll-snap-align:none}
+            .swiper-css-mode.swiper-centered>.swiper-wrapper::before{content:'';flex-shrink:0;order:9999}
+            .swiper-css-mode.swiper-centered>.swiper-wrapper>.swiper-slide:first-child{margin-inline-start:var(--swiper-centered-offset-before)}
+            .swiper-css-mode.swiper-centered .swiper-wrapper>.swiper-slide{scroll-snap-align:center center;scroll-snap-stop:always}
+            .swiper-button-next,.swiper-button-prev{position:absolute;top:50%;width:calc(var(--swiper-navigation-size)/44*27);height:var(--swiper-navigation-size);margin-top:calc(0px - var(--swiper-navigation-size)/2);z-index:10;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--swiper-navigation-color,var(--swiper-theme-color))}
+            :root{--swiper-navigation-size:44px}
+            .swiper-button-next.swiper-button-disabled,.swiper-button-prev.swiper-button-disabled{opacity:.35;cursor:auto;pointer-events:none}
+            .swiper-button-next.swiper-button-hidden,.swiper-button-prev.swiper-button-hidden{opacity:0;cursor:auto;pointer-events:none}
+            .swiper-navigation-disabled .swiper-button-next,.swiper-navigation-disabled .swiper-button-prev{display:none!important}
+            .swiper-button-next svg,.swiper-button-prev svg{width:100%;height:100%;object-fit:contain;transform-origin:center}
+            .swiper-rtl .swiper-button-next svg,.swiper-rtl .swiper-button-prev svg{transform:rotate(180deg)}
+            .swiper-button-prev,.swiper-rtl .swiper-button-next{left:10px;right:auto}
+            .swiper-button-next,.swiper-rtl .swiper-button-prev{right:10px;left:auto}
+            .swiper-button-lock{display:none}
+            .swiper-button-next svg,.swiper-button-prev svg{display:none!important}
+            .swiper-button-next:after,.swiper-button-prev:after{content:''!important;display:block!important;width:100%;height:100%;background-color:var(--swiper-navigation-color,currentColor);-webkit-mask-size:contain;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;mask-size:contain;mask-position:center;mask-repeat:no-repeat}
+            .swiper-button-prev:after,.swiper-rtl .swiper-button-next:after{-webkit-mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E")}
+            .swiper-button-next:after,.swiper-rtl .swiper-button-prev:after{-webkit-mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E")}
+            .swiper-pagination{position:absolute;text-align:center;transition:.3s opacity;transform:translateZ(0);z-index:10}
+            .swiper-pagination.swiper-pagination-hidden{opacity:0}
+            .swiper-pagination-disabled>.swiper-pagination,.swiper-pagination.swiper-pagination-disabled{display:none!important}
+            .swiper-horizontal>.swiper-pagination-bullets,.swiper-pagination-bullets.swiper-pagination-horizontal,.swiper-pagination-custom,.swiper-pagination-fraction{bottom:var(--swiper-pagination-bottom,8px);top:var(--swiper-pagination-top,auto);left:0;width:100%}
+            .swiper-pagination-bullets-dynamic{overflow:hidden;font-size:0}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet{transform:scale(.33);position:relative}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-main{transform:scale(1)}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-prev{transform:scale(.66)}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-prev-prev{transform:scale(.33)}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-next{transform:scale(.66)}
+            .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-next-next{transform:scale(.33)}
+            .swiper-pagination-bullet{width:var(--swiper-pagination-bullet-width,var(--swiper-pagination-bullet-size,8px));height:var(--swiper-pagination-bullet-height,var(--swiper-pagination-bullet-size,8px));display:inline-block;border-radius:var(--swiper-pagination-bullet-border-radius,50%);background:var(--swiper-pagination-bullet-inactive-color,#000);opacity:var(--swiper-pagination-bullet-inactive-opacity,.2)}
+            button.swiper-pagination-bullet{border:none;margin:0;padding:0;box-shadow:none;-webkit-appearance:none;appearance:none}
+            .swiper-pagination-clickable .swiper-pagination-bullet{cursor:pointer}
+            .swiper-pagination-bullet:only-child{display:none!important}
+            .swiper-pagination-bullet-active{opacity:var(--swiper-pagination-bullet-opacity,1);background:var(--swiper-pagination-color,var(--swiper-theme-color))}
+            .swiper-vertical>.swiper-pagination-bullets,.swiper-pagination-bullets.swiper-pagination-vertical{right:var(--swiper-pagination-right,8px);left:var(--swiper-pagination-left,auto);top:50%;transform:translate3d(0px,-50%,0)}
+            .swiper-vertical>.swiper-pagination-bullets .swiper-pagination-bullet,.swiper-pagination-bullets.swiper-pagination-vertical .swiper-pagination-bullet{margin:var(--swiper-pagination-bullet-vertical-gap,6px) auto;display:block}
+            .swiper-horizontal>.swiper-pagination-bullets .swiper-pagination-bullet,.swiper-pagination-bullets.swiper-pagination-horizontal .swiper-pagination-bullet{margin:0 var(--swiper-pagination-bullet-horizontal-gap,4px)}
+            .swiper-pagination-progressbar{background:rgba(0,0,0,.25);position:absolute}
+            .swiper-pagination-progressbar .swiper-pagination-progressbar-fill{background:var(--swiper-pagination-color,var(--swiper-theme-color));position:absolute;left:0;top:0;width:100%;height:100%;transform:scale(0);transform-origin:left top}
+            .swiper-rtl .swiper-pagination-progressbar .swiper-pagination-progressbar-fill{transform-origin:right top}
+            .swiper-horizontal>.swiper-pagination-progressbar,.swiper-pagination-progressbar.swiper-pagination-horizontal,.swiper-pagination-progressbar.swiper-pagination-vertical.swiper-pagination-progressbar-opposite,.swiper-vertical>.swiper-pagination-progressbar.swiper-pagination-progressbar-opposite{width:100%;height:4px;left:0;top:0}
+            .swiper-horizontal>.swiper-pagination-progressbar.swiper-pagination-progressbar-opposite,.swiper-pagination-progressbar.swiper-pagination-horizontal.swiper-pagination-progressbar-opposite,.swiper-pagination-progressbar.swiper-pagination-vertical.swiper-pagination-horizontal,.swiper-vertical>.swiper-pagination-progressbar{width:4px;height:100%;left:0;top:0}
+            .swiper-pagination-lock{display:none}
+          `;
+          canvasDoc.head.appendChild(swiperStyle);
+          console.log('✅ Swiper CSS injected into canvas from npm package');
+        }
+      } catch (e) {
+        console.warn('Could not inject Swiper into canvas:', e);
+      }
+
       // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
       try {
         const canvasDoc = editor.Canvas.getDocument();
@@ -1942,6 +2705,33 @@ const GrapesEditor = () => {
           }
         };
         makeVisible(model);
+
+        // Update Swiper if a new slide is added
+        if (model.is('swiper-slide')) {
+          const classes = model.getClasses();
+          if (!classes.includes('swiper-slide-duplicate')) {
+            const parent = model.closest('[data-gjs-type="swiper-container"]');
+            if (parent && typeof (parent as any).triggerReinit === 'function') {
+              setTimeout(() => {
+                (parent as any).triggerReinit();
+              }, 250);
+            }
+          }
+        }
+      });
+
+      editor.on('component:remove', (model) => {
+        if (model.is('swiper-slide')) {
+          const classes = model.getClasses();
+          if (!classes.includes('swiper-slide-duplicate')) {
+            const parent = model.closest('[data-gjs-type="swiper-container"]');
+            if (parent && typeof (parent as any).triggerReinit === 'function') {
+              setTimeout(() => {
+                (parent as any).triggerReinit();
+              }, 250);
+            }
+          }
+        }
       });
 
       editor.on('component:dblclick', (model) => {
@@ -2491,6 +3281,19 @@ const GrapesEditor = () => {
         setRightTab('traits');
       }
 
+      // Restore Swiper Pagination if wiped by GrapesJS re-render
+      const swiperContainer = model.is('swiper-container') ? model : model.closest('[data-gjs-type="swiper-container"]');
+      if (swiperContainer) {
+        setTimeout(() => {
+          const el = swiperContainer.getEl() as any;
+          if (el && el.__swiper && el.__swiper.pagination) {
+            el.__swiper.pagination.render();
+            el.__swiper.pagination.update();
+            if (el.__swiper.navigation) el.__swiper.navigation.update();
+          }
+        }, 150);
+      }
+
       setActiveComponent(model);
 
       // Update Selection Label for AI
@@ -2572,6 +3375,7 @@ const GrapesEditor = () => {
     console.log('💾 Saving page content...');
     const html = editorRef.current.getHtml();
     const css = editorRef.current.getCss() || '';
+    const js = editorRef.current.getJs() || '';
 
     // Capture internal global styles injected by GlobalStylesPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
@@ -2596,8 +3400,10 @@ const GrapesEditor = () => {
 
     // Merge canvas scripts with backed-up template scripts (deduplicates by src/content)
     const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
-
-    const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
+    let htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
+    if (js) {
+      htmlWithScripts += `\n<script>\n${js}\n</script>`;
+    }
 
     const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
@@ -2637,6 +3443,7 @@ const GrapesEditor = () => {
     if (editorRef.current) {
       const html = editorRef.current.getHtml();
       const css = editorRef.current.getCss() || '';
+      const js = editorRef.current.getJs() || '';
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
@@ -2653,7 +3460,10 @@ const GrapesEditor = () => {
         console.warn('Failed to extract scripts from canvas:', e);
       }
       const customScripts = mergeScripts(canvasScripts, extractedTemplateScripts);
-      const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
+      let htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
+      if (js) {
+        htmlWithScripts += `\n<script>\n${js}\n</script>`;
+      }
 
       if (page) {
         if (mode === 'landing') {
@@ -2734,6 +3544,7 @@ const GrapesEditor = () => {
     // Extract all custom script tags from the canvas document using the unified helper
     let canvasScriptsForDownload = '';
     let globalCssForDownload = '';
+    const js = editorRef.current.getJs() || '';
     try {
       const canvasDoc = editorRef.current.Canvas.getDocument();
       if (canvasDoc) {
@@ -2767,6 +3578,10 @@ const GrapesEditor = () => {
       landingHtml = landingHtml + '\n' + customScripts;
     } else if (mode === 'thank-you' && customScripts) {
       thankYouHtml = thankYouHtml + '\n' + customScripts;
+    }
+    if (js) {
+      landingHtml += `\n<script>\n${js}\n</script>`;
+      thankYouHtml += `\n<script>\n${js}\n</script>`;
     }
 
     let formattedLandingHtml = formatHtmlPretty(landingHtml);
@@ -3091,7 +3906,7 @@ const GrapesEditor = () => {
   const handleAiUndo = (data: any, msgIndex: number) => {
     if (!editorRef.current || !data || !data.selectedId) return;
     const editor = editorRef.current;
-    
+
     // Revert the component
     let targetComp = null;
     const findComponentById = (component: any, targetId: string): any => {
@@ -3105,12 +3920,12 @@ const GrapesEditor = () => {
       return null;
     };
     targetComp = findComponentById(editor.getWrapper(), data.selectedId);
-    
+
     if (!targetComp) {
       // Fallback: try to just use currently selected
       targetComp = activeComponent || editor.getSelected();
     }
-    
+
     if (targetComp) {
       const state = data.before;
       const action = data.action;
@@ -3124,14 +3939,14 @@ const GrapesEditor = () => {
         targetComp.replaceWith(state.html);
       }
     }
-    
+
     // Put prompt back into text box
     if (data.prompt) {
       setChatInput(data.prompt);
       setTimeout(() => {
         if (aiInputRef.current) {
-           aiInputRef.current.focus();
-           aiInputRef.current.value = data.prompt;
+          aiInputRef.current.focus();
+          aiInputRef.current.value = data.prompt;
         }
       }, 50);
     }
@@ -3147,7 +3962,7 @@ const GrapesEditor = () => {
       }
       return newMsgs;
     });
-    
+
     toast.success('Reverted! Prompt moved to input.');
   };
 
@@ -3203,7 +4018,7 @@ const GrapesEditor = () => {
       const aiText = parsed.text || parsed.content || parsed.text_content;
       const aiHtml = parsed.html || parsed.modified_html || parsed.new_html;
       const action = parsed.action || (aiHtml ? 'html' : aiCss ? 'style' : aiText ? 'text' : 'both');
-      
+
       const beforeHtml = selected.toHTML();
       const beforeCss = selected.getStyle();
       const beforeText = selected.components().models.map(m => m.get('content')).join('');
@@ -3231,9 +4046,9 @@ const GrapesEditor = () => {
       if (action === 'html' && aiHtml) {
         const newComps = selected.replaceWith(aiHtml);
         if (newComps && newComps.length > 0) {
-           finalSelectedId = newComps[0].getId();
+          finalSelectedId = newComps[0].getId();
         } else if (newComps && !Array.isArray(newComps)) {
-           finalSelectedId = newComps.getId();
+          finalSelectedId = newComps.getId();
         }
         changeApplied = true;
       }
@@ -3700,13 +4515,13 @@ const GrapesEditor = () => {
                           {msg.content}
                           {msg.role === 'ai' && msg.content.includes('✅ Done!') && (
                             <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                              <button 
-                                onClick={() => msg.undoData && handleAiUndo(msg.undoData, i)} 
+                              <button
+                                onClick={() => msg.undoData && handleAiUndo(msg.undoData, i)}
                                 style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 12px', fontSize: 12, color: '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                                 onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
                                 onMouseOut={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" /></svg>
                                 Undo
                               </button>
                             </div>
@@ -3789,9 +4604,9 @@ const GrapesEditor = () => {
                   pageId={pageId || ''}
                   industry={page?.industry}
                   isCanvasEmpty={
-                    !page?.thankYouPageContent || 
-                    page.thankYouPageContent.trim() === '' || 
-                    !page?.thankYouPageStyles || 
+                    !page?.thankYouPageContent ||
+                    page.thankYouPageContent.trim() === '' ||
+                    !page?.thankYouPageStyles ||
                     page.thankYouPageStyles.trim() === '' ||
                     page.thankYouPageContent.includes('Landing Page is Ready') ||
                     page.thankYouPageContent.includes('Your request has been successfully submitted')
@@ -3806,96 +4621,96 @@ const GrapesEditor = () => {
                       console.warn('Blocked Thank You template from applying in Landing mode');
                       return;
                     }
-                  if (editorRef.current) {
-                    console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
-                    setIsCanvasLoading(true);
+                    if (editorRef.current) {
+                      console.log(`🎬 Applying Thank You template to canvas... (HTML length: ${html?.length})`);
+                      setIsCanvasLoading(true);
 
-                    // Clear editor state
-                    editorRef.current.setComponents('');
-                    try {
-                      if (editorRef.current.DomComponents?.clear) editorRef.current.DomComponents.clear();
-                      // @ts-ignore
-                      if (editorRef.current.Css?.clear) editorRef.current.Css.clear();
-                      // @ts-ignore
-                      if (editorRef.current.UndoManager?.clear) editorRef.current.UndoManager.clear();
-                    } catch (e) { }
-
-                    let finalHtml = html;
-                    let finalCss = css || '';
-
-                    // Parse full HTML document
-                    if (html.toLowerCase().includes('<body')) {
+                      // Clear editor state
+                      editorRef.current.setComponents('');
                       try {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
+                        if (editorRef.current.DomComponents?.clear) editorRef.current.DomComponents.clear();
+                        // @ts-ignore
+                        if (editorRef.current.Css?.clear) editorRef.current.Css.clear();
+                        // @ts-ignore
+                        if (editorRef.current.UndoManager?.clear) editorRef.current.UndoManager.clear();
+                      } catch (e) { }
 
-                        // Extract styles
-                        const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
-                        if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+                      let finalHtml = html;
+                      let finalCss = css || '';
 
-                        // Backup scripts
-                        const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
-                        const newBackupScripts = allTemplateScripts
-                          .filter(s => {
-                            const src = s.getAttribute('src') || '';
-                            if (src.includes('cdn.tailwindcss.com')) return false;
-                            if (s.innerHTML.includes('tailwind.config')) return false;
-                            return true;
-                          })
-                          .map(s => s.outerHTML)
-                          .join('\n');
-                        if (newBackupScripts) {
-                          setExtractedTemplateScripts(newBackupScripts);
+                      // Parse full HTML document
+                      if (html.toLowerCase().includes('<body')) {
+                        try {
+                          const parser = new DOMParser();
+                          const doc = parser.parseFromString(html, 'text/html');
+
+                          // Extract styles
+                          const styleTags = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                          if (styleTags) finalCss = (finalCss || '') + '\n' + styleTags;
+
+                          // Backup scripts
+                          const allTemplateScripts = Array.from(doc.querySelectorAll('script'));
+                          const newBackupScripts = allTemplateScripts
+                            .filter(s => {
+                              const src = s.getAttribute('src') || '';
+                              if (src.includes('cdn.tailwindcss.com')) return false;
+                              if (s.innerHTML.includes('tailwind.config')) return false;
+                              return true;
+                            })
+                            .map(s => s.outerHTML)
+                            .join('\n');
+                          if (newBackupScripts) {
+                            setExtractedTemplateScripts(newBackupScripts);
+                          }
+
+                          finalHtml = doc.body.innerHTML;
+                        } catch (e) {
+                          console.error('Error parsing Thank You HTML:', e);
                         }
-
-                        finalHtml = doc.body.innerHTML;
-                      } catch (e) {
-                        console.error('Error parsing Thank You HTML:', e);
-                      }
-                    } else {
-                      const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
-                      const filteredScripts = scriptMatches.filter((s: string) =>
-                        !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
-                      );
-                      if (filteredScripts.length > 0) {
-                        setExtractedTemplateScripts(filteredScripts.join('\n'));
-                      }
-                    }
-
-                    // Apply content — strip body{} rules and style tags to avoid iframe margin issues and CssComposer lag
-                    finalHtml = finalHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-                    editorRef.current.setComponents(finalHtml);
-                    if (finalCss) {
-                      // ⚠️ Remove body margin/padding from template CSS to prevent iframe scroll issues
-                      const cleanCss = finalCss
-                        .replace(/body\s*\{[^}]*margin[^}]*\}/gi, '')
-                        .replace(/body\s*\{[^}]*padding[^}]*\}/gi, '');
-                      // Intentionally skipping setStyle to avoid SelectorManager click lag
-                    }
-
-                    // Inject CSS directly into canvas iframe for reliable rendering
-                    try {
-                      const canvasDoc = editorRef.current.Canvas.getDocument();
-                      if (canvasDoc && finalCss) {
-                        let tplTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
-                        if (!tplTag) {
-                          tplTag = canvasDoc.createElement('style');
-                          tplTag.id = 'template-styles';
-                          canvasDoc.head.appendChild(tplTag);
+                      } else {
+                        const scriptMatches = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || ([] as string[]);
+                        const filteredScripts = scriptMatches.filter((s: string) =>
+                          !s.includes('cdn.tailwindcss.com') && !s.includes('tailwind.config')
+                        );
+                        if (filteredScripts.length > 0) {
+                          setExtractedTemplateScripts(filteredScripts.join('\n'));
                         }
-                        // Reset body margin/padding in canvas to prevent scrollbar/padding issues
-                        tplTag.innerHTML = `
+                      }
+
+                      // Apply content — strip body{} rules and style tags to avoid iframe margin issues and CssComposer lag
+                      finalHtml = finalHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+                      editorRef.current.setComponents(finalHtml);
+                      if (finalCss) {
+                        // ⚠️ Remove body margin/padding from template CSS to prevent iframe scroll issues
+                        const cleanCss = finalCss
+                          .replace(/body\s*\{[^}]*margin[^}]*\}/gi, '')
+                          .replace(/body\s*\{[^}]*padding[^}]*\}/gi, '');
+                        // Intentionally skipping setStyle to avoid SelectorManager click lag
+                      }
+
+                      // Inject CSS directly into canvas iframe for reliable rendering
+                      try {
+                        const canvasDoc = editorRef.current.Canvas.getDocument();
+                        if (canvasDoc && finalCss) {
+                          let tplTag = canvasDoc.getElementById('template-styles') as HTMLStyleElement | null;
+                          if (!tplTag) {
+                            tplTag = canvasDoc.createElement('style');
+                            tplTag.id = 'template-styles';
+                            canvasDoc.head.appendChild(tplTag);
+                          }
+                          // Reset body margin/padding in canvas to prevent scrollbar/padding issues
+                          tplTag.innerHTML = `
                           body, html { margin: 0 !important; padding: 0 !important; overflow-x: hidden; }
                           ${finalCss}
                         `;
-                      }
-                    } catch (e) { }
+                        }
+                      } catch (e) { }
 
-                    editorRef.current.refresh();
-                    setTimeout(() => setIsCanvasLoading(false), 200);
-                  }
-                }}
-              />
+                      editorRef.current.refresh();
+                      setTimeout(() => setIsCanvasLoading(false), 200);
+                    }
+                  }}
+                />
               )}
             </div>
           </div>
@@ -3940,45 +4755,46 @@ const GrapesEditor = () => {
               <path d={isRightSidebarOpen ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"}></path>
             </svg>
           </button>
-          
+
           <div className="gjs-editor gjs-one-bg" style={{
             width: isRightSidebarOpen ? 280 : 0,
             opacity: isRightSidebarOpen ? 1 : 0,
             overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             flexShrink: 0, background: '#ffffff',
-            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none', 
+            borderLeft: isRightSidebarOpen ? '1px solid #e5e7eb' : 'none',
             display: 'flex', flexDirection: 'column',
           }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
-            <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
-            <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
-            <div id="styles-container" />
-            
-            <details className="selectors-accordion" style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
-              <summary className="gs-style-manager-sector-header" style={{ listStyle: 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: 500, color: '#111827', marginLeft: '5px' }}>
-                    Classes & States
+            {/* Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
+              <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
+              <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
+              <div id="styles-container" />
+
+              <details className="selectors-accordion" style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
+                <summary className="gs-style-manager-sector-header" style={{ listStyle: 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: 500, color: '#111827', marginLeft: '5px' }}>
+                      Classes & States
+                    </div>
+                    <div className="gs-cmp-accordion-handler-toggle selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
+                    </div>
                   </div>
-                  <div className="gs-cmp-accordion-handler-toggle selectors-arrow" style={{ display: 'flex', alignItems: 'center' }}>
-                  </div>
-                </div>
-              </summary>
-              <div id="selectors-container" style={{ padding: '12px', background: '#fff' }} />
-            </details>
-            
-            <style dangerouslySetInnerHTML={{__html: `
+                </summary>
+                <div id="selectors-container" style={{ padding: '12px', background: '#fff' }} />
+              </details>
+
+              <style dangerouslySetInnerHTML={{
+                __html: `
               .selectors-accordion summary::-webkit-details-marker { display: none; }
               .selectors-accordion[open] .selectors-arrow { transform: rotate(90deg); }
               .selectors-arrow { transition: transform 0.2s; }
               #selectors-container .gjs-clm-tags:nth-child(n+2) { display: none !important; }
             `}} />
-          </div>
-          <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
+            </div>
+            <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
           </div>
         </div>
       </div>
@@ -4518,8 +5334,7 @@ function buildPublishHtml(
       }
     };
   </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -4623,7 +5438,7 @@ function buildFullHtml(html: string, css: string, title = 'Landing Page', desc =
   <title>${title}</title>
   ${desc ? `<meta name="description" content="${desc}"/>` : ''}
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Icons&display=swap" rel="stylesheet"/>
