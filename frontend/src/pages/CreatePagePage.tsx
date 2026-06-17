@@ -22,6 +22,7 @@ import { finance02Html, finance02Styles } from "../templates/finance/templates02
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 import { finance04Html, finance04Styles } from "../templates/finance/templates04";
 import { law01Html, law01Styles } from "../templates/law/templates01";
+import { law02Html, law02Styles } from "../templates/law/templates02";
 import { useState, useEffect } from "react";
 
 // Templates removed as per user request
@@ -371,6 +372,14 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
 const LANDING_TEMPLATES: any[] = [
   {
     id: "law-01",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot.png",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+    prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-02",
     name: "Justice Law Firm",
     tag: "Law Firm",
     img: "/assets/templates/LawFirm/screenshot.png",
@@ -1071,6 +1080,7 @@ const CreatePagePage = () => {
 
       switch (finalTemplateId) {
         case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
+        case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1290,8 +1300,7 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
   <meta name="description" content="${project.description || ''}"/>${faviconUrl ? `\n  <link rel="icon" href="${faviconUrl}"/>` : ''}
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -1851,6 +1860,7 @@ ${enrichedContent}
               let tpStyles = "";
               switch (previewTemplate.id) {
                 case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
+                case "law-02": tpHtml = law02Html; tpStyles = law02Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
@@ -1935,7 +1945,7 @@ ${enrichedContent}
                         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
                         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
                         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-                        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
+                        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
                         <style>
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                           ${tpStyles}
