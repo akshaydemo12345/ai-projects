@@ -27,6 +27,7 @@ const CATEGORIES: any[] = [
       { id: 'custom-video', label: 'Video', icon: <div className="w-[24px] h-[18px] border-[1.5px] border-zinc-400 flex items-center justify-center"><div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-zinc-400 border-b-[4px] border-b-transparent ml-1"></div></div> },
       { id: 'custom-map', label: 'Map', icon: <div className="w-[20px] h-[24px] border-[1.5px] border-zinc-400 rounded-b-full rounded-t-full flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-full mb-1"></div></div> },
       { id: 'icon', label: 'Icon', icon: <div className="text-[20px] text-zinc-400 leading-none">💎</div> },
+      { id: 'tabs', label: 'Tabs', icon: <div className="w-[24px] h-[18px] flex flex-col gap-[2px]"><div className="flex gap-[2px] h-[6px]"><div className="flex-1 bg-zinc-400 rounded-t-[2px]" /><div className="flex-1 border-[1.5px] border-zinc-400 border-b-0 rounded-t-[2px]" /></div><div className="flex-1 border-[1.5px] border-zinc-400" /></div> },
       { id: 'custom-code', label: 'Custom Code', icon: <div className="text-[20px] text-zinc-400 leading-none">HTML</div> },
     ]
   },

@@ -307,7 +307,7 @@ const GrapesEditor = () => {
       d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
       d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
       dbContent = d.body.innerHTML;
-    } catch(e) {}
+    } catch (e) { }
 
     // 2. Intelligent Extraction
     if (dbContent.toLowerCase().includes('<body') || dbContent.toLowerCase().includes('<head') || dbContent.toLowerCase().includes('<html')) {
@@ -585,11 +585,21 @@ const GrapesEditor = () => {
                 const allTabs = Array.from(container.querySelectorAll('.tab-item'));
                 const allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
                 const tabIndex = allTabs.indexOf(tabItem);
-                allTabs.forEach(function(t) { t.classList.remove('active'); });
-                allPanels.forEach(function(p) { p.classList.remove('active'); });
+                allTabs.forEach(function(t: any) { 
+                  t.classList.remove('active'); 
+                  t.style.borderBottomColor = 'transparent'; 
+                  t.style.color = '#4b5563'; 
+                });
+                allPanels.forEach(function(p: any) { 
+                  p.classList.remove('active'); 
+                  p.style.display = 'none'; 
+                });
                 tabItem.classList.add('active');
+                (tabItem as any).style.borderBottomColor = 'var(--primary, #6366f1)';
+                (tabItem as any).style.color = 'var(--primary, #6366f1)';
                 if (allPanels[tabIndex]) {
                   allPanels[tabIndex].classList.add('active');
+                  (allPanels[tabIndex] as any).style.display = 'block';
                 }
               }
             }
@@ -1219,6 +1229,69 @@ const GrapesEditor = () => {
       // SWIPER BLOCK + COMPONENTS
       // ════════════════════════════════════════════════
 
+      // ─── SWIPER BLOCK + COMPONENTS ───
+
+      editor.Components.addType('custom-tabs', {
+        isComponent: el => {
+          if (el && el.classList && el.classList.contains('tabs-container')) {
+            return { type: 'custom-tabs' };
+          }
+        },
+        model: {
+          defaults: {
+            script: function () {
+              var container = this;
+              var allTabs = Array.prototype.slice.call(container.querySelectorAll('.tab-item'));
+              var allPanels = Array.prototype.slice.call(container.querySelectorAll('.tab-content-box'));
+
+              allTabs.forEach(function (tabEl, index) {
+                tabEl.addEventListener('click', function () {
+                  allTabs.forEach(function (t) { t.classList.remove('active'); t.style.borderBottomColor = 'transparent'; t.style.color = '#4b5563'; });
+                  allPanels.forEach(function (p) { p.classList.remove('active'); p.style.display = 'none'; });
+                  
+                  tabEl.classList.add('active');
+                  tabEl.style.borderBottomColor = '#6366f1';
+                  tabEl.style.color = '#6366f1';
+                  
+                  if (allPanels[index]) {
+                    allPanels[index].classList.add('active');
+                    allPanels[index].style.display = 'block';
+                  }
+                });
+              });
+            }
+          }
+        }
+      });
+
+      editor.BlockManager.add('tabs', {
+        label: '<i class="fa fa-folder"></i><br/>Tabs',
+        category: 'Basic',
+        content: `
+      <div data-gjs-type="custom-tabs" class="tabs-container" data-gjs-droppable="false" style="width: 100%; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #fff;">
+        <div style="display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb;" data-gjs-droppable="false">
+          <div class="tab-item active" data-gjs-droppable="false" style="padding: 12px 24px; cursor: pointer; font-weight: 600; font-size: 14px; border-bottom: 2px solid #6366f1; color: #6366f1; transition: all 0.2s;">Tab 1</div>
+          <div class="tab-item" data-gjs-droppable="false" style="padding: 12px 24px; cursor: pointer; font-weight: 500; font-size: 14px; border-bottom: 2px solid transparent; color: #4b5563; transition: all 0.2s;">Tab 2</div>
+          <div class="tab-item" data-gjs-droppable="false" style="padding: 12px 24px; cursor: pointer; font-weight: 500; font-size: 14px; border-bottom: 2px solid transparent; color: #4b5563; transition: all 0.2s;">Tab 3</div>
+        </div>
+        <div style="padding: 24px;" data-gjs-droppable="false">
+          <div class="tab-content-box active" data-gjs-droppable="true" style="display: block;">
+            <h3 style="margin-top: 0;">Content for Tab 1</h3>
+            <p>This is the first tab content. You can add text, images, or any other elements here.</p>
+          </div>
+          <div class="tab-content-box" data-gjs-droppable="true" style="display: none;">
+            <h3 style="margin-top: 0;">Content for Tab 2</h3>
+            <p>This is the second tab content. Customize it to your needs.</p>
+          </div>
+          <div class="tab-content-box" data-gjs-droppable="true" style="display: none;">
+            <h3 style="margin-top: 0;">Content for Tab 3</h3>
+            <p>This is the third tab content area.</p>
+          </div>
+        </div>
+      </div>
+`
+      });
+
       editor.BlockManager.add('swiper-slider', {
         label: '<i class="fa fa-arrows-h"></i><br/>Swiper Slider',
         category: 'Basic',
@@ -1614,20 +1687,20 @@ const GrapesEditor = () => {
           init() {
             // Nuke any legacy script saved in the DB that causes infinite MutationObserver loops
             this.set('script', '');
-            
+
             (this as any).triggerReinit = () => reinitSwiper(this);
             (this as any)._lastSwiperTraits = '';
 
             this.on('change:attributes', () => {
               const attrs = this.getAttributes();
-              
+
               // Only reinit if a Swiper-related trait actually changed
               const currentTraits = SWIPER_TRAIT_NAMES.reduce((acc, name) => {
                 acc[name] = attrs[name];
                 return acc;
               }, {} as any);
               const currentTraitsStr = JSON.stringify(currentTraits);
-              
+
               if ((this as any)._lastSwiperTraits === currentTraitsStr) {
                 return; // Prevent infinite loops from DOM mutations syncing back
               }
@@ -1679,7 +1752,7 @@ const GrapesEditor = () => {
 
       editor.Components.addType('swiper-pagination', {
         isComponent: el => el.classList && el.classList.contains('swiper-pagination'),
-        model: { 
+        model: {
           defaults: { name: 'Pagination', selectable: false, hoverable: false, droppable: false },
           init() { this.set('script', ''); }
         }
@@ -1687,7 +1760,7 @@ const GrapesEditor = () => {
 
       editor.Components.addType('swiper-button-prev', {
         isComponent: el => el.classList && el.classList.contains('swiper-button-prev'),
-        model: { 
+        model: {
           defaults: { name: 'Prev Button', selectable: false, hoverable: false, droppable: false },
           init() { this.set('script', ''); }
         }
@@ -1695,7 +1768,7 @@ const GrapesEditor = () => {
 
       editor.Components.addType('swiper-button-next', {
         isComponent: el => el.classList && el.classList.contains('swiper-button-next'),
-        model: { 
+        model: {
           defaults: { name: 'Next Button', selectable: false, hoverable: false, droppable: false },
           init() { this.set('script', ''); }
         }
@@ -5389,16 +5462,22 @@ ${scripts}
       var hasActive = allPanels.some(function(p) { return p.classList.contains('active'); });
       if (!hasActive && allTabs.length > 0) {
         allTabs[0].classList.add('active');
-        if (allPanels[0]) allPanels[0].classList.add('active');
+        if (allPanels[0]) {
+          allPanels[0].classList.add('active');
+          allPanels[0].style.display = 'block';
+        }
       }
 
       allTabs.forEach(function(tabEl, index) {
         tabEl.style.cursor = 'pointer';
         tabEl.addEventListener('click', function() {
           allTabs.forEach(function(t) { t.classList.remove('active'); });
-          allPanels.forEach(function(p) { p.classList.remove('active'); });
+          allPanels.forEach(function(p) { p.classList.remove('active'); p.style.display = 'none'; });
           tabEl.classList.add('active');
-          if (allPanels[index]) allPanels[index].classList.add('active');
+          if (allPanels[index]) {
+            allPanels[index].classList.add('active');
+            allPanels[index].style.display = 'block';
+          }
         });
       });
     });
