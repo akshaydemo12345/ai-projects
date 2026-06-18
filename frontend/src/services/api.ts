@@ -41,6 +41,7 @@ export interface Project {
   apiToken: string;
   userId: string;
   isDeleted: boolean;
+  isVerified?: boolean;
   createdAt: string;
   updatedAt: string;
   logoUrl?: string;
@@ -199,8 +200,13 @@ export interface LandingPage {
 }
 
 // Maps technical/backend errors to clear, concise, user-friendly messages for non-technical users.
-export function getFriendlyErrorMessage(message: string, status?: number, errors?: any[]): string {
+export function getFriendlyErrorMessage(message: string, status?: number, errors?: any[], code?: string): string {
   const msg = (message || '').toLowerCase();
+
+  // 0. Backend error codes — highest priority
+  if (code === 'SITE_BLOCKED') {
+    return 'This website is blocking automated access. Please fill in your project details manually.';
+  }
 
   // 1. If there are field/validation errors (like from Zod), prioritize the first one
   if (Array.isArray(errors) && errors.length > 0) {
@@ -367,9 +373,10 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const rawErrorMessage =
       result?.message ||
       (Array.isArray(result?.errors) ? result.errors.map((e: any) => e.message).join(', ') : response.statusText || 'Something went wrong');
-    const errorMessage = getFriendlyErrorMessage(rawErrorMessage, response.status, result?.errors);
+    const errorMessage = getFriendlyErrorMessage(rawErrorMessage, response.status, result?.errors, result?.code);
     const error = new Error(errorMessage);
     (error as any).status = response.status;
+    (error as any).code = result?.code;
     (error as any).errors = result?.errors;
     throw error;
   }
@@ -666,7 +673,18 @@ export const aiApi = {
       body: JSON.stringify(data),
     });
   },
-  generateDescription: async (data: { pageName: string; industry: string; projectDesc?: string; currentPrompt?: string }) => {
+  generateDescription: async (data: {
+    pageName: string;
+    industry: string;
+    projectDesc?: string;
+    currentPrompt?: string;
+    projectId?: string;
+    uiPrimaryColor?: string;
+    uiSecondaryColor?: string;
+    uiAccentColor?: string;
+    uiBodyFont?: string;
+    uiHeadingFont?: string;
+  }) => {
     return apiFetch('/ai/generate-description', {
       method: 'POST',
       body: JSON.stringify(data),

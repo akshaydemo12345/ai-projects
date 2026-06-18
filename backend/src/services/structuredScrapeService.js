@@ -1,23 +1,8 @@
 'use strict';
 
-/**
- * structuredScrapeService.js  —  v7.1 (Cheerio + node-fetch, Puppeteer-free)
- *
- * Enhanced extraction:
- *   - Smarter brand name (OG site_name + title stripping)
- *   - Services/features fallback using semantic sections
- *   - Font extraction from CSS variables and <style> body rules
- *   - Color harvesting from all <style> hex values
- *   - Testimonials with schema.org support & rating extraction
- *   - Hero CTA fallback inside .hero sections
- *   - Industry confidence score & source
- *   - Merged forms from Cheerio + formExtractor
- */
-
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 
-// ── Optional package loaders ─────────────────────────────────────────────────
 const loadOptional = (name) => {
     try { return require(name); } catch { return null; }
 };
@@ -36,7 +21,6 @@ try {
 
 const { extractFormFields: extractFormFieldsFromHtml } = require('../utils/formExtractor');
 
-// ── HTTP helpers ─────────────────────────────────────────────────────────────
 const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
     '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
@@ -88,6 +72,29 @@ const fetchHtml = async (url, timeoutMs = 30000) => {
     throw new Error('No HTTP client available (install node-fetch or axios)');
 };
 
+const fetchText = async (url, timeoutMs = 10000) => {
+    if (nodeFetch) {
+        try {
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await nodeFetch(url, { headers: DEFAULT_HEADERS, redirect: 'follow', signal: controller.signal });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.text();
+            } finally {
+                clearTimeout(tid);
+            }
+        } catch (e) {
+            logger.warn(`[Scraper] fetchText node-fetch failed for ${url}: ${e.message}`);
+        }
+    }
+    if (axios) {
+        const res = await axios.get(url, { timeout: timeoutMs, headers: DEFAULT_HEADERS, maxRedirects: 5, responseType: 'text', validateStatus: s => s < 500 });
+        return res.data;
+    }
+    return null;
+};
+
 const fetchBinary = async (url, referer = '', timeoutMs = 10000) => {
     const headers = {
         'User-Agent': DEFAULT_UA,
@@ -134,7 +141,6 @@ const toAbsUrl = (src, base) => {
 const cleanStr = (s) => (s || '').trim().replace(/\s+/g, ' ');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ── Industry classification ───────────────────────────────────────────────────
 const INDUSTRY_MAP = [
     { industry: 'Beauty & Personal Care', sub: 'Natural Skincare', kws: ['skincare', 'beauty', 'cosmetic', 'serum', 'moisturizer', 'natural skin', 'organic beauty', 'skin care'] },
     { industry: 'Beauty & Personal Care', sub: 'Hair Care', kws: ['shampoo', 'conditioner', 'hair oil', 'hair care', 'hair growth'] },
@@ -205,15 +211,13 @@ const classifyIndustryWithAI = async (textCorpus) => {
 };
 
 const classifyIndustry = async (textCorpus) => {
+    // AI classification removed — pure keyword-based only (fast, zero API dependency)
     const kwResult = classifyIndustryByKeywords(textCorpus);
     if (kwResult && kwResult.score >= 2) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords' };
-    const aiResult = await classifyIndustryWithAI(textCorpus);
-    if (aiResult) return aiResult;
     if (kwResult) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords-low' };
     return { industry: 'General', subIndustry: 'Business', score: 0, source: 'default' };
 };
 
-// ── Colour helpers ────────────────────────────────────────────────────────────
 const isNeutralHex = (hex) => {
     if (!hex || hex.length < 7) return true;
     const r = parseInt(hex.slice(1, 3), 16);
@@ -222,7 +226,10 @@ const isNeutralHex = (hex) => {
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
     const sat = max === 0 ? 0 : (max - min) / max;
     const lum = (r * 299 + g * 587 + b * 114) / 1000;
-    return sat < 0.12 || lum > 235 || lum < 20;
+    // FIX 1: Loosened thresholds — dark brand colors (navy, dark green) and light
+    // pastels (lavender, cream) were being incorrectly rejected with sat<0.12/lum>235/lum<20.
+    // Now only truly achromatic greys/whites/blacks are rejected.
+    return sat < 0.08 || lum > 245 || lum < 8;
 };
 
 const normaliseCssColor = (raw) => {
@@ -266,7 +273,6 @@ const extractColorsFromSvgMarkup = (svgMarkup) => {
     return Array.from(colors);
 };
 
-// ── Logo color extraction (unchanged, but kept for completeness) ─────────────
 const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => {
     if (!logoUrl) return { primary: null, secondary: null, palette: [], source: null };
 
@@ -402,7 +408,6 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
     }
 };
 
-// ── Section keywords ──────────────────────────────────────────────────────────
 const SECTION_KEYWORDS = {
     hero: ['hero', 'banner', 'jumbotron', 'masthead', 'splash', 'top-section'],
     about: ['about', 'who-we-are', 'our-story', 'mission', 'vision'],
@@ -415,19 +420,34 @@ const SECTION_KEYWORDS = {
     footer: ['footer', 'bottom'],
 };
 
-// ── Cheerio-based extractor ───────────────────────────────────────────────────
 const extractWithCheerio = ($, html, baseUrl) => {
     const getText = (el) => cleanStr($(el).text());
     const getAttr = (el, a) => ($(el).attr(a) || '').trim();
 
     const getRealSrc = (el) => {
         const $el = $(el);
+        // FIX 2: Parse srcset properly — sort by width descriptor and pick highest res.
+        // Old code split on /[\s,]+/ which could mangle "img.png 800w, img@2x.png 1200w".
+        const srcset = $el.attr('srcset') || '';
+        let bestSrcsetUrl = null;
+        if (srcset) {
+            const candidates = srcset.split(',').map(s => {
+                const parts = s.trim().split(/\s+/);
+                const descriptor = parts[1] || '';
+                const width = parseInt(descriptor) || 0;
+                return { url: parts[0], width };
+            }).filter(c => c.url);
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => b.width - a.width);
+                bestSrcsetUrl = candidates[0].url;
+            }
+        }
         return (
             $el.attr('data-src') ||
             $el.attr('data-lazy-src') ||
             $el.attr('data-original') ||
             $el.attr('data-lazy') ||
-            ($el.attr('srcset') || '').split(/[\s,]+/)[0] ||
+            bestSrcsetUrl ||
             $el.attr('src') || null
         );
     };
@@ -450,7 +470,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         return 'unknown';
     };
 
-    // 1. Identity
     const pageTitle = cleanStr($('title').first().text());
     const metaDesc = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
     const ogTitle = $('meta[property="og:title"]').attr('content') || '';
@@ -468,10 +487,34 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     };
 
+    // FIX 3: Logo selectors reordered specific→generic.
+    // 'meta[property="og:image"]' is intentionally placed LAST — it frequently points
+    // to a promotional social-share banner, not the company logo. Only use it as a
+    // true last resort after all DOM-based selectors are exhausted.
     const LOGO_SELECTORS = [
-        'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]', 'img[class*="logo" i]',
-        'img[src*="logo" i]', '.logo img', '.navbar-brand img', '.site-logo img', '.header-logo img',
-        'a.logo img', '.brand img', 'a[href="/"] img', 'header img', 'nav img', '.navbar img', '.site-header img',
+        // 1. Highest confidence — explicit logo class/id/alt/src markers
+        'img[class*="logo" i]',
+        'img[id*="logo" i]',
+        'img[alt*="logo" i]',
+        'img[src*="logo" i]',
+        // 2. Wrapper-based logo containers
+        '[class*="logo" i] img',
+        '[id*="logo" i] img',
+        '.navbar-brand img',
+        '.site-logo img',
+        '.header-logo img',
+        '.brand-logo img',
+        // 3. Common CMS/framework patterns
+        'a.logo img',
+        '.brand img',
+        '.site-header img',
+        '.main-header img',
+        // 4. Generic fallbacks
+        'a[href="/"] img',
+        'header img',
+        'nav img',
+        '.navbar img',
+        // 5. og:image last — often a social banner, not the actual logo
         'meta[property="og:image"]',
     ];
 
@@ -492,7 +535,10 @@ const extractWithCheerio = ($, html, baseUrl) => {
         const hasShape = /<(path|rect|circle|ellipse|polygon|use|image)/i.test(markup);
         const w = parseInt(el.attr('width') || '0', 10);
         const h = parseInt(el.attr('height') || '0', 10);
-        const tooSmall = (w > 0 && w < 24) || (h > 0 && h < 24);
+        // FIX 4: Changed OR to AND — many SVG logos have no explicit width/height (sized via CSS).
+        // Old: (w>0 && w<24) || (h>0 && h<24) would reject any SVG missing one dimension.
+        // New: only reject when BOTH dimensions are explicitly set and both are tiny.
+        const tooSmall = (w > 0 && w < 24) && (h > 0 && h < 24);
         if (hasShape && !tooSmall && markup.length > 60) {
             inlineSvgLogoMarkup = markup;
             logoFormat = 'svg-inline-dom';
@@ -509,10 +555,31 @@ const extractWithCheerio = ($, html, baseUrl) => {
             if (el.is('meta')) {
                 const content = el.attr('content');
                 const abs = toAbs(content);
-                if (abs && isSupportedImageSrc(abs)) { logoUrl = abs; logoFormat = 'og-image'; break; }
+                // og:image is our last resort — reject it if it looks like a banner
+                // (wide aspect from explicit attributes, or URL keywords like /og/, /social/, /share/, /banner/)
+                if (abs && isSupportedImageSrc(abs)) {
+                    const bannerPathRe = /\/(og[-_]?image|social[-_]share|share[-_]image|og-banner|banner|meta[-_]img|preview[-_]img|twitter[-_]card|og\/|social\/)/i;
+                    const w = 0, h = 0; // og:image has no DOM size attributes
+                    if (!bannerPathRe.test(abs)) {
+                        logoUrl = abs; logoFormat = 'og-image'; break;
+                    }
+                    logger.info(`[Scraper] Skipping og:image banner: ${abs}`);
+                }
             } else {
                 const src = getRealSrc(el);
                 const absSrc = toAbs(src);
+
+                // Reject images whose explicit dimensions look like a horizontal banner (width:height > 3.5)
+                const isBannerDimension = (() => {
+                    const w = parseInt(el.attr('width') || '0', 10);
+                    const h = parseInt(el.attr('height') || '0', 10);
+                    return w > 0 && h > 0 && (w / h) > 3.5;
+                })();
+                if (isBannerDimension) {
+                    logger.info(`[Scraper] Skipping banner-shaped image via "${sel}"`);
+                    continue;
+                }
+
                 if (!absSrc && src && src.startsWith('data:image/')) {
                     logoUrl = src;
                     logoFormat = src.startsWith('data:image/svg') ? 'svg-inline' : 'data-uri';
@@ -525,6 +592,34 @@ const extractWithCheerio = ($, html, baseUrl) => {
                 }
             }
         }
+    }
+
+    // FIX 5: JSON-LD structured data logo extraction.
+    // Many sites (especially those following Google's guidelines) define their logo
+    // in <script type="application/ld+json"> — this was completely missed before.
+    if (!logoUrl) {
+        $('script[type="application/ld+json"]').each((_, el) => {
+            if (logoUrl) return false; // already found
+            try {
+                const jsonText = $(el).html() || '';
+                const data = JSON.parse(jsonText);
+                const entries = Array.isArray(data) ? data : [data];
+                for (const entry of entries) {
+                    const logoField =
+                        (entry.logo && (entry.logo.url || (typeof entry.logo === 'string' ? entry.logo : null))) ||
+                        (entry.image && (entry.image.url || (typeof entry.image === 'string' ? entry.image : null)));
+                    if (logoField) {
+                        const abs = toAbs(logoField);
+                        if (abs && isSupportedImageSrc(abs)) {
+                            logoUrl = abs;
+                            logoFormat = abs.toLowerCase().includes('.svg') ? 'svg-url' : 'raster-url';
+                            logger.info(`[Scraper] JSON-LD logo found: ${abs}`);
+                            return false; // break .each()
+                        }
+                    }
+                }
+            } catch (_) { /* malformed JSON-LD — skip */ }
+        });
     }
 
     const faviconSelectors = [
@@ -548,7 +643,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
     favicon = toAbs(favicon);
     if (!logoUrl && favicon) { logoUrl = favicon; logoFormat = 'favicon-fallback'; }
 
-    // 2. Colors — collect CSS variables + inline styles + all hex values from <style>
     const cssVariables = {};
     const allBgs = [], allTexts = [];
     const cssVarRegex = /--([a-zA-Z][a-zA-Z0-9-]*)\s*:\s*([^;}{]+)/g;
@@ -560,7 +654,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         while ((m = cssVarRegex.exec(cssText)) !== null) {
             cssVariables[m[1]] = m[2].trim();
         }
-        // Harvest hex colors directly from CSS (e.g. .bg-primary { color: #abc123; })
         const hexRe = /#([0-9a-fA-F]{6})\b/g;
         let hexMatch;
         while ((hexMatch = hexRe.exec(cssText)) !== null) {
@@ -608,7 +701,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (fg) allTexts.push(fg[1].trim());
     });
 
-    // data-* color attributes
     $('[data-color], [data-bg-color], [data-background-color]').each((_, el) => {
         const c = $(el).attr('data-color') || $(el).attr('data-bg-color') || $(el).attr('data-background-color');
         if (c) allBgs.push(c);
@@ -623,10 +715,8 @@ const extractWithCheerio = ($, html, baseUrl) => {
         exact: { cssVariables, meta: metaColors, elements: {} },
     };
 
-    // 3. Typography — now extracted from CSS variables, body style, and <style> rules
     let bodyFontFamily = null, headingFontFamily = null, bodyFontSize = null;
 
-    // CSS variables
     for (const [varName, val] of Object.entries(cssVariables)) {
         const lower = varName.toLowerCase();
         if (!bodyFontFamily && (lower.includes('font-body') || lower.includes('body-font') || lower === 'font-family')) {
@@ -668,7 +758,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
 
     if (!bodyFontFamily && googleFontFamilies.length) bodyFontFamily = googleFontFamilies[0];
 
-    // 4. Images
     const isUnwantedUrl = (absUrl) => {
         try {
             const { pathname } = new URL(absUrl);
@@ -718,7 +807,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         seenImgUrls.add(url);
     });
 
-    // 5. Videos
     const videos = [];
     $('video').each((_, el) => {
         const src = toAbs($(el).attr('src'));
@@ -737,7 +825,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     });
 
-    // 6. Content
     let heroHeading = '', heroSubheading = '';
     const heroSels = ['.hero h1', '.banner h1', '[class*="hero"] h1', 'header h1', 'main h1', 'h1'];
     for (const sel of heroSels) {
@@ -757,7 +844,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (h && !services.find(s => s.title === h)) services.push({ title: h, description: d || '' });
         if (services.length >= 15) return false;
     });
-    // Fallback for services using sections + h3/h4 pairs
     if (services.length === 0) {
         $('section, .section, [id*="service" i], [id*="what-we-do" i]').each((_, sec) => {
             $(sec).find('h3, h4').each((__, heading) => {
@@ -817,7 +903,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
         if (ctaTexts.length >= 10) return false;
     });
-    // Hero CTA fallback
     if (ctaTexts.length === 0) {
         const heroSel = '.hero, .banner, [class*="hero"], [id*="hero"], header';
         $(heroSel).find('a[href], button').each((_, el) => {
@@ -843,7 +928,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (sectionHeadings.length >= 25) return false;
     });
 
-    // 7. Forms (Cheerio)
     const forms = [];
     $('form').each((_, formEl) => {
         const fields = [];
@@ -866,7 +950,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     });
 
-    // 8. SEO
     const seoMeta = {};
     $('meta').each((_, el) => {
         const prop = $(el).attr('property') || '';
@@ -882,7 +965,6 @@ const extractWithCheerio = ($, html, baseUrl) => {
     });
     const canonical = $('link[rel="canonical"]').attr('href') || baseUrl;
 
-    // 9. Detected sections
     const foundSections = new Set();
     $('section, article, div[id], div[class], header, footer, nav, main').each((_, el) => {
         const combined = (($(el).attr('class') || '') + ' ' + ($(el).attr('id') || '')).toLowerCase();
@@ -906,7 +988,306 @@ const extractWithCheerio = ($, html, baseUrl) => {
     };
 };
 
-// ── Post-process colours ──────────────────────────────────────────────────────
+const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
+    try {
+        const externalCssLinks = [];
+        $('link[rel="stylesheet"]').each((_, el) => {
+            const href = $(el).attr('href');
+            const abs = toAbsUrl(href, baseUrl);
+            if (abs) externalCssLinks.push(abs);
+        });
+
+        // FIX 6: Deduplicate CSS URLs before fetching — same stylesheet can be linked
+        // multiple times (e.g. minified + unminified). Also switched Promise.all →
+        // Promise.allSettled so one failing fetch doesn't abort the rest.
+        const uniqueCssLinks = [...new Set(externalCssLinks.slice(0, 8))];
+        const cssResults = await Promise.allSettled(uniqueCssLinks.map(async (href) => {
+            try {
+                const css = await fetchText(href, 8000);
+                return css;
+            } catch (e) {
+                logger.warn(`[Scraper] enhanceThemeAndLogo: failed to fetch CSS ${href}: ${e.message}`);
+                return null;
+            }
+        }));
+        const externalCssTexts = cssResults
+            .filter(r => r.status === 'fulfilled' && r.value)
+            .map(r => r.value);
+
+        const inlineCssTexts = [];
+        $('style').each((_, el) => {
+            const txt = $(el).html();
+            if (txt) inlineCssTexts.push(txt);
+        });
+
+        const allCssTexts = [...inlineCssTexts, ...externalCssTexts];
+
+        const parseCssRules = (cssText) => {
+            const rules = [];
+            if (!cssText) return rules;
+            const css = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+            let i = 0;
+            const n = css.length;
+            const readBlock = (start) => {
+                let depth = 0, j = start;
+                for (; j < n; j++) {
+                    if (css[j] === '{') depth++;
+                    else if (css[j] === '}') { depth--; if (depth === 0) return j; }
+                }
+                return n - 1;
+            };
+            while (i < n) {
+                const openIdx = css.indexOf('{', i);
+                if (openIdx === -1) break;
+                const header = css.slice(i, openIdx).trim();
+                const closeIdx = readBlock(openIdx);
+                const body = css.slice(openIdx + 1, closeIdx);
+                if (header.startsWith('@media') || header.startsWith('@supports')) {
+                    parseCssRules(body).forEach(r => rules.push({ ...r, atRule: header }));
+                } else if (header && !header.startsWith('@')) {
+                    header.split(',').map(s => s.trim()).filter(Boolean).forEach(selector => {
+                        rules.push({ selector, body, atRule: null });
+                    });
+                }
+                i = closeIdx + 1;
+            }
+            return rules;
+        };
+
+        let allRules = [];
+        allCssTexts.forEach(txt => { allRules = allRules.concat(parseCssRules(txt)); });
+
+        const parseDeclarations = (body) => {
+            const decls = {};
+            body.split(';').forEach(decl => {
+                const idx = decl.indexOf(':');
+                if (idx === -1) return;
+                const prop = decl.slice(0, idx).trim().toLowerCase();
+                const value = decl.slice(idx + 1).trim();
+                if (prop && value) decls[prop] = value;
+            });
+            return decls;
+        };
+
+        const newCssVariables = {};
+        const cssVariablesList = [];
+        allRules.forEach(rule => {
+            const decls = parseDeclarations(rule.body);
+            Object.entries(decls).forEach(([prop, value]) => {
+                if (prop.startsWith('--')) {
+                    const name = prop.replace(/^--/, '');
+                    if (!(name in newCssVariables)) newCssVariables[name] = value;
+                    cssVariablesList.push({ variable: prop, value, selector: rule.selector, atRule: rule.atRule || null });
+                }
+            });
+        });
+
+        // FIX 7: Loop-based CSS variable resolution — the old single-pass regex only
+        // resolved one level of var() nesting. Chained variables like:
+        //   --btn-bg: var(--color-primary)
+        //   --color-primary: var(--brand)
+        //   --brand: #FF6B00
+        // now correctly resolve all the way to #FF6B00.
+        const resolveVarRefs = (value, varMap, depth = 0) => {
+            if (!value || depth > 10) return value;
+            let result = value;
+            let changed = true;
+            let iterations = 0;
+            while (changed && iterations < 10) {
+                changed = false;
+                const m = result.match(/var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)/);
+                if (!m) break;
+                const [, varName, fallback] = m;
+                const key = varName.replace(/^--/, '');
+                const resolved = varMap[key] || (fallback ? fallback.trim() : null);
+                if (resolved) {
+                    result = result.replace(m[0], resolved.trim());
+                    changed = true;
+                }
+                iterations++;
+            }
+            return result || null;
+        };
+
+        const HEADER_SELECTORS = ['header', '.site-header', '#header', '#masthead', '.main-header', '.topbar', '.header', '.navbar'];
+        const NAV_SELECTORS = ['nav', '.navigation', '#site-navigation', '.navbar', '.nav', '.site-nav', '.main-nav'];
+        const NAV_LINK_SELECTORS = ['nav a', '.navbar a', '.navigation a', '.nav a', '.menu a', '.site-nav a', 'header a'];
+        const BUTTON_SELECTORS = ['.btn-primary', 'button.primary', '.button-primary', '.wp-block-button__link', '.btn', 'button', 'a.button', '.cta', '.call-to-action'];
+
+        const matchRulesForSelectors = (rules, targets) => {
+            const base = {}, hover = {}, active = {};
+            for (const target of targets) {
+                for (const rule of rules) {
+                    const sel = rule.selector;
+                    const pseudoMatch = sel.match(/^(.*?):(hover|active|visited|focus)$/);
+                    const core = pseudoMatch ? pseudoMatch[1].trim() : sel;
+                    const pseudo = pseudoMatch ? pseudoMatch[2] : null;
+                    const matches = core === target
+                        || core.endsWith(' ' + target)
+                        || core.endsWith('>' + target)
+                        || core.split(/[\s>]+/).pop() === target;
+                    if (!matches) continue;
+                    const decls = parseDeclarations(rule.body);
+                    if (pseudo === 'hover') Object.assign(hover, decls);
+                    else if (pseudo === 'active') Object.assign(active, decls);
+                    else Object.assign(base, decls);
+                }
+            }
+            return { base, hover, active };
+        };
+
+        const resolveProp = (decls, prop) => {
+            if (!decls || !decls[prop]) return null;
+            const resolved = resolveVarRefs(decls[prop], newCssVariables) || decls[prop];
+            return normaliseCssColor(resolved);
+        };
+
+        const headerMatch = matchRulesForSelectors(allRules, HEADER_SELECTORS);
+        const navMatch = matchRulesForSelectors(allRules, NAV_SELECTORS);
+        const navLinkMatch = matchRulesForSelectors(allRules, NAV_LINK_SELECTORS);
+        const buttonMatch = matchRulesForSelectors(allRules, BUTTON_SELECTORS);
+
+        const headerComputed = {
+            background: resolveProp(headerMatch.base, 'background-color') || resolveProp(headerMatch.base, 'background'),
+            text: resolveProp(headerMatch.base, 'color'),
+            border: resolveProp(headerMatch.base, 'border-color') || resolveProp(headerMatch.base, 'border-bottom-color'),
+            link: resolveProp(navLinkMatch.base, 'color'),
+        };
+        const navComputed = {
+            background: resolveProp(navMatch.base, 'background-color') || resolveProp(navMatch.base, 'background'),
+            text: resolveProp(navMatch.base, 'color'),
+            border: resolveProp(navMatch.base, 'border-color'),
+            linkColors: {
+                default: resolveProp(navLinkMatch.base, 'color'),
+                hover: resolveProp(navLinkMatch.hover, 'color'),
+                active: resolveProp(navLinkMatch.active, 'color'),
+            },
+        };
+        const buttonComputed = {
+            background: resolveProp(buttonMatch.base, 'background-color') || resolveProp(buttonMatch.base, 'background'),
+            text: resolveProp(buttonMatch.base, 'color'),
+            border: resolveProp(buttonMatch.base, 'border-color'),
+            hoverBackground: resolveProp(buttonMatch.hover, 'background-color') || resolveProp(buttonMatch.hover, 'background'),
+            hoverText: resolveProp(buttonMatch.hover, 'color'),
+        };
+
+        const darkSelectors = ['.dark', '.dark-mode', '[data-theme="dark"]', 'html.dark', 'body.dark'];
+        const darkRules = allRules.filter(r => {
+            if (r.atRule && /prefers-color-scheme:\s*dark/i.test(r.atRule)) return true;
+            return darkSelectors.some(ds => r.selector === ds || r.selector.startsWith(ds + ' ') || r.selector.startsWith(ds + '.'));
+        });
+        const darkOverrides = { background: null, text: null, links: null, buttons: null, borders: null };
+        let darkEnabled = darkRules.length > 0 || Object.keys(newCssVariables).some(k => /dark/i.test(k));
+        darkRules.forEach(r => {
+            const decls = parseDeclarations(r.body);
+            const bg = resolveProp(decls, 'background-color') || resolveProp(decls, 'background');
+            const txt = resolveProp(decls, 'color');
+            const border = resolveProp(decls, 'border-color');
+            if (bg && !darkOverrides.background) darkOverrides.background = bg;
+            if (txt && !darkOverrides.text) darkOverrides.text = txt;
+            if (border && !darkOverrides.borders) darkOverrides.borders = border;
+            if (/a$|a:|link/.test(r.selector) && txt && !darkOverrides.links) darkOverrides.links = txt;
+            if (/btn|button|cta/.test(r.selector) && bg && !darkOverrides.buttons) darkOverrides.buttons = bg;
+        });
+
+        const frameworks = [];
+        let platform = 'Plain HTML';
+        const evidence = {};
+
+        if (/wp-content|wp-includes/i.test(html) || $('meta[name="generator"][content*="WordPress" i]').length || Object.keys(newCssVariables).some(k => k.startsWith('wp--'))) {
+            platform = 'WordPress';
+            evidence.wordpress = true;
+        }
+        if (/elementor/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('e-global-color-'))) {
+            frameworks.push('Elementor'); evidence.elementor = true;
+        }
+        if (/et_pb_|divi/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('et_pb_'))) {
+            frameworks.push('Divi'); evidence.divi = true;
+        }
+        if (/wp-block-/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('wp--preset'))) {
+            frameworks.push('Gutenberg'); evidence.gutenberg = true;
+        }
+        if (/bootstrap/i.test(html) || $('.navbar, .container, .row, .col-md-6, .btn-primary').length || Object.keys(newCssVariables).some(k => k.startsWith('bs-'))) {
+            frameworks.push('Bootstrap'); evidence.bootstrap = true;
+        }
+        if ($('.grid-x, .cell, .top-bar').length) {
+            frameworks.push('Foundation'); evidence.foundation = true;
+        }
+        const tailwindClassRe = /\b(?:flex|grid|text-(?:xs|sm|lg|xl|\d)|bg-(?:gray|blue|red|green|primary)-\d{2,3}|p[xytblr]?-\d|m[xytblr]?-\d|rounded-(?:md|lg|xl|full)|justify-center|items-center)\b/;
+        let tailwindFound = false;
+        $('[class]').each((i, el) => {
+            if (tailwindFound) return false;
+            if (tailwindClassRe.test($(el).attr('class') || '')) tailwindFound = true;
+        });
+        if (tailwindFound) { frameworks.push('Tailwind'); evidence.tailwind = true; }
+        if (/_next\/static/i.test(html) || $('#__next').length) { frameworks.push('Next.js'); evidence.nextjs = true; }
+        else if ($('[data-reactroot]').length) { frameworks.push('React'); evidence.react = true; }
+
+        raw.themeColors = raw.themeColors || {};
+        raw.themeColors.exact = raw.themeColors.exact || { cssVariables: {}, meta: {}, elements: {} };
+
+        raw.themeColors.exact.cssVariables = {
+            ...newCssVariables,
+            ...raw.themeColors.exact.cssVariables, // existing values win
+        };
+        raw.themeColors.exact.cssVariablesList = cssVariablesList;
+
+        raw.themeColors.header = raw.themeColors.header || {};
+        if (!raw.themeColors.header.bg && headerComputed.background) raw.themeColors.header.bg = headerComputed.background;
+        if (!raw.themeColors.header.text && headerComputed.text) raw.themeColors.header.text = headerComputed.text;
+        if (!raw.themeColors.header.border && headerComputed.border) raw.themeColors.header.border = headerComputed.border;
+        if (!raw.themeColors.header.link && headerComputed.link) raw.themeColors.header.link = headerComputed.link;
+
+        raw.themeColors.navigation = raw.themeColors.navigation || {};
+        if (!raw.themeColors.navigation.background && navComputed.background) raw.themeColors.navigation.background = navComputed.background;
+        if (!raw.themeColors.navigation.color && navComputed.text) raw.themeColors.navigation.color = navComputed.text;
+        if (!raw.themeColors.navigation.border && navComputed.border) raw.themeColors.navigation.border = navComputed.border;
+        raw.themeColors.navigation.linkColors = {
+            default: raw.themeColors.navigation.linkColors?.default || navComputed.linkColors.default || null,
+            hover: raw.themeColors.navigation.linkColors?.hover || navComputed.linkColors.hover || null,
+            active: raw.themeColors.navigation.linkColors?.active || navComputed.linkColors.active || null,
+        };
+
+        raw.themeColors.button = raw.themeColors.button || {};
+        if (!raw.themeColors.button.bg && buttonComputed.background) raw.themeColors.button.bg = buttonComputed.background;
+        if (!raw.themeColors.button.text && buttonComputed.text) raw.themeColors.button.text = buttonComputed.text;
+        raw.themeColors.button.border = raw.themeColors.button.border || buttonComputed.border || null;
+        raw.themeColors.button.hoverBackground = raw.themeColors.button.hoverBackground || buttonComputed.hoverBackground || null;
+        raw.themeColors.button.hoverText = raw.themeColors.button.hoverText || buttonComputed.hoverText || null;
+
+        raw.darkMode = { enabled: darkEnabled, overrides: darkOverrides };
+
+        raw.frameworkInfo = { platform, frameworks, evidence };
+
+        if (!raw.logoUrl) {
+            const logoEl = $([
+                '.site-header img', 'header img.logo', 'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]',
+                'header img', 'nav img', '.navbar img', '.brand img', 'a[href="/"] img', '#masthead img',
+            ].join(', ')).first();
+            if (logoEl && logoEl.length) {
+                const src = logoEl.attr('data-src') || logoEl.attr('data-lazy-src') || logoEl.attr('src');
+                const abs = toAbsUrl(src, baseUrl);
+                if (abs) {
+                    raw.logoUrl = abs;
+                    raw.logoFormat = abs.toLowerCase().includes('.svg') ? 'svg-url' : 'raster-url';
+                }
+            }
+            if (!raw.logoUrl) {
+                const svgEl = $('header svg, nav svg, .navbar svg, .site-header svg, .brand svg').first();
+                if (svgEl && svgEl.length) {
+                    raw.logoUrl = 'data:image/svg+xml,' + encodeURIComponent($.html(svgEl));
+                    raw.logoFormat = 'svg-inline-dom';
+                }
+            }
+        }
+
+        return raw;
+    } catch (e) {
+        logger.warn(`[Scraper] enhanceThemeAndLogo failed (non-fatal): ${e.message}`);
+        return raw; // never break the pipeline
+    }
+};
+
 const buildPalette = (raw) => {
     const { themeColors, allBgs, allTexts, allBorders } = raw;
     const exactColors = themeColors?.exact || {};
@@ -947,10 +1328,9 @@ const buildPalette = (raw) => {
     const secondary = exactSecondary || metaSecondary || palette.find(c => c !== primary) || '#555555';
     const accent = palette.find(c => c !== primary && c !== secondary) || '#888888';
 
-    return { primary, secondary, accent, palette, exact: { cssVariables: cssVars, meta: metaCols } };
+    return { primary, secondary, accent, palette, exact: { cssVariables: cssVars, cssVariablesList: exactColors.cssVariablesList || [], meta: metaCols } };
 };
 
-// ── Main export: scrapeWebsiteStructure ───────────────────────────────────────
 const scrapeWebsiteStructure = async (websiteUrl) => {
     const startedAt = Date.now();
     logger.info(`[Scraper] Starting Cheerio scrape for ${websiteUrl}`);
@@ -972,8 +1352,8 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const $ = cheerio.load(html);
     const baseUrl = finalUrl || websiteUrl;
     const raw = extractWithCheerio($, html, baseUrl);
+    await enhanceThemeAndLogo($, html, baseUrl, raw);
 
-    // Identity – with improved brand name extraction
     const rawTitle = cleanStr(raw.pageTitle || raw.ogTitle || '');
     const siteName = raw.ogSiteName || '';
     const cleanedTitle = rawTitle
@@ -1005,7 +1385,6 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         identity.logoSource = 'favicon-fallback';
     }
 
-    // Logo Colors
     let logoColors = { primary: null, secondary: null, palette: [], source: null };
     const logoSourceUrl = identity.logoSource !== 'favicon-fallback' ? identity.logoUrl : null;
     const faviconFallback = identity.faviconUrl || null;
@@ -1034,24 +1413,44 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
 
     const colors = buildPalette(raw);
 
-    // ThemeSystem
     const tc = raw.themeColors;
     const norm = normaliseCssColor;
     const themeSystem = {
-        button: { background: norm(tc.button?.bg), color: norm(tc.button?.text), border: null },
-        header: { background: norm(tc.header?.bg), color: norm(tc.header?.text), border: null, link: null },
-        navigation: { background: norm(tc.header?.bg), color: null, active: null },
+        button: {
+            background: norm(tc.button?.bg),
+            color: norm(tc.button?.text),
+            border: norm(tc.button?.border) || null,
+            hoverBackground: norm(tc.button?.hoverBackground) || null,
+            hoverText: norm(tc.button?.hoverText) || null,
+        },
+        header: {
+            background: norm(tc.header?.bg),
+            color: norm(tc.header?.text),
+            border: norm(tc.header?.border) || null,
+            link: norm(tc.header?.link) || null,
+        },
+        navigation: {
+            background: norm(tc.navigation?.background) || norm(tc.header?.bg),
+            color: norm(tc.navigation?.color) || null,
+            border: norm(tc.navigation?.border) || null,
+            active: norm(tc.navigation?.linkColors?.active) || null,
+            linkColors: {
+                default: norm(tc.navigation?.linkColors?.default) || null,
+                hover: norm(tc.navigation?.linkColors?.hover) || null,
+                active: norm(tc.navigation?.linkColors?.active) || null,
+            },
+        },
         footer: { background: norm(tc.footer?.bg), color: norm(tc.footer?.text), border: null, link: null },
         hero: { background: norm(tc.hero?.bg) },
         page: { background: norm(tc.page?.bg) || '#FFFFFF' },
         bodyText: null,
         linkColor: null,
         exactCssVars: colors.exact.cssVariables,
+        exactCssVarsList: colors.exact.cssVariablesList || [],
         metaColors: colors.exact.meta,
         exactElements: {},
     };
 
-    // Typography
     const typography = {
         primaryFont: raw.bodyFontFamily || raw.googleFontFamilies[0] || null,
         headingFont: raw.headingFontFamily || raw.googleFontFamilies[1] || raw.googleFontFamilies[0] || null,
@@ -1104,7 +1503,6 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
 
     const { industry, subIndustry, score: industryScore, source: industrySource } = await classifyIndustry(textCorpus);
 
-    // Merge forms from Cheerio + formExtractor
     const formFieldsFromExtractor = extractFormFieldsFromHtml(html);
     const mergedForms = [...forms];
     if (Array.isArray(formFieldsFromExtractor) && formFieldsFromExtractor.length > 0) {
@@ -1122,6 +1520,8 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         colors,
         logoColors,
         themeSystem,
+        darkMode: raw.darkMode || { enabled: false, overrides: {} },
+        frameworkInfo: raw.frameworkInfo || { platform: 'Plain HTML', frameworks: [], evidence: {} },
         typography,
         images,
         videos,
@@ -1168,9 +1568,6 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     };
 };
 
-/**
- * buildWebsiteProfile – maps scraped data into Project.websiteProfile shape
- */
 const buildWebsiteProfile = (scraped, themeData = null) => {
     if (!scraped) return null;
 
@@ -1180,6 +1577,8 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         forms = [], seo = {}, sections = [],
         industry, subIndustry, industryScore, industrySource,
         scrapedAt, sourceUrl, finalUrl,
+        darkMode = { enabled: false, overrides: {} },
+        frameworkInfo = { platform: 'Plain HTML', frameworks: [], evidence: {} },
     } = scraped;
 
     const primaryColor = logoColors.primary || colors.primary || '';
@@ -1240,7 +1639,10 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             const exactHeaderBg = exactElements.headerBrandBg;
             const exactFooterBg = exactElements.footerBrandBg;
 
-            const btnBg = first(exactBtnBg, themeSystem?.button?.background, cssPrimary, metaThemeColor, p);
+            // FIX 8: Removed `p` (page-level primary palette color) from button background
+            // fallback chain — it frequently resolves to body text or page background color,
+            // not the actual button color. Only trust explicit button-origin sources.
+            const btnBg = first(exactBtnBg, themeSystem?.button?.background, cssPrimary, metaThemeColor);
             const btnText = first(themeSystem?.button?.color, '#ffffff');
             const headerBg = first(exactHeaderBg, themeSystem?.header?.background, themeSystem?.page?.background, '#ffffff');
             const headerText = first(themeSystem?.header?.color, themeSystem?.bodyText, '#212221');
@@ -1250,12 +1652,21 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             const footerBg = first(exactFooterBg, themeSystem?.footer?.background, '#212221');
             const footerText = first(themeSystem?.footer?.color, '#898B8A');
 
+            const navHover = first(themeSystem?.navigation?.linkColors?.hover, cssSecondary);
+            const navBorder = themeSystem?.header?.border || '';
+            const btnBorder = themeSystem?.button?.border || '';
+            const btnHoverBg = themeSystem?.button?.hoverBackground || '';
+            const btnHoverText = themeSystem?.button?.hoverText || '';
+
             return {
-                header: themeData?.header || { background: headerBg, text: headerText },
-                navigation: themeData?.navigation || { background: navBg, text: navText, active: navActive },
+                header: themeData?.header || { background: headerBg, text: headerText, border: navBorder },
+                navigation: themeData?.navigation || { background: navBg, text: navText, active: navActive, hover: navHover, border: navBorder },
                 buttons: {
                     primaryBg: btnBg,
                     primaryText: btnText,
+                    primaryBorder: btnBorder,
+                    primaryHoverBg: btnHoverBg,
+                    primaryHoverText: btnHoverText,
                     secondaryBg: first(cssSecondary, sec, p),
                     secondaryText: '#ffffff',
                 },
@@ -1341,6 +1752,8 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             extractionVersion: '7.1',
             durationMs: scraped.durationMs || 0,
         },
+        darkMode,
+        frameworkInfo,
     };
 };
 

@@ -79,6 +79,7 @@ export default function ProjectBrandingPage() {
           projectId={projectId}
           initialBranding={branding}
           onBrandingUpdated={handleBrandingUpdated}
+          websiteProfile={project?.websiteProfile}
         />
       </div>
     </div>

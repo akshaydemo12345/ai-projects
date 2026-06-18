@@ -104,6 +104,8 @@ const CreateProjectFlow = () => {
       if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
         setLogoPreview(result);
         setLogoBase64(result);
+        // Reset bg — SVG brightness will be detected in the render
+        setLogoPreviewBgClass("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
         return;
       }
 
@@ -212,6 +214,8 @@ const CreateProjectFlow = () => {
         if (normalizedLogo) {
           setLogoPreview(normalizedLogo);
           setLogoBase64(normalizedLogo);
+          // Reset to dark bg — will be updated once brightness is detected
+          setLogoPreviewBgClass("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
         }
       }
       if (meta.theme) {
@@ -281,7 +285,14 @@ const CreateProjectFlow = () => {
 
       toast.success("Website analyzed successfully.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to analyze website");
+      const code = (err as any).code;
+      if (code === 'SITE_BLOCKED') {
+        toast.error("Website blocked access", {
+          duration: 6000,
+        });
+      } else {
+        toast.error(err.message || "Failed to analyze website");
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -634,43 +645,90 @@ const CreateProjectFlow = () => {
 
                   {logoPreview ? (
                     <div className="space-y-3">
-                      {/* Logo display — full width, white bg, brand color */}
-                      <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center py-4 px-6 min-h-[72px] shadow-sm">
-                        {logoPreview.startsWith('data:image/svg+xml;base64,') ? (() => {
-                          try {
-                            const svgMarkup = atob(logoPreview.replace('data:image/svg+xml;base64,', ''));
-                            const svgColor = logoColors.primary || primaryColor || '#000000';
+                      {/* Logo display — background adapts to logo brightness so it's always visible */}
+                      <div className={`w-full rounded-xl flex items-center justify-center py-4 px-6 min-h-[72px] shadow-sm transition-colors ${logoPreviewBgClass}`}>
+                        {(() => {
+                          // Resolve SVG markup from any variant: base64, percent-encoded URI, or raw markup
+                          let svgMarkup: string | null = null;
+                          if (logoPreview.startsWith('data:image/svg+xml;base64,')) {
+                            try { svgMarkup = atob(logoPreview.replace('data:image/svg+xml;base64,', '')); } catch { }
+                          } else if (/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i.test(logoPreview)) {
+                            try {
+                              const payload = logoPreview.replace(/^data:image\/svg\+xml(?:;charset=[^,;]*)?,/i, '');
+                              svgMarkup = decodeURIComponent(payload);
+                            } catch { }
+                          } else if (/^<svg[\s\S]*<\/svg>$/i.test(logoPreview.trim())) {
+                            svgMarkup = logoPreview.trim();
+                          }
+
+                          if (svgMarkup) {
+                            // Detect if SVG is light/white so we can pick the right background.
+                            // Extract fill/stroke colors from SVG markup and check average luminance.
+                            const detectSvgBrightness = (markup: string): number => {
+                              const colorRe = /(?:fill|stroke)="([^"]+)"/gi;
+                              const styleRe = /(?:fill|stroke)\s*:\s*([^;}"'\s][^;}"']*)/gi;
+                              const hexRe = /#([0-9a-fA-F]{3,6})\b/;
+                              const rgbRe = /rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i;
+                              let total = 0, count = 0;
+                              const processColor = (c: string) => {
+                                c = c.trim();
+                                if (!c || c === 'none' || c === 'transparent' || c === 'currentColor') return;
+                                let r = 0, g = 0, b = 0, ok = false;
+                                if (c === 'white' || c === '#fff' || c === '#ffffff') { r = g = b = 255; ok = true; }
+                                else if (c === 'black' || c === '#000' || c === '#000000') { r = g = b = 0; ok = true; }
+                                else {
+                                  const hm = hexRe.exec(c);
+                                  if (hm) {
+                                    const h = hm[1].length === 3 ? hm[1].split('').map(x => x + x).join('') : hm[1];
+                                    r = parseInt(h.slice(0, 2), 16); g = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16); ok = true;
+                                  } else {
+                                    const rm = rgbRe.exec(c);
+                                    if (rm) { r = +rm[1]; g = +rm[2]; b = +rm[3]; ok = true; }
+                                  }
+                                }
+                                if (ok) { total += 0.2126 * (r / 255) + 0.7152 * (g / 255) + 0.0722 * (b / 255); count++; }
+                              };
+                              let m: RegExpExecArray | null;
+                              while ((m = colorRe.exec(markup)) !== null) processColor(m[1]);
+                              while ((m = styleRe.exec(markup)) !== null) processColor(m[1]);
+                              return count > 0 ? total / count : 0.5;
+                            };
+                            const svgBrightness = detectSvgBrightness(svgMarkup);
+                            // Update background class based on SVG brightness (do it once via effect-like call)
+                            const bgClass = getLogoPreviewContainerClasses(svgBrightness);
+                            if (bgClass !== logoPreviewBgClass) {
+                              // Schedule state update outside render
+                              setTimeout(() => setLogoPreviewBgClass(bgClass), 0);
+                            }
                             return (
                               <span
                                 className="flex items-center justify-center [&>svg]:max-h-10 [&>svg]:w-auto [&>svg]:max-w-full"
-                                style={{ color: svgColor }}
                                 dangerouslySetInnerHTML={{ __html: svgMarkup }}
                               />
                             );
-                          } catch {
-                            // fall through to <img>
                           }
-                        })() : null}
-                        {!logoPreview.startsWith('data:image/svg+xml;base64,') && (
-                          <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="max-h-10 max-w-full object-contain"
-                            onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
-                            onError={(e) => {
-                              const current = e.currentTarget;
-                              const src = logoPreview || '';
-                              if (src.startsWith('http') && !src.startsWith('data:')) {
-                                const proxyUrl = aiApi.proxyImage(src);
-                                if (current.src !== proxyUrl) { current.src = proxyUrl; return; }
-                              }
-                              const faviconFallback = scrapedData?.favicon;
-                              if (faviconFallback && current.src !== faviconFallback) { current.src = faviconFallback; return; }
-                              setLogoPreview(null);
-                              setLogoBase64(null);
-                            }}
-                          />
-                        )}
+                          // Raster or external URL — render as <img>
+                          return (
+                            <img
+                              src={logoPreview}
+                              alt="Logo preview"
+                              className="max-h-10 max-w-full object-contain"
+                              onLoad={(e) => handleLogoPreviewImageLoad(e.currentTarget)}
+                              onError={(e) => {
+                                const current = e.currentTarget;
+                                const src = logoPreview || '';
+                                if (src.startsWith('http') && !src.startsWith('data:')) {
+                                  const proxyUrl = aiApi.proxyImage(src);
+                                  if (current.src !== proxyUrl) { current.src = proxyUrl; return; }
+                                }
+                                const faviconFallback = scrapedData?.favicon;
+                                if (faviconFallback && current.src !== faviconFallback) { current.src = faviconFallback; return; }
+                                setLogoPreview(null);
+                                setLogoBase64(null);
+                              }}
+                            />
+                          );
+                        })()}
                       </div>
                       {/* Actions row */}
                       <div className="flex items-center justify-between px-1">
