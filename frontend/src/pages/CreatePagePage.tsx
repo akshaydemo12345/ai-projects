@@ -382,7 +382,7 @@ const LANDING_TEMPLATES: any[] = [
     id: "law-02",
     name: "Justice Law Firm",
     tag: "Law Firm",
-    img: "/assets/templates/LawFirm/screenshot.png",
+    img: "/assets/templates/LawFirm/templates02/lov02.png",
     gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
     prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
   },
