@@ -23,8 +23,14 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   const [name, setName] = useState(cleanProjectName(project.name) || "");
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
-  const [industry, setIndustry] = useState(project.industry || project.category || "SaaS");
-  const [subIndustry, setSubIndustry] = useState(project.subIndustry || project.scrapedData?.subIndustry || "");
+  const allowedIndustries = ["SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate", "Other"];
+  const initialIndustryRaw = project.websiteProfile?.industry?.industry || project.scrapedData?.industry || project.industry || project.category || "SaaS";
+  const initialIndustry = allowedIndustries.includes(initialIndustryRaw) ? initialIndustryRaw : "General";
+  const [industry, setIndustry] = useState(initialIndustry);
+  const [subIndustry, setSubIndustry] = useState(
+    // Prefer websiteProfile -> scrapedData -> explicit subIndustry
+    project.websiteProfile?.industry?.subIndustry || project.scrapedData?.subIndustry || project.subIndustry || (allowedIndustries.includes(initialIndustryRaw) ? "" : initialIndustryRaw) || ""
+  );
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -68,9 +74,23 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Industry</label>
             <select
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setIndustry(val);
+                // If user selects General, and we have a scraped/raw industry, surface it in subIndustry
+                if (val === 'General') {
+                  const raw = project.websiteProfile?.industry?.industry || project.scrapedData?.industry || project.industry || project.category || '';
+                  if (raw && !allowedIndustries.includes(raw)) setSubIndustry(raw);
+                }
+                // If user picks a known industry, clear subIndustry placeholder
+                if (val !== 'General' && allowedIndustries.includes(val)) {
+                  // preserve existing subIndustry if it's meaningful, otherwise clear
+                  if (!project.subIndustry && !project.scrapedData?.subIndustry) setSubIndustry('');
+                }
+              }}
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             >
+              <option value="General">General</option>
               <option value="SaaS">SaaS</option>
               <option value="Agency">Agency</option>
               <option value="E-commerce">E-commerce</option>

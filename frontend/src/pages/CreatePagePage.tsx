@@ -1488,12 +1488,12 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold flex items-center gap-1.5">
                     Primary
-                    {isColorsFromLogo && project?.websiteProfile?.logoColors?.primary && (
+                    {/* {isColorsFromLogo && project?.websiteProfile?.logoColors?.primary && (
                       <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-1.5 py-px">
                         <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
                         From Logo
                       </span>
-                    )}
+                    )} */}
                   </p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
                     <PickrColorInput value={primaryColor} onChange={(val) => setPrimaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
@@ -1504,12 +1504,12 @@ ${enrichedContent}
                 <div>
                   <p className="text-[11px] text-gray-600 mb-1 font-semibold flex items-center gap-1.5">
                     Secondary
-                    {isColorsFromLogo && project?.websiteProfile?.logoColors?.secondary && (
+                    {/* {isColorsFromLogo && project?.websiteProfile?.logoColors?.secondary && (
                       <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-1.5 py-px">
                         <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
                         From Logo
                       </span>
-                    )}
+                    )} */}
                   </p>
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 relative">
                     <PickrColorInput value={secondaryColor} onChange={(val) => setSecondaryColor(val)} className="absolute inset-0 w-full h-full opacity-0" />
