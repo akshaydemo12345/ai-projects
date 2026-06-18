@@ -30,6 +30,15 @@ const projectSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'active', 'failed'],
+    default: 'pending',
+  },
+  verifiedAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
