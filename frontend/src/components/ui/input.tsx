@@ -4,6 +4,16 @@ import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    // If parent passes a `value` prop, treat as controlled and normalize
+    // undefined -> '' to avoid React uncontrolled->controlled warnings.
+    const { value, defaultValue, ...rest } = props;
+    const inputProps: Record<string, any> = { ...rest };
+    if (Object.prototype.hasOwnProperty.call(props, 'value')) {
+      inputProps.value = value ?? '';
+    } else if (defaultValue !== undefined) {
+      inputProps.defaultValue = defaultValue;
+    }
+
     return (
       <input
         type={type}
@@ -12,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className,
         )}
         ref={ref}
-        {...props}
+        {...inputProps}
       />
     );
   },

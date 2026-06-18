@@ -7,11 +7,12 @@ const loadOptional = (name) => {
     try { return require(name); } catch { return null; }
 };
 
-const axios = loadOptional('axios');
-const nodeFetch = loadOptional('node-fetch');
+const axios = loadOptional('axios');          // fallback HTML fetch + binary/text asset downloads
+const nodeFetch = loadOptional('node-fetch');  // fallback HTML fetch + binary/text asset downloads
 const sharpLib = loadOptional('sharp');
 const resvgLib = loadOptional('@resvg/resvg-js');
 const Anthropic = loadOptional('@anthropic-ai/sdk');
+const playwright = loadOptional('playwright'); // primary HTML fetch — renders JS before cheerio parses
 
 let VibrantLib = null;
 try {
@@ -32,7 +33,89 @@ const DEFAULT_HEADERS = {
     'Upgrade-Insecure-Requests': '1',
 };
 
+/**
+ * fetchHtmlWithPlaywright — render the page in a real (headless) browser and
+ * return the fully-rendered HTML (post-JS execution) plus the final URL after
+ * redirects. This replaces the old axios/node-fetch + cheerio-only fetch so
+ * that JS-rendered content (React/Vue SPAs, lazy-loaded sections, dynamically
+ * injected meta tags) is captured before cheerio parses it.
+ *
+ * cheerio is still used afterwards for the actual DOM querying/extraction —
+ * only the network fetch + rendering step changes.
+ */
+const fetchHtmlWithPlaywright = async (url, timeoutMs = 30000) => {
+    if (!playwright) throw new Error('playwright not available');
+
+    let browser = null;
+    try {
+        browser = await playwright.chromium.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            headless: true,
+        });
+        const context = await browser.newContext({
+            viewport: { width: 1440, height: 900 },
+            userAgent: DEFAULT_UA,
+            locale: 'en-US',
+            ignoreHTTPSErrors: true,
+        });
+        const page = await context.newPage();
+
+        // Block heavy assets we don't need for HTML extraction — keeps loads fast
+        await page.route('**/*', (route) => {
+            const type = route.request().resourceType();
+            if (['media', 'font', 'websocket'].includes(type)) return route.abort();
+            return route.continue();
+        });
+
+        let navigated = false;
+        try {
+            await page.goto(url, { waitUntil: 'networkidle', timeout: timeoutMs });
+            navigated = true;
+        } catch (e1) {
+            logger.warn(`[Scraper] playwright networkidle failed: ${e1.message}`);
+            try {
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+                navigated = true;
+            } catch (e2) {
+                logger.warn(`[Scraper] playwright domcontentloaded failed: ${e2.message}`);
+                await page.goto(url, { timeout: timeoutMs }).catch(() => { });
+                await page.waitForTimeout(2000);
+            }
+        }
+
+        // Best-effort cookie/consent dismissal so banners don't block content
+        try {
+            const acceptSelectors = [
+                'button[id*="accept" i]', 'button[class*="accept" i]',
+                'button[id*="agree" i]', 'button[class*="agree" i]',
+                '[aria-label*="Accept" i]',
+            ];
+            for (const sel of acceptSelectors) {
+                const el = await page.$(sel);
+                if (el) { await el.click().catch(() => { }); await page.waitForTimeout(300); break; }
+            }
+        } catch (_) { /* non-fatal */ }
+
+        const html = await page.content();
+        const finalUrl = page.url() || url;
+        logger.info(`[Scraper] playwright render OK${navigated ? '' : ' (partial)'}: ${finalUrl}`);
+        return { html, finalUrl };
+    } finally {
+        if (browser) await browser.close().catch(() => { });
+    }
+};
+
 const fetchHtml = async (url, timeoutMs = 30000) => {
+    // Primary: Playwright (real browser, executes JS, sees fully-rendered DOM)
+    if (playwright) {
+        try {
+            return await fetchHtmlWithPlaywright(url, timeoutMs);
+        } catch (e) {
+            logger.warn(`[Scraper] playwright fetch failed (${e.message}), falling back to node-fetch/axios`);
+        }
+    }
+
+    // Fallback: node-fetch (static HTML only, no JS execution)
     if (nodeFetch) {
         try {
             const controller = new AbortController();
@@ -56,6 +139,7 @@ const fetchHtml = async (url, timeoutMs = 30000) => {
         }
     }
 
+    // Last resort: axios (static HTML only)
     if (axios) {
         const res = await axios.get(url, {
             timeout: timeoutMs,
@@ -69,7 +153,7 @@ const fetchHtml = async (url, timeoutMs = 30000) => {
         return { html: res.data, finalUrl };
     }
 
-    throw new Error('No HTTP client available (install node-fetch or axios)');
+    throw new Error('No HTML fetcher available (install playwright, node-fetch, or axios)');
 };
 
 const fetchText = async (url, timeoutMs = 10000) => {
@@ -142,11 +226,15 @@ const cleanStr = (s) => (s || '').trim().replace(/\s+/g, ' ');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const INDUSTRY_MAP = [
+    { industry: 'Home Services', sub: 'Plumbing & Drain', kws: ['drain', 'drain cleaning', 'drain cleaning services', 'sewer', 'sewer cleaning', 'hydro jetting', 'hydro-jetting', 'plumber', 'plumbing', 'clog', 'clogs', 'clogged drain', 'drain repair', 'rooter', 'augering', 'drainage', 'sewer line', 'sewer repair'] },
+    { industry: 'Home Services', sub: 'HVAC & AC', kws: ['hvac', 'air conditioning', 'ac repair', 'heating', 'furnace', 'heat pump', 'air conditioner', 'duct cleaning'] },
     { industry: 'Beauty & Personal Care', sub: 'Natural Skincare', kws: ['skincare', 'beauty', 'cosmetic', 'serum', 'moisturizer', 'natural skin', 'organic beauty', 'skin care'] },
     { industry: 'Beauty & Personal Care', sub: 'Hair Care', kws: ['shampoo', 'conditioner', 'hair oil', 'hair care', 'hair growth'] },
     { industry: 'Healthcare', sub: 'Dental Clinic', kws: ['dental', 'dentist', 'tooth', 'oral health', 'orthodontic'] },
     { industry: 'Healthcare', sub: 'Medical Services', kws: ['hospital', 'clinic', 'doctor', 'physician', 'healthcare', 'medical', 'health center'] },
     { industry: 'Healthcare', sub: 'Pharmacy', kws: ['pharmacy', 'medicine', 'drug store', 'pharmaceutical'] },
+    { industry: 'Marketing & Advertising', sub: 'Digital Marketing Agency', kws: ['seo', 'search engine optimization', 'ppc', 'pay per click', 'smo', 'social media marketing', 'digital marketing', 'link building', 'affiliate management', 'web design and development', 'online marketing', 'search engine marketing'] },
+    { industry: 'Marketing & Advertising', sub: 'Advertising Agency', kws: ['ad agency', 'advertising agency', 'media buying', 'brand campaign', 'creative agency'] },
     { industry: 'SaaS', sub: 'Marketing Automation', kws: ['marketing automation', 'email campaign', 'crm', 'lead generation', 'funnel'] },
     { industry: 'SaaS', sub: 'Project Management', kws: ['project management', 'task management', 'team collaboration', 'workflow'] },
     { industry: 'SaaS', sub: 'Analytics Platform', kws: ['analytics', 'data dashboard', 'reporting', 'business intelligence', 'bi tool'] },
@@ -170,20 +258,70 @@ const INDUSTRY_MAP = [
     { industry: 'Nonprofit', sub: 'NGO', kws: ['ngo', 'nonprofit', 'charity', 'donation', 'foundation', 'social cause'] },
 ];
 
-const classifyIndustryByKeywords = (textCorpus) => {
-    const lower = (textCorpus || '').toLowerCase();
+// New weighted keyword classifier
+// Accepts either a single string (legacy) or an object { title, meta, body }
+const classifyIndustryByKeywords = (input) => {
+    const parts = { title: '', meta: '', body: '' };
+    if (!input) input = '';
+    if (typeof input === 'string') {
+        parts.body = input;
+    } else {
+        parts.title = (input.title || '') + '';
+        parts.meta = (input.meta || '') + '';
+        parts.body = (input.body || '') + '';
+    }
+
+    const noise = ['home', 'about', 'contact', 'services', 'copyright', 'privacy policy', 'read more', 'click here'];
+    const normalize = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ');
+    const title = normalize(parts.title);
+    const meta = normalize(parts.meta);
+    const body = normalize(parts.body);
+
     const scores = {};
+    const matched = new Set();
+
+    const matchCount = (hay, kw) => {
+        if (!kw) return 0;
+        const k = kw.toLowerCase();
+        // phrase match
+        try {
+            if (k.includes(' ')) {
+                // count occurrences of phrase
+                let idx = 0, cnt = 0;
+                while ((idx = hay.indexOf(k, idx)) !== -1) { cnt++; idx += k.length; }
+                return cnt;
+            }
+            // single word - match word boundaries
+            const re = new RegExp('\\b' + k.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&') + '\\b', 'g');
+            const m = hay.match(re);
+            return m ? m.length : 0;
+        } catch (e) {
+            return hay.includes(k) ? 1 : 0;
+        }
+    };
+
     for (const entry of INDUSTRY_MAP) {
-        const score = entry.kws.reduce((acc, kw) => acc + (lower.includes(kw) ? 1 : 0), 0);
+        let score = 0;
+        for (const kw of entry.kws) {
+            // remove global noise words from consideration
+            if (noise.includes((kw || '').toLowerCase())) continue;
+            const inTitle = matchCount(title, kw);
+            const inMeta = matchCount(meta, kw);
+            const inBody = matchCount(body, kw);
+            const kwScore = (inTitle * 2) + (inMeta * 2) + inBody; // title/meta weighted 2x
+            if (kwScore > 0) matched.add(kw);
+            score += kwScore;
+        }
         if (score > 0) {
             const key = entry.industry;
             if (!scores[key] || scores[key].score < score) scores[key] = { score, sub: entry.sub };
         }
     }
+
     const sorted = Object.entries(scores).sort((a, b) => b[1].score - a[1].score);
     if (sorted.length === 0) return null;
-    const [industry, { sub }] = sorted[0];
-    return { industry, subIndustry: sub, score: sorted[0][1].score };
+    const [industry, { sub, score }] = sorted[0];
+    return { industry, subIndustry: sub, matchedKeywords: Array.from(matched), score };
 };
 
 const classifyIndustryWithAI = async (textCorpus) => {
@@ -210,12 +348,17 @@ const classifyIndustryWithAI = async (textCorpus) => {
     return null;
 };
 
-const classifyIndustry = async (textCorpus) => {
-    // AI classification removed — pure keyword-based only (fast, zero API dependency)
-    const kwResult = classifyIndustryByKeywords(textCorpus);
-    if (kwResult && kwResult.score >= 2) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords' };
-    if (kwResult) return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, score: kwResult.score, source: 'keywords-low' };
-    return { industry: 'General', subIndustry: 'Business', score: 0, source: 'default' };
+const classifyIndustry = async (textCorpusOrParts) => {
+    // Prefer keyword-based classifier (fast, no external API). We accept either a
+    // simple string (body) or an object {title, meta, body} so title/meta can be weighted.
+    const kwResult = classifyIndustryByKeywords(textCorpusOrParts);
+    if (!kwResult) return { industry: 'General', subIndustry: 'Business', matchedKeywords: [], score: 0, confidence: 0, source: 'default' };
+
+    const source = kwResult.score >= 2 ? 'keywords' : 'keywords-low';
+    const confidence = source === 'keywords'
+        ? Math.min(1, kwResult.score / 5)
+        : Math.min(0.4, kwResult.score / 5);
+    return { industry: kwResult.industry, subIndustry: kwResult.subIndustry, matchedKeywords: kwResult.matchedKeywords || [], score: kwResult.score, confidence, source };
 };
 
 const isNeutralHex = (hex) => {
@@ -408,6 +551,313 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
     }
 };
 
+// Non-browser fallback: extract dominant colors from available images (logo, favicon, hero, first N images)
+const extractColorsFromImagesFallback = async (raw, baseUrl) => {
+    const tryUrls = [];
+    if (raw.logoUrl) tryUrls.push(raw.logoUrl);
+    if (raw.favicon) tryUrls.push(raw.favicon);
+    if (Array.isArray(raw.images) && raw.images.length) {
+        // prioritize hero images
+        const hero = raw.images.find(i => i.section === 'hero');
+        if (hero && hero.url) tryUrls.push(hero.url);
+        // then a few page images
+        for (const img of raw.images.slice(0, 8)) if (img.url) tryUrls.push(img.url);
+    }
+
+    const seen = new Set();
+    const buffers = [];
+    for (let u of tryUrls) {
+        if (!u) continue;
+        if (u.startsWith('inline-svg:')) {
+            const idx = parseInt(u.split(':')[1] || '0', 10);
+            const img = raw.images && raw.images[idx];
+            if (img && img.markup) {
+                const svcs = extractColorsFromSvgMarkup(img.markup);
+                svcs.forEach(c => seen.add(c));
+            }
+            continue;
+        }
+        let abs = u;
+        if (!u.startsWith('http') && baseUrl) {
+            try { abs = new URL(u, baseUrl).href; } catch (_) { abs = u; }
+        }
+        if (!abs || seen.has(abs)) continue;
+        seen.add(abs);
+        try {
+            const buf = await fetchBinary(abs, baseUrl, 10000);
+            if (buf && buf.length) buffers.push(buf);
+        } catch (e) {
+            logger.warn(`[Scraper] fallback image fetch failed ${abs}: ${e.message}`);
+        }
+        if (buffers.length >= 6) break;
+    }
+
+    const palette = [];
+    const addToPalette = (hex) => {
+        if (!hex) return;
+        const n = normaliseCssColor(hex);
+        if (!n) return;
+        if (!isNeutralHex(n) && !palette.includes(n)) palette.push(n);
+    };
+
+    const colorFromBuffer = async (buf) => {
+        if (!buf) return null;
+        // SVG already handled above
+        if (VibrantLib) {
+            try {
+                const v = await VibrantLib.from(buf).getPalette();
+                const order = ['Vibrant', 'DarkVibrant', 'LightVibrant', 'Muted', 'DarkMuted', 'LightMuted'];
+                for (const k of order) {
+                    const sw = v[k];
+                    if (sw && sw.getHex) return sw.getHex().toUpperCase();
+                }
+            } catch (e) { /* fallthrough */ }
+        }
+        if (sharpLib) {
+            try {
+                const p = await sharpLib(buf).resize(1, 1).raw().toBuffer();
+                const r = p[0], g = p[1], b = p[2];
+                return ('#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
+            } catch (e) { /* ignore */ }
+        }
+        return null;
+    };
+
+    for (const b of buffers) {
+        try {
+            const hex = await colorFromBuffer(b);
+            addToPalette(hex);
+        } catch (e) { /* ignore */ }
+    }
+
+    // Also include CSS-derived candidates
+    (raw.allBgs || []).slice(0, 20).forEach(addToPalette);
+    (raw.allTexts || []).slice(0, 20).forEach(addToPalette);
+
+    // Helper: compute saturation & luminance
+    const hexToRgb = (h) => {
+        if (!h || h[0] !== '#') return null;
+        const hv = h.length === 7 ? h.slice(1) : h.length === 4 ? h.slice(1).split('').map(c => c + c).join('') : null;
+        if (!hv) return null;
+        return [parseInt(hv.slice(0, 2), 16), parseInt(hv.slice(2, 4), 16), parseInt(hv.slice(4, 6), 16)];
+    };
+    const rgbToHsl = (r, g, b) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; }
+            h = Math.round(h * 60);
+        }
+        return { h, s, l };
+    };
+    const saturation = (hex) => { const rgb = hexToRgb(hex); if (!rgb) return 0; return rgbToHsl(...rgb).s; };
+    const luminance = (hex) => { const rgb = hexToRgb(hex); if (!rgb) return 0; return rgbToHsl(...rgb).l; };
+
+    // Decide header/nav/button/footer heuristics
+    const pickHeader = () => {
+        // prefer explicit CSS
+        const hcss = raw.themeColors?.header?.bg; if (hcss) return normaliseCssColor(hcss);
+        // prefer logo dominant
+        if (raw.logoUrl) {
+            const p = palette[0]; if (p) return p;
+        }
+        return palette[0] || null;
+    };
+    const pickNav = () => {
+        const ncss = raw.themeColors?.navigation?.background; if (ncss) return normaliseCssColor(ncss);
+        return palette[0] || null;
+    };
+    const pickButton = () => {
+        const bcss = raw.themeColors?.button?.bg; if (bcss) return normaliseCssColor(bcss);
+        // pick most saturated color
+        const sorted = palette.slice().sort((a, b) => saturation(b) - saturation(a));
+        return sorted[0] || palette[0] || null;
+    };
+    const pickFooter = () => {
+        const fcss = raw.themeColors?.footer?.bg; if (fcss) return normaliseCssColor(fcss);
+        // pick darkest
+        const sorted = palette.slice().sort((a, b) => luminance(a) - luminance(b));
+        return sorted[0] || null;
+    };
+
+    // derive a representative screenshot from first buffer when renderer isn't available
+    let screenshotDataUri = null;
+    try {
+        if (buffers.length) {
+            const buf = buffers[0];
+            const start = buf.toString('utf8', 0, Math.min(buf.length, 256));
+            if (/^\s*<svg[\s\S]*<\/svg>\s*$/i.test(start) || /^<\?xml/i.test(start)) {
+                // treat as SVG markup
+                screenshotDataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buf.toString('utf8'));
+            } else {
+                screenshotDataUri = `data:image/png;base64,${buf.toString('base64')}`;
+            }
+        } else if (raw.logoUrl) {
+            screenshotDataUri = raw.logoUrl.startsWith('data:') ? raw.logoUrl : toAbsUrl(raw.logoUrl, baseUrl) || raw.logoUrl;
+        }
+    } catch (e) { /* ignore */ }
+
+    // compute a body color by averaging image buffers if possible
+    let body = null;
+    try {
+        const cols = [];
+        for (const b of buffers) {
+            const h = await colorFromBuffer(b);
+            if (h) cols.push(h);
+        }
+        if (cols.length) {
+            const rgbs = cols.map(hexToRgb).filter(Boolean);
+            if (rgbs.length) {
+                const sum = rgbs.reduce((acc, c) => [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]], [0, 0, 0]);
+                const avg = sum.map(v => Math.round(v / rgbs.length));
+                body = ('#' + avg.map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
+            }
+        }
+        if (!body && palette.length) body = palette[0];
+    } catch (e) { body = palette[0] || null; }
+
+    return { palette, header: pickHeader(), navigation: pickNav(), button: pickButton(), footer: pickFooter(), body, screenshot: screenshotDataUri };
+};
+
+// Capture a full-page screenshot and extract region colors (header, nav, button, footer)
+const captureRenderedColors = async (url) => {
+    if (!playwright) return null;
+    if (!sharpLib && !VibrantLib) return null;
+    let browser = null;
+    try {
+        browser = await playwright.chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
+        const context = await browser.newContext({
+            viewport: { width: 1280, height: 900 },
+            userAgent: DEFAULT_UA,
+            locale: 'en-US',
+            ignoreHTTPSErrors: true,
+        });
+        const page = await context.newPage();
+
+        // Try navigation with progressively relaxed wait strategies to avoid long timeouts on heavy pages
+        let navigated = false;
+        try {
+            await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+            navigated = true;
+        } catch (e1) {
+            logger.warn(`[Scraper] page.goto networkidle failed: ${e1.message}`);
+            try {
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                navigated = true;
+            } catch (e2) {
+                logger.warn(`[Scraper] page.goto domcontentloaded failed: ${e2.message}`);
+                try {
+                    await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+                    navigated = true;
+                } catch (e3) {
+                    logger.warn(`[Scraper] page.goto load failed: ${e3.message}`);
+                }
+            }
+        }
+        if (!navigated) {
+            // final attempt: open without waiting and proceed to screenshot after a short delay
+            try {
+                await page.goto(url, { timeout: 20000 });
+                await page.waitForTimeout(3500);
+            } catch (e) {
+                logger.warn(`[Scraper] final non-waiting goto failed: ${e.message}`);
+            }
+        }
+
+        const fullBuffer = await page.screenshot({ fullPage: true });
+        const selectors = {
+            header: ['header', '.site-header', '.main-header', '#header', '.header'],
+            navigation: ['nav', '.navbar', '.site-nav', '.main-nav'],
+            button: ['.btn-primary', '.button-primary', 'button.primary', '.cta', 'a.button'],
+            footer: ['footer', '.site-footer', '.footer'],
+            body: ['body', 'main', '#main', '.page', '.site'],
+        };
+
+        const colors = { palette: [] };
+        // Try to extract palette from full page first
+        if (VibrantLib) {
+            try {
+                const v = await VibrantLib.from(fullBuffer).getPalette();
+                const pal = Object.values(v).map(s => s && s.getHex && s.getHex()).filter(Boolean);
+                colors.palette = pal;
+            } catch (e) { /* ignore */ }
+        }
+
+        // Helper to crop region and get dominant color
+        const getRegionColor = async (bbox) => {
+            if (!bbox || bbox.width === 0 || bbox.height === 0) return null;
+            if (!sharpLib) return null;
+            try {
+                const cropped = await sharpLib(fullBuffer).extract({ left: Math.max(0, Math.floor(bbox.x)), top: Math.max(0, Math.floor(bbox.y)), width: Math.max(1, Math.floor(bbox.width)), height: Math.max(1, Math.floor(bbox.height)) }).toBuffer();
+                if (VibrantLib) {
+                    const pv = await VibrantLib.from(cropped).getPalette();
+                    const sw = Object.values(pv).find(s => s && s.getHex);
+                    if (sw && sw.getHex) return sw.getHex().toUpperCase();
+                }
+                return null;
+            } catch (e) { return null; }
+        };
+
+        for (const [key, sels] of Object.entries(selectors)) {
+            let bbox = null;
+            for (const sel of sels) {
+                try {
+                    const el = await page.$(sel);
+                    if (!el) continue;
+                    const box = await el.boundingBox();
+                    if (box && box.width > 5 && box.height > 5) { bbox = box; break; }
+                } catch (e) { /* ignore selector errors */ }
+            }
+            // For body we prefer sampling a central area if possible
+            if (key === 'body') {
+                let bodyColor = null;
+                try {
+                    if (sharpLib) {
+                        const meta = await sharpLib(fullBuffer).metadata();
+                        const w = meta.width || 1280;
+                        const h = meta.height || 900;
+                        const cw = Math.min(800, Math.floor(w * 0.6));
+                        const ch = Math.min(600, Math.floor(h * 0.6));
+                        const left = Math.max(0, Math.floor((w - cw) / 2));
+                        const top = Math.max(0, Math.floor((h - ch) / 2));
+                        const cropped = await sharpLib(fullBuffer).extract({ left, top, width: Math.max(1, cw), height: Math.max(1, ch) }).toBuffer();
+                        if (VibrantLib) {
+                            const pv = await VibrantLib.from(cropped).getPalette();
+                            const sw = Object.values(pv).find(s => s && s.getHex);
+                            if (sw && sw.getHex) bodyColor = sw.getHex().toUpperCase();
+                        }
+                        if (!bodyColor) {
+                            const p = await sharpLib(cropped).resize(1, 1).raw().toBuffer();
+                            const r = p[0], g = p[1], b = p[2];
+                            bodyColor = ('#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
+                        }
+                    } else {
+                        // fallback to palette
+                        bodyColor = colors.palette && colors.palette.length ? colors.palette[0] : null;
+                    }
+                } catch (e) {
+                    bodyColor = colors.palette && colors.palette.length ? colors.palette[0] : null;
+                }
+                colors[key] = bodyColor || null;
+            } else {
+                colors[key] = await getRegionColor(bbox) || null;
+            }
+        }
+
+        // attach screenshot as data-uri (small risk of large memory — truncated)
+        const screenshotDataUri = `data:image/png;base64,${fullBuffer.toString('base64')}`;
+        await browser.close(); browser = null;
+        return { screenshot: screenshotDataUri, colors };
+    } catch (e) {
+        try { if (browser) await browser.close(); } catch (ignore) { }
+        logger.warn(`[Scraper] captureRenderedColors failed: ${e.message}`);
+        return null;
+    }
+};
+
 const SECTION_KEYWORDS = {
     hero: ['hero', 'banner', 'jumbotron', 'masthead', 'splash', 'top-section'],
     about: ['about', 'who-we-are', 'our-story', 'mission', 'vision'],
@@ -487,110 +937,149 @@ const extractWithCheerio = ($, html, baseUrl) => {
         }
     };
 
-    // FIX 3: Logo selectors reordered specific→generic.
-    // 'meta[property="og:image"]' is intentionally placed LAST — it frequently points
-    // to a promotional social-share banner, not the company logo. Only use it as a
-    // true last resort after all DOM-based selectors are exhausted.
+    // FIX 9: The top-priority logo selectors matched ANY <img> on the entire page whose
+    // class/id/alt/src merely contained the substring "logo" — not scoped to the header/nav
+    // at all. Pages that show partner/certification badges (e.g. a "Bing partner logo" image
+    // sitting in a mid-page trust-badges section) have "logo" right there in their alt text,
+    // so that badge was winning over the real site logo — which often has no literal "logo"
+    // word in its alt/class (e.g. alt="ebrandz") but does sit inside <header>/<nav>. Fix:
+    // try header/nav-scoped matches (with or without the "logo" keyword) first, and only
+    // fall back to an unscoped keyword match anywhere on the page as a last resort.
     const LOGO_SELECTORS = [
-        // 1. Highest confidence — explicit logo class/id/alt/src markers
-        'img[class*="logo" i]',
-        'img[id*="logo" i]',
-        'img[alt*="logo" i]',
-        'img[src*="logo" i]',
-        // 2. Wrapper-based logo containers
-        '[class*="logo" i] img',
-        '[id*="logo" i] img',
-        '.navbar-brand img',
-        '.site-logo img',
-        '.header-logo img',
-        '.brand-logo img',
+        // 1. Highest confidence — scoped to header/nav AND has an explicit logo marker.
+        'header img[class*="logo" i]', 'nav img[class*="logo" i]', '.navbar img[class*="logo" i]', '.site-header img[class*="logo" i]',
+        'header img[id*="logo" i]', 'nav img[id*="logo" i]',
+        'header img[alt*="logo" i]', 'nav img[alt*="logo" i]', '.site-header img[alt*="logo" i]',
+        'header img[src*="logo" i]', 'nav img[src*="logo" i]',
+        // 2. Wrapper-based logo containers (the wrapper's own class/id carries the signal).
+        '[class*="logo" i] img', '[id*="logo" i] img',
+        '.navbar-brand img', '.site-logo img', '.header-logo img', '.brand-logo img',
         // 3. Common CMS/framework patterns
-        'a.logo img',
-        '.brand img',
-        '.site-header img',
-        '.main-header img',
-        // 4. Generic fallbacks
-        'a[href="/"] img',
-        'header img',
-        'nav img',
-        '.navbar img',
-        // 5. og:image last — often a social banner, not the actual logo
+        'a.logo img', '.brand img', '.site-header img', '.main-header img',
+        // 4. Plain header/nav image, no "logo" keyword needed — being located in the
+        //    header/nav is itself a strong signal, and should beat an unscoped keyword
+        //    match found elsewhere on the page (e.g. a partner badge in the body/footer).
+        'a[href="/"] img', 'header img', 'nav img', '.navbar img',
+        // 5. Unscoped keyword fallback — last resort before inline SVG / og:image, since a
+        //    "logo" keyword match with no location signal is the weakest evidence (it's what
+        //    incorrectly matched partner/certification badges in the past).
+        'img[class*="logo" i]', 'img[id*="logo" i]', 'img[alt*="logo" i]', 'img[src*="logo" i]',
+        // 6. og:image last — often a social banner, not the actual logo
         'meta[property="og:image"]',
     ];
 
+    // FIX 6: Inline-<svg> detection used to run BEFORE the <img>-based LOGO_SELECTORS loop,
+    // using very generic selectors like 'header svg' / 'nav svg' / '[role="banner"] svg'.
+    // Those match ANY svg sitting in the header/nav — dropdown chevrons, hamburger icons,
+    // search icons, social icons — not just an actual logo. On sites where the real logo is
+    // a plain <img> (e.g. a PNG) but the header also contains a small UI icon (e.g. a
+    // dropdown-arrow svg with classes like "group-hover:rotate-180"), that icon was winning
+    // and being reported as the logo instead of the real image. Fix: try the higher-confidence
+    // <img>/og:image selectors first, and only fall back to inline SVG if nothing real is
+    // found — and even then, skip elements that look like utility icons rather than blindly
+    // taking the first SVG match.
     const INLINE_SVG_CONTAINERS = [
-        '[role="banner"] svg', 'header svg', 'nav svg',
+        // Logo-specific containers first — highest confidence among the SVG fallbacks.
         '[class*="logo"] svg', '[id*="logo"] svg',
         '.navbar-brand svg', '.site-header svg', '.site-logo svg',
+        // Generic header/nav containers last — these need the utility-icon filter below.
+        '[role="banner"] svg', 'header svg', 'nav svg',
     ];
+
+    const UTILITY_ICON_PATTERN = /\b(icon|chevron|arrow|caret|dropdown|toggle|hamburger|burger|menu[-_]?icon|search|cart|social|close|expand|collapse|rotate|accordion|nav[-_]?icon)\b/i;
+
+    const looksLikeUtilityIcon = (el) => {
+        const self = `${el.attr('class') || ''} ${el.attr('id') || ''}`;
+        const parent = el.parent();
+        const parentAttrs = `${parent.attr('class') || ''} ${parent.attr('id') || ''}`;
+        if (UTILITY_ICON_PATTERN.test(self) || UTILITY_ICON_PATTERN.test(parentAttrs)) return true;
+
+        // Many UI icons (chevrons, carets, hamburgers) are sized purely via CSS classes
+        // (e.g. Tailwind's "w-4 h-4") rather than width/height attributes, so the old
+        // attribute-only size check never caught them. A small square viewBox (typical
+        // icon-font/SVG-sprite size) is a strong tell unless something nearby says "logo".
+        const viewBox = el.attr('viewBox') || el.attr('viewbox') || '';
+        const vb = viewBox.trim().split(/\s+/).map(Number);
+        if (vb.length === 4 && vb[2] > 0 && vb[2] <= 32 && vb[3] > 0 && vb[3] <= 32) {
+            if (!/logo|brand/i.test(self) && !/logo|brand/i.test(parentAttrs)) return true;
+        }
+        return false;
+    };
 
     let logoUrl = null;
     let logoFormat = null;
     let inlineSvgLogoMarkup = null;
 
-    for (const sel of INLINE_SVG_CONTAINERS) {
+    // 1. Try <img>-based selectors and og:image first — these are the highest-confidence
+    //    signals and should win whenever a real logo image actually exists on the page.
+    for (const sel of LOGO_SELECTORS) {
         const el = $(sel).first();
         if (!el.length) continue;
-        const markup = $.html(el);
-        const hasShape = /<(path|rect|circle|ellipse|polygon|use|image)/i.test(markup);
-        const w = parseInt(el.attr('width') || '0', 10);
-        const h = parseInt(el.attr('height') || '0', 10);
-        // FIX 4: Changed OR to AND — many SVG logos have no explicit width/height (sized via CSS).
-        // Old: (w>0 && w<24) || (h>0 && h<24) would reject any SVG missing one dimension.
-        // New: only reject when BOTH dimensions are explicitly set and both are tiny.
-        const tooSmall = (w > 0 && w < 24) && (h > 0 && h < 24);
-        if (hasShape && !tooSmall && markup.length > 60) {
-            inlineSvgLogoMarkup = markup;
-            logoFormat = 'svg-inline-dom';
-            logoUrl = 'data:image/svg+xml,' + encodeURIComponent(markup);
-            logger.info(`[Scraper] Inline SVG logo found via "${sel}"`);
-            break;
+        if (el.is('meta')) {
+            const content = el.attr('content');
+            const abs = toAbs(content);
+            // og:image is our last resort — reject it if it looks like a banner
+            // (wide aspect from explicit attributes, or URL keywords like /og/, /social/, /share/, /banner/)
+            if (abs && isSupportedImageSrc(abs)) {
+                const bannerPathRe = /\/(og[-_]?image|social[-_]share|share[-_]image|og-banner|banner|meta[-_]img|preview[-_]img|twitter[-_]card|og\/|social\/)/i;
+                if (!bannerPathRe.test(abs)) {
+                    logoUrl = abs; logoFormat = 'og-image'; break;
+                }
+                logger.info(`[Scraper] Skipping og:image banner: ${abs}`);
+            }
+        } else {
+            const src = getRealSrc(el);
+            const absSrc = toAbs(src);
+
+            // Reject images whose explicit dimensions look like a horizontal banner (width:height > 3.5)
+            const isBannerDimension = (() => {
+                const w = parseInt(el.attr('width') || '0', 10);
+                const h = parseInt(el.attr('height') || '0', 10);
+                return w > 0 && h > 0 && (w / h) > 3.5;
+            })();
+            if (isBannerDimension) {
+                logger.info(`[Scraper] Skipping banner-shaped image via "${sel}"`);
+                continue;
+            }
+
+            if (!absSrc && src && src.startsWith('data:image/')) {
+                logoUrl = src;
+                logoFormat = src.startsWith('data:image/svg') ? 'svg-inline' : 'data-uri';
+                break;
+            }
+            if (absSrc && isSupportedImageSrc(absSrc)) {
+                logoUrl = absSrc;
+                logoFormat = absSrc.toLowerCase().includes('.svg') ? 'svg-url' : 'raster-url';
+                break;
+            }
         }
     }
 
+    // 2. Only fall back to inline <svg> if no real logo image was found, and skip anything
+    //    that looks like a utility icon (chevrons, hamburgers, search/cart/social icons, etc.)
+    //    instead of blindly taking the first SVG match in the header/nav.
     if (!logoUrl) {
-        for (const sel of LOGO_SELECTORS) {
-            const el = $(sel).first();
-            if (!el.length) continue;
-            if (el.is('meta')) {
-                const content = el.attr('content');
-                const abs = toAbs(content);
-                // og:image is our last resort — reject it if it looks like a banner
-                // (wide aspect from explicit attributes, or URL keywords like /og/, /social/, /share/, /banner/)
-                if (abs && isSupportedImageSrc(abs)) {
-                    const bannerPathRe = /\/(og[-_]?image|social[-_]share|share[-_]image|og-banner|banner|meta[-_]img|preview[-_]img|twitter[-_]card|og\/|social\/)/i;
-                    const w = 0, h = 0; // og:image has no DOM size attributes
-                    if (!bannerPathRe.test(abs)) {
-                        logoUrl = abs; logoFormat = 'og-image'; break;
-                    }
-                    logger.info(`[Scraper] Skipping og:image banner: ${abs}`);
-                }
-            } else {
-                const src = getRealSrc(el);
-                const absSrc = toAbs(src);
-
-                // Reject images whose explicit dimensions look like a horizontal banner (width:height > 3.5)
-                const isBannerDimension = (() => {
-                    const w = parseInt(el.attr('width') || '0', 10);
-                    const h = parseInt(el.attr('height') || '0', 10);
-                    return w > 0 && h > 0 && (w / h) > 3.5;
-                })();
-                if (isBannerDimension) {
-                    logger.info(`[Scraper] Skipping banner-shaped image via "${sel}"`);
-                    continue;
-                }
-
-                if (!absSrc && src && src.startsWith('data:image/')) {
-                    logoUrl = src;
-                    logoFormat = src.startsWith('data:image/svg') ? 'svg-inline' : 'data-uri';
-                    break;
-                }
-                if (absSrc && isSupportedImageSrc(absSrc)) {
-                    logoUrl = absSrc;
-                    logoFormat = absSrc.toLowerCase().includes('.svg') ? 'svg-url' : 'raster-url';
+        for (const sel of INLINE_SVG_CONTAINERS) {
+            const matches = $(sel).toArray();
+            let found = false;
+            for (const rawEl of matches) {
+                const el = $(rawEl);
+                if (looksLikeUtilityIcon(el)) continue;
+                const markup = $.html(el);
+                const hasShape = /<(path|rect|circle|ellipse|polygon|use|image)/i.test(markup);
+                const w = parseInt(el.attr('width') || '0', 10);
+                const h = parseInt(el.attr('height') || '0', 10);
+                const tooSmall = (w > 0 && w < 24) && (h > 0 && h < 24);
+                if (hasShape && !tooSmall && markup.length > 60) {
+                    inlineSvgLogoMarkup = markup;
+                    logoFormat = 'svg-inline-dom';
+                    logoUrl = 'data:image/svg+xml,' + encodeURIComponent(markup);
+                    logger.info(`[Scraper] Inline SVG logo found via "${sel}"`);
+                    found = true;
                     break;
                 }
             }
+            if (found) break;
         }
     }
 
@@ -683,6 +1172,25 @@ const extractWithCheerio = ($, html, baseUrl) => {
         const m = style.match(/(?:^|;)\s*color\s*:\s*([^;]+)/i);
         return m ? normaliseCssColor(m[1].trim()) : null;
     };
+    // FIX 7: bg and text used to be pulled via two separate $(sel).first() calls with
+    // slightly different selector lists (e.g. header bg checked '.site-header'/'.main-header'
+    // too, but header text didn't). Since "first matching element in the DOM" can differ
+    // between two different selector lists, bg and text could end up coming from two
+    // unrelated elements — e.g. a white-background element supplies "bg" while some other
+    // nav/header-like element supplies a white "text" color, yielding invisible white-on-white
+    // text even though neither element individually had that problem. Pulling both values from
+    // a single matched element guarantees they're at least internally consistent.
+    const extractInlineColors = (sel) => {
+        const el = $(sel).first();
+        if (!el.length) return { bg: null, text: null };
+        const style = el.attr('style') || '';
+        const bg = style.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+        const fg = style.match(/(?:^|;)\s*color\s*:\s*([^;]+)/i);
+        return {
+            bg: bg ? normaliseCssColor(bg[1].trim()) : null,
+            text: fg ? normaliseCssColor(fg[1].trim()) : null,
+        };
+    };
 
     let exactPrimary = null, exactSecondary = null;
     const primaryVarNames = ['primary', 'brand', 'theme', 'main', 'color-primary', 'brand-primary'];
@@ -706,10 +1214,14 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (c) allBgs.push(c);
     });
 
+    const buttonColors = extractInlineColors('.btn-primary, .button-primary, .cta-btn, .wp-block-button__link, .btn, button');
+    const headerColors = extractInlineColors('header, .header, .site-header, .main-header, nav, .navbar');
+    const footerColors = extractInlineColors('footer, .footer, .site-footer');
+
     const themeColors = {
-        button: { bg: extractInlineBg('.btn-primary, .button-primary, .cta-btn, .wp-block-button__link, .btn, button'), text: extractInlineColor('.btn-primary, .btn, button') },
-        header: { bg: extractInlineBg('header, .header, .site-header, .main-header, nav, .navbar'), text: extractInlineColor('header, .header, nav, .navbar') },
-        footer: { bg: extractInlineBg('footer, .footer, .site-footer'), text: extractInlineColor('footer, .footer, .site-footer') },
+        button: { bg: buttonColors.bg, text: buttonColors.text },
+        header: { bg: headerColors.bg, text: headerColors.text },
+        footer: { bg: footerColors.bg, text: footerColors.text },
         hero: { bg: extractInlineBg('.hero, .banner, .hero-section, .hero-banner') },
         page: { bg: extractInlineBg('body') },
         exact: { cssVariables, meta: metaColors, elements: {} },
@@ -808,20 +1320,28 @@ const extractWithCheerio = ($, html, baseUrl) => {
     });
 
     const videos = [];
+    const seenVideoKeys = new Set();
+    const addVideo = (v) => {
+        if (!v || !v.url) return;
+        const key = v.videoId ? `${v.platform}:${v.videoId}` : v.url;
+        if (seenVideoKeys.has(key)) return;
+        seenVideoKeys.add(key);
+        videos.push(v);
+    };
     $('video').each((_, el) => {
         const src = toAbs($(el).attr('src'));
         const poster = toAbs($(el).attr('poster'));
-        if (src) videos.push({ url: src, platform: 'html5', videoId: null, poster: poster || null, section: getSectionForEl($(el)) });
+        if (src) addVideo({ url: src, platform: 'html5', videoId: null, poster: poster || null, section: getSectionForEl($(el)) });
     });
     $('iframe').each((_, el) => {
         const src = $(el).attr('src') || '';
         if (!src) return;
         if (src.includes('youtube.com') || src.includes('youtu.be')) {
             const m = src.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([^/?&]+)/);
-            videos.push({ url: toAbs(src) || src, platform: 'youtube', videoId: m?.[1] || null, poster: null, section: getSectionForEl($(el)) });
+            addVideo({ url: toAbs(src) || src, platform: 'youtube', videoId: m?.[1] || null, poster: null, section: getSectionForEl($(el)) });
         } else if (src.includes('vimeo.com')) {
             const m = src.match(/vimeo\.com\/(\d+)/);
-            videos.push({ url: toAbs(src) || src, platform: 'vimeo', videoId: m?.[1] || null, poster: null, section: getSectionForEl($(el)) });
+            addVideo({ url: toAbs(src) || src, platform: 'vimeo', videoId: m?.[1] || null, poster: null, section: getSectionForEl($(el)) });
         }
     });
 
@@ -929,6 +1449,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
     });
 
     const forms = [];
+    const seenFormSignatures = new Set();
     $('form').each((_, formEl) => {
         const fields = [];
         $(formEl).find('input, select, textarea').each((__, fieldEl) => {
@@ -946,7 +1467,14 @@ const extractWithCheerio = ($, html, baseUrl) => {
             fields.push({ name: name || `field_${fields.length}`, label: label || ph, type, placeholder: ph, required: $(fieldEl).is('[required]') });
         });
         if (fields.length > 0) {
-            forms.push({ action: $(formEl).attr('action') || '', method: ($(formEl).attr('method') || 'POST').toUpperCase(), fields });
+            const action = $(formEl).attr('action') || '';
+            const method = ($(formEl).attr('method') || 'POST').toUpperCase();
+            // Signature catches forms that are structurally identical (same action/method/fields),
+            // which happens when a site repeats the same embedded widget/modal multiple times.
+            const signature = `${action}|${method}|${fields.map(f => `${f.name}:${f.type}`).join(',')}`;
+            if (seenFormSignatures.has(signature)) return;
+            seenFormSignatures.add(signature);
+            forms.push({ action, method, fields });
         }
     });
 
@@ -1125,7 +1653,10 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
                     const matches = core === target
                         || core.endsWith(' ' + target)
                         || core.endsWith('>' + target)
-                        || core.split(/[\s>]+/).pop() === target;
+                        || core.split(/[\s>]+/).pop() === target
+                        // Also match when the target appears anywhere in the selector
+                        // (covers cases like "a.btn-primary", ".btn-primary.btn", etc.).
+                        || core.includes(target);
                     if (!matches) continue;
                     const decls = parseDeclarations(rule.body);
                     if (pseudo === 'hover') Object.assign(hover, decls);
@@ -1226,20 +1757,81 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
         raw.themeColors = raw.themeColors || {};
         raw.themeColors.exact = raw.themeColors.exact || { cssVariables: {}, meta: {}, elements: {} };
 
-        raw.themeColors.exact.cssVariables = {
-            ...newCssVariables,
-            ...raw.themeColors.exact.cssVariables, // existing values win
-        };
+        // Merge CSS variables into exact map and store each variable under
+        // both forms (with and without leading `--`) so downstream lookups
+        // (which may search for either form) reliably find values.
+        const existingCssVars = raw.themeColors.exact.cssVariables || {};
+        const mergedCssVars = { ...existingCssVars };
+        Object.entries(newCssVariables).forEach(([k, v]) => {
+            if (!(k in mergedCssVars)) mergedCssVars[k] = v;
+            const withDash = '--' + k;
+            if (!(withDash in mergedCssVars)) mergedCssVars[withDash] = v;
+        });
+        raw.themeColors.exact.cssVariables = mergedCssVars;
         raw.themeColors.exact.cssVariablesList = cssVariablesList;
 
+        // Better section-wise selection with debug reasons
         raw.themeColors.header = raw.themeColors.header || {};
-        if (!raw.themeColors.header.bg && headerComputed.background) raw.themeColors.header.bg = headerComputed.background;
+        raw.themeColors.navigation = raw.themeColors.navigation || {};
+        raw.themeColors.button = raw.themeColors.button || {};
+
+        const chooseSection = (name, opts) => {
+            // opts: {inlineFn, cssValue, imageValue, paletteFallback}
+            const candidates = [];
+            let source = null;
+            // 1) inline styles from DOM
+            try {
+                if (opts.inlineFn) {
+                    const v = opts.inlineFn();
+                    if (v) { candidates.push({ v, source: 'inline' }); }
+                }
+            } catch (_) { }
+            // 2) CSS rules (computed)
+            if (opts.cssValue) candidates.push({ v: opts.cssValue, source: 'css' });
+            // 3) image/rendered sample
+            if (opts.imageValue) candidates.push({ v: opts.imageValue, source: 'image' });
+            // 4) palette or logo
+            if (opts.paletteFallback) candidates.push({ v: opts.paletteFallback, source: 'palette' });
+
+            // pick first non-neutral normalized color
+            for (const c of candidates) {
+                const norm = normaliseCssColor(c.v);
+                if (!norm) continue;
+                if (!isNeutralHex(norm)) { source = c.source; return { value: norm, source }; }
+            }
+            // fallback: none
+            return { value: null, source: 'none' };
+        };
+
+        // inline extractors using cheerio
+        const inlineHeaderBg = () => extractInlineBg(HEADER_SELECTORS[0]) || extractInlineBg(HEADER_SELECTORS[1]) || extractInlineBg('header');
+        const inlineNavBg = () => extractInlineBg(NAV_SELECTORS[0]) || extractInlineBg(NAV_SELECTORS[1]) || extractInlineBg('nav');
+        const inlineButtonFromDom = () => {
+            // scan multiple button selectors and pick most frequent inline bg
+            const freq = {};
+            for (const sel of BUTTON_SELECTORS) {
+                $(sel).each((i, el) => {
+                    const style = ($(el).attr('style') || '').match(/background(?:-color)?:\s*([^;]+)/i);
+                    if (style && style[1]) {
+                        const n = normaliseCssColor(style[1].trim());
+                        if (n) freq[n] = (freq[n] || 0) + 1;
+                    }
+                });
+            }
+            const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+            return entries.length ? entries[0][0] : null;
+        };
+
+        const paletteFallback = (raw.logoColors && raw.logoColors.palette && raw.logoColors.palette[0]) || (raw.colors && raw.colors[0]) || (raw.allBgs && raw.allBgs[0]) || null;
+
+        const headerPick = chooseSection('header', { inlineFn: inlineHeaderBg, cssValue: headerComputed.background, imageValue: null, paletteFallback });
+        if (!raw.themeColors.header.bg && headerPick.value) raw.themeColors.header.bg = headerPick.value;
         if (!raw.themeColors.header.text && headerComputed.text) raw.themeColors.header.text = headerComputed.text;
         if (!raw.themeColors.header.border && headerComputed.border) raw.themeColors.header.border = headerComputed.border;
         if (!raw.themeColors.header.link && headerComputed.link) raw.themeColors.header.link = headerComputed.link;
 
-        raw.themeColors.navigation = raw.themeColors.navigation || {};
-        if (!raw.themeColors.navigation.background && navComputed.background) raw.themeColors.navigation.background = navComputed.background;
+        const navPick = chooseSection('navigation', { inlineFn: inlineNavBg, cssValue: navComputed.background, imageValue: null, paletteFallback });
+        if (!raw.themeColors.navigation.background && navPick.value) raw.themeColors.navigation.background = navPick.value;
         if (!raw.themeColors.navigation.color && navComputed.text) raw.themeColors.navigation.color = navComputed.text;
         if (!raw.themeColors.navigation.border && navComputed.border) raw.themeColors.navigation.border = navComputed.border;
         raw.themeColors.navigation.linkColors = {
@@ -1248,12 +1840,21 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
             active: raw.themeColors.navigation.linkColors?.active || navComputed.linkColors.active || null,
         };
 
-        raw.themeColors.button = raw.themeColors.button || {};
-        if (!raw.themeColors.button.bg && buttonComputed.background) raw.themeColors.button.bg = buttonComputed.background;
+        const btnPick = chooseSection('button', { inlineFn: inlineButtonFromDom, cssValue: buttonComputed.background, imageValue: null, paletteFallback });
+        if (!raw.themeColors.button.bg && btnPick.value) raw.themeColors.button.bg = btnPick.value;
         if (!raw.themeColors.button.text && buttonComputed.text) raw.themeColors.button.text = buttonComputed.text;
         raw.themeColors.button.border = raw.themeColors.button.border || buttonComputed.border || null;
         raw.themeColors.button.hoverBackground = raw.themeColors.button.hoverBackground || buttonComputed.hoverBackground || null;
         raw.themeColors.button.hoverText = raw.themeColors.button.hoverText || buttonComputed.hoverText || null;
+
+        // attach per-section reasons into debug payload
+        try {
+            raw._debugTheme = raw._debugTheme || {};
+            raw._debugTheme.sections = raw._debugTheme.sections || {};
+            raw._debugTheme.sections.header = { value: raw.themeColors.header.bg || null, source: headerPick.source || null };
+            raw._debugTheme.sections.navigation = { value: raw.themeColors.navigation.background || null, source: navPick.source || null };
+            raw._debugTheme.sections.button = { value: raw.themeColors.button.bg || null, source: btnPick.source || null };
+        } catch (e) { /* ignore */ }
 
         raw.darkMode = { enabled: darkEnabled, overrides: darkOverrides };
 
@@ -1281,6 +1882,25 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
             }
         }
 
+        // Attach debugging info to help diagnose theme/color detection issues.
+        try {
+            raw._debugTheme = {
+                cssVariableKeys: Object.keys(mergedCssVars).slice(0, 200),
+                cssVariablesSample: Object.fromEntries(Object.entries(mergedCssVars).slice(0, 20)),
+                cssVariablesList: cssVariablesList.slice(0, 50),
+                headerComputed,
+                navComputed,
+                buttonComputed,
+                darkEnabled,
+                darkOverrides,
+                allBgs: allBgs.slice(0, 200),
+                allTexts: allTexts.slice(0, 200),
+                frameworks,
+                platform,
+            };
+        } catch (xx) {
+            // ignore debug attach errors
+        }
         return raw;
     } catch (e) {
         logger.warn(`[Scraper] enhanceThemeAndLogo failed (non-fatal): ${e.message}`);
@@ -1333,7 +1953,7 @@ const buildPalette = (raw) => {
 
 const scrapeWebsiteStructure = async (websiteUrl) => {
     const startedAt = Date.now();
-    logger.info(`[Scraper] Starting Cheerio scrape for ${websiteUrl}`);
+    logger.info(`[Scraper] Starting Playwright-rendered scrape for ${websiteUrl}`);
 
     let html, finalUrl;
     try {
@@ -1353,6 +1973,111 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const baseUrl = finalUrl || websiteUrl;
     const raw = extractWithCheerio($, html, baseUrl);
     await enhanceThemeAndLogo($, html, baseUrl, raw);
+
+    // Attempt to capture a rendered screenshot and use rendered-region colors.
+    // If renderer is not available (server without browsers), fall back to image-based heuristics.
+    // snapshot pre-capture theme values so we can report what changed
+    const preCapture = {
+        header: raw.themeColors?.header?.bg || null,
+        navigation: raw.themeColors?.navigation?.background || null,
+        button: raw.themeColors?.button?.bg || null,
+        footer: raw.themeColors?.footer?.bg || null,
+    };
+
+    let renderResult = null;
+    let captureSource = null;
+    try {
+        renderResult = await captureRenderedColors(finalUrl || websiteUrl);
+        if (renderResult) {
+            raw.screenshot = renderResult.screenshot;
+            raw.renderColors = renderResult.colors;
+            // use rendered region colors as fallbacks for themeColors where missing
+            raw.themeColors = raw.themeColors || {};
+            raw.themeColors.header = raw.themeColors.header || {};
+            raw.themeColors.navigation = raw.themeColors.navigation || {};
+            raw.themeColors.button = raw.themeColors.button || {};
+            if (!raw.themeColors.header.bg && renderResult.colors.header) raw.themeColors.header.bg = renderResult.colors.header;
+            if (!raw.themeColors.navigation.background && renderResult.colors.navigation) raw.themeColors.navigation.background = renderResult.colors.navigation;
+            if (!raw.themeColors.button.bg && renderResult.colors.button) raw.themeColors.button.bg = renderResult.colors.button;
+            if (!raw.themeColors.footer) raw.themeColors.footer = {};
+            if (!raw.themeColors.footer.bg && renderResult.colors.footer) raw.themeColors.footer.bg = renderResult.colors.footer;
+            // merge rendered palette into allBgs for palette building
+            if (Array.isArray(renderResult.colors.palette) && renderResult.colors.palette.length) {
+                raw.allBgs = (raw.allBgs || []).concat(renderResult.colors.palette.map(c => c));
+            }
+            captureSource = 'render';
+        } else {
+            // Playwright/render not available or returned null -> use image-based fallback
+            const fb = await extractColorsFromImagesFallback(raw, baseUrl);
+            if (fb) {
+                raw.renderColors = raw.renderColors || {};
+                if (fb.palette && fb.palette.length) raw.allBgs = (raw.allBgs || []).concat(fb.palette);
+                raw.themeColors = raw.themeColors || {};
+                raw.themeColors.header = raw.themeColors.header || {};
+                raw.themeColors.navigation = raw.themeColors.navigation || {};
+                raw.themeColors.button = raw.themeColors.button || {};
+                if (!raw.themeColors.header.bg && fb.header) raw.themeColors.header.bg = fb.header;
+                if (!raw.themeColors.navigation.background && fb.navigation) raw.themeColors.navigation.background = fb.navigation;
+                if (!raw.themeColors.button.bg && fb.button) raw.themeColors.button.bg = fb.button;
+                if (!raw.themeColors.footer) raw.themeColors.footer = {};
+                if (!raw.themeColors.footer.bg && fb.footer) raw.themeColors.footer.bg = fb.footer;
+                captureSource = 'image-fallback';
+            }
+        }
+    } catch (e) {
+        logger.warn(`[Scraper] render capture failed: ${e.message}`);
+        // attempt fallback on error as well
+        try {
+            const fb2 = await extractColorsFromImagesFallback(raw, baseUrl);
+            if (fb2) {
+                if (fb2.palette && fb2.palette.length) raw.allBgs = (raw.allBgs || []).concat(fb2.palette);
+                raw.themeColors = raw.themeColors || {};
+                raw.themeColors.header = raw.themeColors.header || {};
+                raw.themeColors.navigation = raw.themeColors.navigation || {};
+                raw.themeColors.button = raw.themeColors.button || {};
+                if (!raw.themeColors.header.bg && fb2.header) raw.themeColors.header.bg = fb2.header;
+                if (!raw.themeColors.navigation.background && fb2.navigation) raw.themeColors.navigation.background = fb2.navigation;
+                if (!raw.themeColors.button.bg && fb2.button) raw.themeColors.button.bg = fb2.button;
+                if (!raw.themeColors.footer) raw.themeColors.footer = {};
+                if (!raw.themeColors.footer.bg && fb2.footer) raw.themeColors.footer.bg = fb2.footer;
+                captureSource = 'image-fallback';
+            }
+        } catch (ee) {
+            logger.warn(`[Scraper] fallback image extraction also failed: ${ee.message}`);
+        }
+    }
+
+    // attach per-section capture debug info (what changed and source)
+    try {
+        raw._debugTheme = raw._debugTheme || {};
+        const postCapture = {
+            header: raw.themeColors?.header?.bg || null,
+            navigation: raw.themeColors?.navigation?.background || null,
+            button: raw.themeColors?.button?.bg || null,
+            footer: raw.themeColors?.footer?.bg || null,
+        };
+        const sections = {};
+        for (const k of ['header', 'navigation', 'button', 'footer']) {
+            const before = preCapture[k];
+            const after = postCapture[k];
+            let source = 'none';
+            if (after && before && after === before) source = 'pre-existing';
+            else if (renderResult && renderResult.colors && renderResult.colors[k] && after === renderResult.colors[k]) source = 'render';
+            else if (captureSource === 'image-fallback' && after) source = 'image-fallback';
+            else if (after) source = 'computed';
+            sections[k] = { value: after, source };
+        }
+        // determine palette used and 'other' remaining colors
+        const paletteUsed = Array.isArray(renderResult?.colors?.palette) ? renderResult.colors.palette.slice() : (captureSource === 'image-fallback' ? (raw.allBgs || []).slice() : []);
+        const usedVals = new Set(Object.values(sections).map(s => s.value).filter(Boolean));
+        const other = paletteUsed.filter(c => c && !usedVals.has(c));
+        raw._debugTheme.capture = {
+            pathUsed: renderResult ? 'render' : (captureSource || 'none'),
+            sections,
+            paletteUsed,
+            other,
+        };
+    } catch (err) { /* ignore */ }
 
     const rawTitle = cleanStr(raw.pageTitle || raw.ogTitle || '');
     const siteName = raw.ogSiteName || '';
@@ -1459,11 +2184,30 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         bodyFontSize: raw.bodyFontSize || null,
     };
 
-    const images = (raw.images || []).map(img => ({
-        ...img,
-        url: img.url.startsWith('inline-svg:') ? img.url : (toAbsUrl(img.url, baseUrl) || img.url),
-    }));
-    const videos = (raw.videos || []).map(vid => ({ ...vid, url: toAbsUrl(vid.url, baseUrl) || vid.url }));
+    // Dedup helper — keeps the first occurrence for a given key.
+    const dedupeBy = (arr, keyFn) => {
+        const seen = new Set();
+        const out = [];
+        for (const item of arr) {
+            const key = keyFn(item);
+            if (key == null || seen.has(key)) continue;
+            seen.add(key);
+            out.push(item);
+        }
+        return out;
+    };
+
+    const images = dedupeBy(
+        (raw.images || []).map(img => ({
+            ...img,
+            url: img.url.startsWith('inline-svg:') ? img.url : (toAbsUrl(img.url, baseUrl) || img.url),
+        })),
+        img => img.url
+    );
+    const videos = dedupeBy(
+        (raw.videos || []).map(vid => ({ ...vid, url: toAbsUrl(vid.url, baseUrl) || vid.url })),
+        vid => vid.videoId ? `${vid.platform}:${vid.videoId}` : vid.url
+    );
 
     const content = raw.content || {};
     const forms = raw.forms || [];
@@ -1472,7 +2216,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const seo = {
         title: cleanStr(raw.pageTitle || ''),
         metaDescription: sm.description || raw.metaDesc || '',
-        metaKeywords: (sm.keywords || '').split(',').map(k => k.trim()).filter(Boolean),
+        metaKeywords: [...new Set((sm.keywords || '').split(',').map(k => k.trim()).filter(Boolean))],
         canonicalUrl: raw.canonical || baseUrl,
         robotsTag: sm.robots || '',
         openGraph: {
@@ -1501,7 +2245,13 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         raw.textCorpusSample || '',
     ].join(' ');
 
-    const { industry, subIndustry, score: industryScore, source: industrySource } = await classifyIndustry(textCorpus);
+    const classificationInput = {
+        title: seo.title,
+        meta: (seo.metaDescription || '') + ' ' + (seo.metaKeywords || []).join(' '),
+        body: textCorpus,
+    };
+
+    const { industry, subIndustry, matchedKeywords, score: industryScore, confidence: industryConfidence, source: industrySource } = await classifyIndustry(classificationInput);
 
     const formFieldsFromExtractor = extractFormFieldsFromHtml(html);
     const mergedForms = [...forms];
@@ -1533,6 +2283,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         industry,
         subIndustry,
         industryScore,
+        industryConfidence,
         industrySource,
         scrapedAt: new Date().toISOString(),
         sourceUrl: websiteUrl,
@@ -1571,11 +2322,31 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
 const buildWebsiteProfile = (scraped, themeData = null) => {
     if (!scraped) return null;
 
+    // ─── FINAL DEDUP SAFETY NET ─────────────────────────────────────────────
+    // This is the last step before data is saved to the Project model, so it
+    // dedupes every array field regardless of how it was produced upstream
+    // (extraction overlap, multiple scrape passes, merges, etc).
+    // For primitives (strings), pass keyFn = (x) => x. For objects, pass a
+    // function that returns the field(s) that define uniqueness.
+    const dedupeArray = (arr, keyFn) => {
+        if (!Array.isArray(arr)) return [];
+        const seen = new Set();
+        const out = [];
+        for (const item of arr) {
+            const key = keyFn(item);
+            if (key == null || key === '') continue;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(item);
+        }
+        return out;
+    };
+
     const {
         identity = {}, colors = {}, logoColors = {}, themeSystem = {},
         typography = {}, images = [], videos = [], content = {},
         forms = [], seo = {}, sections = [],
-        industry, subIndustry, industryScore, industrySource,
+        industry, subIndustry, industryScore, industryConfidence, industrySource,
         scrapedAt, sourceUrl, finalUrl,
         darkMode = { enabled: false, overrides: {} },
         frameworkInfo = { platform: 'Plain HTML', frameworks: [], evidence: {} },
@@ -1597,20 +2368,20 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         logoColors: {
             primary: logoColors.primary || null,
             secondary: logoColors.secondary || null,
-            palette: logoColors.palette || [],
+            palette: dedupeArray(logoColors.palette, c => c),
             source: logoColors.source || null,
         },
         industry: {
             industry: industry || '',
             subIndustry: subIndustry || '',
-            confidence: industryScore || null,
+            confidence: industryConfidence ?? null,
             detectedFrom: industrySource ? [industrySource] : [],
         },
         colors: {
             primary: primaryColor,
             secondary: secondaryColor,
             accent: accentColor,
-            palette: Array.isArray(colors.palette) ? colors.palette : [],
+            palette: dedupeArray(colors.palette, c => c),
             pagePrimary: colors.primary || '',
             pageSecondary: colors.secondary || '',
         },
@@ -1639,18 +2410,37 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             const exactHeaderBg = exactElements.headerBrandBg;
             const exactFooterBg = exactElements.footerBrandBg;
 
+            // Defense-in-depth: even with FIX 7's same-element extraction, other sources in
+            // this fallback chain (exact*Bg from a different pass, meta theme-color, etc.)
+            // could still independently land on the same hex for bg and text, producing
+            // invisible text. If that happens, swap text for a contrasting default instead
+            // of trusting the coincidental match.
+            const hexLuminance = (hex) => {
+                if (!hex || hex[0] !== '#' || hex.length !== 7) return null;
+                const r = parseInt(hex.slice(1, 3), 16) / 255;
+                const g = parseInt(hex.slice(3, 5), 16) / 255;
+                const b = parseInt(hex.slice(5, 7), 16) / 255;
+                return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            };
+            const ensureContrast = (bg, text) => {
+                if (!bg || !text || bg.toLowerCase() !== text.toLowerCase()) return text;
+                const lum = hexLuminance(bg);
+                if (lum === null) return text;
+                return lum > 0.5 ? '#212221' : '#ffffff';
+            };
+
             // FIX 8: Removed `p` (page-level primary palette color) from button background
             // fallback chain — it frequently resolves to body text or page background color,
             // not the actual button color. Only trust explicit button-origin sources.
             const btnBg = first(exactBtnBg, themeSystem?.button?.background, cssPrimary, metaThemeColor);
-            const btnText = first(themeSystem?.button?.color, '#ffffff');
+            const btnText = ensureContrast(btnBg, first(themeSystem?.button?.color, '#ffffff'));
             const headerBg = first(exactHeaderBg, themeSystem?.header?.background, themeSystem?.page?.background, '#ffffff');
-            const headerText = first(themeSystem?.header?.color, themeSystem?.bodyText, '#212221');
-            const navText = first(themeSystem?.header?.link, themeSystem?.linkColor, cssPrimary, headerText);
+            const headerText = ensureContrast(headerBg, first(themeSystem?.header?.color, themeSystem?.bodyText, '#212221'));
+            const navText = ensureContrast(headerBg, first(themeSystem?.header?.link, themeSystem?.linkColor, cssPrimary, headerText));
             const navBg = first(themeSystem?.navigation?.background, headerBg);
             const navActive = first(themeSystem?.navigation?.active, cssPrimary, p);
             const footerBg = first(exactFooterBg, themeSystem?.footer?.background, '#212221');
-            const footerText = first(themeSystem?.footer?.color, '#898B8A');
+            const footerText = ensureContrast(footerBg, first(themeSystem?.footer?.color, '#898B8A'));
 
             const navHover = first(themeSystem?.navigation?.linkColors?.hover, cssSecondary);
             const navBorder = themeSystem?.header?.border || '';
@@ -1676,11 +2466,11 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         fonts: {
             primaryFont: typography.primaryFont || '',
             headingFont: typography.headingFont || '',
-            googleFonts: Array.isArray(typography.googleFontFamilies) ? typography.googleFontFamilies : [],
+            googleFonts: dedupeArray(typography.googleFontFamilies, f => f),
             bodyFont: typography.bodyFont || '',
             bodyFontSize: typography.bodyFontSize || '',
         },
-        images: (Array.isArray(images) ? images : []).map(img => ({
+        images: dedupeArray(images, img => img.url).map(img => ({
             url: img.url || '',
             alt: img.alt || '',
             section: img.section || 'unknown',
@@ -1688,7 +2478,7 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             height: img.height || null,
             ...(img.markup ? { markup: img.markup } : {}),
         })),
-        videos: (Array.isArray(videos) ? videos : []).map(vid => ({
+        videos: dedupeArray(videos, vid => vid.videoId ? `${vid.platform}:${vid.videoId}` : vid.url).map(vid => ({
             url: vid.url || '',
             platform: vid.platform || '',
             videoId: vid.videoId || '',
@@ -1701,31 +2491,32 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 subtitle: content.heroSubheading || '',
                 ctaText: (content.ctaTexts && content.ctaTexts[0]) || '',
             },
-            taglines: Array.isArray(content.taglines) ? content.taglines : [],
-            services: (Array.isArray(content.services) ? content.services : []).map(s => ({ title: s.title || '', description: s.description || '', icon: s.icon || '' })),
-            features: (Array.isArray(content.features) ? content.features : []).map(f => ({ title: f.title || '', description: f.description || '', icon: f.icon || '' })),
-            testimonials: (Array.isArray(content.testimonials) ? content.testimonials : []).map(t => ({ name: t.name || t.author || '', company: t.company || '', text: t.text || '', rating: t.rating || null })),
-            ctas: (Array.isArray(content.ctaTexts) ? content.ctaTexts : []).map(text => ({ title: '', description: '', buttonText: text })),
-            sectionHeadings: Array.isArray(content.sectionHeadings) ? content.sectionHeadings : [],
+            taglines: dedupeArray(content.taglines, t => t),
+            services: dedupeArray(content.services, s => s.title).map(s => ({ title: s.title || '', description: s.description || '', icon: s.icon || '' })),
+            features: dedupeArray(content.features, f => f.title).map(f => ({ title: f.title || '', description: f.description || '', icon: f.icon || '' })),
+            testimonials: dedupeArray(content.testimonials, t => t.text).map(t => ({ name: t.name || t.author || '', company: t.company || '', text: t.text || '', rating: t.rating || null })),
+            ctas: dedupeArray(content.ctaTexts, text => text).map(text => ({ title: '', description: '', buttonText: text })),
+            sectionHeadings: dedupeArray(content.sectionHeadings, h => h),
         },
-        forms: (Array.isArray(forms) ? forms : [])
-            .filter(f => Array.isArray(f.fields) && f.fields.length > 0)
-            .map((f, i) => ({
-                formName: f.formName || f.id || f.action || `form_${i}`,
-                fields: f.fields.map(field => ({
-                    name: String(field.name || `field_${i}`),
-                    label: String(field.label || field.placeholder || ''),
-                    type: String(field.type || 'text'),
-                    placeholder: String(field.placeholder || ''),
-                    required: !!field.required,
-                })),
+        forms: dedupeArray(
+            (Array.isArray(forms) ? forms : []).filter(f => Array.isArray(f.fields) && f.fields.length > 0),
+            f => `${f.action || ''}|${(f.fields || []).map(fld => `${fld.name}:${fld.type}`).join(',')}`
+        ).map((f, i) => ({
+            formName: f.formName || f.id || f.action || `form_${i}`,
+            fields: f.fields.map(field => ({
+                name: String(field.name || `field_${i}`),
+                label: String(field.label || field.placeholder || ''),
+                type: String(field.type || 'text'),
+                placeholder: String(field.placeholder || ''),
+                required: !!field.required,
             })),
+        })),
         seo: {
             title: seo.title || '',
             description: seo.metaDescription || '',
             canonicalUrl: seo.canonicalUrl || '',
             robots: seo.robotsTag || '',
-            keywords: Array.isArray(seo.metaKeywords) ? seo.metaKeywords : [],
+            keywords: dedupeArray(seo.metaKeywords, k => k),
             openGraph: {
                 title: seo.openGraph?.title || '',
                 description: seo.openGraph?.description || '',
@@ -1739,7 +2530,7 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 image: seo.twitterCard?.image || '',
             },
         },
-        sections: (Array.isArray(sections) ? sections : []).map((s, idx) => ({
+        sections: dedupeArray(sections, s => typeof s === 'string' ? s : (s.type || null)).map((s, idx) => ({
             type: typeof s === 'string' ? s : (s.type || ''),
             enabled: true,
             order: idx,

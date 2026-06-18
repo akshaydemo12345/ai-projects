@@ -21,26 +21,104 @@ exports.createProject = async (req, res, next) => {
       },
     };
 
-    // Scrape and build websiteProfile in one pass
+    // If website URL provided, store sourceUrl up-front and try a quick metadata fetch
+    // to populate light fields (favicon, logo, title, description). Heavy behavior
+    // arrays (images, videos, content, forms, sections, seo) are left for background scraping.
     if (req.body.websiteUrl || req.body.url) {
+      const websiteToInspect = req.body.websiteUrl || req.body.url;
+      projectPayload.websiteProfile = {
+        extraction: {
+          sourceUrl: normalizeDomain(websiteToInspect),
+        },
+      };
+      projectPayload.scrapeMeta = projectPayload.scrapeMeta || {};
+      projectPayload.scrapeMeta.status = 'pending';
+      projectPayload.scrapeMeta.sourceUrl = normalizeDomain(websiteToInspect);
+
+      // Quick metadata fetch (short timeout) to provide light-weight fields immediately
       try {
-        const websiteToInspect = req.body.websiteUrl || req.body.url;
-        const { scrapeWebsiteStructure, buildWebsiteProfile } = require('../services/structuredScrapeService');
+        const axios = require('axios');
+        const cheerio = require('cheerio');
+        const fetchUrl = /^https?:\/\//i.test(websiteToInspect) ? websiteToInspect : normalizeDomain(websiteToInspect);
+        const resp = await axios.get(fetchUrl, {
+          timeout: 2000,
+          maxRedirects: 5,
+          headers: { 'User-Agent': 'Buildify/QuickMeta (+https://example.com) Node' },
+        });
+        const html = resp.data || '';
+        const $ = cheerio.load(html);
 
-        const scraped = await scrapeWebsiteStructure(websiteToInspect);
-        projectPayload.websiteProfile = buildWebsiteProfile(scraped, null);
+        const title = $('meta[property="og:site_name"]').attr('content') || $('title').text() || null;
+        const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
 
-        // Update scrape meta
-        projectPayload.scrapeMeta.status = 'success';
-        projectPayload.scrapeMeta.finishedAt = new Date();
-      } catch (err) {
-        console.error('[projectController] scrape failed:', err.message);
-        projectPayload.scrapeMeta.status = 'failed';
-        projectPayload.scrapeMeta.errors = [err.message || 'Unknown scrape error'];
+        let favicon = $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href') || $('link[rel="apple-touch-icon"]').attr('href') || null;
+        if (favicon && !favicon.startsWith('http')) {
+          try { favicon = new URL(favicon, resp.request?.res?.responseUrl || fetchUrl).href; } catch (e) { /* ignore */ }
+        }
+
+        let logo = $('meta[property="og:image"]').attr('content') || $('img.logo').first().attr('src') || null;
+        if (logo && !logo.startsWith('http')) {
+          try { logo = new URL(logo, resp.request?.res?.responseUrl || fetchUrl).href; } catch (e) { /* ignore */ }
+        }
+
+        // Attach minimal identity info so frontend can show favicon/logo/title immediately
+        projectPayload.websiteProfile.identity = projectPayload.websiteProfile.identity || {};
+        if (favicon) projectPayload.websiteProfile.identity.faviconUrl = favicon;
+        if (logo) projectPayload.websiteProfile.identity.logoUrl = logo;
+        if (title) projectPayload.websiteProfile.identity.title = title;
+        if (description) projectPayload.websiteProfile.identity.description = description;
+
+        // Also expose quick light fields at the project root so UI can read them consistently
+        projectPayload.websiteUrl = fetchUrl;
+        if (logo) projectPayload.logoUrl = logo;
+        if (favicon && !projectPayload.faviconUrl) projectPayload.faviconUrl = favicon;
+        if (title && !projectPayload.name) projectPayload.name = projectPayload.name || title;
+        if (description && !projectPayload.description) projectPayload.description = projectPayload.description || description;
+
+        console.debug('[projectController] quick metadata fetched', { fetchUrl, hasTitle: !!title, hasDescription: !!description, hasFavicon: !!favicon, hasLogo: !!logo });
+      } catch (e) {
+        // Fail quietly — background job will attempt full scrape later
+        console.debug('[projectController] quick metadata fetch failed:', e?.message || e);
       }
     }
 
     const project = await Project.create(projectPayload);
+
+    // If a website was provided, perform the heavier scrape + profile build in background.
+    if (req.body.websiteUrl || req.body.url) {
+      const websiteToInspect = req.body.websiteUrl || req.body.url;
+      setImmediate(async () => {
+        try {
+          const { scrapeWebsiteStructure, buildWebsiteProfile } = require('../services/structuredScrapeService');
+          const scraped = await scrapeWebsiteStructure(websiteToInspect);
+          const websiteProfile = buildWebsiteProfile(scraped, null);
+
+          await Project.findByIdAndUpdate(
+            project._id,
+            {
+              $set: {
+                websiteProfile,
+                'scrapeMeta.status': 'success',
+                'scrapeMeta.finishedAt': new Date(),
+                'scrapeMeta.errors': [],
+              },
+            },
+            { runValidators: false }
+          );
+        } catch (err) {
+          console.error('[projectController] background scrape failed:', err?.message || err);
+          try {
+            await Project.findByIdAndUpdate(
+              project._id,
+              { $set: { 'scrapeMeta.status': 'failed', 'scrapeMeta.errors': [err?.message || 'Unknown scrape error'] } },
+              { runValidators: false }
+            );
+          } catch (e) {
+            console.error('[projectController] failed to persist scrape error state:', e?.message || e);
+          }
+        }
+      });
+    }
 
     res.status(201).json({
       status: 'success',
