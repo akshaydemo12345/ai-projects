@@ -970,6 +970,14 @@ exports.publishPage = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Page not found' });
     }
 
+    const project = await Project.findById(page.projectId);
+    if (project && !project.isVerified) {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Your WordPress plugin is deactivated or not verified. Please verify the API token in your WordPress dashboard to publish pages.'
+      });
+    }
+
     const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
     let liveUrl;
 
