@@ -1745,7 +1745,7 @@ exports.verifyPlugin = async (req, res, next) => {
 
     if (!project) {
       console.warn(`🔑 [VERIFY] Invalid API Token Attempt: [${apiToken}]`);
-      return res.status(401).json({ status: 'error', message: 'Invalid API token. No project found.' });
+      return res.status(401).json({ status: 'error', isVerified: false, message: 'Invalid API token. No project found.' });
     }
 
     console.log(`🔑 Plugin Verification Request: Token=[${apiToken}] | Domain=[${domain}]`);
@@ -1761,8 +1761,14 @@ exports.verifyPlugin = async (req, res, next) => {
       } else if (normalizeDomain(project.websiteUrl) !== incomingDomain) {
         // Domain mismatch!
         console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
+        
+        // Update project table - if not verified API then false
+        project.isVerified = false;
+        await Project.updateOne({ _id: project._id }, { $set: { isVerified: false, verificationStatus: 'failed' } });
+
         return res.status(403).json({
           status: 'error',
+          isVerified: false,
           message: 'Website URL not match. This API key is already linked to another website. Please create a new project for this domain.'
         });
       }
@@ -1772,11 +1778,11 @@ exports.verifyPlugin = async (req, res, next) => {
       'title slug content seo template domain publishedAt'
     );
 
-    // If verification succeeded and hasn't been set, set it to true
-    if (!project.isVerified) {
-      project.isVerified = true;
-      await Project.updateOne({ _id: project._id }, { $set: { isVerified: true } });
-    }
+    // Force verification to true on every successful plugin verification
+    project.isVerified = true;
+    project.verificationStatus = 'active';
+    project.verifiedAt = new Date();
+    await Project.updateOne({ _id: project._id }, { $set: { isVerified: true, verificationStatus: 'active', verifiedAt: new Date() } });
 
     const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
 
@@ -1794,6 +1800,7 @@ exports.verifyPlugin = async (req, res, next) => {
 
     res.status(200).json({
       status: 'active',
+      isVerified: true,
       source_url: project.websiteUrl || domain,   // BUG-FIX #3: plugin's class-api.php reads this in update_options()
       target_url: normalizedBackendBase,
       target_domain: config.api.baseUrl.replace(/^https?:\/\//i, ''),
