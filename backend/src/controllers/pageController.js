@@ -282,12 +282,48 @@ exports.verifyPageSlug = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please enter a valid page name or slug', data: {} });
     }
 
+    // Collision within the same project
     if (await Page.exists({ projectId, slug: normalizedSlug })) {
       return res.status(400).json({
         success: false,
         message: 'This URL slug already exists in this project. Please choose a different page name.',
         data: {}
       });
+    }
+
+    // If the current project has a configured websiteUrl, check other projects
+    // that use the same website URL and slug — block only in that case.
+    if (project.websiteUrl) {
+      const normalizeWebsiteKey = (u) => {
+        if (!u) return '';
+        let s = u.trim().toLowerCase();
+        if (!s.startsWith('http')) s = 'https://' + s;
+        try {
+          const urlObj = new URL(s);
+          // Use hostname + pathname (without trailing slash) as comparison key
+          return (urlObj.hostname.replace(/^www\./, '') + urlObj.pathname.replace(/\/+$/, '')) || urlObj.hostname.replace(/^www\./, '');
+        } catch (e) {
+          return s.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+        }
+      };
+
+      const thisSiteKey = normalizeWebsiteKey(project.websiteUrl);
+      if (thisSiteKey) {
+        const otherPages = await Page.find({ slug: normalizedSlug }).lean();
+        for (const op of otherPages) {
+          if (!op.projectId) continue;
+          if (op.projectId.toString() === projectId.toString()) continue; // same project already checked
+          const otherProject = await Project.findById(op.projectId).select('websiteUrl').lean();
+          const otherSiteKey = normalizeWebsiteKey(otherProject?.websiteUrl);
+          if (otherSiteKey && otherSiteKey === thisSiteKey) {
+            return res.status(400).json({
+              success: false,
+              message: 'This URL slug is already used by another project on the same website. Please choose a different page name.',
+              data: { conflictingProjectId: op.projectId }
+            });
+          }
+        }
+      }
     }
 
     // Check if page exists on external website if websiteUrl is configured.
@@ -512,9 +548,42 @@ exports.createPage = async (req, res, next) => {
     }
 
     // 5. Slug Generation (use finalSlug if provided)
-    const uniqueSlug = finalSlug ? await generateUniqueSlug(finalSlug, projectId) : await generateUniqueSlug(slug || title, projectId);
+    let uniqueSlug = finalSlug ? await generateUniqueSlug(finalSlug, projectId) : await generateUniqueSlug(slug || title, projectId);
 
-    // 5.5 Check if page already exists on the external website (best-effort, non-blocking)
+    // 5.5a Check if same slug exists in another project that shares the same websiteUrl (DB check)
+    if (project.websiteUrl) {
+      const normalizeWebsiteKey = (u) => {
+        if (!u) return '';
+        let s = u.trim().toLowerCase();
+        if (!s.startsWith('http')) s = 'https://' + s;
+        try {
+          const urlObj = new URL(s);
+          return (urlObj.hostname.replace(/^www\./, '') + urlObj.pathname.replace(/\/+$/, '')) || urlObj.hostname.replace(/^www\./, '');
+        } catch (e) {
+          return s.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+        }
+      };
+
+      const thisSiteKey = normalizeWebsiteKey(project.websiteUrl);
+      if (thisSiteKey) {
+        // Find any pages (across all projects) with the same slug
+        const conflictingPages = await Page.find({ slug: uniqueSlug, isDeleted: { $ne: true } }).lean();
+        for (const op of conflictingPages) {
+          if (!op.projectId) continue;
+          if (op.projectId.toString() === projectId.toString()) continue; // same project already handled above
+          const otherProject = await Project.findById(op.projectId).select('websiteUrl').lean();
+          const otherSiteKey = normalizeWebsiteKey(otherProject?.websiteUrl);
+          if (otherSiteKey && otherSiteKey === thisSiteKey) {
+            logger.warn(`Slug "${uniqueSlug}" already used by project ${op.projectId} on same website "${thisSiteKey}". Auto-resolving.`);
+            // Auto-resolve: append suffix so AI generation is not lost
+            uniqueSlug = uniqueSlug + '-' + crypto.randomBytes(3).toString('hex');
+            break;
+          }
+        }
+      }
+    }
+
+    // 5.5b Check if page already exists on the external website (best-effort, non-blocking)
     if (project.websiteUrl) {
       const { exists: existsOnWebsite, verified } = await checkPageExistsOnExternalWebsite(project, uniqueSlug);
       if (verified && existsOnWebsite) {

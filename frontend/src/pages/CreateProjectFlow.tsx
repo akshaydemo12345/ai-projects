@@ -248,23 +248,27 @@ const CreateProjectFlow = () => {
 
       let detectedCategory = category;
       if (meta.industry) {
-        detectedCategory = meta.industry;
-        setCategory(meta.industry);
-        setAvailableCategories(prev => {
-          if (!prev.includes(meta.industry)) {
-            return [...prev, meta.industry];
-          }
-          return prev;
-        });
+        // If detected industry is already in our list, select it.
+        if (availableCategories.includes(meta.industry)) {
+          detectedCategory = meta.industry;
+          setCategory(meta.industry);
+        } else {
+          // Not in list: select General as industry and expose detected industry as dynamic sub-industry
+          detectedCategory = 'General';
+          setCategory('General');
+          setCustomSubIndustry(meta.industry);
+          setSubIndustry('Other');
+        }
       } else if (meta.scrapedData?.industry) {
-        detectedCategory = meta.scrapedData.industry;
-        setCategory(meta.scrapedData.industry);
-        setAvailableCategories(prev => {
-          if (!prev.includes(meta.scrapedData.industry)) {
-            return [...prev, meta.scrapedData.industry];
-          }
-          return prev;
-        });
+        if (availableCategories.includes(meta.scrapedData.industry)) {
+          detectedCategory = meta.scrapedData.industry;
+          setCategory(meta.scrapedData.industry);
+        } else {
+          detectedCategory = 'General';
+          setCategory('General');
+          setCustomSubIndustry(meta.scrapedData.industry);
+          setSubIndustry('Other');
+        }
       }
 
       const candidateSubIndustry = meta.scrapedData?.subIndustry || meta.subIndustry || '';
@@ -274,6 +278,8 @@ const CreateProjectFlow = () => {
           setSubIndustry(candidateSubIndustry);
           setCustomSubIndustry('');
         } else {
+          // If detectedCategory is General because top-level industry wasn't in list,
+          // prefer showing the detected value as custom sub-industry.
           setSubIndustry('Other');
           setCustomSubIndustry(candidateSubIndustry);
         }
@@ -281,6 +287,14 @@ const CreateProjectFlow = () => {
 
       if (meta.scrapedImages) {
         setScrapedImages(meta.scrapedImages);
+      }
+
+      // Store full-page screenshot and render-derived colors (if backend returned them)
+      if (meta.screenshot) {
+        setScrapedData(prev => ({ ...(prev || {}), screenshot: meta.screenshot }));
+      }
+      if (meta.renderColors) {
+        setScrapedData(prev => ({ ...(prev || {}), renderColors: meta.renderColors }));
       }
 
       toast.success("Website analyzed successfully.");
@@ -511,6 +525,7 @@ const CreateProjectFlow = () => {
                       ) : (
                         <Input
                           disabled
+                          value={customSubIndustry}
                           placeholder="Select industry first"
                           className="h-11 rounded-xl bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-60"
                         />
@@ -599,12 +614,12 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{primaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {logoColors.source && logoColors.primary && (
+                        {/* {logoColors.source && logoColors.primary && (
                           <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
                             <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
                             From Logo
                           </span>
-                        )}
+                        )} */}
                       </div>
                     </div>
 
@@ -617,12 +632,12 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{secondaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {logoColors.source && logoColors.secondary && (
+                        {/* {logoColors.source && logoColors.secondary && (
                           <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
                             <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
                             From Logo
                           </span>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>

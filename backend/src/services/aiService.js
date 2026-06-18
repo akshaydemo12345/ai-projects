@@ -451,6 +451,9 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
     .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
     .replace(/\{\{BUSINESS_NAME_KEYWORD\}\}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
 
+  // Final system prompt to send to model
+  const finalSystemPrompt = resolved;
+
   if (openaiKey) {
     try {
       const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -467,6 +470,22 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       });
       const rawText = response.choices[0].message.content;
       const usage = response.usage;
+
+      // Try parse JSON if the model returned structured output
+      const tryParseJson = (txt) => {
+        if (!txt || typeof txt !== 'string') return null;
+        let s = txt.trim();
+        const fm = s.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        if (fm?.[1]) s = fm[1].trim();
+        try { return JSON.parse(s); } catch (e) { return null; }
+      };
+
+      const parsed = tryParseJson(rawText);
+      if (parsed) {
+        const fullHtml = parsed.fullHtml || parsed.html || parsed.htmlString || '';
+        return { fullHtml, meta: parsed.meta || {}, sections: parsed.sections || [], rawJson: parsed, aiUsage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model } };
+      }
+
       return {
         ...processResult(rawText, logoUrl),
         aiUsage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model }
@@ -495,8 +514,24 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
           headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15,prompt-caching-2024-07-31" }
         });
         const usage = response.usage;
+        const rawText = response.content[0].text;
+
+        const tryParseJson = (txt) => {
+          if (!txt || typeof txt !== 'string') return null;
+          let s = txt.trim();
+          const fm = s.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+          if (fm?.[1]) s = fm[1].trim();
+          try { return JSON.parse(s); } catch (e) { return null; }
+        };
+
+        const parsed = tryParseJson(rawText);
+        if (parsed) {
+          const fullHtml = parsed.fullHtml || parsed.html || parsed.htmlString || '';
+          return { fullHtml, meta: parsed.meta || {}, sections: parsed.sections || [], rawJson: parsed, aiUsage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model } };
+        }
+
         return {
-          ...processResult(response.content[0].text, logoUrl),
+          ...processResult(rawText, logoUrl),
           aiUsage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model }
         };
       } catch (err) {
@@ -864,7 +899,7 @@ const buildBusinessContext = (input) => {
 };
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input) => {
+const buildUserPrompt = (input, dna = {}, formHTML = '', placement = 'after-features') => {
   // Visual style nudge to ensure professional variety
   const styleNudges = [
     'Create a clean, modern SaaS-style layout with soft shadows, rounded corners, and clear sections.',
@@ -968,6 +1003,8 @@ const buildUserPrompt = (input) => {
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
+  // Human-readable placement label for the AI prompt (safe default provided)
+  const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
   lines.push(`\n━━━ CONTACT FORM PLACEMENT ━━━`);
   lines.push(placementLabel);
 
@@ -991,6 +1028,14 @@ NOW BUILD — FOLLOW THESE FINAL RULES:
   return lines.join('\n');
 };
 
+// If the caller requests structured JSON output, return prompt text to request JSON
+const appendJsonOutputInstructions = (input) => {
+  if (!input) return '';
+  const wantJson = input.outputFormat === 'json' || input.returnJson === true || input.forceJson === true;
+  if (!wantJson) return '';
+  return `\n\nIMPORTANT: Return ONLY valid JSON (no markdown, no explanation, no code fences). The JSON must follow this exact schema:\n{\n  "fullHtml": "<complete HTML page as a single string>",\n  "meta": { "title": "page title", "primaryColor": "#xxxxxx", "secondaryColor": "#xxxxxx" },\n  "sections": [ { "id": "hero", "html": "<section html>" } ],\n  "aiDebug": { "concept": "short concept label" }\n}\nIf you cannot produce all fields, still return a valid JSON object with the available keys. Do NOT include any extra top-level text.`;
+};
+
 // ═══════════════════════════════════════════════════════════
 //  GENERATE LANDING PAGE  — main export
 // ═══════════════════════════════════════════════════════════
@@ -1012,6 +1057,8 @@ const generateLandingPageContent = async (input) => {
 
   const systemPrompt = buildSystemPrompt(chaosToken);
   let userPrompt = buildUserPrompt(input, dna, formHTML, placement);
+  // Optionally request structured JSON output when the caller sets the flag
+  userPrompt += appendJsonOutputInstructions(input);
 
   if (input.templateHtml) {
     let prevHtml = '';
