@@ -51,8 +51,8 @@ const CreatePageFlow = () => {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleLogoPreviewImageLoad = async (img: HTMLImageElement) => {
-    const brightness = await getImageAverageBrightness(img.src);
+  const handleLogoPreviewImageLoad = (img: HTMLImageElement) => {
+    const brightness = getImageAverageBrightness(img);
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
 

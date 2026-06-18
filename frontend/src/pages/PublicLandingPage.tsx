@@ -525,10 +525,22 @@ const PublicLandingPage = () => {
               allTabs.forEach(function(tabEl, index) {
                 tabEl.style.cursor = 'pointer';
                 tabEl.addEventListener('click', function(e) {
-                  allTabs.forEach(function(t) { t.classList.remove('active'); });
-                  allPanels.forEach(function(p) { p.classList.remove('active'); });
+                  allTabs.forEach(function(t) { 
+                    t.classList.remove('active'); 
+                    t.style.borderBottomColor = 'transparent';
+                    t.style.color = '#4b5563';
+                  });
+                  allPanels.forEach(function(p) { 
+                    p.classList.remove('active'); 
+                    p.style.display = 'none';
+                  });
                   tabEl.classList.add('active');
-                  if (allPanels[index]) allPanels[index].classList.add('active');
+                  tabEl.style.borderBottomColor = 'var(--primary, #6366f1)';
+                  tabEl.style.color = 'var(--primary, #6366f1)';
+                  if (allPanels[index]) {
+                    allPanels[index].classList.add('active');
+                    allPanels[index].style.display = 'block';
+                  }
                 });
               });
             });
