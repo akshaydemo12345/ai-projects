@@ -745,6 +745,124 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 \`\`\`
 `;
 
+// ─── WEBSITE PROFILE + CUSTOM TEXT FLATTENER ──────────────────────────────────────
+// Merges project.websiteProfile (scraped brand data) with any free-text the user
+// typed in (business goals, services, audience, USPs) into one context block
+// the AI can use as ground truth for copywriting.
+const buildBusinessContext = (input) => {
+  const wp = input.websiteProfile || {};
+  const parts = [];
+
+  // ── User-provided custom text (grammar/spelling assumed already cleaned upstream,
+  //    but we still surface it verbatim so the AI can extract goals/USPs from it) ──
+  if (input.customText && input.customText.trim()) {
+    parts.push(`USER-PROVIDED BUSINESS NOTES (authoritative — merge with brand data below, resolve conflicts in favor of these notes):\n${input.customText.trim()}`);
+  }
+  if (input.businessDescription) parts.push(`BUSINESS DESCRIPTION: ${input.businessDescription}`);
+  if (input.targetAudience) parts.push(`TARGET AUDIENCE: ${input.targetAudience}`);
+  if (input.aiPrompt) {
+    let parsedPrompt = null;
+    try {
+      const cleanedPrompt = input.aiPrompt.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      parsedPrompt = JSON.parse(cleanedPrompt);
+    } catch (e) {
+      // Not JSON
+    }
+
+    if (parsedPrompt && typeof parsedPrompt === 'object') {
+      parts.push(`\n━━━ STRUCTURED LANDING PAGE INSTRUCTIONS (CRITICAL DIRECTIVES) ━━━`);
+      if (parsedPrompt.pageGoal) {
+        parts.push(`PAGE GOAL/TYPE: ${parsedPrompt.pageGoal}`);
+      }
+      if (parsedPrompt.targetAudience) {
+        parts.push(`TARGET AUDIENCE (Focus copy for them): ${parsedPrompt.targetAudience}`);
+      }
+      if (parsedPrompt.headline) {
+        parts.push(`HERO HEADLINE (You MUST use this exact headline or a minor variation in the hero section): "${parsedPrompt.headline}"`);
+      }
+      if (parsedPrompt.subheadline) {
+        parts.push(`HERO SUBHEADLINE (You MUST use this exact subheadline in the hero section): "${parsedPrompt.subheadline}"`);
+      }
+      if (parsedPrompt.sections && Array.isArray(parsedPrompt.sections)) {
+        parts.push(`MANDATORY SECTIONS SEQUENCE: ${parsedPrompt.sections.join(' -> ')}`);
+      }
+      if (parsedPrompt.tone) {
+        parts.push(`WRITING TONE: ${parsedPrompt.tone}`);
+      }
+      if (parsedPrompt.cta) {
+        if (parsedPrompt.cta.primary) {
+          parts.push(`PRIMARY CTA BUTTON TEXT: ${parsedPrompt.cta.primary}`);
+        }
+        if (parsedPrompt.cta.secondary) {
+          parts.push(`SECONDARY CTA BUTTON TEXT: ${parsedPrompt.cta.secondary}`);
+        }
+      }
+      if (parsedPrompt.keyServices && Array.isArray(parsedPrompt.keyServices)) {
+        parts.push(`KEY SERVICES TO FEATURE:\n${parsedPrompt.keyServices.map(s => `- ${s}`).join('\n')}`);
+      }
+      if (parsedPrompt.uniqueSellingPoints && Array.isArray(parsedPrompt.uniqueSellingPoints)) {
+        parts.push(`UNIQUE SELLING POINTS (USPs) TO FEATURE:\n${parsedPrompt.uniqueSellingPoints.map(u => `- ${u}`).join('\n')}`);
+      }
+      if (parsedPrompt.specialInstructions) {
+        parts.push(`SPECIAL LAYOUT & DESIGN DIRECTIVES:\n${parsedPrompt.specialInstructions}`);
+      }
+    } else {
+      parts.push(`SPECIFIC INSTRUCTIONS FROM USER: ${input.aiPrompt}`);
+    }
+  }
+
+  // ── Hero copy from scrape ──
+  const hero = wp.content?.hero;
+  if (hero?.title || hero?.subtitle) {
+    parts.push(`EXISTING HERO COPY (use as inspiration, improve if possible): Title: "${hero.title || ''}" | Subtitle: "${hero.subtitle || ''}" | CTA: "${hero.ctaText || ''}"`);
+  }
+
+  // ── Taglines ──
+  if (wp.content?.taglines?.length) {
+    parts.push(`BRAND TAGLINES: ${wp.content.taglines.join(' | ')}`);
+  }
+
+  // ── Services ──
+  const services = wp.content?.services?.length ? wp.content.services : null;
+  if (services) {
+    parts.push(`SERVICES/PRODUCTS:\n` + services.map(s => `- ${s.title}${s.description ? `: ${s.description}` : ''}`).join('\n'));
+  } else if (input.services?.length) {
+    parts.push(`SERVICES/PRODUCTS: ${input.services.join(', ')}`);
+  }
+
+  // ── Features / key selling points ──
+  if (wp.content?.features?.length) {
+    parts.push(`KEY FEATURES / SELLING POINTS:\n` + wp.content.features.map(f => `- ${f.title}${f.description ? `: ${f.description}` : ''}`).join('\n'));
+  }
+
+  // ── Testimonials ──
+  if (wp.content?.testimonials?.length) {
+    parts.push(`REAL TESTIMONIALS (use these, do not invent fake ones if these exist):\n` + wp.content.testimonials.map(t => `- "${t.text}" — ${t.name}${t.company ? `, ${t.company}` : ''}${t.rating ? ` (${t.rating}★)` : ''}`).join('\n'));
+  }
+
+  // ── Existing CTAs ──
+  if (wp.content?.ctas?.length) {
+    parts.push(`EXISTING CTA COPY: ` + wp.content.ctas.map(c => `${c.title || ''}${c.buttonText ? ` [Button: ${c.buttonText}]` : ''}`).filter(Boolean).join(' | '));
+  }
+
+  // ── Section heading style ──
+  if (wp.content?.sectionHeadings?.length) {
+    parts.push(`EXISTING SECTION HEADING STYLE (for tone matching): ${wp.content.sectionHeadings.join(' | ')}`);
+  }
+
+  // ── Identity / description ──
+  if (wp.identity?.description) {
+    parts.push(`BRAND DESCRIPTION: ${wp.identity.description}`);
+  }
+
+  // ── SEO keywords for tone/topic grounding ──
+  if (wp.seo?.keywords?.length) {
+    parts.push(`SEO KEYWORDS (weave naturally into copy): ${wp.seo.keywords.slice(0, 10).join(', ')}`);
+  }
+
+  return parts.join('\n\n');
+};
+
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
 const buildUserPrompt = (input) => {
   // Visual style nudge to ensure professional variety
@@ -837,6 +955,13 @@ const buildUserPrompt = (input) => {
     `🧩 ${randomFaqNudge}`,
     `CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`
   );
+
+  // ── Merged websiteProfile + custom user text (business goals, services, USPs) ──
+  const businessContext = buildBusinessContext(input);
+  if (businessContext) {
+    lines.push(`\n━━━ BUSINESS CONTEXT (websiteProfile + user notes — ground all copy in this, write a UNIQUE page tailored to THIS business, not a generic template) ━━━`);
+    lines.push(businessContext);
+  }
 
   if (input.websiteContent) {
     lines.push(`\n━━━ SCRAPED WEBSITE CONTENT (use real names, facts, copy from this) ━━━`);
@@ -1178,13 +1303,106 @@ CONTRAST RULE: if setting dark background, also set light text color in same css
 };
 
 // ═══════════════════════════════════════════════════════════
-//  DESCRIPTION SUGGESTION
+//  DESCRIPTION SUGGESTION  (Structured JSON prompt)
 // ═══════════════════════════════════════════════════════════
-const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt }) => {
-  const sys = `You are a Landing Page Conversion Copywriter. Write a compelling business description. 3-4 sentences. Benefit-driven. No generic filler. Return ONLY the description text.`;
-  const user = `PAGE:${pageName}\nINDUSTRY:${industry}\nBUSINESS:${projectDesc || 'not provided'}\nIMPROVE:${currentPrompt || 'none'}`;
+const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, currentPrompt, websiteProfile, scrapedData, uiOverrides }) => {
+  const sys = `You are an elite Landing Page Strategist and Conversion Copywriter.
+Your job is to generate a STRUCTURED JSON prompt that will be fed to an AI page generator to build a high-converting landing page.
+
+RULES:
+1. Return ONLY valid JSON — no markdown, no backticks, no explanation before or after.
+2. The JSON must follow this EXACT schema:
+{
+  "pageGoal": "lead generation | sales | booking | event | waitlist | coming soon",
+  "targetAudience": "Specific audience description",
+  "headline": "Compelling hero headline for the page",
+  "subheadline": "Supporting subtitle that expands on the headline",
+  "sections": ["hero", "features", "about", "services", "testimonials", "faq", "contact", "footer"],
+  "tone": "professional | friendly | premium | bold | minimal | corporate",
+  "cta": {
+    "primary": "Primary CTA button text",
+    "secondary": "Secondary CTA text (optional)"
+  },
+  "keyServices": ["Service 1", "Service 2", "Service 3"],
+  "uniqueSellingPoints": ["USP 1", "USP 2", "USP 3"],
+  "specialInstructions": "Any additional creative direction or specific requirements for the page layout and content"
+}
+3. Ground ALL content in the REAL business data provided — use actual services, features, testimonials.
+4. If a CURRENT PROMPT (free text) is provided by the user, CORRECT any spelling/grammar errors, understand the user's INTENT, and restructure it into the JSON schema above — preserving their ideas but making them professional and actionable.
+5. The "sections" array should list 8-10 relevant section types based on the industry and page goal.
+6. Write "headline" and "subheadline" as actual compelling copy — not instructions.
+7. "keyServices" must reflect the REAL services from the business data.
+8. "specialInstructions" should contain creative direction about layout style, imagery, and any industry-specific elements (e.g. "before/after gallery for roofing", "booking calendar for healthcare").
+9. ALL text content MUST be in English only.`;
+
+  const lines = [
+    `PAGE NAME: ${pageName}`,
+    `INDUSTRY: ${industry}`,
+    `PROJECT/BUSINESS DESCRIPTION: ${projectDesc || 'not provided'}`,
+  ];
+
+  // Reuse the same flattener used for full-page generation so Magic Write
+  // and the actual page generator are grounded in identical business data.
+  const businessContext = buildBusinessContext({
+    websiteProfile,
+    businessDescription: projectDesc,
+  });
+  if (businessContext) {
+    lines.push(`\n━━━ BRAND & BUSINESS DATA (use this to make the JSON specific and real) ━━━`);
+    lines.push(businessContext);
+  }
+
+  // Live UI color/font overrides — current brand styling context
+  if (uiOverrides) {
+    const styleParts = [];
+    if (uiOverrides.primaryColor) styleParts.push(`primary:${uiOverrides.primaryColor}`);
+    if (uiOverrides.secondaryColor) styleParts.push(`secondary:${uiOverrides.secondaryColor}`);
+    if (uiOverrides.accentColor) styleParts.push(`accent:${uiOverrides.accentColor}`);
+    if (uiOverrides.headingFont) styleParts.push(`heading font:${uiOverrides.headingFont}`);
+    if (uiOverrides.bodyFont) styleParts.push(`body font:${uiOverrides.bodyFont}`);
+    if (styleParts.length) lines.push(`\nCURRENT BRAND STYLING: ${styleParts.join(', ')}`);
+  }
+
+  // Fallback to scrapedData hero/services if websiteProfile is empty
+  if (!websiteProfile?.content && scrapedData) {
+    if (scrapedData.hero?.title || scrapedData.hero?.subtitle) {
+      lines.push(`\nSCRAPED HERO COPY: "${scrapedData.hero?.title || ''}" / "${scrapedData.hero?.subtitle || ''}"`);
+    }
+    if (scrapedData.services?.length) {
+      lines.push(`SCRAPED SERVICES: ${scrapedData.services.map(s => s.title || s).join(', ')}`);
+    }
+  }
+
+  if (currentPrompt && currentPrompt.trim()) {
+    lines.push(`\nUSER'S CURRENT TEXT (correct any errors, understand intent, convert to JSON schema): ${currentPrompt}`);
+  } else {
+    lines.push(`\nNo user prompt provided — generate a fresh JSON prompt from scratch based on the business data above.`);
+  }
+
+  const user = lines.join('\n');
   const r = await callAIText(sys, user);
-  return { suggestion: r.text.trim(), text: r.text.trim(), aiUsage: r.aiUsage };
+
+  // Parse AI output — strip markdown fences if present, extract valid JSON
+  let rawText = r.text.trim();
+  rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch (e) {
+    // If AI returned invalid JSON, try to extract JSON from the response
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch (_) { /* fallback below */ }
+    }
+  }
+
+  // If parsing succeeded, return formatted JSON string; otherwise return raw text
+  const formattedJson = parsed ? JSON.stringify(parsed, null, 2) : rawText;
+
+  return { suggestion: formattedJson, text: formattedJson, json: parsed, aiUsage: r.aiUsage };
 };
 
 // ═══════════════════════════════════════════════════════════
