@@ -98,6 +98,15 @@ const fetchHtmlWithPlaywright = async (url, timeoutMs = 30000) => {
 
         const html = await page.content();
         const finalUrl = page.url() || url;
+
+        // ✅ ADD THIS BLOCK
+        const isCaptchaRedirect = /\/(sgcaptcha|captcha|bot-check|challenge|cf-challenge)/i.test(finalUrl);
+
+        if (isCaptchaRedirect) {
+            logger.warn(`[Scraper] Bot-detection redirect detected: ${finalUrl}`);
+            throw new Error(`Blocked by bot detection: ${finalUrl}`);
+        }
+
         logger.info(`[Scraper] playwright render OK${navigated ? '' : ' (partial)'}: ${finalUrl}`);
         return { html, finalUrl };
     } finally {
@@ -216,10 +225,19 @@ const fetchBinary = async (url, referer = '', timeoutMs = 10000) => {
 };
 
 const toAbsUrl = (src, base) => {
-    if (!src || src.startsWith('data:')) return null;
-    if (src.startsWith('http')) return src;
-    if (src.startsWith('//')) return 'https:' + src;
-    try { return new URL(src, base).href; } catch { return null; }
+    if (!src) return null;
+
+    // ✅ Explicit reject
+    if (src.startsWith('data:')) {
+        return null;
+    }
+
+    try {
+        return new URL(src, base).href;
+    } catch (e) {
+        logger.warn(`[toAbsUrl] Invalid URL: ${src}`);
+        return null;
+    }
 };
 
 const cleanStr = (s) => (s || '').trim().replace(/\s+/g, ' ');
@@ -417,7 +435,15 @@ const extractColorsFromSvgMarkup = (svgMarkup) => {
 };
 
 const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => {
-    if (!logoUrl) return { primary: null, secondary: null, palette: [], source: null };
+    if (!logoUrl) {
+        return { primary: null, secondary: null, palette: [], source: null };
+    }
+
+    // ✅ NEW GUARD
+    if (logoUrl.startsWith('data:') && !logoUrl.startsWith('data:image/')) {
+        logger.warn(`[LogoColors] Skipping non-image data URI: ${logoUrl.slice(0, 50)}`);
+        return { primary: null, secondary: null, palette: [], source: null };
+    }
 
     try {
         let imageBuffer;
@@ -925,7 +951,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
     const ogTitle = $('meta[property="og:title"]').attr('content') || '';
     const ogSiteName = $('meta[property="og:site_name"]').attr('content') || '';
 
-    const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw)(\?.*)?$/i;
+    const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw|ico)(\?.*)?$/i;
     const isSupportedImageSrc = (src) => {
         if (!src) return false;
         if (src.startsWith('data:image/')) return true;
@@ -1128,8 +1154,12 @@ const extractWithCheerio = ($, html, baseUrl) => {
             if (favicon) break;
         }
     }
-    if (!favicon) favicon = new URL(baseUrl).origin + '/favicon.ico';
-    favicon = toAbs(favicon);
+    try {
+        const origin = new URL(originalUrl || baseUrl).origin;
+        if (!favicon) favicon = origin + '/favicon.ico';
+    } catch (e) {
+        logger.warn('[Scraper] Failed to build favicon fallback');
+    } favicon = toAbs(favicon);
     if (!logoUrl && favicon) { logoUrl = favicon; logoFormat = 'favicon-fallback'; }
 
     const cssVariables = {};
@@ -1317,6 +1347,65 @@ const extractWithCheerio = ($, html, baseUrl) => {
         if (isUnwantedUrl(url)) return;
         images.push({ url, alt: 'background', width: null, height: null, section: getSectionForEl($(el)) });
         seenImgUrls.add(url);
+    });
+
+    // Extract images from <picture><source> elements (common WebP delivery pattern)
+    $('picture').each((_, el) => {
+        const $pic = $(el);
+        // Prefer the highest-quality source (WebP > others), fall back to inner <img>
+        const sources = $pic.find('source').toArray();
+        let bestUrl = null;
+        // First pass: pick WebP source with srcset
+        for (const src of sources) {
+            const type = ($(src).attr('type') || '').toLowerCase();
+            const srcset = $(src).attr('srcset') || '';
+            if (type.includes('webp') && srcset) {
+                const candidates = srcset.split(',').map(s => {
+                    const parts = s.trim().split(/\s+/);
+                    const width = parseInt(parts[1]) || 0;
+                    return { url: parts[0], width };
+                }).filter(c => c.url);
+                if (candidates.length > 0) {
+                    candidates.sort((a, b) => b.width - a.width);
+                    bestUrl = toAbs(candidates[0].url);
+                }
+                break;
+            }
+        }
+        // Second pass: any source with srcset
+        if (!bestUrl) {
+            for (const src of sources) {
+                const srcset = $(src).attr('srcset') || '';
+                if (srcset) {
+                    const candidates = srcset.split(',').map(s => {
+                        const parts = s.trim().split(/\s+/);
+                        const width = parseInt(parts[1]) || 0;
+                        return { url: parts[0], width };
+                    }).filter(c => c.url);
+                    if (candidates.length > 0) {
+                        candidates.sort((a, b) => b.width - a.width);
+                        bestUrl = toAbs(candidates[0].url);
+                        break;
+                    }
+                }
+            }
+        }
+        // Fallback to inner <img> (already captured above, but covers edge cases)
+        if (!bestUrl) {
+            const innerImg = $pic.find('img').first();
+            if (innerImg.length) {
+                bestUrl = toAbs(getRealSrc(innerImg));
+            }
+        }
+        if (!bestUrl || seenImgUrls.has(bestUrl)) return;
+        if (isUnwantedUrl(bestUrl)) return;
+        const innerImg = $pic.find('img').first();
+        const alt = cleanStr(innerImg.attr('alt') || '');
+        const w = parseInt(innerImg.attr('width') || '0', 10);
+        const h = parseInt(innerImg.attr('height') || '0', 10);
+        if ((w > 0 && w < 50) || (h > 0 && h < 50)) return;
+        images.push({ url: bestUrl, alt, width: w || null, height: h || null, section: getSectionForEl($pic) });
+        seenImgUrls.add(bestUrl);
     });
 
     const videos = [];
@@ -2087,7 +2176,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         .trim();
     const identityName = siteName || cleanedTitle || '';
 
-    const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw)(\?.*)?$/i;
+    const LOGO_IMG_EXTS = /\.(jpe?g|png|gif|bmp|webp|tiff?|svg|ai|eps|apng|raw|cr2|nef|arw|ico)(\?.*)?$/i;
     const detectLogoFormat = (url) => {
         if (!url) return null;
         if (url.startsWith('data:image/svg')) return 'svg-inline';
