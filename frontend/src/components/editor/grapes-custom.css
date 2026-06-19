@@ -269,7 +269,8 @@
 /* Label */
 .gjs-editor .gjs-sm-label,
 .gjs-editor .gjs-trt-label {
-  color: #111827 !important; /* Darker, crisper text like screenshot */
+  color: #111827 !important;
+  /* Darker, crisper text like screenshot */
   font-weight: 500 !important;
   font-size: 13px !important;
   font-family: 'Inter', system-ui, sans-serif !important;
@@ -278,7 +279,8 @@
 .gjs-editor .gjs-sm-property__composite .gjs-sm-label,
 .gjs-editor .gjs-sm-property__stack .gjs-sm-label {
   margin-bottom: 4px !important;
-  font-size: 12px !important; /* Slightly smaller for composite internal labels */
+  font-size: 12px !important;
+  /* Slightly smaller for composite internal labels */
   color: #4b5563 !important;
 }
 
@@ -342,16 +344,94 @@
   pointer-events: none;
 }
 
+/* =============================================
+   gjs-field-int — Integer / Number field
+   NOTE: .gjs-field-int is a CHILD of .gjs-field
+   So NO border/background here — parent handles it.
+   Only need display:flex so input + arrows are side-by-side.
+   ============================================= */
+.gjs-editor .gjs-field-int {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gjs-editor .gjs-field-int input[type="number"],
+.gjs-editor .gjs-field-int input {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 8px !important;
+  box-sizing: border-box !important;
+  /* Hide native browser number spinners — GrapesJS arrows are used instead */
+  -moz-appearance: textfield !important;
+}
+
+.gjs-editor .gjs-field-int input[type="number"]::-webkit-inner-spin-button,
+.gjs-editor .gjs-field-int input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* Swiper slider — field-int inside traits panel (same pattern) */
+.gjs-editor #traits-container .gjs-field-int {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gjs-editor #traits-container .gjs-field-int input {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 8px !important;
+  -moz-appearance: textfield !important;
+}
+
+.gjs-editor #traits-container .gjs-field-int input::-webkit-inner-spin-button,
+.gjs-editor #traits-container .gjs-field-int input::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
 /* Numeric arrows - Redesigned to be subtle and not disturb layout */
 .gjs-editor .gjs-field-arrows {
   display: flex !important;
-  flex-direction: column !important; /* Restore normal order */
+  flex-direction: column !important;
+  /* Restore normal order */
   justify-content: center !important;
   align-items: center !important;
   width: 25px !important;
   height: 100% !important;
   background: #f9fafb !important;
-  border-left: 1px solid #d1d5db !important; /* Vertical middle line */
+  border-left: 1px solid #d1d5db !important;
+  /* Vertical middle line */
   position: relative !important;
 }
 
@@ -385,7 +465,8 @@
   margin: 0 !important;
   padding: 0 !important;
   border-style: solid !important;
-  border-width: 0 4px 4px 4px !important; /* Triangle pointing UP */
+  border-width: 0 4px 4px 4px !important;
+  /* Triangle pointing UP */
   border-color: transparent transparent #000000 transparent !important;
 }
 
@@ -399,7 +480,8 @@
   margin: 0 !important;
   padding: 0 !important;
   border-style: solid !important;
-  border-width: 4px 4px 0 4px !important; /* Triangle pointing DOWN */
+  border-width: 4px 4px 0 4px !important;
+  /* Triangle pointing DOWN */
   border-color: #000000 transparent transparent transparent !important;
 }
 
@@ -463,7 +545,8 @@
 
 .gjs-editor .gjs-radio-item input:checked+.gjs-radio-item-label {
   background: #f3e8ff !important;
-  color: #7c3aed !important; /* Matching GrapeJS Studio purple */
+  color: #7c3aed !important;
+  /* Matching GrapeJS Studio purple */
 }
 
 .gjs-editor .gjs-radio-item:hover {
@@ -543,7 +626,7 @@ body:has(.gjs-editor) {
   width: 100% !important;
 }
 
-.gjs-editor .gjs-sm-property__stack > .gjs-sm-label {
+.gjs-editor .gjs-sm-property__stack>.gjs-sm-label {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
@@ -565,7 +648,8 @@ body:has(.gjs-editor) {
   font-size: 18px !important;
   font-weight: bold !important;
   cursor: pointer !important;
-  margin-left: auto !important; /* Push to the right */
+  margin-left: auto !important;
+  /* Push to the right */
   opacity: 1 !important;
 }
 
@@ -604,6 +688,29 @@ body:has(.gjs-editor) {
   padding: 10px 12px !important;
   background: #ffffff !important;
   border-bottom: 1px solid #e5e7eb !important;
+  width: 100% !important;
+}
+
+/* Custom Accordion Header Trait */
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header {
+  padding: 0 !important;
+  border-bottom: none !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header .gjs-label {
+  display: none !important;
+  /* Hide the default label */
+}
+
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header .gjs-field {
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  box-shadow: none !important;
+  padding: 0 !important;
   width: 100% !important;
 }
 
@@ -755,11 +862,13 @@ body:has(.gjs-editor) {
   justify-content: space-between !important;
   padding-bottom: 8px !important;
 }
+
 .gjs-clm-header-status {
   font-size: 13px !important;
   font-weight: 600 !important;
   color: #0f172a !important;
 }
+
 .gjs-clm-states {
   border: 1px solid #d1d5db !important;
   border-radius: 4px !important;
@@ -778,10 +887,12 @@ body:has(.gjs-editor) {
   padding: 4px 8px !important;
   background: #fff !important;
 }
+
 .gjs-clm-sel-b {
   flex-grow: 1 !important;
   margin-right: 8px !important;
 }
+
 .gjs-clm-sel-b input {
   border: none !important;
   outline: none !important;
@@ -790,6 +901,7 @@ body:has(.gjs-editor) {
   color: #111827 !important;
   background: transparent !important;
 }
+
 .gjs-clm-btn-add {
   color: #6366f1 !important;
   font-size: 14px !important;
@@ -810,8 +922,10 @@ body:has(.gjs-editor) {
   flex-wrap: wrap !important;
   gap: 6px !important;
 }
+
 .gjs-clm-tag {
-  background: #3b82f6 !important; /* Blue like the screenshot */
+  background: #3b82f6 !important;
+  /* Blue like the screenshot */
   color: #fff !important;
   border: none !important;
   border-radius: 4px !important;
@@ -821,11 +935,13 @@ body:has(.gjs-editor) {
   align-items: center !important;
   gap: 6px !important;
 }
+
 .gjs-clm-tag-close {
   cursor: pointer !important;
   opacity: 0.8 !important;
   font-size: 14px !important;
 }
+
 .gjs-clm-tag-close:hover {
   opacity: 1 !important;
 }
@@ -1012,7 +1128,8 @@ body:has(.gjs-editor) {
   font-family: 'Inter', system-ui, sans-serif !important;
   padding: 12px !important;
   box-sizing: border-box !important;
-  min-height: 200px !important; /* Force container height */
+  min-height: 200px !important;
+  /* Force container height */
   height: 200px !important;
   width: 250px !important;
 }
@@ -1027,14 +1144,16 @@ body:has(.gjs-editor) {
   border: none !important;
   padding: 0 !important;
   position: relative !important;
-  height: 170px !important; /* Fixed height to prevent collapse */
+  height: 170px !important;
+  /* Fixed height to prevent collapse */
   min-height: 170px !important;
   display: block !important;
 }
 
 /* Top Color Preview */
 .sp-initial {
-  display: none !important; /* Hide native initial to save space */
+  display: none !important;
+  /* Hide native initial to save space */
 }
 
 /* Top Container (holds map and hue) */
@@ -1051,8 +1170,10 @@ body:has(.gjs-editor) {
 .sp-color {
   border: 1px solid #e5e7eb !important;
   border-radius: 4px !important;
-  right: 20px !important; /* Make room for vertical hue slider */
-  height: 100% !important; /* Fill .sp-top */
+  right: 20px !important;
+  /* Make room for vertical hue slider */
+  height: 100% !important;
+  /* Fill .sp-top */
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
@@ -1063,10 +1184,12 @@ body:has(.gjs-editor) {
 .sp-hue {
   border: 1px solid #e5e7eb !important;
   border-radius: 4px !important;
-  left: auto !important; 
-  right: 0 !important; /* Push to the right edge */
+  left: auto !important;
+  right: 0 !important;
+  /* Push to the right edge */
   width: 15px !important;
-  height: 100% !important; /* Fill .sp-top */
+  height: 100% !important;
+  /* Fill .sp-top */
   position: absolute !important;
   top: 0 !important;
   bottom: 0 !important;
@@ -1075,7 +1198,7 @@ body:has(.gjs-editor) {
 /* Dragger Handle */
 .sp-dragger {
   border: 2px solid #ffffff !important;
-  box-shadow: 0 0 2px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) !important;
   border-radius: 50% !important;
   width: 12px !important;
   height: 12px !important;
@@ -1085,7 +1208,7 @@ body:has(.gjs-editor) {
 /* Slider Handle */
 .sp-slider {
   border: 2px solid #ffffff !important;
-  box-shadow: 0 0 2px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) !important;
   background: transparent !important;
   border-radius: 2px !important;
   height: 6px !important;
@@ -1121,7 +1244,8 @@ body:has(.gjs-editor) {
 
 /* Save / OK Button */
 .sp-choose {
-  background-color: #3b82f6 !important; /* Blue to match screenshot */
+  background-color: #3b82f6 !important;
+  /* Blue to match screenshot */
   color: #ffffff !important;
   border: none !important;
   border-radius: 4px !important;
@@ -1134,6 +1258,7 @@ body:has(.gjs-editor) {
   text-shadow: none !important;
   background-image: none !important;
 }
+
 .sp-choose:hover {
   background-color: #2563eb !important;
 }
@@ -1147,15 +1272,17 @@ body:has(.gjs-editor) {
   margin-left: 8px !important;
   padding: 6px !important;
 }
+
 .sp-cancel:hover {
   color: #111827 !important;
 }
+
 .gjs-editor .gs-utl-rounded-full {
   border-radius: 9999px !important;
 }
 
 /* Force white background for styles and traits containers */
-#styles-container, 
+#styles-container,
 #traits-container,
 .gjs-sm-sectors,
 .gjs-trt-traits {
@@ -1167,9 +1294,10 @@ body:has(.gjs-editor) {
   min-width: 50% !important;
 }
 
-/* Fix for checkbox traits */
+/* Fix for checkbox traits to look like Toggle Switches */
 .gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox,
-.gjs-editor #traits-container .gjs-trt-trait .gjs-field[data-type="checkbox"] {
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field[data-type="checkbox"],
+.gjs-editor #traits-container .gjs-trt-trait--checkbox .gjs-field {
   width: auto !important;
   height: auto !important;
   border: none !important;
@@ -1182,18 +1310,54 @@ body:has(.gjs-editor) {
 }
 
 .gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox input,
-.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"] {
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"],
+.gjs-editor #traits-container .gjs-trt-trait--checkbox input {
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
-  width: 16px !important;
-  height: 16px !important;
+  width: 36px !important;
+  height: 20px !important;
   cursor: pointer !important;
   margin: 0 !important;
   position: relative !important;
-  appearance: auto !important;
-  -webkit-appearance: checkbox !important;
-  z-index: 10 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-color: #d1d5db !important;
+  border-radius: 20px !important;
+  outline: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #ffffff !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]:checked {
+  background-color: #8b5cf6 !important;
+  /* purple toggle like the screenshot */
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]:checked::after {
+  transform: translateX(16px) !important;
+}
+
+/* Swiper / Text Traits styling */
+.gjs-editor #traits-container .gjs-trt-trait--text {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait--text .gjs-label {
+  margin-bottom: 6px !important;
 }
 
 /* Hide grapesjs native fake checkbox if present */
@@ -1206,18 +1370,22 @@ body:has(.gjs-editor) {
   background: transparent !important;
   color: #111827 !important;
 }
+
 .gjs-editor .gjs-clm-tags * {
   color: #111827 !important;
 }
+
 .gjs-editor .gjs-clm-header {
   padding-bottom: 8px !important;
 }
+
 .gjs-editor .gjs-clm-header-status {
   font-size: 13px !important;
   font-weight: 500 !important;
   color: #111827 !important;
   font-family: 'Inter', system-ui, sans-serif !important;
 }
+
 .gjs-editor .gjs-clm-states {
   background-color: #ffffff !important;
   color: #111827 !important;
@@ -1237,10 +1405,12 @@ body:has(.gjs-editor) {
   cursor: pointer !important;
   transition: border-color 0.2s, box-shadow 0.2s !important;
 }
+
 .gjs-editor .gjs-clm-states:focus {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
 }
+
 .gjs-editor .gjs-clm-sel {
   background: #ffffff !important;
   border: 1px solid #d1d5db !important;
@@ -1249,11 +1419,13 @@ body:has(.gjs-editor) {
   height: 32px !important;
   align-items: center !important;
 }
+
 .gjs-editor .gjs-clm-sel-b {
   height: 100% !important;
   display: flex !important;
   align-items: center !important;
 }
+
 .gjs-editor .gjs-clm-sel-b input {
   color: #111827 !important;
   background: transparent !important;
@@ -1261,6 +1433,7 @@ body:has(.gjs-editor) {
   font-family: 'Inter', system-ui, sans-serif !important;
   height: 100% !important;
 }
+
 .gjs-editor .gjs-clm-btn-add {
   background: #ffffff !important;
   color: #6366f1 !important;
@@ -1268,6 +1441,7 @@ body:has(.gjs-editor) {
   font-size: 16px !important;
   line-height: 1 !important;
 }
+
 .gjs-editor .gjs-clm-tags .gjs-sm-label {
   color: #111827 !important;
   font-size: 13px !important;
@@ -1276,6 +1450,7 @@ body:has(.gjs-editor) {
   margin-top: 10px !important;
   margin-bottom: 4px !important;
 }
+
 .gjs-editor .gjs-clm-tag {
   background: #e0e7ff !important;
   color: #4f46e5 !important;
@@ -1285,14 +1460,17 @@ body:has(.gjs-editor) {
   font-family: 'Inter', system-ui, sans-serif !important;
   border: 1px solid #c7d2fe !important;
 }
+
 .gjs-editor .gjs-clm-tag * {
   color: #4f46e5 !important;
 }
+
 .gjs-editor .gjs-clm-tag-close {
   color: #4f46e5 !important;
   margin-left: 6px !important;
   cursor: pointer !important;
 }
+
 .gjs-editor .gjs-clm-tags-list {
   display: flex !important;
   flex-wrap: wrap !important;
@@ -1305,9 +1483,11 @@ body:has(.gjs-editor) {
   display: flex !important;
   flex-direction: column !important;
 }
+
 .gjs-editor #styles-container .gjs-sm-sectors {
   order: 1 !important;
 }
+
 .gjs-editor #styles-container .gjs-clm-tags {
   order: 2 !important;
   border-top: 1px solid #e5e7eb !important;
@@ -1320,8 +1500,8 @@ body:has(.gjs-editor) {
 .gjs-editor .gjs-clm-header-status,
 .gjs-editor .gjs-clm-tags .gjs-sm-label,
 .gjs-editor .gjs-clm-tags .gjs-clm-label,
-.gjs-editor .gjs-clm-tags > div:first-child > div:first-child,
-.gjs-editor .gjs-clm-tags > div:last-child > div:first-child {
+.gjs-editor .gjs-clm-tags>div:first-child>div:first-child,
+.gjs-editor .gjs-clm-tags>div:last-child>div:first-child {
   color: #111827 !important;
   font-size: 13px !important;
   font-weight: 500 !important;
@@ -1331,7 +1511,7 @@ body:has(.gjs-editor) {
 .gjs-editor .gjs-clm-tags-pt,
 .gjs-editor .gjs-clm-select,
 .gjs-editor .gjs-clm-sel-row,
-.gjs-editor .gjs-clm-tags > div:last-child {
+.gjs-editor .gjs-clm-tags>div:last-child {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
@@ -1340,13 +1520,13 @@ body:has(.gjs-editor) {
 
 .gjs-editor .gjs-clm-tags-pt .gjs-sm-label,
 .gjs-editor .gjs-clm-tags-pt .gjs-clm-label,
-.gjs-editor .gjs-clm-tags > div:last-child > div:first-child {
+.gjs-editor .gjs-clm-tags>div:last-child>div:first-child {
   margin-bottom: 8px !important;
 }
 
 .gjs-editor .gjs-clm-tags-pt .gjs-field,
 .gjs-editor .gjs-clm-select .gjs-field,
-.gjs-editor .gjs-clm-tags > div:last-child .gjs-field {
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field {
   width: 100% !important;
   height: 32px !important;
   background: #ffffff !important;
@@ -1357,15 +1537,17 @@ body:has(.gjs-editor) {
   padding: 0 8px !important;
   transition: border-color 0.2s, box-shadow 0.2s !important;
 }
+
 .gjs-editor .gjs-clm-tags-pt .gjs-field:focus-within,
 .gjs-editor .gjs-clm-select .gjs-field:focus-within,
-.gjs-editor .gjs-clm-tags > div:last-child .gjs-field:focus-within {
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field:focus-within {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
 }
+
 .gjs-editor .gjs-clm-tags-pt .gjs-field input,
 .gjs-editor .gjs-clm-select .gjs-field input,
-.gjs-editor .gjs-clm-tags > div:last-child .gjs-field input {
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field input {
   color: #111827 !important;
   background: transparent !important;
   font-size: 13px !important;
@@ -1373,4 +1555,110 @@ body:has(.gjs-editor) {
   width: 100% !important;
   border: none !important;
   outline: none !important;
+}
+
+/* =============================================
+   BUG FIX: Slider (range input) not working
+   Problem: .gjs-field has overflow:hidden which clips
+   the range thumb, and no range-specific styles exist.
+   ============================================= */
+
+/* 1. Override overflow:hidden for slider fields */
+.gjs-editor .gjs-field.gjs-field-slider,
+.gjs-editor .gjs-field.gjs-sm-property__slider .gjs-field,
+.gjs-editor .gjs-sm-property__slider .gjs-field {
+  overflow: visible !important;
+}
+
+/* 2. Range input proper styling */
+.gjs-editor .gjs-field input[type="range"],
+.gjs-editor input[type="range"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 4px 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  accent-color: #6366f1 !important;
+}
+
+/* 3. Also fix any parent containers of slider fields */
+.gjs-editor .gjs-sm-property__slider {
+  overflow: visible !important;
+}
+
+/* =============================================
+   BUG FIX: Select options not working
+   Problem: overflow:hidden on parent containers
+   clips the dropdown options list.
+   ============================================= */
+
+/* Fix select dropdown visibility */
+.gjs-editor .gjs-field-select,
+.gjs-editor .gjs-sm-property .gjs-field-select {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Allow native select dropdown to appear above everything */
+.gjs-editor .gjs-field select,
+.gjs-editor .gjs-trt-trait .gjs-field select {
+  position: relative !important;
+  z-index: 9999 !important;
+  cursor: pointer !important;
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  appearance: auto !important;
+}
+
+/* Hide the fake arrow since we're using native appearance */
+.gjs-editor .gjs-field-select::after {
+  display: none !important;
+}
+
+/* Fix traits panel select too */
+.gjs-editor #traits-container .gjs-field-select {
+  overflow: visible !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field select {
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  appearance: auto !important;
+  z-index: 9999 !important;
+  cursor: pointer !important;
+}
+
+/* Fix styles panel container overflow */
+.gjs-editor .gjs-sm-properties,
+.gjs-editor .gjs-sm-sector,
+.gjs-editor .gjs-sm-property {
+  overflow: visible !important;
+}
+
+/* Fix select alignment by forcing input holder to 100% width */
+.gjs-editor .gjs-field.gjs-select > span {
+  width: 100% !important;
+}
+
+/* Fix slider thumb clipping and alignment */
+.gjs-editor .gjs-field-range,
+.gjs-editor .gjs-field-range input[type=range] {
+  overflow: visible !important;
+}
+
+.gjs-editor .gjs-field-range {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.gjs-editor input[type=range] {
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+.gjs-editor input[type=range]::-webkit-slider-thumb {
+  margin-top: auto !important;
+  transform: translateY(calc(-50% + 2px));
 }

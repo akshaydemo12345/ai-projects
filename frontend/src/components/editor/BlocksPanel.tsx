@@ -27,7 +27,61 @@ const CATEGORIES: any[] = [
       { id: 'custom-video', label: 'Video', icon: <div className="w-[24px] h-[18px] border-[1.5px] border-zinc-400 flex items-center justify-center"><div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-zinc-400 border-b-[4px] border-b-transparent ml-1"></div></div> },
       { id: 'custom-map', label: 'Map', icon: <div className="w-[20px] h-[24px] border-[1.5px] border-zinc-400 rounded-b-full rounded-t-full flex items-center justify-center"><div className="w-[6px] h-[6px] bg-zinc-400 rounded-full mb-1"></div></div> },
       { id: 'icon', label: 'Icon', icon: <div className="text-[20px] text-zinc-400 leading-none">💎</div> },
-      { id: 'custom-code', label: 'Custom Code', icon: <div className="text-[20px] text-zinc-400 leading-none">HTML</div> }
+      { id: 'tabs', label: 'Tabs', icon: <div className="w-[24px] h-[18px] flex flex-col gap-[2px]"><div className="flex gap-[2px] h-[6px]"><div className="flex-1 bg-zinc-400 rounded-t-[2px]" /><div className="flex-1 border-[1.5px] border-zinc-400 border-b-0 rounded-t-[2px]" /></div><div className="flex-1 border-[1.5px] border-zinc-400" /></div> },
+      { id: 'custom-code', label: 'Custom Code', icon: <div className="text-[20px] text-zinc-400 leading-none">HTML</div> },
+    ]
+  },
+  {
+    name: 'Sliders',
+    isGrid: true,
+    icon: '🎠',
+    blocks: [
+      {
+        id: 'swiper-slider',
+        label: 'Basic Slider',
+        icon: (
+          <div className="w-[36px] h-[26px] border-[1.5px] border-indigo-400 rounded-[3px] flex items-center justify-between px-[4px] bg-indigo-50">
+            <div className="w-[5px] h-[5px] border-t-[2px] border-l-[2px] border-indigo-400 -rotate-45" />
+            <div className="w-[12px] h-[14px] bg-indigo-300 rounded-[2px]" />
+            <div className="w-[5px] h-[5px] border-t-[2px] border-r-[2px] border-indigo-400 rotate-45" />
+          </div>
+        )
+      },
+      {
+        id: 'swiper-grid',
+        label: 'Grid Slider',
+        icon: (
+          <div className="w-[36px] h-[26px] border-[1.5px] border-violet-400 rounded-[3px] flex items-center justify-center gap-[2px] p-[3px] bg-violet-50">
+            <div className="flex-1 h-full bg-violet-300 rounded-[1px]" />
+            <div className="flex-1 h-full bg-violet-300 rounded-[1px]" />
+            <div className="flex-1 h-full bg-violet-300 rounded-[1px]" />
+          </div>
+        )
+      },
+      {
+        id: 'swiper-cards',
+        label: 'Card Slider',
+        icon: (
+          <div className="w-[36px] h-[26px] border-[1.5px] border-pink-400 rounded-[3px] flex items-center gap-[3px] px-[4px] bg-pink-50">
+            <div className="w-[10px] h-[18px] bg-pink-300 rounded-[2px] flex-shrink-0" />
+            <div className="flex flex-col gap-[2px] flex-1">
+              <div className="h-[2px] bg-pink-400 rounded-full w-full" />
+              <div className="h-[2px] bg-pink-300 rounded-full w-3/4" />
+              <div className="h-[2px] bg-pink-200 rounded-full w-1/2" />
+            </div>
+          </div>
+        )
+      },
+      {
+        id: 'swiper-hero',
+        label: 'Hero Slider',
+        icon: (
+          <div className="w-[36px] h-[26px] bg-gradient-to-br from-blue-400 to-indigo-500 border-[1.5px] border-indigo-400 rounded-[3px] flex flex-col items-center justify-center gap-[2px]">
+            <div className="h-[2px] bg-white rounded-full w-3/4" />
+            <div className="h-[1px] bg-white/70 rounded-full w-1/2" />
+          </div>
+        )
+      },
     ]
   },
   {
@@ -71,7 +125,7 @@ const CATEGORIES: any[] = [
 const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({
-    Basic: true, Forms: true, Embeds: true, 'Data Sources': true, Layout: true
+    Basic: true, Sliders: true, Forms: true, Embeds: true, 'Data Sources': true, Layout: true
   });
 
   const toggleCat = (cat: string) => {
