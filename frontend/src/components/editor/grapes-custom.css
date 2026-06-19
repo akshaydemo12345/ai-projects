@@ -328,21 +328,7 @@
   cursor: pointer;
 }
 
-/* Arrows in select */
-.gjs-editor .gjs-field-select {
-  position: relative !important;
-}
-
-.gjs-editor .gjs-field-select::after {
-  content: '▼';
-  font-size: 8px;
-  color: #6b7280;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
+/* Arrows in select handled via native appearance none */
 
 /* =============================================
    gjs-field-int — Integer / Number field
@@ -1607,14 +1593,9 @@ body:has(.gjs-editor) {
   position: relative !important;
   z-index: 9999 !important;
   cursor: pointer !important;
-  -webkit-appearance: auto !important;
-  -moz-appearance: auto !important;
-  appearance: auto !important;
-}
-
-/* Hide the fake arrow since we're using native appearance */
-.gjs-editor .gjs-field-select::after {
-  display: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
 }
 
 /* Fix traits panel select too */
@@ -1623,9 +1604,9 @@ body:has(.gjs-editor) {
 }
 
 .gjs-editor #traits-container .gjs-trt-trait .gjs-field select {
-  -webkit-appearance: auto !important;
-  -moz-appearance: auto !important;
-  appearance: auto !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
   z-index: 9999 !important;
   cursor: pointer !important;
 }
