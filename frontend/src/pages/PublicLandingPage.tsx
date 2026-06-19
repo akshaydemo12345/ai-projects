@@ -53,7 +53,9 @@ const PublicLandingPage = () => {
       return pagesApi.getBySlug(resolvedSlug!, token || undefined);
     },
     enabled: !!pageId || !!resolvedSlug,
-    retry: 1
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   useEffect(() => {
@@ -297,16 +299,108 @@ const PublicLandingPage = () => {
     }
 
     const coreDependencies = `
+      <base href="${window.location.origin}/" />
       <title>${extractedTitle}</title>
       ${extractedFavicon}
+      ${aiHtml.includes('swiper') ? `
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+      <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+      <style id="swiper-custom-fixes">
+        .swiper-button-next:after, .swiper-button-prev:after { content: '' !important; display: block !important; width: 100%; height: 100%; background-color: var(--swiper-navigation-color, currentColor); -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+        .swiper-button-prev:after, .swiper-rtl .swiper-button-next:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); }
+        .swiper-button-next:after, .swiper-rtl .swiper-button-prev:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); }
+        .swiper-pagination-bullet { background: #000 !important; opacity: 0.5; }
+        .swiper-pagination-bullet-active { background: var(--primary) !important; opacity: 1; }
+      </style>
+      <script id="swiper-global-init">
+        (function() {
+          function initAllSwipers() {
+            if (typeof window.Swiper === 'undefined') {
+              setTimeout(initAllSwipers, 100);
+              return;
+            }
+            document.querySelectorAll('.swiper-container').forEach(function(self) {
+              if (self.__swiper) return;
+              
+              // Clean up remnants from GrapesJS editor state so Swiper can init fresh
+              self.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+              self.querySelectorAll('.swiper-slide-duplicate').forEach(function(dup) { dup.remove(); });
+              self.querySelectorAll('.swiper-slide').forEach(function(s) {
+                 const el = s;
+                 el.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+                 el.removeAttribute('data-swiper-slide-index');
+                 el.style.opacity = '';
+                 el.style.transform = '';
+                 el.style.width = '';
+                 el.style.height = '';
+                 el.style.margin = '';
+              });
+              self.querySelectorAll('.swiper-wrapper').forEach(function(w) {
+                 w.removeAttribute('style');
+              });
+              var paginationEl = self.querySelector('.swiper-pagination');
+              if (paginationEl) paginationEl.innerHTML = '';
+
+              var getAttr = function(k) { return self.getAttribute(k) || self.getAttribute('data-' + k) || null; };
+              var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
+              var num = function(k, fb) { return parseInt(getAttr(k) || String(fb), 10) || fb; };
+              var props = {
+                observer: false, observeParents: false, observeSlideChildren: false,
+                direction: bool('vertical') ? 'vertical' : 'horizontal',
+                loop: bool('loop'), freeMode: bool('freeMode'), autoHeight: bool('autoHeight'),
+                initialSlide: num('initialSlide', 0), speed: num('speed', 300), effect: getAttr('effect') || 'slide',
+                parallax: bool('parallax'), slidesPerView: num('slidesPerView', 1),
+                spaceBetween: num('spaceBetween', 0), slidesPerGroup: num('slidesPerGroup', 1),
+                centeredSlides: bool('centeredSlides'), rewind: bool('rewind'),
+                keyboard: bool('keyboard') ? { enabled: true } : false,
+                mousewheel: bool('mousewheel'), grabCursor: bool('grabCursor'),
+                lazy: bool('lazy') ? { loadPrevNext: true } : false,
+              };
+              if (bool('autoplay')) {
+                props.autoplay = {
+                  delay: num('autoplayDelay', 3000), disableOnInteraction: bool('autoplayDisableOnInteraction'),
+                  pauseOnMouseEnter: bool('autoplayPauseOnMouseEnter'), reverseDirection: bool('autoplayReverseDirection')
+                };
+              }
+              if (bool('navigation')) {
+                props.navigation = { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') };
+              }
+              if (getAttr('pagination')) {
+                props.pagination = {
+                  el: self.querySelector('.swiper-pagination'), type: getAttr('pagination'),
+                  dynamicBullets: bool('dynamicBullets'), clickable: getAttr('clickableBullets') !== null ? bool('clickableBullets') : true
+                };
+              }
+              if (bool('scrollbar')) {
+                props.scrollbar = { el: self.querySelector('.swiper-scrollbar'), hide: true };
+              }
+              props.breakpoints = {};
+              if (bool('mobileBreakpoint')) props.breakpoints[480] = { slidesPerView: 1, spaceBetween: 10 };
+              if (bool('tabletBreakpoint')) props.breakpoints[768] = { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 };
+              self.__swiper = new window.Swiper(self, props);
+            });
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAllSwipers);
+          } else {
+            initAllSwipers();
+          }
+        })();
+      </script>` : ''}
+      ${aiHtml.includes('<details') ? `
+      <style id="faq-custom-fixes">
+        details { cursor: pointer; }
+        summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
+        details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+        details p { margin-top: 10px; color: var(--text-muted, #4b5563); }
+      </style>` : ''}
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = { theme: { extend: { colors: { primary: '${BRAND_PRIMARY}', secondary: '${BRAND_SECONDARY}' } } } };
       </script>
-      <!-- All possible icon libraries -->
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
       
@@ -343,6 +437,34 @@ const PublicLandingPage = () => {
               var elementVisible = 50;
               if (elementTop < windowHeight - elementVisible || elementTop < 100) {
                 reveals[i].classList.add("revealed");
+              }
+            }
+            
+            // Counter animation
+            var counters = document.querySelectorAll("[data-count]");
+            for (var j = 0; j < counters.length; j++) {
+              var counter = counters[j];
+              var cTop = counter.getBoundingClientRect().top;
+              if (cTop < window.innerHeight - 50) {
+                if (!counter.classList.contains("counted")) {
+                  counter.classList.add("counted");
+                  let target = parseInt(counter.getAttribute("data-count") || "0", 10);
+                  let suffix = counter.getAttribute("data-suffix") || "";
+                  let currentCount = 0;
+                  let increment = Math.ceil(target / 40);
+                  if (target > 0) {
+                    let interval = setInterval((function(c, t, inc, suf) {
+                      return function() {
+                        currentCount += inc;
+                        if (currentCount >= t) {
+                          currentCount = t;
+                          clearInterval(interval);
+                        }
+                        c.innerText = currentCount + suf;
+                      };
+                    })(counter, target, increment, suffix), 40);
+                  }
+                }
               }
             }
           }
@@ -403,10 +525,22 @@ const PublicLandingPage = () => {
               allTabs.forEach(function(tabEl, index) {
                 tabEl.style.cursor = 'pointer';
                 tabEl.addEventListener('click', function(e) {
-                  allTabs.forEach(function(t) { t.classList.remove('active'); });
-                  allPanels.forEach(function(p) { p.classList.remove('active'); });
+                  allTabs.forEach(function(t) { 
+                    t.classList.remove('active'); 
+                    t.style.borderBottomColor = 'transparent';
+                    t.style.color = '#4b5563';
+                  });
+                  allPanels.forEach(function(p) { 
+                    p.classList.remove('active'); 
+                    p.style.display = 'none';
+                  });
                   tabEl.classList.add('active');
-                  if (allPanels[index]) allPanels[index].classList.add('active');
+                  tabEl.style.borderBottomColor = 'var(--primary, #6366f1)';
+                  tabEl.style.color = 'var(--primary, #6366f1)';
+                  if (allPanels[index]) {
+                    allPanels[index].classList.add('active');
+                    allPanels[index].style.display = 'block';
+                  }
                 });
               });
             });
@@ -471,6 +605,28 @@ const PublicLandingPage = () => {
     const leadScript = buildLeadScript(res);
     let cleanHtml = aiHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
     if (!cleanHtml) return '';
+
+    // ── SANITIZE CORRUPTED SWIPER DOM ──
+    try {
+      const p = new DOMParser();
+      const d = p.parseFromString(cleanHtml, 'text/html');
+      d.querySelectorAll('.swiper-slide-duplicate').forEach(el => el.remove());
+      d.querySelectorAll('.swiper-slide').forEach(s => {
+        const el = s as HTMLElement;
+        if (el.style) {
+          el.style.height = '';
+          el.style.opacity = '';
+          el.style.transform = '';
+          el.style.width = '';
+          el.style.margin = '';
+        }
+        el.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+        el.removeAttribute('data-swiper-slide-index');
+      });
+      d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
+      d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
+      cleanHtml = d.body.innerHTML;
+    } catch(e) {}
 
     // Keep AI-generated scripts and events fully intact so interactive elements (FAQ accordions, menus, sliders) work natively!
     // cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
