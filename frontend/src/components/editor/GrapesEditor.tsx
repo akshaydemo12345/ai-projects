@@ -537,19 +537,7 @@ const GrapesEditor = () => {
           });
 
           document.addEventListener('click', function(e) {
-            // Handle details/summary toggle
-            const summary = e.target.closest('summary');
-            if (summary) {
-              const details = summary.parentElement;
-              if (details && details.tagName === 'DETAILS') {
-                if (details.hasAttribute('open')) {
-                  details.removeAttribute('open');
-                } else {
-                  details.setAttribute('open', '');
-                }
-              }
-            }
-
+            // Native details/summary toggle removed from here. Now handled securely via GrapesJS component:selected event.
             // ── Handle AI-generated Accordion / FAQ (accordion-header + accordion-content) ──
             const accHeader = e.target.closest('.accordion-header');
             if (accHeader) {
@@ -1235,6 +1223,21 @@ const GrapesEditor = () => {
       // ════════════════════════════════════════════════
 
       // ─── SWIPER BLOCK + COMPONENTS ───
+
+      editor.Components.addType('details', {
+        isComponent: el => el.tagName === 'DETAILS',
+        model: {
+          defaults: {
+            traits: [
+              {
+                type: 'checkbox',
+                name: 'open',
+                label: 'Accordion Open'
+              }
+            ]
+          }
+        }
+      });
 
       editor.Components.addType('custom-tabs', {
         isComponent: el => {
@@ -3334,6 +3337,7 @@ const GrapesEditor = () => {
 
     editorRef.current = editor;
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
+    (window as any).editorInstance = editor; // Expose to iframe interaction script
 
     return () => {
       if (editorRef.current) {
@@ -3357,6 +3361,20 @@ const GrapesEditor = () => {
       // 1. Handle UI Tab Switching
       if (isCustomCode) {
         setRightTab('traits');
+      }
+
+      // 2. Handle Native Details/Summary Toggle on Click
+      if (tagName.toLowerCase() === 'summary') {
+        const parent = model.parent();
+        if (parent && parent.get('tagName')?.toLowerCase() === 'details') {
+          const attrs = Object.assign({}, parent.getAttributes());
+          if (attrs.open) {
+            delete attrs.open;
+          } else {
+            attrs.open = 'open';
+          }
+          parent.setAttributes(attrs);
+        }
       }
 
       // Restore Swiper Pagination if wiped by GrapesJS re-render
