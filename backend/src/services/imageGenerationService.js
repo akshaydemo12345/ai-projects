@@ -338,7 +338,8 @@ async function replacePlaceholdersInHtml(
           src.includes('unsplash.com') ||
           src.includes('picsum.photos') ||
           src.includes('freepik.com') ||
-          src.includes('placehold.co')
+          src.includes('placehold.co') ||
+          src.includes('/assets/')
         )
       ) {
 
@@ -441,7 +442,7 @@ async function replacePlaceholdersInHtml(
     /**
      * REGEX FOR ANY REMAINING STOCK URLS (e.g. background-image)
      */
-    const stockRegex = /(https?:\/\/(?:[a-zA-Z0-9-]+\.)*(?:unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)[^'"\s\)\>]*)/gi;
+    const stockRegex = /((?:https?:\/\/(?:[a-zA-Z0-9-]+\.)*(?:unsplash\.com|picsum\.photos|freepik\.com|placehold\.co)|\/assets\/)[^'"\s\)\>]*)/gi;
 
     let match;
     const remainingUrls = [];
