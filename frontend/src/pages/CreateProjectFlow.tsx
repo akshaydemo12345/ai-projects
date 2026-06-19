@@ -824,7 +824,16 @@ const CreateProjectFlow = () => {
                             alt={img.alt || `Extracted ${idx + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
+                              const current = e.currentTarget;
+                              const src = img.url || '';
+                              // Try proxy for cross-origin images (CORS / hotlink blocked)
+                              if (src.startsWith('http') && !current.dataset.proxied) {
+                                current.dataset.proxied = '1';
+                                current.src = aiApi.proxyImage(src);
+                                return;
+                              }
+                              // Final fallback: hide the broken image
+                              current.style.display = 'none';
                             }}
                           />
                         </div>
