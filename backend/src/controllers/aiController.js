@@ -8,6 +8,7 @@ const { scrapeWebsiteStructure, buildWebsiteProfile, SiteBlockedError } = requir
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 // ─── Zod Validation Schema ─────────────────────────────────────────────────────
 const generateSchema = z.object({
@@ -652,16 +653,40 @@ exports.proxyImage = async (req, res, next) => {
 
     const axios = require('axios');
 
+    // Derive a same-origin Referer/Origin from the target URL itself.
+    // Many WordPress hosts / CDNs (hotlink protection) will 403 or return a
+    // placeholder image when a request arrives with no Referer at all, which
+    // is exactly what was happening here for *.wp-content/uploads/* assets.
+    let originHeader = '';
+    try {
+      const parsedTarget = new URL(url);
+      originHeader = `${parsedTarget.protocol}//${parsedTarget.host}`;
+    } catch (e) {
+      // url already validated above, but guard anyway
+    }
+
     // Fetch the image with timeout
     const response = await axios.get(url, {
       timeout: 8000,
       responseType: 'arraybuffer',
+      maxRedirects: 5,
+      // Treat any non-2xx as an error so it lands in the catch block below
+      // instead of being piped back as if it were a valid image.
+      validateStatus: (status) => status >= 200 && status < 300,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        ...(originHeader ? { Referer: `${originHeader}/`, Origin: originHeader } : {})
       }
     });
 
     const contentType = response.headers['content-type'] || 'image/png';
+
+    // Guard against hosts that return a 200 HTML error/placeholder page
+    // instead of the actual image (common with hotlink-protection plugins).
+    if (!contentType.startsWith('image/')) {
+      throw new Error(`Upstream did not return an image (content-type: ${contentType})`);
+    }
 
     // Set cache headers for 30 days
     res.set('Content-Type', contentType);
@@ -670,20 +695,19 @@ exports.proxyImage = async (req, res, next) => {
 
     return res.send(response.data);
   } catch (err) {
-    // Return a 1px transparent PNG fallback on error
-    const fallbackPng = Buffer.from([
-      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-      0x0D, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x63, 0xF8, 0xFF, 0xFF, 0x3F,
-      0x00, 0x05, 0xFE, 0x02, 0xB7, 0xA7, 0x37, 0x81, 0x84, 0x00, 0x00, 0x00,
-      0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
-    ]);
+    // Log the real reason so failures like hotlink-protection 403s, DNS
+    // errors, or timeouts are actually visible instead of silently turning
+    // into an indistinguishable blank image every time.
+    logger.warn(`[proxyImage] Failed to fetch "${req.query.url}": ${err.response?.status || ''} ${err.message}`);
 
-    res.set('Content-Type', 'image/png');
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.set('Access-Control-Allow-Origin', '*');
-    return res.send(fallbackPng);
+    // Let the frontend know this one failed (it already retries via the
+    // same proxy URL once on <img onError>, then falls back to favicon /
+    // hides the element — see CreateProjectFlow.tsx). A 200 + transparent
+    // pixel made that fallback chain impossible to trigger.
+    return res.status(502).json({
+      status: 'fail',
+      message: 'Unable to fetch the requested image from its source.'
+    });
   }
 };
 
