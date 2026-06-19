@@ -335,6 +335,18 @@ exports.extractProject = async (req, res, next) => {
         keywords: websiteProfile?.seo?.keywords || [],
         industry: websiteProfile?.industry?.industry || '',
         subIndustry: websiteProfile?.industry?.subIndustry || '',
+        // Images extracted from website (filter out inline-svg and data URIs for display)
+        scrapedImages: (websiteProfile?.images || []).filter(img =>
+          img.url && !img.url.startsWith('inline-svg:') && !img.url.startsWith('data:')
+        ),
+        // Full scraped data for downstream consumption
+        scrapedData: {
+          images: websiteProfile?.images || [],
+          favicon: websiteProfile?.identity?.favicon || '',
+          screenshot: scraped?.screenshot || null,
+          industry: websiteProfile?.industry?.industry || '',
+          subIndustry: websiteProfile?.industry?.subIndustry || '',
+        },
       },
     });
   } catch (err) {
