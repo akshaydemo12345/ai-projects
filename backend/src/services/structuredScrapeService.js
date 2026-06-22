@@ -2354,7 +2354,7 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const durationMs = Date.now() - startedAt;
     logger.info(`[Scraper] Completed in ${durationMs}ms — ${images.length} images, ${videos.length} videos, ${sections.length} sections`);
 
-    return {
+    const result = {
         identity,
         colors,
         logoColors,
@@ -2406,6 +2406,16 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
             siteName: seo.openGraph?.site_name || '',
         },
     };
+
+    if (
+        (!result.sections || result.sections.length === 0) &&
+        (!result.images || result.images.length <= 2)
+    ) {
+        logger.error('[Scraper] Empty scrape result — likely blocked');
+        throw new Error('Scraping failed: No meaningful content extracted');
+    }
+
+    return result;
 };
 
 const buildWebsiteProfile = (scraped, themeData = null) => {
