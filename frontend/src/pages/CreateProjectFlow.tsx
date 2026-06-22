@@ -732,12 +732,20 @@ const CreateProjectFlow = () => {
                               onError={(e) => {
                                 const current = e.currentTarget;
                                 const src = logoPreview || '';
-                                if (src.startsWith('http') && !src.startsWith('data:')) {
-                                  const proxyUrl = aiApi.proxyImage(src);
-                                  if (current.src !== proxyUrl) { current.src = proxyUrl; return; }
+                                // Step 1: try the proxy once (handles hotlink-protected / CORS-blocked sources)
+                                if (!current.dataset.triedProxy && src.startsWith('http') && !src.startsWith('data:')) {
+                                  current.dataset.triedProxy = '1';
+                                  current.src = aiApi.proxyImage(src);
+                                  return;
                                 }
+                                // Step 2: try the detected favicon once
                                 const faviconFallback = scrapedData?.favicon;
-                                if (faviconFallback && current.src !== faviconFallback) { current.src = faviconFallback; return; }
+                                if (!current.dataset.triedFavicon && faviconFallback) {
+                                  current.dataset.triedFavicon = '1';
+                                  current.src = faviconFallback;
+                                  return;
+                                }
+                                // Step 3: give up — clear the logo so the upload prompt shows instead
                                 setLogoPreview(null);
                                 setLogoBase64(null);
                               }}
@@ -807,7 +815,7 @@ const CreateProjectFlow = () => {
                 </div>
 
                 {/* Extracted Images Card */}
-                {scrapedImages.length > 0 && (
+                {/* {scrapedImages.length > 0 && (
                   <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-sm">
                     <div>
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Extracted Images</h3>
@@ -840,7 +848,7 @@ const CreateProjectFlow = () => {
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
 
             </div>
