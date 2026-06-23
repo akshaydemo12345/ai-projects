@@ -5,7 +5,7 @@ const { generateLandingPageContent } = require('../services/aiService');
 const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
 const { scrapeWebsiteStructure, buildWebsiteProfile, SiteBlockedError } = require('../services/structuredScrapeService');
-const { extractThemeProfile, mapThemeProfileToThemeData } = require('../services/themeStyleExtractorService');
+// const { extractThemeProfile, mapThemeProfileToThemeData } = require('../services/themeStyleExtractorService');
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
@@ -569,11 +569,11 @@ exports.generateDescription = async (req, res, next) => {
     // Merge live UI color/font overrides on top of scraped values
     // so the prompt reflects exactly what the user currently has set
     const uiOverrides = {
-      primaryColor:   uiPrimaryColor   || null,
+      primaryColor: uiPrimaryColor || null,
       secondaryColor: uiSecondaryColor || null,
-      accentColor:    uiAccentColor    || null,
-      bodyFont:       uiBodyFont       || null,
-      headingFont:    uiHeadingFont    || null,
+      accentColor: uiAccentColor || null,
+      bodyFont: uiBodyFont || null,
+      headingFont: uiHeadingFont || null,
     };
 
     const { generateDescriptionSuggestion } = require('../services/aiService');
