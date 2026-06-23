@@ -31,6 +31,15 @@ router.post('/inspect-website', protect, aiRateLimit, require('../controllers/ai
 router.post('/extract-project', protect, aiRateLimit, require('../controllers/aiController').extractProject);
 
 /**
+ * @route   POST /ai/extract-theme-profile
+ * @desc    Playwright-based visual theme extraction (colors, fonts, buttons,
+ *          shape language) from a live URL — used to match a new project's
+ *          landing page to the customer's existing website design.
+ * @access  Private (JWT)
+ */
+router.post('/extract-theme-profile', protect, aiRateLimit, require('../controllers/aiController').extractThemeStyle);
+
+/**
  * @route   POST /ai/structured-scrape
  * @desc    Scrape website and return structured data for landing page generation
  * @access  Private (JWT)

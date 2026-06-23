@@ -2551,15 +2551,23 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 header: themeData?.header || { background: headerBg, text: headerText, border: navBorder },
                 navigation: themeData?.navigation || { background: navBg, text: navText, active: navActive, hover: navHover, border: navBorder },
                 buttons: {
-                    primaryBg: btnBg,
-                    primaryText: btnText,
-                    primaryBorder: btnBorder,
-                    primaryHoverBg: btnHoverBg,
-                    primaryHoverText: btnHoverText,
-                    secondaryBg: first(cssSecondary, sec, p),
-                    secondaryText: '#ffffff',
+                    primaryBg: themeData?.buttons?.primaryBg || btnBg,
+                    primaryText: themeData?.buttons?.primaryText || btnText,
+                    primaryBorder: themeData?.buttons?.primaryBorder || btnBorder,
+                    primaryHoverBg: themeData?.buttons?.primaryHoverBg || btnHoverBg,
+                    primaryHoverText: themeData?.buttons?.primaryHoverText || btnHoverText,
+                    secondaryBg: themeData?.buttons?.secondaryBg || first(cssSecondary, sec, p),
+                    secondaryText: themeData?.buttons?.secondaryText || '#ffffff',
+                    // Additive — only populated when a Playwright-derived themeData is supplied.
+                    borderRadius: themeData?.buttons?.borderRadius || '',
                 },
-                footer: { background: footerBg, text: footerText },
+                footer: themeData?.footer || { background: footerBg, text: footerText },
+                // Additive blocks — present only when themeData comes from the Playwright
+                // visual extractor (extractThemeProfile -> mapThemeProfileToThemeData).
+                // Left undefined (and therefore omitted from the JSON) for the legacy
+                // heuristic-only path so existing consumers of `theme` are unaffected.
+                ...(themeData?.typography ? { typography: themeData.typography } : {}),
+                ...(themeData?.shape ? { shape: themeData.shape } : {}),
             };
         })(),
         fonts: {

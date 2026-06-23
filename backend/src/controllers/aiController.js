@@ -5,6 +5,7 @@ const { generateLandingPageContent } = require('../services/aiService');
 const { analyzeWebsite: analyzeService, inspectWebsite: inspectService, extractProjectData } = require('../services/analyzeService');
 const { fetchFigmaDesign } = require('../services/figmaService');
 const { scrapeWebsiteStructure, buildWebsiteProfile, SiteBlockedError } = require('../services/structuredScrapeService');
+const { extractThemeProfile, mapThemeProfileToThemeData } = require('../services/themeStyleExtractorService');
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
@@ -291,13 +292,30 @@ exports.analyzeWebsite = async (req, res, next) => {
  */
 exports.extractProject = async (req, res, next) => {
   try {
-    const { url, projectId } = req.body;
+    const { url, projectId, skipVisualTheme } = req.body;
     if (!url) {
       return res.status(400).json({ status: 'fail', message: 'URL is required' });
     }
 
     const scraped = await scrapeWebsiteStructure(url);
-    const websiteProfile = buildWebsiteProfile(scraped, null);
+
+    // Best-effort Playwright visual-theme pass. Runs alongside the existing
+    // heuristic scrape and, when it succeeds, takes priority inside
+    // websiteProfile.theme (header/navigation/buttons/footer) plus adds the
+    // additive `typography` and `shape` sub-blocks. Any failure here (site
+    // blocks automation, Playwright not installed, timeout, etc.) is logged
+    // and swallowed — it must never break project creation.
+    let themeData = null;
+    if (!skipVisualTheme) {
+      try {
+        const visualProfile = await extractThemeProfile(url, { screenshot: false, timeout: 25_000 });
+        themeData = mapThemeProfileToThemeData(visualProfile);
+      } catch (themeErr) {
+        logger.warn(`[aiController] visual theme extraction skipped: ${themeErr.message}`);
+      }
+    }
+
+    const websiteProfile = buildWebsiteProfile(scraped, themeData);
 
     if (projectId && require('mongoose').Types.ObjectId.isValid(projectId)) {
       try {
@@ -364,10 +382,58 @@ exports.extractProject = async (req, res, next) => {
 };
 
 /**
- * @route   POST /ai/structured-scrape
- * @desc    Scrape website and return structured data for landing page generation
+ * @route   POST /ai/extract-theme-profile
+ * @desc    Use Playwright to load a live URL and extract a *visual theme
+ *          profile* (brand colors, typography, button styles, shape/shadow
+ *          language, logo/favicon) so a new project's landing page can be
+ *          styled to match the customer's existing website.
  * @access  Private
  */
+exports.extractThemeStyle = async (req, res, next) => {
+  try {
+    const { url, projectId, includeScreenshot } = req.body;
+    if (!url) {
+      return res.status(400).json({ status: 'fail', message: 'URL is required' });
+    }
+
+    const themeProfile = await extractThemeProfile(url, {
+      screenshot: includeScreenshot !== false,
+    });
+
+    if (projectId && require('mongoose').Types.ObjectId.isValid(projectId)) {
+      try {
+        await Project.findOneAndUpdate(
+          { _id: projectId, userId: req.user._id },
+          { 'scrapeMeta.visualThemeProfile': themeProfile },
+          { runValidators: false }
+        );
+      } catch (persistErr) {
+        logger.error(`[aiController] extractThemeStyle persist failed: ${persistErr.message}`);
+      }
+    }
+
+    return res.status(200).json({ status: 'success', data: { themeProfile } });
+  } catch (err) {
+    logger.error(`[aiController] extractThemeStyle failed: ${err.message}`);
+    if (err.code === 'SITE_BLOCKED') {
+      return res.status(422).json({
+        status: 'fail',
+        code: 'SITE_BLOCKED',
+        message: 'This website is blocking automated access. Please try a different URL.',
+      });
+    }
+    if (err.code === 'PLAYWRIGHT_NOT_INSTALLED') {
+      return res.status(500).json({
+        status: 'error',
+        code: 'PLAYWRIGHT_NOT_INSTALLED',
+        message: err.message,
+      });
+    }
+    next(err);
+  }
+};
+
+
 exports.structuredScrape = async (req, res, next) => {
   try {
     const parsed = structuredScrapeSchema.safeParse(req.body);
