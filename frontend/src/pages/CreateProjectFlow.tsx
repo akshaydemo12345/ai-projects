@@ -78,6 +78,7 @@ const CreateProjectFlow = () => {
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
   const [scrapedData, setScrapedData] = useState<any>({});
+  const [scrapedProfile, setScrapedProfile] = useState<any>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
@@ -189,6 +190,7 @@ const CreateProjectFlow = () => {
         ...scrapedData,
         subIndustry: selectedSubIndustry || undefined,
       },
+      websiteProfile: scrapedProfile || undefined,
     });
   };
 
@@ -244,6 +246,9 @@ const CreateProjectFlow = () => {
       }
       if (meta.scrapedData) {
         setScrapedData(meta.scrapedData);
+      }
+      if (meta.websiteProfile) {
+        setScrapedProfile(meta.websiteProfile);
       }
 
       let detectedCategory = category;
