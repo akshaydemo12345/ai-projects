@@ -1785,8 +1785,8 @@ const ProjectDetailPage = () => {
           >
             <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
               <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
-                {(project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
-                  ? (project.websiteUrl || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
+                {(project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
+                  ? (project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
                     .replace(/^https?:\/\//, '').replace(/\/$/, '')
                   : project.name}
               </span>

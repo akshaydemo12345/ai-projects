@@ -16,7 +16,18 @@ const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
 
-    // If the token already carries user meta (new-style tokens), skip the DB lookup entirely.
+    // Access tokens are extremely long-lived (JWT_EXPIRES_IN, default 9999d),
+    // so we MUST confirm the account still exists on every request. Without
+    // this, a deleted (or banned) user's existing token keeps working
+    // forever — they'd stay "logged in" indefinitely instead of being
+    // kicked out the moment their account is removed.
+    const stillExists = await User.exists({ _id: decoded.id });
+    if (!stillExists) {
+      return res.status(401).json({ status: 'fail', message: 'User no longer exists' });
+    }
+
+    // If the token already carries user meta (new-style tokens), skip the
+    // full-document DB lookup — we've already confirmed the user exists above.
     // This eliminates one DB round-trip on every authenticated request.
     // Old tokens (id-only) fall back to a single DB fetch.
     if (decoded.name && decoded.email && decoded.plan !== undefined) {
