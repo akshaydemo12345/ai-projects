@@ -21,10 +21,79 @@ exports.createProject = async (req, res, next) => {
       },
     };
 
-    // If website URL provided, store sourceUrl up-front and try a quick metadata fetch
-    // to populate light fields (favicon, logo, title, description). Heavy behavior
-    // arrays (images, videos, content, forms, sections, seo) are left for background scraping.
-    if (req.body.websiteUrl || req.body.url) {
+    // If pre-scraped websiteProfile is provided by the frontend, use it immediately
+    if (req.body.websiteProfile) {
+      projectPayload.websiteProfile = req.body.websiteProfile;
+      projectPayload.scrapeMeta = {
+        status: 'success',
+        sourceUrl: normalizeDomain(req.body.websiteUrl || req.body.url),
+        finishedAt: new Date(),
+        errors: [],
+      };
+
+      // Ensure identity block exists
+      projectPayload.websiteProfile.identity = projectPayload.websiteProfile.identity || {};
+
+      // Override values with user modifications from the form
+      if (name) projectPayload.websiteProfile.identity.name = name;
+      if (description) projectPayload.websiteProfile.identity.description = description;
+
+      if (req.body.logoUrl) {
+        projectPayload.websiteProfile.identity.logoUrl = req.body.logoUrl;
+      }
+
+      if (req.body.scrapedData?.favicon) {
+        projectPayload.websiteProfile.identity.favicon = req.body.scrapedData.favicon;
+      }
+
+      // Sync colors
+      projectPayload.websiteProfile.logoColors = projectPayload.websiteProfile.logoColors || {};
+      if (req.body.primaryColor) {
+        projectPayload.websiteProfile.logoColors.primary = req.body.primaryColor;
+      }
+      if (req.body.secondaryColor) {
+        projectPayload.websiteProfile.logoColors.secondary = req.body.secondaryColor;
+      }
+      if (req.body.colors) {
+        projectPayload.websiteProfile.logoColors.palette = req.body.colors;
+        projectPayload.websiteProfile.colors = projectPayload.websiteProfile.colors || {};
+        projectPayload.websiteProfile.colors.palette = req.body.colors;
+      }
+
+      // Sync services
+      if (req.body.services) {
+        projectPayload.websiteProfile.content = projectPayload.websiteProfile.content || {};
+        projectPayload.websiteProfile.content.services = req.body.services.map(s => {
+          if (typeof s === 'string') {
+            return { title: s, description: '', icon: '' };
+          }
+          return s;
+        });
+      }
+
+      // Sync keywords
+      if (req.body.keywords) {
+        projectPayload.websiteProfile.seo = projectPayload.websiteProfile.seo || {};
+        projectPayload.websiteProfile.seo.keywords = req.body.keywords;
+      }
+
+      // Sync industry / category classification
+      if (req.body.category || req.body.subIndustry) {
+        projectPayload.websiteProfile.industry = projectPayload.websiteProfile.industry || {};
+        if (req.body.category) projectPayload.websiteProfile.industry.industry = req.body.category;
+        if (req.body.subIndustry) projectPayload.websiteProfile.industry.subIndustry = req.body.subIndustry;
+      }
+
+      // Expose quick light fields at the root of the payload so UI/virtual fields are instantly satisfied
+      projectPayload.websiteUrl = normalizeDomain(req.body.websiteUrl || req.body.url);
+      if (projectPayload.websiteProfile.identity.logoUrl) {
+        projectPayload.logoUrl = projectPayload.websiteProfile.identity.logoUrl;
+      }
+      if (projectPayload.websiteProfile.identity.favicon) {
+        projectPayload.faviconUrl = projectPayload.websiteProfile.identity.favicon;
+      }
+    } else if (req.body.websiteUrl || req.body.url) {
+      // If website URL is provided but no pre-scraped websiteProfile, fall back to quick metadata fetch + background scrape
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       projectPayload.websiteProfile = {
         extraction: {
@@ -49,7 +118,7 @@ exports.createProject = async (req, res, next) => {
         const $ = cheerio.load(html);
 
         const title = $('meta[property="og:site_name"]').attr('content') || $('title').text() || null;
-        const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
+        const descriptionText = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
 
         let favicon = $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href') || $('link[rel="apple-touch-icon"]').attr('href') || null;
         if (favicon && !favicon.startsWith('http')) {
@@ -63,19 +132,19 @@ exports.createProject = async (req, res, next) => {
 
         // Attach minimal identity info so frontend can show favicon/logo/title immediately
         projectPayload.websiteProfile.identity = projectPayload.websiteProfile.identity || {};
-        if (favicon) projectPayload.websiteProfile.identity.faviconUrl = favicon;
+        if (favicon) projectPayload.websiteProfile.identity.favicon = favicon; // Fix key: favicon (schema uses favicon, not faviconUrl)
         if (logo) projectPayload.websiteProfile.identity.logoUrl = logo;
-        if (title) projectPayload.websiteProfile.identity.title = title;
-        if (description) projectPayload.websiteProfile.identity.description = description;
+        if (title) projectPayload.websiteProfile.identity.name = title;
+        if (descriptionText) projectPayload.websiteProfile.identity.description = descriptionText;
 
         // Also expose quick light fields at the project root so UI can read them consistently
         projectPayload.websiteUrl = fetchUrl;
         if (logo) projectPayload.logoUrl = logo;
         if (favicon && !projectPayload.faviconUrl) projectPayload.faviconUrl = favicon;
         if (title && !projectPayload.name) projectPayload.name = projectPayload.name || title;
-        if (description && !projectPayload.description) projectPayload.description = projectPayload.description || description;
+        if (descriptionText && !projectPayload.description) projectPayload.description = projectPayload.description || descriptionText;
 
-        console.debug('[projectController] quick metadata fetched', { fetchUrl, hasTitle: !!title, hasDescription: !!description, hasFavicon: !!favicon, hasLogo: !!logo });
+        console.debug('[projectController] quick metadata fetched', { fetchUrl, hasTitle: !!title, hasDescription: !!descriptionText, hasFavicon: !!favicon, hasLogo: !!logo });
       } catch (e) {
         // Fail quietly — background job will attempt full scrape later
         console.debug('[projectController] quick metadata fetch failed:', e?.message || e);
@@ -84,8 +153,8 @@ exports.createProject = async (req, res, next) => {
 
     const project = await Project.create(projectPayload);
 
-    // If a website was provided, perform the heavier scrape + profile build in background.
-    if (req.body.websiteUrl || req.body.url) {
+    // If a website was provided and no pre-scraped websiteProfile, perform the heavier scrape + profile build in background.
+    if ((req.body.websiteUrl || req.body.url) && !req.body.websiteProfile) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       setImmediate(async () => {
         try {
