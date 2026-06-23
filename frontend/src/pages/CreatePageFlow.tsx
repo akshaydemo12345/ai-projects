@@ -563,7 +563,13 @@ const CreatePageFlow = () => {
       )}
 
       {/* AI Crafting Loading */}
-      {step === "crafting" && <ModernLoader />}
+      {step === "crafting" && (
+        <ModernLoader
+          externalProgress={progress}
+          isComplete={progress >= 100}
+          onFinished={() => navigate("/editor")}
+        />
+      )}
     </div>
   );
 };
