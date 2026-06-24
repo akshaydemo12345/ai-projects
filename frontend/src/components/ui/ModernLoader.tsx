@@ -7,11 +7,13 @@ export const ModernLoader = ({
   onFinished = () => { },
   message = "Analyzing your requirements...",
   externalProgress,
+  statusSteps: statusStepsProp,
 }: {
   isComplete?: boolean;
   onFinished?: () => void;
   message?: string;
-  externalProgress?: number | string;
+  externalProgress?: number;
+  statusSteps?: { p: number; t: string }[];
 }) => {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState(message);
@@ -20,7 +22,7 @@ export const ModernLoader = ({
     if (message) setStatusText(message);
   }, [message]);
 
-  const statusSteps = [
+  const defaultStatusSteps = [
     { p: 0, t: "Analyzing your requirements..." },
     { p: 20, t: "Extracting brand guidelines..." },
     { p: 40, t: "Generating high-converting copy..." },
@@ -29,25 +31,20 @@ export const ModernLoader = ({
     { p: 95, t: "Finalizing your masterpiece..." },
   ];
 
-  useEffect(() => {
-    // If an external progress value is provided, sync to it and respect 'all' as completion.
-    if (typeof externalProgress !== 'undefined') {
-      if (externalProgress === 'all') {
-        setProgress(100);
-        setTimeout(onFinished, 500);
-        return;
-      }
+  const statusSteps = statusStepsProp || defaultStatusSteps;
 
-      const num = Number(externalProgress);
-      if (!Number.isNaN(num)) {
-        setProgress(Math.max(0, Math.min(100, num)));
-        if (num >= 100) setTimeout(onFinished, 500);
-        return;
+  useEffect(() => {
+    // If external progress is provided, sync to it and skip auto-increment.
+    if (typeof externalProgress === "number") {
+      setProgress(externalProgress);
+      const currentStep = [...statusSteps].reverse().find((s) => externalProgress >= s.p);
+      if (currentStep && currentStep.t !== statusText) setStatusText(currentStep.t);
+      if (externalProgress >= 100) {
+        setTimeout(onFinished, 500);
       }
+      return;
     }
 
-    // Auto-incrementing fallback when no external progress provided.
-    let mounted = true;
     const interval = setInterval(() => {
       if (!mounted) return;
       setProgress((prev) => {
@@ -63,17 +60,15 @@ export const ModernLoader = ({
         // soft cap for auto-increment fallback so we don't auto-complete to 100
         if (prev >= 99) return 99;
         const next = prev + (prev > 90 ? 0.05 : prev > 70 ? 0.1 : 0.4);
-        const currentStep = [...statusSteps].reverse().find(s => next >= s.p);
+        const currentStep = [...statusSteps].reverse().find((s) => next >= s.p);
         if (currentStep && currentStep.t !== statusText) {
           setStatusText(currentStep.t);
         }
         return next;
       });
     }, 100);
-
-    return () => { mounted = false; clearInterval(interval); };
-    // Intentionally omit `statusText` to avoid restarting the interval on every update
-  }, [isComplete, onFinished, externalProgress]);
+    return () => clearInterval(interval);
+  }, [isComplete, statusText, onFinished, externalProgress, statusSteps]);
 
   return (
     <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-2xl flex flex-col items-center justify-center p-4">
