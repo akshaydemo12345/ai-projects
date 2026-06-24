@@ -12,6 +12,9 @@ const CLAUDE_MODELS = {
   fast: 'claude-haiku-4-5-20251001',
 };
 
+// Backwards-compatible list used elsewhere in the codebase
+const CLAUDE_MODEL_CANDIDATES = [CLAUDE_MODELS.primary, CLAUDE_MODELS.fast];
+
 // ═══════════════════════════════════════════════════════════
 //  COST CALCULATOR
 // ═══════════════════════════════════════════════════════════
@@ -446,35 +449,45 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const secondaryHex = promptStr.match(/SECONDARY COLOR:\s*(#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
   const businessName = promptStr.match(/BUSINESS NAME:\s*(.+)/)?.[1]?.trim() || 'brand';
 
-  const resolved = systemPrompt
+  // BUG FIX: was computing `resolved` but never assigning it to `finalSystemPrompt`
+  const finalSystemPrompt = systemPrompt
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
     .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
     .replace(/\{\{BUSINESS_NAME_KEYWORD\}\}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
 
-  if (openaiKey) {
+  // Helper to call OpenAI (extracted so it can be used as primary or fallback)
+  const tryOpenAI = async () => {
+    if (!openaiKey) throw new Error('No OpenAI API key configured');
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    logger.info(`[AI] OpenAI: ${model}`);
+    const openai = new OpenAI({ apiKey: openaiKey });
+    const response = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: finalSystemPrompt },
+        { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
+      ],
+      max_tokens: 16000,
+      temperature: 0.95
+    });
+    const rawText = response.choices[0].message.content;
+    const usage = response.usage;
+    return {
+      ...processResult(rawText, logoUrl),
+      aiUsage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model }
+    };
+  };
+
+  // BUG FIX: respect PREFER_OPENAI env var; previously it was read but ignored
+  if (openaiKey && preferOpenAI) {
     try {
-      const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-      logger.info(`[AI] OpenAI: ${model}`);
-      const openai = new OpenAI({ apiKey: openaiKey });
-      const response = await openai.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: finalSystemPrompt },
-          { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
-        ],
-        max_tokens: 16000,
-        temperature: 0.95
-      });
-      const rawText = response.choices[0].message.content;
-      const usage = response.usage;
-      return {
-        ...processResult(rawText, logoUrl),
-        aiUsage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model }
-      };
+      return await tryOpenAI();
     } catch (err) {
-      logger.error(`[AI] OpenAI failed: ${err.message}`);
+      logger.error(`[AI] OpenAI (preferred) failed: ${err.message}`);
+      // fall through to Claude below
     }
   }
+
   if (anthropicKey) {
     const anthropic = new Anthropic({ apiKey: anthropicKey });
     let lastError = null;
@@ -505,8 +518,16 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
         if (!String(err.message).toLowerCase().match(/not_found|model:/)) break;
       }
     }
+    // Claude failed — fall back to OpenAI if available
+    if (openaiKey) {
+      logger.warn('[AI] All Claude models failed, falling back to OpenAI');
+      return await tryOpenAI();
+    }
+    throw lastError || new Error('All AI providers failed');
   }
-  return tryOpenAI();
+
+  // BUG FIX: `tryOpenAI` was called here but was never defined — now it is
+  return await tryOpenAI();
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -746,7 +767,7 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input) => {
+const buildUserPrompt = (input, dna, formHTML, placement) => {
   // Visual style nudge to ensure professional variety
   const styleNudges = [
     'Create a clean, modern SaaS-style layout with soft shadows, rounded corners, and clear sections.',
@@ -767,6 +788,10 @@ const buildUserPrompt = (input) => {
   ];
   const randomFaqNudge = faqNudges[Math.floor(Math.random() * faqNudges.length)];
 
+  // Resolve a human-friendly placement label for the contact form
+  const placementLabel = placement
+    ? `CONTACT FORM PLACEMENT: ${placement}`
+    : 'CONTACT FORM PLACEMENT: not specified (suggest placing the form in the Hero or Contact section)';
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
     `INDUSTRY: ${input.industry}`,
