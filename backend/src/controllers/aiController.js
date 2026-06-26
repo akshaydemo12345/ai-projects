@@ -354,6 +354,12 @@ exports.extractProject = async (req, res, next) => {
         keywords: websiteProfile?.seo?.keywords || [],
         industry: websiteProfile?.industry?.industry || '',
         subIndustry: websiteProfile?.industry?.subIndustry || '',
+        // Fonts extracted from website
+        fonts: {
+          bodyFont: websiteProfile?.fonts?.bodyFont || websiteProfile?.fonts?.primaryFont || '',
+          headingFont: websiteProfile?.fonts?.headingFont || '',
+          googleFonts: websiteProfile?.fonts?.googleFonts || [],
+        },
         // Images extracted from website (filter out inline-svg and data URIs for display)
         scrapedImages: (websiteProfile?.images || []).filter(img =>
           img.url && !img.url.startsWith('inline-svg:') && !img.url.startsWith('data:')
