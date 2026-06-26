@@ -82,8 +82,8 @@ export function BrandingSettings({ projectId, initialBranding, onBrandingUpdated
   const { src: logoSrc, isSvg: logoIsSvg, svgMarkup: logoSvgMarkup } = useLogoDisplay(rawLogoUrl);
 
   // Scraped brand colors from websiteProfile
-  const scrapedPrimary = websiteProfile?.logoColors?.primary || websiteProfile?.colors?.primary;
-  const scrapedSecondary = websiteProfile?.logoColors?.secondary || websiteProfile?.colors?.secondary;
+  const scrapedPrimary = websiteProfile?.colors?.primary || websiteProfile?.logoColors?.primary;
+  const scrapedSecondary = websiteProfile?.colors?.secondary || websiteProfile?.logoColors?.secondary;
   const scrapedPalette = websiteProfile?.logoColors?.palette || websiteProfile?.colors?.palette || [];
 
   useEffect(() => {

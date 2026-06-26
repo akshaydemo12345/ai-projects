@@ -45,6 +45,8 @@ const CreatePageFlow = () => {
   const [primaryColor, setPrimaryColor] = useState("#7c3aed");
   const [secondaryColor, setSecondaryColor] = useState("#a855f7");
   const [accentColor, setAccentColor] = useState("#6366f1");
+  const [bodyFont, setBodyFont] = useState("");
+  const [headingFont, setHeadingFont] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
@@ -72,11 +74,58 @@ const CreatePageFlow = () => {
   useEffect(() => {
     if (project) {
       setBusinessName(project.name);
-      setBusinessDesc(project.description || "");
-      setPrimaryColor(project.primaryColor || "#7c3aed");
-      setSecondaryColor(project.secondaryColor || "#a855f7");
-      setLogoUrl(project.logoUrl);
-      setIndustry(project.industry || "SaaS");
+
+      // Description: prefer websiteProfile hero subtitle or identity description
+      setBusinessDesc(
+        project.description ||
+        project.websiteProfile?.content?.hero?.subtitle ||
+        project.websiteProfile?.identity?.description ||
+        ""
+      );
+
+      // Colors: prefer websiteProfile (logo-extracted) colors, fall back to virtuals
+      setPrimaryColor(
+        project.websiteProfile?.logoColors?.primary ||
+        project.websiteProfile?.colors?.primary ||
+        project.primaryColor ||
+        "#7c3aed"
+      );
+      setSecondaryColor(
+        project.websiteProfile?.logoColors?.secondary ||
+        project.websiteProfile?.colors?.secondary ||
+        project.secondaryColor ||
+        "#a855f7"
+      );
+      setAccentColor(
+        project.websiteProfile?.colors?.accent ||
+        project.secondaryColor ||
+        "#6366f1"
+      );
+
+      // Logo: prefer websiteProfile, fall back to virtual
+      setLogoUrl(
+        project.websiteProfile?.identity?.logoUrl ||
+        project.logoUrl
+      );
+
+      setIndustry(
+        project.websiteProfile?.industry?.industry ||
+        project.industry ||
+        "SaaS"
+      );
+
+      // Fonts from scraped website profile
+      if (project.websiteProfile?.fonts?.headingFont) {
+        setHeadingFont(project.websiteProfile.fonts.headingFont);
+      }
+      if (project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont) {
+        setBodyFont(project.websiteProfile.fonts.bodyFont || project.websiteProfile.fonts.primaryFont || "");
+      }
+
+      // CTA text from scraped content
+      if (project.websiteProfile?.content?.hero?.ctaText) {
+        setCtaText(project.websiteProfile.content.hero.ctaText);
+      }
     }
   }, [project]);
 
@@ -139,6 +188,11 @@ const CreatePageFlow = () => {
         ctaText,
         services: project?.services || [],
         keywords: project?.keywords || [],
+        accentColor,
+        fonts: {
+          bodyFont: bodyFont || undefined,
+          headingFont: headingFont || undefined,
+        },
       };
 
       const res = await pagesApi.create(projectId!, payload);
