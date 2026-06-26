@@ -336,6 +336,12 @@ exports.extractProject = async (req, res, next) => {
         keywords: websiteProfile?.seo?.keywords || [],
         industry: websiteProfile?.industry?.industry || '',
         subIndustry: websiteProfile?.industry?.subIndustry || '',
+        // Fonts extracted from website
+        fonts: {
+          bodyFont: websiteProfile?.fonts?.bodyFont || websiteProfile?.fonts?.primaryFont || '',
+          headingFont: websiteProfile?.fonts?.headingFont || '',
+          googleFonts: websiteProfile?.fonts?.googleFonts || [],
+        },
         // Images extracted from website (filter out inline-svg and data URIs for display)
         scrapedImages: (websiteProfile?.images || []).filter(img =>
           img.url && !img.url.startsWith('inline-svg:') && !img.url.startsWith('data:')
@@ -503,11 +509,11 @@ exports.generateDescription = async (req, res, next) => {
     // Merge live UI color/font overrides on top of scraped values
     // so the prompt reflects exactly what the user currently has set
     const uiOverrides = {
-      primaryColor:   uiPrimaryColor   || null,
+      primaryColor: uiPrimaryColor || null,
       secondaryColor: uiSecondaryColor || null,
-      accentColor:    uiAccentColor    || null,
-      bodyFont:       uiBodyFont       || null,
-      headingFont:    uiHeadingFont    || null,
+      accentColor: uiAccentColor || null,
+      bodyFont: uiBodyFont || null,
+      headingFont: uiHeadingFont || null,
     };
 
     const { generateDescriptionSuggestion } = require('../services/aiService');

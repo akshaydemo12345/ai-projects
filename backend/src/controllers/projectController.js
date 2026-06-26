@@ -9,6 +9,11 @@ exports.createProject = async (req, res, next) => {
     const { name, description } = req.body;
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
+    // Fonts passed explicitly from the frontend (populated after Analyze Website)
+    const incomingFonts = req.body.fonts || {};
+    const bodyFontFromBody = incomingFonts.bodyFont || '';
+    const headingFontFromBody = incomingFonts.headingFont || '';
+
     const projectPayload = {
       name,
       description,
@@ -67,6 +72,15 @@ exports.createProject = async (req, res, next) => {
         if (logo) projectPayload.websiteProfile.identity.logoUrl = logo;
         if (title) projectPayload.websiteProfile.identity.title = title;
         if (description) projectPayload.websiteProfile.identity.description = description;
+
+        // Attach fonts passed from the frontend (collected after Analyze Website click)
+        if (bodyFontFromBody || headingFontFromBody) {
+          projectPayload.websiteProfile.fonts = {
+            bodyFont: bodyFontFromBody || '',
+            headingFont: headingFontFromBody || '',
+            primaryFont: bodyFontFromBody || '',
+          };
+        }
 
         // Also expose quick light fields at the project root so UI can read them consistently
         projectPayload.websiteUrl = fetchUrl;

@@ -82,6 +82,9 @@ const CreateProjectFlow = () => {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [scrapedImages, setScrapedImages] = useState<any[]>([]);
+  const [bodyFont, setBodyFont] = useState<string>("");
+  const [headingFont, setHeadingFont] = useState<string>("");
+  const [googleFonts, setGoogleFonts] = useState<string[]>([]);
 
   const handleLogoPreviewImageLoad = (img: HTMLImageElement) => {
     const brightness = getImageAverageBrightness(img);
@@ -185,6 +188,10 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
+      fonts: {
+        bodyFont: bodyFont || undefined,
+        headingFont: headingFont || undefined,
+      },
       scrapedData: {
         ...scrapedData,
         subIndustry: selectedSubIndustry || undefined,
@@ -287,6 +294,13 @@ const CreateProjectFlow = () => {
 
       if (meta.scrapedImages) {
         setScrapedImages(meta.scrapedImages);
+      }
+
+      // Extract fonts from scraped website
+      if (meta.fonts) {
+        if (meta.fonts.bodyFont) setBodyFont(meta.fonts.bodyFont);
+        if (meta.fonts.headingFont) setHeadingFont(meta.fonts.headingFont);
+        if (meta.fonts.googleFonts) setGoogleFonts(meta.fonts.googleFonts);
       }
 
       // Store full-page screenshot and render-derived colors (if backend returned them)
@@ -614,12 +628,6 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{primaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {/* {logoColors.source && logoColors.primary && (
-                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
-                            From Logo
-                          </span>
-                        )} */}
                       </div>
                     </div>
 
@@ -632,12 +640,6 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{secondaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {/* {logoColors.source && logoColors.secondary && (
-                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
-                            From Logo
-                          </span>
-                        )} */}
                       </div>
                     </div>
                   </div>
