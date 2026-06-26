@@ -61,9 +61,12 @@ const fetchHtmlWithPlaywright = async (url, timeoutMs = 30000) => {
         const page = await context.newPage();
 
         // Block heavy assets we don't need for HTML extraction — keeps loads fast
+        // NOTE: previously fonts were blocked here which prevented @font-face
+        // and remote font files from being fetched. That breaks font detection
+        // downstream. Do not abort 'font' requests so fonts can be discovered.
         await page.route('**/*', (route) => {
             const type = route.request().resourceType();
-            if (['media', 'font', 'websocket'].includes(type)) return route.abort();
+            if (['media', 'websocket'].includes(type)) return route.abort();
             return route.continue();
         });
 
@@ -99,6 +102,41 @@ const fetchHtmlWithPlaywright = async (url, timeoutMs = 30000) => {
         const html = await page.content();
         const finalUrl = page.url() || url;
 
+        // Collect computed/loaded font families and Google Fonts links from the rendered page.
+        let fontsInfo = { computedFamilies: [], loadedFamilies: [], googleFontLinks: [] };
+        try {
+            const computedFamilies = await page.evaluate(() => {
+                const families = new Set();
+                const add = (s) => {
+                    if (!s) return;
+                    s.split(',').forEach(f => {
+                        const name = f.replace(/['"]/g, '').trim();
+                        if (name) families.add(name);
+                    });
+                };
+                try { add(getComputedStyle(document.body).fontFamily); } catch (e) { }
+                try { const h = document.querySelector('h1,h2,h3'); if (h) add(getComputedStyle(h).fontFamily); } catch (e) { }
+                // sample some elements to catch inline font-family overrides
+                try {
+                    const els = Array.from(document.querySelectorAll('*')).slice(0, 300);
+                    els.forEach(el => { try { add(getComputedStyle(el).fontFamily); } catch (e) { } });
+                } catch (e) { }
+                return Array.from(families).slice(0, 12);
+            });
+
+            const loadedFamilies = await page.evaluate(() => {
+                try {
+                    return Array.from(document.fonts || []).map(f => (f.family || '').replace(/['"]/g, '').trim()).filter(Boolean);
+                } catch (e) { return []; }
+            });
+
+            const googleFontLinks = await page.$$eval('link[href*="fonts.googleapis.com" i]', els => els.map(l => l.href));
+
+            fontsInfo = { computedFamilies: computedFamilies || [], loadedFamilies: Array.from(new Set(loadedFamilies || [])), googleFontLinks: googleFontLinks || [] };
+        } catch (e) {
+            logger.warn(`[Scraper] font detection failed: ${e.message}`);
+        }
+
         // ✅ ADD THIS BLOCK
         const isCaptchaRedirect = /\/(sgcaptcha|captcha|bot-check|challenge|cf-challenge)/i.test(finalUrl);
 
@@ -108,7 +146,7 @@ const fetchHtmlWithPlaywright = async (url, timeoutMs = 30000) => {
         }
 
         logger.info(`[Scraper] playwright render OK${navigated ? '' : ' (partial)'}: ${finalUrl}`);
-        return { html, finalUrl };
+        return { html, finalUrl, fonts: fontsInfo };
     } finally {
         if (browser) await browser.close().catch(() => { });
     }
@@ -432,6 +470,117 @@ const extractColorsFromSvgMarkup = (svgMarkup) => {
         if (c && !isNeutralHex(c)) colors.add(c);
     }
     return Array.from(colors);
+};
+
+// Parse @font-face blocks from CSS text and return array of { family, srcs }
+const parseFontFacesFromCss = (cssText) => {
+    if (!cssText) return [];
+    const blocks = cssText.match(/@font-face\s*{[\s\S]*?}/gi) || [];
+    const out = [];
+    for (const blk of blocks) {
+        try {
+            const famMatch = blk.match(/font-family\s*:\s*([^;]+);/i);
+            let family = famMatch ? famMatch[1].trim().replace(/^['\"]|['\"]$/g, '') : null;
+            const srcMatch = blk.match(/src\s*:\s*([^;]+)/i);
+            const srcs = [];
+            if (srcMatch) {
+                // find url(...) occurrences
+                const urlRe = /url\(([^)]+)\)/gi;
+                let m;
+                while ((m = urlRe.exec(srcMatch[1])) !== null) {
+                    let u = m[1].trim().replace(/^['\"]|['\"]$/g, '');
+                    if (u) srcs.push(u);
+                }
+            }
+            if (family || srcs.length) out.push({ family: family || null, srcs });
+        } catch (e) { /* skip malformed */ }
+    }
+    return out;
+};
+
+// Fetch and parse external CSS and inline <style> blocks to discover @font-face rules.
+const discoverFontsFromCss = async ($, baseUrl) => {
+    const discovered = { families: [], srcs: [], cssLinks: [] };
+    try {
+        // collect stylesheet links
+        const linkHrefs = [];
+        $('link[rel="stylesheet"]').each((_, el) => {
+            const href = ($(el).attr('href') || '').trim(); if (href) linkHrefs.push(href);
+        });
+
+        // also check @import inside style tags
+        const inlineStyles = [];
+        $('style').each((_, el) => { inlineStyles.push($(el).html() || ''); });
+
+        // fetch each external CSS and parse
+        for (const rawHref of linkHrefs) {
+            const abs = toAbsUrl(rawHref, baseUrl);
+            if (!abs) continue;
+            discovered.cssLinks.push(abs);
+            try {
+                const cssText = await fetchText(abs, 15000);
+                if (!cssText) continue;
+                // parse @font-face
+                const ffaces = parseFontFacesFromCss(cssText);
+                for (const f of ffaces) {
+                    if (f.family) discovered.families.push(f.family);
+                    for (const s of f.srcs) discovered.srcs.push(toAbsUrl(s, abs) || s);
+                }
+                // also look for @import rules to fetch nested CSS
+                const importRe = /@import\s+(?:url\()?['\"]?([^'\")]+)['\"]?\)?/gi;
+                let im;
+                while ((im = importRe.exec(cssText)) !== null) {
+                    const impUrl = toAbsUrl(im[1], abs);
+                    if (impUrl) {
+                        try {
+                            const nested = await fetchText(impUrl, 15000);
+                            if (nested) {
+                                const nf = parseFontFacesFromCss(nested);
+                                for (const f of nf) {
+                                    if (f.family) discovered.families.push(f.family);
+                                    for (const s of f.srcs) discovered.srcs.push(toAbsUrl(s, impUrl) || s);
+                                }
+                            }
+                        } catch (e) { /* ignore nested fetch */ }
+                    }
+                }
+            } catch (e) { logger.warn(`[Scraper] fetch CSS failed ${abs}: ${e.message}`); }
+        }
+
+        // parse inline styles
+        for (const cssText of inlineStyles) {
+            const ffaces = parseFontFacesFromCss(cssText);
+            for (const f of ffaces) {
+                if (f.family) discovered.families.push(f.family);
+                for (const s of f.srcs) discovered.srcs.push(s);
+            }
+            // also parse @import inside inline styles
+            const importRe = /@import\s+(?:url\()?['\"]?([^'\")]+)['\"]?\)?/gi;
+            let im2;
+            while ((im2 = importRe.exec(cssText)) !== null) {
+                const impUrl = toAbsUrl(im2[1], baseUrl);
+                if (impUrl) {
+                    try {
+                        const nested = await fetchText(impUrl, 15000);
+                        if (nested) {
+                            const nf = parseFontFacesFromCss(nested);
+                            for (const f of nf) {
+                                if (f.family) discovered.families.push(f.family);
+                                for (const s of f.srcs) discovered.srcs.push(toAbsUrl(s, impUrl) || s);
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+            }
+        }
+    } catch (e) {
+        logger.warn(`[Scraper] discoverFontsFromCss failed: ${e.message}`);
+    }
+    // dedupe
+    discovered.families = Array.from(new Set(discovered.families.map(f => f && f.trim()).filter(Boolean)));
+    discovered.srcs = Array.from(new Set(discovered.srcs.filter(Boolean)));
+    discovered.cssLinks = Array.from(new Set(discovered.cssLinks.filter(Boolean)));
+    return discovered;
 };
 
 const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => {
@@ -2044,24 +2193,71 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     const startedAt = Date.now();
     logger.info(`[Scraper] Starting Playwright-rendered scrape for ${websiteUrl}`);
 
-    let html, finalUrl;
+    let html, finalUrl, fontsFromRender;
     try {
-        ({ html, finalUrl } = await fetchHtml(websiteUrl, 30000));
+        ({ html, finalUrl, fonts: fontsFromRender } = await fetchHtml(websiteUrl, 30000));
     } catch (err) {
         logger.warn(`[Scraper] First attempt failed (${err.message}), retrying with alternate UA…`);
         const origUA = DEFAULT_HEADERS['User-Agent'];
         DEFAULT_HEADERS['User-Agent'] = 'curl/8.4.0';
         try {
-            ({ html, finalUrl } = await fetchHtml(websiteUrl, 20000));
+            ({ html, finalUrl, fonts: fontsFromRender } = await fetchHtml(websiteUrl, 20000));
         } finally {
             DEFAULT_HEADERS['User-Agent'] = origUA;
         }
     }
 
+    logger.info(`[Scraper] fontsFromRender: ${JSON.stringify(fontsFromRender || {})}`);
+
     const $ = cheerio.load(html);
     const baseUrl = finalUrl || websiteUrl;
     const raw = extractWithCheerio($, html, baseUrl);
+    // Attach Playwright-detected fonts if available
+    try {
+        raw.fonts = raw.fonts || {};
+        if (fontsFromRender) {
+            raw.fonts.computedFamilies = fontsFromRender.computedFamilies || [];
+            raw.fonts.loadedFamilies = fontsFromRender.loadedFamilies || [];
+            raw.fonts.googleFontLinks = fontsFromRender.googleFontLinks || [];
+            // heuristic primary/body/heading mapping
+            raw.fonts.bodyFont = raw.fonts.loadedFamilies[0] || raw.fonts.computedFamilies[0] || '';
+            raw.fonts.headingFont = (raw.fonts.computedFamilies || []).find(f => f && f !== raw.fonts.bodyFont) || raw.fonts.bodyFont || '';
+            // Extract simple google font family names from links
+            try {
+                raw.fonts.googleFonts = (raw.fonts.googleFontLinks || []).flatMap(l => {
+                    try {
+                        const url = new URL(l);
+                        const q = url.searchParams.get('family') || '';
+                        return q.split('&family=').map(s => s.split(':')[0].replace(/\+/g, ' '));
+                    } catch (e) { return []; }
+                }).filter(Boolean);
+            } catch (e) { raw.fonts.googleFonts = raw.fonts.googleFonts || []; }
+        }
+
+        // Fallback: discover fonts via CSS/@font-face parsing (external CSS + inline <style>)
+        try {
+            const cssFound = await discoverFontsFromCss($, baseUrl);
+            logger.info(`[Scraper] cssFound: ${JSON.stringify(cssFound || {})}`);
+            if (cssFound) {
+                raw.fonts.cssDiscovered = cssFound;
+                raw.fonts.googleFonts = Array.from(new Set([...(raw.fonts.googleFonts || []), ...cssFound.families]));
+                raw.fonts.loadedFamilies = Array.from(new Set([...(raw.fonts.loadedFamilies || []), ...cssFound.families]));
+                // If body/heading missing, try to pick from discovered families
+                if (!raw.fonts.bodyFont && raw.fonts.loadedFamilies.length) raw.fonts.bodyFont = raw.fonts.loadedFamilies[0];
+                if (!raw.fonts.headingFont && raw.fonts.loadedFamilies.length) raw.fonts.headingFont = raw.fonts.loadedFamilies[1] || raw.fonts.loadedFamilies[0];
+            }
+        } catch (e) { logger.warn(`[Scraper] CSS font discovery failed: ${e.message}`); }
+    } catch (e) { logger.warn(`[Scraper] merging fonts failed: ${e.message}`); }
     await enhanceThemeAndLogo($, html, baseUrl, raw);
+    // Normalize legacy fields used later in the pipeline
+    try {
+        if (raw.fonts) {
+            if (!raw.bodyFontFamily && raw.fonts.bodyFont) raw.bodyFontFamily = raw.fonts.bodyFont;
+            if (!raw.headingFontFamily && raw.fonts.headingFont) raw.headingFontFamily = raw.fonts.headingFont;
+            if (!raw.googleFontFamilies || !Array.isArray(raw.googleFontFamilies) || raw.googleFontFamilies.length === 0) raw.googleFontFamilies = raw.fonts.googleFonts || [];
+            if (!raw.bodyFontSize && raw.fonts.bodyFontSize) raw.bodyFontSize = raw.fonts.bodyFontSize;
+        }
+    } catch (e) { /* non-fatal */ }
 
     // Attempt to capture a rendered screenshot and use rendered-region colors.
     // If renderer is not available (server without browsers), fall back to image-based heuristics.
@@ -2265,13 +2461,17 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         exactElements: {},
     };
 
-    const typography = {
-        primaryFont: raw.bodyFontFamily || raw.googleFontFamilies[0] || null,
-        headingFont: raw.headingFontFamily || raw.googleFontFamilies[1] || raw.googleFontFamilies[0] || null,
-        bodyFont: raw.bodyFontFamily || null,
-        googleFontFamilies: raw.googleFontFamilies,
-        bodyFontSize: raw.bodyFontSize || null,
-    };
+    const typography = (() => {
+        const primaryFont = raw.bodyFontFamily || raw.googleFontFamilies[0] || null;
+        const headingFont = raw.headingFontFamily || raw.googleFontFamilies[1] || raw.googleFontFamilies[0] || null;
+        return {
+            primaryFont,
+            headingFont: headingFont && headingFont !== primaryFont ? headingFont : null,
+            bodyFont: primaryFont,
+            googleFontFamilies: raw.googleFontFamilies,
+            bodyFontSize: raw.bodyFontSize || null,
+        };
+    })();
 
     // Dedup helper — keeps the first occurrence for a given key.
     const dedupeBy = (arr, keyFn) => {
@@ -2451,8 +2651,8 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         frameworkInfo = { platform: 'Plain HTML', frameworks: [], evidence: {} },
     } = scraped;
 
-    const primaryColor = logoColors.primary || colors.primary || '';
-    const secondaryColor = logoColors.secondary || colors.secondary || '';
+    const primaryColor = colors.primary || logoColors.primary || '';
+    const secondaryColor = colors.secondary || logoColors.secondary || '';
     const accentColor = colors.accent || '';
 
     return {
@@ -2469,6 +2669,7 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
             secondary: logoColors.secondary || null,
             palette: dedupeArray(logoColors.palette, c => c),
             source: logoColors.source || null,
+            cssOverrode: !!(colors.primary && logoColors.primary && colors.primary !== logoColors.primary),
         },
         industry: {
             industry: industry || '',
