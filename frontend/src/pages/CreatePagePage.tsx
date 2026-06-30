@@ -699,8 +699,8 @@ const CreatePagePage = () => {
     if (project) {
       // Only set initial branding if it hasn't been set yet or if the project ID changed
       // to avoid overwriting user edits when React Query refetches in the background
-      setPrimaryColor(prev => prev === "#7c3aed" ? getProjectPrimaryColor(project) : prev);
-      setSecondaryColor(prev => prev === "#6366f1" ? getProjectSecondaryColor(project) : prev);
+      setPrimaryColor(getProjectPrimaryColor(project));
+      setSecondaryColor(getProjectSecondaryColor(project));
       const logo = getProjectLogoUrl(project);
       if (logo && !logoPreview) {
         setLogoPreview(logo);
@@ -1138,6 +1138,8 @@ const CreatePagePage = () => {
       // ─── FINAL BRANDING INJECTION ───
       const themeData = project.websiteProfile?.theme || project.scrapedData?.theme || {};
       const fontsData = project.websiteProfile?.fonts || project.scrapedData?.fonts || {};
+      console.log("Theme Data:", themeData);
+      console.log("Fonts Data:", fontsData);
 
       const headerBg = themeData.header?.background || "#ffffff";
       const headerText = themeData.header?.text || "var(--text-dark, #1f1f1f)";
@@ -1149,11 +1151,13 @@ const CreatePagePage = () => {
       const btnSecondaryBg = themeData.buttons?.secondaryBg || "transparent";
       const btnSecondaryText = themeData.buttons?.secondaryText || "var(--text-dark, #1f1f1f)";
 
-      const bodyFont = fontsData.bodyFont ? `'${fontsData.bodyFont}', sans-serif` : "var(--font-body-md, 'Inter', sans-serif)";
-      const headingFont = fontsData.headingFont ? `'${fontsData.headingFont}', serif` : "var(--font-h1, 'DM Serif Display', serif)";
+      const bodyFamily = fontsData.bodyFont || fontsData.primaryFont;
+      const headingFamily = fontsData.headingFont || fontsData.primaryFont;
+      const bodyFont = bodyFamily ? `'${bodyFamily}', sans-serif` : "var(--font-body-md, 'Inter', sans-serif)";
+      const headingFont = headingFamily ? `'${headingFamily}', serif` : "var(--font-h1, 'DM Serif Display', serif)";
 
       const brandingCss = `
-:root, body {
+  :root, body {
   --primary: ${primaryColor || "#6366f1"};
   --secondary: ${secondaryColor || "#4f46e5"};
   --primary-rgb: ${hexToRgbStr(primaryColor || "#6366f1")};
@@ -1163,6 +1167,12 @@ const CreatePagePage = () => {
   --header-text: ${headerText};
   --footer-bg: ${footerBg};
   --footer-text: ${footerText};
+
+  --btn-primary-bg: ${btnPrimaryBg};
+  --btn-primary-text: ${btnPrimaryText};
+  --btn-secondary-bg: ${btnSecondaryBg};
+  --btn-secondary-text: ${btnSecondaryText};
+  --button-gradient: linear-gradient(135deg, ${primaryColor || "#6366f1"}, ${secondaryColor || "#4f46e5"});
 }
 
 body, p, a, span, li, input, select, textarea { font-family: ${bodyFont} !important; }

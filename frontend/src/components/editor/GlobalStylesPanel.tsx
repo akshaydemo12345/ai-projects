@@ -8,6 +8,31 @@ interface GlobalStylesPanelProps {
   initialSecondary?: string;
   initialStylesCss?: string;
   onBrandingColorsChange?: (colors: { primary: string; secondary: string }) => void;
+  // Full scraped websiteProfile blocks
+  initialWebsiteColors?: {
+    primary?: string; secondary?: string; accent?: string;
+    pagePrimary?: string; pageSecondary?: string;
+  };
+  initialTheme?: {
+    header?: { background?: string; text?: string; };
+    navigation?: { background?: string; text?: string; active?: string; };
+    buttons?: { primaryBg?: string; primaryText?: string; secondaryBg?: string; secondaryText?: string; };
+    footer?: { background?: string; text?: string; };
+  };
+  initialWebsiteFonts?: {
+    primaryFont?: string; headingFont?: string; bodyFont?: string;
+    bodyFontSize?: string; googleFonts?: string[];
+  };
+  onThemeChange?: (snapshot: {
+    colors: { primary: string; secondary: string; accent: string; };
+    theme: {
+      header: { background: string; text: string; };
+      navigation: { background: string; text: string; active: string; };
+      buttons: { primaryBg: string; primaryText: string; secondaryBg: string; secondaryText: string; };
+      footer: { background: string; text: string; };
+    };
+    fonts: { primaryFont: string; headingFont: string; bodyFont: string; bodyFontSize: string; };
+  }) => void;
 }
 
 interface StyleConfig {
@@ -64,7 +89,7 @@ const INIT_STYLES: StyleConfig = {
   }
 };
 
-const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialStylesCss, onBrandingColorsChange }: GlobalStylesPanelProps) => {
+const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialStylesCss, onBrandingColorsChange, initialWebsiteColors, initialTheme, initialWebsiteFonts, onThemeChange }: GlobalStylesPanelProps) => {
   const [styles, setStyles] = useState<StyleConfig>(INIT_STYLES);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     Colors: true, Body: true, Heading: false, Subheading: false, Buttons: false, Forms: false
@@ -253,27 +278,66 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     setStyles(prev => {
       const newStyles = { ...prev };
       let changed = false;
-      if (initialPrimary && newStyles.Colors.primary.value !== initialPrimary) {
-        newStyles.Colors.primary = { ...newStyles.Colors.primary, value: initialPrimary };
-        // Only override button bg if it hasn't been set by initialStylesCss
+
+      // Prefer scraped websiteProfile.colors over direct primaryColor/secondaryColor
+      const resolvedPrimary = initialWebsiteColors?.primary || initialPrimary;
+      const resolvedSecondary = initialWebsiteColors?.secondary || initialSecondary;
+      const resolvedAccent = initialWebsiteColors?.accent;
+
+      if (resolvedPrimary && newStyles.Colors.primary.value !== resolvedPrimary) {
+        newStyles.Colors.primary = { ...newStyles.Colors.primary, value: resolvedPrimary };
         if (!initialStylesCss) {
-          newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialPrimary };
+          newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: resolvedPrimary };
         }
-        prevColorsRef.current.primary = initialPrimary;
+        prevColorsRef.current.primary = resolvedPrimary;
         changed = true;
       }
-      if (initialSecondary && newStyles.Colors.secondary.value !== initialSecondary) {
-        newStyles.Colors.secondary = { ...newStyles.Colors.secondary, value: initialSecondary };
-        // Only override subheading color if it hasn't been set by initialStylesCss
+      if (resolvedSecondary && newStyles.Colors.secondary.value !== resolvedSecondary) {
+        newStyles.Colors.secondary = { ...newStyles.Colors.secondary, value: resolvedSecondary };
         if (!initialStylesCss) {
-          newStyles.Subheading.color = { ...newStyles.Subheading.color, value: initialSecondary };
+          newStyles.Subheading.color = { ...newStyles.Subheading.color, value: resolvedSecondary };
         }
-        prevColorsRef.current.secondary = initialSecondary;
+        prevColorsRef.current.secondary = resolvedSecondary;
         changed = true;
       }
+
+      // Apply scraped per-component theme values (header/nav/buttons/footer)
+      if (initialTheme?.buttons) {
+        if (initialTheme.buttons.primaryBg && !initialStylesCss) {
+          newStyles.Buttons.bg = { ...newStyles.Buttons.bg, value: initialTheme.buttons.primaryBg };
+          changed = true;
+        }
+        if (initialTheme.buttons.primaryText && !initialStylesCss) {
+          newStyles.Buttons.text = { ...newStyles.Buttons.text, value: initialTheme.buttons.primaryText };
+          changed = true;
+        }
+      }
+
+      // Apply scraped font values
+      if (initialWebsiteFonts) {
+        const bodyFont = initialWebsiteFonts.bodyFont || initialWebsiteFonts.primaryFont;
+        const headingFont = initialWebsiteFonts.headingFont;
+        if (bodyFont && !initialStylesCss) {
+          newStyles.Body.fontFamily = { ...newStyles.Body.fontFamily, value: bodyFont };
+          changed = true;
+        }
+        if (headingFont && !initialStylesCss) {
+          newStyles.Heading.fontFamily = { ...newStyles.Heading.fontFamily, value: headingFont };
+          newStyles.Subheading.fontFamily = { ...newStyles.Subheading.fontFamily, value: headingFont };
+          changed = true;
+        }
+        if (initialWebsiteFonts.bodyFontSize && !initialStylesCss) {
+          const sz = parseFloat(initialWebsiteFonts.bodyFontSize);
+          if (!isNaN(sz)) {
+            newStyles.Body.fontSize = { ...newStyles.Body.fontSize, value: String(sz) };
+            changed = true;
+          }
+        }
+      }
+
       return changed ? newStyles : prev;
     });
-  }, [initialPrimary, initialSecondary, initialStylesCss]);
+  }, [initialPrimary, initialSecondary, initialWebsiteColors, initialTheme, initialWebsiteFonts, initialStylesCss]);
 
   const toggleSection = (cat: string) => {
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -558,6 +622,45 @@ input, select, textarea, .input-field {
       secondary: styles.Colors.secondary.value,
     });
   }, [styles.Colors.primary.value, styles.Colors.secondary.value, onBrandingColorsChange]);
+
+  // Emit full theme snapshot whenever any style changes
+  useEffect(() => {
+    if (!onThemeChange) return;
+    onThemeChange({
+      colors: {
+        primary: styles.Colors.primary.value,
+        secondary: styles.Colors.secondary.value,
+        accent: styles.Colors.secondary.value, // treat secondary as accent fallback
+      },
+      theme: {
+        header: {
+          background: initialTheme?.header?.background || styles.Colors.primary.value,
+          text: initialTheme?.header?.text || styles.Heading.color.value,
+        },
+        navigation: {
+          background: initialTheme?.navigation?.background || styles.Colors.primary.value,
+          text: initialTheme?.navigation?.text || '#ffffff',
+          active: initialTheme?.navigation?.active || styles.Colors.secondary.value,
+        },
+        buttons: {
+          primaryBg: styles.Buttons.bg.value,
+          primaryText: styles.Buttons.text.value,
+          secondaryBg: initialTheme?.buttons?.secondaryBg || styles.Colors.secondary.value,
+          secondaryText: initialTheme?.buttons?.secondaryText || '#ffffff',
+        },
+        footer: {
+          background: initialTheme?.footer?.background || '#1f2937',
+          text: initialTheme?.footer?.text || '#ffffff',
+        },
+      },
+      fonts: {
+        primaryFont: styles.Body.fontFamily.value,
+        headingFont: styles.Heading.fontFamily.value,
+        bodyFont: styles.Body.fontFamily.value,
+        bodyFontSize: `${styles.Body.fontSize.value}${styles.Body.fontSize.unit || 'rem'}`,
+      },
+    });
+  }, [styles, onThemeChange, initialTheme]);
 
   return (
     <div className="w-full flex-shrink-0 flex flex-col bg-[#fff] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>

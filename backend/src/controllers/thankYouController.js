@@ -79,9 +79,9 @@ exports.renderThankYouPage = async (req, res, next) => {
     const { pageSlug: rawPageSlug } = req.params;
     const pageSlug = (rawPageSlug || "").replace(/^api\/v1\/proxy\//i, '');
     const slugParts = (pageSlug || "").split('/');
-    const actualPageSlug = slugParts[slugParts.length - 1]; 
-    const urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/'); 
- 
+    const actualPageSlug = slugParts[slugParts.length - 1];
+    const urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
+
     let page = null;
     const potentialPages = await Page.find({ slug: actualPageSlug, isDeleted: { $ne: true } });
     if (potentialPages.length > 0) {
@@ -89,7 +89,7 @@ exports.renderThankYouPage = async (req, res, next) => {
         for (const p of potentialPages) {
           const project = await Project.findById(p.projectId);
           const projectPreSlug = (project?.preSlug || "").replace(/^\/+|\/+$/g, '');
-          if (projectPreSlug === urlPreSlug) { page = p; break; }
+          if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) { page = p; break; }
         }
       } else {
         for (const p of potentialPages) {
@@ -219,10 +219,10 @@ exports.renderThankYouPage = async (req, res, next) => {
     let extractedEmail = '';
     let extractedPhone = '';
     const sourceHtml = visualFooter || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
-    
+
     const emailMatch = sourceHtml.match(/mailto:([^"'>?]+)/i) || sourceHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     if (emailMatch) extractedEmail = emailMatch[1] || emailMatch[0];
-    
+
     const phoneMatch = sourceHtml.match(/tel:([^"'>?]+)/i) || sourceHtml.match(/(?:\+?\d{1,3}[\s.-]?)?\(?\d{3,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{4}/);
     if (phoneMatch) extractedPhone = phoneMatch[1] || phoneMatch[0];
 
@@ -233,11 +233,11 @@ exports.renderThankYouPage = async (req, res, next) => {
     const hasPhone = !!content.phoneNumber && content.phoneNumber.trim() !== '' && content.phoneNumber !== '0850 458 9665';
 
     // If it's the default string, empty, or missing, replace it with the dynamic clean text
-    const isDefaultText = !content.offerText || 
-                          content.offerText.trim() === '' || 
-                          content.offerText.includes('For more information') ||
-                          content.offerText.includes('connect with us') ||
-                          content.offerText.includes('contact us at');
+    const isDefaultText = !content.offerText ||
+      content.offerText.trim() === '' ||
+      content.offerText.includes('For more information') ||
+      content.offerText.includes('connect with us') ||
+      content.offerText.includes('contact us at');
 
     if (isDefaultText) {
       if (hasEmail && hasPhone) {
@@ -423,10 +423,10 @@ exports.previewThankYouPage = async (req, res, next) => {
       let extractedEmail = '';
       let extractedPhone = '';
       const sourceHtml = visualFooter || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
-      
+
       const emailMatch = sourceHtml.match(/mailto:([^"'>?]+)/i) || sourceHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       if (emailMatch) extractedEmail = emailMatch[1] || emailMatch[0];
-      
+
       const phoneMatch = sourceHtml.match(/tel:([^"'>?]+)/i) || sourceHtml.match(/(?:\+?\d{1,3}[\s.-]?)?\(?\d{3,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{4}/);
       if (phoneMatch) extractedPhone = phoneMatch[1] || phoneMatch[0];
 
@@ -437,11 +437,11 @@ exports.previewThankYouPage = async (req, res, next) => {
       const hasPhone = !!mergedContent.phoneNumber && mergedContent.phoneNumber.trim() !== '' && mergedContent.phoneNumber !== '0850 458 9665';
 
       // If it's the default string, empty, or missing, replace it with the dynamic clean text
-      const isDefaultText = !mergedContent.offerText || 
-                            mergedContent.offerText.trim() === '' || 
-                            mergedContent.offerText.includes('For more information') ||
-                            mergedContent.offerText.includes('connect with us') ||
-                            mergedContent.offerText.includes('contact us at');
+      const isDefaultText = !mergedContent.offerText ||
+        mergedContent.offerText.trim() === '' ||
+        mergedContent.offerText.includes('For more information') ||
+        mergedContent.offerText.includes('connect with us') ||
+        mergedContent.offerText.includes('contact us at');
 
       if (isDefaultText) {
         if (hasEmail && hasPhone) {

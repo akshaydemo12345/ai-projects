@@ -54,7 +54,13 @@ export interface Project {
     industry?: { industry?: string; subIndustry?: string; confidence?: number; };
     logoColors?: { primary?: string; secondary?: string; palette?: string[]; source?: string; };
     colors?: { primary?: string; secondary?: string; accent?: string; palette?: string[]; pagePrimary?: string; pageSecondary?: string; };
-    fonts?: { primaryFont?: string; headingFont?: string; bodyFont?: string; googleFonts?: string[]; };
+    theme?: {
+      header?: { background?: string; text?: string; };
+      navigation?: { background?: string; text?: string; active?: string; };
+      buttons?: { primaryBg?: string; primaryText?: string; secondaryBg?: string; secondaryText?: string; };
+      footer?: { background?: string; text?: string; };
+    };
+    fonts?: { primaryFont?: string; headingFont?: string; bodyFont?: string; bodyFontSize?: string; googleFonts?: string[]; };
     content?: {
       hero?: { title?: string; subtitle?: string; ctaText?: string; };
       taglines?: string[];
@@ -465,6 +471,20 @@ export const projectsApi = {
     return apiFetch(`/projects/${id}/branding/extract-from-website`, {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  },
+  // Persist editor theme (colors / component-theme / fonts) back to websiteProfile
+  updateWebsiteTheme: async (
+    id: string,
+    payload: {
+      colors?: Project['websiteProfile']['colors'];
+      theme?: Project['websiteProfile']['theme'];
+      fonts?: Project['websiteProfile']['fonts'];
+    }
+  ) => {
+    return apiFetch(`/projects/${id}/website-theme`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   },
 };
