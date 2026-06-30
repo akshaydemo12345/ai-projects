@@ -9,6 +9,11 @@ exports.createProject = async (req, res, next) => {
     const { name, description } = req.body;
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
+    // Fonts passed explicitly from the frontend (populated after Analyze Website)
+    const incomingFonts = req.body.fonts || {};
+    const bodyFontFromBody = incomingFonts.bodyFont || '';
+    const headingFontFromBody = incomingFonts.headingFont || '';
+
     const projectPayload = {
       name,
       description,
@@ -21,10 +26,30 @@ exports.createProject = async (req, res, next) => {
       },
     };
 
-    // If website URL provided, store sourceUrl up-front and try a quick metadata fetch
-    // to populate light fields (favicon, logo, title, description). Heavy behavior
-    // arrays (images, videos, content, forms, sections, seo) are left for background scraping.
-    if (req.body.websiteUrl || req.body.url) {
+    // If websiteProfile is provided directly from the frontend, use it.
+    // This happens if the user completed the frontend scraping/analysis.
+    // Otherwise, we fallback to quick metadata fetch + background scraping.
+    if (req.body.websiteProfile) {
+      projectPayload.websiteProfile = req.body.websiteProfile;
+      projectPayload.scrapeMeta = {
+        sourceUrl: normalizeDomain(req.body.websiteUrl || req.body.url),
+        status: 'success',
+        finishedAt: new Date(),
+        errors: [],
+      };
+      
+      const wp = req.body.websiteProfile;
+      projectPayload.websiteUrl = wp.extraction?.sourceUrl || wp.extraction?.finalUrl || req.body.websiteUrl || req.body.url;
+      if (wp.identity?.logoUrl) projectPayload.logoUrl = wp.identity.logoUrl;
+      if (wp.identity?.favicon) projectPayload.faviconUrl = wp.identity.favicon;
+      
+      // Keep root level properties consistent with provided primary/secondary/colors
+      if (req.body.primaryColor) projectPayload.primaryColor = req.body.primaryColor;
+      if (req.body.secondaryColor) projectPayload.secondaryColor = req.body.secondaryColor;
+      if (req.body.colors) projectPayload.colors = req.body.colors;
+      
+      console.debug('[projectController] using websiteProfile provided by frontend, skipping quick fetch & background scraping.');
+    } else if (req.body.websiteUrl || req.body.url) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       projectPayload.websiteProfile = {
         extraction: {
@@ -68,6 +93,15 @@ exports.createProject = async (req, res, next) => {
         if (title) projectPayload.websiteProfile.identity.title = title;
         if (description) projectPayload.websiteProfile.identity.description = description;
 
+        // Attach fonts passed from the frontend (collected after Analyze Website click)
+        if (bodyFontFromBody || headingFontFromBody) {
+          projectPayload.websiteProfile.fonts = {
+            bodyFont: bodyFontFromBody || '',
+            headingFont: headingFontFromBody || '',
+            primaryFont: bodyFontFromBody || '',
+          };
+        }
+
         // Also expose quick light fields at the project root so UI can read them consistently
         projectPayload.websiteUrl = fetchUrl;
         if (logo) projectPayload.logoUrl = logo;
@@ -85,7 +119,8 @@ exports.createProject = async (req, res, next) => {
     const project = await Project.create(projectPayload);
 
     // If a website was provided, perform the heavier scrape + profile build in background.
-    if (req.body.websiteUrl || req.body.url) {
+    // ONLY run if websiteProfile was NOT provided from the frontend.
+    if (!req.body.websiteProfile && (req.body.websiteUrl || req.body.url)) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       setImmediate(async () => {
         try {

@@ -42,6 +42,12 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     let pageDoc = null;
 
+    // 0. Fastest path: if a previewToken is provided, try it directly first
+    //    This handles draft pages accessed via the dashboard "View" or WP plugin ?token=
+    if (previewToken) {
+      pageDoc = await Page.findOne({ previewToken, isDeleted: { $ne: true } });
+    }
+
     // 1. Resolve via ID or Preview Token
     if (requestedPageId) {
       if (/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
@@ -71,7 +77,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           for (const p of potentialPages) {
             const project = await Project.findById(p.projectId);
             const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug === urlPreSlug) {
+            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
               pageDoc = p;
               break;
             }
@@ -81,7 +87,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
             const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
             if (p) {
               const proj = await Project.findById(p.projectId);
-              if (proj && !proj.preSlug) pageDoc = p;
+              if (proj && (!proj.preSlug || previewToken)) pageDoc = p;
             }
           }
         }
@@ -109,7 +115,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
           for (const p of potentialPages) {
             const project = await Project.findById(p.projectId);
             const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug === urlPreSlug) {
+            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
               pageDoc = p;
               break;
             }
@@ -154,7 +160,7 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         for (const p of potentialPages) {
           const project = await Project.findById(p.projectId);
           const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-          if (projectPreSlug === urlPreSlug) {
+          if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
             pageDoc = p;
             break;
           }
@@ -165,8 +171,9 @@ exports.getPublicPageBySlug = async (req, res, next) => {
         pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
         if (pageDoc) {
           const project = await Project.findById(pageDoc.projectId);
-          if (project && project.preSlug && !previewToken) {
-            // Require preSlug for live access, but allow it if preview token is present
+          // Only enforce preSlug for unpublished pages without a preview token.
+          // Published pages are always resolvable by slug directly (e.g. WP plugin, JSON API).
+          if (project && project.preSlug && pageDoc.status !== 'published' && !previewToken) {
             pageDoc = null;
           }
         }
@@ -178,12 +185,51 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       }
     }
 
-    if (!pageDoc) return next(new AppError('Page not found', 404));
+    // 4. Last-resort: try token / rawSlug as a MongoDB ObjectId (pageId or projectId)
+    if (!pageDoc) {
+      const candidateId = previewToken || String(req.params.slug || req.params[0] || '').trim();
 
-    if (pageDoc.status !== 'published' && previewToken && previewToken !== pageDoc.previewToken) {
+      // Try as pageId
+      if (/^[0-9a-fA-F]{24}$/.test(candidateId)) {
+        pageDoc = await Page.findOne({ _id: candidateId, isDeleted: { $ne: true } });
+      }
+
+      // Try as projectId — return the first published page for that project
+      if (!pageDoc && /^[0-9a-fA-F]{24}$/.test(candidateId)) {
+        pageDoc = await Page.findOne({
+          projectId: candidateId,
+          status: 'published',
+          isDeleted: { $ne: true }
+        });
+      }
+
+      // Try token as a previewToken string (non-ObjectId tokens not yet matched above)
+      if (!pageDoc && previewToken && !/^[0-9a-fA-F]{24}$/.test(previewToken)) {
+        pageDoc = await Page.findOne({ previewToken, isDeleted: { $ne: true } });
+      }
+    }
+
+    if (!pageDoc) {
+      // DEBUG — remove before production
+      logger.info(`[publicController] slug resolution failed`, {
+        requestedPageId,
+        pgSlug,
+        rawSlug: req.params.slug || req.params[0],
+        query: req.query,
+        headers: {
+          host: req.headers.host,
+          forwardedHost: req.headers['x-forwarded-host'],
+        }
+      });
       return next(new AppError('Page not found', 404));
     }
-    // Removed strict token requirement for drafts based on user request
+
+    // Gate: block non-published pages ONLY when no valid previewToken is present.
+    // If the token matches the page's previewToken, serve it regardless of status.
+    // If the page is published, always serve it.
+    if (pageDoc.status !== 'published' && pageDoc.previewToken !== previewToken) {
+      return next(new AppError('Page not found', 404));
+    }
 
     const page = await Page.findByIdAndUpdate(
       pageDoc._id,
@@ -1070,7 +1116,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
           for (const p of potentialPages) {
             const project = await Project.findById(p.projectId);
             const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug === urlPreSlug) {
+            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
               page = p;
               break;
             }
@@ -1109,7 +1155,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
           for (const p of potentialPages) {
             const project = await Project.findById(p.projectId);
             const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug === urlPreSlug) {
+            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
               page = p;
               break;
             }
@@ -1207,7 +1253,7 @@ exports.getPublicPageHTML = async (req, res, next) => {
         for (const p of potentialPages) {
           const project = await Project.findById(p.projectId);
           const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-          if (projectPreSlug === urlPreSlug) {
+          if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
             page = p;
             break;
           }
@@ -1850,7 +1896,7 @@ exports.verifyPlugin = async (req, res, next) => {
       } else if (normalizeDomain(project.websiteUrl) !== incomingDomain) {
         // Domain mismatch!
         console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
-        
+
         // Update project table - if not verified API then false
         project.isVerified = false;
         await Project.updateOne({ _id: project._id }, { $set: { isVerified: false, verificationStatus: 'failed' } });
@@ -2103,7 +2149,7 @@ exports.getDynamicPage = async (req, res, next) => {
         // If we have a specific project from apiKey, ensure it matches
         if (project && String(project._id) !== String(p.projectId)) continue;
 
-        if (projectPreSlug === urlPreSlug) {
+        if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
           page = p;
           if (!project) project = proj;
           break;
