@@ -47,6 +47,10 @@ const createPageSchema = z.object({
   keywords: z.array(z.string()).optional(),
   pageType: z.string().optional(),
   figmaImage: z.string().optional(),
+  fonts: z.object({
+    bodyFont: z.string().optional(),
+    headingFont: z.string().optional(),
+  }).optional(),
   mainHeader: z.string().optional(),
   mainFooter: z.string().optional(),
   thankYouHeader: z.string().optional(),
@@ -641,20 +645,28 @@ exports.createPage = async (req, res, next) => {
         logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
 
         // If it's a template, we pass a hint to the AI service
+        // Merge scraped fonts with any fonts explicitly passed from the frontend
+        const resolvedFonts = {
+          bodyFont: incomingFonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
+          headingFont: incomingFonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
+          googleFonts: project.websiteProfile?.fonts?.googleFonts || [],
+        };
+
         const aiInput = {
           businessName: project.name,
-          industry: project.industry,
+          industry: project.websiteProfile?.industry?.industry || project.industry,
           pageType: 'lead generation',
-          targetAudience: project.description || 'Business owners looking for ' + project.industry + ' services',
-          businessDescription: project.description,
-          ctaText: 'Get Started',
+          targetAudience: targetAudience || project.description || 'Business owners looking for ' + (project.websiteProfile?.industry?.industry || project.industry) + ' services',
+          businessDescription: businessDescription || business_description || project.websiteProfile?.identity?.description || project.description,
+          ctaText: ctaText || project.websiteProfile?.content?.hero?.ctaText || 'Get Started',
           tone: 'Professional',
           aiPrompt: promptToUse,
-          logoUrl: project.logoUrl || '',
-          primaryColor: page.primaryColor || project.primaryColor,
-          secondaryColor: page.secondaryColor || project.secondaryColor,
+          logoUrl: project.websiteProfile?.identity?.logoUrl || project.logoUrl || '',
+          primaryColor: page.primaryColor || project.websiteProfile?.logoColors?.primary || project.websiteProfile?.colors?.primary || project.primaryColor,
+          secondaryColor: page.secondaryColor || project.websiteProfile?.logoColors?.secondary || project.websiteProfile?.colors?.secondary || project.secondaryColor,
+          accentColor: page.accentColor || project.websiteProfile?.colors?.accent || project.secondaryColor || '#6366f1',
           services: page.services || project.services || [],
-          keywords: keywords || [],
+          keywords: keywords || project.websiteProfile?.seo?.keywords || [],
           noIndex: page.noIndex || project.noIndex || false,
           noFollow: page.noFollow || project.noFollow || false,
           pageId: page._id,
@@ -665,7 +677,8 @@ exports.createPage = async (req, res, next) => {
           figmaImage: figmaImage || null,
           // Pass scraped data from project (contains images/videos from website)
           scrapedData: project.scrapedData || {},
-          scrapedFonts: project.websiteProfile?.fonts || project.scrapedData?.fonts || null,
+          // Fonts: merge incoming (from form) with scraped (from websiteProfile) — incoming takes priority
+          scrapedFonts: (resolvedFonts.bodyFont || resolvedFonts.headingFont) ? resolvedFonts : null,
           scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null
         };
 
@@ -722,7 +735,7 @@ exports.createPage = async (req, res, next) => {
 :root {
   --primary: ${page.primaryColor};
   --secondary: ${page.secondaryColor};
-  --accent: ${page.secondaryColor};
+  --accent: ${page.accentColor || page.secondaryColor};
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
@@ -745,7 +758,7 @@ exports.createPage = async (req, res, next) => {
 :root {
   --primary: ${page.primaryColor};
   --secondary: ${page.secondaryColor};
-  --accent: ${page.secondaryColor};
+  --accent: ${page.accentColor || page.secondaryColor};
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
@@ -816,7 +829,7 @@ exports.createPage = async (req, res, next) => {
 :root {
   --primary: ${page.primaryColor};
   --secondary: ${page.secondaryColor};
-  --accent: ${page.secondaryColor};
+  --accent: ${page.accentColor || page.secondaryColor};
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;

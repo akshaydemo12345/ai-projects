@@ -78,10 +78,14 @@ const CreateProjectFlow = () => {
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
   const [scrapedData, setScrapedData] = useState<any>({});
+  const [websiteProfile, setWebsiteProfile] = useState<any>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [scrapedImages, setScrapedImages] = useState<any[]>([]);
+  const [bodyFont, setBodyFont] = useState<string>("");
+  const [headingFont, setHeadingFont] = useState<string>("");
+  const [googleFonts, setGoogleFonts] = useState<string[]>([]);
 
   const handleLogoPreviewImageLoad = (img: HTMLImageElement) => {
     const brightness = getImageAverageBrightness(img);
@@ -170,6 +174,43 @@ const CreateProjectFlow = () => {
     setIsSubmitting(true);
     const selectedCategory = category === "Other" ? (customIndustry.trim() || "Other") : category;
     const selectedSubIndustry = subIndustry === "Other" ? customSubIndustry.trim() : subIndustry;
+
+    // Merge user modifications into pre-scraped websiteProfile if available
+    let finalProfile = undefined;
+    if (websiteProfile) {
+      finalProfile = {
+        ...websiteProfile,
+        identity: {
+          ...(websiteProfile.identity || {}),
+          name: name.trim(),
+          description: description.trim(),
+          logoUrl: logoBase64 || websiteProfile.identity?.logoUrl || undefined,
+        },
+        colors: {
+          ...(websiteProfile.colors || {}),
+          primary: primaryColor || websiteProfile.colors?.primary || undefined,
+          secondary: secondaryColor || websiteProfile.colors?.secondary || undefined,
+          palette: extractedColors.length > 0 ? extractedColors : (websiteProfile.colors?.palette || []),
+        },
+        logoColors: {
+          ...(websiteProfile.logoColors || {}),
+          primary: primaryColor || websiteProfile.logoColors?.primary || undefined,
+          secondary: secondaryColor || websiteProfile.logoColors?.secondary || undefined,
+          palette: extractedColors.length > 0 ? extractedColors : (websiteProfile.logoColors?.palette || []),
+        },
+        fonts: {
+          ...(websiteProfile.fonts || {}),
+          bodyFont: bodyFont || websiteProfile.fonts?.bodyFont || undefined,
+          headingFont: headingFont || websiteProfile.fonts?.headingFont || undefined,
+        },
+        industry: {
+          ...(websiteProfile.industry || {}),
+          industry: selectedCategory,
+          subIndustry: selectedSubIndustry || undefined,
+        }
+      };
+    }
+
     createMutation.mutate({
       name: name.trim(),
       preSlug: preSlug.trim(),
@@ -185,10 +226,15 @@ const CreateProjectFlow = () => {
       themeSystem: themeSystem,
       services: extractedServices,
       keywords: extractedKeywords,
+      fonts: {
+        bodyFont: bodyFont || undefined,
+        headingFont: headingFont || undefined,
+      },
       scrapedData: {
         ...scrapedData,
         subIndustry: selectedSubIndustry || undefined,
       },
+      websiteProfile: finalProfile,
     });
   };
 
@@ -245,6 +291,9 @@ const CreateProjectFlow = () => {
       if (meta.scrapedData) {
         setScrapedData(meta.scrapedData);
       }
+      if (meta.websiteProfile) {
+        setWebsiteProfile(meta.websiteProfile);
+      }
 
       let detectedCategory = category;
       if (meta.industry) {
@@ -287,6 +336,13 @@ const CreateProjectFlow = () => {
 
       if (meta.scrapedImages) {
         setScrapedImages(meta.scrapedImages);
+      }
+
+      // Extract fonts from scraped website
+      if (meta.fonts) {
+        if (meta.fonts.bodyFont) setBodyFont(meta.fonts.bodyFont);
+        if (meta.fonts.headingFont) setHeadingFont(meta.fonts.headingFont);
+        if (meta.fonts.googleFonts) setGoogleFonts(meta.fonts.googleFonts);
       }
 
       // Store full-page screenshot and render-derived colors (if backend returned them)
@@ -614,12 +670,6 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{primaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {/* {logoColors.source && logoColors.primary && (
-                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
-                            From Logo
-                          </span>
-                        )} */}
                       </div>
                     </div>
 
@@ -632,12 +682,6 @@ const CreateProjectFlow = () => {
                           className="border-0 bg-transparent flex-shrink-0"
                         />
                         <span className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">{secondaryColor || (isAnalyzing ? "Extracting..." : "No color selected")}</span>
-                        {/* {logoColors.source && logoColors.secondary && (
-                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4" /></svg>
-                            From Logo
-                          </span>
-                        )} */}
                       </div>
                     </div>
                   </div>
@@ -732,12 +776,20 @@ const CreateProjectFlow = () => {
                               onError={(e) => {
                                 const current = e.currentTarget;
                                 const src = logoPreview || '';
-                                if (src.startsWith('http') && !src.startsWith('data:')) {
-                                  const proxyUrl = aiApi.proxyImage(src);
-                                  if (current.src !== proxyUrl) { current.src = proxyUrl; return; }
+                                // Step 1: try the proxy once (handles hotlink-protected / CORS-blocked sources)
+                                if (!current.dataset.triedProxy && src.startsWith('http') && !src.startsWith('data:')) {
+                                  current.dataset.triedProxy = '1';
+                                  current.src = aiApi.proxyImage(src);
+                                  return;
                                 }
+                                // Step 2: try the detected favicon once
                                 const faviconFallback = scrapedData?.favicon;
-                                if (faviconFallback && current.src !== faviconFallback) { current.src = faviconFallback; return; }
+                                if (!current.dataset.triedFavicon && faviconFallback) {
+                                  current.dataset.triedFavicon = '1';
+                                  current.src = faviconFallback;
+                                  return;
+                                }
+                                // Step 3: give up — clear the logo so the upload prompt shows instead
                                 setLogoPreview(null);
                                 setLogoBase64(null);
                               }}
@@ -807,7 +859,7 @@ const CreateProjectFlow = () => {
                 </div>
 
                 {/* Extracted Images Card */}
-                {scrapedImages.length > 0 && (
+                {/* {scrapedImages.length > 0 && (
                   <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-sm">
                     <div>
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Extracted Images</h3>
@@ -840,7 +892,7 @@ const CreateProjectFlow = () => {
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
 
             </div>
