@@ -267,8 +267,8 @@ const PublicLandingPage = () => {
     // Otherwise rgba(SECONDARY_RGB_PLACEHOLDER, 0.2) breaks with rgba(#1a3a2e, 0.2)
     let pRgb = '124, 58, 237';
     let sRgb = '99, 102, 241';
-    try { pRgb = hexToRgbStr(BRAND_PRIMARY); } catch (e) {}
-    try { sRgb = hexToRgbStr(BRAND_SECONDARY); } catch (e) {}
+    try { pRgb = hexToRgbStr(BRAND_PRIMARY); } catch (e) { }
+    try { sRgb = hexToRgbStr(BRAND_SECONDARY); } catch (e) { }
 
     const applyPlaceholders = (str: string) => str
       .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_PRIMARY)
@@ -289,11 +289,11 @@ const PublicLandingPage = () => {
 
     let extractedTitle = res.metaTitle || res.title || 'Your Brand';
     let extractedFavicon = '';
-    
+
     if (res.content && res.content.fullHtml) {
       const titleMatch = res.content.fullHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       if (titleMatch) extractedTitle = titleMatch[1].trim();
-      
+
       const faviconMatch = res.content.fullHtml.match(/<link[^>]*rel="icon"[^>]*href="([^"]*)"[^>]*>/i);
       if (faviconMatch) extractedFavicon = `<link rel="icon" href="${faviconMatch[1]}"/>`;
     }
@@ -341,16 +341,23 @@ const PublicLandingPage = () => {
               var paginationEl = self.querySelector('.swiper-pagination');
               if (paginationEl) paginationEl.innerHTML = '';
 
-              var getAttr = function(k) { return self.getAttribute(k) || self.getAttribute('data-' + k) || null; };
+              var getAttr = function(k) { 
+                if (self.dataset && self.dataset[k] !== undefined) return self.dataset[k];
+                var kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+                return self.getAttribute(k) || self.getAttribute('data-' + kebab) || self.getAttribute('data-' + k) || null; 
+              };
               var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
-              var num = function(k, fb) { return parseInt(getAttr(k) || String(fb), 10) || fb; };
+              var num = function(k, fb) { return parseFloat(getAttr(k) || String(fb)) || fb; };
               var props = {
-                observer: false, observeParents: false, observeSlideChildren: false,
+                observer: true, observeParents: true,
                 direction: bool('vertical') ? 'vertical' : 'horizontal',
-                loop: bool('loop'), freeMode: bool('freeMode'), autoHeight: bool('autoHeight'),
+                loop: bool('loop') !== false ? true : false,
+                freeMode: bool('freeMode'), autoHeight: bool('autoHeight'),
                 initialSlide: num('initialSlide', 0), speed: num('speed', 300), effect: getAttr('effect') || 'slide',
-                parallax: bool('parallax'), slidesPerView: num('slidesPerView', 1),
-                spaceBetween: num('spaceBetween', 0), slidesPerGroup: num('slidesPerGroup', 1),
+                parallax: bool('parallax'), 
+                slidesPerView: num('slidesPerView', 2),
+                spaceBetween: num('spaceBetween', 30),
+                slidesPerGroup: num('slidesPerGroup', 1),
                 centeredSlides: bool('centeredSlides'), rewind: bool('rewind'),
                 keyboard: bool('keyboard') ? { enabled: true } : false,
                 mousewheel: bool('mousewheel'), grabCursor: bool('grabCursor'),
@@ -365,18 +372,19 @@ const PublicLandingPage = () => {
               if (bool('navigation')) {
                 props.navigation = { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') };
               }
-              if (getAttr('pagination')) {
-                props.pagination = {
-                  el: self.querySelector('.swiper-pagination'), type: getAttr('pagination'),
-                  dynamicBullets: bool('dynamicBullets'), clickable: getAttr('clickableBullets') !== null ? bool('clickableBullets') : true
-                };
-              }
+              props.pagination = {
+                el: self.querySelector('.swiper-pagination'), type: getAttr('pagination') || 'bullets',
+                clickable: true
+              };
               if (bool('scrollbar')) {
                 props.scrollbar = { el: self.querySelector('.swiper-scrollbar'), hide: true };
               }
-              props.breakpoints = {};
-              if (bool('mobileBreakpoint')) props.breakpoints[480] = { slidesPerView: 1, spaceBetween: 10 };
-              if (bool('tabletBreakpoint')) props.breakpoints[768] = { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 };
+              props.breakpoints = {
+                320: { slidesPerView: 1, spaceBetween: 10 },
+                768: { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 },
+                1024: { slidesPerView: props.slidesPerView, spaceBetween: props.spaceBetween }
+              };
+              props.slidesPerView = 1;
               self.__swiper = new window.Swiper(self, props);
             });
           }
@@ -392,9 +400,9 @@ const PublicLandingPage = () => {
         details { cursor: pointer; }
         summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
         summary::-webkit-details-marker { display: none; }
-        summary::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
-        details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
-        details p { margin-top: 10px; color: var(--text-muted, #4b5563); }
+        summary:not([class*="faq"])::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
+        details[open] summary:not([class*="faq"])::after { transform: translateY(-50%) rotate(45deg); }
+        details:not([class*="faq"]) p { margin-top: 10px; color: var(--text-muted, #4b5563); }
       </style>` : ''}
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
@@ -604,7 +612,9 @@ const PublicLandingPage = () => {
 
     const leadScript = buildLeadScript(res);
     let cleanHtml = aiHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
-    if (!cleanHtml) return '';
+    if (!cleanHtml) {
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#fff;color:#333;margin:0;"><div><h2 style="margin-bottom:10px;">Page is empty</h2><p>Please open this page in the Editor to generate or add content.</p></div></body></html>`;
+    }
 
     // ── SANITIZE CORRUPTED SWIPER DOM ──
     try {
@@ -624,9 +634,14 @@ const PublicLandingPage = () => {
         el.removeAttribute('data-swiper-slide-index');
       });
       d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
-      d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
+      d.querySelectorAll('.swiper-container').forEach(c => {
+        c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+        c.setAttribute('data-slides-per-view', '2');
+        c.setAttribute('data-mobile-breakpoint', 'true');
+        c.setAttribute('data-tablet-breakpoint', 'true');
+      });
       cleanHtml = d.body.innerHTML;
-    } catch(e) {}
+    } catch (e) { }
 
     // Keep AI-generated scripts and events fully intact so interactive elements (FAQ accordions, menus, sliders) work natively!
     // cleanHtml = cleanHtml.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
@@ -667,6 +682,18 @@ const PublicLandingPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
         <p className="text-slate-600 font-medium">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
+        <AlertCircle className="h-16 w-16 text-red-500 mb-6" />
+        <h1 className="text-3xl font-bold mb-4 text-slate-900">Page Not Found</h1>
+        <p className="text-lg text-slate-600 max-w-md">
+          The page you are looking for does not exist, or you need a valid preview token to view this draft.
+        </p>
       </div>
     );
   }

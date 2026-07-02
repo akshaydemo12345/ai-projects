@@ -157,11 +157,11 @@ h1 em{font-style:italic;color:var(--secondary);font-weight:500}
 .timeline strong{display:block;color:var(--primary);font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;margin-bottom:2px}
 .timeline p{color:var(--text-muted);font-size:.95rem}
 .faq-list{margin-top:24px;display:grid;gap:0;border-top:1px solid var(--border)}
-details{padding:18px 6px;border-bottom:1px solid var(--border);cursor:pointer}
-summary{font-weight:600;color:var(--primary);list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:1.05rem;font-family:'Cormorant Garamond',serif;font-size:1.25rem}
-summary::after{content:"+";color:var(--secondary);font-size:1.5rem;transition:.3s}
-details[open] summary::after{transform:rotate(45deg)}
-details p{color:var(--text-muted);margin-top:10px;font-size:.95rem}
+.faq-list details{padding:18px 6px;border-bottom:1px solid var(--border);cursor:pointer}
+.faq-list summary{font-weight:600;color:var(--primary);list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:1.05rem;font-family:'Cormorant Garamond',serif;font-size:1.25rem}
+.faq-list summary::after{content:"+";color:var(--secondary);font-size:1.5rem;transition:.3s}
+.faq-list details[open] summary::after{transform:rotate(45deg)}
+.faq-list details p{color:var(--text-muted);margin-top:10px;font-size:.95rem}
 
 /* CTA */
 .cta{background-color:var(--primary);background-image:linear-gradient(135deg,transparent,rgba(0,0,0,0.4));color:var(--white);padding:90px 0}

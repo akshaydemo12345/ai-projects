@@ -424,15 +424,29 @@ h1, h2, h3, h4, h5, h6, p {
 .testimonial-img { width: 3rem; height: 3rem; border-radius: 9999px; object-fit: cover; }
 .testimonial-name { font-weight: 700; }
 
+
 /* CTA Banner */
 .cta-banner {
   border-radius: 1.5rem;
-  padding: 3rem;
   text-align: center;
   position: relative;
   overflow: hidden;
   background-color: var(--secondary);
 }
+.cta-slider .swiper-slide {
+  padding: 5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cta-slider .swiper-pagination-bullet { background: rgba(255,255,255,0.5); }
+.cta-slider .swiper-pagination-bullet-active { background: #ffffff; }
+.cta-slider .swiper-button-next:after, .cta-slider .swiper-button-prev:after { content: '' !important; display: block !important; width: 30px; height: 30px; background-color: white; -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+.cta-slider .swiper-button-prev, .cta-slider .swiper-button-next { z-index: 100 !important; pointer-events: auto !important; }
+.cta-slider .swiper-button-prev:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); }
+.cta-slider .swiper-button-next:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); }
+
 .cta-bg-icon {
   position: absolute;
   top: 0; right: 0;
@@ -492,10 +506,32 @@ h1, h2, h3, h4, h5, h6, p {
   cursor: pointer;
   list-style: none; /* remove default arrow */
 }
+.faq-summary::after { display: none !important; }
 .faq-summary::-webkit-details-marker { display: none; }
+.faq-summary::marker { display: none; content: ""; }
 .faq-summary .material-symbols-outlined { transition: transform 200ms; }
 .faq-item[open] .faq-summary .material-symbols-outlined { transform: rotate(180deg); }
 .faq-answer { margin-top: 1rem; }
+
+/* Team Section */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 3rem; }
+.team-member { background: #fff; border-radius: 1rem; overflow: hidden; text-align: center; border: 1px solid color-mix(in srgb, PRIMARY_COLOR_PLACEHOLDER 10%, white); transition: transform 300ms; }
+.team-member:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+.team-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+.team-info { padding: 1.5rem; }
+.team-name { font-size: 1.25rem; font-weight: 700; color: var(--on-surface); margin-bottom: 0.25rem; }
+.team-role { color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 1rem; }
+.team-social { display: flex; justify-content: center; gap: 1rem; }
+.team-social a { color: var(--gray-400); transition: color 200ms; }
+.team-social a:hover { color: var(--primary); }
+
+/* Facilities Section */
+.facilities-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem; }
+.facility-card { border-radius: 1rem; overflow: hidden; position: relative; }
+.facility-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; transition: transform 300ms; }
+.facility-card:hover img { transform: scale(1.05); }
+.facility-info { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 2rem 1.5rem 1.5rem; color: #fff; }
+
 
 /* Footer */
 .site-footer {
@@ -521,7 +557,7 @@ h1, h2, h3, h4, h5, h6, p {
 .footer-links a { color: var(--gray-500); transition: color 200ms; }
 .footer-links a:hover { color: var(--primary); }
 .footer-contact { display: flex; flex-wrap: wrap; flex-direction: column; gap: 0.75rem; color: var(--gray-500); }
-.footer-contact li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.footer-contact li { display: flex; align-items: flex-start; gap: 0.75rem; }
 .footer-bottom {
   max-width: 1280px;
   margin: 0 auto;
@@ -795,50 +831,66 @@ export const healthcare01Html = `
 </div>
 </section>
 
-<!-- Testimonials -->
-<section class="py-xl" id="testimonials">
+<!-- Facilities -->
+<section class="py-xl" id="facilities">
 <div class="container">
 <div class="section-intro">
-<h2 class="font-h2" style="margin-bottom: 1rem;">What Our Patients Say</h2>
-<div class="stars-center">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<h2 class="font-h2" style="margin-bottom: 1rem;">State-of-the-Art Facilities</h2>
+<p class="font-body-lg text-secondary">Experience dental care in a relaxing, modern environment designed for your comfort.</p>
+</div>
+<div class="facilities-grid">
+  <div class="facility-card high-elevation">
+    <img src="https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&q=80&w=600" alt="Modern Treatment Room" />
+    <div class="facility-info">
+      <h4 class="font-h3 text-white">Advanced Treatment Rooms</h4>
+    </div>
+  </div>
+  <div class="facility-card high-elevation">
+    <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=600" alt="Relaxing Waiting Area" />
+    <div class="facility-info">
+      <h4 class="font-h3 text-white">Relaxing Lounge</h4>
+    </div>
+  </div>
+  <div class="facility-card high-elevation">
+    <img src="https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600" alt="High Tech Equipment" />
+    <div class="facility-info">
+      <h4 class="font-h3 text-white">3D Scanning Tech</h4>
+    </div>
+  </div>
 </div>
 </div>
-<div class="testimonials-grid">
-<div class="testimonial-card low-elevation">
-<p class="testimonial-quote text-secondary">"The best dental experience I've ever had. The technology they use is mind-blowing, and I didn't feel a thing during my root canal."</p>
-<div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a smiling young woman with long dark hair in a bright outdoor setting" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Sarah Jenkins"/>
-<div>
-<h5 class="testimonial-name">Sarah Jenkins</h5>
-<p class="font-caption text-secondary">Patient for 3 Years</p>
+</section>
+
+
+<!-- Meet Our Team -->
+<section class="py-xl bg-surface-low" id="team">
+<div class="container">
+<div class="section-intro">
+<h2 class="font-h2" style="margin-bottom: 1rem;">Meet Our Specialists</h2>
+<p class="font-body-lg text-secondary">A dedicated team of board-certified professionals committed to your oral health.</p>
 </div>
-</div>
-</div>
-<div class="testimonial-card low-elevation">
-<p class="testimonial-quote text-secondary">"Invisalign at Lumina was so seamless. My teeth look perfect now and the team was incredibly supportive throughout the process."</p>
-<div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a professional man in a blue shirt smiling confidently" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" alt="Michael Chen"/>
-<div>
-<h5 class="testimonial-name">Michael Chen</h5>
-<p class="font-caption text-secondary">Invisalign Patient</p>
-</div>
-</div>
-</div>
-<div class="testimonial-card low-elevation">
-<p class="testimonial-quote text-secondary">"I used to have dental anxiety, but the staff here made me feel so welcome and relaxed. Highly recommend to everyone."</p>
-<div class="testimonial-author">
-<img class="testimonial-img" data-alt="headshot of a mature woman with a warm and friendly smile" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200" alt="Linda Ross"/>
-<div>
-<h5 class="testimonial-name">Linda Ross</h5>
-<p class="font-caption text-secondary">General Patient</p>
-</div>
-</div>
-</div>
+<div class="team-grid">
+  <div class="team-member high-elevation">
+    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800" alt="Dr. Emily Chen" class="team-img" />
+    <div class="team-info">
+      <h4 class="team-name">Dr. Emily Chen</h4>
+      <p class="team-role">Lead Orthodontist</p>
+    </div>
+  </div>
+  <div class="team-member high-elevation">
+    <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=800" alt="Dr. James Wilson" class="team-img" />
+    <div class="team-info">
+      <h4 class="team-name">Dr. James Wilson</h4>
+      <p class="team-role">Cosmetic Dentist</p>
+    </div>
+  </div>
+  <div class="team-member high-elevation">
+    <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=800" alt="Dr. Sarah Jenkins" class="team-img" />
+    <div class="team-info">
+      <h4 class="team-name">Dr. Sarah Jenkins</h4>
+      <p class="team-role">Oral Surgeon</p>
+    </div>
+  </div>
 </div>
 </div>
 </section>
@@ -846,18 +898,45 @@ export const healthcare01Html = `
 <!-- CTA Banner -->
 <section class="py-xl">
 <div class="container">
-<div class="cta-banner">
+<div class="section-intro">
+<h2 class="font-h2" style="margin-bottom: 1rem;">Start Your Smile Journey Today</h2>
+<p class="font-body-lg text-secondary">Join thousands of happy patients who have transformed their smiles with us.</p>
+</div>
+<div data-gjs-type="swiper-container" class="cta-banner swiper-container cta-slider" data-navigation="true" data-pagination="bullets" style="padding: 0;">
 <div class="cta-bg-icon">
 <span class="material-symbols-outlined">dentistry</span>
 </div>
-<div class="cta-content">
-<h2 class="font-h1 text-white">Start Your Smile Journey Today</h2>
-<p class="font-body-lg">New patients get a 20% discount on their first full dental examination and cleaning.</p>
-<div class="cta-actions">
-<button class="btn-cta-1 high-elevation">Book Now</button>
-<button class="btn-cta-2">Contact Us</button>
+<div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+  <!-- Slide 1 -->
+  <div data-gjs-type="swiper-slide" class="swiper-slide cta-content">
+    <h2 class="font-h1 text-white">Start Your Smile Journey Today</h2>
+    <p class="font-body-lg text-white" style="opacity: 0.9; max-width: 42rem; margin: 0 auto;">New patients get a 20% discount on their first full dental examination and cleaning.</p>
+    <div class="cta-actions" style="margin-top: 2rem;">
+      <button class="btn-cta-1 high-elevation">Book Now</button>
+      <button class="btn-cta-2">Contact Us</button>
+    </div>
+  </div>
+  <!-- Slide 2 -->
+  <div data-gjs-type="swiper-slide" class="swiper-slide cta-content">
+    <h2 class="font-h1 text-white">Advanced Painless Dentistry</h2>
+    <p class="font-body-lg text-white" style="opacity: 0.9; max-width: 42rem; margin: 0 auto;">Experience the future of dental care with our state-of-the-art laser and 3D imaging technology.</p>
+    <div class="cta-actions" style="margin-top: 2rem;">
+      <button class="btn-cta-1 high-elevation">Learn More</button>
+    </div>
+  </div>
+  <!-- Slide 3 -->
+  <div data-gjs-type="swiper-slide" class="swiper-slide cta-content">
+    <h2 class="font-h1 text-white">Flexible Payment Plans</h2>
+    <p class="font-body-lg text-white" style="opacity: 0.9; max-width: 42rem; margin: 0 auto;">Don't let budget stand in the way of your perfect smile. We offer 0% interest financing.</p>
+    <div class="cta-actions" style="margin-top: 2rem;">
+      <button class="btn-cta-1 high-elevation">View Plans</button>
+      <button class="btn-cta-2">Talk to Us</button>
+    </div>
+  </div>
 </div>
-</div>
+<div data-gjs-type="swiper-pagination" class="swiper-pagination"></div>
+<div data-gjs-type="swiper-button-prev" class="swiper-button-prev" style="color: white; z-index: 100 !important; pointer-events: auto !important;"></div>
+<div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color: white; z-index: 100 !important; pointer-events: auto !important;"></div>
 </div>
 </div>
 </section>
@@ -963,6 +1042,8 @@ Absolutely. We reserve specific slots daily for emergency cases. If you're exper
 </footer>
 
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script id="core-interactions">
   (function() {
     // Check if we are inside GrapesJS editor
