@@ -376,6 +376,8 @@ input, select, textarea { font-family: inherit; }
   font-size: 15px; font-weight: 600;
 }
 .p3-faq-sum::-webkit-details-marker { display: none; }
+.p3-faq-sum::marker { display: none; content: ""; }
+.p3-faq-sum::after { display: none !important; content: none !important; }
 .p3-faq-sum .material-symbols-outlined { color: var(--p3-primary-mid); transition: transform 0.25s; }
 .p3-faq-item[open] .p3-faq-sum { color: var(--p3-primary); }
 .p3-faq-item[open] .p3-faq-sum .material-symbols-outlined { transform: rotate(180deg); }

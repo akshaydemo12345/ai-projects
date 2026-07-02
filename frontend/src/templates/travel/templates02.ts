@@ -772,42 +772,42 @@ export const travel02Html = `
       <div class="v2-faq-list">
         <details class="v2-faq-item" open>
           <summary class="v2-faq-summary">
-            Do I need a referral to see a specialist?
+            Do I need a visa to travel with your tours?
             <span class="material-symbols-outlined">expand_more</span>
           </summary>
-          <div class="v2-faq-body">No. As a private clinic we accept self-referrals for all specialties. Simply book online or call us and we'll arrange an initial consultation, often within 48 hours.</div>
+          <div class="v2-faq-body">Visa requirements depend on your nationality and the destination you are visiting. We provide comprehensive visa guidance and support documentation once you book a tour with us.</div>
         </details>
         
         <details class="v2-faq-item">
           <summary class="v2-faq-summary">
-            Which insurance providers do you work with?
+            Are international flights included in the package?
             <span class="material-symbols-outlined">expand_more</span>
           </summary>
-          <div class="v2-faq-body">We are recognised by all major UK insurers including Bupa, AXA, Aviva, Vitality and Cigna. Our billing team handles all pre-authorisation to make the process seamless for you.</div>
+          <div class="v2-faq-body">Our standard tour packages typically cover domestic transfers, accommodation, and guided tours. International flights can be added upon request as a customized travel bundle.</div>
         </details>
         
         <details class="v2-faq-item">
           <summary class="v2-faq-summary">
-            How quickly can I get an appointment?
+            What is your cancellation and refund policy?
             <span class="material-symbols-outlined">expand_more</span>
           </summary>
-          <div class="v2-faq-body">Most patients are seen within 2-3 working days. For urgent matters we offer same-day emergency slots; please call our priority line directly.</div>
+          <div class="v2-faq-body">We offer free cancellation up to 30 days before departure for a full refund. Cancellations made within 30 days may incur fees. Please refer to our full booking terms for details.</div>
         </details>
         
         <details class="v2-faq-item">
           <summary class="v2-faq-summary">
-            Are virtual / teleconsultation appointments available?
+            Is travel insurance mandatory for the trips?
             <span class="material-symbols-outlined">expand_more</span>
           </summary>
-          <div class="v2-faq-body">Yes. We offer secure HD video consultations for follow-ups, medication reviews, and initial assessments where a physical exam is not required. Available 7 days a week.</div>
+          <div class="v2-faq-body">While not strictly mandatory for all destinations, we highly recommend purchasing comprehensive travel insurance. We offer partnered insurance plans during the checkout process.</div>
         </details>
         
         <details class="v2-faq-item">
           <summary class="v2-faq-summary">
-            What is your cancellation policy?
+            Do you offer group discounts or private tours?
             <span class="material-symbols-outlined">expand_more</span>
           </summary>
-          <div class="v2-faq-body">We ask for 24 hours' notice to cancel or reschedule at no charge. Cancellations within 24 hours may incur a small fee which goes towards supporting our emergency slot programme.</div>
+          <div class="v2-faq-body">Yes! We offer special rates for groups of 8 or more. We can also fully customize any of our itineraries to create a private VIP experience just for your family or group.</div>
         </details>
       </div>
     </div>
