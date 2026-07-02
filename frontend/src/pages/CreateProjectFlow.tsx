@@ -78,7 +78,7 @@ const CreateProjectFlow = () => {
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [themeSystem, setThemeSystem] = useState<any>({});
   const [scrapedData, setScrapedData] = useState<any>({});
-  const [scrapedProfile, setScrapedProfile] = useState<any>(null);
+  const [websiteProfile, setWebsiteProfile] = useState<any>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
@@ -174,6 +174,43 @@ const CreateProjectFlow = () => {
     setIsSubmitting(true);
     const selectedCategory = category === "Other" ? (customIndustry.trim() || "Other") : category;
     const selectedSubIndustry = subIndustry === "Other" ? customSubIndustry.trim() : subIndustry;
+
+    // Merge user modifications into pre-scraped websiteProfile if available
+    let finalProfile = undefined;
+    if (websiteProfile) {
+      finalProfile = {
+        ...websiteProfile,
+        identity: {
+          ...(websiteProfile.identity || {}),
+          name: name.trim(),
+          description: description.trim(),
+          logoUrl: logoBase64 || websiteProfile.identity?.logoUrl || undefined,
+        },
+        colors: {
+          ...(websiteProfile.colors || {}),
+          primary: primaryColor || websiteProfile.colors?.primary || undefined,
+          secondary: secondaryColor || websiteProfile.colors?.secondary || undefined,
+          palette: extractedColors.length > 0 ? extractedColors : (websiteProfile.colors?.palette || []),
+        },
+        logoColors: {
+          ...(websiteProfile.logoColors || {}),
+          primary: primaryColor || websiteProfile.logoColors?.primary || undefined,
+          secondary: secondaryColor || websiteProfile.logoColors?.secondary || undefined,
+          palette: extractedColors.length > 0 ? extractedColors : (websiteProfile.logoColors?.palette || []),
+        },
+        fonts: {
+          ...(websiteProfile.fonts || {}),
+          bodyFont: bodyFont || websiteProfile.fonts?.bodyFont || undefined,
+          headingFont: headingFont || websiteProfile.fonts?.headingFont || undefined,
+        },
+        industry: {
+          ...(websiteProfile.industry || {}),
+          industry: selectedCategory,
+          subIndustry: selectedSubIndustry || undefined,
+        }
+      };
+    }
+
     createMutation.mutate({
       name: name.trim(),
       preSlug: preSlug.trim(),
@@ -197,7 +234,7 @@ const CreateProjectFlow = () => {
         ...scrapedData,
         subIndustry: selectedSubIndustry || undefined,
       },
-      websiteProfile: scrapedProfile || undefined,
+      websiteProfile: finalProfile,
     });
   };
 
@@ -255,7 +292,7 @@ const CreateProjectFlow = () => {
         setScrapedData(meta.scrapedData);
       }
       if (meta.websiteProfile) {
-        setScrapedProfile(meta.websiteProfile);
+        setWebsiteProfile(meta.websiteProfile);
       }
 
       let detectedCategory = category;

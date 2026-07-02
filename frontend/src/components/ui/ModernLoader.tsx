@@ -34,6 +34,7 @@ export const ModernLoader = ({
   const statusSteps = statusStepsProp || defaultStatusSteps;
 
   useEffect(() => {
+    let mounted = true;
     // If external progress is provided, sync to it and skip auto-increment.
     if (typeof externalProgress === "number") {
       setProgress(externalProgress);
@@ -67,7 +68,10 @@ export const ModernLoader = ({
         return next;
       });
     }, 100);
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [isComplete, statusText, onFinished, externalProgress, statusSteps]);
 
   return (

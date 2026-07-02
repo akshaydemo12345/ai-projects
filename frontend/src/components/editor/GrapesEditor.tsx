@@ -449,6 +449,8 @@ const GrapesEditor = () => {
         const fontLinks = `
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+          <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         `;
         if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
           canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
@@ -793,6 +795,37 @@ const GrapesEditor = () => {
           }, true);
         `;
       }
+
+      // ─── Auto-heal missing <summary> tags stripped by AI generators ───
+      // If a <details> tag does not immediately contain a <summary>, inject a fallback summary
+      // so that GrapesJS can render it as a selectable/editable text component.
+      dbContent = dbContent.replace(/(<details[^>]*>)(?!\s*<summary)/gi, '$1\n<summary class="ft-header"><h3 class="ft-title">Custom Heading</h3><span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span></summary>\n');
+
+      // ─── Auto-heal missing Swiper data-gjs-type attributes ───
+      // AI generators often generate .swiper-container but strip the data-gjs-type which breaks the slider in GrapesJS.
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-container\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-container"');
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-wrapper\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-wrapper"');
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-slide\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-slide"');
+
+      // ─── Auto-heal missing Swiper properties stripped by AI ───
+      // If AI stripped data-slides-per-view, force it to 2 for testimonials slider so it doesn't collapse to 1
+      dbContent = dbContent.replace(/(<div[^>]*class="[^"]*\bswiper-container\b[^"]*"[^>]*)/gi, (match) => {
+        let newMatch = match;
+        // Always force slides-per-view to 2 if it's missing or set to 1 or 1.5
+        if (!newMatch.includes('data-slides-per-view')) {
+          newMatch = newMatch + ' data-slides-per-view="2"';
+        } else {
+          newMatch = newMatch.replace(/data-slides-per-view="[^"]*"/, 'data-slides-per-view="2"');
+        }
+
+        if (!newMatch.includes('data-mobile-breakpoint')) {
+          newMatch = newMatch + ' data-mobile-breakpoint="true"';
+        }
+        if (!newMatch.includes('data-tablet-breakpoint')) {
+          newMatch = newMatch + ' data-tablet-breakpoint="true"';
+        }
+        return newMatch;
+      });
 
       editor.setComponents(dbContent);
 
@@ -1523,34 +1556,41 @@ const GrapesEditor = () => {
         // -------------------------
 
         const attrs = component.getAttributes();
-        // Read from attrs first, fallback to dataset (data-* on HTML element)
         const bool = (k: string) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === false || v === 'false') && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === false || v === 'false') && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
           return v !== undefined && v !== null && String(v) !== 'false';
         };
         const num = (k: string, fb: number) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
-          return parseInt(String(v ?? fb), 10) || fb;
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === fb || v === String(fb)) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === fb || v === String(fb)) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
+          return parseFloat(String(v ?? fb)) || fb;
         };
         const str = (k: string, fb: string) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === fb) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === fb) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
           return v !== undefined ? String(v) : fb;
         };
 
         const props: any = {
-          observer: false, // Turned OFF to prevent infinite loop fights with GrapesJS MutationObserver
-          observeParents: false,
-          observeSlideChildren: false,
+          observer: true, 
+          observeParents: true,
           direction: bool('vertical') ? 'vertical' : 'horizontal',
-          loop: false, // CRITICAL: Forced to false in editor to prevent Swiper from cloning slides and triggering infinite GrapesJS re-renders
+          loop: bool('loop') !== false ? true : false, // Default to true if not explicitly false
           freeMode: bool('freeMode'),
           autoHeight: bool('autoHeight'),
           initialSlide: num('initialSlide', 0),
           speed: num('speed', 300),
           effect: str('effect', 'slide'),
           parallax: bool('parallax'),
-          slidesPerView: num('slidesPerView', 1),
-          spaceBetween: num('spaceBetween', 0),
+          slidesPerView: num('slidesPerView', 2), // Default 2
+          spaceBetween: num('spaceBetween', 30), // Default 30
           slidesPerGroup: num('slidesPerGroup', 1),
           centeredSlides: bool('centeredSlides'),
           rewind: bool('rewind'),
@@ -1578,23 +1618,38 @@ const GrapesEditor = () => {
           };
         }
 
-        const paginationType = str('pagination', '');
-        if (paginationType) {
-          props.pagination = {
-            el: el.querySelector('.swiper-pagination'),
-            type: paginationType,
-            dynamicBullets: bool('dynamicBullets'),
-            clickable: (attrs['clickableBullets'] !== undefined || el.dataset['clickableBullets'] !== undefined) ? bool('clickableBullets') : true,
-          };
-        }
+        props.pagination = {
+          el: el.querySelector('.swiper-pagination'),
+          type: str('pagination', 'bullets') || 'bullets',
+          clickable: true,
+        };
 
         if (bool('scrollbar')) {
           props.scrollbar = { el: el.querySelector('.swiper-scrollbar'), hide: true };
         }
 
-        props.breakpoints = {};
-        if (bool('mobileBreakpoint')) props.breakpoints[480] = { slidesPerView: 1, spaceBetween: 10 };
-        if (bool('tabletBreakpoint')) props.breakpoints[768] = { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 };
+        // Apply Responsive Breakpoints (Mobile First)
+        props.breakpoints = {
+          // Mobile (0px and up)
+          320: {
+            slidesPerView: 1,
+            spaceBetween: 10
+          },
+          // Tablet (768px and up)
+          768: {
+            slidesPerView: props.slidesPerView > 1 ? 2 : 1,
+            spaceBetween: 20
+          },
+          // Desktop (1024px and up)
+          1024: {
+            slidesPerView: props.slidesPerView,
+            spaceBetween: props.spaceBetween
+          }
+        };
+
+        // For mobile-first Swiper, the base slidesPerView should be 1, but we use breakpoints to scale it up.
+        // So we override the base slidesPerView to 1, and let breakpoints handle the rest.
+        props.slidesPerView = 1;
 
         try {
           (el as any).__swiper = new canvasWin.Swiper(el, props);
@@ -1655,6 +1710,7 @@ const GrapesEditor = () => {
               {
                 type: 'select', name: 'pagination', label: 'Pagination Type',
                 options: [
+                  { id: '', name: 'None' },
                   { id: 'bullets', name: 'Bullets' },
                   { id: 'fraction', name: 'Fraction' },
                   { id: 'progressbar', name: 'Progressbar' },
@@ -1674,7 +1730,7 @@ const GrapesEditor = () => {
               { type: 'checkbox', name: 'tabletBreakpoint', label: 'Enable Tablet Breakpoint', valueTrue: 'true', valueFalse: 'false' },
 
               { type: 'accordion-header', name: 'hdr-extra', label: 'Extra' },
-              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1 },
+              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1, step: 0.1 },
               { type: 'number', name: 'spaceBetween', label: 'Space Between', value: 0 },
 
               { type: 'accordion-header', name: 'hdr-layout', label: 'Layout' },
@@ -3363,17 +3419,21 @@ const GrapesEditor = () => {
         setRightTab('traits');
       }
 
-      // 2. Handle Native Details/Summary Toggle on Click
-      if (tagName.toLowerCase() === 'summary') {
-        const parent = model.parent();
-        if (parent && parent.get('tagName')?.toLowerCase() === 'details') {
-          const attrs = Object.assign({}, parent.getAttributes());
+      // 2. Handle Native Details/Summary Toggle on Click (including children of summary)
+      let summaryModel = model;
+      while (summaryModel && summaryModel.get('tagName')?.toLowerCase() !== 'summary') {
+        summaryModel = summaryModel.parent();
+      }
+      if (summaryModel && summaryModel.get('tagName')?.toLowerCase() === 'summary') {
+        const detailsModel = summaryModel.parent();
+        if (detailsModel && detailsModel.get('tagName')?.toLowerCase() === 'details') {
+          const attrs = Object.assign({}, detailsModel.getAttributes());
           if (attrs.open) {
             delete attrs.open;
           } else {
             attrs.open = 'open';
           }
-          parent.setAttributes(attrs);
+          detailsModel.setAttributes(attrs);
         }
       }
 

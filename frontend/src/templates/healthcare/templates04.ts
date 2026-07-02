@@ -832,6 +832,8 @@ a {
 .hc4-accordion-header::-webkit-details-marker {
   display: none;
 }
+.hc4-accordion-header::marker { display: none; content: ""; }
+.hc4-accordion-header::after { display: none !important; content: none !important; }
 .hc4-accordion-header:hover {
   color: var(--primary);
 }
