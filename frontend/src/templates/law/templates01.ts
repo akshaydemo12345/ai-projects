@@ -138,16 +138,16 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .stat-icon { width: 60px; height: 60px; background: rgba(0,0,0,0.03); color: var(--primary); border-radius: 50%; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-bottom: 1.5rem; transition: 0.3s; }
 .stat-icon svg { width: 28px; height: 28px; }
 .stat-item:hover .stat-icon { background: var(--primary); color: #fff; transform: scale(1.1); }
-.stat-item h3 { font-size: 2.8rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -1px; }
+.stat-item h3 { font-size: 2.2rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.5px; }
 .stat-item p { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin: 0; }
 
 /* Split Section */
 .split-section { padding: 6rem 0; background: #fff; position: relative; overflow: hidden; }
 .split-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.split-visual { position: relative; display: flex; flex-wrap: wrap; gap: 1.5rem; height: 500px; z-index: 2;}
+.split-visual { position: relative; display: flex; align-items: stretch; gap: 1.5rem; height: 500px; z-index: 2;}
 .split-visual img { object-fit: cover; border-radius: 12px; }
-.split-img-1 { width: 45%; height: 80%; margin-top: auto; }
-.split-img-2 { width: 55%; height: 100%; }
+.split-img-1 { width: 45%; height: 80%; align-self: flex-end; }
+.split-img-2 { width: calc(55% - 1.5rem); height: 100%; }
 
 .split-content h2 { font-size: 2.8rem; margin-bottom: 1.5rem; }
 .split-content p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1.05rem; }
@@ -169,8 +169,8 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Published Mode (JS Tabs) */
 body.js-enabled .tab-content-box.active { display: block; animation: tabFadeIn 0.4s ease-out; }
-body.js-enabled .tab-item.active { background: var(--primary); color: #fff; }
-body.js-enabled .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+body.js-enabled .tab-item.active, .tab-item.active { background: var(--primary) !important; color: #ffffff !important; }
+body.js-enabled .tab-item.active .tab-icon, .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); color: #ffffff !important; }
 
 /* Fallback if active class is missing */
 body.js-enabled .tab-content-wrapper:not(:has(.tab-content-box.active)) .tab-content-box:first-child { display: block; animation: tabFadeIn 0.4s ease-out; }
@@ -216,7 +216,6 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 @keyframes dash-flow { to { stroke-dashoffset: 1000; } }
 
 .step-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.step-row:nth-child(even) .step-content { order: -1; }
 .step-img { border-radius: 16px; overflow: hidden; height: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); position: relative; }
 .step-img img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
 .step-img:hover img { transform: scale(1.05); }
@@ -360,11 +359,12 @@ body.js-enabled .animate-fade.in-view {
   .hero-content h1 { font-size: 3rem; }
   .split-visual { height: 400px; }
   .step-row { grid-template-columns: 1fr; gap: 2rem; }
-  .step-row:nth-child(even) .step-content { order: 0; }
   .steps-path-wrap { display: none; }
 }
 @media (max-width: 768px) {
   .hero-content h1 { font-size: 2.2rem; line-height: 1.2; }
+  h2 { font-size: 2rem !important; }
+  h3 { font-size: 1.5rem !important; }
   .hero-actions { flex-direction: column; align-items: stretch; }
   .hero-actions .btn-primary, .hero-actions .btn-outline { width: 100%; justify-content: center; }
   .hero-img-wrap img { height: 350px; }
@@ -598,6 +598,8 @@ export const law01Html = `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
         Our Process
       </div>
+      <h2 style="font-size: 2.8rem; margin-bottom: 1rem; margin-top: 1rem;">A Clear Path to Legal Resolution</h2>
+      <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto;">We guide you through every stage of the legal process with absolute clarity, ensuring you are always informed, prepared, and confident in your case.</p>
     </div>
     
     <div class="steps-wrapper">
@@ -608,14 +610,16 @@ export const law01Html = `
         </svg>
       </div>
 
+      <!-- AI INSTRUCTION: You MUST keep exactly 3 .step-row elements. DO NOT delete the .step-content or .step-img divs inside them. Only rewrite the text! -->
+
       <div class="step-row animate-up">
-        <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&q=80&w=800" alt="Consultation">
-        </div>
         <div class="step-content">
           <div class="step-number">01</div>
           <h3>Initial Consultation</h3>
-          <p>Begin your journey with a free and confidential initial consultation. During this meeting, we'll discuss the specifics of your situation, answer any questions you may have, and outline the potential legal strategies tailored to your case.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        </div>
+        <div class="step-img">
+          <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" alt="Office">
         </div>
       </div>
       
@@ -623,21 +627,21 @@ export const law01Html = `
         <div class="step-content">
           <div class="step-number">02</div>
           <h3>Finalizing the Divorce</h3>
-          <p>As we approach the final stages of the process, we work diligently to secure a fair and just resolution. This includes finalizing any agreements, addressing remaining legal details, and ensuring a smooth transition into next chapter your life.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
         </div>
         <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80&w=800" alt="Strategy">
+          <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800" alt="Strategy Team">
         </div>
       </div>
       
       <div class="step-row animate-up">
-        <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Resolution">
-        </div>
         <div class="step-content">
           <div class="step-number">03</div>
           <h3>Post-Divorce Support</h3>
-          <p>Even after the divorce is finalized, we remain available to address any post-divorce concerns or modifications. Our commitment to your well-being extends beyond the conclusion of the legal proceedings.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        </div>
+        <div class="step-img">
+          <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=800" alt="Book">
         </div>
       </div>
     </div>

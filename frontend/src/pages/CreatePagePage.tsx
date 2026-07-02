@@ -231,7 +231,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content")
       );
 
       serviceHeadings.forEach((heading, idx) => {
@@ -260,7 +260,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     // 4. Inject Testimonials
     const testimonials = project?.websiteProfile?.content?.testimonials?.length ? project.websiteProfile.content.testimonials : (project?.scrapedData?.testimonials || []);
     if (testimonials.length > 0) {
-      const testiCards = Array.from(doc.querySelectorAll(".testi-card, [class*='testimonial']"));
+      const testiCards = Array.from(doc.querySelectorAll(".testi-card, .testimonial-card, .testimonial-item, .review-card"));
       testiCards.forEach((card, idx) => {
         if (idx < testimonials.length) {
           const t = testimonials[idx];
@@ -329,7 +329,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.`;
     if (allParagraphs.length > 1) {
       for (let i = 1; i < allParagraphs.length; i++) {
-        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']")) {
+        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']") || allParagraphs[i].closest(".info-text") || allParagraphs[i].closest(".step-content") || allParagraphs[i].closest(".footer-bottom")) {
           continue;
         }
         if (project?.scrapedData?.summary && i === 1) {
@@ -1974,6 +1974,25 @@ ${enrichedContent}
                         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
                         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
                         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
+                        ${tpHtml.includes('swiper') ? `
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+                        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"><\/script>
+                        <style>
+                          .swiper-button-next:after, .swiper-button-prev:after { content: '' !important; display: block !important; width: 100%; height: 100%; background-color: var(--swiper-navigation-color, currentColor); -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+                          .swiper-button-prev:after, .swiper-rtl .swiper-button-next:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); }
+                          .swiper-button-next:after, .swiper-rtl .swiper-button-prev:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); }
+                          .swiper-pagination-bullet { background: #000 !important; opacity: 0.5; }
+                          .swiper-pagination-bullet-active { background: var(--primary) !important; opacity: 1; }
+                        </style>` : ''}
+                        ${tpHtml.includes('<details') ? `
+                        <style>
+                          details { cursor: pointer; }
+                          summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
+                          summary::-webkit-details-marker { display: none; }
+                          summary:not([class*="faq"])::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
+                          details[open] summary:not([class*="faq"])::after { transform: translateY(-50%) rotate(45deg); }
+                          details:not([class*="faq"]) p { margin-top: 10px; color: var(--text-muted, #4b5563); }
+                        </style>` : ''}
                         <style>
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                           ${tpStyles}
@@ -1981,6 +2000,90 @@ ${enrichedContent}
                       </head>
                       <body>
                         ${tpHtml}
+                        <script>
+                          !function() {
+                            function initInteractions() {
+                              document.body.classList.add('js-enabled');
+                              
+                              function reveal() {
+                                var reveals = document.querySelectorAll(".reveal-on-scroll, .animate-up, .animate-fade");
+                                for (var i = 0; i < reveals.length; i++) {
+                                  var windowHeight = window.innerHeight;
+                                  var elementTop = reveals[i].getBoundingClientRect().top;
+                                  if (elementTop < windowHeight - 50 || elementTop < 100) {
+                                    reveals[i].classList.add("revealed", "in-view");
+                                  }
+                                }
+                              }
+                              window.addEventListener("scroll", reveal);
+                              reveal();
+                              setTimeout(reveal, 500);
+
+                              document.querySelectorAll('.tabs-container').forEach(function(container) {
+                                var allTabs = Array.from(container.querySelectorAll('.tab-item'));
+                                var allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
+                                if (!allTabs.length) return;
+                                var hasActive = allPanels.some(function(p) { return p.classList.contains('active'); });
+                                if (!hasActive) {
+                                  allTabs[0].classList.add('active');
+                                  if (allPanels[0]) allPanels[0].classList.add('active');
+                                }
+                                allTabs.forEach(function(tabEl, index) {
+                                  tabEl.style.cursor = 'pointer';
+                                  tabEl.addEventListener('click', function(e) {
+                                    allTabs.forEach(function(t) { t.classList.remove('active'); t.style.borderBottomColor = 'transparent'; t.style.color = '#4b5563'; });
+                                    allPanels.forEach(function(p) { p.classList.remove('active'); p.style.display = 'none'; });
+                                    tabEl.classList.add('active');
+                                    tabEl.style.borderBottomColor = 'var(--primary, #6366f1)';
+                                    tabEl.style.color = 'var(--primary, #6366f1)';
+                                    if (allPanels[index]) { allPanels[index].classList.add('active'); allPanels[index].style.display = 'block'; }
+                                  });
+                                });
+                              });
+
+                              document.addEventListener('click', function(e) {
+                                const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .accordion-header');
+                                if (faqHead && !faqHead.closest('details')) {
+                                  const item = faqHead.closest('.faq-item, .accordion-item');
+                                  if (item) {
+                                    const allItems = document.querySelectorAll('.faq-item, .accordion-item');
+                                    const content = item.querySelector('.faq-body, .accordion-content');
+                                    const icon = faqHead.querySelector('.accordion-icon, .fa-chevron-down');
+                                    const isOpen = content && !content.classList.contains('hidden');
+                                    allItems.forEach(function(el) {
+                                      if (el !== item) {
+                                        el.classList.remove('active');
+                                        const c = el.querySelector('.faq-body, .accordion-content');
+                                        if (c) c.classList.add('hidden');
+                                        const i = el.querySelector('.accordion-icon, .fa-chevron-down');
+                                        if (i) i.classList.remove('rotate-180');
+                                      }
+                                    });
+                                    item.classList.toggle('active');
+                                    if (!isOpen && content) { content.classList.remove('hidden'); if (icon) icon.classList.add('rotate-180'); }
+                                    else if (isOpen && content) { content.classList.add('hidden'); if (icon) icon.classList.remove('rotate-180'); }
+                                  }
+                                }
+                              });
+
+                              if (typeof window.Swiper !== 'undefined') {
+                                document.querySelectorAll('.swiper-container').forEach(function(self) {
+                                  if (self.__swiper) return;
+                                  var getAttr = function(k) { return self.getAttribute(k) || self.getAttribute('data-' + k) || null; };
+                                  var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
+                                  var num = function(k, fb) { return parseInt(getAttr(k) || String(fb), 10) || fb; };
+                                  var props = {
+                                    loop: bool('loop'), slidesPerView: num('slidesPerView', 1), spaceBetween: num('spaceBetween', 0),
+                                    navigation: bool('navigation') ? { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') } : false,
+                                    pagination: getAttr('pagination') ? { el: self.querySelector('.swiper-pagination'), type: getAttr('pagination'), clickable: true } : false,
+                                  };
+                                  self.__swiper = new window.Swiper(self, props);
+                                });
+                              }
+                            }
+                            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initInteractions); } else { initInteractions(); }
+                          }();
+                        <\/script>
                       </body>
                     </html>
                   `}
