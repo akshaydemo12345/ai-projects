@@ -26,79 +26,30 @@ exports.createProject = async (req, res, next) => {
       },
     };
 
-    // If pre-scraped websiteProfile is provided by the frontend, use it immediately
+    // If websiteProfile is provided directly from the frontend, use it.
+    // This happens if the user completed the frontend scraping/analysis.
+    // Otherwise, we fallback to quick metadata fetch + background scraping.
     if (req.body.websiteProfile) {
       projectPayload.websiteProfile = req.body.websiteProfile;
       projectPayload.scrapeMeta = {
-        status: 'success',
         sourceUrl: normalizeDomain(req.body.websiteUrl || req.body.url),
+        status: 'success',
         finishedAt: new Date(),
         errors: [],
       };
 
-      // Ensure identity block exists
-      projectPayload.websiteProfile.identity = projectPayload.websiteProfile.identity || {};
+      const wp = req.body.websiteProfile;
+      projectPayload.websiteUrl = wp.extraction?.sourceUrl || wp.extraction?.finalUrl || req.body.websiteUrl || req.body.url;
+      if (wp.identity?.logoUrl) projectPayload.logoUrl = wp.identity.logoUrl;
+      if (wp.identity?.favicon) projectPayload.faviconUrl = wp.identity.favicon;
 
-      // Override values with user modifications from the form
-      if (name) projectPayload.websiteProfile.identity.name = name;
-      if (description) projectPayload.websiteProfile.identity.description = description;
+      // Keep root level properties consistent with provided primary/secondary/colors
+      if (req.body.primaryColor) projectPayload.primaryColor = req.body.primaryColor;
+      if (req.body.secondaryColor) projectPayload.secondaryColor = req.body.secondaryColor;
+      if (req.body.colors) projectPayload.colors = req.body.colors;
 
-      if (req.body.logoUrl) {
-        projectPayload.websiteProfile.identity.logoUrl = req.body.logoUrl;
-      }
-
-      if (req.body.scrapedData?.favicon) {
-        projectPayload.websiteProfile.identity.favicon = req.body.scrapedData.favicon;
-      }
-
-      // Sync colors
-      projectPayload.websiteProfile.logoColors = projectPayload.websiteProfile.logoColors || {};
-      if (req.body.primaryColor) {
-        projectPayload.websiteProfile.logoColors.primary = req.body.primaryColor;
-      }
-      if (req.body.secondaryColor) {
-        projectPayload.websiteProfile.logoColors.secondary = req.body.secondaryColor;
-      }
-      if (req.body.colors) {
-        projectPayload.websiteProfile.logoColors.palette = req.body.colors;
-        projectPayload.websiteProfile.colors = projectPayload.websiteProfile.colors || {};
-        projectPayload.websiteProfile.colors.palette = req.body.colors;
-      }
-
-      // Sync services
-      if (req.body.services) {
-        projectPayload.websiteProfile.content = projectPayload.websiteProfile.content || {};
-        projectPayload.websiteProfile.content.services = req.body.services.map(s => {
-          if (typeof s === 'string') {
-            return { title: s, description: '', icon: '' };
-          }
-          return s;
-        });
-      }
-
-      // Sync keywords
-      if (req.body.keywords) {
-        projectPayload.websiteProfile.seo = projectPayload.websiteProfile.seo || {};
-        projectPayload.websiteProfile.seo.keywords = req.body.keywords;
-      }
-
-      // Sync industry / category classification
-      if (req.body.category || req.body.subIndustry) {
-        projectPayload.websiteProfile.industry = projectPayload.websiteProfile.industry || {};
-        if (req.body.category) projectPayload.websiteProfile.industry.industry = req.body.category;
-        if (req.body.subIndustry) projectPayload.websiteProfile.industry.subIndustry = req.body.subIndustry;
-      }
-
-      // Expose quick light fields at the root of the payload so UI/virtual fields are instantly satisfied
-      projectPayload.websiteUrl = normalizeDomain(req.body.websiteUrl || req.body.url);
-      if (projectPayload.websiteProfile.identity.logoUrl) {
-        projectPayload.logoUrl = projectPayload.websiteProfile.identity.logoUrl;
-      }
-      if (projectPayload.websiteProfile.identity.favicon) {
-        projectPayload.faviconUrl = projectPayload.websiteProfile.identity.favicon;
-      }
+      console.debug('[projectController] using websiteProfile provided by frontend, skipping quick fetch & background scraping.');
     } else if (req.body.websiteUrl || req.body.url) {
-      // If website URL is provided but no pre-scraped websiteProfile, fall back to quick metadata fetch + background scrape
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       projectPayload.websiteProfile = {
         extraction: {
@@ -167,8 +118,9 @@ exports.createProject = async (req, res, next) => {
 
     const project = await Project.create(projectPayload);
 
-    // If a website was provided and no pre-scraped websiteProfile, perform the heavier scrape + profile build in background.
-    if ((req.body.websiteUrl || req.body.url) && !req.body.websiteProfile) {
+    // If a website was provided, perform the heavier scrape + profile build in background.
+    // ONLY run if websiteProfile was NOT provided from the frontend.
+    if (!req.body.websiteProfile && (req.body.websiteUrl || req.body.url)) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
       setImmediate(async () => {
         try {
@@ -359,9 +311,9 @@ exports.getProjectPagesSummary = async (req, res, next) => {
     // Ownership verified implicitly: pages are scoped to both projectId + userId via Page model
     // (no extra Project.exists() round-trip needed)
 
-    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory
+    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory 
     const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } })
-      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage')
+      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage previewToken')
       .sort('-createdAt')
       .lean();
 
