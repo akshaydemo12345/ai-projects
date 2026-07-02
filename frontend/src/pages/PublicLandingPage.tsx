@@ -428,11 +428,12 @@ const PublicLandingPage = () => {
           --white: #ffffff;
           --button-gradient: linear-gradient(135deg, ${BRAND_PRIMARY}, ${BRAND_SECONDARY});
         }
-        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; }
-        input, select, textarea { border: 1px solid #cbd5e1 !important; border-radius: 10px !important; padding: 14px 18px !important; width: 100%; margin-bottom: 20px; display: block; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
-        input:focus { border-color: ${BRAND_PRIMARY} !important; outline: none !important; box-shadow: 0 0 0 4px ${BRAND_PRIMARY}15; }
+        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; overflow-x: hidden; }
+        form:not([class*="form"]) input, form:not([class*="form"]) select, form:not([class*="form"]) textarea { border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 18px; width: 100%; margin-bottom: 20px; display: block; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
+        form:not([class*="form"]) input:focus { border-color: ${BRAND_PRIMARY}; outline: none; box-shadow: 0 0 0 4px ${BRAND_PRIMARY}15; }
         label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #475569; }
         form { width: 100%; max-width: 100%; }
+        .float-badge { z-index: 1 !important; }
         ${aiCss}
       </style>
       <script>
@@ -473,6 +474,27 @@ const PublicLandingPage = () => {
                     })(counter, target, increment, suffix), 40);
                   }
                 }
+              }
+            }
+            
+            // To-top button logic (fallback for all templates)
+            var toTopBtn = document.getElementById('toTop') || document.querySelector('.to-top');
+            if (toTopBtn) {
+              if (window.scrollY > 200) {
+                toTopBtn.classList.add('show');
+                toTopBtn.style.opacity = '1';
+                toTopBtn.style.transform = 'translateY(0)';
+              } else {
+                toTopBtn.classList.remove('show');
+                toTopBtn.style.opacity = '0';
+                toTopBtn.style.transform = 'translateY(20px)';
+              }
+              // Add click listener if not already added
+              if (!toTopBtn.hasAttribute('data-click-bound')) {
+                toTopBtn.setAttribute('data-click-bound', 'true');
+                toTopBtn.addEventListener('click', function() {
+                  window.scrollTo({top: 0, behavior: 'smooth'});
+                });
               }
             }
           }
