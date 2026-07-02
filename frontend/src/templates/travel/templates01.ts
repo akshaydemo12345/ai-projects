@@ -436,7 +436,10 @@ header {
 
 /* Testimonial */
 .testimonials { background: #111; padding: clamp(5rem, 8vw, 8rem) 0; color: #fff; position: relative; text-align: center; }
-.testi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 4rem; text-align: left; }
+.testimonials .swiper-container { width: 100%; overflow: hidden; min-height: 200px; }
+.testimonials .swiper-button-next, .testimonials .swiper-button-prev { color: var(--primary); }
+.testimonials .swiper-pagination-bullet { background: #fff; opacity: 0.5; }
+.testimonials .swiper-pagination-bullet-active { background: var(--primary); opacity: 1; }
 .testi-card { 
   background: rgba(255,255,255,0.05); 
   padding: clamp(1.5rem, 4vw, 3rem); 
@@ -489,22 +492,33 @@ header {
   border: 1px solid #e2e8f0;
   overflow: hidden;
   transition: all 0.3s ease;
+  padding: 1rem 1.2rem;
+  font-weight: 700;
+  color: var(--dark);
 }
 .ft-item.light-bg {
   color: var(--dark);
 }
 .ft-item.dark-bg {
   color: #fff;
+  background: #1f2937;
 }
-.ft-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1.2rem; cursor: pointer; user-select: none; list-style: none; }
+.ft-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 0.2rem 0; cursor: pointer; user-select: none; list-style: none; }
 .ft-header::-webkit-details-marker { display: none; }
+.ft-item summary { cursor: pointer; font-weight: 700; font-size: 1.1rem; list-style: none; display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0; border-bottom: 1px solid transparent; }
+.ft-item[open] summary { border-bottom-color: #e2e8f0; margin-bottom: 10px; }
+.ft-item summary::-webkit-details-marker { display: none !important; }
+.ft-item summary::marker { display: none !important; content: "" !important; }
+.ft-item summary::after { content: "▼"; color: var(--primary); font-size: 0.85rem; transition: transform 0.3s; }
+.ft-item[open] summary::after { transform: rotate(180deg); }
+.ft-item summary:has(.ft-icon-toggle)::after { display: none; }
 .ft-title { font-size: clamp(1rem, 1.5vw, 1.1rem); font-weight: 700; margin: 0; flex: 1; color: var(--dark); }
 .ft-item.dark-bg .ft-title { color: #fff; }
 .ft-icon-toggle { font-size: 1.2rem; color: var(--primary); transition: transform 0.3s ease; flex-shrink: 0; }
 .ft-item[open] .ft-icon-toggle { transform: rotate(180deg); }
-.ft-body { padding: 0 1.2rem 1.2rem 1.2rem; }
-.ft-body p { color: var(--gray); font-size: 0.95rem; line-height: 1.5; margin: 0; }
-.ft-item.dark-bg .ft-body p { color: #e2e8f0; }
+.ft-body { padding: 0.5rem 0 0 0; }
+.ft-body p, .ft-item > p, .ft-item > div:not(.ft-header):not(.ft-body) { padding: 0.5rem 0 0 0; color: var(--gray); font-weight: 400; font-size: 0.95rem; line-height: 1.5; margin: 0; }
+.ft-item.dark-bg .ft-body p, .ft-item.dark-bg > p { color: #e2e8f0; }
 
 /* Footer */
 footer { background: #111; color: #fff; padding: clamp(4rem, 8vw, 6rem) 0 2rem; position: relative; }
@@ -750,8 +764,7 @@ export const travel01Html = `
 
   <section class="banner">
     <div class="container">
-      <div class="banner-inner" style="position: relative; overflow: hidden;">
-        <img src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&q=80&w=2000" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;" alt="Banner Background">
+      <div class="banner-inner" style="position: relative; overflow: hidden; background-image: url('https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&q=80&w=2000');">
         <div class="banner-content">
           <span class="tpl-templates01-4" style="font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 1rem">Special Offer For You</span>
           <h2>Grab Up to 50% Off<br>on Your Favorites<br>Destination</h2>
@@ -803,34 +816,59 @@ export const travel01Html = `
       <span class="section-subtitle">Our Testimonials</span>
       <h2 class="section-title">Providing The Best Services<br>For Our Customers</h2>
       
-      <div class="testi-grid">
-        <div class="testi-card">
-          <i class="fa-solid fa-quote-left quote-icon"></i>
-          <p class="testi-text">"The experience was absolutely incredible. Everything from the flights to the hotel was perfectly arranged. I didn't have to worry about a single thing during my vacation."</p>
-          <div class="testi-author">
-            <div>
-              <div class="stars">
-                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+      <div class="swiper-container" data-gjs-type="swiper-container" data-slides-per-view="2" data-space-between="30" data-mobile-breakpoint="true" data-tablet-breakpoint="true" data-navigation="true" data-pagination="true" data-loop="true" style="margin-top: 4rem; padding-bottom: 3rem;">
+        <div class="swiper-wrapper" data-gjs-type="swiper-wrapper">
+          <div class="swiper-slide" data-gjs-type="swiper-slide" style="display: flex; height: auto;">
+            <div class="testi-card" style="width: 100%; text-align: left;">
+              <i class="fa-solid fa-quote-left quote-icon"></i>
+              <p class="testi-text">"The experience was absolutely incredible. Everything from the flights to the hotel was perfectly arranged. I didn't have to worry about a single thing during my vacation."</p>
+              <div class="testi-author">
+                <div>
+                  <div class="stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                  </div>
+                  <p>Travel Blogger</p>
+                </div>
+                <h4>Helena John</h4>
               </div>
-              <p>Travel Blogger</p>
             </div>
-            <h4>Helena John</h4>
+          </div>
+          <div class="swiper-slide" data-gjs-type="swiper-slide" style="display: flex; height: auto;">
+            <div class="testi-card" style="width: 100%; text-align: left;">
+              <i class="fa-solid fa-quote-left quote-icon"></i>
+              <p class="testi-text">"A truly unforgettable trip. The itinerary was perfectly balanced between sightseeing and relaxation. The guides were extremely knowledgeable."</p>
+              <div class="testi-author">
+                <div>
+                  <div class="stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                  </div>
+                  <p>Adventure Enthusiast</p>
+                </div>
+                <h4>Mark Davis</h4>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide" data-gjs-type="swiper-slide" style="display: flex; height: auto;">
+            <div class="testi-card" style="width: 100%; text-align: left;">
+              <i class="fa-solid fa-quote-left quote-icon"></i>
+              <p class="testi-text">"I highly recommend these services. Booking was seamless, and the customer support team was available 24/7. My family and I had the best time!"</p>
+              <div class="testi-author">
+                <div>
+                  <div class="stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                  </div>
+                  <p>Family Traveler</p>
+                </div>
+                <h4>Sarah Jenkins</h4>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="testi-card">
-          <i class="fa-solid fa-quote-left quote-icon"></i>
-          <p class="testi-text">"Truly the best travel agency I have ever used. They found us hidden gems that weren't in any guidebook. Highly recommended for anyone looking for authentic experiences."</p>
-          <div class="testi-author">
-            <div>
-              <div class="stars">
-                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-              </div>
-              <p>Business Owner</p>
-            </div>
-            <h4>Gustavo Silva</h4>
-          </div>
-        </div>
+        <div class="swiper-button-prev" data-gjs-type="swiper-button-prev"></div>
+        <div class="swiper-button-next" data-gjs-type="swiper-button-next"></div>
+        <div class="swiper-pagination" data-gjs-type="swiper-pagination"></div>
       </div>
+    </div>
     </div>
   </section>
 
@@ -924,6 +962,7 @@ export const travel01Html = `
             <p>We tailor our itineraries to meet and exceed all your expectations and travel needs.</p>
           </div>
         </details>
+        </div>
       </div>
     </div>
   </section>

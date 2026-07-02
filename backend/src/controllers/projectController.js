@@ -37,17 +37,17 @@ exports.createProject = async (req, res, next) => {
         finishedAt: new Date(),
         errors: [],
       };
-      
+
       const wp = req.body.websiteProfile;
       projectPayload.websiteUrl = wp.extraction?.sourceUrl || wp.extraction?.finalUrl || req.body.websiteUrl || req.body.url;
       if (wp.identity?.logoUrl) projectPayload.logoUrl = wp.identity.logoUrl;
       if (wp.identity?.favicon) projectPayload.faviconUrl = wp.identity.favicon;
-      
+
       // Keep root level properties consistent with provided primary/secondary/colors
       if (req.body.primaryColor) projectPayload.primaryColor = req.body.primaryColor;
       if (req.body.secondaryColor) projectPayload.secondaryColor = req.body.secondaryColor;
       if (req.body.colors) projectPayload.colors = req.body.colors;
-      
+
       console.debug('[projectController] using websiteProfile provided by frontend, skipping quick fetch & background scraping.');
     } else if (req.body.websiteUrl || req.body.url) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
@@ -311,9 +311,9 @@ exports.getProjectPagesSummary = async (req, res, next) => {
     // Ownership verified implicitly: pages are scoped to both projectId + userId via Page model
     // (no extra Project.exists() round-trip needed)
 
-    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory
+    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory 
     const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } })
-      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage')
+      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage previewToken')
       .sort('-createdAt')
       .lean();
 
