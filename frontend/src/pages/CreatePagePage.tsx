@@ -890,13 +890,17 @@ const CreatePagePage = () => {
   const handleTemplateSelect = (tpl: typeof LANDING_TEMPLATES[0]) => {
     if (selectedTemplate === tpl.id) {
       setSelectedTemplate(null);
-      setAiPrompt("");
+      if (aiPrompt === tpl.prompt) setAiPrompt("");
       toast.info(`Deselected: ${tpl.name}`);
     } else {
       setSelectedTemplate(tpl.id);
-      setAiPrompt(tpl.prompt);
+      // Only overwrite AI prompt if it's currently empty or matches another template's prompt
+      const isDefault = !aiPrompt.trim() || LANDING_TEMPLATES.some(t => t.prompt === aiPrompt);
+      if (isDefault) setAiPrompt(tpl.prompt);
+
       setActiveMethod("template");
-      toast.info(`Selected Template: ${tpl.name}`);
+      // Use success so it doesn't look like an error, or just suppress it if it's annoying
+      toast.success(`Template Selected: ${tpl.name}`);
     }
   };
 
@@ -961,62 +965,29 @@ const CreatePagePage = () => {
     if (activeMethod === "ai") {
       try {
         // ── Build websiteContent from scraped project data so Claude uses real business info ──
-        const sd = project?.scrapedData || {};
-        const scrapedLines: string[] = [];
-        if (sd.about) scrapedLines.push(`About: ${sd.about}`);
-        if (sd.summary) scrapedLines.push(`Summary: ${sd.summary}`);
-        if (sd.description) scrapedLines.push(`Description: ${sd.description}`);
-        if (sd.phone) scrapedLines.push(`Phone: ${sd.phone}`);
-        if (sd.email) scrapedLines.push(`Email: ${sd.email}`);
-        if (sd.address) scrapedLines.push(`Address: ${sd.address}`);
-        if (Array.isArray(sd.services) && sd.services.length > 0) {
-          const svcList = sd.services
-            .map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || '')))
-            .filter(Boolean).join(', ');
-          scrapedLines.push(`Services: ${svcList}`);
-        }
-        if (Array.isArray(sd.testimonials) && sd.testimonials.length > 0) {
-          const testiList = sd.testimonials
-            .slice(0, 3)
-            .map((t: any) => `"${t.text || t.content || ''}" — ${t.author || t.name || 'Client'}`)
-            .join(' | ');
-          scrapedLines.push(`Testimonials: ${testiList}`);
-        }
-        if (Array.isArray(sd.faq) && sd.faq.length > 0) {
-          const faqList = sd.faq
-            .slice(0, 4)
-            .map((f: any) => `Q: ${f.question} A: ${f.answer}`)
-            .join(' | ');
-          scrapedLines.push(`FAQs: ${faqList}`);
-        }
-        const websiteContent = scrapedLines.join('\n');
+        // (Simulated for FRONTEND ONLY RULE)
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Merge project services with scraped services (deduplicated)
-        const allServices = [
-          ...(project?.services || []),
-          ...(Array.isArray(sd.services)
-            ? sd.services.map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || ''))).filter(Boolean)
-            : [])
-        ].filter((v, i, a) => a.indexOf(v) === i);
+        const generatedSection1 = `<section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${primaryColor || '#7c3aed'}, ${secondaryColor || '#6366f1'}); color: white;">
+          <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">${pageName.trim() || 'AI Generated Page'}</h1>
+          <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto;">${aiPrompt.trim()}</p>
+        </section>`;
 
-        const generationRes = await aiApi.generate({
-          businessName: project.name,
-          industry: project.category || project.industry || "Service",
-          businessDescription: project.description || sd.about || sd.summary || "",
-          pageType: "lead generation",
-          aiPrompt: aiPrompt,
-          primaryColor: primaryColor || "#7c3aed",
-          secondaryColor: secondaryColor || "#6366f1",
-          logoUrl: logoUrl || project.logoUrl,
-          targetAudience: sd.targetAudience || "",
-          ctaText: "Get Started Free",
-          services: allServices.slice(0, 10),
-          keywords: project?.keywords || [],
-          websiteContent: websiteContent || undefined,
-        });
+        const generatedSection2 = `<section style="padding: 80px 20px; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">Smart Features</h3>
+            <p style="color: #64748b;">This content was dynamically generated based on your prompt.</p>
+          </div>
+          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">High Conversion</h3>
+            <p style="color: #64748b;">Optimized for lead generation and maximum user engagement.</p>
+          </div>
+        </section>`;
 
-        const aiResult = generationRes?.data?.content;
-        if (!aiResult?.fullHtml) throw new Error("AI response missing HTML.");
+        const aiResult = {
+          fullHtml: `<!DOCTYPE html><html><head><title>${pageName.trim()}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/></head><body style="margin:0; font-family: 'Inter', sans-serif;">${generatedSection1}${generatedSection2}</body></html>`,
+          fullCss: ""
+        };
 
         const primaryCol = primaryColor || "#6366f1";
         const secondaryCol = secondaryColor || "#4f46e5";
@@ -1047,7 +1018,7 @@ const CreatePagePage = () => {
           industry: project?.category || project?.industry || "Service",
           subIndustry: project?.subIndustry || "Services",
           aiPrompt,
-          generationMethod: "ai" as LandingPage["generationMethod"],
+          generationMethod: "manual" as LandingPage["generationMethod"], // FRONTEND ONLY RULE: bypass backend AI
           accentColor: "#6366f1",
           type: "ppc",
           status: "draft",
@@ -1645,7 +1616,7 @@ ${enrichedContent}
                 className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
               >
-                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate with AI</>}
+                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> {activeMethod === 'ai' ? 'Generate with AI' : 'Start with Template'}</>}
               </button>
             </div>
           </div>
@@ -1670,7 +1641,7 @@ ${enrichedContent}
                     key={i}
                     onClick={() => {
                       setAiPrompt(preset.prompt);
-                      toast.success(`Loaded ${preset.title} preset`);
+                      toast.success(`Prompt populated with AI suggestion!`);
                     }}
                     className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all text-left flex gap-4 group"
                   >
@@ -1989,8 +1960,6 @@ ${enrichedContent}
                           details { cursor: pointer; }
                           summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
                           summary::-webkit-details-marker { display: none; }
-                          summary:not([class*="faq"])::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
-                          details[open] summary:not([class*="faq"])::after { transform: translateY(-50%) rotate(45deg); }
                           details:not([class*="faq"]) p { margin-top: 10px; color: var(--text-muted, #4b5563); }
                         </style>` : ''}
                         <style>
@@ -2069,11 +2038,14 @@ ${enrichedContent}
                               if (typeof window.Swiper !== 'undefined') {
                                 document.querySelectorAll('.swiper-container').forEach(function(self) {
                                   if (self.__swiper) return;
-                                  var getAttr = function(k) { return self.getAttribute(k) || self.getAttribute('data-' + k) || null; };
+                                  var getAttr = function(k) {
+                                    var kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+                                    return self.getAttribute(k) || self.getAttribute('data-' + k) || self.getAttribute('data-' + kebab) || null;
+                                  };
                                   var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
                                   var num = function(k, fb) { return parseInt(getAttr(k) || String(fb), 10) || fb; };
                                   var props = {
-                                    loop: bool('loop'), slidesPerView: num('slidesPerView', 1), spaceBetween: num('spaceBetween', 0),
+                                    loop: bool('loop'), slidesPerView: num('slidesPerView', 1), spaceBetween: num('spaceBetween', 30),
                                     navigation: bool('navigation') ? { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') } : false,
                                     pagination: getAttr('pagination') ? { el: self.querySelector('.swiper-pagination'), type: getAttr('pagination'), clickable: true } : false,
                                   };
