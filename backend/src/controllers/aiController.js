@@ -310,7 +310,7 @@ exports.extractProject = async (req, res, next) => {
         const visualProfile = await extractThemeProfile(url, { screenshot: false, timeout: 25_000 });
         themeData = mapThemeProfileToThemeData(visualProfile);
       } catch (themeErr) {
-        logger.warn(`[aiController] visual theme extraction skipped: ${themeErr.message}`);
+        console.warn(`[aiController] visual theme extraction skipped: ${themeErr.message}`);
       }
     }
 
@@ -395,13 +395,13 @@ exports.extractThemeStyle = async (req, res, next) => {
           { runValidators: false }
         );
       } catch (persistErr) {
-        logger.error(`[aiController] extractThemeStyle persist failed: ${persistErr.message}`);
+        console.error('[aiController] extractThemeStyle persist failed:', persistErr.message);
       }
     }
 
     return res.status(200).json({ status: 'success', data: { themeProfile } });
   } catch (err) {
-    logger.error(`[aiController] extractThemeStyle failed: ${err.message}`);
+    console.error(`[aiController] extractThemeStyle failed: ${err.message}`);
     if (err.code === 'SITE_BLOCKED') {
       return res.status(422).json({
         status: 'fail',
@@ -556,11 +556,11 @@ exports.generateDescription = async (req, res, next) => {
     // Merge live UI color/font overrides on top of scraped values
     // so the prompt reflects exactly what the user currently has set
     const uiOverrides = {
-      primaryColor:   uiPrimaryColor   || null,
+      primaryColor: uiPrimaryColor || null,
       secondaryColor: uiSecondaryColor || null,
-      accentColor:    uiAccentColor    || null,
-      bodyFont:       uiBodyFont       || null,
-      headingFont:    uiHeadingFont    || null,
+      accentColor: uiAccentColor || null,
+      bodyFont: uiBodyFont || null,
+      headingFont: uiHeadingFont || null,
     };
 
     const { generateDescriptionSuggestion } = require('../services/aiService');
