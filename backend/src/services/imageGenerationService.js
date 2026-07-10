@@ -60,7 +60,7 @@ async function generateGetImgUrl(
             height,
             steps: 4,
             output_format: 'jpeg',
-            response_format: 'b64'
+            response_format: 'url'
           })
         }
       );
@@ -304,17 +304,16 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = false;
+  const DISABLE_AI_IMAGES_FOR_TESTING = true;
   // 👆👆👆
 
-  if (
-    !htmlContent ||
-    typeof htmlContent !== 'string' ||
-    DISABLE_AI_IMAGES_FOR_TESTING
-  ) {
-    if (DISABLE_AI_IMAGES_FOR_TESTING) {
-      console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Skipping getimg.ai API.');
-    }
+  if (!htmlContent || typeof htmlContent !== 'string') {
+    return { html: htmlContent, imageCount: 0 };
+  }
+
+  if (DISABLE_AI_IMAGES_FOR_TESTING) {
+    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Skipping getimg.ai API.');
+
     return { html: htmlContent, imageCount: 0 };
   }
 

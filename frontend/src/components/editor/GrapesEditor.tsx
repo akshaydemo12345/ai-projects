@@ -813,7 +813,7 @@ const GrapesEditor = () => {
         let newMatch = match;
         const isTravel03 = newMatch.includes('new-design-slider');
         const targetSlides = isTravel03 ? '1' : '2';
-        
+
         if (!newMatch.includes('data-slides-per-view')) {
           newMatch = newMatch + ` data-slides-per-view="${targetSlides}"`;
         } else {
@@ -1581,7 +1581,7 @@ const GrapesEditor = () => {
         };
 
         const props: any = {
-          observer: true, 
+          observer: true,
           observeParents: true,
           direction: bool('vertical') ? 'vertical' : 'horizontal',
           loop: bool('loop') !== false ? true : false, // Default to true if not explicitly false
@@ -2626,7 +2626,7 @@ const GrapesEditor = () => {
 
             // Destroy existing instance to avoid duplicates
             if (canvasWin.t03DestSwiper) {
-              try { canvasWin.t03DestSwiper.destroy(true, true); } catch(_) {}
+              try { canvasWin.t03DestSwiper.destroy(true, true); } catch (_) { }
               canvasWin.t03DestSwiper = null;
             }
 
@@ -3588,9 +3588,18 @@ const GrapesEditor = () => {
     if (!editorRef.current) return;
     setIsSaving(true);
     console.log('💾 Saving page content...');
-    const html = editorRef.current.getHtml();
-    const css = editorRef.current.getCss() || '';
-    const js = editorRef.current.getJs() || '';
+    let html = editorRef.current.getHtml();
+    let css = editorRef.current.getCss() || '';
+    let js = editorRef.current.getJs() || '';
+
+    // Fix relative assets to absolute URLs for external plugins
+    const makeAbsolute = (str: string) => {
+      const origin = window.location.origin;
+      return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+        .replace(new RegExp(origin + origin, 'g'), origin);
+    };
+    html = makeAbsolute(html);
+    css = makeAbsolute(css);
 
     // Capture internal global styles injected by GlobalStylesPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
@@ -3656,8 +3665,16 @@ const GrapesEditor = () => {
 
     // 1. Save current editor state into memory/local page state so it isn't lost on switch
     if (editorRef.current) {
-      const html = editorRef.current.getHtml();
-      const css = editorRef.current.getCss() || '';
+      let html = editorRef.current.getHtml();
+      let css = editorRef.current.getCss() || '';
+
+      const makeAbsolute = (str: string) => {
+        const origin = window.location.origin;
+        return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+          .replace(new RegExp(origin + origin, 'g'), origin);
+      };
+      html = makeAbsolute(html);
+      css = makeAbsolute(css);
       const js = editorRef.current.getJs() || '';
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
@@ -3935,8 +3952,8 @@ const GrapesEditor = () => {
     setIsPublishing(true);
 
     try {
-      const html = editorRef.current.getHtml();
-      const css = editorRef.current.getCss() || '';
+      let html = editorRef.current.getHtml();
+      let css = editorRef.current.getCss() || '';
 
       // Capture internal global styles injected by GlobalStylesPanel
       const canvasDoc = editorRef.current.Canvas.getDocument();
@@ -3960,12 +3977,20 @@ const GrapesEditor = () => {
 
       // Build a FULL self-contained HTML document for publish.
       // This is the key fix: published page has all CSS + JS inline so it works standalone.
-      const fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
+      let fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
         title: pageTitle,
         desc: metaDesc,
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
       });
+
+      // Fix relative assets to absolute URLs for external plugins ONLY for the published output
+      const makeAbsolute = (str: string) => {
+        const origin = window.location.origin;
+        return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+          .replace(new RegExp(origin + origin, 'g'), origin);
+      };
+      fullPublishHtml = makeAbsolute(fullPublishHtml);
 
       // Also keep the raw body HTML for editor reload
       const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;
