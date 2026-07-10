@@ -2610,11 +2610,68 @@ const GrapesEditor = () => {
         console.warn('Could not inject Swiper into canvas:', e);
       }
 
+      // ─── Initialize Travel-03 Destination Slider in Editor Canvas ───
+      // The template's svg onload script is stripped by GrapesJS, so we
+      // manually initialize Swiper for .dest-swiper here.
+      setTimeout(() => {
+        try {
+          const canvasWin = editor.Canvas.getWindow() as any;
+          const canvasDoc = editor.Canvas.getDocument();
+          if (!canvasWin || !canvasDoc) return;
+
+          const initTravel03Slider = () => {
+            if (typeof canvasWin.Swiper === 'undefined') return;
+            const destContainer = canvasDoc.querySelector('.dest-swiper');
+            if (!destContainer) return;
+
+            // Destroy existing instance to avoid duplicates
+            if (canvasWin.t03DestSwiper) {
+              try { canvasWin.t03DestSwiper.destroy(true, true); } catch(_) {}
+              canvasWin.t03DestSwiper = null;
+            }
+
+            canvasWin.t03DestSwiper = new canvasWin.Swiper('.dest-swiper', {
+              wrapperClass: 'dest-grid',
+              slideClass: 'dest',
+              slidesPerView: 1.2,
+              spaceBetween: 20,
+              loop: true,
+              breakpoints: {
+                640: { slidesPerView: 2.2 },
+                900: { slidesPerView: 3.2 },
+                1200: { slidesPerView: 4 },
+              },
+            });
+
+            // Wire up arrow buttons — they use onclick="if(window.t03DestSwiper)..."
+            // but window inside the canvas iframe IS canvasWin, so this just works.
+            console.log('✅ Travel-03 dest-swiper initialized in editor canvas');
+          };
+
+          // Run immediately and also after a short delay for slow renders
+          initTravel03Slider();
+          setTimeout(initTravel03Slider, 800);
+          setTimeout(initTravel03Slider, 2000);
+        } catch (e) {
+          console.warn('Could not initialize Travel-03 slider in editor:', e);
+        }
+      }, 600);
+
       // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
       try {
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           canvasDoc.addEventListener('click', (e: any) => {
+            // ── Travel-03: Destination slider arrow buttons ──
+            const canvasWin = editor.Canvas.getWindow() as any;
+            if (canvasWin?.t03DestSwiper) {
+              if (e.target.closest('.dest-prev')) {
+                canvasWin.t03DestSwiper.slidePrev();
+              } else if (e.target.closest('.dest-next')) {
+                canvasWin.t03DestSwiper.slideNext();
+              }
+            }
+
             let accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
             let item, content, icon;
 

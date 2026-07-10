@@ -383,9 +383,53 @@ const PublicLandingPage = () => {
                 768: { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 },
                 1024: { slidesPerView: props.slidesPerView, spaceBetween: props.spaceBetween }
               };
-              props.slidesPerView = 1;
               self.__swiper = new window.Swiper(self, props);
             });
+
+            // Travel-03 specific swipers
+            if (document.querySelector('.dest-swiper')) {
+              var dSwiperEl = document.querySelector('.dest-swiper');
+              if (!dSwiperEl.__swiper) {
+                dSwiperEl.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+                dSwiperEl.querySelectorAll('.swiper-slide-duplicate').forEach(function(dup) { dup.remove(); });
+                dSwiperEl.querySelectorAll('.dest').forEach(function(s) {
+                   s.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+                   s.removeAttribute('data-swiper-slide-index');
+                   s.style.opacity = ''; s.style.transform = ''; s.style.width = ''; s.style.height = ''; s.style.margin = '';
+                });
+                dSwiperEl.querySelectorAll('.dest-grid').forEach(function(w) { w.removeAttribute('style'); });
+
+                window.t03DestSwiper = dSwiperEl.__swiper = new window.Swiper('.dest-swiper', {
+                  wrapperClass: 'dest-grid',
+                  slideClass: 'dest',
+                  slidesPerView: 1.2, spaceBetween: 20, loop: true,
+                  navigation: { nextEl: '.dest-next', prevEl: '.dest-prev' },
+                  breakpoints: { 640: { slidesPerView: 2.2 }, 900: { slidesPerView: 3.2 }, 1200: { slidesPerView: 4 } }
+                });
+              }
+            }
+
+            if (document.querySelector('.reviews-swiper')) {
+              var rSwiperEl = document.querySelector('.reviews-swiper');
+              if (!rSwiperEl.__swiper) {
+                rSwiperEl.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+                rSwiperEl.querySelectorAll('.swiper-slide-duplicate').forEach(function(dup) { dup.remove(); });
+                rSwiperEl.querySelectorAll('.rev-slide').forEach(function(s) {
+                   s.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+                   s.removeAttribute('data-swiper-slide-index');
+                   s.style.opacity = ''; s.style.transform = ''; s.style.width = ''; s.style.height = ''; s.style.margin = '';
+                });
+                rSwiperEl.querySelectorAll('.reviews-wrapper').forEach(function(w) { w.removeAttribute('style'); });
+
+                rSwiperEl.__swiper = new window.Swiper('.reviews-swiper', {
+                  wrapperClass: 'reviews-wrapper',
+                  slideClass: 'rev-slide',
+                  slidesPerView: 1, spaceBetween: 30, loop: true,
+                  pagination: { el: '.swiper-pagination', clickable: true },
+                  autoHeight: true
+                });
+              }
+            }
           }
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initAllSwipers);
@@ -641,7 +685,7 @@ const PublicLandingPage = () => {
       const p = new DOMParser();
       const d = p.parseFromString(cleanHtml, 'text/html');
       d.querySelectorAll('.swiper-slide-duplicate').forEach(el => el.remove());
-      d.querySelectorAll('.swiper-slide').forEach(s => {
+      d.querySelectorAll('.swiper-slide, .dest, .rev-slide').forEach(s => {
         const el = s as HTMLElement;
         if (el.style) {
           el.style.height = '';
@@ -653,8 +697,8 @@ const PublicLandingPage = () => {
         el.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
         el.removeAttribute('data-swiper-slide-index');
       });
-      d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
-      d.querySelectorAll('.swiper-container').forEach(c => {
+      d.querySelectorAll('.swiper-wrapper, .dest-grid, .reviews-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
+      d.querySelectorAll('.swiper-container, .dest-swiper, .reviews-swiper').forEach(c => {
         c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
         c.setAttribute('data-slides-per-view', '2');
         c.setAttribute('data-mobile-breakpoint', 'true');
