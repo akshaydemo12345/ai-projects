@@ -342,9 +342,8 @@ const PublicLandingPage = () => {
               if (paginationEl) paginationEl.innerHTML = '';
 
               var getAttr = function(k) { 
-                if (self.dataset && self.dataset[k] !== undefined) return self.dataset[k];
                 var kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-                return self.getAttribute(k) || self.getAttribute('data-' + kebab) || self.getAttribute('data-' + k) || null; 
+                return self.getAttribute(k) || self.getAttribute('data-' + k) || self.getAttribute('data-' + kebab) || null; 
               };
               var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
               var num = function(k, fb) { return parseFloat(getAttr(k) || String(fb)) || fb; };
@@ -444,8 +443,7 @@ const PublicLandingPage = () => {
         details { cursor: pointer; }
         summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
         summary::-webkit-details-marker { display: none; }
-        summary:not([class*="faq"])::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); transition: transform 0.3s ease; font-weight: 400; font-size: 1.2rem; }
-        details[open] summary:not([class*="faq"])::after { transform: translateY(-50%) rotate(45deg); }
+
         details:not([class*="faq"]) p { margin-top: 10px; color: var(--text-muted, #4b5563); }
       </style>` : ''}
       <script src="https://cdn.tailwindcss.com"></script>

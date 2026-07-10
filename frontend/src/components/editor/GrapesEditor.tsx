@@ -811,11 +811,13 @@ const GrapesEditor = () => {
       // If AI stripped data-slides-per-view, force it to 2 for testimonials slider so it doesn't collapse to 1
       dbContent = dbContent.replace(/(<div[^>]*class="[^"]*\bswiper-container\b[^"]*"[^>]*)/gi, (match) => {
         let newMatch = match;
-        // Always force slides-per-view to 2 if it's missing or set to 1 or 1.5
+        const isTravel03 = newMatch.includes('new-design-slider');
+        const targetSlides = isTravel03 ? '1' : '2';
+        
         if (!newMatch.includes('data-slides-per-view')) {
-          newMatch = newMatch + ' data-slides-per-view="2"';
+          newMatch = newMatch + ` data-slides-per-view="${targetSlides}"`;
         } else {
-          newMatch = newMatch.replace(/data-slides-per-view="[^"]*"/, 'data-slides-per-view="2"');
+          newMatch = newMatch.replace(/data-slides-per-view="[^"]*"/, `data-slides-per-view="${targetSlides}"`);
         }
 
         if (!newMatch.includes('data-mobile-breakpoint')) {

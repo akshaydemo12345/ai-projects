@@ -72,6 +72,7 @@ p{color:#475569}
 .hero{position:relative;padding:70px 0 90px;overflow:hidden}
 .hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:60px;align-items:center}
 .hero h1{margin-bottom:20px; font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 700;letter-spacing: -.02em;line-height: 1.1; position: relative; z-index: 1; display: inline-block;}
+.hero h1::after { content: ""; position: absolute; left: 0; bottom: -8px; width: 100%; height: 12px; background-color: var(--primary); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 Q 25 0 50 5 T 100 5' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E") center/cover; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 Q 25 0 50 5 T 100 5' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E") center/cover; }
 .lead{max-width:440px;margin-bottom:30px}
 .hero-cta{display:flex;align-items:center;gap:26px;margin-bottom:44px;flex-wrap:wrap}
 .watch{display:flex;align-items:center;gap:12px;font-size:.9rem}
@@ -200,7 +201,18 @@ p{color:#475569}
 .qq{font-size:2.5rem;color:var(--primary);opacity:.3;margin-bottom:15px;display:block}
 .t-right{min-width:0;width:100%;overflow:hidden}
 .t-right p{font-size:1.15rem;color:var(--dark);line-height:1.6;margin-bottom:24px}
-.t-authors{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
+.t-authors{display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:15px}
+
+/* ==== New-design testimonial slider (editor-native swiper) ==== */
+.new-design-slider { padding-bottom: 80px !important; overflow: hidden !important; width: 100%; position: relative; }
+.new-design-slider .swiper-slide{ padding: 6px 2px 20px; width: 100%; flex-shrink: 0; }
+.testi-nav-row{ position: absolute; bottom: 20px; right: 0; width: calc(50% - 25px); display:flex; gap:15px; z-index: 10; justify-content: flex-start; }
+@media (max-width: 768px) { .testi-nav-row { width: 100%; justify-content: center; } }
+.testi-nav-btn{ width:70px !important; height:45px !important; border-radius:25px !important; border:1px solid #f1f5f9 !important; display:flex !important; align-items:center !important; justify-content:center !important; cursor:pointer; color:var(--primary) !important; transition:.3s; background:#fff !important; position: static !important; margin: 0 !important; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+.testi-nav-btn:hover{ background:var(--primary) !important; color:#fff !important; border-color:var(--primary) !important; box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+.testi-nav-btn i { font-size: 1.1rem; }
+.testi-nav-btn::after { display: none !important; }
+.new-design-slider .swiper-pagination{ position:static; margin-top:20px; display: none; }
 
 /* ==== Brands ==== */
 .brands{padding:30px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -312,9 +324,7 @@ p{color:#475569}
 .reveal.in{opacity:1 !important; transform:none !important;}
 
 
-.dest-grid { display: flex; flex-wrap: nowrap; gap: 20px; overflow: hidden; }
-.dest-grid.swiper-wrapper { display: flex !important; gap: 0 !important; }
-.dest.swiper-slide { width: 25% !important; flex: 0 0 auto; }
+.dest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
 
 /* ==== Responsive ==== */
 @media(max-width:900px){
@@ -324,7 +334,7 @@ p{color:#475569}
   .hero-grid,.split-grid,.faq-grid,.explore-grid{grid-template-columns:1fr}
   .companion-card{grid-template-columns:1fr;text-align:center;padding:30px 20px}
   .c-left,.c-right{display:none}
-  .dest-grid{ } /* Removed grid override so it stays flex */
+  .dest-grid{ grid-template-columns: repeat(2, 1fr); }
   .features-grid{grid-template-columns:1fr 1fr}
   .deal-banner{grid-template-columns:1fr;text-align:center}
   .testi{grid-template-columns:1fr;padding:30px}
@@ -332,6 +342,7 @@ p{color:#475569}
 }
 @media(max-width:500px){
   .features-grid,.booking-features{grid-template-columns:1fr}
+  .dest-grid{grid-template-columns:1fr}
   .foot-cols{grid-template-columns:1fr}
   .cta-form{flex-direction:column;background:transparent;padding:0;gap:10px}
   .cta-form input{border-radius:999px;width:100%}
@@ -345,7 +356,6 @@ export const travel03Html = `
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 <!-- Announcement Bar -->
 <div class="announce">
@@ -379,7 +389,6 @@ export const travel03Html = `
       <div class="deco balloon"><i class="fa-solid fa-fire"></i></div>
       <div style="position: relative; display: inline-block;">
         <h1 data-editable="true" style="position: relative; z-index: 10;">The #1 Search &amp; AI Visibility <br/>Partner for Enterprise Growth</h1>
-        <img data-editable-img="true" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'%3E%3Cpath d='M0 5 Q 25 0 50 5 T 100 5' stroke='%23FF6B2C' stroke-width='2' fill='none'/%3E%3C/svg%3E" class="underline-wave" style="position: absolute; left: 0; bottom: -8px; width: 100%; height: 12px; object-fit: cover; z-index: 1;" />
       </div>
       <p data-editable="true" class="lead">To get the best of your adventure you just need to leave and go where you like. We are waiting for you — packed, planned and personal.</p>
       <div class="hero-cta">
@@ -504,12 +513,8 @@ export const travel03Html = `
   <div class="container">
     <div class="sec-head">
       <h2 data-editable="true">Discover the touch of nature 🌈</h2>
-      <div class="arrows">
-        <button data-editable="true" class="rbtn dest-prev" onclick="if(window.t03DestSwiper) window.t03DestSwiper.slidePrev()"><i class="fa-solid fa-arrow-left"></i></button>
-        <button data-editable="true" class="rbtn active dest-next" onclick="if(window.t03DestSwiper) window.t03DestSwiper.slideNext()"><i class="fa-solid fa-arrow-right"></i></button>
-      </div>
     </div>
-    <div class="dest-swiper" style="padding: 10px 0 30px; overflow: hidden;">
+    <div style="padding: 10px 0 30px; overflow: hidden;">
       <div class="dest-grid" >
         <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-venice.jpg" alt="Venice"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Venice</span></a>
         <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" alt="Iceland"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Iceland</span></a>
@@ -598,82 +603,73 @@ export const travel03Html = `
   </div>
 </section>
 
-<!-- 7. TESTIMONIAL -->
-<section class="section" id="reviews">
-  <div class="container">
-    <div class="testi reveal">
-      <div class="t-left">
-        <div class="circle-collage">
-          <div class="c c1"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-arizona.jpg" style="width:100%;height:100%;object-fit:cover;"/><span data-editable="true" class="pin sm">Norway</span></div>
-          <div class="c c2"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-moab.jpg" style="width:100%;height:100%;object-fit:cover;"/><span data-editable="true" class="pin sm">Canada</span></div>
-          <div class="c c3"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" style="width:100%;height:100%;object-fit:cover;"/><span data-editable="true" class="pin sm">Algeria</span></div>
-          <i class="fa-solid fa-paper-plane pp"></i>
+<!-- 7. TESTIMONIAL (NEW DESIGN — editor-native swiper) -->
+<section class="section" id="reviews" style="padding: 100px 0;">
+  <div class="container" style="position:relative;">
+    <div class="sec-head center" style="margin-bottom: 50px;">
+      <span data-editable="true" class="eyebrow">TESTIMONIALS</span>
+      <h2 data-editable="true">What our travelers say ✨</h2>
+    </div>
+
+    <div data-gjs-type="swiper-container" class="swiper-container new-design-slider" data-slides-per-view="1" data-navigation="true" data-auto-height="true" data-space-between="30" data-loop="true" data-grab-cursor="true">
+      <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+
+        <!-- Slide 1 -->
+        <div data-gjs-type="swiper-slide" class="swiper-slide">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap: 50px;">
+            <!-- Left -->
+            <div style="flex:1; min-width:300px; display:flex; justify-content:center;">
+              <div style="width: 350px; height: 350px; background-color: var(--primary); border-radius: 0 50% 50% 50%; overflow: hidden; position: relative;">
+                <img data-editable-img="true" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop" style="width:100%; height:100%; object-fit:cover;" alt="User">
+              </div>
+            </div>
+            <!-- Right -->
+            <div style="flex:1; min-width:300px; text-align:left; position:relative;">
+              <i class="fa-solid fa-quote-left" style="font-size:3rem; color:#e2e8f0; margin-bottom: 20px; opacity:0.6;"></i>
+              <p data-editable="true" style="font-size: 1.1rem; color: #475569; line-height: 1.8; margin-bottom: 20px;">"Kanra made our travel booking so easy. The support team is incredible, and the prices are unbeatable. I recommend this to everyone."</p>
+              <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 5px;">
+                <i class="fa-brands fa-sketch" style="color:#f5a623; font-size:1.5rem;"></i>
+                <strong data-editable="true" style="font-size: 1.1rem; color: #0f172a;">Sketch</strong>
+              </div>
+              <div data-editable="true" style="color: #64748B; font-size: 0.95rem;">
+                Joran Lee (Head of Marketing)
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- Slide 2 -->
+        <div data-gjs-type="swiper-slide" class="swiper-slide">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap: 50px;">
+            <!-- Left -->
+            <div style="flex:1; min-width:300px; display:flex; justify-content:center;">
+              <div style="width: 350px; height: 350px; background-color: var(--primary); border-radius: 0 50% 50% 50%; overflow: hidden; position: relative;">
+                <img data-editable-img="true" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop" style="width:100%; height:100%; object-fit:cover;" alt="User">
+              </div>
+            </div>
+            <!-- Right -->
+            <div style="flex:1; min-width:300px; text-align:left; position:relative;">
+              <i class="fa-solid fa-quote-left" style="font-size:3rem; color:#e2e8f0; margin-bottom: 20px; opacity:0.6;"></i>
+              <p data-editable="true" style="font-size: 1.1rem; color: #475569; line-height: 1.8; margin-bottom: 20px;">"The best vacation ever! The app makes it so easy to keep track of bookings, flights, and weather. The 24/7 support team is a life saver."</p>
+              <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 5px;">
+                <i class="fa-brands fa-figma" style="color:#f24e1e; font-size:1.5rem;"></i>
+                <strong data-editable="true" style="font-size: 1.1rem; color: #0f172a;">Figma</strong>
+              </div>
+              <div data-editable="true" style="color: #64748B; font-size: 0.95rem;">
+                Sarah Jenkins (Product Designer)
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
-                  <div class="t-right reviews-swiper" style="padding-bottom: 40px; position:relative; overflow:hidden;">
-        <div class="reviews-wrapper" style="display:flex; transition:.4s ease-out; align-items:center;">
-          <div class="rev-slide" style="min-width:100%; flex-shrink:0;">
-            <i class="fa-solid fa-quote-right qq"></i>
-            <p data-editable="true" style="font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px;">Their service is absolutely wonderful and cheaper than the hotel direct or any other booking site. You got back to us straight away and no issues at all in the other end.</p>
-            <div class="t-authors" style="display:flex; align-items:center; gap: 15px;">
-              <img data-editable-img="true" src="https://randomuser.me/api/portraits/men/85.jpg" class="a" style="width:60px; height:60px; border-radius:50%; object-fit:cover;"/>
-              <div>
-                <strong data-editable="true" style="display:block;">David Warner</strong>
-                <span data-editable="true" style="font-size: 0.85rem; color: var(--gray);">Tourist from USA</span>
-              </div>
-            </div>
-          </div>
-          <div class="rev-slide" style="min-width:100%; flex-shrink:0;">
-            <i class="fa-solid fa-quote-right qq"></i>
-            <p data-editable="true" style="font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px;">The trip was perfectly organized! Every hotel recommendation was spot on, and the itinerary gave us enough free time to explore by ourselves. Highly recommended!</p>
-            <div class="t-authors" style="display:flex; align-items:center; gap: 15px;">
-              <img data-editable-img="true" src="https://randomuser.me/api/portraits/women/65.jpg" class="a" style="width:60px; height:60px; border-radius:50%; object-fit:cover;"/>
-              <div>
-                <strong data-editable="true" style="display:block;">Sarah Jenkins</strong>
-                <span data-editable="true" style="font-size: 0.85rem; color: var(--gray);">Traveler from UK</span>
-              </div>
-            </div>
-          </div>
-          <div class="rev-slide" style="min-width:100%; flex-shrink:0;">
-            <i class="fa-solid fa-quote-right qq"></i>
-            <p data-editable="true" style="font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px;">Best vacation ever! The app makes it so easy to keep track of bookings, flights, and weather. The 24/7 support team is a life saver.</p>
-            <div class="t-authors" style="display:flex; align-items:center; gap: 15px;">
-              <img data-editable-img="true" src="https://randomuser.me/api/portraits/men/22.jpg" class="a" style="width:60px; height:60px; border-radius:50%; object-fit:cover;"/>
-              <div>
-                <strong data-editable="true" style="display:block;">Mark Robertson</strong>
-                <span data-editable="true" style="font-size: 0.85rem; color: var(--gray);">Traveler from AUS</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="swiper-pagination" style="position:absolute;bottom:0px;left:0;width:100%;"></div>
-      </div>
-          <div data-gjs-type="swiper-slide" class="swiper-slide rev-slide">
-            <i class="fa-solid fa-quote-right qq"></i>
-            <p data-editable="true" style="font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px;">The trip was perfectly organized! Every hotel recommendation was spot on, and the itinerary gave us enough free time to explore by ourselves. Highly recommended!</p>
-            <div class="t-authors" style="justify-content: flex-start; gap: 15px;">
-              <img data-editable-img="true" src="https://randomuser.me/api/portraits/women/65.jpg" class="a" style="width:50px; height:50px; border-radius:50%; object-fit:cover;"/>
-              <div>
-                <strong data-editable="true" style="display:block;">Sarah Jenkins</strong>
-                <span data-editable="true" style="font-size: 0.85rem; color: var(--gray);">Traveler from UK</span>
-              </div>
-            </div>
-          </div>
-          <div data-gjs-type="swiper-slide" class="swiper-slide rev-slide">
-            <i class="fa-solid fa-quote-right qq"></i>
-            <p data-editable="true" style="font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px;">Best vacation ever! The app makes it so easy to keep track of bookings, flights, and weather. The 24/7 support team is a life saver.</p>
-            <div class="t-authors" style="justify-content: flex-start; gap: 15px;">
-              <img data-editable-img="true" src="https://randomuser.me/api/portraits/men/22.jpg" class="a" style="width:50px; height:50px; border-radius:50%; object-fit:cover;"/>
-              <div>
-                <strong data-editable="true" style="display:block;">Mark Robertson</strong>
-                <span data-editable="true" style="font-size: 0.85rem; color: var(--gray);">Traveler from AUS</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div data-gjs-type="swiper-pagination" class="swiper-pagination" style="position:absolute;bottom:0px;left:0;width:100%;"></div>
+
+      <div class="testi-nav-row">
+        <div class="swiper-button-prev testi-nav-btn" data-gjs-type="swiper-button-prev"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="swiper-button-next testi-nav-btn" data-gjs-type="swiper-button-next"><i class="fa-solid fa-arrow-right"></i></div>
       </div>
     </div>
+
   </div>
 </section>
 
@@ -782,5 +778,23 @@ export const travel03Html = `
   </div>
 </footer>
 
-<svg onload="if(!window.t03_loaded){window.t03_loaded=true;var s=document.createElement('script');s.innerHTML=atob('DQogIChmdW5jdGlvbigpIHsNCiAgICAvLyAxLiBJbml0aWFsaXplIGNvcmUgVUkgaW1tZWRpYXRlbHkgKFJldmVhbCBhbmltYXRpb25zKQ0KICAgIGNvbnN0IGluaXRVSSA9ICgpID0+IHsNCiAgICAgIGNvbnN0IGlvID0gbmV3IEludGVyc2VjdGlvbk9ic2VydmVyKChlbnRyaWVzKSA9PiB7DQogICAgICAgIGVudHJpZXMuZm9yRWFjaChlID0+IGUuaXNJbnRlcnNlY3RpbmcgJiYgZS50YXJnZXQuY2xhc3NMaXN0LmFkZCgnaW4nKSk7DQogICAgICB9LCB7IHRocmVzaG9sZDogMC4xIH0pOw0KICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLnJldmVhbCcpLmZvckVhY2goZWwgPT4gaW8ub2JzZXJ2ZShlbCkpOw0KICAgICAgDQogICAgICAvLyBGYWlsc2FmZTogaWYgaW50ZXJzZWN0aW9uIG9ic2VydmVyIGZhaWxzIG9yIHVzZXIgc2Nyb2xscyB0b28gZmFzdCwgZW5zdXJlIGVsZW1lbnRzIGFwcGVhcg0KICAgICAgc2V0VGltZW91dCgoKSA9PiBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcucmV2ZWFsJykuZm9yRWFjaChlbCA9PiBlbC5jbGFzc0xpc3QuYWRkKCdpbicpKSwgMTUwMCk7DQoNCiAgICAgIGNvbnN0IG5hdiA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJy5uYXYnKTsNCiAgICAgIGlmIChuYXYpIHsNCiAgICAgICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ3Njcm9sbCcsICgpID0+IHsNCiAgICAgICAgICBuYXYuY2xhc3NMaXN0LnRvZ2dsZSgnc2Nyb2xsZWQnLCB3aW5kb3cuc2Nyb2xsWSA+IDIwKTsNCiAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndG9Ub3AnKT8uY2xhc3NMaXN0LnRvZ2dsZSgnc2hvdycsIHdpbmRvdy5zY3JvbGxZID4gNDAwKTsNCiAgICAgICAgfSk7DQogICAgICB9DQogICAgfTsNCiAgICBpbml0VUkoKTsNCg0KICAgIC8vIDIuIEluaXRpYWxpemUgU3dpcGVyIGluZGVwZW5kZW50bHkNCiAgICBjb25zdCBpbml0U3dpcGVyID0gKCkgPT4gew0KICAgICAgaWYgKHR5cGVvZiBTd2lwZXIgIT09ICd1bmRlZmluZWQnKSB7DQogICAgICAgIGxldCBkU3dpcGVyLCByU3dpcGVyOw0KICAgICAgICBpZihkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCcuZGVzdC1zd2lwZXInKSkgew0KICAgICAgICAgIHdpbmRvdy50MDNEZXN0U3dpcGVyID0gd2luZG93LnQwM0Rlc3RTd2lwZXIgPSBkU3dpcGVyID0gbmV3IFN3aXBlcignLmRlc3Qtc3dpcGVyJywgew0KICAgICAgICAgICAgd3JhcHBlckNsYXNzOiAnZGVzdC1ncmlkJywNCiAgICAgICAgICAgIHNsaWRlQ2xhc3M6ICdkZXN0JywNCiAgICAgICAgICAgIHNsaWRlc1BlclZpZXc6IDEuMiwgc3BhY2VCZXR3ZWVuOiAyMCwgbG9vcDogdHJ1ZSwNCiAgICAgICAgICAgIG5hdmlnYXRpb246IHsgbmV4dEVsOiAnLmRlc3QtbmV4dCcsIHByZXZFbDogJy5kZXN0LXByZXYnIH0sDQogICAgICAgICAgICBicmVha3BvaW50czogeyA2NDA6IHsgc2xpZGVzUGVyVmlldzogMi4yIH0sIDkwMDogeyBzbGlkZXNQZXJWaWV3OiAzLjIgfSwgMTIwMDogeyBzbGlkZXNQZXJWaWV3OiA0IH0gfQ0KICAgICAgICAgIH0pOw0KICAgICAgICB9DQogICAgICAgIGlmKGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJy5yZXZpZXdzLXN3aXBlcicpKSB7DQogICAgICAgICAgclN3aXBlciA9IG5ldyBTd2lwZXIoJy5yZXZpZXdzLXN3aXBlcicsIHsNCiAgICAgICAgICAgIHdyYXBwZXJDbGFzczogJ3Jldmlld3Mtd3JhcHBlcicsDQogICAgICAgICAgICBzbGlkZUNsYXNzOiAncmV2LXNsaWRlJywNCiAgICAgICAgICAgIHNsaWRlc1BlclZpZXc6IDEsIHNwYWNlQmV0d2VlbjogMzAsIGxvb3A6IHRydWUsDQogICAgICAgICAgICBuYXZpZ2F0aW9uOiB7IG5leHRFbDogJy5yZXYtbmV4dCcsIHByZXZFbDogJy5yZXYtcHJldicgfSwNCiAgICAgICAgICAgIGF1dG9IZWlnaHQ6IHRydWUNCiAgICAgICAgICB9KTsNCiAgICAgICAgfQ0KICAgICAgICANCiAgICAgICAgCiAgICAgICAgaWYoZG9jdW1lbnQucXVlcnlTZWxlY3RvcignLnJldmlld3Mtc3dpcGVyJykpIHsKICAgICAgICAgIHJTd2lwZXIgPSBuZXcgU3dpcGVyKCcucmV2aWV3cy1zd2lwZXInLCB7CiAgICAgICAgICAgIHdyYXBwZXJDbGFzczogJ3Jldmlld3Mtd3JhcHBlcicsCiAgICAgICAgICAgIHNsaWRlQ2xhc3M6ICdyZXYtc2xpZGUnLAogICAgICAgICAgICBzbGlkZXNQZXJWaWV3OiAxLCBzcGFjZUJldHdlZW46IDMwLCBsb29wOiB0cnVlLAogICAgICAgICAgICBwYWdpbmF0aW9uOiB7IGVsOiAnLnN3aXBlci1wYWdpbmF0aW9uJywgY2xpY2thYmxlOiB0cnVlIH0sCiAgICAgICAgICAgIGF1dG9IZWlnaHQ6IHRydWUKICAgICAgICAgIH0pOwogICAgICAgIH0KICAgIAogICAgICAgIGNvbnN0IG9ic2VydmVyID0gbmV3IE11dGF0aW9uT2JzZXJ2ZXIoKG11dGF0aW9ucykgPT4gew0KICAgICAgICAgIG11dGF0aW9ucy5mb3JFYWNoKChtKSA9PiB7DQogICAgICAgICAgICBpZiAobS5hdHRyaWJ1dGVOYW1lID09PSAnY2xhc3MnICYmIG0udGFyZ2V0ICYmIG0udGFyZ2V0LmNsYXNzTGlzdCkgew0KICAgICAgICAgICAgICBpZiAobS50YXJnZXQuY2xhc3NMaXN0LmNvbnRhaW5zKCdnanMtc2VsZWN0ZWQnKSkgew0KICAgICAgICAgICAgICAgIGNvbnN0IGlzTmV4dCA9IG0udGFyZ2V0LmNsb3Nlc3QoJy5kZXN0LW5leHQnKSB8fCBtLnRhcmdldC5jbGFzc0xpc3QuY29udGFpbnMoJ2Rlc3QtbmV4dCcpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGlzUHJldiA9IG0udGFyZ2V0LmNsb3Nlc3QoJy5kZXN0LXByZXYnKSB8fCBtLnRhcmdldC5jbGFzc0xpc3QuY29udGFpbnMoJ2Rlc3QtcHJldicpOw0KICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgIGlmIChpc05leHQgJiYgZFN3aXBlcikgZFN3aXBlci5zbGlkZU5leHQoKTsNCiAgICAgICAgICAgICAgICBpZiAoaXNQcmV2ICYmIGRTd2lwZXIpIGRTd2lwZXIuc2xpZGVQcmV2KCk7DQogICAgICAgICAgICAgICAgDQogICAgICAgICAgICAgICAgDQogICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0NCiAgICAgICAgICB9KTsNCiAgICAgICAgfSk7DQogICAgICAgIG9ic2VydmVyLm9ic2VydmUoZG9jdW1lbnQuYm9keSwgeyBhdHRyaWJ1dGVzOiB0cnVlLCBzdWJ0cmVlOiB0cnVlIH0pOw0KICAgICAgfQ0KICAgIH07DQogICAgDQogICAgaWYgKCFkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc3dpcGVyLWpzLXRyYXZlbDMnKSkgew0KICAgICAgbGV0IHMgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdzY3JpcHQnKTsNCiAgICAgIHMuaWQgPSAnc3dpcGVyLWpzLXRyYXZlbDMnOw0KICAgICAgcy5zcmMgPSAnaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L25wbS9zd2lwZXJAMTEvc3dpcGVyLWJ1bmRsZS5taW4uanMnOw0KICAgICAgcy5vbmxvYWQgPSBpbml0U3dpcGVyOw0KICAgICAgZG9jdW1lbnQuaGVhZC5hcHBlbmRDaGlsZChzKTsNCiAgICB9IGVsc2Ugew0KICAgICAgc2V0VGltZW91dChpbml0U3dpcGVyLCA1MDApOw0KICAgIH0NCg0KICAgIC8vIDMuIEZvcm0gdmFsaWRhdGlvbnMNCiAgICB2YXIgaXNJbkVkaXRvciA9ICEhZG9jdW1lbnQucXVlcnlTZWxlY3RvcignW2RhdGEtZ2pzLXR5cGVdJykgfHwgZG9jdW1lbnQuYm9keS5jbGFzc0xpc3QuY29udGFpbnMoJ2dqcy1kYXNoZWQnKTsNCiAgICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdzdWJtaXQnLCBmdW5jdGlvbihlKSB7DQogICAgICBpZiAoZS50YXJnZXQudGFnTmFtZSA9PT0gJ0ZPUk0nKSB7DQogICAgICAgIGUudGFyZ2V0LnNldEF0dHJpYnV0ZSgnbm92YWxpZGF0ZScsICd0cnVlJyk7DQogICAgICAgIHZhciBpc1ZhbGlkID0gdHJ1ZTsNCiAgICAgICAgdmFyIGlucHV0cyA9IGUudGFyZ2V0LnF1ZXJ5U2VsZWN0b3JBbGwoJ2lucHV0Om5vdChbdHlwZT0ic3VibWl0Il0pOm5vdChbdHlwZT0iaGlkZGVuIl0pOm5vdChbdHlwZT0iYnV0dG9uIl0pLCB0ZXh0YXJlYSwgc2VsZWN0Jyk7DQogICAgICAgIGlucHV0cy5mb3JFYWNoKGZ1bmN0aW9uKGlucHV0KSB7DQogICAgICAgICAgaWYgKCFpbnB1dC52YWx1ZS50cmltKCkgJiYgaW5wdXQuaGFzQXR0cmlidXRlKCdyZXF1aXJlZCcpKSBpc1ZhbGlkID0gZmFsc2U7DQogICAgICAgIH0pOw0KICAgICAgICBpZiAoIWlzVmFsaWQgfHwgaXNJbkVkaXRvcikgew0KICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsNCiAgICAgICAgICBlLnN0b3BJbW1lZGlhdGVQcm9wYWdhdGlvbigpOw0KICAgICAgICB9DQogICAgICB9DQogICAgfSwgdHJ1ZSk7DQogIH0pKCk7DQo=');document.head.appendChild(s);}" style="display:none;"></svg>
+<script>
+(function() {
+  document.addEventListener('submit', function(e) {
+    if (e.target.tagName === 'FORM') {
+      e.target.setAttribute('novalidate', 'true');
+      var isValid = true;
+      var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
+      inputs.forEach(function(input) {
+        if (!input.value.trim() && input.hasAttribute('required')) isValid = false;
+      });
+      var isInEditor = !!document.querySelector('[data-gjs-type]');
+      if (!isValid || isInEditor) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, true);
+})();
+</script>
 `;
