@@ -23,6 +23,7 @@ import { finance03Html, finance03Styles } from "../templates/finance/templates03
 import { finance04Html, finance04Styles } from "../templates/finance/templates04";
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
+import { law03Html, law03Styles } from "../templates/law/templates03";
 import { useState, useEffect } from "react";
 
 // Templates removed as per user request
@@ -390,6 +391,14 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/LawFirm/templates02/lov02.png",
     gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
     prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-03",
+    name: "Justice Elite",
+    tag: "Law Firm",
+    img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400",
+    gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
+    prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
   },
   {
     id: "healthcare-01",
@@ -1048,6 +1057,7 @@ const CreatePagePage = () => {
       switch (finalTemplateId) {
         case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
         case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
+        case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1860,6 +1870,7 @@ ${enrichedContent}
               switch (previewTemplate.id) {
                 case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "law-02": tpHtml = law02Html; tpStyles = law02Styles; break;
+                case "law-03": tpHtml = law03Html; tpStyles = law03Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
