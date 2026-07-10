@@ -34,6 +34,7 @@ export const ModernLoader = ({
   const statusSteps = statusStepsProp || defaultStatusSteps;
 
   useEffect(() => {
+    let mounted = true;
     // If external progress is provided, sync to it and skip auto-increment.
     if (typeof externalProgress === "number") {
       setProgress(externalProgress);
@@ -46,18 +47,19 @@ export const ModernLoader = ({
     }
 
     const interval = setInterval(() => {
+      if (!mounted) return;
       setProgress((prev) => {
         if (isComplete) {
           const next = prev + 5;
           if (next >= 100) {
-            clearInterval(interval);
             setTimeout(onFinished, 500);
             return 100;
           }
           return next;
         }
 
-        if (prev >= 95) return 95;
+        // soft cap for auto-increment fallback so we don't auto-complete to 100
+        if (prev >= 99) return 99;
         const next = prev + (prev > 90 ? 0.05 : prev > 70 ? 0.1 : 0.4);
         const currentStep = [...statusSteps].reverse().find((s) => next >= s.p);
         if (currentStep && currentStep.t !== statusText) {
@@ -66,7 +68,10 @@ export const ModernLoader = ({
         return next;
       });
     }, 100);
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [isComplete, statusText, onFinished, externalProgress, statusSteps]);
 
   return (
