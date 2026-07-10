@@ -276,7 +276,14 @@ exports.analyzeWebsite = async (req, res, next) => {
 
     return res.status(200).json({
       status: 'success',
-      data: { websiteProfile, scrapedAt: scraped.scrapedAt },
+      data: {
+        websiteProfile,
+        scrapedAt: scraped.scrapedAt,
+        fonts: websiteProfile?.fonts || {},
+        themeSystem: websiteProfile?.theme || websiteProfile?.themeSystem || {},
+        screenshot: scraped?.screenshot || null,
+        renderColors: scraped?.renderColors || null,
+      },
     });
   } catch (err) {
     next(err);
@@ -335,6 +342,10 @@ exports.extractProject = async (req, res, next) => {
         keywords: websiteProfile?.seo?.keywords || [],
         industry: websiteProfile?.industry?.industry || '',
         subIndustry: websiteProfile?.industry?.subIndustry || '',
+        fonts: websiteProfile?.fonts || {},
+        themeSystem: websiteProfile?.theme || websiteProfile?.themeSystem || {},
+        screenshot: scraped?.screenshot || null,
+        renderColors: scraped?.renderColors || null,
       },
     });
   } catch (err) {
