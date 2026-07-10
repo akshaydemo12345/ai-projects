@@ -24,7 +24,7 @@ import { finance04Html, finance04Styles } from "../templates/finance/templates04
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Templates removed as per user request
 
@@ -702,7 +702,7 @@ const CreatePagePage = () => {
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [createdPage, setCreatedPage] = useState<any>(null);
-  const [apiProgress, setApiProgress] = useState<number | string | undefined>(undefined);
+  const [apiProgress, setApiProgress] = useState<number | undefined>(undefined);
   const pollRef = useRef<number | null>(null);
   const [faviconBroken, setFaviconBroken] = useState(false);
 
@@ -931,13 +931,13 @@ const CreatePagePage = () => {
       setCreatedPage(newPage);
       // Start polling for generation progress (backend returns early)
       setIsComplete(false);
-      setApiProgress(newPage.generationProgress ?? 5);
+      setApiProgress(Number(newPage.generationProgress) || 5);
       if (pollRef.current) window.clearInterval(pollRef.current);
       pollRef.current = window.setInterval(async () => {
         try {
           const pageObj = await pagesApi.getById(id!, newPage._id);
           if (!pageObj) return;
-          const prog = pageObj.generationProgress ?? (pageObj.status === 'draft' ? 100 : undefined);
+          const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
           setApiProgress(prog);
           if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
             if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
