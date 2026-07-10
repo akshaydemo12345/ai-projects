@@ -338,11 +338,18 @@ const CreateProjectFlow = () => {
         setScrapedImages(meta.scrapedImages);
       }
 
-      // Extract fonts from scraped website
-      if (meta.fonts) {
-        if (meta.fonts.bodyFont) setBodyFont(meta.fonts.bodyFont);
-        if (meta.fonts.headingFont) setHeadingFont(meta.fonts.headingFont);
-        if (meta.fonts.googleFonts) setGoogleFonts(meta.fonts.googleFonts);
+      // Extract fonts from scraped website, prefer explicit metadata but fall back to websiteProfile values.
+      const fontSource = meta.fonts || meta.websiteProfile?.fonts || meta.websiteProfile?.typography || {};
+      if (fontSource.bodyFont) setBodyFont(fontSource.bodyFont);
+      if (fontSource.headingFont) setHeadingFont(fontSource.headingFont);
+      const detectedGoogleFonts = fontSource.googleFonts || (fontSource as any).googleFontFamilies;
+      if (detectedGoogleFonts) setGoogleFonts(detectedGoogleFonts);
+      if (!fontSource.bodyFont && fontSource.primaryFont) setBodyFont(fontSource.primaryFont);
+
+      // Capture theme system from the response or the nested websiteProfile.
+      const themeSource = meta.themeSystem || meta.websiteProfile?.theme || meta.websiteProfile?.themeSystem;
+      if (themeSource) {
+        setThemeSystem(themeSource);
       }
 
       // Store full-page screenshot and render-derived colors (if backend returned them)
