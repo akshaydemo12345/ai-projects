@@ -943,7 +943,8 @@ const CreatePagePage = () => {
             if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
             setCreatedPage(pageObj);
             setIsComplete(true);
-            setShowLoader(false);
+            // DO NOT call setShowLoader(false) here. Let ModernLoader finish its animation
+            // and call handleLoaderFinished to navigate.
           }
         } catch (e) {
           // ignore transient errors
@@ -1381,7 +1382,7 @@ ${enrichedContent}
   };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
-  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} externalProgress={apiProgress} onFinished={handleLoaderFinished} />;
+  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
