@@ -411,7 +411,7 @@ export const travel03Html = `
     <div class="hero-right reveal">
       <div class="hero-person">
         <div class="hero-blob"></div>
-        <img data-editable-img="true" src="/assets/templates/travel/templates03/hero-person.png" alt="Traveler" />
+        <img data-editable-img="true" src="https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=800&q=80" alt="Traveler" />
         <div class="badge badge-live"><span data-editable="true" class="dot"></span> LIVE</div>
         <div class="badge badge-support">
           <b>24/7</b><br/><span data-editable="true">Guide Support</span>
@@ -497,13 +497,13 @@ export const travel03Html = `
     <div class="companion-card reveal" style="cursor: pointer;" onclick="const v = this.querySelector('video'); if(v.paused) { v.play(); v.style.opacity='1'; this.querySelectorAll('.hide-on-play').forEach(e=>e.style.opacity='0'); } else { v.pause(); v.style.opacity='0.4'; this.querySelectorAll('.hide-on-play').forEach(e=>e.style.opacity='1'); }">
       <video src="https://www.w3schools.com/html/mov_bbb.mp4" playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.4;transition:0.3s;pointer-events:none;" loop></video>
       <div class="hide-on-play" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:1;transition:0.3s;pointer-events:none;"></div>
-      <img data-editable-img="true" src="/assets/templates/travel/templates03/traveler-man.png" alt="" class="c-left hide-on-play" style="z-index:2;position:relative;transition:0.3s;" />
+      <img data-editable-img="true" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="" class="c-left hide-on-play" style="z-index:2;position:relative;transition:0.3s;" />
       <div class="c-center hide-on-play" style="z-index:2;position:relative;transition:0.3s;">
         <div class="play-big" style="pointer-events:none;"><i class="fa-solid fa-play"></i></div>
         <h3 data-editable="true">Your travel companion that carries all the information</h3>
         <div class="deco plane-2"><i class="fa-solid fa-plane"></i></div>
       </div>
-      <img data-editable-img="true" src="/assets/templates/travel/templates03/traveler-woman.png" alt="" class="c-right hide-on-play" style="z-index:2;position:relative;transition:0.3s;" />
+      <img data-editable-img="true" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80" alt="" class="c-right hide-on-play" style="z-index:2;position:relative;transition:0.3s;" />
     </div>
   </div>
 </section>
@@ -516,11 +516,11 @@ export const travel03Html = `
     </div>
     <div style="padding: 10px 0 30px; overflow: hidden;">
       <div class="dest-grid" >
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-venice.jpg" alt="Venice"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Venice</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" alt="Iceland"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Iceland</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-moab.jpg" alt="Moab"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Moab</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-arizona.jpg" alt="Arizona"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Arizona</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" alt="Paris"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Paris</span></a>
+        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=600&q=80" alt="Venice"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Venice</span></a>
+        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="https://images.unsplash.com/photo-1504829857797-ddff29c27927?auto=format&fit=crop&w=600&q=80" alt="Iceland"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Iceland</span></a>
+        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=600&q=80" alt="Moab"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Moab</span></a>
+        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?auto=format&fit=crop&w=600&q=80" alt="Arizona"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Arizona</span></a>
+        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80" alt="Paris"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Paris</span></a>
       </div>
     </div>
   </div>
@@ -538,11 +538,11 @@ export const travel03Html = `
         </ul>
       </div>
       <div class="mini-card mc1">
-        <img data-editable-img="true" src="/assets/templates/travel/templates03/card-morocco.jpg" alt=""/>
+        <img data-editable-img="true" src="https://images.unsplash.com/photo-1539020140153-e479b8c22e70?auto=format&fit=crop&w=400&q=80" alt="Morocco"/>
         <div><b>Morocco</b><small>YYB → LAX → DXB</small></div>
       </div>
       <div class="mini-card mc2">
-        <img data-editable-img="true" src="/assets/templates/travel/templates03/card-denver.jpg" alt=""/>
+        <img data-editable-img="true" src="https://images.unsplash.com/photo-1619856699906-09e1f4ef710c?auto=format&fit=crop&w=400&q=80" alt="Denver"/>
         <div><b>Denver</b><small>YYB → LAX</small></div>
       </div>
       <div class="stat-tiles">
@@ -689,7 +689,7 @@ export const travel03Html = `
 <section class="section" id="blog">
   <div class="container explore-grid">
     <div class="ex-big reveal">
-      <img data-editable-img="true" src="/assets/templates/travel/templates03/photographer.png" alt=""/>
+      <img data-editable-img="true" src="https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=800&q=80" alt="Explore"/>
       <div class="ex-caption">
         <div>
           <small>Explore the world</small>
