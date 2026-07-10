@@ -396,7 +396,7 @@ const LANDING_TEMPLATES: any[] = [
     id: "law-03",
     name: "Justice Elite",
     tag: "Law Firm",
-    img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400",
+    img: "/assets/templates/LawFirm/templates03/screenshot.png",
     gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
     prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
   },
