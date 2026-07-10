@@ -431,27 +431,75 @@ const isNeutralHex = (hex) => {
     return sat < 0.08 || lum > 245 || lum < 8;
 };
 
+const clamp01 = (value) => Math.min(1, Math.max(0, value));
+const linearToSrgb = (value) => {
+    const v = clamp01(value);
+    return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+};
+const oklabToHex = (L, a, b) => {
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+    const rLin = 4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_;
+    const gLin = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_;
+    const bLin = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_;
+
+    const rgb = [rLin, gLin, bLin].map((v) => Math.round(clamp01(linearToSrgb(v)) * 255));
+    if (rgb.some((v) => Number.isNaN(v))) return null;
+    return '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+};
+const oklchToHex = (L, C, h) => {
+    const rad = (h % 360) * Math.PI / 180;
+    const a = Math.cos(rad) * C;
+    const b = Math.sin(rad) * C;
+    return oklabToHex(L, a, b);
+};
+
 const normaliseCssColor = (raw) => {
-    if (!raw) return null;
-    const s = raw.trim();
-    if (!s || s === 'transparent' || s === 'rgba(0, 0, 0, 0)' || s === 'rgb(0, 0, 0)') return null;
+    if (raw === null || raw === undefined) return null;
+    const s = (typeof raw === 'string' ? raw : String(raw)).trim().replace(/\s+/g, ' ');
+    if (!s || /^transparent$/i.test(s) || /^rgba?\(\s*0\s*[ ,]+\s*0\s*[ ,]+\s*0\s*[ ,\/]\s*0\s*\)$/i.test(s) || /^rgb\(\s*0\s*,\s*0\s*,\s*0\s*\)$/i.test(s)) return null;
 
     const h6 = s.match(/^#([0-9a-fA-F]{6})$/); if (h6) return ('#' + h6[1]).toUpperCase();
     const h3 = s.match(/^#([0-9a-fA-F]{3})$/); if (h3) return ('#' + h3[1].split('').map(c => c + c).join('')).toUpperCase();
     const h8 = s.match(/^#([0-9a-fA-F]{8})$/); if (h8) return ('#' + h8[1].slice(0, 6)).toUpperCase();
 
-    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    const parseRgbComponent = (value) => {
+        if (value.endsWith('%')) {
+            const pct = parseFloat(value.slice(0, -1));
+            return Math.round(Math.min(100, Math.max(0, pct)) * 2.55);
+        }
+        return Math.round(Math.min(255, Math.max(0, parseInt(value, 10) || 0)));
+    };
+
+    const rgb = s.match(/rgba?\(\s*([\d.]+%?)\s*[ ,]+\s*([\d.]+%?)\s*[ ,]+\s*([\d.]+%?)(?:\s*[ ,\/]\s*[\d.]+%?)?\s*\)/i);
     if (rgb) {
-        const [, r, g, b] = rgb.map(Number);
-        return ('#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
+        const [, r, g, b] = rgb;
+        return ('#' + [r, g, b].map(parseRgbComponent).map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
     }
 
-    const hsl = s.match(/hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?/);
+    const hsl = s.match(/hsla?\(\s*([\d.]+)(?:deg)?\s*[ ,]+\s*([\d.]+)%\s*[ ,]+\s*([\d.]+)%(?:\s*[ ,\/]\s*[\d.]+%?)?\s*\)/i);
     if (hsl) {
         let [h, sat, l] = [parseFloat(hsl[1]), parseFloat(hsl[2]) / 100, parseFloat(hsl[3]) / 100];
-        const k = n => { const kk = (n + h / 30) % 12; const a2 = sat * Math.min(l, 1 - l); return l - a2 * Math.max(-1, Math.min(kk - 3, 9 - kk, 1)); };
+        const k = (n) => {
+            const a = sat * Math.min(l, 1 - l);
+            const f = (n + h / 30) % 12;
+            return l - a * Math.max(-1, Math.min(f - 3, 9 - f, 1));
+        };
         return ('#' + [0, 8, 4].map(n => Math.round(k(n) * 255).toString(16).padStart(2, '0')).join('')).toUpperCase();
     }
+
+    const oklch = s.match(/oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:deg)?(?:\s*\/\s*[\d.]+%?)?\s*\)/i);
+    if (oklch) {
+        const L = String(oklch[1]).endsWith('%') ? parseFloat(oklch[1]) / 100 : parseFloat(oklch[1]);
+        const C = parseFloat(oklch[2]);
+        const h = parseFloat(oklch[3]);
+        if (!Number.isNaN(L) && !Number.isNaN(C) && !Number.isNaN(h)) {
+            return oklchToHex(L, C, h);
+        }
+    }
+
     return null;
 };
 
@@ -897,6 +945,25 @@ const extractColorsFromImagesFallback = async (raw, baseUrl) => {
     return { palette, header: pickHeader(), navigation: pickNav(), button: pickButton(), footer: pickFooter(), body, screenshot: screenshotDataUri };
 };
 
+// Given a Vibrant getPalette() result (an object keyed by swatch name —
+// Vibrant/DarkVibrant/LightVibrant/Muted/DarkMuted/LightMuted), return the
+// swatch that actually covers the most pixels in the sampled region, i.e.
+// the true "majority" color — not just whichever swatch type happens to be
+// first in the object (that was the previous, incorrect behavior).
+const pickMajoritySwatch = (paletteObj) => {
+    if (!paletteObj) return null;
+    const swatches = Object.values(paletteObj).filter(sw => sw && typeof sw.getHex === 'function');
+    if (!swatches.length) return null;
+    const population = (sw) => {
+        if (typeof sw.getPopulation === 'function') return sw.getPopulation() || 0;
+        if (typeof sw.population === 'number') return sw.population;
+        return 0;
+    };
+    swatches.sort((a, b) => population(b) - population(a));
+    const top = swatches[0];
+    return top.getHex ? top.getHex().toUpperCase() : null;
+};
+
 // Capture a full-page screenshot and extract region colors (header, nav, button, footer)
 const captureRenderedColors = async (url) => {
     if (!playwright) return null;
@@ -943,6 +1010,67 @@ const captureRenderedColors = async (url) => {
         }
 
         const fullBuffer = await page.screenshot({ fullPage: true });
+        const computedTheme = await page.evaluate(() => {
+            const safeQuery = (selectors) => {
+                for (const selector of selectors) {
+                    try {
+                        const el = document.querySelector(selector);
+                        if (el) return el;
+                    } catch (_) {
+                        continue;
+                    }
+                }
+                return null;
+            };
+
+            const getComputed = (el) => {
+                if (!el) return null;
+                const style = window.getComputedStyle(el);
+                return {
+                    background: style.getPropertyValue('background-color') || style.getPropertyValue('background') || null,
+                    color: style.getPropertyValue('color') || null,
+                    border: style.getPropertyValue('border-color') || style.getPropertyValue('border-top-color') || style.getPropertyValue('border-bottom-color') || null,
+                };
+            };
+
+            const selectors = {
+                header: ['header', '.site-header', '.main-header', '#header', '.header', '.navbar'],
+                navigation: ['nav', '.navigation', '#site-navigation', '.navbar', '.site-nav', '.main-nav'],
+                button: ['.btn-primary', '.button-primary', 'button.primary', '.wp-block-button__link', '.btn', 'button', 'a.button', '.cta', '.call-to-action'],
+                footer: ['footer', '.site-footer', '.footer'],
+                hero: ['.hero', '.banner', '.hero-section', '.hero-banner'],
+                page: ['body', 'html'],
+            };
+
+            const elementComputed = {};
+            for (const [key, sels] of Object.entries(selectors)) {
+                const el = safeQuery(sels);
+                if (!el) continue;
+                elementComputed[key] = getComputed(el);
+            }
+            const navLink = safeQuery(['nav a', '.navbar a', '.site-nav a', 'header a']);
+            if (navLink) {
+                const style = window.getComputedStyle(navLink);
+                elementComputed.navigation = {
+                    ...(elementComputed.navigation || {}),
+                    link: style.getPropertyValue('color') || null,
+                };
+            }
+
+            const rootStyle = window.getComputedStyle(document.documentElement);
+            const cssVariables = {};
+            for (let i = 0; i < rootStyle.length; i += 1) {
+                const name = rootStyle[i];
+                if (typeof name === 'string' && name.startsWith('--')) {
+                    const value = rootStyle.getPropertyValue(name).trim();
+                    if (value) cssVariables[name] = value;
+                }
+            }
+
+            const bodyBackground = window.getComputedStyle(document.body).getPropertyValue('background-color') || null;
+            return { cssVariables, elementComputed, bodyBackground };
+        });
+
         const selectors = {
             header: ['header', '.site-header', '.main-header', '#header', '.header'],
             navigation: ['nav', '.navbar', '.site-nav', '.main-nav'],
@@ -951,17 +1079,21 @@ const captureRenderedColors = async (url) => {
             body: ['body', 'main', '#main', '.page', '.site'],
         };
 
-        const colors = { palette: [] };
-        // Try to extract palette from full page first
+        const colors = { palette: [], computedTheme };
+        // Try to extract palette from full page first — ordered by population
+        // (pixel coverage) so palette[0] is the actual majority color on the page,
+        // not just whichever swatch type Vibrant happens to list first.
         if (VibrantLib) {
             try {
                 const v = await VibrantLib.from(fullBuffer).getPalette();
-                const pal = Object.values(v).map(s => s && s.getHex && s.getHex()).filter(Boolean);
-                colors.palette = pal;
+                const swatches = Object.values(v).filter(sw => sw && sw.getHex);
+                const population = (sw) => (typeof sw.getPopulation === 'function' ? sw.getPopulation() || 0 : (sw.population || 0));
+                swatches.sort((a, b) => population(b) - population(a));
+                colors.palette = swatches.map(s => s.getHex().toUpperCase()).filter(Boolean);
             } catch (e) { /* ignore */ }
         }
 
-        // Helper to crop region and get dominant color
+        // Helper to crop region and get the majority (most-pixels) dominant color
         const getRegionColor = async (bbox) => {
             if (!bbox || bbox.width === 0 || bbox.height === 0) return null;
             if (!sharpLib) return null;
@@ -969,8 +1101,8 @@ const captureRenderedColors = async (url) => {
                 const cropped = await sharpLib(fullBuffer).extract({ left: Math.max(0, Math.floor(bbox.x)), top: Math.max(0, Math.floor(bbox.y)), width: Math.max(1, Math.floor(bbox.width)), height: Math.max(1, Math.floor(bbox.height)) }).toBuffer();
                 if (VibrantLib) {
                     const pv = await VibrantLib.from(cropped).getPalette();
-                    const sw = Object.values(pv).find(s => s && s.getHex);
-                    if (sw && sw.getHex) return sw.getHex().toUpperCase();
+                    const majority = pickMajoritySwatch(pv);
+                    if (majority) return majority;
                 }
                 return null;
             } catch (e) { return null; }
@@ -1001,8 +1133,8 @@ const captureRenderedColors = async (url) => {
                         const cropped = await sharpLib(fullBuffer).extract({ left, top, width: Math.max(1, cw), height: Math.max(1, ch) }).toBuffer();
                         if (VibrantLib) {
                             const pv = await VibrantLib.from(cropped).getPalette();
-                            const sw = Object.values(pv).find(s => s && s.getHex);
-                            if (sw && sw.getHex) bodyColor = sw.getHex().toUpperCase();
+                            const majority = pickMajoritySwatch(pv);
+                            if (majority) bodyColor = majority;
                         }
                         if (!bodyColor) {
                             const p = await sharpLib(cropped).resize(1, 1).raw().toBuffer();
@@ -1025,7 +1157,7 @@ const captureRenderedColors = async (url) => {
         // attach screenshot as data-uri (small risk of large memory — truncated)
         const screenshotDataUri = `data:image/png;base64,${fullBuffer.toString('base64')}`;
         await browser.close(); browser = null;
-        return { screenshot: screenshotDataUri, colors };
+        return { screenshot: screenshotDataUri, colors, computed: computedTheme };
     } catch (e) {
         try { if (browser) await browser.close(); } catch (ignore) { }
         logger.warn(`[Scraper] captureRenderedColors failed: ${e.message}`);
@@ -1808,7 +1940,7 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
                 const header = css.slice(i, openIdx).trim();
                 const closeIdx = readBlock(openIdx);
                 const body = css.slice(openIdx + 1, closeIdx);
-                if (header.startsWith('@media') || header.startsWith('@supports')) {
+                if (header.startsWith('@media') || header.startsWith('@supports') || header.startsWith('@layer')) {
                     parseCssRules(body).forEach(r => rules.push({ ...r, atRule: header }));
                 } else if (header && !header.startsWith('@')) {
                     header.split(',').map(s => s.trim()).filter(Boolean).forEach(selector => {
@@ -1910,6 +2042,22 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
             const resolved = resolveVarRefs(decls[prop], newCssVariables) || decls[prop];
             return normaliseCssColor(resolved);
         };
+
+        // Resolve chained var() references (e.g. --color-primary: var(--brand-600))
+        // in the variables map itself. Without this, anything downstream that reads
+        // `cssVariables`/`newCssVariables` directly (buildPalette's primary/secondary
+        // detection, findCssVarColor, etc.) sees the raw unresolved "var(--brand-600)"
+        // string, normaliseCssColor() can't parse it, and the real color is silently
+        // dropped in favor of a wrong fallback — even though resolveVarRefs already
+        // knows how to resolve it (it's used for header/nav/button computed colors).
+        Object.keys(newCssVariables).forEach((k) => {
+            const resolved = resolveVarRefs(newCssVariables[k], newCssVariables);
+            if (resolved) newCssVariables[k] = resolved;
+        });
+        cssVariablesList.forEach((entry) => {
+            const resolved = resolveVarRefs(entry.value, newCssVariables);
+            if (resolved) entry.value = resolved;
+        });
 
         const headerMatch = matchRulesForSelectors(allRules, HEADER_SELECTORS);
         const navMatch = matchRulesForSelectors(allRules, NAV_SELECTORS);
@@ -2147,9 +2295,10 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
 };
 
 const buildPalette = (raw) => {
-    const { themeColors, allBgs, allTexts, allBorders } = raw;
+    const { themeColors, allBgs, allTexts, allBorders, renderColors } = raw;
     const exactColors = themeColors?.exact || {};
     const cssVars = exactColors.cssVariables || {};
+    const exactElements = exactColors.elements || {};
     const metaCols = exactColors.meta || {};
 
     let exactPrimary = null, exactSecondary = null;
@@ -2158,12 +2307,41 @@ const buildPalette = (raw) => {
 
     for (const [varName, colorValue] of Object.entries(cssVars)) {
         const lowerName = varName.toLowerCase();
-        if (!exactPrimary && primaryVarNames.some(p => lowerName.includes(p))) exactPrimary = normaliseCssColor(colorValue);
-        if (!exactSecondary && secondaryVarNames.some(p => lowerName.includes(p))) exactSecondary = normaliseCssColor(colorValue);
+        const normalized = normaliseCssColor(colorValue);
+        if (!exactPrimary && primaryVarNames.some(p => lowerName.includes(p))) exactPrimary = normalized;
+        if (!exactSecondary && secondaryVarNames.some(p => lowerName.includes(p))) exactSecondary = normalized;
+    }
+
+    for (const [elementKey, elementValue] of Object.entries(exactElements)) {
+        const lowerKey = elementKey.toLowerCase();
+        const normalized = normaliseCssColor(elementValue);
+        if (!normalized) continue;
+        if (!exactPrimary && primaryVarNames.some(p => lowerKey.includes(p))) exactPrimary = normalized;
+        if (!exactSecondary && secondaryVarNames.some(p => lowerKey.includes(p))) exactSecondary = normalized;
     }
 
     const metaPrimary = normaliseCssColor(metaCols.themeColor);
     const metaSecondary = normaliseCssColor(metaCols.msTileColor);
+
+    // Screenshot-majority fallback: only used when the site doesn't declare
+    // primary/secondary via CSS variables, named elements, or meta theme-color.
+    // renderColors comes from captureRenderedColors, which renders the page,
+    // takes a full screenshot, and (via pickMajoritySwatch) picks colors by
+    // actual pixel population — i.e. "read the screenshot, take the color
+    // that covers the most area" — for the button, header, nav, and footer
+    // regions, plus a population-sorted full-page palette as a last resort.
+    const screenshotCandidates = [
+        renderColors?.button,
+        renderColors?.header,
+        renderColors?.navigation,
+        renderColors?.footer,
+        ...(Array.isArray(renderColors?.palette) ? renderColors.palette : []),
+    ]
+        .map(normaliseCssColor)
+        .filter(Boolean)
+        .filter(c => !isNeutralHex(c));
+    const screenshotPrimary = screenshotCandidates[0] || null;
+    const screenshotSecondary = screenshotCandidates.find(c => c !== screenshotPrimary) || null;
 
     const candidates = [
         exactPrimary || metaPrimary,
@@ -2173,6 +2351,10 @@ const buildPalette = (raw) => {
         themeColors?.hero?.bg,
         themeColors?.header?.link,
         exactSecondary || metaSecondary,
+        screenshotPrimary,
+        screenshotSecondary,
+        ...Object.values(cssVars),
+        ...Object.values(exactElements),
         ...allBgs,
         ...allTexts,
         ...(allBorders || []),
@@ -2182,11 +2364,11 @@ const buildPalette = (raw) => {
         .filter(c => !isNeutralHex(c));
 
     const palette = [...new Set(candidates)].slice(0, 20);
-    const primary = exactPrimary || metaPrimary || palette[0] || '#333333';
-    const secondary = exactSecondary || metaSecondary || palette.find(c => c !== primary) || '#555555';
-    const accent = palette.find(c => c !== primary && c !== secondary) || '#888888';
+    const primary = exactPrimary || metaPrimary || screenshotPrimary || palette[0];
+    const secondary = exactSecondary || metaSecondary || screenshotSecondary || palette.find(c => c !== primary);
+    const accent = palette.find(c => c !== primary && c !== secondary);
 
-    return { primary, secondary, accent, palette, exact: { cssVariables: cssVars, cssVariablesList: exactColors.cssVariablesList || [], meta: metaCols } };
+    return { primary, secondary, rawPrimary: exactPrimary || metaPrimary || null, rawSecondary: exactSecondary || metaSecondary || null, accent, palette, exact: { cssVariables: cssVars, cssVariablesList: exactColors.cssVariablesList || [], meta: metaCols } };
 };
 
 const scrapeWebsiteStructure = async (websiteUrl) => {
@@ -2276,19 +2458,51 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         if (renderResult) {
             raw.screenshot = renderResult.screenshot;
             raw.renderColors = renderResult.colors;
-            // use rendered region colors as fallbacks for themeColors where missing
+            raw.renderComputed = renderResult.colors.computedTheme || renderResult.computed;
+            // merge rendered computed CSS values into exact theme metadata
             raw.themeColors = raw.themeColors || {};
+            raw.themeColors.exact = raw.themeColors.exact || { cssVariables: {}, meta: {}, elements: {} };
+            if (renderResult.computed?.cssVariables) {
+                raw.themeColors.exact.cssVariables = { ...raw.themeColors.exact.cssVariables, ...renderResult.computed.cssVariables };
+            }
+            if (renderResult.computed?.elementComputed) {
+                raw.themeColors.exact.elements = { ...raw.themeColors.exact.elements, ...renderResult.computed.elementComputed };
+            }
+            // use rendered region colors and computed DOM colors as fallbacks for themeColors where missing
             raw.themeColors.header = raw.themeColors.header || {};
             raw.themeColors.navigation = raw.themeColors.navigation || {};
             raw.themeColors.button = raw.themeColors.button || {};
+            const computedHeaderBg = renderResult.computed?.elementComputed?.header?.background;
+            const computedHeaderColor = renderResult.computed?.elementComputed?.header?.color;
+            const computedNavBg = renderResult.computed?.elementComputed?.navigation?.background;
+            const computedNavColor = renderResult.computed?.elementComputed?.navigation?.color;
+            const computedButtonBg = renderResult.computed?.elementComputed?.button?.background;
+            const computedButtonColor = renderResult.computed?.elementComputed?.button?.color;
+            const computedFooterBg = renderResult.computed?.elementComputed?.footer?.background;
+            const computedPageBg = renderResult.computed?.bodyBackground;
+
+            if (!raw.themeColors.header.bg && computedHeaderBg) raw.themeColors.header.bg = computedHeaderBg;
             if (!raw.themeColors.header.bg && renderResult.colors.header) raw.themeColors.header.bg = renderResult.colors.header;
+            if (!raw.themeColors.header.text && computedHeaderColor) raw.themeColors.header.text = computedHeaderColor;
+            if (!raw.themeColors.navigation.background && computedNavBg) raw.themeColors.navigation.background = computedNavBg;
             if (!raw.themeColors.navigation.background && renderResult.colors.navigation) raw.themeColors.navigation.background = renderResult.colors.navigation;
+            if (!raw.themeColors.navigation.color && computedNavColor) raw.themeColors.navigation.color = computedNavColor;
+            if (!raw.themeColors.button.bg && computedButtonBg) raw.themeColors.button.bg = computedButtonBg;
             if (!raw.themeColors.button.bg && renderResult.colors.button) raw.themeColors.button.bg = renderResult.colors.button;
+            if (!raw.themeColors.button.text && computedButtonColor) raw.themeColors.button.text = computedButtonColor;
             if (!raw.themeColors.footer) raw.themeColors.footer = {};
+            if (!raw.themeColors.footer.bg && computedFooterBg) raw.themeColors.footer.bg = computedFooterBg;
             if (!raw.themeColors.footer.bg && renderResult.colors.footer) raw.themeColors.footer.bg = renderResult.colors.footer;
+            if (!raw.themeColors.page?.bg && computedPageBg) {
+                raw.themeColors.page = raw.themeColors.page || {};
+                raw.themeColors.page.bg = computedPageBg;
+            }
             // merge rendered palette into allBgs for palette building
             if (Array.isArray(renderResult.colors.palette) && renderResult.colors.palette.length) {
                 raw.allBgs = (raw.allBgs || []).concat(renderResult.colors.palette.map(c => c));
+            }
+            if (renderResult.computed?.cssVariables) {
+                raw.allBgs = (raw.allBgs || []).concat(Object.values(renderResult.computed.cssVariables));
             }
             captureSource = 'render';
         } else {
@@ -2422,6 +2636,14 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
     }
 
     const colors = buildPalette(raw);
+    if (colors.primary) {
+        logoColors = {
+            primary: colors.primary,
+            secondary: colors.secondary || logoColors.secondary || null,
+            palette: (colors.palette && colors.palette.length) ? colors.palette : logoColors.palette,
+            source: 'rendered-page',
+        };
+    }
 
     const tc = raw.themeColors;
     const norm = normaliseCssColor;
@@ -2559,6 +2781,8 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         colors,
         logoColors,
         themeSystem,
+        theme: themeSystem,
+        fonts: typography,
         darkMode: raw.darkMode || { enabled: false, overrides: {} },
         frameworkInfo: raw.frameworkInfo || { platform: 'Plain HTML', frameworks: [], evidence: {} },
         typography,
@@ -2595,7 +2819,13 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
             description: seo.metaDescription,
             favicon: identity.faviconUrl,
             logoUrl: identity.logoUrl,
-            fonts: { googleFontFamilies: typography.googleFontFamilies, primaryFont: typography.primaryFont, headingFont: typography.headingFont },
+            fonts: {
+                googleFontFamilies: typography.googleFontFamilies,
+                primaryFont: typography.primaryFont || '',
+                headingFont: typography.headingFont || '',
+                bodyFont: typography.bodyFont || '',
+                bodyFontSize: typography.bodyFontSize || '',
+            },
             canonicalUrl: seo.canonicalUrl,
             keywords: seo.metaKeywords,
             robots: seo.robotsTag,
@@ -2680,6 +2910,8 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         colors: {
             primary: primaryColor,
             secondary: secondaryColor,
+            rawPrimary: colors.rawPrimary || '',
+            rawSecondary: colors.rawSecondary || '',
             accent: accentColor,
             palette: dedupeArray(colors.palette, c => c),
             pagePrimary: colors.primary || '',
