@@ -24,7 +24,7 @@ import { finance04Html, finance04Styles } from "../templates/finance/templates04
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Templates removed as per user request
 
@@ -702,6 +702,8 @@ const CreatePagePage = () => {
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [createdPage, setCreatedPage] = useState<any>(null);
+  const [apiProgress, setApiProgress] = useState<number | undefined>(undefined);
+  const pollRef = useRef<number | null>(null);
   const [faviconBroken, setFaviconBroken] = useState(false);
 
   useEffect(() => {
@@ -927,7 +929,26 @@ const CreatePagePage = () => {
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreatedPage(newPage);
-      setIsComplete(true);
+      // Start polling for generation progress (backend returns early)
+      setIsComplete(false);
+      setApiProgress(Number(newPage.generationProgress) || 5);
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      pollRef.current = window.setInterval(async () => {
+        try {
+          const pageObj = await pagesApi.getById(id!, newPage._id);
+          if (!pageObj) return;
+          const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
+          setApiProgress(prog);
+          if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
+            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+            setCreatedPage(pageObj);
+            setIsComplete(true);
+            setShowLoader(false);
+          }
+        } catch (e) {
+          // ignore transient errors
+        }
+      }, 1500);
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
@@ -936,6 +957,10 @@ const CreatePagePage = () => {
       setIsComplete(false);
     },
   });
+
+  useEffect(() => {
+    return () => { if (pollRef.current) window.clearInterval(pollRef.current); };
+  }, []);
 
   const handleGenerateMagicPrompt = async () => {
     if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
@@ -1356,7 +1381,7 @@ ${enrichedContent}
   };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
-  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
+  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} externalProgress={apiProgress} onFinished={handleLoaderFinished} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

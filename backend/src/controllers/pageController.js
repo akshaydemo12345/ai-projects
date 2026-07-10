@@ -630,6 +630,26 @@ exports.createPage = async (req, res, next) => {
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
 
+    // Set initial progress and persist so clients can poll immediately
+    page.generationProgress = 5;
+    await page.save();
+
+    // Return early to client so UI can poll for progress while generation continues
+    const frontendUrlEarly = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrlEarly = `${frontendUrlEarly}/preview?page=${page._id}&token=${page.previewToken}`;
+    res.status(202).json({
+      success: true,
+      message: 'Landing page generation started',
+      data: {
+        pageId: page._id,
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        generationProgress: page.generationProgress || 5,
+        previewUrl: previewUrlEarly
+      }
+    });
+    // Note: continue processing asynchronously after responding
     // Increment pageCount
     await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: 1 } });
 
@@ -643,6 +663,8 @@ exports.createPage = async (req, res, next) => {
     if (isAIRequested) {
       try {
         logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
+        // update progress: AI generation started
+        try { await Page.findByIdAndUpdate(page._id, { generationProgress: 10 }).exec(); } catch (e) { /* non-fatal */ }
 
         // If it's a template, we pass a hint to the AI service
         // Merge scraped fonts with any fonts explicitly passed from the frontend
@@ -693,6 +715,7 @@ exports.createPage = async (req, res, next) => {
             seo: generatedResult.seo || {},
             aiUsage: generatedResult.aiUsage
           };
+          try { await Page.findByIdAndUpdate(page._id, { generationProgress: 60 }).exec(); } catch (e) { }
         }
       } catch (aiErr) {
         logger.error('AI Generation Failed during page creation:', {
@@ -837,6 +860,8 @@ exports.createPage = async (req, res, next) => {
           page.landingPageStyles = page.styles;
         }
       }
+      // update progress after images processed
+      try { await Page.findByIdAndUpdate(page._id, { generationProgress: 85 }).exec(); } catch (e) { }
     } catch (imgErr) {
       logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
     }
@@ -887,32 +912,17 @@ exports.createPage = async (req, res, next) => {
     }
 
     page.previewUrl = previewUrl;
+    // final touches
+    try { await Page.findByIdAndUpdate(page._id, { generationProgress: 98 }).exec(); } catch (e) { }
     page.status = 'draft';
+    page.generationProgress = 100;
     await page.save();
 
     // 8.5 Sync Form Schema Immediately
     await syncFormSchema(page);
 
-    // 9. Success Response
-    return res.status(201).json({
-      success: true,
-      message: 'Landing page created successfully',
-      data: {
-        pageId: page._id,
-        _id: page._id,
-        title: page.title,
-        slug: page.slug,
-        prefix: page.prefix,
-        finalSlug: page.prefix ? `${page.prefix}-${page.slug}` : page.slug,
-        noIndex: page.noIndex,
-        noFollow: page.noFollow,
-        services: page.services,
-        previewUrl: page.previewUrl,
-        content: page.content,
-        styles: page.styles,
-        seo: page.seo
-      }
-    });
+    // 9. Generation finished (we already responded earlier). Just log.
+    logger.info(`Landing page generation finished for ${page._id}`);
 
   } catch (error) {
     logger.error("Create Page Final Error:", {

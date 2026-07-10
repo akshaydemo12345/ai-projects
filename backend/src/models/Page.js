@@ -137,6 +137,10 @@ const pageSchema = new mongoose.Schema({
     enum: ['draft', 'published', 'generating'],
     default: 'draft',
   },
+  generationProgress: {
+    type: Number,
+    default: 0,
+  },
   domain: {
     type: String,
     sparse: true,
