@@ -449,6 +449,8 @@ const GrapesEditor = () => {
         const fontLinks = `
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+          <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         `;
         if (!canvasDoc.head.innerHTML.includes('Material+Symbols+Outlined')) {
           canvasDoc.head.insertAdjacentHTML('beforeend', fontLinks);
@@ -537,19 +539,7 @@ const GrapesEditor = () => {
           });
 
           document.addEventListener('click', function(e) {
-            // Handle details/summary toggle
-            const summary = e.target.closest('summary');
-            if (summary) {
-              const details = summary.parentElement;
-              if (details && details.tagName === 'DETAILS') {
-                if (details.hasAttribute('open')) {
-                  details.removeAttribute('open');
-                } else {
-                  details.setAttribute('open', '');
-                }
-              }
-            }
-
+            // Native details/summary toggle removed from here. Now handled securely via GrapesJS component:selected event.
             // ── Handle AI-generated Accordion / FAQ (accordion-header + accordion-content) ──
             const accHeader = e.target.closest('.accordion-header');
             if (accHeader) {
@@ -805,6 +795,39 @@ const GrapesEditor = () => {
           }, true);
         `;
       }
+
+      // ─── Auto-heal missing <summary> tags stripped by AI generators ───
+      // If a <details> tag does not immediately contain a <summary>, inject a fallback summary
+      // so that GrapesJS can render it as a selectable/editable text component.
+      dbContent = dbContent.replace(/(<details[^>]*>)(?!\s*<summary)/gi, '$1\n<summary class="ft-header"><h3 class="ft-title">Custom Heading</h3><span class="ft-icon-toggle"><i class="fa-solid fa-chevron-down"></i></span></summary>\n');
+
+      // ─── Auto-heal missing Swiper data-gjs-type attributes ───
+      // AI generators often generate .swiper-container but strip the data-gjs-type which breaks the slider in GrapesJS.
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-container\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-container"');
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-wrapper\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-wrapper"');
+      dbContent = dbContent.replace(/class="([^"]*\bswiper-slide\b[^"]*)"(?![^>]*data-gjs-type)/gi, 'class="$1" data-gjs-type="swiper-slide"');
+
+      // ─── Auto-heal missing Swiper properties stripped by AI ───
+      // If AI stripped data-slides-per-view, force it to 2 for testimonials slider so it doesn't collapse to 1
+      dbContent = dbContent.replace(/(<div[^>]*class="[^"]*\bswiper-container\b[^"]*"[^>]*)/gi, (match) => {
+        let newMatch = match;
+        const isTravel03 = newMatch.includes('new-design-slider');
+        const targetSlides = isTravel03 ? '1' : '2';
+
+        if (!newMatch.includes('data-slides-per-view')) {
+          newMatch = newMatch + ` data-slides-per-view="${targetSlides}"`;
+        } else {
+          newMatch = newMatch.replace(/data-slides-per-view="[^"]*"/, `data-slides-per-view="${targetSlides}"`);
+        }
+
+        if (!newMatch.includes('data-mobile-breakpoint')) {
+          newMatch = newMatch + ' data-mobile-breakpoint="true"';
+        }
+        if (!newMatch.includes('data-tablet-breakpoint')) {
+          newMatch = newMatch + ' data-tablet-breakpoint="true"';
+        }
+        return newMatch;
+      });
 
       editor.setComponents(dbContent);
 
@@ -1236,6 +1259,21 @@ const GrapesEditor = () => {
 
       // ─── SWIPER BLOCK + COMPONENTS ───
 
+      editor.Components.addType('details', {
+        isComponent: el => el.tagName === 'DETAILS',
+        model: {
+          defaults: {
+            traits: [
+              {
+                type: 'checkbox',
+                name: 'open',
+                label: 'Accordion Open'
+              }
+            ]
+          }
+        }
+      });
+
       editor.Components.addType('custom-tabs', {
         isComponent: el => {
           if (el && el.classList && el.classList.contains('tabs-container')) {
@@ -1520,34 +1558,41 @@ const GrapesEditor = () => {
         // -------------------------
 
         const attrs = component.getAttributes();
-        // Read from attrs first, fallback to dataset (data-* on HTML element)
         const bool = (k: string) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === false || v === 'false') && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === false || v === 'false') && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
           return v !== undefined && v !== null && String(v) !== 'false';
         };
         const num = (k: string, fb: number) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
-          return parseInt(String(v ?? fb), 10) || fb;
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === fb || v === String(fb)) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === fb || v === String(fb)) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
+          return parseFloat(String(v ?? fb)) || fb;
         };
         const str = (k: string, fb: string) => {
-          const v = attrs[k] !== undefined ? attrs[k] : el.dataset[k];
+          let v = attrs[k];
+          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+          if ((v === undefined || v === fb) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+          if ((v === undefined || v === fb) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
           return v !== undefined ? String(v) : fb;
         };
 
         const props: any = {
-          observer: false, // Turned OFF to prevent infinite loop fights with GrapesJS MutationObserver
-          observeParents: false,
-          observeSlideChildren: false,
+          observer: true,
+          observeParents: true,
           direction: bool('vertical') ? 'vertical' : 'horizontal',
-          loop: false, // CRITICAL: Forced to false in editor to prevent Swiper from cloning slides and triggering infinite GrapesJS re-renders
+          loop: bool('loop') !== false ? true : false, // Default to true if not explicitly false
           freeMode: bool('freeMode'),
           autoHeight: bool('autoHeight'),
           initialSlide: num('initialSlide', 0),
           speed: num('speed', 300),
           effect: str('effect', 'slide'),
           parallax: bool('parallax'),
-          slidesPerView: num('slidesPerView', 1),
-          spaceBetween: num('spaceBetween', 0),
+          slidesPerView: num('slidesPerView', 2), // Default 2
+          spaceBetween: num('spaceBetween', 30), // Default 30
           slidesPerGroup: num('slidesPerGroup', 1),
           centeredSlides: bool('centeredSlides'),
           rewind: bool('rewind'),
@@ -1575,23 +1620,38 @@ const GrapesEditor = () => {
           };
         }
 
-        const paginationType = str('pagination', '');
-        if (paginationType) {
-          props.pagination = {
-            el: el.querySelector('.swiper-pagination'),
-            type: paginationType,
-            dynamicBullets: bool('dynamicBullets'),
-            clickable: (attrs['clickableBullets'] !== undefined || el.dataset['clickableBullets'] !== undefined) ? bool('clickableBullets') : true,
-          };
-        }
+        props.pagination = {
+          el: el.querySelector('.swiper-pagination'),
+          type: str('pagination', 'bullets') || 'bullets',
+          clickable: true,
+        };
 
         if (bool('scrollbar')) {
           props.scrollbar = { el: el.querySelector('.swiper-scrollbar'), hide: true };
         }
 
-        props.breakpoints = {};
-        if (bool('mobileBreakpoint')) props.breakpoints[480] = { slidesPerView: 1, spaceBetween: 10 };
-        if (bool('tabletBreakpoint')) props.breakpoints[768] = { slidesPerView: props.slidesPerView > 1 ? 2 : 1, spaceBetween: 20 };
+        // Apply Responsive Breakpoints (Mobile First)
+        props.breakpoints = {
+          // Mobile (0px and up)
+          320: {
+            slidesPerView: 1,
+            spaceBetween: 10
+          },
+          // Tablet (768px and up)
+          768: {
+            slidesPerView: props.slidesPerView > 1 ? 2 : 1,
+            spaceBetween: 20
+          },
+          // Desktop (1024px and up)
+          1024: {
+            slidesPerView: props.slidesPerView,
+            spaceBetween: props.spaceBetween
+          }
+        };
+
+        // For mobile-first Swiper, the base slidesPerView should be 1, but we use breakpoints to scale it up.
+        // So we override the base slidesPerView to 1, and let breakpoints handle the rest.
+        props.slidesPerView = 1;
 
         try {
           (el as any).__swiper = new canvasWin.Swiper(el, props);
@@ -1652,6 +1712,7 @@ const GrapesEditor = () => {
               {
                 type: 'select', name: 'pagination', label: 'Pagination Type',
                 options: [
+                  { id: '', name: 'None' },
                   { id: 'bullets', name: 'Bullets' },
                   { id: 'fraction', name: 'Fraction' },
                   { id: 'progressbar', name: 'Progressbar' },
@@ -1671,7 +1732,7 @@ const GrapesEditor = () => {
               { type: 'checkbox', name: 'tabletBreakpoint', label: 'Enable Tablet Breakpoint', valueTrue: 'true', valueFalse: 'false' },
 
               { type: 'accordion-header', name: 'hdr-extra', label: 'Extra' },
-              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1 },
+              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1, step: 0.1 },
               { type: 'number', name: 'spaceBetween', label: 'Space Between', value: 0 },
 
               { type: 'accordion-header', name: 'hdr-layout', label: 'Layout' },
@@ -2549,11 +2610,68 @@ const GrapesEditor = () => {
         console.warn('Could not inject Swiper into canvas:', e);
       }
 
+      // ─── Initialize Travel-03 Destination Slider in Editor Canvas ───
+      // The template's svg onload script is stripped by GrapesJS, so we
+      // manually initialize Swiper for .dest-swiper here.
+      setTimeout(() => {
+        try {
+          const canvasWin = editor.Canvas.getWindow() as any;
+          const canvasDoc = editor.Canvas.getDocument();
+          if (!canvasWin || !canvasDoc) return;
+
+          const initTravel03Slider = () => {
+            if (typeof canvasWin.Swiper === 'undefined') return;
+            const destContainer = canvasDoc.querySelector('.dest-swiper');
+            if (!destContainer) return;
+
+            // Destroy existing instance to avoid duplicates
+            if (canvasWin.t03DestSwiper) {
+              try { canvasWin.t03DestSwiper.destroy(true, true); } catch (_) { }
+              canvasWin.t03DestSwiper = null;
+            }
+
+            canvasWin.t03DestSwiper = new canvasWin.Swiper('.dest-swiper', {
+              wrapperClass: 'dest-grid',
+              slideClass: 'dest',
+              slidesPerView: 1.2,
+              spaceBetween: 20,
+              loop: true,
+              breakpoints: {
+                640: { slidesPerView: 2.2 },
+                900: { slidesPerView: 3.2 },
+                1200: { slidesPerView: 4 },
+              },
+            });
+
+            // Wire up arrow buttons — they use onclick="if(window.t03DestSwiper)..."
+            // but window inside the canvas iframe IS canvasWin, so this just works.
+            console.log('✅ Travel-03 dest-swiper initialized in editor canvas');
+          };
+
+          // Run immediately and also after a short delay for slow renders
+          initTravel03Slider();
+          setTimeout(initTravel03Slider, 800);
+          setTimeout(initTravel03Slider, 2000);
+        } catch (e) {
+          console.warn('Could not initialize Travel-03 slider in editor:', e);
+        }
+      }, 600);
+
       // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
       try {
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           canvasDoc.addEventListener('click', (e: any) => {
+            // ── Travel-03: Destination slider arrow buttons ──
+            const canvasWin = editor.Canvas.getWindow() as any;
+            if (canvasWin?.t03DestSwiper) {
+              if (e.target.closest('.dest-prev')) {
+                canvasWin.t03DestSwiper.slidePrev();
+              } else if (e.target.closest('.dest-next')) {
+                canvasWin.t03DestSwiper.slideNext();
+              }
+            }
+
             let accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
             let item, content, icon;
 
@@ -3334,6 +3452,7 @@ const GrapesEditor = () => {
 
     editorRef.current = editor;
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
+    (window as any).editorInstance = editor; // Expose to iframe interaction script
 
     return () => {
       if (editorRef.current) {
@@ -3357,6 +3476,24 @@ const GrapesEditor = () => {
       // 1. Handle UI Tab Switching
       if (isCustomCode) {
         setRightTab('traits');
+      }
+
+      // 2. Handle Native Details/Summary Toggle on Click (including children of summary)
+      let summaryModel = model;
+      while (summaryModel && summaryModel.get('tagName')?.toLowerCase() !== 'summary') {
+        summaryModel = summaryModel.parent();
+      }
+      if (summaryModel && summaryModel.get('tagName')?.toLowerCase() === 'summary') {
+        const detailsModel = summaryModel.parent();
+        if (detailsModel && detailsModel.get('tagName')?.toLowerCase() === 'details') {
+          const attrs = Object.assign({}, detailsModel.getAttributes());
+          if (attrs.open) {
+            delete attrs.open;
+          } else {
+            attrs.open = 'open';
+          }
+          detailsModel.setAttributes(attrs);
+        }
       }
 
       // Restore Swiper Pagination if wiped by GrapesJS re-render
@@ -3451,9 +3588,18 @@ const GrapesEditor = () => {
     if (!editorRef.current) return;
     setIsSaving(true);
     console.log('💾 Saving page content...');
-    const html = editorRef.current.getHtml();
-    const css = editorRef.current.getCss() || '';
-    const js = editorRef.current.getJs() || '';
+    let html = editorRef.current.getHtml();
+    let css = editorRef.current.getCss() || '';
+    let js = editorRef.current.getJs() || '';
+
+    // Fix relative assets to absolute URLs for external plugins
+    const makeAbsolute = (str: string) => {
+      const origin = window.location.origin;
+      return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+        .replace(new RegExp(origin + origin, 'g'), origin);
+    };
+    html = makeAbsolute(html);
+    css = makeAbsolute(css);
 
     // Capture internal global styles injected by GlobalStylesPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
@@ -3519,8 +3665,16 @@ const GrapesEditor = () => {
 
     // 1. Save current editor state into memory/local page state so it isn't lost on switch
     if (editorRef.current) {
-      const html = editorRef.current.getHtml();
-      const css = editorRef.current.getCss() || '';
+      let html = editorRef.current.getHtml();
+      let css = editorRef.current.getCss() || '';
+
+      const makeAbsolute = (str: string) => {
+        const origin = window.location.origin;
+        return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+          .replace(new RegExp(origin + origin, 'g'), origin);
+      };
+      html = makeAbsolute(html);
+      css = makeAbsolute(css);
       const js = editorRef.current.getJs() || '';
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
@@ -3798,8 +3952,8 @@ const GrapesEditor = () => {
     setIsPublishing(true);
 
     try {
-      const html = editorRef.current.getHtml();
-      const css = editorRef.current.getCss() || '';
+      let html = editorRef.current.getHtml();
+      let css = editorRef.current.getCss() || '';
 
       // Capture internal global styles injected by GlobalStylesPanel
       const canvasDoc = editorRef.current.Canvas.getDocument();
@@ -3823,12 +3977,20 @@ const GrapesEditor = () => {
 
       // Build a FULL self-contained HTML document for publish.
       // This is the key fix: published page has all CSS + JS inline so it works standalone.
-      const fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
+      let fullPublishHtml = buildPublishHtml(html, styleData, customScripts, {
         title: pageTitle,
         desc: metaDesc,
         primaryColor: themePrimary,
         secondaryColor: themeSecondary,
       });
+
+      // Fix relative assets to absolute URLs for external plugins ONLY for the published output
+      const makeAbsolute = (str: string) => {
+        const origin = window.location.origin;
+        return str.replace(/\/assets\/templates\//g, origin + '/assets/templates/')
+          .replace(new RegExp(origin + origin, 'g'), origin);
+      };
+      fullPublishHtml = makeAbsolute(fullPublishHtml);
 
       // Also keep the raw body HTML for editor reload
       const htmlWithScripts = customScripts ? html + '\n' + customScripts : html;

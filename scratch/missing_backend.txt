@@ -1,0 +1,14 @@
+/assets/templates/travel/templates01/santorini.jpg
+/assets/templates/travel/templates03/card-denver.jpg
+/assets/templates/travel/templates03/card-morocco.jpg
+/assets/templates/travel/templates03/designer.png
+/assets/templates/travel/templates03/dest-arizona.jpg
+/assets/templates/travel/templates03/dest-iceland.jpg
+/assets/templates/travel/templates03/dest-moab.jpg
+/assets/templates/travel/templates03/dest-venice.jpg
+/assets/templates/travel/templates03/hero.png
+/assets/templates/travel/templates03/patagonia.png
+/assets/templates/travel/templates03/photographer.png
+/assets/templates/travel/templates03/spa.png
+/assets/templates/travel/templates03/traveler-man.png
+/assets/templates/travel/templates03/traveler-woman.png
