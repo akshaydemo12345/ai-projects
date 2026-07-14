@@ -431,6 +431,23 @@ const isNeutralHex = (hex) => {
     return sat < 0.08 || lum > 245 || lum < 8;
 };
 
+// Derives a secondary color from a single primary hex by shifting its lightness.
+// Used as a last-resort fallback when pixel/palette extraction only yields one
+// distinct color (e.g. a monochrome favicon icon), so `secondary` isn't left null
+// when there genuinely is no second color to detect.
+const deriveShadeHex = (hex, amount = 0.28) => {
+    if (!hex || hex.length < 7) return null;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+    // Darken bright colors, lighten dark ones, so the shade stays visually distinct.
+    const factor = lum > 140 ? -amount : amount;
+    const adjust = (v) => Math.round(Math.min(255, Math.max(0, v + (factor > 0 ? (255 - v) : v) * factor)));
+    const rr = adjust(r), gg = adjust(g), bb = adjust(b);
+    return '#' + [rr, gg, bb].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+};
+
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 const linearToSrgb = (value) => {
     const v = clamp01(value);
@@ -726,6 +743,16 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                 const sorted = Object.entries(colorCount).sort((a, b) => b[1] - a[1]).map(([hex]) => hex);
                 const nonNeutral = sorted.filter(c => !isNeutralHex(c));
                 let colors = nonNeutral.length > 0 ? nonNeutral : sorted.filter(c => !['#FFFFFF', '#000000', '#FEFEFE', '#F8F8F8'].includes(c));
+
+                // If neutral-filtering left us with too few colors to derive a secondary,
+                // pad the candidate list with the next most common non-pure-white/black
+                // pixels (even if borderline "neutral") so `secondary` isn't just dropped.
+                if (colors.length < 2) {
+                    const padding = sorted.filter(c =>
+                        !colors.includes(c) && !['#FFFFFF', '#000000', '#FEFEFE', '#F8F8F8'].includes(c)
+                    );
+                    colors = colors.concat(padding);
+                }
                 const deduped = [];
                 for (const hex of colors) {
                     const r1 = parseInt(hex.slice(1, 3), 16);
@@ -741,7 +768,13 @@ const extractLogoColors = async (logoUrl, _page, baseUrl, isFavicon = false) => 
                     if (deduped.length >= 5) break;
                 }
                 if (deduped.length > 0) {
-                    return { primary: deduped[0] || null, secondary: deduped[1] || null, palette: deduped.slice(0, 5), source: 'favicon-pixel' };
+                    const primary = deduped[0] || null;
+                    // Only one distinct color survived filtering/dedup (common for
+                    // single-color icon favicons) — synthesize a secondary shade
+                    // instead of returning null.
+                    const secondary = deduped[1] || (primary ? deriveShadeHex(primary) : null);
+                    const palette = secondary && deduped.length < 2 ? [...deduped, secondary].slice(0, 5) : deduped.slice(0, 5);
+                    return { primary, secondary, palette, source: 'favicon-pixel' };
                 }
             } catch (e) {
                 logger.warn(`[LogoColors] Favicon pixel extraction failed: ${e.message}`);
@@ -1011,16 +1044,26 @@ const captureRenderedColors = async (url) => {
 
         const fullBuffer = await page.screenshot({ fullPage: true });
         const computedTheme = await page.evaluate(() => {
+            const isTransparentBg = (bg) => {
+                if (!bg) return true;
+                return /^(transparent|none|rgba\(0,\s*0,\s*0,\s*0\))$/i.test(bg.trim());
+            };
+
             const safeQuery = (selectors) => {
+                let firstMatch = null;
                 for (const selector of selectors) {
                     try {
                         const el = document.querySelector(selector);
-                        if (el) return el;
+                        if (!el) continue;
+                        if (!firstMatch) firstMatch = el;
+                        const style = window.getComputedStyle(el);
+                        const bg = style.getPropertyValue('background-color') || style.getPropertyValue('background') || null;
+                        if (!isTransparentBg(bg)) return el;
                     } catch (_) {
                         continue;
                     }
                 }
-                return null;
+                return firstMatch;
             };
 
             const getComputed = (el) => {
@@ -1255,9 +1298,14 @@ const extractWithCheerio = ($, html, baseUrl) => {
     const LOGO_SELECTORS = [
         // 1. Highest confidence — scoped to header/nav AND has an explicit logo marker.
         'header img[class*="logo" i]', 'nav img[class*="logo" i]', '.navbar img[class*="logo" i]', '.site-header img[class*="logo" i]',
+        'header img[class*="custom-logo" i]', 'nav img[class*="custom-logo" i]', '.site-header img[class*="custom-logo" i]',
+        'header img[class*="site-logo" i]', 'nav img[class*="site-logo" i]', '.site-header img[class*="site-logo" i]',
         'header img[id*="logo" i]', 'nav img[id*="logo" i]',
         'header img[alt*="logo" i]', 'nav img[alt*="logo" i]', '.site-header img[alt*="logo" i]',
         'header img[src*="logo" i]', 'nav img[src*="logo" i]',
+        'a.custom-logo-link img', '.custom-logo img', '.elementor-widget-theme-site-logo img', '.et_pb_menu_logo img', '.elementor-nav-menu__logo img',
+        // Beaver Builder / FL Builder patterns
+        '.fl-logo img', '.fl-module-logo img', '.fl-builder-content img', '.fl-node img', '.bb-logo img',
         // 2. Wrapper-based logo containers (the wrapper's own class/id carries the signal).
         '[class*="logo" i] img', '[id*="logo" i] img',
         '.navbar-brand img', '.site-logo img', '.header-logo img', '.brand-logo img',
@@ -1270,7 +1318,7 @@ const extractWithCheerio = ($, html, baseUrl) => {
         // 5. Unscoped keyword fallback — last resort before inline SVG / og:image, since a
         //    "logo" keyword match with no location signal is the weakest evidence (it's what
         //    incorrectly matched partner/certification badges in the past).
-        'img[class*="logo" i]', 'img[id*="logo" i]', 'img[alt*="logo" i]', 'img[src*="logo" i]',
+        'img[class*="logo" i]', 'img[class*="custom-logo" i]', 'img[id*="logo" i]', 'img[alt*="logo" i]', 'img[src*="logo" i]',
         // 6. og:image last — often a social banner, not the actual logo
         'meta[property="og:image"]',
     ];
@@ -1338,15 +1386,25 @@ const extractWithCheerio = ($, html, baseUrl) => {
             const src = getRealSrc(el);
             const absSrc = toAbs(src);
 
-            // Reject images whose explicit dimensions look like a horizontal banner (width:height > 3.5)
-            const isBannerDimension = (() => {
-                const w = parseInt(el.attr('width') || '0', 10);
-                const h = parseInt(el.attr('height') || '0', 10);
-                return w > 0 && h > 0 && (w / h) > 3.5;
-            })();
-            if (isBannerDimension) {
-                logger.info(`[Scraper] Skipping banner-shaped image via "${sel}"`);
-                continue;
+            // FIX 10: Banner-dimension check was too aggressive.
+            // Most website logos are deliberately wide (horizontal layout), so an aspect ratio > 3.5
+            // is normal for a logo, NOT a sign of a banner. Only apply strict dimension filtering
+            // for lower-confidence selectors (generic keyword matches with no location signal).
+            // For high-confidence selectors like "header img[class*='logo']" that are already
+            // scoped to header/nav, trust the location signal over dimension assumptions.
+            const isHighConfidenceSelector = /(^header |^nav |\.navbar|\.site-header|\.brand-logo|\.site-logo|\.header-logo|a\.logo|a\[href="\/"]\s+img|header\s+img|nav\s+img|\.navbar\s+img)/i.test(sel);
+            
+            if (!isHighConfidenceSelector) {
+                // Only apply strict dimension check to low-confidence selectors (fallbacks)
+                const isBannerDimension = (() => {
+                    const w = parseInt(el.attr('width') || '0', 10);
+                    const h = parseInt(el.attr('height') || '0', 10);
+                    return w > 0 && h > 0 && (w / h) > 5; // Relaxed from 3.5 to 5 (e.g., 500x100 is still OK)
+                })();
+                if (isBannerDimension) {
+                    logger.info(`[Scraper] Skipping banner-shaped image via "${sel}" (aspect ratio > 5)`);
+                    continue;
+                }
             }
 
             if (!absSrc && src && src.startsWith('data:image/')) {
@@ -2007,10 +2065,20 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
             return result || null;
         };
 
-        const HEADER_SELECTORS = ['header', '.site-header', '#header', '#masthead', '.main-header', '.topbar', '.header', '.navbar'];
-        const NAV_SELECTORS = ['nav', '.navigation', '#site-navigation', '.navbar', '.nav', '.site-nav', '.main-nav'];
-        const NAV_LINK_SELECTORS = ['nav a', '.navbar a', '.navigation a', '.nav a', '.menu a', '.site-nav a', 'header a'];
-        const BUTTON_SELECTORS = ['.btn-primary', 'button.primary', '.button-primary', '.wp-block-button__link', '.btn', 'button', 'a.button', '.cta', '.call-to-action'];
+        const HEADER_SELECTORS = [
+            'header', '.site-header', '#header', '#masthead', '.main-header', '.topbar', '.header', '.navbar',
+            '.elementor-location-header', '.elementor-header', '.elementor-top-section', '.ast-header-break-point', '.ast-site-header-wrap',
+            '.et_header_style_left', '.et-fixed-header', '.et_menu_container', '.et_pb_menu', '.avia-menu', '.site-header-wrap', '.astra-header', '.site-branding',
+        ];
+        const NAV_SELECTORS = [
+            'nav', '.navigation', '#site-navigation', '.navbar', '.nav', '.site-nav', '.main-nav',
+            '.elementor-nav-menu--main', '.elementor-nav-menu', '.et_menu_container', '.et-menu-nav', '.ast-builder-menu', '.astra-menu', '.main-navigation', '.nav-menu',
+        ];
+        const NAV_LINK_SELECTORS = ['nav a', '.navbar a', '.navigation a', '.nav a', '.menu a', '.site-nav a', 'header a', '.elementor-nav-menu a', '.et-menu-nav a', '.astra-menu a'];
+        const BUTTON_SELECTORS = [
+            '.btn-primary', 'button.primary', '.button-primary', '.wp-block-button__link', '.btn', 'button', 'a.button', '.cta', '.call-to-action',
+            '.elementor-button', '.elementor-button-link', '.et_pb_button', '.et_pb_promo_button', '.avia-button', '.astra-button', '.wp-block-button__link',
+        ];
 
         const matchRulesForSelectors = (rules, targets) => {
             const base = {}, hover = {}, active = {};
@@ -2111,19 +2179,44 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
         let platform = 'Plain HTML';
         const evidence = {};
 
-        if (/wp-content|wp-includes/i.test(html) || $('meta[name="generator"][content*="WordPress" i]').length || Object.keys(newCssVariables).some(k => k.startsWith('wp--'))) {
+        // Basic WordPress platform detection
+        if (/wp-content|wp-includes|wp-json/i.test(html) || $('meta[name="generator"][content*="WordPress" i]').length || Object.keys(newCssVariables).some(k => k.startsWith('wp--'))) {
             platform = 'WordPress';
             evidence.wordpress = true;
         }
-        if (/elementor/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('e-global-color-'))) {
-            frameworks.push('Elementor'); evidence.elementor = true;
-        }
-        if (/et_pb_|divi/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('et_pb_'))) {
-            frameworks.push('Divi'); evidence.divi = true;
-        }
-        if (/wp-block-/i.test(html) || Object.keys(newCssVariables).some(k => k.startsWith('wp--preset'))) {
-            frameworks.push('Gutenberg'); evidence.gutenberg = true;
-        }
+
+        // Builder-specific heuristics & evidence collection
+        const builders = [];
+
+        // Elementor
+        const elemEvidence = [];
+        if (/elementor/i.test(html)) elemEvidence.push('html contains "elementor"');
+        if ($('[class*="elementor"]').length) elemEvidence.push('DOM has elementor classes');
+        if (Object.keys(newCssVariables).some(k => k.toLowerCase().startsWith('e-global-') || k.toLowerCase().includes('elementor'))) elemEvidence.push('css variables indicate elementor');
+        if ($('link[href*="elementor"]').length || $('script[src*="elementor"]').length) elemEvidence.push('asset URL contains elementor');
+        if (elemEvidence.length) { frameworks.push('Elementor'); evidence.elementor = elemEvidence; builders.push({ name: 'Elementor', evidence: elemEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, elemEvidence.length) * 0.15) }); }
+
+        // Divi
+        const diviEvidence = [];
+        if (/et_pb_|divi/i.test(html)) diviEvidence.push('html contains et_pb/divi');
+        if ($('[class*="et_pb_"]').length || $('[class*="et_builder"]').length) diviEvidence.push('DOM has et_pb_/et_builder classes');
+        if (Object.keys(newCssVariables).some(k => k.toLowerCase().startsWith('et_pb_') || k.toLowerCase().includes('divi'))) diviEvidence.push('css variables indicate divi');
+        if ($('link[href*="divi"]').length || $('script[src*="divi"]').length) diviEvidence.push('asset URL contains divi');
+        if (diviEvidence.length) { frameworks.push('Divi'); evidence.divi = diviEvidence; builders.push({ name: 'Divi', evidence: diviEvidence, confidence: Math.min(0.95, 0.35 + Math.min(5, diviEvidence.length) * 0.13) }); }
+
+        // Gutenberg (WordPress block editor)
+        const gutenbergEvidence = [];
+        if (/wp-block-/i.test(html)) gutenbergEvidence.push('html contains wp-block classes');
+        if (Object.keys(newCssVariables).some(k => k.toLowerCase().startsWith('wp--preset') || k.toLowerCase().includes('wp--preset'))) gutenbergEvidence.push('css variables indicate wp presets');
+        if ($('[class*="wp-block-"]').length) gutenbergEvidence.push('DOM has wp-block classes');
+        if (gutenbergEvidence.length) { frameworks.push('Gutenberg'); evidence.gutenberg = gutenbergEvidence; builders.push({ name: 'Gutenberg', evidence: gutenbergEvidence, confidence: Math.min(0.9, 0.3 + Math.min(5, gutenbergEvidence.length) * 0.12) }); }
+
+        // Beaver Builder (FL Builder)
+        const beaverEvidence = [];
+        if (/fl-builder|beaver|fl-node|fl-module-/i.test(html)) beaverEvidence.push('html contains fl-builder/beaver markers');
+        if ($('[class*="fl-"]').length || $('[class*="fl-module"]').length || $('[class*="fl-row"]').length) beaverEvidence.push('DOM has fl- classes');
+        if ($('link[href*="beaver"]').length || $('script[src*="beaver"]').length || $('link[href*="fl-builder"]').length) beaverEvidence.push('asset URL contains beaver/fl-builder');
+        if (beaverEvidence.length) { frameworks.push('Beaver Builder'); evidence.beaver = beaverEvidence; builders.push({ name: 'Beaver Builder', evidence: beaverEvidence, confidence: Math.min(0.9, 0.3 + Math.min(5, beaverEvidence.length) * 0.12) }); }
         if (/bootstrap/i.test(html) || $('.navbar, .container, .row, .col-md-6, .btn-primary').length || Object.keys(newCssVariables).some(k => k.startsWith('bs-'))) {
             frameworks.push('Bootstrap'); evidence.bootstrap = true;
         }
@@ -2190,8 +2283,20 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
         };
 
         // inline extractors using cheerio
-        const inlineHeaderBg = () => extractInlineBg(HEADER_SELECTORS[0]) || extractInlineBg(HEADER_SELECTORS[1]) || extractInlineBg('header');
-        const inlineNavBg = () => extractInlineBg(NAV_SELECTORS[0]) || extractInlineBg(NAV_SELECTORS[1]) || extractInlineBg('nav');
+        const inlineHeaderBg = () => {
+            for (const sel of HEADER_SELECTORS) {
+                const val = extractInlineBg(sel);
+                if (val) return val;
+            }
+            return null;
+        };
+        const inlineNavBg = () => {
+            for (const sel of NAV_SELECTORS) {
+                const val = extractInlineBg(sel);
+                if (val) return val;
+            }
+            return null;
+        };
         const inlineButtonFromDom = () => {
             // scan multiple button selectors and pick most frequent inline bg
             const freq = {};
@@ -2248,6 +2353,7 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
 
         if (!raw.logoUrl) {
             const logoEl = $([
+                '.custom-logo img', 'a.custom-logo-link img', 'img.custom-logo', '.elementor-widget-theme-site-logo img', '.et_pb_menu_logo img', '.elementor-nav-menu__logo img',
                 '.site-header img', 'header img.logo', 'img.logo', 'img[alt*="logo" i]', 'img[id*="logo" i]',
                 'header img', 'nav img', '.navbar img', '.brand img', 'a[href="/"] img', '#masthead img',
             ].join(', ')).first();
@@ -2302,8 +2408,15 @@ const buildPalette = (raw) => {
     const metaCols = exactColors.meta || {};
 
     let exactPrimary = null, exactSecondary = null;
-    const primaryVarNames = ['primary', 'brand', 'theme', 'main', 'color-primary', 'brand-primary', '--primary', '--brand', '--theme-color'];
-    const secondaryVarNames = ['secondary', 'accent', 'color-secondary', 'brand-secondary', '--secondary', '--accent'];
+    const primaryVarNames = [
+        'primary', 'brand', 'theme', 'main', 'color-primary', 'brand-primary', '--primary', '--brand', '--theme-color',
+        '--e-global-color-primary', '--e-global-color-secondary', '--e-global-color-text', '--e-global-color-accent',
+        '--et_pb_accent_color', '--et_pb_text_color', '--wp--preset--color--primary', '--wp--preset--color--base',
+    ];
+    const secondaryVarNames = [
+        'secondary', 'accent', 'color-secondary', 'brand-secondary', '--secondary', '--accent',
+        '--e-global-color-secondary', '--e-global-color-accent', '--et_pb_accent_color', '--wp--preset--color--secondary',
+    ];
 
     for (const [varName, colorValue] of Object.entries(cssVars)) {
         const lowerName = varName.toLowerCase();
