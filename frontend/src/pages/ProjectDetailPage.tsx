@@ -31,7 +31,7 @@ const generateAiPage = (prompt: string, project: Project, branding: { primary: s
       <!-- Section 1: Hero -->
       <section style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 100px 20px; text-align: center; color: white;">
         <h1 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">Welcome to ${project.name || "Our Business"}</h1>
-        <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto 30px; opacity: 0.9;">${prompt ? prompt.slice(0, 100) + '...' : 'Discover our premium services tailored just for you. Innovative solutions for modern problems.'}</p>
+        <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto 30px; opacity: 0.9;"><strong>Prompt:</strong> ${prompt || 'Dynamic AI Generated Section'}</p>
         <button style="background: white; color: var(--primary); padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">Get Started Now</button>
       </section>
 
@@ -2042,7 +2042,7 @@ const ProjectDetailPage = () => {
                               const preSlugPrefix = project.preSlug ? project.preSlug + '/' : '';
                               const url = page.status === "published"
                                 ? `/${preSlugPrefix}${page.slug}`
-                                : `/preview/${preSlugPrefix}${page.slug}`;
+                                : `/preview/${preSlugPrefix}${page.slug}?token=${page.previewToken || ''}`;
                               window.open(url, '_blank');
                             }}
                             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1 rounded hover:bg-primary/5"
