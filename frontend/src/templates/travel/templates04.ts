@@ -3,7 +3,7 @@
 
 export const travel04Styles = `
 :root {
-  --primary: rgb(234, 255, 0);
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,7 +56,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .trending { padding: 10rem 0; }
 .section-tag { color: #64748b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 1rem; }
 .section-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; line-height: 1.1; }
-.section-title span { background: #eaff00; padding: 0 10px; border-radius: 4px; }
+.section-title span { background: var(--primary); padding: 0 10px; border-radius: 4px; }
 
 .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 .trend-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; transition: 0.3s; }
@@ -70,8 +70,8 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .trend-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 1.5rem; margin-top: 1rem; padding-top: 1.5rem; }
 .price { font-weight: 800; font-size: 1.1rem; }
 .price span { font-size: 0.7rem; color: #94a3b8; margin-right: 5px; }
-.btn-view { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
-.btn-view:hover { border-color: PRIMARY_COLOR_PLACEHOLDER; }
+.btn-view { color: var(--primary); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
+.btn-view:hover { border-color: var(--primary); }
 
 /* How It Works (Dark) */
 .how { padding: 10rem 0; background: #000; color: #fff; border-radius: 40px; margin: 0 2rem; }
@@ -114,7 +114,7 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
 .timeline-line { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e2e8f0; overflow: hidden; }
 .timeline-line::after { 
     content: ''; position: absolute; top: -100px; left: 0; width: 2px; height: 100px; 
-    background: linear-gradient(to bottom, transparent, PRIMARY_COLOR_PLACEHOLDER); 
+    background: linear-gradient(to bottom, transparent, var(--primary)); 
     animation: moveLine 3s infinite linear; 
 }
 
@@ -161,17 +161,17 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
   .tpl-templates04-2 { color: #64748b; }
   .tpl-templates04-3 { color: #00ff00; }
   .tpl-templates04-4 { color: #64748b; }
-  .tpl-templates04-5 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-6 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-7 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-8 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-9 { background: #eaff00; color: #000; }
+  .tpl-templates04-5 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-6 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-7 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-8 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-9 { background: var(--primary); color: #000; }
   .tpl-templates04-10 { background: #fff; color: #000; }
   .tpl-templates04-11 { border-top: 1px solid #e2e8f0; }
   .tpl-templates04-12 { color: #64748b; }
   .tpl-templates04-13 { color: #64748b; }
   .tpl-templates04-14 { color: #64748b; }
-  .tpl-templates04-15 { color: #eaff00; }
+  .tpl-templates04-15 { color: var(--primary); }
   .tpl-templates04-16 { color: #fff; }
   .tpl-templates04-17 { color: #64748b; }
   .tpl-templates04-18 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
