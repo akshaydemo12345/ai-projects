@@ -304,7 +304,7 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = false;
+  const DISABLE_AI_IMAGES_FOR_TESTING = true;
   // 👆👆👆
 
   if (!htmlContent || typeof htmlContent !== 'string') {
@@ -312,7 +312,8 @@ async function replacePlaceholdersInHtml(
   }
 
   if (DISABLE_AI_IMAGES_FOR_TESTING) {
-    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Will use local fallback images.');
+    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Keeping original template images.');
+    return { html: htmlContent, imageCount: 0 };
   }
 
   const getLocalFallbackImage = (indStr, html = '') => {
