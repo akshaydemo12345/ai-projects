@@ -304,7 +304,7 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = true;
+  const DISABLE_AI_IMAGES_FOR_TESTING = false;
   // 👆👆👆
 
   if (!htmlContent || typeof htmlContent !== 'string') {
@@ -312,10 +312,18 @@ async function replacePlaceholdersInHtml(
   }
 
   if (DISABLE_AI_IMAGES_FOR_TESTING) {
-    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Skipping getimg.ai API.');
-
-    return { html: htmlContent, imageCount: 0 };
+    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Will use local fallback images.');
   }
+
+  const getLocalFallbackImage = (indStr, html = '') => {
+    const ind = (indStr || '').toLowerCase();
+    const htmlLower = html.toLowerCase();
+    if (ind.includes('law') || htmlLower.includes('lawfirm')) return '/assets/templates/LawFirm/templates03/justice.jpg';
+    if (ind.includes('health') || ind.includes('medical') || ind.includes('dental') || htmlLower.includes('healthcare')) return '/assets/templates/healthcare/templates03/screnshort82.png';
+    if (ind.includes('travel') || ind.includes('tour') || htmlLower.includes('travel')) return '/assets/templates/travel/templates03/dest-venice.jpg';
+    if (ind.includes('finance') || ind.includes('bank') || htmlLower.includes('finance')) return '/assets/templates/finance/templates03/screenshot1.png';
+    return '/assets/templates/finance/templates01/screenshot.png'; // default
+  };
 
   try {
 
@@ -338,7 +346,7 @@ async function replacePlaceholdersInHtml(
           src.includes('picsum.photos') ||
           src.includes('freepik.com') ||
           src.includes('placehold.co') ||
-          src.includes('/assets/')
+          (src.includes('/assets/') && !DISABLE_AI_IMAGES_FOR_TESTING)
         )
       ) {
 
@@ -396,10 +404,15 @@ async function replacePlaceholdersInHtml(
      */
     const results = [];
     for (const img of imagesToReplace) {
-      const prompt = getPromptForIndustry(industry, subIndustry, img.context);
-      const width = img.context.isHero ? 768 : 512;
-      const height = img.context.isHero ? 512 : 512;
-      const newUrl = await generateGetImgUrl(prompt, width, height);
+      let newUrl;
+      if (DISABLE_AI_IMAGES_FOR_TESTING) {
+        newUrl = getLocalFallbackImage(industry, htmlContent);
+      } else {
+        const prompt = getPromptForIndustry(industry, subIndustry, img.context);
+        const width = 800;
+        const height = 600;
+        newUrl = await generateGetImgUrl(prompt, width, height);
+      }
 
       results.push({
         type: img.type,
@@ -447,6 +460,9 @@ async function replacePlaceholdersInHtml(
     const remainingUrls = [];
     while ((match = stockRegex.exec(finalHtml)) !== null) {
       const url = match[1];
+      if (DISABLE_AI_IMAGES_FOR_TESTING && url.includes('/assets/')) {
+        continue;
+      }
       if (!remainingUrls.some(r => r.url === url)) {
         const startIdx = Math.max(0, match.index - 300);
         const precedingText = finalHtml.substring(startIdx, match.index).toLowerCase();
@@ -465,10 +481,15 @@ async function replacePlaceholdersInHtml(
           isHero: item.isHero,
           sectionClass: item.isHero ? 'hero' : ''
         };
-        const prompt = getPromptForIndustry(industry, subIndustry, context);
-        const width = item.isHero ? 768 : 512;
-        const height = item.isHero ? 512 : 512;
-        const newUrl = await generateGetImgUrl(prompt, width, height);
+        let newUrl;
+        if (DISABLE_AI_IMAGES_FOR_TESTING) {
+          newUrl = getLocalFallbackImage(industry, htmlContent);
+        } else {
+          const prompt = getPromptForIndustry(industry, subIndustry, context);
+          const width = 1200;
+          const height = 800;
+          newUrl = await generateGetImgUrl(prompt, width, height);
+        }
 
         remainingResults.push({ originalUrl: item.url, newUrl });
 
