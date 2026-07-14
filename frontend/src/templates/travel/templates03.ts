@@ -791,10 +791,29 @@ export const travel03Html = `
       var isInEditor = !!document.querySelector('[data-gjs-type]');
       if (!isValid || isInEditor) {
         e.preventDefault();
-        e.stopImmediatePropagation();
       }
     }
   }, true);
+  
+  // Initialize Swiper in preview/live mode
+  if (!isInEditor && typeof Swiper !== 'undefined') {
+    var swipers = document.querySelectorAll('.swiper-container');
+    swipers.forEach(function(s) {
+      var slidesPerView = s.getAttribute('data-slides-per-view') || 1;
+      new Swiper(s, {
+        slidesPerView: slidesPerView,
+        loop: true,
+        pagination: {
+          el: s.querySelector('.swiper-pagination'),
+          clickable: true,
+        },
+        navigation: {
+          nextEl: s.querySelector('.swiper-button-next'),
+          prevEl: s.querySelector('.swiper-button-prev'),
+        },
+      });
+    });
+  }
 })();
 </script>
 `;

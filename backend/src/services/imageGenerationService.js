@@ -304,7 +304,7 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = false;
+  const DISABLE_AI_IMAGES_FOR_TESTING = true;
   // 👆👆👆
 
   if (!htmlContent || typeof htmlContent !== 'string') {

@@ -49,6 +49,8 @@ export const ModernLoader = ({
     const interval = setInterval(() => {
       if (!mounted) return;
       setProgress((prev) => {
+        if (prev >= 100) return 100;
+
         if (isComplete) {
           const next = prev + 5;
           if (next >= 100) {
