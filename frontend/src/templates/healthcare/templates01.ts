@@ -902,7 +902,7 @@ export const healthcare01Html = `
 <h2 class="font-h2" style="margin-bottom: 1rem;">Start Your Smile Journey Today</h2>
 <p class="font-body-lg text-secondary">Join thousands of happy patients who have transformed their smiles with us.</p>
 </div>
-<div data-gjs-type="swiper-container" class="cta-banner swiper-container cta-slider" data-navigation="true" data-pagination="bullets" style="padding: 0;">
+<div data-gjs-type="swiper-container" class="cta-banner swiper-container cta-slider" data-slides-per-view="1" data-navigation="true" data-pagination="bullets" style="padding: 0;">
 <div class="cta-bg-icon">
 <span class="material-symbols-outlined">dentistry</span>
 </div>
@@ -1144,6 +1144,26 @@ Absolutely. We reserve specific slots daily for emergency cases. If you're exper
         }
       }
     }, true);
+    
+    // Initialize Swiper in preview/live mode
+    if (!isInEditor && typeof Swiper !== 'undefined') {
+      var swipers = document.querySelectorAll('.swiper-container');
+      swipers.forEach(function(s) {
+        var slidesPerView = s.getAttribute('data-slides-per-view') || 1;
+        new Swiper(s, {
+          slidesPerView: slidesPerView,
+          loop: true,
+          pagination: {
+            el: s.querySelector('.swiper-pagination'),
+            clickable: true,
+          },
+          navigation: {
+            nextEl: s.querySelector('.swiper-button-next'),
+            prevEl: s.querySelector('.swiper-button-prev'),
+          },
+        });
+      });
+    }
   })();
 </script>
 
