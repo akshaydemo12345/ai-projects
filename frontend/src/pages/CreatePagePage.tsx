@@ -20,7 +20,6 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
-import { finance04Html, finance04Styles } from "../templates/finance/templates04";
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
@@ -485,21 +484,14 @@ const LANDING_TEMPLATES: any[] = [
 
   {
     id: "finance-03",
-    name: "Aureum Finance Elite",
-    tag: "Finance",
-    img: "/assets/templates/finance/templates03/screenshot1.png",
-    gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
-    prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
-  },
-
-  {
-    id: "finance-04",
     name: "Finova Analytics",
     tag: "Finance",
     img: "/assets/templates/finance/templates04/screenshot.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
     prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
   },
+
+
 ];
 
 
@@ -1095,7 +1087,6 @@ const CreatePagePage = () => {
         case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
         case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
         case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
-        case "finance-04": enrichedContent = finance04Html; enrichedStyles = finance04Styles; break;
         default: enrichedContent = ""; enrichedStyles = "";
       }
 
@@ -1908,7 +1899,6 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
-                case "finance-04": tpHtml = finance04Html; tpStyles = finance04Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 
