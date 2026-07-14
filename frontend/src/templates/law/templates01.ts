@@ -90,7 +90,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('https://images.unsplash.com/photo-1496715976403-7e36dc43f17b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+  background-image: url('/assets/templates/LawFirm/templates01/image1.jpg');
   background-size: cover;
   background-position: center;
   animation: heroBgZoom 20s infinite alternate linear;
@@ -138,16 +138,16 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .stat-icon { width: 60px; height: 60px; background: rgba(0,0,0,0.03); color: var(--primary); border-radius: 50%; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-bottom: 1.5rem; transition: 0.3s; }
 .stat-icon svg { width: 28px; height: 28px; }
 .stat-item:hover .stat-icon { background: var(--primary); color: #fff; transform: scale(1.1); }
-.stat-item h3 { font-size: 2.8rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -1px; }
+.stat-item h3 { font-size: 2.2rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.5px; }
 .stat-item p { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin: 0; }
 
 /* Split Section */
 .split-section { padding: 6rem 0; background: #fff; position: relative; overflow: hidden; }
 .split-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.split-visual { position: relative; display: flex; flex-wrap: wrap; gap: 1.5rem; height: 500px; z-index: 2;}
+.split-visual { position: relative; display: flex; align-items: stretch; gap: 1.5rem; height: 500px; z-index: 2;}
 .split-visual img { object-fit: cover; border-radius: 12px; }
-.split-img-1 { width: 45%; height: 80%; margin-top: auto; }
-.split-img-2 { width: 55%; height: 100%; }
+.split-img-1 { width: 45%; height: 80%; align-self: flex-end; }
+.split-img-2 { width: calc(55% - 1.5rem); height: 100%; }
 
 .split-content h2 { font-size: 2.8rem; margin-bottom: 1.5rem; }
 .split-content p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1.05rem; }
@@ -169,8 +169,8 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 
 /* Published Mode (JS Tabs) */
 body.js-enabled .tab-content-box.active { display: block; animation: tabFadeIn 0.4s ease-out; }
-body.js-enabled .tab-item.active { background: var(--primary); color: #fff; }
-body.js-enabled .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+body.js-enabled .tab-item.active, .tab-item.active { background: var(--primary) !important; color: #ffffff !important; }
+body.js-enabled .tab-item.active .tab-icon, .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); color: #ffffff !important; }
 
 /* Fallback if active class is missing */
 body.js-enabled .tab-content-wrapper:not(:has(.tab-content-box.active)) .tab-content-box:first-child { display: block; animation: tabFadeIn 0.4s ease-out; }
@@ -216,7 +216,6 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 @keyframes dash-flow { to { stroke-dashoffset: 1000; } }
 
 .step-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.step-row:nth-child(even) .step-content { order: -1; }
 .step-img { border-radius: 16px; overflow: hidden; height: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); position: relative; }
 .step-img img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
 .step-img:hover img { transform: scale(1.05); }
@@ -360,11 +359,12 @@ body.js-enabled .animate-fade.in-view {
   .hero-content h1 { font-size: 3rem; }
   .split-visual { height: 400px; }
   .step-row { grid-template-columns: 1fr; gap: 2rem; }
-  .step-row:nth-child(even) .step-content { order: 0; }
   .steps-path-wrap { display: none; }
 }
 @media (max-width: 768px) {
   .hero-content h1 { font-size: 2.2rem; line-height: 1.2; }
+  h2 { font-size: 2rem !important; }
+  h3 { font-size: 1.5rem !important; }
   .hero-actions { flex-direction: column; align-items: stretch; }
   .hero-actions .btn-primary, .hero-actions .btn-outline { width: 100%; justify-content: center; }
   .hero-img-wrap img { height: 350px; }
@@ -422,9 +422,9 @@ export const law01Html = `
       
       <div class="hero-rating">
         <div class="avatar-group">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100" alt="Client">
-          <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100&h=100" alt="Client">
-          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100" alt="Client">
+          <img src="/assets/templates/LawFirm/templates01/image2.jpg" alt="Client">
+          <img src="/assets/templates/LawFirm/templates01/image3.jpg" alt="Client">
+          <img src="/assets/templates/LawFirm/templates01/image4.jpg" alt="Client">
         </div>
         <div>
           <div class="stars">★★★★★</div>
@@ -435,7 +435,7 @@ export const law01Html = `
     
     <div class="hero-visual animate-up" style="transition-delay: 0.2s;">
       <div class="hero-img-wrap">
-        <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Lawyer discussing with clients">
+        <img src="/assets/templates/LawFirm/templates01/image5.jpg" alt="Lawyer discussing with clients">
       </div>
       <div class="hero-floating-card">
         <div class="icon">
@@ -493,8 +493,8 @@ export const law01Html = `
   <div class="container split-inner">
     <div class="split-visual animate-up">
       <div class="dec-shape dec-dots split-dots"></div>
-      <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=400" alt="Lawyer" class="split-img-1">
-      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" alt="Consultation" class="split-img-2">
+      <img src="/assets/templates/LawFirm/templates01/image6.jpg" alt="Lawyer" class="split-img-1">
+      <img src="/assets/templates/LawFirm/templates01/image7.jpg" alt="Consultation" class="split-img-2">
     </div>
     <div class="split-content animate-up" style="transition-delay: 0.2s;">
       <div class="badge">About Us</div>
@@ -549,35 +549,35 @@ export const law01Html = `
         <div class="tab-content-box active" id="panel-1">
           <h3>Discover Solutions</h3>
           <p>We provide comprehensive legal strategies tailored to the complexities of your specific case, ensuring your interests are vigorously protected at every stage.</p>
-          <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800" alt="Legal Solutions">
+          <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
         
         <div class="tab-content-box" id="panel-2">
           <h3>Corporate Law Mastery</h3>
           <p>From mergers and acquisitions to corporate governance, our business law attorneys ensure your enterprise operates smoothly and safely.</p>
-          <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800" alt="Corporate Law">
+          <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-3">
           <h3>Family Law & Divorce</h3>
           <p>Navigate difficult family transitions with our compassionate and experienced attorneys focusing on child custody and asset division.</p>
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800" alt="Family Law">
+          <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-4">
           <h3>Real Estate Legalities</h3>
           <p>We handle complex real estate transactions, zoning laws, and property disputes, providing a solid foundation for your investments.</p>
-          <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800" alt="Real Estate">
+          <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-5">
           <h3>Criminal Defense</h3>
           <p>Aggressive and strategic defense to protect your rights, freedom, and future against criminal charges at state and federal levels.</p>
-          <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Criminal Defense">
+          <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
       </div>
@@ -598,6 +598,8 @@ export const law01Html = `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
         Our Process
       </div>
+      <h2 style="font-size: 2.8rem; margin-bottom: 1rem; margin-top: 1rem;">A Clear Path to Legal Resolution</h2>
+      <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto;">We guide you through every stage of the legal process with absolute clarity, ensuring you are always informed, prepared, and confident in your case.</p>
     </div>
     
     <div class="steps-wrapper">
@@ -608,14 +610,16 @@ export const law01Html = `
         </svg>
       </div>
 
+      <!-- AI INSTRUCTION: You MUST keep exactly 3 .step-row elements. DO NOT delete the .step-content or .step-img divs inside them. Only rewrite the text! -->
+
       <div class="step-row animate-up">
-        <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&q=80&w=800" alt="Consultation">
-        </div>
         <div class="step-content">
           <div class="step-number">01</div>
           <h3>Initial Consultation</h3>
-          <p>Begin your journey with a free and confidential initial consultation. During this meeting, we'll discuss the specifics of your situation, answer any questions you may have, and outline the potential legal strategies tailored to your case.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        </div>
+        <div class="step-img">
+          <img src="/assets/templates/LawFirm/templates01/image13.jpg" alt="Office">
         </div>
       </div>
       
@@ -623,21 +627,21 @@ export const law01Html = `
         <div class="step-content">
           <div class="step-number">02</div>
           <h3>Finalizing the Divorce</h3>
-          <p>As we approach the final stages of the process, we work diligently to secure a fair and just resolution. This includes finalizing any agreements, addressing remaining legal details, and ensuring a smooth transition into next chapter your life.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
         </div>
         <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80&w=800" alt="Strategy">
+          <img src="/assets/templates/LawFirm/templates01/image14.jpg" alt="Strategy Team">
         </div>
       </div>
       
       <div class="step-row animate-up">
-        <div class="step-img">
-          <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Resolution">
-        </div>
         <div class="step-content">
           <div class="step-number">03</div>
           <h3>Post-Divorce Support</h3>
-          <p>Even after the divorce is finalized, we remain available to address any post-divorce concerns or modifications. Our commitment to your well-being extends beyond the conclusion of the legal proceedings.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        </div>
+        <div class="step-img">
+          <img src="/assets/templates/LawFirm/templates01/image15.jpg" alt="Book">
         </div>
       </div>
     </div>
@@ -651,13 +655,13 @@ export const law01Html = `
       <div class="circle-dashed"></div>
       <div class="circle-dashed-2"></div>
       <div class="circle-dashed-3"></div>
-      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=300&h=300" alt="Lead Attorney" class="center-avatar">
-      <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-1" alt="Team">
-      <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-2" alt="Team">
-      <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-3" alt="Team">
-      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-4" alt="Team">
-      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-5" alt="Team">
-      <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100&h=100" class="orbit-avatar orbit-6" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image16.jpg" alt="Lead Attorney" class="center-avatar">
+      <img src="/assets/templates/LawFirm/templates01/image17.jpg" class="orbit-avatar orbit-1" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image18.jpg" class="orbit-avatar orbit-2" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image19.jpg" class="orbit-avatar orbit-3" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image20.jpg" class="orbit-avatar orbit-4" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image21.jpg" class="orbit-avatar orbit-5" alt="Team">
+      <img src="/assets/templates/LawFirm/templates01/image22.jpg" class="orbit-avatar orbit-6" alt="Team">
     </div>
     
     <div class="team-content animate-up" style="transition-delay: 0.2s;">
@@ -665,7 +669,7 @@ export const law01Html = `
       <h2>Expertise Supported By A Powerful Network</h2>
       
       <div class="attorney-card">
-        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200&h=200" alt="Attorney">
+        <img src="/assets/templates/LawFirm/templates01/image23.jpg" alt="Attorney">
         <div class="attorney-info">
           <p>"As a lawyer, I work closely with you. I provide comprehensive legal representation tailored to your needs, backed by a team of specialists."</p>
           <div class="stars">★★★★★</div>

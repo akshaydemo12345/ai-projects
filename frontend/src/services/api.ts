@@ -176,6 +176,7 @@ export interface LandingPage {
   previewToken?: string;
   template?: string;
   templateId?: string;
+  generationProgress?: number;
   figmaImage?: string;
   views: number;
   aiUsage?: {

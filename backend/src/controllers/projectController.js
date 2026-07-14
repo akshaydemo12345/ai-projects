@@ -37,17 +37,17 @@ exports.createProject = async (req, res, next) => {
         finishedAt: new Date(),
         errors: [],
       };
-      
+
       const wp = req.body.websiteProfile;
       projectPayload.websiteUrl = wp.extraction?.sourceUrl || wp.extraction?.finalUrl || req.body.websiteUrl || req.body.url;
       if (wp.identity?.logoUrl) projectPayload.logoUrl = wp.identity.logoUrl;
       if (wp.identity?.favicon) projectPayload.faviconUrl = wp.identity.favicon;
-      
+
       // Keep root level properties consistent with provided primary/secondary/colors
       if (req.body.primaryColor) projectPayload.primaryColor = req.body.primaryColor;
       if (req.body.secondaryColor) projectPayload.secondaryColor = req.body.secondaryColor;
       if (req.body.colors) projectPayload.colors = req.body.colors;
-      
+
       console.debug('[projectController] using websiteProfile provided by frontend, skipping quick fetch & background scraping.');
     } else if (req.body.websiteUrl || req.body.url) {
       const websiteToInspect = req.body.websiteUrl || req.body.url;
@@ -74,7 +74,7 @@ exports.createProject = async (req, res, next) => {
         const $ = cheerio.load(html);
 
         const title = $('meta[property="og:site_name"]').attr('content') || $('title').text() || null;
-        const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
+        const descriptionText = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
 
         let favicon = $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href') || $('link[rel="apple-touch-icon"]').attr('href') || null;
         if (favicon && !favicon.startsWith('http')) {
@@ -88,10 +88,10 @@ exports.createProject = async (req, res, next) => {
 
         // Attach minimal identity info so frontend can show favicon/logo/title immediately
         projectPayload.websiteProfile.identity = projectPayload.websiteProfile.identity || {};
-        if (favicon) projectPayload.websiteProfile.identity.faviconUrl = favicon;
+        if (favicon) projectPayload.websiteProfile.identity.favicon = favicon; // Fix key: favicon (schema uses favicon, not faviconUrl)
         if (logo) projectPayload.websiteProfile.identity.logoUrl = logo;
-        if (title) projectPayload.websiteProfile.identity.title = title;
-        if (description) projectPayload.websiteProfile.identity.description = description;
+        if (title) projectPayload.websiteProfile.identity.name = title;
+        if (descriptionText) projectPayload.websiteProfile.identity.description = descriptionText;
 
         // Attach fonts passed from the frontend (collected after Analyze Website click)
         if (bodyFontFromBody || headingFontFromBody) {
@@ -107,9 +107,9 @@ exports.createProject = async (req, res, next) => {
         if (logo) projectPayload.logoUrl = logo;
         if (favicon && !projectPayload.faviconUrl) projectPayload.faviconUrl = favicon;
         if (title && !projectPayload.name) projectPayload.name = projectPayload.name || title;
-        if (description && !projectPayload.description) projectPayload.description = projectPayload.description || description;
+        if (descriptionText && !projectPayload.description) projectPayload.description = projectPayload.description || descriptionText;
 
-        console.debug('[projectController] quick metadata fetched', { fetchUrl, hasTitle: !!title, hasDescription: !!description, hasFavicon: !!favicon, hasLogo: !!logo });
+        console.debug('[projectController] quick metadata fetched', { fetchUrl, hasTitle: !!title, hasDescription: !!descriptionText, hasFavicon: !!favicon, hasLogo: !!logo });
       } catch (e) {
         // Fail quietly — background job will attempt full scrape later
         console.debug('[projectController] quick metadata fetch failed:', e?.message || e);
@@ -311,9 +311,9 @@ exports.getProjectPagesSummary = async (req, res, next) => {
     // Ownership verified implicitly: pages are scoped to both projectId + userId via Page model
     // (no extra Project.exists() round-trip needed)
 
-    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory
+    // Only the fields the page list table renders — no HTML/CSS blobs, no logoUrl, no aiUsageHistory 
     const pages = await Page.find({ projectId: id, isDeleted: { $ne: true } })
-      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage')
+      .select('_id title slug status type primaryColor secondaryColor publishedUrl views aiUsage previewToken')
       .sort('-createdAt')
       .lean();
 

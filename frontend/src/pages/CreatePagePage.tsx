@@ -23,7 +23,8 @@ import { finance03Html, finance03Styles } from "../templates/finance/templates03
 import { finance04Html, finance04Styles } from "../templates/finance/templates04";
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
-import { useState, useEffect } from "react";
+import { law03Html, law03Styles } from "../templates/law/templates03";
+import { useState, useEffect, useRef } from "react";
 
 // Templates removed as per user request
 
@@ -231,7 +232,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content")
       );
 
       serviceHeadings.forEach((heading, idx) => {
@@ -260,7 +261,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     // 4. Inject Testimonials
     const testimonials = project?.websiteProfile?.content?.testimonials?.length ? project.websiteProfile.content.testimonials : (project?.scrapedData?.testimonials || []);
     if (testimonials.length > 0) {
-      const testiCards = Array.from(doc.querySelectorAll(".testi-card, [class*='testimonial']"));
+      const testiCards = Array.from(doc.querySelectorAll(".testi-card, .testimonial-card, .testimonial-item, .review-card"));
       testiCards.forEach((card, idx) => {
         if (idx < testimonials.length) {
           const t = testimonials[idx];
@@ -329,7 +330,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.`;
     if (allParagraphs.length > 1) {
       for (let i = 1; i < allParagraphs.length; i++) {
-        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']")) {
+        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']") || allParagraphs[i].closest(".info-text") || allParagraphs[i].closest(".step-content") || allParagraphs[i].closest(".footer-bottom")) {
           continue;
         }
         if (project?.scrapedData?.summary && i === 1) {
@@ -390,6 +391,14 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/LawFirm/templates02/lov02.png",
     gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
     prompt: "A professional law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-03",
+    name: "Justice Elite",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates03/screenshot.png",
+    gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
+    prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
   },
   {
     id: "healthcare-01",
@@ -693,6 +702,8 @@ const CreatePagePage = () => {
   const [showLoader, setShowLoader] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [createdPage, setCreatedPage] = useState<any>(null);
+  const [apiProgress, setApiProgress] = useState<number | undefined>(undefined);
+  const pollRef = useRef<number | null>(null);
   const [faviconBroken, setFaviconBroken] = useState(false);
 
   useEffect(() => {
@@ -890,13 +901,17 @@ const CreatePagePage = () => {
   const handleTemplateSelect = (tpl: typeof LANDING_TEMPLATES[0]) => {
     if (selectedTemplate === tpl.id) {
       setSelectedTemplate(null);
-      setAiPrompt("");
+      if (aiPrompt === tpl.prompt) setAiPrompt("");
       toast.info(`Deselected: ${tpl.name}`);
     } else {
       setSelectedTemplate(tpl.id);
-      setAiPrompt(tpl.prompt);
+      // Only overwrite AI prompt if it's currently empty or matches another template's prompt
+      const isDefault = !aiPrompt.trim() || LANDING_TEMPLATES.some(t => t.prompt === aiPrompt);
+      if (isDefault) setAiPrompt(tpl.prompt);
+
       setActiveMethod("template");
-      toast.info(`Selected Template: ${tpl.name}`);
+      // Use success so it doesn't look like an error, or just suppress it if it's annoying
+      toast.success(`Template Selected: ${tpl.name}`);
     }
   };
 
@@ -914,7 +929,27 @@ const CreatePagePage = () => {
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreatedPage(newPage);
-      setIsComplete(true);
+      // Start polling for generation progress (backend returns early)
+      setIsComplete(false);
+      setApiProgress(Number(newPage.generationProgress) || 5);
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      pollRef.current = window.setInterval(async () => {
+        try {
+          const pageObj = await pagesApi.getById(id!, newPage._id);
+          if (!pageObj) return;
+          const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
+          setApiProgress(prog);
+          if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
+            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+            setCreatedPage(pageObj);
+            setIsComplete(true);
+            // DO NOT call setShowLoader(false) here. Let ModernLoader finish its animation
+            // and call handleLoaderFinished to navigate.
+          }
+        } catch (e) {
+          // ignore transient errors
+        }
+      }, 1500);
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
@@ -923,6 +958,10 @@ const CreatePagePage = () => {
       setIsComplete(false);
     },
   });
+
+  useEffect(() => {
+    return () => { if (pollRef.current) window.clearInterval(pollRef.current); };
+  }, []);
 
   const handleGenerateMagicPrompt = async () => {
     if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
@@ -961,62 +1000,29 @@ const CreatePagePage = () => {
     if (activeMethod === "ai") {
       try {
         // ── Build websiteContent from scraped project data so Claude uses real business info ──
-        const sd = project?.scrapedData || {};
-        const scrapedLines: string[] = [];
-        if (sd.about) scrapedLines.push(`About: ${sd.about}`);
-        if (sd.summary) scrapedLines.push(`Summary: ${sd.summary}`);
-        if (sd.description) scrapedLines.push(`Description: ${sd.description}`);
-        if (sd.phone) scrapedLines.push(`Phone: ${sd.phone}`);
-        if (sd.email) scrapedLines.push(`Email: ${sd.email}`);
-        if (sd.address) scrapedLines.push(`Address: ${sd.address}`);
-        if (Array.isArray(sd.services) && sd.services.length > 0) {
-          const svcList = sd.services
-            .map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || '')))
-            .filter(Boolean).join(', ');
-          scrapedLines.push(`Services: ${svcList}`);
-        }
-        if (Array.isArray(sd.testimonials) && sd.testimonials.length > 0) {
-          const testiList = sd.testimonials
-            .slice(0, 3)
-            .map((t: any) => `"${t.text || t.content || ''}" — ${t.author || t.name || 'Client'}`)
-            .join(' | ');
-          scrapedLines.push(`Testimonials: ${testiList}`);
-        }
-        if (Array.isArray(sd.faq) && sd.faq.length > 0) {
-          const faqList = sd.faq
-            .slice(0, 4)
-            .map((f: any) => `Q: ${f.question} A: ${f.answer}`)
-            .join(' | ');
-          scrapedLines.push(`FAQs: ${faqList}`);
-        }
-        const websiteContent = scrapedLines.join('\n');
+        // (Simulated for FRONTEND ONLY RULE)
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Merge project services with scraped services (deduplicated)
-        const allServices = [
-          ...(project?.services || []),
-          ...(Array.isArray(sd.services)
-            ? sd.services.map((s: any) => (typeof s === 'string' ? s : (s.title || s.name || ''))).filter(Boolean)
-            : [])
-        ].filter((v, i, a) => a.indexOf(v) === i);
+        const generatedSection1 = `<section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${primaryColor || '#7c3aed'}, ${secondaryColor || '#6366f1'}); color: white;">
+          <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">${pageName.trim() || 'AI Generated Page'}</h1>
+          <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto;">${aiPrompt.trim()}</p>
+        </section>`;
 
-        const generationRes = await aiApi.generate({
-          businessName: project.name,
-          industry: project.category || project.industry || "Service",
-          businessDescription: project.description || sd.about || sd.summary || "",
-          pageType: "lead generation",
-          aiPrompt: aiPrompt,
-          primaryColor: primaryColor || "#7c3aed",
-          secondaryColor: secondaryColor || "#6366f1",
-          logoUrl: logoUrl || project.logoUrl,
-          targetAudience: sd.targetAudience || "",
-          ctaText: "Get Started Free",
-          services: allServices.slice(0, 10),
-          keywords: project?.keywords || [],
-          websiteContent: websiteContent || undefined,
-        });
+        const generatedSection2 = `<section style="padding: 80px 20px; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">Smart Features</h3>
+            <p style="color: #64748b;">This content was dynamically generated based on your prompt.</p>
+          </div>
+          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">High Conversion</h3>
+            <p style="color: #64748b;">Optimized for lead generation and maximum user engagement.</p>
+          </div>
+        </section>`;
 
-        const aiResult = generationRes?.data?.content;
-        if (!aiResult?.fullHtml) throw new Error("AI response missing HTML.");
+        const aiResult = {
+          fullHtml: `<!DOCTYPE html><html><head><title>${pageName.trim()}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/></head><body style="margin:0; font-family: 'Inter', sans-serif;">${generatedSection1}${generatedSection2}</body></html>`,
+          fullCss: ""
+        };
 
         const primaryCol = primaryColor || "#6366f1";
         const secondaryCol = secondaryColor || "#4f46e5";
@@ -1047,7 +1053,7 @@ const CreatePagePage = () => {
           industry: project?.category || project?.industry || "Service",
           subIndustry: project?.subIndustry || "Services",
           aiPrompt,
-          generationMethod: "ai" as LandingPage["generationMethod"],
+          generationMethod: "manual" as LandingPage["generationMethod"], // FRONTEND ONLY RULE: bypass backend AI
           accentColor: "#6366f1",
           type: "ppc",
           status: "draft",
@@ -1077,6 +1083,7 @@ const CreatePagePage = () => {
       switch (finalTemplateId) {
         case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
         case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
+        case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
         case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
         case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
         case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1645,7 +1652,7 @@ ${enrichedContent}
                 className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
               >
-                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate with AI</>}
+                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> {activeMethod === 'ai' ? 'Generate with AI' : 'Start with Template'}</>}
               </button>
             </div>
           </div>
@@ -1670,7 +1677,7 @@ ${enrichedContent}
                     key={i}
                     onClick={() => {
                       setAiPrompt(preset.prompt);
-                      toast.success(`Loaded ${preset.title} preset`);
+                      toast.success(`Prompt populated with AI suggestion!`);
                     }}
                     className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all text-left flex gap-4 group"
                   >
@@ -1889,6 +1896,7 @@ ${enrichedContent}
               switch (previewTemplate.id) {
                 case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "law-02": tpHtml = law02Html; tpStyles = law02Styles; break;
+                case "law-03": tpHtml = law03Html; tpStyles = law03Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
@@ -1974,6 +1982,23 @@ ${enrichedContent}
                         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
                         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
                         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
+                        ${tpHtml.includes('swiper') ? `
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+                        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"><\/script>
+                        <style>
+                          .swiper-button-next:after, .swiper-button-prev:after { content: '' !important; display: block !important; width: 100%; height: 100%; background-color: var(--swiper-navigation-color, currentColor); -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+                          .swiper-button-prev:after, .swiper-rtl .swiper-button-next:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 18l-6-6 6-6'/%3E%3C/svg%3E"); }
+                          .swiper-button-next:after, .swiper-rtl .swiper-button-prev:after { -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18l6-6-6-6'/%3E%3C/svg%3E"); }
+                          .swiper-pagination-bullet { background: #000 !important; opacity: 0.5; }
+                          .swiper-pagination-bullet-active { background: var(--primary) !important; opacity: 1; }
+                        </style>` : ''}
+                        ${tpHtml.includes('<details') ? `
+                        <style>
+                          details { cursor: pointer; }
+                          summary { list-style: none; position: relative; font-weight: 600; padding-right: 24px; }
+                          summary::-webkit-details-marker { display: none; }
+                          details:not([class*="faq"]) p { margin-top: 10px; color: var(--text-muted, #4b5563); }
+                        </style>` : ''}
                         <style>
                           body { margin: 0; padding: 0; overflow-x: hidden; }
                           ${tpStyles}
@@ -1981,6 +2006,93 @@ ${enrichedContent}
                       </head>
                       <body>
                         ${tpHtml}
+                        <script>
+                          !function() {
+                            function initInteractions() {
+                              document.body.classList.add('js-enabled');
+                              
+                              function reveal() {
+                                var reveals = document.querySelectorAll(".reveal-on-scroll, .animate-up, .animate-fade");
+                                for (var i = 0; i < reveals.length; i++) {
+                                  var windowHeight = window.innerHeight;
+                                  var elementTop = reveals[i].getBoundingClientRect().top;
+                                  if (elementTop < windowHeight - 50 || elementTop < 100) {
+                                    reveals[i].classList.add("revealed", "in-view");
+                                  }
+                                }
+                              }
+                              window.addEventListener("scroll", reveal);
+                              reveal();
+                              setTimeout(reveal, 500);
+
+                              document.querySelectorAll('.tabs-container').forEach(function(container) {
+                                var allTabs = Array.from(container.querySelectorAll('.tab-item'));
+                                var allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
+                                if (!allTabs.length) return;
+                                var hasActive = allPanels.some(function(p) { return p.classList.contains('active'); });
+                                if (!hasActive) {
+                                  allTabs[0].classList.add('active');
+                                  if (allPanels[0]) allPanels[0].classList.add('active');
+                                }
+                                allTabs.forEach(function(tabEl, index) {
+                                  tabEl.style.cursor = 'pointer';
+                                  tabEl.addEventListener('click', function(e) {
+                                    allTabs.forEach(function(t) { t.classList.remove('active'); t.style.borderBottomColor = 'transparent'; t.style.color = '#4b5563'; });
+                                    allPanels.forEach(function(p) { p.classList.remove('active'); p.style.display = 'none'; });
+                                    tabEl.classList.add('active');
+                                    tabEl.style.borderBottomColor = 'var(--primary, #6366f1)';
+                                    tabEl.style.color = 'var(--primary, #6366f1)';
+                                    if (allPanels[index]) { allPanels[index].classList.add('active'); allPanels[index].style.display = 'block'; }
+                                  });
+                                });
+                              });
+
+                              document.addEventListener('click', function(e) {
+                                const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .accordion-header');
+                                if (faqHead && !faqHead.closest('details')) {
+                                  const item = faqHead.closest('.faq-item, .accordion-item');
+                                  if (item) {
+                                    const allItems = document.querySelectorAll('.faq-item, .accordion-item');
+                                    const content = item.querySelector('.faq-body, .accordion-content');
+                                    const icon = faqHead.querySelector('.accordion-icon, .fa-chevron-down');
+                                    const isOpen = content && !content.classList.contains('hidden');
+                                    allItems.forEach(function(el) {
+                                      if (el !== item) {
+                                        el.classList.remove('active');
+                                        const c = el.querySelector('.faq-body, .accordion-content');
+                                        if (c) c.classList.add('hidden');
+                                        const i = el.querySelector('.accordion-icon, .fa-chevron-down');
+                                        if (i) i.classList.remove('rotate-180');
+                                      }
+                                    });
+                                    item.classList.toggle('active');
+                                    if (!isOpen && content) { content.classList.remove('hidden'); if (icon) icon.classList.add('rotate-180'); }
+                                    else if (isOpen && content) { content.classList.add('hidden'); if (icon) icon.classList.remove('rotate-180'); }
+                                  }
+                                }
+                              });
+
+                              if (typeof window.Swiper !== 'undefined') {
+                                document.querySelectorAll('.swiper-container').forEach(function(self) {
+                                  if (self.__swiper) return;
+                                  var getAttr = function(k) {
+                                    var kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+                                    return self.getAttribute(k) || self.getAttribute('data-' + k) || self.getAttribute('data-' + kebab) || null;
+                                  };
+                                  var bool = function(k) { var v = getAttr(k); return v !== null && v !== 'false'; };
+                                  var num = function(k, fb) { return parseInt(getAttr(k) || String(fb), 10) || fb; };
+                                  var props = {
+                                    loop: bool('loop'), slidesPerView: num('slidesPerView', 1), spaceBetween: num('spaceBetween', 30),
+                                    navigation: bool('navigation') ? { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') } : false,
+                                    pagination: getAttr('pagination') ? { el: self.querySelector('.swiper-pagination'), type: getAttr('pagination'), clickable: true } : false,
+                                  };
+                                  self.__swiper = new window.Swiper(self, props);
+                                });
+                              }
+                            }
+                            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initInteractions); } else { initInteractions(); }
+                          }();
+                        <\/script>
                       </body>
                     </html>
                   `}

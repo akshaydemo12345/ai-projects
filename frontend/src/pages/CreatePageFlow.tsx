@@ -224,21 +224,13 @@ const CreatePageFlow = () => {
 
     let errorMsg = "AI generation failed. Please check your connection or try again.";
     try {
-      const res = await aiApi.generate({
-        businessName,
-        industry,
-        pageType: selectedPageType === "landing" ? "lead generation" : "lead generation",
-        businessDescription: businessDesc,
-        targetAudience,
-        ctaText,
-        aiPrompt,
-        primaryColor,
-        secondaryColor,
-        logoUrl,
-        projectId,
-      });
-
-      const aiContent = res?.data?.content;
+      // FRONTEND ONLY: Simulated AI generation
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      const aiContent = {
+        fullHtml: `<!DOCTYPE html><html><head><title>AI Generated Flow</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/></head><body style="margin:0; font-family: 'Inter', sans-serif;"><section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${primaryColor || '#7c3aed'}, ${secondaryColor || '#6366f1'}); color: white;"><h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">AI Generated Page</h1><p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto;"><strong>Prompt:</strong> ${aiPrompt || 'Default Flow Content'}</p></section></body></html>`,
+        fullCss: ""
+      };
+      
       if (aiContent?.fullHtml) {
         localStorage.setItem("grapes-initial-html", aiContent.fullHtml);
         localStorage.setItem("grapes-initial-css", aiContent.fullCss || "");

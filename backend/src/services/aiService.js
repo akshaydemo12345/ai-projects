@@ -467,7 +467,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
         { role: 'system', content: finalSystemPrompt },
         { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
       ],
-      max_tokens: 16000,
+      max_tokens: 1600,
       temperature: 0.95
     });
     const rawText = response.choices[0].message.content;
@@ -495,7 +495,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       try {
         logger.info(`[AI] Claude: ${model}`);
         const response = await anthropic.messages.create({
-          model, max_tokens: 16000, temperature: 0.95,
+          model, max_tokens: 1600, temperature: 0.95,
           system: [
             {
               type: "text",
