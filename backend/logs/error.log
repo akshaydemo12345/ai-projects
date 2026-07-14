@@ -4624,3 +4624,9 @@ Require stack:
 [2026-07-06T06:19:44.557Z] [ERROR] POST /projects/6a27aeca83a964d21d43dd41/pages 500 1471ms {"ip":"127.0.0.1","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
 [2026-07-06T06:42:27.913Z] [ERROR] GET /favicon.ico → Page not found or no page id provided {"statusCode":404,"stack":"Error: Page not found or no page id provided\n    at exports.getPublicPageHTML (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/src/controllers/publicController.js:1279:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
 [2026-07-06T07:11:14.737Z] [ERROR] GET /api/pages/swsws → Page not found or no page id provided {"statusCode":404,"stack":"Error: Page not found or no page id provided\n    at exports.getPublicPageHTML (/var/www/html/ai-projects-main-monday-12pm-working-new/ai-projects-main-monday-12pm-working/ai-projects-main/backend/src/controllers/publicController.js:1279:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+[2026-07-14T04:53:55.268Z] [ERROR] [ImageGenerationService] prompt is not defined
+[2026-07-14T04:53:55.277Z] [ERROR] [ImageGenerationService] prompt is not defined
+[2026-07-14T04:53:55.288Z] [ERROR] [ImageGenerationService] prompt is not defined
+[2026-07-14T04:54:49.940Z] [ERROR] [ImageGenerationService] prompt is not defined
+[2026-07-14T04:54:49.950Z] [ERROR] [ImageGenerationService] prompt is not defined
+[2026-07-14T04:54:49.961Z] [ERROR] [ImageGenerationService] prompt is not defined
