@@ -56,6 +56,20 @@ const cleanHTML = (raw) => {
 };
 
 // ═══════════════════════════════════════════════════════════
+//  HTML COMPLETENESS CHECK
+//  Detects a truncated / cut-off AI response so the caller can
+//  retry with more budget instead of shipping a half page.
+// ═══════════════════════════════════════════════════════════
+const isHtmlIncomplete = (html) => {
+  if (!html || typeof html !== 'string') return true;
+  const closesHtml = /<\/html>\s*$/i.test(html.trim());
+  const closesBody = /<\/body>/i.test(html);
+  const hasFooter = /<footer/i.test(html) || /class="[^"]*footer/i.test(html);
+  // A finished page should close its tags AND contain a footer.
+  return !(closesHtml && closesBody && hasFooter);
+};
+
+// ═══════════════════════════════════════════════════════════
 //  FORM FIELD BUILDER
 //  Converts scraped/DB form fields into HTML with validation.
 //  Falls back to universal 4-field form if no fields supplied.
@@ -234,10 +248,12 @@ const extractFieldsFromScrape = (scrapedText) => {
 // ═══════════════════════════════════════════════════════════
 
 const FORM_PLACEMENTS = [
-  'after-features',    // section 3 — early, high visibility
-  'after-about',       // section 4
-  'after-testimonials',// section 6
-  'before-footer',     // last section before footer
+  'in-hero',            // right inside the hero section (side-by-side)
+  'after-features',     // section 3 — early, high visibility
+  'after-about',        // mid page
+  'after-testimonials', // late page
+  'own-section',        // dedicated full-width contact section
+  'before-footer',      // last section before footer
 ];
 
 /**
@@ -323,7 +339,7 @@ const VALIDATION_SCRIPT = `<script>
       });
       if(ok){
         var w=form.closest('.form-wrapper');
-        if(w)w.innerHTML='<div style="text-align:center;padding:3rem 1rem"><div style="font-size:3.5rem;margin-bottom:1rem">\u2705</div><h3 style="font-size:1.75rem;font-weight:700;margin-bottom:.75rem">Thank You!</h3><p style="color:#6b7280">We received your message and will get back to you shortly.</p></div>';
+        if(w)w.innerHTML='\\x3Cdiv style="text-align:center;padding:3rem 1rem"\\x3E\\x3Cdiv style="font-size:3.5rem;margin-bottom:1rem"\\x3E\\u2705\\x3C/div\\x3E\\x3Ch3 style="font-size:1.75rem;font-weight:700;margin-bottom:.75rem"\\x3EThank You!\\x3C/h3\\x3E\\x3Cp style="color:#6b7280"\\x3EWe received your message and will get back to you shortly.\\x3C/p\\x3E\\x3C/div\\x3E';
       }
     });
   }
@@ -335,9 +351,6 @@ const VALIDATION_SCRIPT = `<script>
 //  SELECTIVE SCROLL ANIMATION ENGINE
 //  — Injected once, ultra-lightweight (~400 bytes gzip)
 //  — Uses IntersectionObserver for performance
-//  — AI is instructed to use ONLY on big reveal moments
-//    (hero content, section headings, feature cards, stats)
-//    NOT on every paragraph or every child element
 // ═══════════════════════════════════════════════════════════
 const SCROLL_ANIMATION_ENGINE = `<style>
 /* Scroll reveal — only elements with [data-reveal] animate */
@@ -384,14 +397,18 @@ const injectScripts = (html) => {
   if (html.includes('<head>')) {
     html = html.replace('<head>', '<head>\n' + SCROLL_ANIMATION_ENGINE);
     // Then inject only form validation before </body>
-    return html.includes('</body>')
-      ? html.replace('</body>', VALIDATION_SCRIPT + '\n</body>')
-      : html + VALIDATION_SCRIPT;
+    if (html.includes('</body>')) {
+      return html.replace('</body>', VALIDATION_SCRIPT + '\n</body>');
+    } else {
+      return html + '\n' + VALIDATION_SCRIPT + '\n</body>\n</html>';
+    }
   }
 
-  return html.includes('</body>')
-    ? html.replace('</body>', toInject + '</body>')
-    : html + toInject;
+  if (html.includes('</body>')) {
+    return html.replace('</body>', toInject + '\n</body>');
+  } else {
+    return html + '\n' + toInject + '\n</body>\n</html>';
+  }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -437,7 +454,14 @@ const withRetry = async (fn, { retries = 3, baseDelayMs = 2000 } = {}) => {
 
 // ═══════════════════════════════════════════════════════════
 //  CORE AI CALL
+//  🚨 BUG FIX: max_tokens was set to 1600 — nowhere near enough
+//  for a full 6+ section HTML page. This is what caused pages to
+//  cut off halfway through the hero. Raised to 8000 for both
+//  providers, and one automatic retry-with-higher-budget added
+//  if the returned HTML looks truncated.
 // ═══════════════════════════════════════════════════════════
+const MAX_OUTPUT_TOKENS = 8000;
+
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
@@ -449,7 +473,6 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const secondaryHex = promptStr.match(/SECONDARY COLOR:\s*(#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
   const businessName = promptStr.match(/BUSINESS NAME:\s*(.+)/)?.[1]?.trim() || 'brand';
 
-  // BUG FIX: was computing `resolved` but never assigning it to `finalSystemPrompt`
   const finalSystemPrompt = systemPrompt
     .replace(/\[PRIMARY_HEX\]/g, primaryHex)
     .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
@@ -467,7 +490,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
         { role: 'system', content: finalSystemPrompt },
         { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
       ],
-      max_tokens: 1600,
+      max_tokens: MAX_OUTPUT_TOKENS,
       temperature: 0.95
     });
     const rawText = response.choices[0].message.content;
@@ -478,7 +501,6 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
     };
   };
 
-  // BUG FIX: respect PREFER_OPENAI env var; previously it was read but ignored
   if (openaiKey && preferOpenAI) {
     try {
       return await tryOpenAI();
@@ -495,7 +517,7 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
       try {
         logger.info(`[AI] Claude: ${model}`);
         const response = await anthropic.messages.create({
-          model, max_tokens: 1600, temperature: 0.95,
+          model, max_tokens: MAX_OUTPUT_TOKENS, temperature: 0.95,
           system: [
             {
               type: "text",
@@ -508,10 +530,43 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
           headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15,prompt-caching-2024-07-31" }
         });
         const usage = response.usage;
-        return {
+        let result = {
           ...processResult(response.content[0].text, logoUrl),
           aiUsage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model }
         };
+
+        // Safety net: if the model got cut off mid-page (stop_reason max_tokens
+        // or missing closing tags/footer), ask it once to finish the document.
+        if (response.stop_reason === 'max_tokens' || isHtmlIncomplete(result.fullHtml)) {
+          logger.warn('[AI] Output looked truncated — requesting continuation');
+          try {
+            const continued = await anthropic.messages.create({
+              model, max_tokens: MAX_OUTPUT_TOKENS, temperature: 0.7,
+              system: finalSystemPrompt,
+              messages: [
+                { role: 'user', content: userPrompt },
+                { role: 'assistant', content: response.content[0].text },
+                { role: 'user', content: 'Your previous response was cut off before the page was finished. Continue EXACTLY where you left off (do not repeat any earlier HTML) and finish the remaining sections plus the footer, ending with </body></html>.' }
+              ],
+            });
+            const combinedRaw = response.content[0].text + '\n' + continued.content[0].text;
+            const cUsage = continued.usage;
+            result = {
+              ...processResult(combinedRaw, logoUrl),
+              aiUsage: {
+                promptTokens: usage.input_tokens + cUsage.input_tokens,
+                completionTokens: usage.output_tokens + cUsage.output_tokens,
+                totalTokens: usage.input_tokens + usage.output_tokens + cUsage.input_tokens + cUsage.output_tokens,
+                cost: calculateCost(model, usage.input_tokens, usage.output_tokens) + calculateCost(model, cUsage.input_tokens, cUsage.output_tokens),
+                model
+              }
+            };
+          } catch (contErr) {
+            logger.error(`[AI] Continuation attempt failed: ${contErr.message}`);
+          }
+        }
+
+        return result;
       } catch (err) {
         lastError = err;
         logger.error(`[AI] Claude failed (${model}): ${err.message}`);
@@ -526,7 +581,6 @@ const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
     throw lastError || new Error('All AI providers failed');
   }
 
-  // BUG FIX: `tryOpenAI` was called here but was never defined — now it is
   return await tryOpenAI();
 };
 
@@ -572,82 +626,100 @@ const callAIText = async (systemPrompt, userPrompt) => {
 };
 
 // ═══════════════════════════════════════════════════════════
-//  10 LAYOUT DNA  — each generation picks one at random
-//  These are visual directions, not templates.
-//  Contrast rules are embedded in each description.
+//  PROCEDURAL LAYOUT ENGINE
+//  Instead of picking from a small fixed list (which repeats
+//  fast — only 12×5=60 combos, birthday-paradox means you see
+//  a repeat within ~8-10 generations), we build every page from
+//  SIX independent axes that get combined fresh every call:
+//    colorMode × heroLayout × cardStyle × accentMotif ×
+//    typography × (randomly shuffled section order)
+//  6 × 8 × 6 × 6 × 4 × (14-pick-5 shuffled permutations, which
+//  alone is over 240,000 orderings) = effectively never repeats
+//  in practice, even across thousands of generations.
 // ═══════════════════════════════════════════════════════════
-const LAYOUT_DNA = [
-  {
-    id: 'editorial-split',
-    label: 'Editorial Split',
-    hero: 'Full-viewport hero: 58% left column (very dark #0d0d0d bg, white text, massive 6xl headline, eyebrow label, single CTA), 42% right column is a full-height picsum photo with no overlay.',
-    sections: 'Features: large alternating rows (image left/text right). Testimonials: horizontal 3-col cards with thick left border accent. Stats: bold number row on brand-color bg (white text).',
-    vibe: 'Premium editorial magazine. Strong typographic hierarchy. Monochromatic dark accent.',
-  },
-  {
-    id: 'cinematic-dark',
-    label: 'Cinematic Dark',
-    hero: 'Full-bleed picsum background, dense rgba(0,0,0,0.62) overlay, centered white headline with letter-spacing, elegant white subtext, ghost-border CTA button.',
-    sections: 'Dark body (#0f0f1a). Services: glowing border cards (border: 1px solid rgba(255,255,255,0.1), dark bg, white text). Testimonials: dark cards white text. Stats: gradient accent bar.',
-    vibe: 'Dark luxury. Everything on dark must be white or light. Zero light sections except form.',
-  },
-  {
-    id: 'bento-minimal',
-    label: 'Bento Minimal',
-    hero: 'Clean #f9fafb hero, huge serif display headline (dark #111), short subtext, brand-color CTA, tiny decorative dash/line accent. No background image.',
-    sections: 'Services: asymmetric bento grid (CSS grid-template-areas, varied cell sizes). About: white/light with a real image. Testimonials: quote-card masonry. FAQ: clean border-bottom accordion.',
-    vibe: 'Modern minimal SaaS. Light backgrounds = dark text. Brand color only for CTAs and accents.',
-  },
-  {
-    id: 'gradient-wave',
-    label: 'Gradient Wave',
-    hero: 'Diagonal gradient hero (primary → secondary), white headline, white subtext, white rounded CTA.',
-    sections: 'Alternating light/dark sections for visual rhythm — dark sections ALWAYS get white text and white icon cards. Light sections get dark text. Stats on brand gradient (white numbers). Testimonials: gradient border cards.',
-    vibe: 'Energetic, colorful. Each section clearly signals its background-to-text relationship.',
-  },
-  {
-    id: 'neo-brutalist',
-    label: 'Neo-Brutalist',
-    hero: 'Split: left 50% brand primary (white text, massive bold uppercase H1), right 50% white (dark text, key stat or graphic). Thick 3px black borders on buttons and cards.',
-    sections: 'Services: thick-bordered rectangular cards with icon. No border-radius on anything. FAQ: stark bordered accordion. Testimonials: newspaper-column style. One loud accent color.',
-    vibe: 'Bold, opinionated, confident. Dark side = white text. Light side = dark text. Always.',
-  },
-  {
-    id: 'glassmorphism',
-    label: 'Glassmorphism',
-    hero: 'Rich purple/blue gradient bg (#1a0533 to #0a1628), frosted glass hero card (background:rgba(255,255,255,0.07);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.12)), all text white.',
-    sections: 'Dark background throughout. Glass cards (rgba white, white text, subtle border). Stats bar: solid brand gradient, white. Footer: #050505, white text.',
-    vibe: 'Premium dark tech. Every single text element on dark/glass must be white or #e2e8f0.',
-  },
-  {
-    id: 'soft-luxury',
-    label: 'Soft Luxury',
-    hero: 'Warm ivory #faf8f4 hero, large serif display headline in #1a1208, muted gold brand accent, minimal CTA. No background image — pure typography.',
-    sections: 'All light sections — dark text throughout. Generous whitespace. Services: minimal icon + text. Testimonials: italic serif quotes with author photo. Stats: subtle bordered boxes.',
-    vibe: 'Refined, premium, human. All light = dark text. Brand gold used sparingly on borders/icons.',
-  },
-  {
-    id: 'dashboard-card',
-    label: 'Dashboard / SaaS',
-    hero: 'Split layout: left panel dark (#111827) with white headline + key benefits list, right panel light (#f3f4f6) showing a mock product UI card/screenshot (use a picsum as product image).',
-    sections: 'Features as horizontal feature rows (icon + heading + paragraph). Pricing-style testimonial cards. FAQ clean. Light body overall — dark text.',
-    vibe: 'Tech product, trust-building. Dark hero panel = white text. Light body = dark text.',
-  },
-  {
-    id: 'bold-magazine',
-    label: 'Bold Magazine',
-    hero: 'Fullscreen picsum image, gradient overlay (transparent to #000 80%), bottom-anchored text (white H1, white subtext). Strong CTA with brand accent.',
-    sections: 'Wide section dividers. Feature cards with colored top border accent. Testimonials: large serif quote marks, light gray bg (dark text). Stats: black bg, white numbers.',
-    vibe: 'Editorial energy. Image sections = white text. Light content sections = dark text.',
-  },
-  {
-    id: 'asymmetric-split',
-    label: 'Premium Asymmetric',
-    hero: '70/30 split: text side light (#fff, dark text H1), image side is full-height picsum with dark overlay and white caption. No hero form.',
-    sections: 'Features: numbered large items (not generic grid). About: full-bleed image with text overlay (dark overlay + white text). Testimonials: offset grid. Stats: brand color bg (white).',
-    vibe: 'Architectural precision. Image overlays = white text. Light sections = dark text. Always clear.',
-  },
+
+const COLOR_MODES = [
+  { id: 'light-minimal', rule: 'Clean light body (#ffffff / #f9fafb) throughout. NO hero background image. Dark (#111) text everywhere. Brand color reserved for CTAs, icons, and small accents only.' },
+  { id: 'dark-luxury', rule: 'Full dark theme throughout (#0d0d0d / #0f0f1a body). White or light-gray text everywhere except the form (which stays on a white card for readability). Glowing brand-color accents.' },
+  { id: 'image-overlay', rule: 'Hero and 1-2 other sections use large full-bleed picsum photography with a dark gradient overlay (white text on top). Remaining sections are light with dark text. Never put dark text directly on an unoverlaid photo.' },
+  { id: 'gradient-brand', rule: 'Hero and one closing section use a diagonal or radial primary→secondary brand gradient (white text on top). Body sections alternate light (dark text) and dark (white text) — always match text color to its own background.' },
+  { id: 'glass-dark', rule: 'Deep dark gradient background (#1a0533 to #0a1628 style) runs through the whole page. Cards are frosted glass: backdrop-blur, translucent white border, white/#e2e8f0 text throughout.' },
+  { id: 'warm-ivory', rule: 'Warm ivory/cream background (#faf8f4) throughout, no hero image, dark warm-brown/black serif text. Brand color used sparingly as a thin accent line or small badge, never as a large fill.' },
 ];
+
+const HERO_LAYOUTS = [
+  'Full-viewport split roughly 55/45: headline+CTA on one side, a large image or product mock on the other.',
+  'Centered hero with no image — massive headline, short subtext, one CTA, small decorative kicker/badge above the headline.',
+  'Full-bleed background treatment (image or gradient per the color mode), centered text, strong overlay so text stays readable.',
+  'Asymmetric ~70/30 split where the image bleeds off the edge of the viewport.',
+  'Two-panel hero: one solid-color panel with a short benefits list, the other panel shows a product/photo mock.',
+  'Bottom-anchored text sitting over a full-bleed image or gradient, gradient fades from transparent at top to solid at bottom.',
+  'Offset/overlapping composition — a small stat card or badge visually overlaps the corner of the hero image.',
+  'Slanted-feel hero using an angled CSS gradient background (NOT clip-path) instead of a photo.',
+];
+
+const CARD_STYLES = [
+  'rounded-2xl cards with soft diffused shadows',
+  'sharp rounded-none cards with bold 2-3px borders (neo-brutalist feel)',
+  'frosted glass cards — translucent background, backdrop-blur, thin light border',
+  'borderless content blocks separated only by generous whitespace and a thin 1px divider line',
+  'cards with a single colored accent bar along the top edge',
+  'pill/rounded-full badges and capsule-shaped containers',
+];
+
+const ACCENT_MOTIFS = [
+  'a few large blurred brand-color gradient orbs positioned absolutely in the background (blur-3xl, opacity-20)',
+  'a faint grid-line pattern overlay behind dark sections',
+  'thin dashed divider lines separating sections',
+  'large ghost/outline numerals or icons behind section headings',
+  'small uppercase tracked-out brand-color kicker labels above every section heading',
+  'no extra decoration at all — pure typography, whitespace, and color carry the design',
+];
+
+const TYPOGRAPHY_PAIRS = [
+  'massive bold sans-serif headlines with tracking-tighter, clean sans-serif body text',
+  'large serif display headlines paired with simple sans-serif body text (editorial feel)',
+  'uppercase tracked-out headlines paired with normal-case body text (structured, technical feel)',
+  'mixed-weight headlines (a thin word next to a bold word in the same line) with sans-serif body text',
+];
+
+// Pool of possible middle-page sections. Hero, the contact form, and the
+// footer are always present and are NOT part of this pool. Every generation
+// shuffles this pool and takes 5 of them in random order — with 14 items,
+// C(14,5) × 5! (order matters) gives well over 240,000 distinct sequences.
+const SECTION_POOL = [
+  'Trust bar: horizontal scrolling logo/credential marquee',
+  'Stats row: 3-4 bold large numbers with short labels',
+  'Features: asymmetric bento-grid cards (mixed col-spans, varied sizes)',
+  'Features: zig-zag rows alternating image-left/text-right then text-left/image-right',
+  'Features: clean 3-column icon + heading + paragraph cards',
+  'About/Story: full-bleed image with an overlaid text caption',
+  'Process: numbered step timeline, vertical or horizontal',
+  'Testimonials: masonry layout with uneven card heights',
+  'Testimonials: one large featured quote plus 2-3 smaller supporting quotes',
+  'Testimonials: staggered/offset 2-column grid of quote cards',
+  'Gallery: horizontal scrolling image showcase (flex-row overflow-x-auto)',
+  'Gallery: 2x2 or 3x2 image grid with short captions',
+  'FAQ: accordion section using accordion-item / accordion-header / accordion-content classes',
+  'Pricing or package comparison: 2-3 simple plan cards',
+];
+
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+/**
+ * Builds one fully-random "recipe" for a single generation.
+ * Called fresh on every request — nothing here is cached or reused.
+ */
+const buildLayoutRecipe = () => {
+  const colorMode = pick(COLOR_MODES);
+  const heroLayout = pick(HERO_LAYOUTS);
+  const cardStyle = pick(CARD_STYLES);
+  const accentMotif = pick(ACCENT_MOTIFS);
+  const typography = pick(TYPOGRAPHY_PAIRS);
+  const middleSections = shuffle(SECTION_POOL).slice(0, 5);
+  return { colorMode, heroLayout, cardStyle, accentMotif, typography, middleSections };
+};
 
 // ═══════════════════════════════════════════════════════════
 //  SYSTEM PROMPT
@@ -659,13 +731,13 @@ Your goal is to build a clean, modern, ultra-premium, high-converting landing pa
 Every page you build looks like it was crafted by a senior designer at a top agency — not generated. It has a clear visual identity, professional copy, and real personality.
 
 CHAOS SEED: ${chaosToken}
-This seed shapes your creative decisions. Every generation must feel genuinely fresh and different from any other.
+This seed shapes your creative decisions. Every generation must feel genuinely fresh and different from any other — you will be given a specific LAYOUT DNA and SECTION BLUEPRINT below; follow them exactly, do not default to a generic "safe" layout.
 
 🚫 FORBIDDEN BAD PRACTICES (NEVER USE):
 - NEVER USE plain text without proper padding or margins.
 - NEVER USE outdated, ugly color combinations. Always keep it harmonious.
 - NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
-- 🔄 DYNAMIC FORM PLACEMENT: Do not always put the contact/lead form in the exact same place! Sometimes put it in the Hero section, sometimes put it below the Hero, sometimes in the Footer, or in its own section. Mix it up completely!
+- NEVER reuse the exact same hero/section pattern you might default to — actively follow the LAYOUT DNA given to you.
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
@@ -683,8 +755,8 @@ USE data-reveal ONLY on these high-impact elements:
   • Contact form section wrapper  → data-reveal="up"
   • About section image + text side  → data-reveal="left"/"right"
 
-3. PREMIUM MINIMALIST FOOTER AT THE BOTTOM:
-- Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section.
+3. PREMIUM MINIMALIST FOOTER AT THE BOTTOM (MANDATORY):
+- Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section wrapped in a real <footer> tag.
 - The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a copyright notice.
 - 🚨 COPYRIGHT RULE: Use EXACTLY the copyright text found in the user's website content if available. DO NOT add the current year or make up your own copyright string! If no copyright is provided, just write "© BrandName. All rights reserved." without any year.
 
@@ -694,10 +766,9 @@ USE data-reveal ONLY on these high-impact elements:
 - This is critical so the user's selected brand colors are automatically applied!
 
 5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
-- Use proven, high-converting web layouts (e.g., elegant 3-column feature cards, beautiful alternating left-right image/text sections, strong centered or split-screen hero headers).
-- Create a highly reliable, beautiful, modern layout that users immediately understand and trust.
-- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids).
-- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=1\` (change the random number for different images). Every page must have beautiful, large photos.
+- Use proven, high-converting web layouts, but strictly following the SECTION BLUEPRINT you are given — do not invent your own section order.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT DNA explicitly says otherwise (e.g. neo-brutalist = no border-radius).
+- YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=N\` (change N for every image, never reuse the same number twice on one page). Every page must have beautiful, large photos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  NAVBAR
@@ -711,53 +782,52 @@ Nothing else. No links. No hamburger menu. Ultra-minimal premium.
  HERO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Follow the LAYOUT DNA hero description exactly.
-Contains: H1 headline + subparagraph + ONE CTA button.
-ZERO forms. ZERO inputs. ZERO email boxes. EVER.
+Contains: H1 headline + subparagraph + ONE CTA button (unless the form placement below says the form goes in-hero).
 Image backgrounds: use picsum.photos/1600/900?random=[N]
 Always add a proper dark overlay so white text is readable.
 
-24. INTERACTIVE ACCORDIONS & FORMS (NO JS REQUIRED):
+INTERACTIVE ACCORDIONS & FORMS (NO JS REQUIRED):
 - We automatically inject JavaScript for FAQs and Form validation. You DO NOT need to write any script tags for interactivity.
-- However, your HTML MUST use these exact classes for FAQs: \`accordion-item\`, \`accordion-header\`, and \`accordion-content hidden\`.
-- 🚨 EXTREMELY IMPORTANT: DO NOT use the same boring white box design for FAQs every time. Invent DIFFERENT styles! Sometimes use a 2-column grid. Sometimes use minimalist borders with no background. Sometimes use dark backgrounds. Sometimes put the FAQ next to a large image. VARY THE DESIGN!
-- 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page! Do NOT put a form in the hero AND the footer. Pick ONE interesting, dynamic placement for it!
+- Your HTML MUST use these exact classes for FAQs: \`accordion-item\`, \`accordion-header\`, and \`accordion-content hidden\`.
+- 🚨 VARY THE FAQ DESIGN as instructed in the user prompt — never default to a plain white box every time.
+- 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page, in the placement specified in the user prompt.
 - FORM STRUCTURE: Make the form look premium. ALL form fields must have the \`required\` attribute (e.g. \`<input type="text" required>\`) so our backend validation script catches them.
 
-12. ULTRA-PREMIUM UI/UX FINISH (MANDATORY & CRITICAL):
+ULTRA-PREMIUM UI/UX FINISH (MANDATORY & CRITICAL):
 You MUST design at an "Awwwards-winning" luxury agency level. Generic designs are unacceptable.
 - WHITESPACE IS LUXURY: Use massive padding (e.g., \`py-32\`, \`py-40\`, \`gap-16\`). Let elements breathe. NEVER cramp text.
-- TYPOGRAPHY AS ART: Use extreme typographic contrast. Use \`tracking-tighter\` for massive 6xl+ headings, and \`tracking-widest uppercase text-[10px] font-bold text-[var(--primary)]\` for small kickers/subheadings. 
+- TYPOGRAPHY AS ART: Use extreme typographic contrast. Use \`tracking-tighter\` for massive 6xl+ headings, and \`tracking-widest uppercase text-[10px] font-bold text-[var(--primary)]\` for small kickers/subheadings.
 - PREMIUM BACKGROUNDS: Do not just use solid colors. Use subtle radial gradients, mesh gradients, or large dark backgrounds with subtle glowing orbs (e.g. absolute divs with \`bg-[var(--primary)] blur-3xl opacity-20\`).
-- GLASSMORPHISM & BORDERS: Use \`backdrop-blur-lg bg-white/10 border border-white/20\` for cards on top of dark/image backgrounds. 
+- GLASSMORPHISM & BORDERS: Use \`backdrop-blur-lg bg-white/10 border border-white/20\` for cards on top of dark/image backgrounds.
 - OVERLAPPING LAYOUTS: Break out of the box! Make images overlap into the section above/below using negative margins (\`-mt-16\`) or absolute positioning.
-- GRADIENT TEXT: Always use gradient text for key emphasis in headlines: \`bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]\`.
+- GRADIENT TEXT: Use gradient text for key emphasis in headlines: \`bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]\`.
 - SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_30px_60px_rgba(0,_0,_0,_0.08)]\`) and scale effects.
-- 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners.
+- 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners (unless LAYOUT DNA says no border-radius).
 - 🚨 NO WOW.JS: DO NOT use the \`wow.js\` library or \`wow\` classes. ONLY use AOS for scroll animations!
-- MICRO-INTERACTIONS & AWESOME ANIMATIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
-- SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and heavily use \`data-aos="fade-up"\` and \`data-aos="zoom-in"\` with different delays. Initialize AOS in the script tag: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
+- MICRO-INTERACTIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
+- SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` / \`data-aos="zoom-in"\` with different delays. Initialize AOS: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ TECHNICAL REQUIREMENTS:
 - Tailwind CDN: <script src="https://cdn.tailwindcss.com"></script>
+- FontAwesome 6 for icons: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 - Google Fonts: Dynamically load the selected font pairing stylesheet in <head>
 - Brand colors via CSS variables: --primary and --secondary ONLY
-- Custom CSS in <style> tag for smooth continuous marquees, custom font styling, and line transitions.
 - Fully responsive, complete, and stunning HTML output.
+- 📱 MOBILE FIRST: use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` everywhere so it never breaks on phones.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📤 OUTPUT FORMAT & TOKEN LIMITS (CRITICAL):
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
-CRITICAL TOKEN LIMIT: You have a generous output budget of 16,000 tokens — use it well!
+CRITICAL TOKEN LIMIT: You have a generous output budget of ${MAX_OUTPUT_TOKENS} tokens — use it well, but budget carefully across ALL sections so you never run out before the footer.
 - NEVER write massive inline SVG codes. ALWAYS use FontAwesome 6 classes (e.g., <i class="fa-solid fa-star"></i>).
 - NEVER use Tailwind's arbitrary URL classes for background images (e.g. \`bg-[url('...')]\`). You MUST use inline styles for background images (e.g. \`<div style="background-image: url('...')">\`). This is critical to prevent CSS parser crashes.
 - Keep your HTML DOM structure clean and avoid excessively deep nested divs.
-- Do NOT generate excessively long placeholder text. Keep text punchy and concise.
+- Do NOT generate excessively long placeholder text. Keep text punchy and concise — 1-2 sentences per paragraph max — so the ENTIRE page including the footer fits comfortably within budget.
+- 🚨 PRIORITY ORDER IF RUNNING LOW ON BUDGET: it is far better to finish ALL sections with shorter copy than to write long copy and leave the page unfinished. ALWAYS reach the closing \`</footer></body></html>\`.
 You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
 Return ONLY a complete HTML file inside one code block.
-No explanation before or after. No comments. Start with the HTML tag directly.
+No explanation before or after. No comments outside the HTML. Start with the HTML tag directly.
 \`\`\`html
 <!DOCTYPE html>
 <html lang="en">
@@ -767,17 +837,7 @@ No explanation before or after. No comments. Start with the HTML tag directly.
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input, dna, formHTML, placement) => {
-  // Visual style nudge to ensure professional variety
-  const styleNudges = [
-    'Create a clean, modern SaaS-style layout with soft shadows, rounded corners, and clear sections.',
-    'Design an elegant, premium corporate layout with high-quality images, clean typography, and a trustworthy feel.',
-    'Build a vibrant, high-converting marketing page with bold clear CTAs, soft gradients, and modern feature grids.',
-    'Use a minimalist, highly readable design with generous whitespace, subtle borders, and a focus on typography.',
-    'Design a highly professional service-business layout with clear benefits, trust badges, and easy-to-read content blocks.'
-  ];
-  const randomNudge = styleNudges[Math.floor(Math.random() * styleNudges.length)];
-
+const buildUserPrompt = (input, recipe, formHTML, placement) => {
   // Random FAQ layout constraints to prevent repetitive white-box accordion designs
   const faqNudges = [
     'FAQ DESIGN: Use a strict 2-column grid. No backgrounds on the items, just clean subtle bottom borders.',
@@ -788,10 +848,8 @@ const buildUserPrompt = (input, dna, formHTML, placement) => {
   ];
   const randomFaqNudge = faqNudges[Math.floor(Math.random() * faqNudges.length)];
 
-  // Resolve a human-friendly placement label for the contact form
-  const placementLabel = placement
-    ? `CONTACT FORM PLACEMENT: ${placement}`
-    : 'CONTACT FORM PLACEMENT: not specified (suggest placing the form in the Hero or Contact section)';
+  const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
+
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
     `INDUSTRY: ${input.industry}`,
@@ -857,35 +915,55 @@ const buildUserPrompt = (input, dna, formHTML, placement) => {
     lines.push(`LOGO URL (actual): ${input.branding.logoUrl}`);
   }
 
+  // ── PROCEDURAL LAYOUT RECIPE — freshly randomized every single call.
+  //    This is the main creative-direction lever. It combines 5 independent
+  //    style axes plus a freshly shuffled section order, so the odds of two
+  //    generations looking alike are astronomically low. ──
   lines.push(
-    `🎨 OVERALL STYLE DIRECTION: ${randomNudge}`,
-    `🧩 ${randomFaqNudge}`,
-    `CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`
+    `\n━━━ LAYOUT RECIPE FOR THIS PAGE (MANDATORY — FOLLOW EXACTLY, DO NOT SUBSTITUTE YOUR OWN DEFAULT) ━━━`,
+    `COLOR MODE: ${recipe.colorMode.rule}`,
+    `HERO LAYOUT: ${recipe.heroLayout}`,
+    `CARD / CONTAINER STYLE: use ${recipe.cardStyle} for every card, feature block, and testimonial throughout the page.`,
+    `DECORATIVE ACCENT: ${recipe.accentMotif}`,
+    `TYPOGRAPHY PAIRING: ${recipe.typography}`,
+    `🚨 This exact combination was randomly generated fresh for this request. Follow it precisely — it is what makes this page visually distinct from any other page you've ever generated. Do not fall back on a "safe" generic layout.`
   );
+
+  lines.push(`🧩 ${randomFaqNudge}`);
+  lines.push(`CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`);
 
   if (input.websiteContent) {
     lines.push(`\n━━━ SCRAPED WEBSITE CONTENT (use real names, facts, copy from this) ━━━`);
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
+  const orderedSections = [
+    'Section 1 (Hero): follow the HERO LAYOUT above',
+    ...recipe.middleSections.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
+    `Section ${recipe.middleSections.length + 2} (Contact/Form): placement specified below`,
+  ];
+
+  lines.push(`\n━━━ MANDATORY SECTION ORDER (YOU MUST FOLLOW THIS EXACT SEQUENCE, ${orderedSections.length} SECTIONS + FOOTER) ━━━`);
+  lines.push(orderedSections.join('\n'));
+
   lines.push(`\n━━━ CONTACT FORM PLACEMENT ━━━`);
   lines.push(placementLabel);
 
-  lines.push(`\n━━━ CONTACT FORM HTML (insert this VERBATIM inside the contact section) ━━━`);
+  lines.push(`\n━━━ CONTACT FORM HTML (insert this VERBATIM inside the correct section) ━━━`);
   lines.push(formHTML);
 
   lines.push(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW BUILD — FOLLOW THESE FINAL RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices. Use mobile-first Tailwind classes. NEVER use static widths that break the viewport. Always use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` to ensure everything stacks perfectly on phones!
-2. Your hero MUST follow the STYLE DIRECTION above. Make it look extremely premium and trustworthy.
-3. Name your visual concept in an HTML comment at the top: <!-- CONCEPT: ... -->
+1. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices.
+2. Your hero MUST follow the HERO LAYOUT + COLOR MODE above exactly. Make it look extremely premium and trustworthy.
+3. Name your visual concept in an HTML comment at the top, e.g. <!-- RECIPE: ${recipe.colorMode.id} / ${recipe.cardStyle.slice(0, 30)}... -->
 4. Write REAL, industry-specific copy — not generic filler text.
-6. MANDATORY LEAD FORM (NO POPUPS): You MUST include at least one functional Lead Capture <form> block directly visible on the page (e.g. in the Hero or a dedicated Contact section). DO NOT hide the form inside a modal or popup. It must be INLINE and always visible. Include beautiful input fields and a submit button.
-7. 🔥 EXTREME STRUCTURAL VARIETY (MINIMUM 8 SECTIONS): Choose a completely unexpected combination of sections. YOU MUST GENERATE AT LEAST 8 SECTIONS to make the page feel complete and professional.
-8. ⚠️ COMPLETE THE FULL PAGE: You have 16,000 output tokens available — more than enough! You MUST generate all 8+ sections completely. Do NOT rush or skip sections. Every section should be fully designed and coded.
-9. The page must end with a beautiful custom Footer (containing the logo, contact info, and copyright), followed by your interaction script and the closing \`</html>\` tag. The footer layout must also be uniquely designed each time. Do NOT stop writing before finishing the footer and closing all HTML tags!
+5. MANDATORY LEAD FORM (NO POPUPS): Include the given Lead Capture <form> block directly visible on the page, in the placement specified above. DO NOT hide it in a modal or popup. It must be INLINE and always visible. Style the form's outer wrapper card to match the CARD / CONTAINER STYLE above.
+6. 🔥 STRICT SECTION-ORDER COMPLIANCE: You MUST GENERATE AT LEAST ${orderedSections.length} SECTIONS (never fewer than 6) in the exact order listed in "MANDATORY SECTION ORDER" above. Do NOT invent your own section order or skip any listed section.
+7. ⚠️ COMPLETE THE FULL PAGE: Write concise, punchy copy so the entire document — every section plus the footer — fits and finishes within the token budget. An unfinished page is a failure even if the sections you did write look good.
+8. The page MUST end with a beautiful custom <footer> (logo, contact info, copyright), followed by the closing </html> tag. The footer must also use the same COLOR MODE and CARD STYLE as the rest of the page. Do NOT stop writing before finishing the footer and closing all HTML tags!
 `);
 
   return lines.join('\n');
@@ -902,16 +980,17 @@ const generateLandingPageContent = async (input) => {
     (input.businessName || 'biz').split('').reverse().join('').slice(0, 6).toUpperCase(),
   ].join('-');
 
-  // Pick layout DNA
-  const dna = LAYOUT_DNA[Math.floor(Math.random() * LAYOUT_DNA.length)];
+  // Build a fresh procedural recipe — 6 independent axes combined at random
+  // every single call. No fixed list to exhaust, so pages don't repeat.
+  const recipe = buildLayoutRecipe();
 
   // Resolve form from DB / scrape / fallback
   const { formHTML, placement, fieldCount, source } = resolveForm(input);
 
-  logger.info(`[AI] Generate | Business:${input.businessName} | Layout:${dna.label} | Form:${source}(${fieldCount} fields) | Placement:${placement} | Token:${chaosToken}`);
+  logger.info(`[AI] Generate | Business:${input.businessName} | ColorMode:${recipe.colorMode.id} | Sections:${recipe.middleSections.length + 2} | Form:${source}(${fieldCount} fields) | Placement:${placement} | Token:${chaosToken}`);
 
   const systemPrompt = buildSystemPrompt(chaosToken);
-  let userPrompt = buildUserPrompt(input, dna, formHTML, placement);
+  let userPrompt = buildUserPrompt(input, recipe, formHTML, placement);
 
   if (input.templateHtml) {
     let prevHtml = '';
@@ -920,7 +999,7 @@ const generateLandingPageContent = async (input) => {
     } else if (typeof input.templateHtml === 'object') {
       prevHtml = input.templateHtml.fullHtml || input.templateHtml.html || JSON.stringify(input.templateHtml);
     }
-    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different):\n${prevHtml.substring(0, 3000)}`;
+    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different, matching the NEW recipe above):\n${prevHtml.substring(0, 2000)}`;
   }
 
   const aiResult = await callAI(userPrompt, input.logoUrl, systemPrompt);
@@ -941,7 +1020,7 @@ const generateLandingPageContent = async (input) => {
             const isVisible = nextEl.offsetHeight > 0 && !isHidden;
             const hasIcon = current.querySelector('svg, i.fa, i.fas, i.far, i.fab, i.material-icons') || current.tagName === 'BUTTON';
             const isPointer = window.getComputedStyle(current).cursor === 'pointer' || current.classList.contains('cursor-pointer') || current.tagName === 'BUTTON' || current.closest('.faq-item, .accordion-item');
-            
+
             if (hasIcon && isPointer) {
                if (isHidden) {
                   nextEl.classList.remove('hidden');
@@ -966,11 +1045,11 @@ const generateLandingPageContent = async (input) => {
                }
             }
          }
-         
+
          const container = current;
          const hiddenChild = Array.from(container.children).find(c => c.classList.contains('hidden') || c.style.display === 'none');
          const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item');
-         
+
          if (hiddenChild && hasPointer && container.querySelector('svg, i')) {
             hiddenChild.classList.remove('hidden');
             hiddenChild.style.display = 'block';
@@ -1001,14 +1080,14 @@ const generateLandingPageContent = async (input) => {
 
     // Check if we are inside GrapesJS editor (published pages don't have data-gjs-type)
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
-    
+
     // 2. Form Validation (runs everywhere so you can see red borders in editor)
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
         e.target.setAttribute('novalidate', 'true'); // Disable native browser tooltips
         var isValid = true;
         var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
-        
+
         inputs.forEach(function(input) {
           if (!input.dataset.valSetup) {
             input.dataset.valSetup = 'true';
@@ -1036,7 +1115,7 @@ const generateLandingPageContent = async (input) => {
             input.style.outline = '2px solid #ef4444';
             input.style.outlineOffset = '1px';
             input.style.borderColor = '#ef4444';
-            
+
             // Dynamically wrap input if it's a direct child of a grid/flex (fixes error placement)
             if (!input.parentElement.classList.contains('val-wrapper')) {
                 var wrapper = document.createElement('div');
@@ -1044,13 +1123,13 @@ const generateLandingPageContent = async (input) => {
                 wrapper.style.display = 'flex';
                 wrapper.style.flexDirection = 'column';
                 wrapper.style.width = '100%';
-                
+
                 var computed = window.getComputedStyle(input);
                 if (window.getComputedStyle(input.parentElement).display === 'grid') {
                     wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
                     wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
                 }
-                
+
                 input.parentNode.insertBefore(wrapper, input);
                 wrapper.appendChild(input);
             }
@@ -1075,7 +1154,7 @@ const generateLandingPageContent = async (input) => {
             input.style.borderColor = '#22c55e';
           }
         });
-        
+
         // Block submission if invalid OR if we are inside the editor (to prevent iframe redirect)
         if (!isValid || isInEditor) {
           e.preventDefault();
@@ -1090,7 +1169,7 @@ const generateLandingPageContent = async (input) => {
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '\\x3Cdiv style="padding: 20px; text-align: center; border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534;"\\x3E\\x3Ch3 style="margin: 0 0 10px 0; font-size: 20px;"\\x3EThank You!\\x3C/h3\\x3E\\x3Cp style="margin: 0;"\\x3EYour request has been submitted successfully.\\x3C/p\\x3E\\x3C/div\\x3E';
           }, 1000);
         }
       }
@@ -1108,7 +1187,6 @@ const generateLandingPageContent = async (input) => {
 </script>
 `;
 
-
   if (aiResult && aiResult.fullHtml) {
     if (aiResult.fullHtml.includes('</body>')) {
       aiResult.fullHtml = aiResult.fullHtml.replace('</body>', coreScript + '\n</body>');
@@ -1124,30 +1202,6 @@ const generateLandingPageContent = async (input) => {
 //  IMPROVE SECTION
 // ═══════════════════════════════════════════════════════════
 const improveSectionContent = async ({ sectionType, currentContent, aiPrompt }) => {
-  const systemPrompt = `
-You are a Senior UI Developer, Conversion Copywriter, and Creative Director at a world-class digital agency.
-Your job: Transform the given landing page section into something visually STUNNING, unique, and highly optimized for conversions.
-
-🚫 ZERO TEMPLATE POLICY:
-You are FORBIDDEN from using standard, boring layouts:
-- Centered header with 3 equal feature cards (e.g. "Why Choose Us" with 3 icons)
-- Alternating left-image / right-text rows (boring and lazy)
-- Plain white backgrounds with simple black text and a solid blue/purple button
-- Generic stats rows with equal boxes (e.g., 500+ Clients, 99% ROI)
-- Generic placeholder testimonials
-
-✅ CREATIVE REQUIREMENTS:
-- Invent a layout structure custom-tailored to the industry and goal.
-- Use Tailwind CSS utility classes + custom inline/style overrides for advanced details (custom drop shadows, animated gradients).
-- Introduce strong asymmetry, unique structural framing, or interesting card dynamics.
-- Write REAL, highly detailed, industry-specific marketing copy. Do not use generic placeholders.
-- Add micro-interactions, subtle hover scale transformations (e.g. group-hover), and elegant visual division.
-
-OUTPUT FORMAT:
-IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
-Return ONLY the complete improved HTML code. No explanation. No comments. Start directly with an HTML tag (e.g. <section> or <div>).
-`;
-
   // Visual style nudges for section generation
   const styles = [
     'Dark glassmorphic — deep gradient bg, frosted card, ALL text white.',
@@ -1163,23 +1217,12 @@ REQUIRED: data-reveal on section heading and cards. Hover animations. Mobile res
 OUTPUT: raw HTML only. No explanation. No markdown fences.`;
   const style = styles[Math.floor(Math.random() * styles.length)];
   const user = `SECTION TYPE: ${sectionType}\nSTYLE: ${style}\nCURRENT HTML:\n${typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent)}\nREQUEST: ${aiPrompt || 'Make this premium and unique with proper contrast and selective scroll animations.'}`;
-  return callAI(user, '', system);
+
+  const res = await callAIText(system, user);
+  return { suggestion: cleanHTML(res.text), aiUsage: res.aiUsage };
 };
 
 // ─── EDITOR CHAT MODIFY ──────────────────────────────────────────────────────────
-const EDITOR_SYSTEM_PROMPT = `
-You are a Senior UI Developer modifying GrapesJS elements.
-IMPORTANT: You MUST respond in the English language only. Do not use Hindi or any other language.
-Return a valid JSON object ONLY — no markdown, no explanation:
-{
-  "action": "style" | "text" | "both" | "html",
-  "css": { "camelCaseProperty": "value" },
-  "text": "new text content (in English)",
-  "html": "full html string if action is html",
-  "summary": "one line: what you changed (in English)"
-}
-`;
-
 const editorChatModify = async ({ elementTag, elementHtml, elementCss, instruction }) => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY missing');
@@ -1262,4 +1305,12 @@ module.exports = {
   buildFormHTML,
   extractFieldsFromScrape,
   normaliseField,
+  // Expose new procedural layout utilities too
+  buildLayoutRecipe,
+  COLOR_MODES,
+  HERO_LAYOUTS,
+  CARD_STYLES,
+  ACCENT_MOTIFS,
+  TYPOGRAPHY_PAIRS,
+  SECTION_POOL,
 };

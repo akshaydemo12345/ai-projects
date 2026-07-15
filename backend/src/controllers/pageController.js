@@ -669,8 +669,8 @@ exports.createPage = async (req, res, next) => {
         // If it's a template, we pass a hint to the AI service
         // Merge scraped fonts with any fonts explicitly passed from the frontend
         const resolvedFonts = {
-          bodyFont: incomingFonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
-          headingFont: incomingFonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
+          bodyFont: req.body.fonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
+          headingFont: req.body.fonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
           googleFonts: project.websiteProfile?.fonts?.googleFonts || [],
         };
 
@@ -723,13 +723,19 @@ exports.createPage = async (req, res, next) => {
           pageId: page._id
         });
         // Fallback: If AI fails on a purely AI-generated page, we should halt rather than giving a blank page.
-        if (!initialContent && (!template || template === 'blank')) {
-          await Page.findByIdAndDelete(page._id);
-          return res.status(502).json({
-            success: false,
-            message: `AI Generation Error: ${aiErr.message}`,
-            data: {}
-          });
+        // req.body.content might be an object like { fullHtml: '...', html: '' } from the frontend
+        const isContentEmpty = !initialContent || 
+                               (typeof initialContent === 'string' && initialContent.trim().length === 0) || 
+                               (typeof initialContent === 'object' && (!initialContent.html || initialContent.html.trim().length === 0));
+                               
+        if (isContentEmpty && (!template || template === 'blank' || template === 'AI Generated Layout')) {
+          try {
+            await Page.findByIdAndUpdate(page._id, { 
+              status: 'error',
+              errorMessage: `AI Generation Error: ${aiErr.message}`
+            }).exec();
+          } catch(e) {}
+          return; // Stop further processing for this page
         }
       }
     }
