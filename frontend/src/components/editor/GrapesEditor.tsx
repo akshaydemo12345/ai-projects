@@ -3944,10 +3944,12 @@ const GrapesEditor = () => {
   const handlePublish = async () => {
     if (!editorRef.current) return;
 
-    if (!project?.isVerified) {
-      toast.error('first verfiy plugin or script then page will publish');
-      return;
-    }
+    // if (!project?.isVerified) {
+    //   toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+    //     style: { color: '#ef4444' }
+    //   });
+    //   return;
+    // }
 
     setIsPublishing(true);
 
@@ -4442,7 +4444,9 @@ const GrapesEditor = () => {
               onChange={(e) => {
                 const val = e.target.value as any;
                 if (val === 'published' && !project?.isVerified) {
-                  toast.error('first verfiy plugin or script then page will publish');
+                  toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+                    style: { color: '#ef4444' }
+                  });
                   // Revert the select element visually
                   e.target.value = siteStatus;
                   return;
