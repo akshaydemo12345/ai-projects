@@ -988,83 +988,10 @@ const CreatePagePage = () => {
     setShowLoader(true);
     setIsComplete(false);
 
-    // ─── PURE AI PATH: Always call real Claude API when method is "ai" ───
-    if (activeMethod === "ai") {
-      try {
-        // ── Build websiteContent from scraped project data so Claude uses real business info ──
-        // (Simulated for FRONTEND ONLY RULE)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const generatedSection1 = `<section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${primaryColor || '#7c3aed'}, ${secondaryColor || '#6366f1'}); color: white;">
-          <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">${pageName.trim() || 'AI Generated Page'}</h1>
-          <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto;">${aiPrompt.trim()}</p>
-        </section>`;
-
-        const generatedSection2 = `<section style="padding: 80px 20px; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">Smart Features</h3>
-            <p style="color: #64748b;">This content was dynamically generated based on your prompt.</p>
-          </div>
-          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">High Conversion</h3>
-            <p style="color: #64748b;">Optimized for lead generation and maximum user engagement.</p>
-          </div>
-        </section>`;
-
-        const aiResult = {
-          fullHtml: `<!DOCTYPE html><html><head><title>${pageName.trim()}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/></head><body style="margin:0; font-family: 'Inter', sans-serif;">${generatedSection1}${generatedSection2}</body></html>`,
-          fullCss: ""
-        };
-
-        const primaryCol = primaryColor || "#6366f1";
-        const secondaryCol = secondaryColor || "#4f46e5";
-        const brandingCss = `:root{--primary:${primaryCol};--secondary:${secondaryCol};--primary-rgb:${hexToRgbStr(primaryCol)};--secondary-rgb:${hexToRgbStr(secondaryCol)};}`;
-        const fullAiHtml = aiResult.fullHtml.includes('<!DOCTYPE') ? aiResult.fullHtml : `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>${pageName.trim() || project.name}</title>
-  <script src="https://cdn.tailwindcss.com"><\/script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <style>${brandingCss}\n${aiResult.fullCss || ""}</style>
-</head>
-<body>${aiResult.fullHtml}</body>
-</html>`;
-
-        createPageMutation.mutate({
-          name: pageName.trim(),
-          slug: pageSlug.trim() || autoSlug(pageName),
-          metaTitle: `${project.name} - ${pageName.trim()}`,
-          metaDescription: project.description || `${pageName.trim()} by ${project.name}.`,
-          noIndexNoFollow,
-          primaryColor,
-          secondaryColor,
-          logoUrl,
-          industry: project?.category || project?.industry || "Service",
-          subIndustry: project?.subIndustry || "Services",
-          aiPrompt,
-          generationMethod: "manual" as LandingPage["generationMethod"], // FRONTEND ONLY RULE: bypass backend AI
-          accentColor: "#6366f1",
-          type: "ppc",
-          status: "draft",
-          content: { fullHtml: fullAiHtml, html: aiResult.fullHtml, fullCss: aiResult.fullCss || "" },
-          styles: aiResult.fullCss || "",
-          landingPageContent: fullAiHtml,
-          landingPageStyles: aiResult.fullCss || "",
-        });
-      } catch (err: any) {
-        toast.error(err.message || "AI generation failed. Please try again.");
-        setShowLoader(false);
-        setIsComplete(false);
-      }
-      return;
-    }
-
+    // PURE AI PATH: Removed dummy logic per user request. Fall through to the real AI api call below.
     let basePayload: Partial<LandingPage> = {};
     let finalTemplateId = selectedTemplate;
-    let isAiTemplatePath = false;
+    let isAiTemplatePath = activeMethod === "ai";
 
     if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
@@ -1091,41 +1018,9 @@ const CreatePagePage = () => {
       }
 
       // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
-      // ONLY run this if we are in the "AI" path (isAiTemplatePath === true)
+      // The backend will handle the AI generation asynchronously when generationMethod === "ai"
       if (isAiTemplatePath) {
-        try {
-          const generationRes = await aiApi.generate({
-            businessName: project.name,
-            industry: getProjectIndustry(project),
-            businessDescription: getProjectDescription(project),
-            pageType: "lead generation",
-            aiPrompt: aiPrompt,
-            primaryColor: primaryColor,
-            secondaryColor: secondaryColor,
-            logoUrl: logoUrl,
-            // If it's a direct AI prompt, we don't pass the base template so the AI is forced to start from scratch
-            templateHtml: (activeMethod as string) === "ai" ? "" : enrichedContent,
-            templateStyles: (activeMethod as string) === "ai" ? "" : enrichedStyles
-          });
-
-          const aiResult = generationRes?.data?.content;
-          if (aiResult && aiResult.fullHtml) {
-            let extractedHtml = aiResult.fullHtml;
-            // Prevent nested HTML documents which break browser rendering and FAQ details tags
-            const bodyMatch = extractedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-            if (bodyMatch) {
-              extractedHtml = bodyMatch[1];
-            }
-            enrichedContent = extractedHtml;
-            if (aiResult.fullCss && aiResult.fullCss.length > 50) {
-              enrichedStyles = aiResult.fullCss;
-            }
-            toast.success("Claude: Template regenerated with your vision!");
-          }
-        } catch (err) {
-          console.error("AI Template Regeneration failed:", err);
-          toast.warning("AI regeneration failed, using base template with placeholders.");
-        }
+        console.log("Delegating AI Generation to backend async process...");
       }
 
       const finalLogo = logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo || getProjectLogoUrl(project);
@@ -1356,9 +1251,8 @@ ${enrichedContent}
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
       industry: project?.category || project?.industry || "Service",
       subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
-      aiPrompt: "",
-      // Always use template generation on the frontend
-      generationMethod: "template",
+      aiPrompt: aiPrompt,
+      generationMethod: activeMethod === "ai" ? "ai" : "template",
       accentColor: "#6366f1",
       type: "ppc",
       status: "draft",
