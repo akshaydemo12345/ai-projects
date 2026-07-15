@@ -281,12 +281,20 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       }
     }
 
+    const _domainProj = page.projectId
+      ? await Project.findById(page.projectId).select('websiteProfile').lean()
+      : null;
+    const domainFavicon = _domainProj?.websiteProfile?.identity?.favicon || '';
+
+    const html = renderFullHTML(page, '', false, domainFavicon);
+
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'content="no-store"');
     res.status(200).json({
       status: 'success',
+      html: html,
       data: page.content,
       styles: page.styles,
       landingPageContent: page.landingPageContent,

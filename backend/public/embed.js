@@ -9,6 +9,27 @@
     return scripts[scripts.length - 1];
   })();
 
+  // Inject overlay synchronously to hide native 404 flash
+  const overlayBg = (currentScript && currentScript.getAttribute('data-overlay-color')) || '#ffffff';
+  
+  const style = document.createElement('style');
+  style.id = 'pc-style-overlay';
+  style.textContent = 'body { display: none !important; } #pc-overlay { position:fixed;inset:0;z-index:2147483647;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center; } #pc-spinner { width:40px;height:40px;border:3px solid rgba(0,0,0,0.1);border-top:3px solid #3498db;border-radius:50%;animation:pc-spin 1s linear infinite; } @keyframes pc-spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }';
+  if (document.head) document.head.appendChild(style);
+  else document.documentElement.appendChild(style);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pc-overlay';
+  overlay.innerHTML = '<div id="pc-spinner"></div>';
+  document.documentElement.appendChild(overlay);
+
+  function removeOverlay() {
+    const styleEl = document.getElementById('pc-style-overlay');
+    if (styleEl) styleEl.remove();
+    const overlayEl = document.getElementById('pc-overlay');
+    if (overlayEl) overlayEl.remove();
+  }
+
   const url = new URL(currentScript.src, window.location.origin);
   const token = currentScript.getAttribute('data-token') || url.searchParams.get('token');
   const searchParams = new URLSearchParams(window.location.search);
@@ -164,22 +185,24 @@
 
       const result = await response.json();
 
-      if (result.status !== 'success' && !result.data) {
+      if (result.status !== 'success' && !result.data && !result.html) {
         throw new Error(result.message || 'Unknown error from API');
       }
 
-      const target = `${apiBase}/${encodeURIComponent(page)}`;
-      window.location.replace(target);
+      if (result.html) {
+        document.open();
+        document.write(result.html);
+        document.close();
+      } else {
+        removeOverlay();
+      }
 
     } catch (err) {
       console.error('PageCraft AI Error:', err);
+      removeOverlay();
     }
   }
 
-  // Support for browsers that might have already finished loading
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadPage);
-  } else {
-    loadPage();
-  }
+  // Do not wait for DOMContentLoaded, execute immediately
+  loadPage();
 })();

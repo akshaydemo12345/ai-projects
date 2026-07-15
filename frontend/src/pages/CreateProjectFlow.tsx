@@ -445,7 +445,7 @@ const CreateProjectFlow = () => {
   ];
 
   const scriptCode = createdProject
-    ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${createdProject.apiToken}" async></script>`
+    ? `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${createdProject.apiToken}"></script>`
     : ""; return (
       <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
         {/* ─── Header ─── */}
