@@ -922,7 +922,7 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
   const baseUrl = project?.websiteUrl || project?.url || window.location.origin;
   const publishUrl = page.publishedUrl || `${baseUrl.replace(/\/+$/, '')}/${project.preSlug ? project.preSlug + '/' : ''}${page.slug}`;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org';
-  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}" async></script>`;
+  const scriptCode = `<script src="${apiBaseUrl}/embed.js" data-token="${project.apiToken}"></script>`;
 
   const handlePublish = () => {
     onPublished({ ...page, status: "published", publishedUrl: publishUrl });
@@ -1115,9 +1115,9 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
             {tab === "script" && (
               <div className="space-y-4">
                 <div className="text-[11px] text-muted-foreground leading-relaxed space-y-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
-                  <p><strong>1. One-time site-wide install:</strong> Paste this script in your global header/footer (WordPress, Wix, Duda, Webflow, Squarespace).</p>
-                  <p><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will be redirected to view that landing page — the URL will change to the landing page's own address.</p>
-                  <p><strong>3. SEO Note:</strong> The original URL isn't indexable (acts as a redirect), but the destination landing page URL is a real 200 page and can be indexed on its own.</p>
+                  <p><strong>1. One-time site-wide install:</strong> Paste as the first item in the page's &lt;head&gt;. Do not mark it async or defer, and do not place it at the end of &lt;body&gt; — doing so allows the native 'not found' content to render and flash before this script runs.</p>
+                  <p><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will see the landing page rendered instantly without changing the URL.</p>
+                  <p><strong>3. SEO Note:</strong> The destination landing page URL is a real 200 page and can be indexed on its own.</p>
                 </div>
                 <div className="bg-muted rounded-xl p-1">
                   <div className="flex justify-between items-center mb-2 px-2 pt-2">
@@ -1699,7 +1699,7 @@ const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(nul
   const totalLeads = project.leadCount || pages.reduce((sum, p) => sum + ((p as any).leads?.length || 0), 0);
   const totalViews = (project as any).views || pages.reduce((sum, p) => sum + (p.views || 0), 0);
 
-  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}" async></script>`;
+  const scriptCode = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/embed.js" data-token="${project?.apiToken}"></script>`;
 
   const handleHeaderLogoImageLoad = (img: HTMLImageElement) => {
     const brightness = getImageAverageBrightness(img);

@@ -15,21 +15,46 @@ import { finance02Html, finance02Styles } from "../templates/finance/templates02
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
+import { law04Html, law04Styles } from "../templates/law/templates04";
+import { law05Html, law05Styles } from "../templates/law/templates05";
+import { travel04Html, travel04Styles } from "../templates/travel/templates04";
+import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 
 const LANDING_TEMPLATES = [
-  {
-    id: "law-03",
-    name: "Justice Elite",
-    tag: "Law Firm",
-    img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400",
-    gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
-  },
   {
     id: "law-01",
     name: "Justice Law Firm",
     tag: "Law Firm",
-    img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400",
+    img: "/assets/templates/LawFirm/screenshot.png",
     gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+  },
+  {
+    id: "law-02",
+    name: "Justice Law Firm",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates02/lov02.png",
+    gradient: "linear-gradient(135deg, #7A28F5 0%, #4615b2 100%)",
+  },
+  {
+    id: "law-03",
+    name: "Justice Elite",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates03/screenshot.png",
+    gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
+  },
+  {
+    id: "law-04",
+    name: "Justice Supreme",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot04.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+  },
+  {
+    id: "law-05",
+    name: "Lawyer Base",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot05.png",
+    gradient: "linear-gradient(135deg, #111111 0%, #b79b6c 100%)",
   },
   {
     id: "healthcare-01",
@@ -68,21 +93,28 @@ const LANDING_TEMPLATES = [
   },
   {
     id: "travel-02",
-    name: "Savanna Safari",
+    name: "Savanna Safari Elite",
     tag: "Travel",
-    img: "/assets/templates/travel/templates02/hero.jpg",
-    gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+    img: "/assets/templates/travel/templates02/screenshot3.png",
+    gradient: "linear-gradient(135deg, #78350f 0%, #1c1917 100%)",
   },
   {
     id: "travel-03",
     name: "Etheria Journeys",
     tag: "Travel",
-    img: "/assets/templates/travel/templates03/hero.png",
+    img: "/assets/templates/travel/templates03/screenshot2.png",
     gradient: "linear-gradient(135deg, #0a1128 0%, #c5a059 100%)",
   },
   {
+    id: "travel-04",
+    name: "Metro City Explorer",
+    tag: "Travel",
+    img: "/assets/templates/travel/templates04/screenshot4.png",
+    gradient: "linear-gradient(135deg, #111827 0%, #374151 100%)",
+  },
+  {
     id: "finance-01",
-    name: "Finova Finance",
+    name: "Elite Wealth",
     tag: "Finance",
     img: "/assets/templates/finance/templates01/screenshot.png",
     gradient: "linear-gradient(135deg, #2b5cff 0%, #1f3aa6 100%)",
@@ -91,8 +123,15 @@ const LANDING_TEMPLATES = [
     id: "finance-02",
     name: "Finance Elite 02",
     tag: "Finance",
-    img: "/assets/templates/finance/templates02/hero.png",
+    img: "/assets/templates/finance/templates02/screen.png",
     gradient: "linear-gradient(135deg, #0a192f 0%, #c5a059 100%)",
+  },
+  {
+    id: "finance-03",
+    name: "Finova Analytics",
+    tag: "Finance",
+    img: "/assets/templates/finance/templates04/screenshot.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
   }
 ];
 
@@ -103,6 +142,8 @@ const getTemplateContent = (id: string) => {
     case "law-01": return { html: law01Html, css: law01Styles };
     case "law-02": return { html: law02Html, css: law02Styles };
     case "law-03": return { html: law03Html, css: law03Styles };
+    case "law-04": return { html: law04Html, css: law04Styles };
+    case "law-05": return { html: law05Html, css: law05Styles };
     case "healthcare-01": return { html: healthcare01Html, css: healthcare01Styles };
     case "healthcare-02": return { html: healthcare02Html, css: healthcare02Styles };
     case "healthcare-03": return { html: healthcare03Html, css: healthcare03Styles };
@@ -110,8 +151,10 @@ const getTemplateContent = (id: string) => {
     case "travel-01": return { html: travel01Html, css: travel01Styles };
     case "travel-02": return { html: travel02Html, css: travel02Styles };
     case "travel-03": return { html: travel03Html, css: travel03Styles };
+    case "travel-04": return { html: travel04Html, css: travel04Styles };
     case "finance-01": return { html: finance01Html, css: finance01Styles };
     case "finance-02": return { html: finance02Html, css: finance02Styles };
+    case "finance-03": return { html: finance03Html, css: finance03Styles };
     default: return { html: "", css: "" };
   }
 };
