@@ -23,6 +23,8 @@ import { finance03Html, finance03Styles } from "../templates/finance/templates03
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
+import { law04Html, law04Styles } from "../templates/law/templates04";
+import { law05Html, law05Styles } from "../templates/law/templates05";
 import { useState, useEffect, useRef } from "react";
 
 // Templates removed as per user request
@@ -143,21 +145,6 @@ const generateAiPage = (
           <div style="flex: 1; min-width: 250px;">
             <h3 style="color: white; font-size: 1.5rem; margin-bottom: 20px; font-weight: bold;">${project.name || "Our Business"}</h3>
             <p style="line-height: 1.6;">Providing premium services and innovative solutions for businesses worldwide. Your success is our priority.</p>
-          </div>
-          <div style="flex: 1; min-width: 200px;">
-            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Quick Links</h4>
-            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">About Us</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Our Services</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Testimonials</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Contact</a></li>
-            </ul>
-          </div>
-          <div style="flex: 1; min-width: 250px;">
-            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Contact Us</h4>
-            <p style="margin-bottom: 10px;">Email: hello@example.com</p>
-            <p style="margin-bottom: 10px;">Phone: +1 (555) 123-4567</p>
-            <p>Address: 123 Business Avenue, Suite 100<br/>New York, NY 10001</p>
           </div>
         </div>
         <div style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem;">
@@ -298,6 +285,37 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
       });
     }
 
+    // 6. Global override: Remove navigation menus as per user request
+    const menus = doc.querySelectorAll(".nav-links, .hc4-nav-links, .navbar-nav, .nav-menu, nav ul");
+    menus.forEach(menu => menu.remove());
+
+    // 7. Global override: Remove all footer links (Quick Links, Services, Patient Portal, etc.)
+    const footerLinks = doc.querySelectorAll("footer ul, footer ol, footer nav, .footer-col ul, .footer-links, .foot-links, [class*='footer-links'], [class*='footer-nav']");
+    footerLinks.forEach(linkList => {
+      const parent = linkList.parentElement;
+      linkList.remove();
+      // Remove the column wrapper if only the heading is left
+      if (parent && parent.children.length === 1 && parent.children[0].tagName.match(/^H[1-6]$/i)) {
+        parent.remove();
+      }
+    });
+
+    // 8. Remove bottom privacy/terms text
+    const footerPTags = doc.querySelectorAll("footer p, footer span, footer a, footer div, [class*='footer-bottom'] p");
+    footerPTags.forEach(p => {
+      const text = p.textContent?.toLowerCase() || "";
+      if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
+        p.remove();
+      } else if (text.includes("©")) {
+        // Update copyright year to 2026
+        p.innerHTML = p.innerHTML.replace(/\b202\d\b/g, "2026");
+      }
+    });
+
+    // 9. Remove footer badges
+    const footerBadges = doc.querySelectorAll(".footer-badges, [class*='footer-badge']");
+    footerBadges.forEach(badge => badge.remove());
+
     // 6. Inject Videos
     const videos = project?.scrapedData?.videos || [];
     if (videos.length > 0) {
@@ -398,6 +416,22 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/LawFirm/templates03/screenshot.png",
     gradient: "linear-gradient(135deg, #0A1118 0%, #D4AF37 100%)",
     prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-04",
+    name: "Justice Supreme",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot04.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+    prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-05",
+    name: "Lawyer Base",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot05.png",
+    gradient: "linear-gradient(135deg, #111111 0%, #b79b6c 100%)",
+    prompt: "A professional full-service law firm template with dark aesthetics, gold accents, practice areas, attorney grid, and elegant contact form.",
   },
   {
     id: "healthcare-01",
@@ -1016,6 +1050,8 @@ const CreatePagePage = () => {
           case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
           case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
           case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
+          case "law-04": enrichedContent = law04Html; enrichedStyles = law04Styles; break;
+          case "law-05": enrichedContent = law05Html; enrichedStyles = law05Styles; break;
           case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
           case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
           case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1797,6 +1833,8 @@ ${enrichedContent}
                 case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "law-02": tpHtml = law02Html; tpStyles = law02Styles; break;
                 case "law-03": tpHtml = law03Html; tpStyles = law03Styles; break;
+                case "law-04": tpHtml = law04Html; tpStyles = law04Styles; break;
+                case "law-05": tpHtml = law05Html; tpStyles = law05Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
