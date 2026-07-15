@@ -997,10 +997,57 @@ const pickMajoritySwatch = (paletteObj) => {
     return top.getHex ? top.getHex().toUpperCase() : null;
 };
 
+// TRUE majority-color extractor by actual pixel frequency.
+// Unlike Vibrant (which only ever returns 6 fixed "aesthetic" categories —
+// Vibrant/DarkVibrant/LightVibrant/Muted/DarkMuted/LightMuted — and can
+// therefore miss whatever color literally covers the most pixels on screen),
+// this reads the raw decoded pixels of the screenshot/crop, buckets them into
+// a small quantized palette, and counts real frequency. This is what actually
+// answers "what color shows up the most in this screenshot".
+const getPixelHistogramColors = async (buffer, { maxColors = 8, ignoreNeutral = true, bucketSize = 16 } = {}) => {
+    if (!sharpLib || !buffer) return [];
+    try {
+        const { data, info } = await sharpLib(buffer)
+            .resize(150, 150, { fit: 'inside' })
+            .ensureAlpha()
+            .raw()
+            .toBuffer({ resolveWithObject: true });
+        const channels = info.channels || 4;
+        const counts = new Map();
+        const bucket = (v) => Math.min(255, Math.round(v / bucketSize) * bucketSize);
+        for (let i = 0; i + channels <= data.length; i += channels) {
+            if (channels === 4 && data[i + 3] < 16) continue; // skip transparent pixels
+            const r = bucket(data[i]);
+            const g = bucket(data[i + 1]);
+            const b = bucket(data[i + 2]);
+            const key = `${r},${g},${b}`;
+            counts.set(key, (counts.get(key) || 0) + 1);
+        }
+        const total = data.length / channels;
+        const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+        const results = sorted.map(([key, count]) => {
+            const [r, g, b] = key.split(',').map(Number);
+            const hex = ('#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')).toUpperCase();
+            return { hex, share: total ? count / total : 0 };
+        });
+        const filtered = ignoreNeutral ? results.filter(r => !isNeutralHex(r.hex)) : results;
+        return filtered.slice(0, maxColors).map(r => r.hex);
+    } catch (e) {
+        logger.warn(`[Scraper] pixel histogram extraction failed: ${e.message}`);
+        return [];
+    }
+};
+
 // Capture a full-page screenshot and extract region colors (header, nav, button, footer)
 const captureRenderedColors = async (url) => {
-    if (!playwright) return null;
-    if (!sharpLib && !VibrantLib) return null;
+    if (!playwright) {
+        logger.warn('[Scraper] captureRenderedColors skipped — playwright not installed, screenshot-based colors unavailable');
+        return null;
+    }
+    if (!sharpLib && !VibrantLib) {
+        logger.warn('[Scraper] captureRenderedColors skipped — neither sharp nor vibrant available, screenshot-based colors unavailable');
+        return null;
+    }
     let browser = null;
     try {
         browser = await playwright.chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
@@ -1123,25 +1170,43 @@ const captureRenderedColors = async (url) => {
         };
 
         const colors = { palette: [], computedTheme };
-        // Try to extract palette from full page first — ordered by population
-        // (pixel coverage) so palette[0] is the actual majority color on the page,
-        // not just whichever swatch type Vibrant happens to list first.
+        // PRIMARY: true pixel-frequency histogram — counts actual pixels in the
+        // decoded screenshot, so palette[0] genuinely is the color that covers
+        // the most area on the rendered page (this is what "majority color"
+        // should mean). Vibrant is appended afterwards purely as enrichment
+        // (it can surface a distinct accent color the histogram's quantization
+        // buckets together with something else), never as the primary source.
+        try {
+            const histogramColors = await getPixelHistogramColors(fullBuffer, { maxColors: 10, ignoreNeutral: true });
+            if (histogramColors.length) colors.palette.push(...histogramColors);
+        } catch (e) { logger.warn(`[Scraper] full-page histogram failed: ${e.message}`); }
+
         if (VibrantLib) {
             try {
                 const v = await VibrantLib.from(fullBuffer).getPalette();
                 const swatches = Object.values(v).filter(sw => sw && sw.getHex);
                 const population = (sw) => (typeof sw.getPopulation === 'function' ? sw.getPopulation() || 0 : (sw.population || 0));
                 swatches.sort((a, b) => population(b) - population(a));
-                colors.palette = swatches.map(s => s.getHex().toUpperCase()).filter(Boolean);
+                const vibrantColors = swatches.map(s => s.getHex().toUpperCase()).filter(Boolean);
+                for (const c of vibrantColors) if (!colors.palette.includes(c)) colors.palette.push(c);
             } catch (e) { /* ignore */ }
         }
+        if (!colors.palette.length) {
+            logger.warn('[Scraper] no colors extracted from screenshot — sharp/vibrant may be unavailable or screenshot capture failed');
+        }
 
-        // Helper to crop region and get the majority (most-pixels) dominant color
+        // Helper to crop region and get the majority (most-pixels) dominant color.
+        // Histogram (true pixel count) is tried first since it reflects what's
+        // actually on screen; Vibrant's fixed swatch categories are only used
+        // as a fallback when the histogram has nothing usable (e.g. a nearly
+        // monochrome crop where every pixel is filtered as neutral).
         const getRegionColor = async (bbox) => {
             if (!bbox || bbox.width === 0 || bbox.height === 0) return null;
             if (!sharpLib) return null;
             try {
                 const cropped = await sharpLib(fullBuffer).extract({ left: Math.max(0, Math.floor(bbox.x)), top: Math.max(0, Math.floor(bbox.y)), width: Math.max(1, Math.floor(bbox.width)), height: Math.max(1, Math.floor(bbox.height)) }).toBuffer();
+                const histColors = await getPixelHistogramColors(cropped, { maxColors: 3, ignoreNeutral: true });
+                if (histColors.length) return histColors[0];
                 if (VibrantLib) {
                     const pv = await VibrantLib.from(cropped).getPalette();
                     const majority = pickMajoritySwatch(pv);
@@ -1174,7 +1239,9 @@ const captureRenderedColors = async (url) => {
                         const left = Math.max(0, Math.floor((w - cw) / 2));
                         const top = Math.max(0, Math.floor((h - ch) / 2));
                         const cropped = await sharpLib(fullBuffer).extract({ left, top, width: Math.max(1, cw), height: Math.max(1, ch) }).toBuffer();
-                        if (VibrantLib) {
+                        const histColors = await getPixelHistogramColors(cropped, { maxColors: 3, ignoreNeutral: true });
+                        if (histColors.length) bodyColor = histColors[0];
+                        if (!bodyColor && VibrantLib) {
                             const pv = await VibrantLib.from(cropped).getPalette();
                             const majority = pickMajoritySwatch(pv);
                             if (majority) bodyColor = majority;
@@ -2217,6 +2284,38 @@ const enhanceThemeAndLogo = async ($, html, baseUrl, raw) => {
         if ($('[class*="fl-"]').length || $('[class*="fl-module"]').length || $('[class*="fl-row"]').length) beaverEvidence.push('DOM has fl- classes');
         if ($('link[href*="beaver"]').length || $('script[src*="beaver"]').length || $('link[href*="fl-builder"]').length) beaverEvidence.push('asset URL contains beaver/fl-builder');
         if (beaverEvidence.length) { frameworks.push('Beaver Builder'); evidence.beaver = beaverEvidence; builders.push({ name: 'Beaver Builder', evidence: beaverEvidence, confidence: Math.min(0.9, 0.3 + Math.min(5, beaverEvidence.length) * 0.12) }); }
+
+        // Non-WordPress site builders — additive detection only. This does NOT
+        // change how colors/logo/header/etc. are scraped (those already use
+        // generic rendered-DOM selectors and work on any platform); it only
+        // improves the `platform`/`frameworks` metadata reported back.
+        const wixEvidence = [];
+        if (/wixstatic\.com|wix\.com/i.test(html)) wixEvidence.push('asset URL/domain references wix');
+        if ($('meta[name="generator"][content*="Wix" i]').length) wixEvidence.push('meta generator = Wix');
+        if ($('[class*="wixui-"]').length || $('[data-testid*="wix" i]').length) wixEvidence.push('DOM has wixui-/data-testid wix markers');
+        if (wixEvidence.length) { platform = 'Wix'; frameworks.push('Wix'); evidence.wix = wixEvidence; builders.push({ name: 'Wix', evidence: wixEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, wixEvidence.length) * 0.15) }); }
+
+        const squarespaceEvidence = [];
+        if (/squarespace\.com|static1\.squarespace\.com/i.test(html)) squarespaceEvidence.push('asset URL/domain references squarespace');
+        if ($('meta[name="generator"][content*="Squarespace" i]').length) squarespaceEvidence.push('meta generator = Squarespace');
+        if ($('[class*="sqs-"]').length) squarespaceEvidence.push('DOM has sqs- classes');
+        if (squarespaceEvidence.length) { platform = 'Squarespace'; frameworks.push('Squarespace'); evidence.squarespace = squarespaceEvidence; builders.push({ name: 'Squarespace', evidence: squarespaceEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, squarespaceEvidence.length) * 0.15) }); }
+
+        const webflowEvidence = [];
+        if ($('html[data-wf-site], html[data-wf-page]').length) webflowEvidence.push('html tag has data-wf-site/data-wf-page');
+        if (/website-files\.com|webflow\.com/i.test(html)) webflowEvidence.push('asset URL/domain references webflow');
+        if (webflowEvidence.length) { platform = 'Webflow'; frameworks.push('Webflow'); evidence.webflow = webflowEvidence; builders.push({ name: 'Webflow', evidence: webflowEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, webflowEvidence.length) * 0.15) }); }
+
+        const shopifyEvidence = [];
+        if (/cdn\.shopify\.com|myshopify\.com/i.test(html)) shopifyEvidence.push('asset URL/domain references shopify');
+        if (/Shopify\.theme|window\.Shopify/i.test(html)) shopifyEvidence.push('inline script references Shopify object');
+        if (shopifyEvidence.length) { platform = 'Shopify'; frameworks.push('Shopify'); evidence.shopify = shopifyEvidence; builders.push({ name: 'Shopify', evidence: shopifyEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, shopifyEvidence.length) * 0.15) }); }
+
+        const dudaEvidence = [];
+        if (/irp\.cdn-website\.com|duda\.co|dudamobile/i.test(html)) dudaEvidence.push('asset URL/domain references duda');
+        if ($('[class*="dmBody"], [class*="dm-"]').length) dudaEvidence.push('DOM has dmBody/dm- classes');
+        if (dudaEvidence.length) { platform = 'Duda'; frameworks.push('Duda'); evidence.duda = dudaEvidence; builders.push({ name: 'Duda', evidence: dudaEvidence, confidence: Math.min(0.95, 0.4 + Math.min(5, dudaEvidence.length) * 0.15) }); }
+
         if (/bootstrap/i.test(html) || $('.navbar, .container, .row, .col-md-6, .btn-primary').length || Object.keys(newCssVariables).some(k => k.startsWith('bs-'))) {
             frameworks.push('Bootstrap'); evidence.bootstrap = true;
         }
@@ -2456,14 +2555,43 @@ const buildPalette = (raw) => {
     const screenshotPrimary = screenshotCandidates[0] || null;
     const screenshotSecondary = screenshotCandidates.find(c => c !== screenshotPrimary) || null;
 
+    // Sanity check: a CSS variable named "primary"/"brand"/"theme" is often a
+    // reliable signal, but on some sites those variable names are reused for
+    // small/unrelated elements and don't match what's actually visible on the
+    // page. If we have a screenshot to compare against and the CSS-derived
+    // color doesn't visually appear anywhere near the top of the rendered
+    // page (within a small color-distance tolerance), trust the screenshot's
+    // real majority color instead — it's what a human looking at the site
+    // would actually call the brand color.
+    const hexToRgb = (hex) => {
+        if (!hex || hex[0] !== '#' || hex.length !== 7) return null;
+        return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    };
+    const colorDistance = (hexA, hexB) => {
+        const a = hexToRgb(hexA), b = hexToRgb(hexB);
+        if (!a || !b) return Infinity;
+        return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+    };
+    const appearsInScreenshot = (hex) => screenshotCandidates.some(c => colorDistance(hex, c) < 40);
+
+    let effectiveExactPrimary = exactPrimary;
+    if (exactPrimary && screenshotCandidates.length && !appearsInScreenshot(exactPrimary)) {
+        logger.warn(`[Scraper] CSS-derived primary ${exactPrimary} not visually present in screenshot — using screenshot majority color instead`);
+        effectiveExactPrimary = null;
+    }
+    let effectiveExactSecondary = exactSecondary;
+    if (exactSecondary && screenshotCandidates.length && !appearsInScreenshot(exactSecondary)) {
+        effectiveExactSecondary = null;
+    }
+
     const candidates = [
-        exactPrimary || metaPrimary,
+        effectiveExactPrimary || metaPrimary,
         themeColors?.button?.bg,
         themeColors?.header?.bg,
         themeColors?.footer?.bg,
         themeColors?.hero?.bg,
         themeColors?.header?.link,
-        exactSecondary || metaSecondary,
+        effectiveExactSecondary || metaSecondary,
         screenshotPrimary,
         screenshotSecondary,
         ...Object.values(cssVars),
@@ -2477,11 +2605,22 @@ const buildPalette = (raw) => {
         .filter(c => !isNeutralHex(c));
 
     const palette = [...new Set(candidates)].slice(0, 20);
-    const primary = exactPrimary || metaPrimary || screenshotPrimary || palette[0];
-    const secondary = exactSecondary || metaSecondary || screenshotSecondary || palette.find(c => c !== primary);
+    const primary = effectiveExactPrimary || metaPrimary || screenshotPrimary || palette[0];
+    const secondary = effectiveExactSecondary || metaSecondary || screenshotSecondary || palette.find(c => c !== primary);
     const accent = palette.find(c => c !== primary && c !== secondary);
 
-    return { primary, secondary, rawPrimary: exactPrimary || metaPrimary || null, rawSecondary: exactSecondary || metaSecondary || null, accent, palette, exact: { cssVariables: cssVars, cssVariablesList: exactColors.cssVariablesList || [], meta: metaCols } };
+    return {
+        primary, secondary, accent, palette,
+        rawPrimary: exactPrimary || metaPrimary || null,
+        rawSecondary: exactSecondary || metaSecondary || null,
+        // Explicit per-tier values so callers can implement their own priority
+        // order (e.g. "screenshot first, then logo, then declared") instead of
+        // being locked into the CSS-first order baked into `primary`/`secondary`.
+        screenshotPrimary, screenshotSecondary,
+        declaredPrimary: effectiveExactPrimary || metaPrimary || null,
+        declaredSecondary: effectiveExactSecondary || metaSecondary || null,
+        exact: { cssVariables: cssVars, cssVariablesList: exactColors.cssVariablesList || [], meta: metaCols },
+    };
 };
 
 const scrapeWebsiteStructure = async (websiteUrl) => {
@@ -2722,41 +2861,67 @@ const scrapeWebsiteStructure = async (websiteUrl) => {
         identity.logoSource = 'favicon-fallback';
     }
 
+    // ── Color resolution priority chain ──────────────────────────────────
+    // Tier 1: SCREENSHOT — real pixels from the rendered page (most reliable
+    //         signal of what the site actually looks like).
+    // Tier 2: LOGO / FAVICON — dominant colors pulled from the brand mark.
+    // Tier 3: DECLARED — colors the site itself declares via CSS variables
+    //         or meta theme-color tags.
+    // Each tier is only attempted if the previous one produced nothing.
+    const pagePalette = buildPalette(raw);
+
     let logoColors = { primary: null, secondary: null, palette: [], source: null };
-    const logoSourceUrl = identity.logoSource !== 'favicon-fallback' ? identity.logoUrl : null;
-    const faviconFallback = identity.faviconUrl || null;
 
-    if (logoSourceUrl) {
-        try {
-            logoColors = await extractLogoColors(logoSourceUrl, null, baseUrl, false);
-        } catch (e) {
-            logger.warn(`[Scraper] Logo color extraction failed: ${e.message}`);
-        }
-    }
-    if (!logoColors.primary && faviconFallback) {
-        try {
-            const favColors = await extractLogoColors(faviconFallback, null, baseUrl, true);
-            if (favColors.primary) logoColors = favColors;
-        } catch (e) {
-            logger.warn(`[Scraper] Favicon color extraction failed: ${e.message}`);
-        }
-    }
-    if (!logoColors.primary) {
-        const pagePalette = buildPalette(raw);
-        if (pagePalette.primary) {
-            logoColors = { primary: pagePalette.primary, secondary: pagePalette.secondary || null, palette: pagePalette.palette || [], source: 'css-fallback' };
-        }
-    }
-
-    const colors = buildPalette(raw);
-    if (colors.primary) {
+    if (pagePalette.screenshotPrimary) {
         logoColors = {
-            primary: colors.primary,
-            secondary: colors.secondary || logoColors.secondary || null,
-            palette: (colors.palette && colors.palette.length) ? colors.palette : logoColors.palette,
-            source: 'rendered-page',
+            primary: pagePalette.screenshotPrimary,
+            secondary: pagePalette.screenshotSecondary || null,
+            palette: pagePalette.palette || [],
+            source: 'screenshot',
         };
+        logger.info(`[Scraper] Color source: screenshot majority (${logoColors.primary})`);
+    } else {
+        logger.warn('[Scraper] Screenshot color extraction unavailable/empty — trying logo next');
+
+        const logoSourceUrl = identity.logoSource !== 'favicon-fallback' ? identity.logoUrl : null;
+        const faviconFallback = identity.faviconUrl || null;
+
+        if (logoSourceUrl) {
+            try {
+                const lc = await extractLogoColors(logoSourceUrl, null, baseUrl, false);
+                if (lc.primary) logoColors = { ...lc, source: lc.source || 'logo' };
+            } catch (e) {
+                logger.warn(`[Scraper] Logo color extraction failed: ${e.message}`);
+            }
+        }
+        if (!logoColors.primary && faviconFallback) {
+            try {
+                const favColors = await extractLogoColors(faviconFallback, null, baseUrl, true);
+                if (favColors.primary) logoColors = { ...favColors, source: 'favicon' };
+            } catch (e) {
+                logger.warn(`[Scraper] Favicon color extraction failed: ${e.message}`);
+            }
+        }
+
+        if (logoColors.primary) {
+            logger.info(`[Scraper] Color source: ${logoColors.source} (${logoColors.primary})`);
+        } else {
+            logger.warn('[Scraper] Logo/favicon color extraction unavailable/empty — falling back to declared colors');
+            if (pagePalette.declaredPrimary || pagePalette.primary) {
+                logoColors = {
+                    primary: pagePalette.declaredPrimary || pagePalette.primary,
+                    secondary: pagePalette.declaredSecondary || pagePalette.secondary || null,
+                    palette: pagePalette.palette || [],
+                    source: 'declared',
+                };
+                logger.info(`[Scraper] Color source: declared CSS/meta (${logoColors.primary})`);
+            } else {
+                logger.warn('[Scraper] No color could be resolved from screenshot, logo, or declared CSS/meta');
+            }
+        }
     }
+
+    const colors = pagePalette;
 
     const tc = raw.themeColors;
     const norm = normaliseCssColor;
@@ -2994,8 +3159,12 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
         frameworkInfo = { platform: 'Plain HTML', frameworks: [], evidence: {} },
     } = scraped;
 
-    const primaryColor = colors.primary || logoColors.primary || '';
-    const secondaryColor = colors.secondary || logoColors.secondary || '';
+    // `logoColors` already encodes the full screenshot → logo/favicon → declared
+    // priority chain resolved in scrapeWebsiteStructure, so it must win here.
+    // `colors.primary` (raw CSS-first heuristic) is only a last-resort fallback
+    // for the rare case logoColors ended up with nothing at all.
+    const primaryColor = logoColors.primary || colors.primary || '';
+    const secondaryColor = logoColors.secondary || colors.secondary || '';
     const accentColor = colors.accent || '';
 
     return {
@@ -3097,23 +3266,15 @@ const buildWebsiteProfile = (scraped, themeData = null) => {
                 header: themeData?.header || { background: headerBg, text: headerText, border: navBorder },
                 navigation: themeData?.navigation || { background: navBg, text: navText, active: navActive, hover: navHover, border: navBorder },
                 buttons: {
-                    primaryBg: themeData?.buttons?.primaryBg || btnBg,
-                    primaryText: themeData?.buttons?.primaryText || btnText,
-                    primaryBorder: themeData?.buttons?.primaryBorder || btnBorder,
-                    primaryHoverBg: themeData?.buttons?.primaryHoverBg || btnHoverBg,
-                    primaryHoverText: themeData?.buttons?.primaryHoverText || btnHoverText,
-                    secondaryBg: themeData?.buttons?.secondaryBg || first(cssSecondary, sec, p),
-                    secondaryText: themeData?.buttons?.secondaryText || '#ffffff',
-                    // Additive — only populated when a Playwright-derived themeData is supplied.
-                    borderRadius: themeData?.buttons?.borderRadius || '',
+                    primaryBg: btnBg,
+                    primaryText: btnText,
+                    primaryBorder: btnBorder,
+                    primaryHoverBg: btnHoverBg,
+                    primaryHoverText: btnHoverText,
+                    secondaryBg: first(cssSecondary, sec, p),
+                    secondaryText: '#ffffff',
                 },
-                footer: themeData?.footer || { background: footerBg, text: footerText },
-                // Additive blocks — present only when themeData comes from the Playwright
-                // visual extractor (extractThemeProfile -> mapThemeProfileToThemeData).
-                // Left undefined (and therefore omitted from the JSON) for the legacy
-                // heuristic-only path so existing consumers of `theme` are unaffected.
-                ...(themeData?.typography ? { typography: themeData.typography } : {}),
-                ...(themeData?.shape ? { shape: themeData.shape } : {}),
+                footer: { background: footerBg, text: footerText },
             };
         })(),
         fonts: {
