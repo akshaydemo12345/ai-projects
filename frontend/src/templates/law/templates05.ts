@@ -551,6 +551,56 @@ img { max-width: 100%; height: auto; display: block; }
   .nav-links { display: none; }
   .top-bar { display: none; }
 }
+/* Tabs Section */
+.tabs-section { padding: 6rem 0; background: linear-gradient(135deg, rgba(var(--secondary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.02) 100%); position: relative; overflow: hidden; }
+.tabs-header { text-align: center; max-width: 750px; margin: 0 auto 4rem; }
+.tabs-header h2 { font-size: 2.8rem; margin-bottom: 1rem; }
+.tabs-header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 1rem; }
+
+.tabs-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start; max-width: 1000px; margin: 0 auto; z-index: 2; position: relative; }
+.tab-list { display: flex; flex-wrap: wrap; flex-direction: column; gap: 1rem; }
+.tab-item { background: #fff; padding: 1.25rem 1.5rem; border-radius: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+.tab-item:hover { background: rgba(0,0,0,0.02); }
+.tab-icon { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; transition: 0.3s; color: inherit; }
+.tab-content-box { display: none; background: #fff; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+
+/* Published Mode (JS Tabs) */
+body.js-enabled .tab-content-box.active { display: block; animation: tabFadeIn 0.4s ease-out; }
+body.js-enabled .tab-item.active, .tab-item.active { background: var(--primary) !important; color: #ffffff !important; }
+body.js-enabled .tab-item.active .tab-icon, .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); color: #ffffff !important; }
+
+/* Fallback if active class is missing */
+body.js-enabled .tab-content-wrapper:not(:has(.tab-content-box.active)) .tab-content-box:first-child { display: block; animation: tabFadeIn 0.4s ease-out; }
+body.js-enabled .tab-list:not(:has(.tab-item.active)) .tab-item:first-child { background: var(--primary); color: #fff; }
+body.js-enabled .tab-list:not(:has(.tab-item.active)) .tab-item:first-child .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+
+/* Editor Mode Horizontal Scroll (When JS is disabled in GrapesJS) */
+body:not(.js-enabled) .tab-content-wrapper {
+  display: flex!important; flex-wrap: wrap;
+  overflow-x: auto !important;
+  gap: 2rem;
+  padding-bottom: 1rem;
+  scroll-snap-type: x mandatory;
+}
+body:not(.js-enabled) .tab-content-box {
+  display: block !important;
+  flex: 0 0 100% !important;
+  min-width: 100%;
+  scroll-snap-align: center;
+}
+body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar { height: 8px; }
+body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+@keyframes tabFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.tab-content-box h3 { font-size: 1.8rem; margin-bottom: 1rem; }
+.tab-content-box p { color: var(--text-muted); margin-bottom: 1.5rem; }
+.tab-content-box img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; margin-bottom: 1.5rem; }
+.link-primary { color: var(--primary); font-weight: 600; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.link-primary:hover { gap: 8px; }
+
+.tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
+
 `;
 
 export const law05Html = `
