@@ -456,11 +456,11 @@ const withRetry = async (fn, { retries = 3, baseDelayMs = 2000 } = {}) => {
 //  CORE AI CALL
 //  🚨 BUG FIX: max_tokens was set to 1600 — nowhere near enough
 //  for a full 6+ section HTML page. This is what caused pages to
-//  cut off halfway through the hero. Raised to 12000 both
+//  cut off halfway through the hero. Raised to 8000 for both
 //  providers, and one automatic retry-with-higher-budget added
 //  if the returned HTML looks truncated.
 // ═══════════════════════════════════════════════════════════
-const MAX_OUTPUT_TOKENS = 18000;
+const MAX_OUTPUT_TOKENS = 8000;
 
 const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
