@@ -11,6 +11,27 @@
     fullUrl: window.location.href
   };
 
+  // Inject overlay synchronously to hide native 404 flash
+  const overlayBg = (scriptTag && scriptTag.getAttribute('data-overlay-color')) || '#ffffff';
+  
+  const style = document.createElement('style');
+  style.id = 'pc-style-overlay';
+  style.textContent = 'body { display: none !important; } #pc-overlay { position:fixed;inset:0;z-index:2147483647;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center; } #pc-spinner { width:40px;height:40px;border:3px solid rgba(0,0,0,0.1);border-top:3px solid #3498db;border-radius:50%;animation:pc-spin 1s linear infinite; } @keyframes pc-spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }';
+  if (document.head) document.head.appendChild(style);
+  else document.documentElement.appendChild(style);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pc-overlay';
+  overlay.innerHTML = '<div id="pc-spinner"></div>';
+  document.documentElement.appendChild(overlay);
+
+  function removeOverlay() {
+    const styleEl = document.getElementById('pc-style-overlay');
+    if (styleEl) styleEl.remove();
+    const overlayEl = document.getElementById('pc-overlay');
+    if (overlayEl) overlayEl.remove();
+  }
+
   // Support re-initialization on hash change
   window.addEventListener('hashchange', () => window.location.reload());
   const landingUrl = window.location.href;
@@ -224,20 +245,19 @@
       if (d && d.html) {
         CONFIG.pageId = d.pageId;
         CONFIG.projectId = d.projectId;
-        const target = `${CONFIG.apiBase}/${encodeURIComponent(CONFIG.path)}`;
-        window.location.replace(target);
+        document.open();
+        document.write(d.html);
+        document.close();
       } else {
+        removeOverlay();
         handleForms();
       }
     } catch (e) {
       console.log('Fallback to static form tracking');
+      removeOverlay();
       handleForms();
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
-  }
+  initialize();
 })();
