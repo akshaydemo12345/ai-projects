@@ -540,6 +540,7 @@ a {
   font-weight: 800;
   margin: 0 0 5px;
   color: var(--primary);
+  line-height: 1.1;
 }
 .hc4-stat-item p {
   margin: 0;

@@ -218,26 +218,67 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal")
       );
 
       serviceHeadings.forEach((heading, idx) => {
         if (idx < services.length) {
           const service = services[idx];
-          if (typeof service === "string") {
-            heading.textContent = service;
-          } else if (service.title || service.name) {
-            heading.textContent = service.title || service.name;
+          const serviceTitle = typeof service === "string" ? service : (service.title || service.name);
+          if (serviceTitle) {
+            heading.textContent = serviceTitle;
             const parent = heading.parentElement;
-            if (parent && service.description) {
+            
+            // Sync tab labels
+            if (parent && parent.classList.contains('tab-content-box')) {
+              const tabWrapper = parent.closest('.tabs-container');
+              if (tabWrapper) {
+                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
+                const boxIndex = allTabBoxes.indexOf(parent);
+                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
+                if (boxIndex > -1 && allTabItems[boxIndex]) {
+                  const span = allTabItems[boxIndex].querySelector('span:not(.tab-icon)');
+                  if (span) span.textContent = serviceTitle;
+                }
+              }
+            }
+
+            // Sync accordion labels (e.g. healthcare template 04)
+            const accordionItem = heading.closest('.hc4-accordion-item, details');
+            if (accordionItem) {
+              const summary = accordionItem.querySelector('summary, .hc4-accordion-header');
+              if (summary) {
+                // Preserve the icon if it exists (usually an 'i' or 'span' at the end)
+                const icon = summary.querySelector('i, span, svg');
+                summary.textContent = serviceTitle;
+                if (icon) {
+                  summary.appendChild(document.createTextNode(" "));
+                  summary.appendChild(icon);
+                }
+              }
+            }
+
+            if (parent && typeof service !== "string" && service.description) {
               const p = parent.querySelector("p");
               if (p) p.textContent = service.description;
             }
           }
         } else {
           // Remove extra hardcoded service item
-          const parent = heading.closest(".service-card, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
+          const parent = heading.closest(".service-card, .hc4-accordion-item, details, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
           if (parent) {
+            // If we're removing a tab-content-box, we must also remove its tab-item button
+            if (parent.classList.contains('tab-content-box')) {
+              const tabWrapper = parent.closest('.tabs-container');
+              if (tabWrapper) {
+                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
+                const boxIndex = allTabBoxes.indexOf(parent as Element);
+                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
+                if (boxIndex > -1 && allTabItems[boxIndex]) {
+                  allTabItems[boxIndex].remove();
+                }
+              }
+            }
             parent.remove();
           }
         }
@@ -300,16 +341,67 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
       }
     });
 
-    // 8. Remove bottom privacy/terms text
-    const footerPTags = doc.querySelectorAll("footer p, footer span, footer a, footer div, [class*='footer-bottom'] p");
-    footerPTags.forEach(p => {
-      const text = p.textContent?.toLowerCase() || "";
+    // 8. Remove bottom privacy/terms text without breaking parent divs
+    const footerTextElements = doc.querySelectorAll("footer p, footer span, footer a, footer li");
+    let copyRightText = "© 2026 " + (project?.websiteProfile?.identity?.companyName || "PROJECT_NAME_PLACEHOLDER") + ". All rights reserved.";
+    
+    footerTextElements.forEach(el => {
+      const text = el.textContent?.toLowerCase() || "";
       if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
-        p.remove();
+        el.remove();
       } else if (text.includes("©")) {
-        // Update copyright year to 2026
-        p.innerHTML = p.innerHTML.replace(/\b202\d\b/g, "2026");
+        // Update copyright year to 2026 and store for moving
+        el.innerHTML = el.innerHTML.replace(/\b202\d\b/g, "2026");
+        copyRightText = el.textContent || copyRightText;
+        el.remove(); // We will move it to the brand column
       }
+    });
+
+    // 9. Reformat Footer Brand Column (Add About Us, move copyright, remove social icons)
+    const footerBrandCols = doc.querySelectorAll("footer .footer-col, footer .fc-brand, footer .foot-col, footer .brand-col, footer > div > div");
+    footerBrandCols.forEach(col => {
+      const logo = col.querySelector(".logo, .footer-brand, .brand-logo, [href='#']");
+      if (logo && logo.textContent?.includes("LOGO_PLACEHOLDER")) {
+         // Found the brand column!
+         
+         // 1. Remove social icons
+         const socials = col.querySelector(".socials, .footer-socials, .social-links, .social-icons");
+         if (socials) socials.remove();
+
+         const iconLinks = col.querySelectorAll("a:has(span.material-symbols-outlined), a:has(i), a:has(svg)");
+         iconLinks.forEach(l => {
+           if (!l.textContent?.trim()) l.remove();
+         });
+
+         // 2. Add 'About Us' title above the description
+         const desc = col.querySelector("p");
+         if (desc && !desc.previousElementSibling?.textContent?.includes("About Us")) {
+            const aboutTitle = doc.createElement("h4");
+            const existingTitle = doc.querySelector(".footer-title, .foot-title, h4");
+            aboutTitle.className = existingTitle ? existingTitle.className : "footer-title";
+            aboutTitle.textContent = "About Us";
+            aboutTitle.style.fontWeight = "700";
+            aboutTitle.style.marginBottom = "0.5rem";
+            aboutTitle.style.marginTop = "1rem";
+            col.insertBefore(aboutTitle, desc);
+         }
+
+         // 3. Move copyright text to below the logo
+         const copyP = doc.createElement("p");
+         copyP.textContent = copyRightText;
+         copyP.style.fontSize = "0.875rem";
+         copyP.style.opacity = "0.7";
+         copyP.style.marginTop = "0.5rem";
+         copyP.style.marginBottom = "1.5rem";
+         
+         col.insertBefore(copyP, logo.nextSibling);
+      }
+    });
+
+    // 10. Clean up empty footer-bottom wrappers
+    const footerBottoms = doc.querySelectorAll(".footer-bottom, .foot-bottom");
+    footerBottoms.forEach(fb => {
+      if (!fb.textContent?.trim()) fb.remove();
     });
 
     // 9. Remove footer badges
