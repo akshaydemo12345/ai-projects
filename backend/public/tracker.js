@@ -213,17 +213,21 @@
 
   async function initialize() {
     try {
-      const res = await fetch(`${CONFIG.apiBase}/api/page?domain=${CONFIG.domain}&path=${CONFIG.path}${CONFIG.apiKey ? `&apiKey=${CONFIG.apiKey}` : ''}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch(`${CONFIG.apiBase}/api/page?domain=${CONFIG.domain}&path=${CONFIG.path}${CONFIG.apiKey ? `&apiKey=${CONFIG.apiKey}` : ''}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       if (!res.ok) throw new Error('Dynamic load failed');
       const d = await res.json();
       if (d && d.html) {
         CONFIG.pageId = d.pageId;
         CONFIG.projectId = d.projectId;
-        document.open();
-        document.write(d.html);
-        document.close();
-        // Wait for DOM to stabilize
-        setTimeout(handleForms, 500);
+        const target = `${CONFIG.apiBase}/${encodeURIComponent(CONFIG.path)}`;
+        window.location.replace(target);
+      } else {
+        handleForms();
       }
     } catch (e) {
       console.log('Fallback to static form tracking');
