@@ -1112,24 +1112,31 @@ const PublishModal = ({ page, project, onClose, onPublished }: PublishModalProps
 
             {/* Script */}
             {tab === "script" && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs text-muted-foreground">Add to your &lt;head&gt; tag:</p>
-                  <button
-                    onClick={async () => {
-                      const success = await copyToClipboard(scriptCode);
-                      if (success) {
-                        setScriptCopied(true);
-                        toast.success("Code copied successfully.");
-                        setTimeout(() => setScriptCopied(false), 2000);
-                      }
-                    }}
-                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80 transition-all active:scale-95"
-                  >
-                    {scriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
-                  </button>
+              <div className="space-y-4">
+                <div className="text-[11px] text-muted-foreground leading-relaxed space-y-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+                  <p><strong>1. One-time site-wide install:</strong> Paste this script in your global header/footer (WordPress, Wix, Duda, Webflow, Squarespace).</p>
+                  <p><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will be redirected to view that landing page — the URL will change to the landing page's own address.</p>
+                  <p><strong>3. SEO Note:</strong> The original URL isn't indexable (acts as a redirect), but the destination landing page URL is a real 200 page and can be indexed on its own.</p>
                 </div>
-                <pre className="text-[11px] font-mono bg-muted rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-foreground">{scriptCode}</pre>
+                <div className="bg-muted rounded-xl p-1">
+                  <div className="flex justify-between items-center mb-2 px-2 pt-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Embed Code</p>
+                    <button
+                      onClick={async () => {
+                        const success = await copyToClipboard(scriptCode);
+                        if (success) {
+                          setScriptCopied(true);
+                          toast.success("Code copied successfully.");
+                          setTimeout(() => setScriptCopied(false), 2000);
+                        }
+                      }}
+                      className="text-[10px] font-bold text-primary flex items-center gap-1 hover:text-primary/80 transition-all active:scale-95 bg-primary/10 px-2 py-1 rounded"
+                    >
+                      {scriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+                    </button>
+                  </div>
+                  <pre className="text-[11px] font-mono bg-background rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-foreground border border-border">{scriptCode}</pre>
+                </div>
               </div>
             )}
 
@@ -2253,19 +2260,21 @@ const ProjectDetailPage = () => {
                 )}
 
                 {integTab === "script" && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-medium">Add this script to your website’s &lt;head&gt; section</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-7 text-[10px] gap-1.5 transition-all ${integScriptCopied ? "text-emerald-600 bg-emerald-50" : ""}`}
-                        onClick={handleCopyScript}
-                      >
-                        {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
-                      </Button>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Embed Code</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-7 text-[10px] gap-1.5 transition-all ${integScriptCopied ? "text-emerald-600 bg-emerald-50" : ""}`}
+                          onClick={handleCopyScript}
+                        >
+                          {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+                        </Button>
+                      </div>
+                      <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                     </div>
-                    <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
                   </div>
                 )}
 
