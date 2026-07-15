@@ -3,7 +3,7 @@
 
 export const travel04Styles = `
 :root {
-  --primary: rgb(234, 255, 0);
+  --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,7 +56,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .trending { padding: 10rem 0; }
 .section-tag { color: #64748b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 1rem; }
 .section-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; line-height: 1.1; }
-.section-title span { background: #eaff00; padding: 0 10px; border-radius: 4px; }
+.section-title span { background: var(--primary); padding: 0 10px; border-radius: 4px; }
 
 .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 .trend-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; transition: 0.3s; }
@@ -70,8 +70,8 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .trend-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 1.5rem; margin-top: 1rem; padding-top: 1.5rem; }
 .price { font-weight: 800; font-size: 1.1rem; }
 .price span { font-size: 0.7rem; color: #94a3b8; margin-right: 5px; }
-.btn-view { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
-.btn-view:hover { border-color: PRIMARY_COLOR_PLACEHOLDER; }
+.btn-view { color: var(--primary); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
+.btn-view:hover { border-color: var(--primary); }
 
 /* How It Works (Dark) */
 .how { padding: 10rem 0; background: #000; color: #fff; border-radius: 40px; margin: 0 2rem; }
@@ -114,7 +114,7 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
 .timeline-line { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e2e8f0; overflow: hidden; }
 .timeline-line::after { 
     content: ''; position: absolute; top: -100px; left: 0; width: 2px; height: 100px; 
-    background: linear-gradient(to bottom, transparent, PRIMARY_COLOR_PLACEHOLDER); 
+    background: linear-gradient(to bottom, transparent, var(--primary)); 
     animation: moveLine 3s infinite linear; 
 }
 
@@ -161,17 +161,17 @@ footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem;
   .tpl-templates04-2 { color: #64748b; }
   .tpl-templates04-3 { color: #00ff00; }
   .tpl-templates04-4 { color: #64748b; }
-  .tpl-templates04-5 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-6 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-7 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-8 { color: #ff4400; border: 1px solid #ff4400; border-radius: 2px; }
-  .tpl-templates04-9 { background: #eaff00; color: #000; }
+  .tpl-templates04-5 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-6 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-7 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-8 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
+  .tpl-templates04-9 { background: var(--primary); color: #000; }
   .tpl-templates04-10 { background: #fff; color: #000; }
   .tpl-templates04-11 { border-top: 1px solid #e2e8f0; }
   .tpl-templates04-12 { color: #64748b; }
   .tpl-templates04-13 { color: #64748b; }
   .tpl-templates04-14 { color: #64748b; }
-  .tpl-templates04-15 { color: #eaff00; }
+  .tpl-templates04-15 { color: var(--primary); }
   .tpl-templates04-16 { color: #fff; }
   .tpl-templates04-17 { color: #64748b; }
   .tpl-templates04-18 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
@@ -381,16 +381,16 @@ export const travel04Html = `
            
            <div class="tpl-templates04-11" style="padding-top: 3rem">
               <div style="margin-bottom: 2rem;">
-                 <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ Skip-the-line Access</h4>
-                 <p class="tpl-templates04-12" style="font-size: 0.85rem">We handle all reservations and priority entries before you even land.</p>
+                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ Skip-the-line Access</h4>
+                 <p class="tpl-templates04-12">We handle all reservations and priority entries before you even land.</p>
               </div>
               <div style="margin-bottom: 2rem;">
-                 <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ Curated Secret Maps</h4>
-                 <p class="tpl-templates04-13" style="font-size: 0.85rem">Get a digital map with offline markers for spots that don't appear on Google.</p>
+                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ Curated Secret Maps</h4>
+                 <p class="tpl-templates04-13">Get a digital map with offline markers for spots that don't appear on Google.</p>
               </div>
               <div>
-                 <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem;">✦ 24/7 City Concierge</h4>
-                 <p class="tpl-templates04-14" style="font-size: 0.85rem">One WhatsApp text away from a table at the city's most exclusive rooftop.</p>
+                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ 24/7 City Concierge</h4>
+                 <p class="tpl-templates04-14">One WhatsApp text away from a table at the city's most exclusive rooftop.</p>
               </div>
            </div>
         </div>
@@ -470,7 +470,7 @@ export const travel04Html = `
          </div>
       </div>
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-         <p class="tpl-templates04-17" style="font-size: 0.7rem">© 2026 metro.travel - built for the weekend</p>
+         <p class="tpl-templates04-17">© 2026 metro.travel - built for the weekend</p>
          <div class="foot-social">
             <div class="social-icon"><i class="fa-brands fa-instagram"></i></div>
             <div class="social-icon"><i class="fa-brands fa-twitter"></i></div>
@@ -486,9 +486,19 @@ export const travel04Html = `
     // Check if we are inside GrapesJS editor
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
     
-    // Form Validation (runs everywhere so you can see red borders in editor)
+    // Form Validation
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
+        e.preventDefault();
+        if (isInEditor) {
+          e.stopImmediatePropagation();
+          var existingModal = document.getElementById("preview-mode-modal");
+          if (existingModal) existingModal.remove();
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          document.body.insertAdjacentHTML("beforeend", modalHtml);
+          return;
+        }
+
         e.target.setAttribute('novalidate', 'true');
         var isValid = true;
         var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
@@ -555,18 +565,10 @@ export const travel04Html = `
           }
         });
         
-        if (!isValid || isInEditor) {
+        if (!isValid) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          if (isInEditor) {
-            var existingModal = document.getElementById("preview-mode-modal");
-            if (existingModal) existingModal.remove();
-            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
-            document.body.insertAdjacentHTML("beforeend", modalHtml);
-          }
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        } else if (!isInEditor) {
+        } else {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
           if (btn) {
@@ -574,7 +576,7 @@ export const travel04Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div class="tpl-templates04-18" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates04-18" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; ">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }

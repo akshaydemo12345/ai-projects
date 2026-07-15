@@ -205,8 +205,8 @@ h1, h2, h3 {
 .values-section { background: var(--primary) ; color: #fff; text-align: center; }
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
 .value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
-.value-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
-.value-card i { font-size: 2rem; color: var(--accent); margin-bottom: 2rem; display: block; }
+.value-card:hover { background: rgba(255,255,255,0.05); border-color: #fff; }
+.value-card i { font-size: 2rem; color: #fff; margin-bottom: 2rem; display: block; }
 .value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
 
 /* MINIMAL CTA */
@@ -236,20 +236,20 @@ h1, h2, h3 {
 
   /* Extracted Template Inline Styles */
   .tpl-templates02-1 { background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)); }
-  .tpl-templates02-2 { color: var(--gold); }
+  .tpl-templates02-2 { color: var(--primary); }
   .tpl-templates02-3 { color: var(--slate); }
   .tpl-templates02-4 { color: #000; }
-  .tpl-templates02-5 { color: var(--gold); }
+  .tpl-templates02-5 { color: var(--primary); }
   .tpl-templates02-6 { background: #f8fafc; }
-  .tpl-templates02-7 { color: var(--gold); }
+  .tpl-templates02-7 { color: var(--primary); }
   .tpl-templates02-8 { color: var(--slate); }
-  .tpl-templates02-9 { background: var(--gold); }
-  .tpl-templates02-10 { background: var(--gold); }
-  .tpl-templates02-11 { background: var(--gold); }
-  .tpl-templates02-12 { color: SECONDARY_COLOR_PLACEHOLDER; border-bottom: 2px solid var(--gold); }
-  .tpl-templates02-13 { color: var(--gold); }
+  .tpl-templates02-9 { background: var(--primary); }
+  .tpl-templates02-10 { background: var(--primary); }
+  .tpl-templates02-11 { background: var(--primary); }
+  .tpl-templates02-12 { color: SECONDARY_COLOR_PLACEHOLDER; border-bottom: 2px solid var(--primary); }
+  .tpl-templates02-13 { color: var(--primary); }
   .tpl-templates02-14 { color: #fff; }
-  .tpl-templates02-15 { color: var(--gold); }
+  .tpl-templates02-15 { color: var(--primary); }
   .tpl-templates02-16 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
@@ -271,7 +271,7 @@ export const finance02Html = `
   </div>
   <div class="container">
     <div class="hero-content">
-      <h1>Preserving Wealth. <br>Building <span class="text-gold">Legacies.</span></h1>
+      <h1>Preserving Wealth. <br>Building <span class="text-primary" style="color: var(--primary);">Legacies.</span></h1>
       <p>Global institutional-grade investment management and strategic advisory for multi-generational success.</p>
       <div class="hero-btns">
         <a href="#contact" class="btn-hero-primary">Our Expertise</a>
@@ -289,8 +289,8 @@ export const finance02Html = `
         <h2>Begin Your Consultation</h2>
         <p>Connect with our senior advisors for a comprehensive analysis of your global financial objectives.</p>
         <div style="margin-top: 2rem;">
-          <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Corporate HQ</h4>
-          <p class="tpl-templates02-3" style="font-size: 0.9rem">ADDRESS_PLACEHOLDER</p>
+          <h4 style="margin-bottom: 0.5rem;">Corporate HQ</h4>
+          <p class="tpl-templates02-3">ADDRESS_PLACEHOLDER</p>
         </div>
       </div>
       <form class="contact-form">
@@ -334,7 +334,7 @@ export const finance02Html = `
 <section class="section-padding container" id="services">
   <div style="text-align: center; margin-bottom: 6rem;">
     <span class="tpl-templates02-5" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Areas of Expertise</span>
-    <h2 style="font-size: 3.5rem; margin-top: 1.5rem;">Unrivaled Financial <br>Intelligence</h2>
+    <h2 style="margin-top: 1.5rem;">Unrivaled Financial <br>Intelligence</h2>
   </div>
 
   <div class="services-grid">
@@ -363,8 +363,8 @@ export const finance02Html = `
     </div>
     <div class="expertise-content">
       <span class="tpl-templates02-7" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px">Our Heritage</span>
-      <h2 style="font-size: 3rem; margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
-      <p class="tpl-templates02-8" style="font-size: 1.1rem; margin-bottom: 2rem">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
+      <h2 style="margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
+      <p class="tpl-templates02-8" style="margin-bottom: 2rem">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
       <ul style="list-style: none; display: flex; flex-wrap: wrap; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
         <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-9" style="width: 20px; height: 1px"></div> Institutional Risk Management</li>
         <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-10" style="width: 20px; height: 1px"></div> Global Market Access</li>
@@ -395,7 +395,7 @@ export const finance02Html = `
 <section class="section-padding values-section">
   <div class="container">
     <span class="tpl-templates02-13" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Philosophy</span>
-    <h2 class="tpl-templates02-14" style="font-size: 3rem; margin-top: 1.5rem">The Pillars of Our Success</h2>
+    <h2 class="tpl-templates02-14" style="margin-top: 1.5rem">The Pillars of Our Success</h2>
     <div class="values-grid">
       <div class="value-card">
         <i class="fa-solid fa-shield-halved"></i>
@@ -469,9 +469,19 @@ export const finance02Html = `
     // Check if we are inside GrapesJS editor
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
     
-    // Form Validation (runs everywhere so you can see red borders in editor)
+    // Form Validation
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
+        e.preventDefault();
+        if (isInEditor) {
+          e.stopImmediatePropagation();
+          var existingModal = document.getElementById("preview-mode-modal");
+          if (existingModal) existingModal.remove();
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          document.body.insertAdjacentHTML("beforeend", modalHtml);
+          return;
+        }
+
         e.target.setAttribute('novalidate', 'true');
         var isValid = true;
         var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
@@ -538,18 +548,10 @@ export const finance02Html = `
           }
         });
         
-        if (!isValid || isInEditor) {
+        if (!isValid) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          if (isInEditor) {
-            var existingModal = document.getElementById("preview-mode-modal");
-            if (existingModal) existingModal.remove();
-            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
-            document.body.insertAdjacentHTML("beforeend", modalHtml);
-          }
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        } else if (!isInEditor) {
+        } else {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
           if (btn) {
@@ -557,7 +559,7 @@ export const finance02Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div class="tpl-templates02-16" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; font-size: 20px;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates02-16" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; ">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
