@@ -669,8 +669,8 @@ exports.createPage = async (req, res, next) => {
         // If it's a template, we pass a hint to the AI service
         // Merge scraped fonts with any fonts explicitly passed from the frontend
         const resolvedFonts = {
-          bodyFont: incomingFonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
-          headingFont: incomingFonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
+          bodyFont: req.body.fonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
+          headingFont: req.body.fonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
           googleFonts: project.websiteProfile?.fonts?.googleFonts || [],
         };
 

@@ -307,6 +307,9 @@ const GrapesEditor = () => {
       d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
       d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
       dbContent = d.body.innerHTML;
+      
+      // Fix for older pages corrupted with leaked validation script text
+      dbContent = dbContent.replace(/'; \} \}\); \} document\.readyState === 'loading'\?document\.addEventListener\('DOMContentLoaded',init\):init\(\); \}\)\(\);/g, '');
     } catch (e) { }
 
     // 2. Intelligent Extraction
