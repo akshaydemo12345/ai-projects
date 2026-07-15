@@ -1,7 +1,11 @@
+'use strict';
 const Project = require('../models/Project');
 const Page = require('../models/Page');
 const crypto = require('crypto');
 const { normalizeDomain } = require('../utils/validation');
+
+const axios = require('axios');
+const puppeteer = require('puppeteer');
 
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
@@ -641,5 +645,78 @@ exports.extractBrandingFromWebsite = async (req, res, next) => {
     }
   } catch (err) {
     next(err);
+  }
+};
+
+
+exports.verifyScript = async (req, res) => {
+  try {
+    const { url, projectId } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ success: false, message: 'URL is required' });
+    }
+
+    // Example unique script identifier (could be project-specific)
+    const SCRIPT_IDENTIFIER = `data-project-id="${projectId}"`;
+
+    // ─────────────────────────────────────────────
+    // 1️⃣ FAST CHECK (Axios - raw HTML)
+    // ─────────────────────────────────────────────
+    let axiosFound = false;
+
+    try {
+      const response = await axios.get(url, { timeout: 8000 });
+      axiosFound = response.data.includes(SCRIPT_IDENTIFIER);
+    } catch (err) {
+      console.warn('Axios fetch failed, fallback to Puppeteer...');
+    }
+
+    // ─────────────────────────────────────────────
+    // 2️⃣ HEADLESS BROWSER CHECK (Puppeteer)
+    // ─────────────────────────────────────────────
+    let puppeteerFound = false;
+
+    if (!axiosFound) {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox']
+      });
+
+      const page = await browser.newPage();
+
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+        timeout: 15000
+      });
+
+      const content = await page.content();
+
+      puppeteerFound = content.includes(SCRIPT_IDENTIFIER);
+
+      await browser.close();
+    }
+
+    const verified = axiosFound || puppeteerFound;
+
+    // ─────────────────────────────────────────────
+    // 3️⃣ FINAL RESPONSE
+    // ─────────────────────────────────────────────
+    return res.status(200).json({
+      success: true,
+      verified,
+      method: axiosFound ? 'axios' : puppeteerFound ? 'puppeteer' : 'none',
+      message: verified
+        ? 'Script verified successfully ✅'
+        : 'Script not found ❌'
+    });
+
+  } catch (error) {
+    console.error('Verification error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Verification failed',
+      error: error.message
+    });
   }
 };

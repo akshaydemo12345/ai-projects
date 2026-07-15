@@ -20,6 +20,7 @@ import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {verifyScript} from "../../../backend/src/controllers/projectController";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -187,7 +188,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-
+  
   // Load project suggestions when modal opens
   useEffect(() => {
     if (method === "ai") {
@@ -1512,6 +1513,9 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+const [isVerifying, setIsVerifying] = useState(false);
+const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(null);
+
 
   // ── Query 1: Project meta (header, stats, integration panel) ─────────────────
   // Seeds instantly from the projects list cache so the header renders with zero delay.
@@ -1704,6 +1708,55 @@ const ProjectDetailPage = () => {
     // Set appropriate background color based on brightness
     setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
   };
+
+const handleVerifyScript = async () => {
+  try {
+    setIsVerifying(true);
+    setVerifyStatus(null);
+
+    const url = project?.websiteUrl || project?.url;
+    const token = project?.apiToken;
+
+    if (!url || !token) {
+      toast.error("Token or URL missing ❌");
+      console.error("Missing Data:", { url, token });
+      return;
+    }
+
+    console.log("🚀 Sending verify request:", { url, token });
+
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url, token }),
+    });
+
+    const data = await res.json();
+
+    console.log("✅ Verify response:", data);
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Request failed");
+    }
+
+    if (data?.verified === true) {
+      setVerifyStatus("success");
+      toast.success("Script verified successfully ✅");
+    } else {
+      setVerifyStatus("error");
+      toast.error("Script not found ❌");
+    }
+
+  } catch (err: any) {
+    console.error("❌ Verify error:", err);
+    setVerifyStatus("error");
+    toast.error(err.message || "Verification failed");
+  } finally {
+    setIsVerifying(false);
+  }
+};
 
   return (
     <div className="flex-1 min-h-full flex flex-col"
@@ -2271,6 +2324,15 @@ const ProjectDetailPage = () => {
                           onClick={handleCopyScript}
                         >
                           {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleVerifyScript}
+                          disabled={isVerifying}
+                        >
+                          {isVerifying ? "Verifying..." : "Verify"}
                         </Button>
                       </div>
                       <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
