@@ -6,6 +6,7 @@ const projectController = require('../controllers/projectController');
 const pageController = require('../controllers/pageController');
 // settings-specific handlers (lean payload — no HTML blobs)
 const { getPageSettings, updatePageSettings } = pageController;
+const { verifyScript } = require("../controllers/projectController");
 
 const router = express.Router();
 
@@ -96,5 +97,5 @@ router.put('/:projectId/pages/:id', pageController.updatePage);
  * @desc    Delete a specific page inside a project
  */
 router.delete('/:projectId/pages/:id', pageController.deletePage);
-
+router.post("/verify-script", verifyScript); // ✅ FIXED
 module.exports = router;
