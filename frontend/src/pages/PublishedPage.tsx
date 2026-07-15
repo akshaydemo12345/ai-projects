@@ -110,7 +110,7 @@ const WordPressIntegration = ({ project, pageId }: { project: Project, pageId: s
 const ScriptIntegration = ({ project, pageId }: { project: Project, pageId: string }) => {
   const [copied, setCopied] = useState(false);
   const token = project.apiToken || 'PC-TOKEN-PENDING';
-  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${token}" data-page-id="${pageId}" async></script>`;
+  const snippet = `<script src="${import.meta.env.VITE_API_BASE_URL || 'https://receiving-llp-charlie-motor.trycloudflare.com'}/embed.js" data-token="${token}" data-page-id="${pageId}"></script>`;
   const copy = async () => { 
     const success = await copyToClipboard(snippet);
     if (success) {
@@ -123,9 +123,9 @@ const ScriptIntegration = ({ project, pageId }: { project: Project, pageId: stri
   return (
     <div>
       <div style={{ fontSize: 13, color: '#6b7280', margin: '0 0 16px', lineHeight: 1.6 }}>
-        <p style={{ marginBottom: 8 }}><strong>1. One-time site-wide install:</strong> Paste this script in your global header/footer (WordPress, Wix, Duda, Webflow, Squarespace, etc).</p>
-        <p style={{ marginBottom: 8 }}><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will be redirected to view that landing page — the URL will change to the landing page's own address.</p>
-        <p style={{ margin: 0 }}><strong>3. SEO Note:</strong> The original URL isn't indexable (acts as a redirect), but the destination landing page URL is a real 200 page and can be indexed on its own.</p>
+        <p style={{ marginBottom: 8 }}><strong>1. One-time site-wide install:</strong> Paste as the first item in the page's &lt;head&gt;. Do not mark it async or defer, and do not place it at the end of &lt;body&gt; — doing so allows the native 'not found' content to render and flash before this script runs.</p>
+        <p style={{ marginBottom: 8 }}><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will see the landing page rendered instantly without changing the URL.</p>
+        <p style={{ margin: 0 }}><strong>3. SEO Note:</strong> The destination landing page URL is a real 200 page and can be indexed on its own.</p>
       </div>
       <div style={{ position: 'relative', background: '#0f172a', borderRadius: 10, padding: 18 }}>
         <pre style={{ color: '#fdba74', fontSize: 12, fontFamily: 'monospace', margin: 0, lineHeight: 1.7, overflow: 'auto' }}>{snippet}</pre>
