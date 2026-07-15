@@ -218,26 +218,67 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal")
       );
 
       serviceHeadings.forEach((heading, idx) => {
         if (idx < services.length) {
           const service = services[idx];
-          if (typeof service === "string") {
-            heading.textContent = service;
-          } else if (service.title || service.name) {
-            heading.textContent = service.title || service.name;
+          const serviceTitle = typeof service === "string" ? service : (service.title || service.name);
+          if (serviceTitle) {
+            heading.textContent = serviceTitle;
             const parent = heading.parentElement;
-            if (parent && service.description) {
+
+            // Sync tab labels
+            if (parent && parent.classList.contains('tab-content-box')) {
+              const tabWrapper = parent.closest('.tabs-container');
+              if (tabWrapper) {
+                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
+                const boxIndex = allTabBoxes.indexOf(parent);
+                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
+                if (boxIndex > -1 && allTabItems[boxIndex]) {
+                  const span = allTabItems[boxIndex].querySelector('span:not(.tab-icon)');
+                  if (span) span.textContent = serviceTitle;
+                }
+              }
+            }
+
+            // Sync accordion labels (e.g. healthcare template 04)
+            const accordionItem = heading.closest('.hc4-accordion-item, details');
+            if (accordionItem) {
+              const summary = accordionItem.querySelector('summary, .hc4-accordion-header');
+              if (summary) {
+                // Preserve the icon if it exists (usually an 'i' or 'span' at the end)
+                const icon = summary.querySelector('i, span, svg');
+                summary.textContent = serviceTitle;
+                if (icon) {
+                  summary.appendChild(document.createTextNode(" "));
+                  summary.appendChild(icon);
+                }
+              }
+            }
+
+            if (parent && typeof service !== "string" && service.description) {
               const p = parent.querySelector("p");
               if (p) p.textContent = service.description;
             }
           }
         } else {
           // Remove extra hardcoded service item
-          const parent = heading.closest(".service-card, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
+          const parent = heading.closest(".service-card, .hc4-accordion-item, details, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
           if (parent) {
+            // If we're removing a tab-content-box, we must also remove its tab-item button
+            if (parent.classList.contains('tab-content-box')) {
+              const tabWrapper = parent.closest('.tabs-container');
+              if (tabWrapper) {
+                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
+                const boxIndex = allTabBoxes.indexOf(parent as Element);
+                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
+                if (boxIndex > -1 && allTabItems[boxIndex]) {
+                  allTabItems[boxIndex].remove();
+                }
+              }
+            }
             parent.remove();
           }
         }
@@ -300,16 +341,67 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
       }
     });
 
-    // 8. Remove bottom privacy/terms text
-    const footerPTags = doc.querySelectorAll("footer p, footer span, footer a, footer div, [class*='footer-bottom'] p");
-    footerPTags.forEach(p => {
-      const text = p.textContent?.toLowerCase() || "";
+    // 8. Remove bottom privacy/terms text without breaking parent divs
+    const footerTextElements = doc.querySelectorAll("footer p, footer span, footer a, footer li");
+    let copyRightText = "© 2026 " + (project?.websiteProfile?.identity?.companyName || "PROJECT_NAME_PLACEHOLDER") + ". All rights reserved.";
+
+    footerTextElements.forEach(el => {
+      const text = el.textContent?.toLowerCase() || "";
       if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
-        p.remove();
+        el.remove();
       } else if (text.includes("©")) {
-        // Update copyright year to 2026
-        p.innerHTML = p.innerHTML.replace(/\b202\d\b/g, "2026");
+        // Update copyright year to 2026 and store for moving
+        el.innerHTML = el.innerHTML.replace(/\b202\d\b/g, "2026");
+        copyRightText = el.textContent || copyRightText;
+        el.remove(); // We will move it to the brand column
       }
+    });
+
+    // 9. Reformat Footer Brand Column (Add About Us, move copyright, remove social icons)
+    const footerBrandCols = doc.querySelectorAll("footer .footer-col, footer .fc-brand, footer .foot-col, footer .brand-col, footer > div > div");
+    footerBrandCols.forEach(col => {
+      const logo = col.querySelector(".logo, .footer-brand, .brand-logo, [href='#']");
+      if (logo && logo.textContent?.includes("LOGO_PLACEHOLDER")) {
+        // Found the brand column!
+
+        // 1. Remove social icons
+        const socials = col.querySelector(".socials, .footer-socials, .social-links, .social-icons");
+        if (socials) socials.remove();
+
+        const iconLinks = col.querySelectorAll("a:has(span.material-symbols-outlined), a:has(i), a:has(svg)");
+        iconLinks.forEach(l => {
+          if (!l.textContent?.trim()) l.remove();
+        });
+
+        // 2. Add 'About Us' title above the description
+        const desc = col.querySelector("p");
+        if (desc && !desc.previousElementSibling?.textContent?.includes("About Us")) {
+          const aboutTitle = doc.createElement("h4");
+          const existingTitle = doc.querySelector(".footer-title, .foot-title, h4");
+          aboutTitle.className = existingTitle ? existingTitle.className : "footer-title";
+          aboutTitle.textContent = "About Us";
+          aboutTitle.style.fontWeight = "700";
+          aboutTitle.style.marginBottom = "0.5rem";
+          aboutTitle.style.marginTop = "1rem";
+          col.insertBefore(aboutTitle, desc);
+        }
+
+        // 3. Move copyright text to below the logo
+        const copyP = doc.createElement("p");
+        copyP.textContent = copyRightText;
+        copyP.style.fontSize = "0.875rem";
+        copyP.style.opacity = "0.7";
+        copyP.style.marginTop = "0.5rem";
+        copyP.style.marginBottom = "1.5rem";
+
+        col.insertBefore(copyP, logo.nextSibling);
+      }
+    });
+
+    // 10. Clean up empty footer-bottom wrappers
+    const footerBottoms = doc.querySelectorAll(".footer-bottom, .foot-bottom");
+    footerBottoms.forEach(fb => {
+      if (!fb.textContent?.trim()) fb.remove();
     });
 
     // 9. Remove footer badges
@@ -531,6 +623,14 @@ const LANDING_TEMPLATES: any[] = [
 
 const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
 
+const PREDEFINED_PROMPTS = [
+  { label: "Lawyer", prompt: "A professional landing page for a law firm specializing in corporate law and personal injury. Include a hero section with headline and CTA, a lead-capture form (name, phone, case type), attorney profiles, trust badges (bar certifications, awards), client testimonials, and a footer with contact details." },
+  { label: "Plumber", prompt: "A high-converting landing page for an emergency plumbing service. Include a hero section with a clear 'Call Now' CTA, services offered (leaks, clogs, installation, water heaters), a quote request form, customer reviews with ratings, and a footer with service area and contact details." },
+  { label: "Real Estate", prompt: "A modern real estate landing page for a luxury property agency. Include a hero section with featured property, a property listings/gallery section, a lead capture form for home valuations, agent profiles with contact details, testimonials, and a footer." },
+  { label: "Medical", prompt: "A clean, trustworthy landing page for a medical clinic. Include a hero section with appointment booking CTA, an online booking form, doctor profiles, list of medical services, accepted insurances section, patient testimonials, and a footer with clinic hours and location." },
+  { label: "Book Keeping", prompt: "A professional landing page for a bookkeeping and accounting service targeting small businesses. Include a hero section with free-consultation CTA, a lead capture form, services section (tax preparation, payroll, financial consulting), pricing packages, client testimonials, and a footer with contact details." }
+];
+
 // ─── websiteProfile-aware project data helpers ────────────────────────────────
 // Extracts data from the new `websiteProfile` shape first, falls back to legacy fields.
 const getProjectIndustry = (p: any): string =>
@@ -633,6 +733,9 @@ const CreatePagePage = () => {
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [loaderError, setLoaderError] = useState<string | null>(null);
+  const [showDelayedLoader, setShowDelayedLoader] = useState(false);
+  const loaderTimeoutRef = useRef<number | null>(null);
 
   // Whether the current primary/secondary colors were extracted from the logo
   const isColorsFromLogo = !!(project?.websiteProfile?.logoColors?.source);
@@ -955,47 +1058,28 @@ const CreatePagePage = () => {
     onSuccess: (newPage) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreatedPage(newPage);
-      // Start polling for generation progress (backend returns early)
-      setIsComplete(false);
-      setApiProgress(Number(newPage.generationProgress) || 5);
-      if (pollRef.current) window.clearInterval(pollRef.current);
-      pollRef.current = window.setInterval(async () => {
-        try {
-          const pageObj = await pagesApi.getById(id!, newPage._id);
-          if (!pageObj) return;
-
-          if (pageObj.status === 'error') {
-            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-            toast.error(pageObj.errorMessage || "AI Generation failed. Insufficient API credits.");
-            setShowLoader(false);
-            setIsComplete(false);
-            return;
-          }
-
-          const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
-          setApiProgress(prog);
-          if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
-            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
-            setCreatedPage(pageObj);
-            setIsComplete(true);
-            // DO NOT call setShowLoader(false) here. Let ModernLoader finish its animation
-            // and call handleLoaderFinished to navigate.
-          }
-        } catch (e) {
-          // ignore transient errors
-        }
-      }, 1500);
+      setApiProgress(100);
+      setIsComplete(true);
+      // ModernLoader will see isComplete=true and finish its animation, then call handleLoaderFinished
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
       toast.error(err.message || "Failed to create page");
+      // If it failed fast, we might not have even shown the loader yet
+      if (loaderTimeoutRef.current) {
+        window.clearTimeout(loaderTimeoutRef.current);
+      }
+      setShowDelayedLoader(false);
       setShowLoader(false);
       setIsComplete(false);
     },
   });
 
   useEffect(() => {
-    return () => { if (pollRef.current) window.clearInterval(pollRef.current); };
+      return () => {
+         if (pollRef.current) window.clearInterval(pollRef.current);
+         if (loaderTimeoutRef.current) window.clearTimeout(loaderTimeoutRef.current);
+      };
   }, []);
 
   const handleGenerateMagicPrompt = async () => {
@@ -1030,8 +1114,17 @@ const CreatePagePage = () => {
 
     setShowLoader(true);
     setIsComplete(false);
+    setLoaderError(null);
+    setShowDelayedLoader(false);
+    
+    // Start a 2 second timer before showing the actual loader overlay.
+    // If an error happens before this (e.g. insufficient credits), the mutation fails fast 
+    // and we never show the loader, keeping them on the form.
+    loaderTimeoutRef.current = window.setTimeout(() => {
+       setShowDelayedLoader(true);
+    }, 2000);
 
-    // PURE AI PATH: Removed dummy logic per user request. Fall through to the real AI api call below.
+    // PURE AI PATH: Forwarding to the backend Claude API
     let basePayload: Partial<LandingPage> = {};
     let finalTemplateId = selectedTemplate;
     let isAiTemplatePath = activeMethod === "ai";
@@ -1042,7 +1135,7 @@ const CreatePagePage = () => {
       let enrichedStyles = "";
       let tName = isAiTemplatePath ? "AI Generated Layout" : "Template";
 
-      if (!isAiTemplatePath) {
+      if (!isAiTemplatePath && finalTemplateId) {
         const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
         tName = templateObj?.name || "Template";
 
@@ -1298,8 +1391,7 @@ ${enrichedContent}
       noIndexNoFollow,
       primaryColor,
       secondaryColor,
-      logoUrl: logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo, // <-- Fix: ensure DB saves the scraped logo
-      // Explicitly pass industry so imageGenerationService receives it for AI image prompts
+      logoUrl: logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo,
       industry: project?.category || project?.industry || "Service",
       subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
       aiPrompt: finalPromptForTemplate,
@@ -1318,7 +1410,19 @@ ${enrichedContent}
   };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
-  if (showLoader || createPageMutation.isPending) return <ModernLoader isComplete={isComplete} onFinished={handleLoaderFinished} />;
+  if ((showLoader || createPageMutation.isPending) && showDelayedLoader) return (
+    <ModernLoader 
+      isComplete={isComplete} 
+      onFinished={handleLoaderFinished} 
+      error={loaderError}
+      onDismissError={() => {
+        setShowLoader(false);
+        setShowDelayedLoader(false);
+        setIsComplete(false);
+        setLoaderError(null);
+      }}
+    />
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -1525,13 +1629,13 @@ ${enrichedContent}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-gray-700">Describe your page *</label>
-                  <button
+                  {/* <button
                     onClick={handleGenerateMagicPrompt}
                     disabled={!pageName.trim() || isGeneratingPrompt}
                     className="flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg px-2.5 py-1 transition-all disabled:opacity-40"
                   >
                     {isGeneratingPrompt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} ✨ Magic Write
-                  </button>
+                  </button> */}
                 </div>
                 <textarea
                   value={aiPrompt}
@@ -1547,9 +1651,17 @@ ${enrichedContent}
                     <span>⚠️</span> {methodError}
                   </p>
                 )}
-                <p className="text-[10px] text-gray-400 leading-relaxed">
-                  💡 <strong>Tip:</strong> The more detail you provide (industry, audience, services, tone), the better Claude generates your page.
-                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {PREDEFINED_PROMPTS.map(p => (
+                    <button
+                      key={p.label}
+                      onClick={() => { setAiPrompt(p.prompt); setMethodError(""); }}
+                      className="text-[10px] font-semibold text-gray-500 bg-white hover:bg-violet-50 hover:text-violet-600 px-3 py-1.5 rounded-full transition-all border border-gray-200 hover:border-violet-200"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </section>
             )}
 
