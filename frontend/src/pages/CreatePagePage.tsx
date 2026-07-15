@@ -929,6 +929,15 @@ const CreatePagePage = () => {
         try {
           const pageObj = await pagesApi.getById(id!, newPage._id);
           if (!pageObj) return;
+
+          if (pageObj.status === 'error') {
+            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+            toast.error(pageObj.errorMessage || "AI Generation failed. Insufficient API credits.");
+            setShowLoader(false);
+            setIsComplete(false);
+            return;
+          }
+
           const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
           setApiProgress(prog);
           if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
@@ -992,29 +1001,34 @@ const CreatePagePage = () => {
     let basePayload: Partial<LandingPage> = {};
     let finalTemplateId = selectedTemplate;
     let isAiTemplatePath = activeMethod === "ai";
+    let finalPromptForTemplate = "";
 
     if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
       let enrichedStyles = "";
-      const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
-      const tName = templateObj?.name || "Template";
+      let tName = isAiTemplatePath ? "AI Generated Layout" : "Template";
 
-      switch (finalTemplateId) {
-        case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
-        case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
-        case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
-        case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
-        case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
-        case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
-        case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
-        case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
-        case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
-        case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
-        case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
-        case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
-        case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
-        case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
-        default: enrichedContent = ""; enrichedStyles = "";
+      if (!isAiTemplatePath) {
+        const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
+        tName = templateObj?.name || "Template";
+
+        switch (finalTemplateId) {
+          case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
+          case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
+          case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
+          case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+          case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
+          case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+          case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
+          case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
+          case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
+          case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
+          case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
+          case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
+          case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
+          case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+          default: enrichedContent = ""; enrichedStyles = "";
+        }
       }
 
       // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
@@ -1184,6 +1198,7 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
       // Otherwise, we clear it to avoid triggering the backend AI service.
       const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
       const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
+      finalPromptForTemplate = isPromptModified ? aiPrompt : "";
 
       // Build a complete standalone HTML document for the template.
       // This ensures CSS, JS, and interactive features (FAQ accordion, etc.) work after publish.
@@ -1231,7 +1246,7 @@ ${enrichedContent}
         landingPageStyles: enrichedStyles,
         templateId: finalTemplateId,
         template: tName,
-        aiPrompt: aiPrompt
+        aiPrompt: finalPromptForTemplate
       };
     } else {
       toast.error("Please select a template to continue.");
@@ -1251,11 +1266,11 @@ ${enrichedContent}
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
       industry: project?.category || project?.industry || "Service",
       subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
-      aiPrompt: aiPrompt,
-      generationMethod: activeMethod === "ai" ? "ai" : "template",
+      aiPrompt: finalPromptForTemplate,
+      generationMethod: isAiTemplatePath ? "ai" : "template",
       accentColor: "#6366f1",
       type: "ppc",
-      status: "draft",
+      status: "generating",
     });
   };
 
