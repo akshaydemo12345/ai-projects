@@ -3944,12 +3944,12 @@ const GrapesEditor = () => {
   const handlePublish = async () => {
     if (!editorRef.current) return;
 
-    if (!project?.isVerified) {
-      toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
-        style: { color: '#ef4444' }
-      });
-      return;
-    }
+    // if (!project?.isVerified) {
+    //   toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+    //     style: { color: '#ef4444' }
+    //   });
+    //   return;
+    // }
 
     setIsPublishing(true);
 

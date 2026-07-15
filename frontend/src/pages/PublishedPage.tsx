@@ -122,9 +122,11 @@ const ScriptIntegration = ({ project, pageId }: { project: Project, pageId: stri
 
   return (
     <div>
-      <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 16px', lineHeight: 1.6 }}>
-        Paste this script tag anywhere in your website's HTML — ideally before <code>&lt;/body&gt;</code>.
-      </p>
+      <div style={{ fontSize: 13, color: '#6b7280', margin: '0 0 16px', lineHeight: 1.6 }}>
+        <p style={{ marginBottom: 8 }}><strong>1. One-time site-wide install:</strong> Paste this script in your global header/footer (WordPress, Wix, Duda, Webflow, Squarespace, etc).</p>
+        <p style={{ marginBottom: 8 }}><strong>2. How it works:</strong> Visitors who land on a page that doesn't exist on your site, but matches a published landing page, will be redirected to view that landing page — the URL will change to the landing page's own address.</p>
+        <p style={{ margin: 0 }}><strong>3. SEO Note:</strong> The original URL isn't indexable (acts as a redirect), but the destination landing page URL is a real 200 page and can be indexed on its own.</p>
+      </div>
       <div style={{ position: 'relative', background: '#0f172a', borderRadius: 10, padding: 18 }}>
         <pre style={{ color: '#fdba74', fontSize: 12, fontFamily: 'monospace', margin: 0, lineHeight: 1.7, overflow: 'auto' }}>{snippet}</pre>
         <button onClick={copy} style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 5, background: copied ? '#22c55e' : '#fff', color: copied ? '#fff' : '#374151', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
