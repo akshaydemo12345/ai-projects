@@ -548,35 +548,35 @@ export const law01Html = `
       <div class="tab-content-wrapper">
         <div class="tab-content-box active" id="panel-1">
           <h3>Discover Solutions</h3>
-          <p>We provide comprehensive legal strategies tailored to the complexities of your specific case, ensuring your interests are vigorously protected at every stage.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
         
         <div class="tab-content-box" id="panel-2">
           <h3>Corporate Law Mastery</h3>
-          <p>From mergers and acquisitions to corporate governance, our business law attorneys ensure your enterprise operates smoothly and safely.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-3">
           <h3>Family Law & Divorce</h3>
-          <p>Navigate difficult family transitions with our compassionate and experienced attorneys focusing on child custody and asset division.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-4">
           <h3>Real Estate Legalities</h3>
-          <p>We handle complex real estate transactions, zoning laws, and property disputes, providing a solid foundation for your investments.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-5">
           <h3>Criminal Defense</h3>
-          <p>Aggressive and strategic defense to protect your rights, freedom, and future against criminal charges at state and federal levels.</p>
+          <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
           <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
@@ -774,6 +774,27 @@ export const law01Html = `
     // Check if we are inside GrapesJS editor
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
     
+    // Tab Switching Logic
+    if (!isInEditor) {
+      document.body.classList.add('js-enabled');
+      var tabItems = document.querySelectorAll('.tab-item');
+      var tabContents = document.querySelectorAll('.tab-content-box');
+      
+      tabItems.forEach(function(item, index) {
+        item.addEventListener('click', function() {
+          // Remove active from all tabs and contents
+          tabItems.forEach(function(t) { t.classList.remove('active'); });
+          tabContents.forEach(function(c) { c.classList.remove('active'); });
+          
+          // Add active to clicked tab and corresponding content
+          item.classList.add('active');
+          if (tabContents[index]) {
+            tabContents[index].classList.add('active');
+          }
+        });
+      });
+    }
+
     // Form Validation
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
