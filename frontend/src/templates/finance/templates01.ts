@@ -18,50 +18,48 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .nav-links a { color: #4b5563; font-size: 0.9rem; font-weight: 600; }
 .btn-primary { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #fff); padding: 0.75rem 1.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; }
 
-/* Hero Section with Exact Curved Shape */
-.hero { position: relative; padding: 6rem 0 15rem; background: #f8fafc; overflow: hidden; }
-.hero-bg-shape { 
-    position: absolute; top: 0; left: 0; width: 55%; height: 100%; 
-    background-color: var(--primary); 
-    background-image: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); 
-    z-index: 1; 
-    border-bottom-right-radius: 50% 20%; 
-}
-.hero-inner { position: relative; z-index: 10; display: grid; grid-template-columns: 1.1fr 1fr; gap: 5rem; align-items: center; }
+/* Hero Section Redesign */
+.hero { position: relative; padding: 10rem 0 14rem; background: #0f172a; overflow: hidden; display: flex; align-items: center; }
+.hero::before { content: ""; position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1920') center/cover; opacity: 0.1; z-index: 0; mix-blend-mode: overlay; }
+.hero-glow { position: absolute; width: 600px; height: 600px; background: var(--primary); border-radius: 50%; filter: blur(150px); opacity: 0.3; top: -100px; right: -100px; z-index: 1; pointer-events: none; }
+.hero-inner { position: relative; z-index: 10; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
 .hero-text { color: #fff; }
-.hero-text span { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; opacity: 0.8; }
-.hero-text h1 { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin: 1.5rem 0; }
-.hero-text p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 3.5rem; max-width: 500px; line-height: 1.7; }
+.hero-text span { font-size: 0.8rem; text-transform: uppercase; font-weight: 800; letter-spacing: 3px; color: var(--primary); display: inline-block; margin-bottom: 1.5rem; padding: 8px 20px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); }
+.hero-text h1 { color: #fff; font-size: clamp(3rem, 4vw, 4.2rem); font-weight: 800; line-height: 1.15; margin-bottom: 1.5rem; letter-spacing: -1px; }
+.hero-text p { font-size: 1.15rem; color: #cbd5e1; margin-bottom: 3rem; line-height: 1.6; max-width: 550px; }
 .hero-btns { display: flex; flex-wrap: wrap; gap: 1.5rem; }
-.btn-hero-white { background-color: #fff; color: var(--primary); padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: none; }
-.btn-hero-outline { border: 1.5px solid #fff; color: #fff; padding: 1.1rem 2.8rem; border-radius: 4px; font-weight: 800; font-size: 0.95rem; background: transparent; }
+.btn-hero-white { background-color: #fff; color: var(--primary); padding: 1.1rem 2.8rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: none; transition: 0.3s; }
+.btn-hero-white:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+.btn-hero-outline { border: 2px solid rgba(255,255,255,0.2); color: #fff; padding: 1.1rem 2.8rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; background: transparent; transition: 0.3s; }
+.btn-hero-outline:hover { border-color: #fff; background: rgba(255,255,255,0.05); }
 
-.hero-img-box { position: relative; }
-.hero-img { border-radius: 40px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.2); }
-.hero-img img { width: 100%; height: 550px; object-fit: cover; }
-.hero-badge { 
-    position: absolute; bottom: 30px; left: -30px; 
-    background: #fff; padding: 1rem 1.5rem; border-radius: 12px; 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-    display: flex; flex-wrap: wrap; align-items: center; gap: 12px; 
-}
-.hero-badge .icon { width: 32px; height: 32px; background-color: var(--primary); border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; }
-.hero-badge span { font-size: 0.75rem; font-weight: 800; color: #111; }
+/* Hero Image & Animations */
+.hero-visual { position: relative; }
+.hero-img { border-radius: 30px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); }
+.hero-img img { width: 100%; height: 500px; object-fit: cover; }
+.hero-float-1 { position: absolute; bottom: -30px; left: -40px; background: #fff; padding: 1.25rem; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px; animation: floatY 4s ease-in-out infinite; z-index: 20; }
+.hero-float-2 { position: absolute; top: -30px; right: -20px; background: #fff; padding: 1rem 1.25rem; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px; animation: floatY 5s ease-in-out infinite alternate-reverse; z-index: 20; }
+.float-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #fff; }
+.float-text h5 { font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+.float-text p { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+@keyframes floatY { 0% { transform: translateY(0); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0); } }
 
 /* Floating Horizontal Form Bar */
-.form-bar-container { position: relative; margin-top: -80px; z-index: 100; }
+
+.form-bar-container { position: relative; margin-top: -65px; z-index: 100; max-width: 1050px; margin-left: auto; margin-right: auto; padding: 0 20px; }
 .form-bar { 
-    background: #fff; padding: 1rem; border-radius: 12px; 
-    box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
+    background: #ffffff; padding: 0.75rem; border-radius: 16px; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05); 
     display: grid; grid-template-columns: 1fr 1fr 1fr auto; 
     gap: 0; align-items: center; 
-    border: 1px solid #000; 
 }
-.form-group { padding: 0.75rem 2rem; border-right: 1px solid #f1f5f9; }
+.form-group { padding: 0.75rem 1.5rem; border-right: 1px solid #e2e8f0; }
 .form-group:nth-child(3) { border-right: none; }
-.form-group label { display: block; font-size: 0.6rem; text-transform: uppercase; color: #000; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
-.form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #000; }
-.btn-submit { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #fff); border: none; padding: 1.25rem 3rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+.form-group label { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--primary); font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
+.form-group input { width: 100%; border: none; outline: none; font-size: 1rem; font-weight: 600; color: #0f172a; background: transparent; }
+.form-group input::placeholder { color: #94a3b8; font-weight: 400; }
+.btn-submit { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 1.25rem 3rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-transform: uppercase; letter-spacing: 1px; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
 
 /* About Section */
 .about { padding: 12rem 0; }
@@ -118,6 +116,7 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .cases-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 6rem; }
 .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
 .case-card { background: var(--primary); padding: 4rem 3rem; border-radius: 20px; color: #fff; position: relative; transition: 0.4s; }
+.case-card-alt { background: var(--secondary); }
 .case-card span { font-size: 0.7rem; opacity: 0.6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 .case-card h3 { font-size: 1.5rem; font-weight: 700; margin-top: 1.25rem; line-height: 1.3; }
 .case-icon { position: absolute; top: 4rem; right: 3rem; font-size: 1.5rem; opacity: 0.2; }
@@ -128,11 +127,18 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 .cta-inner h2 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; }
 
 /* Testimonial Section */
-.testimonial { padding: 12rem 0; background: #f9fafb; text-align: center; }
-.test-box { max-width: 900px; margin: 0 auto; background: #fff; padding: 6rem 4rem; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.03); }
-.test-box p { font-size: 1.6rem; color: #334155; font-style: italic; margin-bottom: 3rem; line-height: 1.7; }
+.testimonial { padding: 10rem 0; background: #f9fafb; text-align: center; overflow: hidden; }
+.testimonial h2 { font-size: 3.2rem; font-weight: 800; margin-bottom: 4rem; }
+.test-slider-container { width: 100%; padding-bottom: 40px; overflow: hidden; position: relative; }
+.test-slider-container .swiper-slide { height: auto; }
+.test-box { background: #fff; padding: 4rem; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.03); text-align: left; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.test-box p { font-size: 1.4rem; color: #334155; font-style: italic; margin-bottom: 2rem; line-height: 1.6; }
 .test-meta h4 { font-size: 1.25rem; font-weight: 800; color: #111; }
-.test-meta span { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; margin-top: 5px; display: block; }
+.test-meta span { color: var(--primary); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; margin-top: 5px; display: block; }
+.swiper-pagination-bullet { width: 12px !important; height: 12px !important; background: #cbd5e1 !important; opacity: 1 !important; margin: 0 6px !important; transition: 0.3s !important; }
+.swiper-pagination-bullet-active { width: 30px !important; border-radius: 6px !important; background: var(--primary) !important; }
+.swiper-pagination { position: absolute !important; bottom: 0 !important; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 50; }
+
 
 /* Final Contact Form */
 .contact { padding: 12rem 0; text-align: center; }
@@ -150,6 +156,11 @@ footer { background: #0f172a; color: #fff; padding: 10rem 0 5rem; }
 
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
+    .hero-inner { grid-template-columns: 1fr !important; text-align: center; gap: 5rem; }
+    .hero-float-1, .hero-float-2 { transform: scale(0.8); }
+    .hero-btns { justify-content: center; }
+    .test-box { padding: 3rem 2rem; }
+
     .hero-bg-shape { width: 100%; height: 50%; border-bottom-right-radius: 0; border-bottom-left-radius: 0; }
     .hero-inner { grid-template-columns: 1fr !important; text-align: center; gap: 3rem; }
     .hero-text p { margin-left: auto; margin-right: auto; }
@@ -188,9 +199,9 @@ footer { background: #0f172a; color: #fff; padding: 10rem 0 5rem; }
 
 
   /* Extracted Template Inline Styles */
-  .tpl-templates01-1 { color: #2a58e8; }
-  .tpl-templates01-2 { color: #2a58e8; }
-  .tpl-templates01-3 { color: #2a58e8; }
+  .tpl-templates01-1 { color: var(--primary); }
+  .tpl-templates01-2 { color: var(--primary); }
+  .tpl-templates01-3 { color: var(--primary); }
   .tpl-templates01-4 { color: #2a58e8; border-bottom: 2px solid #2a58e8; }
   .tpl-templates01-5 { border-radius: 4px; }
   .tpl-templates01-6 { color: #fff; }
@@ -215,34 +226,45 @@ export const finance01Html = `
 </header>
 
 <main>
-  <!-- HERO SECTION WITH CURVED BLUE SHAPE -->
+  <!-- REDESIGNED HERO SECTION -->
   <section class="hero">
-    <div class="hero-bg-shape"></div>
+    <div class="hero-glow"></div>
     <div class="container hero-inner">
       <div class="hero-text">
-        <span>BEST FINANCE COMPANY</span>
-        <h1>Our Finance Can <br>Give Possibilities <br>For Business</h1>
+        <span>Premium Finance Consulting</span>
+        <h1>Architecting Growth <br>For Ambitious Brands</h1>
         <p>We deliver tailored financial strategies for ambitious companies — turning complex numbers into clear, actionable opportunities for sustainable growth.</p>
         <div class="hero-btns">
           <a href="#services" class="btn-hero-white">Discover More</a>
-          <a href="#contact" class="btn-hero-outline">Contact Us</a>
+          <a href="#about" class="btn-hero-outline">Contact Us</a>
         </div>
       </div>
-      <div class="hero-img-box">
+      <div class="hero-visual">
         <div class="hero-img">
-          <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800" alt="Global Business">
+          <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" alt="Finance Business">
         </div>
-        <div class="hero-badge">
-           <div class="icon"><i class="fa-solid fa-headset"></i></div>
-           <span>24/7 Expert Support</span>
+        <div class="hero-float-1">
+          <div class="float-icon" style="background: var(--primary);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+          <div class="float-text">
+            <h5>+45.8%</h5>
+            <p>Annual Growth</p>
+          </div>
+        </div>
+        <div class="hero-float-2">
+          <div class="float-icon" style="background: var(--secondary);"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="float-text">
+            <h5>100%</h5>
+            <p>Secure Assets</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- FLOATING HORIZONTAL FORM BAR -->
-  <div class="container form-bar-container">
-    <form class="form-bar">
+
+  <div class="form-bar-container">
+    <form class="form-bar" onsubmit="event.preventDefault();">
       <div class="form-group">
         <label>Full Name</label>
         <input type="text" name="full_name" placeholder="John Carter" required>
@@ -258,7 +280,7 @@ export const finance01Html = `
       <button type="submit" class="btn-submit">Get Started</button>
     </form>
   </div>
-
+  
   <!-- ABOUT SECTION WITH ROUNDED SQUARE IMAGE -->
   <section class="about" id="about">
     <div class="container about-grid">
@@ -366,15 +388,14 @@ export const finance01Html = `
           <span class="tpl-templates01-3" style="font-weight: 800">OUR LATEST PROJECTS</span>
           <h2 style="font-size: 3rem; font-weight: 800; margin-top: 1.5rem;">Incredible Client Stories</h2>
         </div>
-        <a href="#" class="tpl-templates01-4" style="font-weight: 800">View All Cases</a>
-      </div>
+        </div>
       <div class="case-grid">
         <div class="case-card">
           <div class="case-icon"><i class="fa-solid fa-chart-line"></i></div>
           <span>FINANCE</span>
           <h3>Financial Report Restructure</h3>
         </div>
-        <div class="case-card">
+        <div class="case-card case-card-alt">
           <div class="case-icon"><i class="fa-solid fa-chess"></i></div>
           <span>STRATEGY</span>
           <h3>Business Growth Solutions</h3>
@@ -384,7 +405,7 @@ export const finance01Html = `
           <span>WEALTH</span>
           <h3>Portfolio Optimization Plan</h3>
         </div>
-        <div class="case-card">
+        <div class="case-card case-card-alt">
           <div class="case-icon"><i class="fa-solid fa-clipboard-check"></i></div>
           <span>AUDIT</span>
           <h3>Operational Audit Overhaul</h3>
@@ -394,7 +415,7 @@ export const finance01Html = `
           <span>RISK</span>
           <h3>Enterprise Risk Framework</h3>
         </div>
-        <div class="case-card">
+        <div class="case-card case-card-alt">
           <div class="case-icon"><i class="fa-solid fa-globe"></i></div>
           <span>TAX</span>
           <h3>Cross-Border Tax Strategy</h3>
@@ -414,30 +435,59 @@ export const finance01Html = `
   <!-- TESTIMONIAL -->
   <section class="testimonial">
     <div class="container">
-      <div class="test-box">
-        <p>"PROJECT_NAME_PLACEHOLDER transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the numbers that move our business forward."</p>
-        <div class="test-meta">
-          <h4>Marcus Chen</h4>
-          <span>CFO, Helix Ventures</span>
+      <h2>What Our Clients Say</h2>
+      <div data-gjs-type="swiper-container" class="swiper-container test-slider-container" data-slides-per-view="2" data-space-between="30" data-loop="true" data-grab-cursor="true" data-pagination="bullets">
+        <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+          <div data-gjs-type="swiper-slide" class="swiper-slide">
+            <div class="test-box">
+              <p>"PROJECT_NAME_PLACEHOLDER transformed how we think about capital. Their team is sharp, kind, and relentlessly focused on the numbers that move our business forward."</p>
+              <div class="test-meta">
+                <h4>Marcus Chen</h4>
+                <span>CFO, Helix Ventures</span>
+              </div>
+            </div>
+          </div>
+          <div data-gjs-type="swiper-slide" class="swiper-slide">
+            <div class="test-box">
+              <p>"An absolute game changer for our fiscal year planning. We uncovered growth levers we didn't even know existed thanks to their detailed audit."</p>
+              <div class="test-meta">
+                <h4>Sarah Jenkins</h4>
+                <span>CEO, TechFlow</span>
+              </div>
+            </div>
+          </div>
+          <div data-gjs-type="swiper-slide" class="swiper-slide">
+            <div class="test-box">
+              <p>"Professional, responsive, and incredibly strategic. They are more than just consultants; they are partners in our success journey."</p>
+              <div class="test-meta">
+                <h4>David Ross</h4>
+                <span>Director, Global Trade</span>
+              </div>
+            </div>
+          </div>
+          <div data-gjs-type="swiper-slide" class="swiper-slide">
+            <div class="test-box">
+              <p>"The best investment we've made this year. Their financial remodeling helped us save countless hours and significantly boosted our margins."</p>
+              <div class="test-meta">
+                <h4>Emily Stanton</h4>
+                <span>Founder, Elevate Inc.</span>
+              </div>
+            </div>
+          </div>
         </div>
+        <div data-gjs-type="swiper-pagination" class="swiper-pagination"></div>
       </div>
     </div>
   </section>
 
-  <!-- FINAL CONTACT FORM -->
-  <section class="contact" id="contact">
-    <div class="container">
-      <span>GET IN TOUCH</span>
-      <h2 style="margin-top: 1.5rem;">Ready to Talk Numbers?</h2>
-      <form class="contact-form">
-        <input type="text" name="full_name" placeholder="Jane Doe" required>
-        <input type="email" name="email_address" placeholder="jane@company.com" required>
-        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="form-full" required>
-        <textarea name="message" placeholder="Tell us about your business..." rows="5" class="form-full" required></textarea>
-        <div class="form-full" style="text-align: center;">
-           <button type="submit" class="btn-send">Send Now</button>
-        </div>
-      </form>
+  <!-- FINAL CALL TO ACTION -->
+  <section class="contact" style="padding: 10rem 0; background: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920') center/cover; position: relative;">
+    <div style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 0;"></div>
+    <div class="container" style="position: relative; z-index: 10; text-align: center; color: #fff; max-width: 800px;">
+      <span style="color: var(--primary); font-weight: 800; font-size: 0.9rem; letter-spacing: 2px;">TAKE THE NEXT STEP</span>
+      <h2 style="font-size: 3.5rem; font-weight: 800; margin: 1.5rem 0 2rem; line-height: 1.1;">Ready to Redefine Your Financial Future?</h2>
+      <p style="font-size: 1.1rem; color: #cbd5e1; margin-bottom: 3rem; line-height: 1.6;">Join hundreds of leading companies that trust us to manage their growth, mitigate risks, and secure their financial legacy.</p>
+      <a href="#" class="btn-primary" style="padding: 1.25rem 3.5rem; font-size: 1.1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">Schedule Your Free Strategy Session</a>
     </div>
   </section>
 </main>
@@ -473,7 +523,7 @@ export const finance01Html = `
     <div class="foot-col">
        <h5>Newsletter</h5>
        <p class="tpl-templates01-9" style="font-size: 0.85rem; margin-bottom: 1.5rem">Get monthly insights from our senior advisors.</p>
-       <form style="display: flex; flex-wrap: wrap; gap: 10px;">
+       <form style="display: flex; flex-wrap: wrap; gap: 10px;" onsubmit="event.preventDefault();">
           <input type="email" placeholder="Your email" class="tpl-templates01-10" style="padding: 0.8rem; width: 100%" required>
           <button type="submit" class="tpl-templates01-11" style="padding: 0.8rem 1.2rem"><i class="fa-solid fa-paper-plane"></i></button>
        </form>
@@ -490,9 +540,19 @@ export const finance01Html = `
     // Check if we are inside GrapesJS editor
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
     
-    // Form Validation (runs everywhere so you can see red borders in editor)
+    // Form Validation
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
+        e.preventDefault();
+        if (isInEditor) {
+          e.stopImmediatePropagation();
+          var existingModal = document.getElementById("preview-mode-modal");
+          if (existingModal) existingModal.remove();
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          document.body.insertAdjacentHTML("beforeend", modalHtml);
+          return;
+        }
+
         e.target.setAttribute('novalidate', 'true');
         var isValid = true;
         var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
@@ -559,18 +619,10 @@ export const finance01Html = `
           }
         });
         
-        if (!isValid || isInEditor) {
+        if (!isValid) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          if (isInEditor) {
-            var existingModal = document.getElementById("preview-mode-modal");
-            if (existingModal) existingModal.remove();
-            var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(&apos;preview-mode-modal&apos;).remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=&apos;#1E293B&apos;" onmouseout="this.style.background=&apos;#0F172A&apos;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
-            document.body.insertAdjacentHTML("beforeend", modalHtml);
-          }
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        } else if (!isInEditor) {
+        } else {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
           if (btn) {

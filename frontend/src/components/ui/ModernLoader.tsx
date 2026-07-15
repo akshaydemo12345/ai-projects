@@ -1,4 +1,4 @@
-import { Sparkles, CheckCircle2 } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle } from "lucide-react";
 import Lottie from "lottie-react";
 import { useEffect, useState, useRef } from "react";
 
@@ -8,12 +8,16 @@ export const ModernLoader = ({
   message = "Analyzing your requirements...",
   externalProgress,
   statusSteps: statusStepsProp,
+  error = null,
+  onDismissError = () => { }
 }: {
   isComplete?: boolean;
   onFinished?: () => void;
   message?: string;
   externalProgress?: number;
   statusSteps?: { p: number; t: string }[];
+  error?: string | null;
+  onDismissError?: () => void;
 }) => {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState(message);
@@ -49,6 +53,8 @@ export const ModernLoader = ({
     const interval = setInterval(() => {
       if (!mounted) return;
       setProgress((prev) => {
+        if (prev >= 100) return 100;
+
         if (isComplete) {
           const next = prev + 5;
           if (next >= 100) {
@@ -72,7 +78,44 @@ export const ModernLoader = ({
       mounted = false;
       clearInterval(interval);
     };
-  }, [isComplete, statusText, onFinished, externalProgress, statusSteps]);
+  }, [isComplete, statusText, onFinished, externalProgress, statusSteps, error]);
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-2xl flex flex-col items-center justify-center p-4">
+        <div className="relative group flex flex-col items-center max-w-md text-center">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-red-500/10 blur-[100px] rounded-full animate-pulse" />
+          
+          <div className="relative h-32 w-32 flex items-center justify-center mb-6">
+            <div className="h-24 w-24 rounded-full bg-red-100 flex items-center justify-center animate-in zoom-in duration-300">
+              <XCircle className="h-12 w-12 text-red-500" />
+            </div>
+          </div>
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 mb-4">
+             <span className="h-2 w-2 bg-red-600 rounded-full" />
+             <span className="text-[10px] font-bold uppercase tracking-widest text-red-600">
+               Generation Failed
+             </span>
+          </div>
+
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
+            We hit a snag
+          </h2>
+          <p className="text-gray-500 text-sm mt-4 font-medium leading-relaxed">
+            {error}
+          </p>
+          
+          <button 
+            onClick={onDismissError}
+            className="mt-8 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition-colors"
+          >
+            Go Back & Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-2xl flex flex-col items-center justify-center p-4">

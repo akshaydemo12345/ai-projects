@@ -209,6 +209,56 @@ footer i{color:var(--primary);margin-right:8px}
   .slider{padding:10px 12px}
   .slider-btn{display:none}
 }
+/* Tabs Section */
+.tabs-section { padding: 6rem 0; background: linear-gradient(135deg, rgba(var(--secondary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.02) 100%); position: relative; overflow: hidden; }
+.tabs-header { text-align: center; max-width: 750px; margin: 0 auto 4rem; }
+.tabs-header h2 { font-size: 2.8rem; margin-bottom: 1rem; }
+.tabs-header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 1rem; }
+
+.tabs-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start; max-width: 1000px; margin: 0 auto; z-index: 2; position: relative; }
+.tab-list { display: flex; flex-wrap: wrap; flex-direction: column; gap: 1rem; }
+.tab-item { background: #fff; padding: 1.25rem 1.5rem; border-radius: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+.tab-item:hover { background: rgba(0,0,0,0.02); }
+.tab-icon { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; transition: 0.3s; color: inherit; }
+.tab-content-box { display: none; background: #fff; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+
+/* Published Mode (JS Tabs) */
+body.js-enabled .tab-content-box.active { display: block; animation: tabFadeIn 0.4s ease-out; }
+body.js-enabled .tab-item.active, .tab-item.active { background: var(--primary) !important; color: #ffffff !important; }
+body.js-enabled .tab-item.active .tab-icon, .tab-item.active .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); color: #ffffff !important; }
+
+/* Fallback if active class is missing */
+body.js-enabled .tab-content-wrapper:not(:has(.tab-content-box.active)) .tab-content-box:first-child { display: block; animation: tabFadeIn 0.4s ease-out; }
+body.js-enabled .tab-list:not(:has(.tab-item.active)) .tab-item:first-child { background: var(--primary); color: #fff; }
+body.js-enabled .tab-list:not(:has(.tab-item.active)) .tab-item:first-child .tab-icon { border-color: transparent; background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+
+/* Editor Mode Horizontal Scroll (When JS is disabled in GrapesJS) */
+body:not(.js-enabled) .tab-content-wrapper {
+  display: flex!important; flex-wrap: wrap;
+  overflow-x: auto !important;
+  gap: 2rem;
+  padding-bottom: 1rem;
+  scroll-snap-type: x mandatory;
+}
+body:not(.js-enabled) .tab-content-box {
+  display: block !important;
+  flex: 0 0 100% !important;
+  min-width: 100%;
+  scroll-snap-align: center;
+}
+body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar { height: 8px; }
+body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+@keyframes tabFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.tab-content-box h3 { font-size: 1.8rem; margin-bottom: 1rem; }
+.tab-content-box p { color: var(--text-muted); margin-bottom: 1.5rem; }
+.tab-content-box img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; margin-bottom: 1.5rem; }
+.link-primary { color: var(--primary); font-weight: 600; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.link-primary:hover { gap: 8px; }
+
+.tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
+
 `;
 
 export const law02Html = `
@@ -281,51 +331,86 @@ export const law02Html = `
   </div></div>
 </section>
 
-<!-- PRACTICE AREAS -->
-<section class="section">
+<!-- PRACTICE AREAS (TABS) -->
+<section class="tabs-section" id="services">
+  <div class="shape-blob blob-4"></div>
+  <div class="dec-shape dec-dots tabs-dots"></div>
+  
   <div class="container">
-    <div class="head-row">
-      <div>
-        <span data-editable="true" class="kicker">Practice Areas</span>
-        <h2 data-editable="true">Full-spectrum legal services, delivered with depth.</h2>
-      </div>
-      <p data-editable="true" class="head-desc">From advising unicorn startups on Series C rounds to defending personal liberty in trial courts — our practice areas cover every dimension of modern Indian law.</p>
+    <div class="tabs-header animate-up">
+      <span class="badge"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Legal Practice Areas</span>
+      <h2>Expertise You Can Trust. Your Dedicated Legal Partner.</h2>
+      <p>We provide specialized legal representation across multiple practice areas, combining deep industry knowledge with a commitment to securing the best outcomes for our clients.</p>
     </div>
+    
+    <div class="tabs-container animate-up">
+      <div class="tab-list">
+        <div class="tab-item active">
+          <span>SERVICES_PLACEHOLDER</span>
+          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+        </div>
+        <div class="tab-item">
+          <span>Corporate Law</span>
+          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+        </div>
+        <div class="tab-item">
+          <span>Family Law</span>
+          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+        </div>
+        <div class="tab-item">
+          <span>Real Estate</span>
+          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+        </div>
+        <div class="tab-item">
+          <span>Criminal Defense</span>
+          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+        </div>
+      </div>
+      
+      <div class="tab-content-wrapper">
+        <div class="tab-content-box active" id="panel-1">
+          <h3>Discover Solutions</h3>
+          <p>We provide comprehensive legal strategies tailored to the complexities of your specific case, ensuring your interests are vigorously protected at every stage.</p>
+          <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
+          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
+        
+        <div class="tab-content-box" id="panel-2">
+          <h3>Corporate Law Mastery</h3>
+          <p>From mergers and acquisitions to corporate governance, our business law attorneys ensure your enterprise operates smoothly and safely.</p>
+          <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
+          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
 
-    <div class="practice-grid">
-      <article class="practice-card">
-        <div class="pc-num">01</div><h3 data-editable="true">Corporate &amp; Commercial</h3>
-        <p data-editable="true">M&amp;A, private equity, joint ventures, share purchase agreements, corporate governance &amp; SEBI compliance.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
-      <article class="practice-card">
-        <div class="pc-num">02</div><h3 data-editable="true">Criminal Defence</h3>
-        <p data-editable="true">Bail applications, FIR quashing, white-collar crime, ED &amp; CBI matters, NDPS &amp; trial advocacy.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
-      <article class="practice-card">
-        <div class="pc-num">03</div><h3 data-editable="true">Matrimonial &amp; Family</h3>
-        <p data-editable="true">Mutual &amp; contested divorce, child custody, maintenance, NRI matrimonial disputes &amp; mediation.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
-      <article class="practice-card">
-        <div class="pc-num">04</div><h3 data-editable="true">Real Estate &amp; RERA</h3>
-        <p data-editable="true">Title diligence, sale deeds, RERA complaints, builder-buyer disputes, land acquisition &amp; partition.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
-      <article class="practice-card">
-        <div class="pc-num">05</div><h3 data-editable="true">Tax &amp; GST Litigation</h3>
-        <p data-editable="true">Income tax appeals, GST refunds, transfer pricing, search &amp; seizure, faceless assessment defence.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
-      <article class="practice-card">
-        <div class="pc-num">06</div><h3 data-editable="true">IP &amp; Cyber Law</h3>
-        <p data-editable="true">Trademark, copyright, patent disputes, cyber-fraud recovery, data protection &amp; IT Act compliance.</p>
-        <a data-editable="true" href="#contact">Engage Us <i class="fa-solid fa-arrow-right-long"></i></a>
-      </article>
+        <div class="tab-content-box" id="panel-3">
+          <h3>Family Law & Divorce</h3>
+          <p>Navigate difficult family transitions with our compassionate and experienced attorneys focusing on child custody and asset division.</p>
+          <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
+          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
+
+        <div class="tab-content-box" id="panel-4">
+          <h3>Real Estate Legalities</h3>
+          <p>We handle complex real estate transactions, zoning laws, and property disputes, providing a solid foundation for your investments.</p>
+          <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
+          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
+
+        <div class="tab-content-box" id="panel-5">
+          <h3>Criminal Defense</h3>
+          <p>Aggressive and strategic defense to protect your rights, freedom, and future against criminal charges at state and federal levels.</p>
+          <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
+          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tabs-action animate-up">
+      <a href="#contact" class="btn btn-primary">View All Services</a>
     </div>
   </div>
 </section>
+
 
 <!-- SPLIT QUOTE / IMAGE -->
 <section class="split-section">
@@ -358,7 +443,7 @@ export const law02Html = `
     <div class="head-row">
       <div><span data-editable="true" class="kicker">Client Stories</span><h2 data-editable="true">Quiet wins. Loud results.</h2></div>
     </div>
-    <div data-gjs-type="swiper-container" class="swiper-container slider" data-navigation="true" data-pagination="bullets">
+    <div data-gjs-type="swiper-container" class="swiper-container slider" data-slides-per-view="1" data-navigation="true" data-pagination="bullets">
       <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
         <article data-gjs-type="swiper-slide" class="swiper-slide rev-slide">
           <div class="rev-meta"><div class="stars">★★★★★</div><span data-editable="true">Corporate · Mumbai</span></div>
@@ -489,9 +574,28 @@ export const law02Html = `
         if (!isValid || isInEditor) {
           e.preventDefault();
           e.stopImmediatePropagation();
-        }
       }
     }, true);
+    
+    // Initialize Swiper in preview/live mode
+    if (!isInEditor && typeof Swiper !== 'undefined') {
+      var swipers = document.querySelectorAll('.swiper-container');
+      swipers.forEach(function(s) {
+        var slidesPerView = s.getAttribute('data-slides-per-view') || 1;
+        new Swiper(s, {
+          slidesPerView: slidesPerView,
+          loop: true,
+          pagination: {
+            el: s.querySelector('.swiper-pagination'),
+            clickable: true,
+          },
+          navigation: {
+            nextEl: s.querySelector('.swiper-button-next'),
+            prevEl: s.querySelector('.swiper-button-prev'),
+          },
+        });
+      });
+    }
   })();
 </script>
 `;
