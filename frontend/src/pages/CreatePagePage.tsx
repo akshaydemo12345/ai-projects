@@ -20,10 +20,11 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
-import { finance04Html, finance04Styles } from "../templates/finance/templates04";
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
+import { law04Html, law04Styles } from "../templates/law/templates04";
+import { law05Html, law05Styles } from "../templates/law/templates05";
 import { useState, useEffect, useRef } from "react";
 
 // Templates removed as per user request
@@ -144,21 +145,6 @@ const generateAiPage = (
           <div style="flex: 1; min-width: 250px;">
             <h3 style="color: white; font-size: 1.5rem; margin-bottom: 20px; font-weight: bold;">${project.name || "Our Business"}</h3>
             <p style="line-height: 1.6;">Providing premium services and innovative solutions for businesses worldwide. Your success is our priority.</p>
-          </div>
-          <div style="flex: 1; min-width: 200px;">
-            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Quick Links</h4>
-            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">About Us</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Our Services</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Testimonials</a></li>
-              <li><a href="#" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Contact</a></li>
-            </ul>
-          </div>
-          <div style="flex: 1; min-width: 250px;">
-            <h4 style="color: white; font-size: 1.1rem; margin-bottom: 20px;">Contact Us</h4>
-            <p style="margin-bottom: 10px;">Email: hello@example.com</p>
-            <p style="margin-bottom: 10px;">Phone: +1 (555) 123-4567</p>
-            <p>Address: 123 Business Avenue, Suite 100<br/>New York, NY 10001</p>
           </div>
         </div>
         <div style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem;">
@@ -299,6 +285,37 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
       });
     }
 
+    // 6. Global override: Remove navigation menus as per user request
+    const menus = doc.querySelectorAll(".nav-links, .hc4-nav-links, .navbar-nav, .nav-menu, nav ul");
+    menus.forEach(menu => menu.remove());
+
+    // 7. Global override: Remove all footer links (Quick Links, Services, Patient Portal, etc.)
+    const footerLinks = doc.querySelectorAll("footer ul, footer ol, footer nav, .footer-col ul, .footer-links, .foot-links, [class*='footer-links'], [class*='footer-nav']");
+    footerLinks.forEach(linkList => {
+      const parent = linkList.parentElement;
+      linkList.remove();
+      // Remove the column wrapper if only the heading is left
+      if (parent && parent.children.length === 1 && parent.children[0].tagName.match(/^H[1-6]$/i)) {
+        parent.remove();
+      }
+    });
+
+    // 8. Remove bottom privacy/terms text
+    const footerPTags = doc.querySelectorAll("footer p, footer span, footer a, footer div, [class*='footer-bottom'] p");
+    footerPTags.forEach(p => {
+      const text = p.textContent?.toLowerCase() || "";
+      if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
+        p.remove();
+      } else if (text.includes("©")) {
+        // Update copyright year to 2026
+        p.innerHTML = p.innerHTML.replace(/\b202\d\b/g, "2026");
+      }
+    });
+
+    // 9. Remove footer badges
+    const footerBadges = doc.querySelectorAll(".footer-badges, [class*='footer-badge']");
+    footerBadges.forEach(badge => badge.remove());
+
     // 6. Inject Videos
     const videos = project?.scrapedData?.videos || [];
     if (videos.length > 0) {
@@ -401,6 +418,22 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
   },
   {
+    id: "law-04",
+    name: "Justice Supreme",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot04.png",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #38bdf8 100%)",
+    prompt: "A premium law firm landing page with hero header, trust signals, services tabs, attorneys section, and contact lead capture form.",
+  },
+  {
+    id: "law-05",
+    name: "Lawyer Base",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot05.png",
+    gradient: "linear-gradient(135deg, #111111 0%, #b79b6c 100%)",
+    prompt: "A professional full-service law firm template with dark aesthetics, gold accents, practice areas, attorney grid, and elegant contact form.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -485,21 +518,14 @@ const LANDING_TEMPLATES: any[] = [
 
   {
     id: "finance-03",
-    name: "Aureum Finance Elite",
-    tag: "Finance",
-    img: "/assets/templates/finance/templates03/screenshot1.png",
-    gradient: "linear-gradient(135deg, #050505 0%, #1a1a1a 100%)",
-    prompt: "A premium dark-mode finance landing page with gold accents, horizontal hero form, and a streamlined 4-step journey.",
-  },
-
-  {
-    id: "finance-04",
     name: "Finova Analytics",
     tag: "Finance",
     img: "/assets/templates/finance/templates04/screenshot.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
     prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
   },
+
+
 ];
 
 
@@ -937,6 +963,15 @@ const CreatePagePage = () => {
         try {
           const pageObj = await pagesApi.getById(id!, newPage._id);
           if (!pageObj) return;
+
+          if (pageObj.status === 'error') {
+            if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+            toast.error(pageObj.errorMessage || "AI Generation failed. Insufficient API credits.");
+            setShowLoader(false);
+            setIsComplete(false);
+            return;
+          }
+
           const prog = Number(pageObj.generationProgress) || (pageObj.status === 'draft' ? 100 : undefined);
           setApiProgress(prog);
           if (pageObj.status === 'draft' || (typeof prog === 'number' && prog >= 100)) {
@@ -996,145 +1031,46 @@ const CreatePagePage = () => {
     setShowLoader(true);
     setIsComplete(false);
 
-    // ─── PURE AI PATH: Always call real Claude API when method is "ai" ───
-    if (activeMethod === "ai") {
-      try {
-        // ── Build websiteContent from scraped project data so Claude uses real business info ──
-        // (Simulated for FRONTEND ONLY RULE)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const generatedSection1 = `<section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${primaryColor || '#7c3aed'}, ${secondaryColor || '#6366f1'}); color: white;">
-          <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">${pageName.trim() || 'AI Generated Page'}</h1>
-          <p style="font-size: 1.25rem; max-width: 600px; margin: 0 auto;">${aiPrompt.trim()}</p>
-        </section>`;
-
-        const generatedSection2 = `<section style="padding: 80px 20px; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">Smart Features</h3>
-            <p style="color: #64748b;">This content was dynamically generated based on your prompt.</p>
-          </div>
-          <div style="background: #f8fafc; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: ${primaryColor || '#7c3aed'};">High Conversion</h3>
-            <p style="color: #64748b;">Optimized for lead generation and maximum user engagement.</p>
-          </div>
-        </section>`;
-
-        const aiResult = {
-          fullHtml: `<!DOCTYPE html><html><head><title>${pageName.trim()}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/></head><body style="margin:0; font-family: 'Inter', sans-serif;">${generatedSection1}${generatedSection2}</body></html>`,
-          fullCss: ""
-        };
-
-        const primaryCol = primaryColor || "#6366f1";
-        const secondaryCol = secondaryColor || "#4f46e5";
-        const brandingCss = `:root{--primary:${primaryCol};--secondary:${secondaryCol};--primary-rgb:${hexToRgbStr(primaryCol)};--secondary-rgb:${hexToRgbStr(secondaryCol)};}`;
-        const fullAiHtml = aiResult.fullHtml.includes('<!DOCTYPE') ? aiResult.fullHtml : `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>${pageName.trim() || project.name}</title>
-  <script src="https://cdn.tailwindcss.com"><\/script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <style>${brandingCss}\n${aiResult.fullCss || ""}</style>
-</head>
-<body>${aiResult.fullHtml}</body>
-</html>`;
-
-        createPageMutation.mutate({
-          name: pageName.trim(),
-          slug: pageSlug.trim() || autoSlug(pageName),
-          metaTitle: `${project.name} - ${pageName.trim()}`,
-          metaDescription: project.description || `${pageName.trim()} by ${project.name}.`,
-          noIndexNoFollow,
-          primaryColor,
-          secondaryColor,
-          logoUrl,
-          industry: project?.category || project?.industry || "Service",
-          subIndustry: project?.subIndustry || "Services",
-          aiPrompt,
-          generationMethod: "manual" as LandingPage["generationMethod"], // FRONTEND ONLY RULE: bypass backend AI
-          accentColor: "#6366f1",
-          type: "ppc",
-          status: "draft",
-          content: { fullHtml: fullAiHtml, html: aiResult.fullHtml, fullCss: aiResult.fullCss || "" },
-          styles: aiResult.fullCss || "",
-          landingPageContent: fullAiHtml,
-          landingPageStyles: aiResult.fullCss || "",
-        });
-      } catch (err: any) {
-        toast.error(err.message || "AI generation failed. Please try again.");
-        setShowLoader(false);
-        setIsComplete(false);
-      }
-      return;
-    }
-
+    // PURE AI PATH: Removed dummy logic per user request. Fall through to the real AI api call below.
     let basePayload: Partial<LandingPage> = {};
     let finalTemplateId = selectedTemplate;
-    let isAiTemplatePath = false;
+    let isAiTemplatePath = activeMethod === "ai";
+    let finalPromptForTemplate = "";
 
     if ((activeMethod === "template" && finalTemplateId) || isAiTemplatePath) {
       let enrichedContent = "";
       let enrichedStyles = "";
-      const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
-      const tName = templateObj?.name || "Template";
+      let tName = isAiTemplatePath ? "AI Generated Layout" : "Template";
 
-      switch (finalTemplateId) {
-        case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
-        case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
-        case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
-        case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
-        case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
-        case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
-        case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
-        case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
-        case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
-        case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
-        case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
-        case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
-        case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
-        case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
-        case "finance-04": enrichedContent = finance04Html; enrichedStyles = finance04Styles; break;
-        default: enrichedContent = ""; enrichedStyles = "";
+      if (!isAiTemplatePath) {
+        const templateObj = LANDING_TEMPLATES.find(t => t.id === finalTemplateId);
+        tName = templateObj?.name || "Template";
+
+        switch (finalTemplateId) {
+          case "law-01": enrichedContent = law01Html; enrichedStyles = law01Styles; break;
+          case "law-02": enrichedContent = law02Html; enrichedStyles = law02Styles; break;
+          case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
+          case "law-04": enrichedContent = law04Html; enrichedStyles = law04Styles; break;
+          case "law-05": enrichedContent = law05Html; enrichedStyles = law05Styles; break;
+          case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
+          case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
+          case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
+          case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
+          case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
+          case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
+          case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
+          case "travel-04": enrichedContent = travel04Html; enrichedStyles = travel04Styles; break;
+          case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
+          case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
+          case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+          default: enrichedContent = ""; enrichedStyles = "";
+        }
       }
 
       // ─── AI-POWERED TEMPLATE REGENERATION (Claude) ───
-      // ONLY run this if we are in the "AI" path (isAiTemplatePath === true)
+      // The backend will handle the AI generation asynchronously when generationMethod === "ai"
       if (isAiTemplatePath) {
-        try {
-          const generationRes = await aiApi.generate({
-            businessName: project.name,
-            industry: getProjectIndustry(project),
-            businessDescription: getProjectDescription(project),
-            pageType: "lead generation",
-            aiPrompt: aiPrompt,
-            primaryColor: primaryColor,
-            secondaryColor: secondaryColor,
-            logoUrl: logoUrl,
-            // If it's a direct AI prompt, we don't pass the base template so the AI is forced to start from scratch
-            templateHtml: (activeMethod as string) === "ai" ? "" : enrichedContent,
-            templateStyles: (activeMethod as string) === "ai" ? "" : enrichedStyles
-          });
-
-          const aiResult = generationRes?.data?.content;
-          if (aiResult && aiResult.fullHtml) {
-            let extractedHtml = aiResult.fullHtml;
-            // Prevent nested HTML documents which break browser rendering and FAQ details tags
-            const bodyMatch = extractedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-            if (bodyMatch) {
-              extractedHtml = bodyMatch[1];
-            }
-            enrichedContent = extractedHtml;
-            if (aiResult.fullCss && aiResult.fullCss.length > 50) {
-              enrichedStyles = aiResult.fullCss;
-            }
-            toast.success("Claude: Template regenerated with your vision!");
-          }
-        } catch (err) {
-          console.error("AI Template Regeneration failed:", err);
-          toast.warning("AI regeneration failed, using base template with placeholders.");
-        }
+        console.log("Delegating AI Generation to backend async process...");
       }
 
       const finalLogo = logoUrl || project?.websiteProfile?.identity?.logoUrl || project.logoUrl || project.scrapedData?.logo || getProjectLogoUrl(project);
@@ -1298,6 +1234,7 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
       // Otherwise, we clear it to avoid triggering the backend AI service.
       const defaultTplPrompt = LANDING_TEMPLATES.find(t => t.id === selectedTemplate)?.prompt || "";
       const isPromptModified = aiPrompt.trim() !== defaultTplPrompt.trim();
+      finalPromptForTemplate = isPromptModified ? aiPrompt : "";
 
       // Build a complete standalone HTML document for the template.
       // This ensures CSS, JS, and interactive features (FAQ accordion, etc.) work after publish.
@@ -1345,7 +1282,7 @@ ${enrichedContent}
         landingPageStyles: enrichedStyles,
         templateId: finalTemplateId,
         template: tName,
-        aiPrompt: aiPrompt
+        aiPrompt: finalPromptForTemplate
       };
     } else {
       toast.error("Please select a template to continue.");
@@ -1365,12 +1302,11 @@ ${enrichedContent}
       // Explicitly pass industry so imageGenerationService receives it for AI image prompts
       industry: project?.category || project?.industry || "Service",
       subIndustry: project?.subIndustry || project?.scrapedData?.subIndustry || "Services",
-      aiPrompt: "",
-      // Always use template generation on the frontend
-      generationMethod: "template",
+      aiPrompt: finalPromptForTemplate,
+      generationMethod: isAiTemplatePath ? "ai" : "template",
       accentColor: "#6366f1",
       type: "ppc",
-      status: "draft",
+      status: "generating",
     });
   };
 
@@ -1897,6 +1833,8 @@ ${enrichedContent}
                 case "law-01": tpHtml = law01Html; tpStyles = law01Styles; break;
                 case "law-02": tpHtml = law02Html; tpStyles = law02Styles; break;
                 case "law-03": tpHtml = law03Html; tpStyles = law03Styles; break;
+                case "law-04": tpHtml = law04Html; tpStyles = law04Styles; break;
+                case "law-05": tpHtml = law05Html; tpStyles = law05Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
@@ -1908,7 +1846,6 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
-                case "finance-04": tpHtml = finance04Html; tpStyles = finance04Styles; break;
                 default: tpHtml = ""; tpStyles = "";
               }
 

@@ -312,7 +312,8 @@ async function replacePlaceholdersInHtml(
   }
 
   if (DISABLE_AI_IMAGES_FOR_TESTING) {
-    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Will use local fallback images.');
+    console.log('[TESTING MODE] 🛑 AI Image Generation is DISABLED. Keeping original template images.');
+    return { html: htmlContent, imageCount: 0 };
   }
 
   const getLocalFallbackImage = (indStr, html = '') => {

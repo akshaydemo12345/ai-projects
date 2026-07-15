@@ -38,8 +38,8 @@ button{cursor:pointer;font:inherit;border:none;background:none}
 
 .container{max-width:1200px;margin:0 auto;padding:0 20px}
 h1,h2,h3,h4{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--dark)}
-h1{font-size:clamp(3.2rem,6vw,4.8rem) !important;}
-h2{font-size:clamp(2.2rem,4vw,3.2rem) !important; font-weight: 700 !important;letter-spacing: -.02em-0.896px !important;line-height: 1.1 !important;}
+h1{font-size:clamp(3.2rem,6vw,4.8rem);}
+h2{font-size:clamp(2.2rem,4vw,3.2rem); font-weight: 700;letter-spacing: -.02em;line-height: 1.1;}
 h3{font-size:1.8rem}
 h4{font-size:1.4rem}
 p{color:#475569}
@@ -89,7 +89,7 @@ p{color:#475569}
 .hero-person{position:relative;aspect-ratio:1/1.05;display:grid;place-items:center}
 .hero-person::before{content:"";position:absolute;top:50%;left:50%;width:70%;height:70%;background:var(--primary);filter:blur(100px);transform:translate(-50%,-50%);z-index:0;opacity:0.6;pointer-events:none}
 .hero-blob{position:absolute;inset:6% 8% 8% 6%;background:var(--secondary);border-radius:32px;transform:rotate(-3deg);z-index:1}
-.hero-person img{position:relative;z-index:2;max-height:100%;filter:drop-shadow(0 30px 40px rgba(0,0,0,.25))}
+.hero-person img{border-radius: 25px; position:relative;z-index:2;max-width:100%;max-height:70%; object-fit:contain;filter:drop-shadow(0 30px 40px rgba(0,0,0,.25))}
 .badge{position:absolute;background:#fff;border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);z-index:3;font-size:.8rem;display:flex;align-items:center;gap:8px;animation:float 4s ease-in-out infinite}
 .badge-live{top:12%;left:-4%;color:#ef4444;font-weight:700}
 .badge-live .dot{width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow:0 0 0 6px rgba(239,68,68,.15);animation:pulse 1.5s infinite}
@@ -626,12 +626,12 @@ export const travel03Html = `
             <!-- Right -->
             <div style="flex:1; min-width:300px; text-align:left; position:relative;">
               <i class="fa-solid fa-quote-left" style="font-size:3rem; color:#e2e8f0; margin-bottom: 20px; opacity:0.6;"></i>
-              <p data-editable="true" style="font-size: 1.1rem; color: #475569; line-height: 1.8; margin-bottom: 20px;">"Kanra made our travel booking so easy. The support team is incredible, and the prices are unbeatable. I recommend this to everyone."</p>
+              <p data-editable="true" style="color: #475569; line-height: 1.8; margin-bottom: 20px;">"Kanra made our travel booking so easy. The support team is incredible, and the prices are unbeatable. I recommend this to everyone."</p>
               <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 5px;">
                 <i class="fa-brands fa-sketch" style="color:#f5a623; font-size:1.5rem;"></i>
-                <strong data-editable="true" style="font-size: 1.1rem; color: #0f172a;">Sketch</strong>
+                <strong data-editable="true" style="color: #0f172a;">Sketch</strong>
               </div>
-              <div data-editable="true" style="color: #64748B; font-size: 0.95rem;">
+              <div data-editable="true" style="color: #64748B; ">
                 Joran Lee (Head of Marketing)
               </div>
             </div>
@@ -650,12 +650,12 @@ export const travel03Html = `
             <!-- Right -->
             <div style="flex:1; min-width:300px; text-align:left; position:relative;">
               <i class="fa-solid fa-quote-left" style="font-size:3rem; color:#e2e8f0; margin-bottom: 20px; opacity:0.6;"></i>
-              <p data-editable="true" style="font-size: 1.1rem; color: #475569; line-height: 1.8; margin-bottom: 20px;">"The best vacation ever! The app makes it so easy to keep track of bookings, flights, and weather. The 24/7 support team is a life saver."</p>
+              <p data-editable="true" style="color: #475569; line-height: 1.8; margin-bottom: 20px;">"The best vacation ever! The app makes it so easy to keep track of bookings, flights, and weather. The 24/7 support team is a life saver."</p>
               <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 5px;">
                 <i class="fa-brands fa-figma" style="color:#f24e1e; font-size:1.5rem;"></i>
-                <strong data-editable="true" style="font-size: 1.1rem; color: #0f172a;">Figma</strong>
+                <strong data-editable="true" style="color: #0f172a;">Figma</strong>
               </div>
-              <div data-editable="true" style="color: #64748B; font-size: 0.95rem;">
+              <div data-editable="true" style="color: #64748B; ">
                 Sarah Jenkins (Product Designer)
               </div>
             </div>
@@ -791,10 +791,29 @@ export const travel03Html = `
       var isInEditor = !!document.querySelector('[data-gjs-type]');
       if (!isValid || isInEditor) {
         e.preventDefault();
-        e.stopImmediatePropagation();
       }
     }
   }, true);
+  
+  // Initialize Swiper in preview/live mode
+  if (!isInEditor && typeof Swiper !== 'undefined') {
+    var swipers = document.querySelectorAll('.swiper-container');
+    swipers.forEach(function(s) {
+      var slidesPerView = s.getAttribute('data-slides-per-view') || 1;
+      new Swiper(s, {
+        slidesPerView: slidesPerView,
+        loop: true,
+        pagination: {
+          el: s.querySelector('.swiper-pagination'),
+          clickable: true,
+        },
+        navigation: {
+          nextEl: s.querySelector('.swiper-button-next'),
+          prevEl: s.querySelector('.swiper-button-prev'),
+        },
+      });
+    });
+  }
 })();
 </script>
 `;
