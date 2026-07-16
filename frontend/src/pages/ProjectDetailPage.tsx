@@ -1725,13 +1725,27 @@ const handleVerifyScript = async () => {
 
     console.log("🚀 Sending verify request:", { url, token });
 
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ url, token }),
-    });
+    // const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ url, token }),
+    // });
+
+const tokenAuth = localStorage.getItem("token");
+
+    const res = await fetch(
+  `${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${tokenAuth}` // ✅ FIXED
+    },
+    body: JSON.stringify({ url, token }) // ✅ matches backend
+  }
+);
 
     const data = await res.json();
 
@@ -1744,6 +1758,16 @@ const handleVerifyScript = async () => {
     if (data?.verified === true) {
       setVerifyStatus("success");
       toast.success("Script verified successfully ✅");
+
+      // Sync the verified flag into the cached project immediately so the
+      // Publish button unlocks without needing a manual page refresh.
+      if (data?.project) {
+        queryClient.setQueryData(["project", id], (old: any) =>
+          old ? { ...old, ...data.project } : old
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     } else {
       setVerifyStatus("error");
       toast.error("Script not found ❌");
