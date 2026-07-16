@@ -11,6 +11,7 @@ const { verifyScript } = require("../controllers/projectController");
 const router = express.Router();
 
 // ─── Project CRUD ────────────────────────────────────────────────────────────
+router.post("/verify-script", verifyScript); // ✅ FIXED
 
 router.use(protect); // All routes below are protected
 
@@ -97,5 +98,4 @@ router.put('/:projectId/pages/:id', pageController.updatePage);
  * @desc    Delete a specific page inside a project
  */
 router.delete('/:projectId/pages/:id', pageController.deletePage);
-router.post("/verify-script", verifyScript); // ✅ FIXED
 module.exports = router;

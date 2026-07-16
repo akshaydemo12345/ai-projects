@@ -17,6 +17,7 @@ const AppError = require('../utils/AppError');
 const FormSchema = require('../models/FormSchema');
 const { extractFormFields } = require('../utils/formExtractor');
 const { syncFormSchema } = require('../utils/schemaSync');
+const { verifyProjectIntegration } = require('../utils/verifyIntegration');
 
 // ─── Validation Schemas ────────────────────────────────────────────────────────
 const createPageSchema = z.object({
@@ -968,6 +969,38 @@ exports.updatePage = async (req, res, next) => {
 
     const updateData = { ...parsed.data, updatedAt: Date.now() };
 
+    // ─── LIVE RE-VERIFICATION GATE ───────────────────────────────────────
+    // A one-time "Verify" click only proves the integration script was
+    // present at that moment in the past. If this request is (re)publishing
+    // the page, re-check RIGHT NOW that the script is still on the site —
+    // don't trust project.isVerified alone, since it can go stale at any
+    // time (script removed, plugin deactivated, site migrated, etc.), and
+    // this endpoint is also reachable directly via API, bypassing any
+    // client-side check entirely.
+    if (parsed.data.status === 'published') {
+      const project = await Project.findById(currentPage.projectId);
+      if (!project) {
+        return res.status(404).json({ status: 'fail', message: 'Project not found' });
+      }
+
+      const { verified, message } = await verifyProjectIntegration(project);
+
+      // Sync the stored flag with what we just observed, in both directions,
+      // so the UI reflects current reality rather than the last check ever run.
+      await Project.findByIdAndUpdate(project._id, {
+        isVerified: verified,
+        verificationStatus: verified ? 'verified' : 'failed',
+        verifiedAt: verified ? new Date() : project.verifiedAt
+      });
+
+      if (!verified) {
+        return res.status(403).json({
+          status: 'fail',
+          message: `Cannot publish: ${message}`
+        });
+      }
+    }
+
     if (parsed.data.slug && parsed.data.slug !== currentPage.slug) {
       const uniqueSlug = await generateUniqueSlug(parsed.data.slug, currentPage.projectId, currentPage._id);
 
@@ -1069,11 +1102,21 @@ exports.publishPage = async (req, res, next) => {
     }
 
     const project = await Project.findById(page.projectId);
-    if (project && !project.isVerified) {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'Your WordPress plugin is deactivated or not verified. Please verify the API token in your WordPress dashboard to publish pages.'
+    if (project) {
+      const { verified, message } = await verifyProjectIntegration(project);
+
+      await Project.findByIdAndUpdate(project._id, {
+        isVerified: verified,
+        verificationStatus: verified ? 'verified' : 'failed',
+        verifiedAt: verified ? new Date() : project.verifiedAt
       });
+
+      if (!verified) {
+        return res.status(403).json({
+          status: 'fail',
+          message: `Cannot publish: ${message}`
+        });
+      }
     }
 
     const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';

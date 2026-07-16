@@ -6,6 +6,9 @@ const { normalizeDomain } = require('../utils/validation');
 
 const axios = require('axios');
 const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
+const { fetchPageHtml } = require('../utils/puppeteerFetch');
+const { verifyProjectIntegration } = require('../utils/verifyIntegration');
 
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
@@ -591,7 +594,6 @@ exports.extractLogoColors = async (req, res, next) => {
   }
 };
 
-// FETCH AND EXTRACT BRANDING FROM WEBSITE
 exports.extractBrandingFromWebsite = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -651,68 +653,76 @@ exports.extractBrandingFromWebsite = async (req, res, next) => {
 
 exports.verifyScript = async (req, res) => {
   try {
-    const { url, projectId } = req.body;
+    const { url, token } = req.body;
 
-    if (!url) {
-      return res.status(400).json({ success: false, message: 'URL is required' });
-    }
-
-    // Example unique script identifier (could be project-specific)
-    const SCRIPT_IDENTIFIER = `data-project-id="${projectId}"`;
-
-    // ─────────────────────────────────────────────
-    // 1️⃣ FAST CHECK (Axios - raw HTML)
-    // ─────────────────────────────────────────────
-    let axiosFound = false;
-
-    try {
-      const response = await axios.get(url, { timeout: 8000 });
-      axiosFound = response.data.includes(SCRIPT_IDENTIFIER);
-    } catch (err) {
-      console.warn('Axios fetch failed, fallback to Puppeteer...');
-    }
-
-    // ─────────────────────────────────────────────
-    // 2️⃣ HEADLESS BROWSER CHECK (Puppeteer)
-    // ─────────────────────────────────────────────
-    let puppeteerFound = false;
-
-    if (!axiosFound) {
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox']
+    // ─────────────────────────────
+    // 1️⃣ VALIDATION
+    // ─────────────────────────────
+    if (!url || !token) {
+      return res.status(400).json({
+        success: false,
+        message: 'URL and token are required'
       });
-
-      const page = await browser.newPage();
-
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-        timeout: 15000
-      });
-
-      const content = await page.content();
-
-      puppeteerFound = content.includes(SCRIPT_IDENTIFIER);
-
-      await browser.close();
     }
 
-    const verified = axiosFound || puppeteerFound;
+    // Prevent SSRF attacks
+    if (
+      url.includes('localhost') ||
+      url.includes('127.0.0.1') ||
+      url.includes('169.254')
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid URL'
+      });
+    }
 
-    // ─────────────────────────────────────────────
-    // 3️⃣ FINAL RESPONSE
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
+    // 2️⃣ RUN THE LIVE CHECK
+    // ─────────────────────────────
+    // Delegates to the same shared helper used by the publish flow, so
+    // "Verify" and "does publish think we're verified" can never disagree.
+    const { verified, method, message } = await verifyProjectIntegration({ websiteUrl: url, apiToken: token });
+
+    // ─────────────────────────────
+    // 3️⃣ PERSIST VERIFICATION STATUS
+    // ─────────────────────────────
+    // Keep the DB record in sync with reality in BOTH directions: mark
+    // isVerified true when found, but also flip it back to false when a
+    // previously-verified project's script is no longer detected. Without
+    // this, isVerified could only ever go true → stays true forever, even
+    // after the site owner removes the script.
+    const updatedProject = await Project.findOneAndUpdate(
+      { apiToken: token, isDeleted: { $ne: true } },
+      {
+        isVerified: verified,
+        verificationStatus: verified ? 'verified' : 'failed',
+        verifiedAt: verified ? new Date() : null
+      },
+      { new: true }
+    );
+
+    // ─────────────────────────────
+    // 4️⃣ RESPONSE
+    // ─────────────────────────────
     return res.status(200).json({
       success: true,
       verified,
-      method: axiosFound ? 'axios' : puppeteerFound ? 'puppeteer' : 'none',
-      message: verified
-        ? 'Script verified successfully ✅'
-        : 'Script not found ❌'
+      method: method || 'none',
+      message,
+      project: updatedProject
+        ? {
+            _id: updatedProject._id,
+            isVerified: updatedProject.isVerified,
+            verificationStatus: updatedProject.verificationStatus,
+            verifiedAt: updatedProject.verifiedAt
+          }
+        : null
     });
 
   } catch (error) {
-    console.error('Verification error:', error);
+    console.error('Verification error:', error.message);
+
     return res.status(500).json({
       success: false,
       message: 'Verification failed',
