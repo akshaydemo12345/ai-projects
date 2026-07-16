@@ -211,8 +211,8 @@ p, h1, h2, h3, h4, h5 { margin: 0; }
 .bg-brand-blue\/20 { background: rgba(PRIMARY_RGB_PLACEHOLDER,.2); }
 .bg-brand-orange { background: var(--secondary); }
 .bg-orange-500 { background: SECONDARY_COLOR_PLACEHOLDER; }
-.bg-indigo-500 { background: #6366f1; }
-.bg-emerald-500 { background: #10b981; }
+.bg-indigo-500 { background: var(--primary); }
+.bg-emerald-500 { background: var(--secondary); }
 
 .border-white { border-color: #fff; }
 .border-white\/10 { border-color: rgba(255,255,255,.1); }
@@ -258,7 +258,7 @@ p, h1, h2, h3, h4, h5 { margin: 0; }
 .group:hover.group-hover\:bg-brand-blue\/10,
 .group:hover .group-hover\:bg-brand-blue\/10 { background: rgba(PRIMARY_RGB_PLACEHOLDER,.1); }
 .hover\:text-white:hover { color: #fff; }
-.hover\:bg-orange-600:hover { background: #ea580c; }
+.hover\:bg-orange-600:hover { background: var(--secondary); }
 .hover\:bg-brand-blue:hover { background: var(--primary); }
 .hover\:bg-brand-blue\/90:hover { background: rgba(PRIMARY_RGB_PLACEHOLDER,.9); }
 .hover\:bg-white:hover { background: #fff; }
