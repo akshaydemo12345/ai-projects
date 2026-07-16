@@ -20,6 +20,9 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
+import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
+import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
@@ -616,12 +619,33 @@ const LANDING_TEMPLATES: any[] = [
     gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
     prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
   },
-
-
+  {
+    id: "plumber-01",
+    name: "ProPlumb Solutions",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #00479b 0%, #db313f 100%)",
+    prompt: "A professional plumbing services landing page with hero section, emergency contact form, trusted expert section, features grid, and local customer reviews.",
+  },
+  {
+    id: "plumber-02",
+    name: "Elite Plumbing",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates02/screenshot.png",
+    gradient: "linear-gradient(135deg, #091d2d 0%, #49607e 100%)",
+    prompt: "A premium plumbing services landing page with hero section, emergency booking form, features grid, process timeline, and customer success stories.",
+  },
+  {
+    id: "plumber-03",
+    name: "Modern Plumber",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates03/screenshot.png",
+    gradient: "linear-gradient(135deg, #0c0f0d 0%, #a6e028 100%)",
+    prompt: "A dark-themed modern plumbing landing page with glowing accents, trust indicators, hero section, and lead capture form.",
+  }
 ];
 
-
-const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance", "Plumber"];
 
 const PREDEFINED_PROMPTS = [
   { label: "Lawyer", prompt: "A professional landing page for a law firm specializing in corporate law and personal injury. Include a hero section with headline and CTA, a lead-capture form (name, phone, case type), attorney profiles, trust badges (bar certifications, awards), client testimonials, and a footer with contact details." },
@@ -1076,10 +1100,10 @@ const CreatePagePage = () => {
   });
 
   useEffect(() => {
-      return () => {
-         if (pollRef.current) window.clearInterval(pollRef.current);
-         if (loaderTimeoutRef.current) window.clearTimeout(loaderTimeoutRef.current);
-      };
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      if (loaderTimeoutRef.current) window.clearTimeout(loaderTimeoutRef.current);
+    };
   }, []);
 
   const handleGenerateMagicPrompt = async () => {
@@ -1116,12 +1140,12 @@ const CreatePagePage = () => {
     setIsComplete(false);
     setLoaderError(null);
     setShowDelayedLoader(false);
-    
+
     // Start a 2 second timer before showing the actual loader overlay.
     // If an error happens before this (e.g. insufficient credits), the mutation fails fast 
     // and we never show the loader, keeping them on the form.
     loaderTimeoutRef.current = window.setTimeout(() => {
-       setShowDelayedLoader(true);
+      setShowDelayedLoader(true);
     }, 2000);
 
     // PURE AI PATH: Forwarding to the backend Claude API
@@ -1156,6 +1180,9 @@ const CreatePagePage = () => {
           case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
           case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
           case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+          case "plumber-01": enrichedContent = plumber01Html; enrichedStyles = plumber01Styles; break;
+          case "plumber-02": enrichedContent = plumber02Html; enrichedStyles = plumber02Styles; break;
+          case "plumber-03": enrichedContent = plumber03Html; enrichedStyles = plumber03Styles; break;
           default: enrichedContent = ""; enrichedStyles = "";
         }
       }
@@ -1345,7 +1372,7 @@ h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFon
   <script>tailwind.config={theme:{extend:{colors:{primary:'${primaryCol}',secondary:'${secondaryCol}'}}}}</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   ${fontsData?.googleFonts?.length ? `<link href="https://fonts.googleapis.com/css2?family=${fontsData.googleFonts.map(f => f.replace(/ /g, '+')).join('&family=')}:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>` : ''}
   <style>
@@ -1411,9 +1438,9 @@ ${enrichedContent}
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen bg-white"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
   if ((showLoader || createPageMutation.isPending) && showDelayedLoader) return (
-    <ModernLoader 
-      isComplete={isComplete} 
-      onFinished={handleLoaderFinished} 
+    <ModernLoader
+      isComplete={isComplete}
+      onFinished={handleLoaderFinished}
       error={loaderError}
       onDismissError={() => {
         setShowLoader(false);
@@ -1958,7 +1985,10 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
-                default: tpHtml = ""; tpStyles = "";
+                case "plumber-01": tpHtml = plumber01Html; tpStyles = plumber01Styles; break;
+                case "plumber-02": tpHtml = plumber02Html; tpStyles = plumber02Styles; break;
+                case "plumber-03": tpHtml = plumber03Html; tpStyles = plumber03Styles; break;
+                default: tpHtml = ""; tpStyles = ""; break;
               }
 
               // ── Use actual project branding in preview ──

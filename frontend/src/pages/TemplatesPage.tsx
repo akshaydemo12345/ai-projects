@@ -19,6 +19,9 @@ import { law04Html, law04Styles } from "../templates/law/templates04";
 import { law05Html, law05Styles } from "../templates/law/templates05";
 import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
+import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
+import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 
 const LANDING_TEMPLATES = [
   {
@@ -132,10 +135,31 @@ const LANDING_TEMPLATES = [
     tag: "Finance",
     img: "/assets/templates/finance/templates04/screenshot.png",
     gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
+  },
+  {
+    id: "plumber-01",
+    name: "ProPlumb Solutions",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates01/screenshot.png",
+    gradient: "linear-gradient(135deg, #00479b 0%, #db313f 100%)",
+  },
+  {
+    id: "plumber-02",
+    name: "Elite Plumbing",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates02/screenshot.png",
+    gradient: "linear-gradient(135deg, #091d2d 0%, #49607e 100%)",
+  },
+  {
+    id: "plumber-03",
+    name: "Modern Plumber",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates03/screenshot.png",
+    gradient: "linear-gradient(135deg, #0c0f0d 0%, #a6e028 100%)",
   }
 ];
 
-const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance"];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance", "Plumber"];
 
 const getTemplateContent = (id: string) => {
   switch (id) {
@@ -155,6 +179,9 @@ const getTemplateContent = (id: string) => {
     case "finance-01": return { html: finance01Html, css: finance01Styles };
     case "finance-02": return { html: finance02Html, css: finance02Styles };
     case "finance-03": return { html: finance03Html, css: finance03Styles };
+    case "plumber-01": return { html: plumber01Html, css: plumber01Styles };
+    case "plumber-02": return { html: plumber02Html, css: plumber02Styles };
+    case "plumber-03": return { html: plumber03Html, css: plumber03Styles };
     default: return { html: "", css: "" };
   }
 };
@@ -353,7 +380,7 @@ const TemplatesPage = () => {
                       <script>tailwind.config={theme:{extend:{colors:{primary:'${PRIMARY}',secondary:'${SECONDARY}'}}}}<\/script>
                       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
                       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-                      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+                      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
                       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
                       <style>
                         body { margin: 0; padding: 0; overflow-x: hidden; }
