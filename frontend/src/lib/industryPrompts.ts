@@ -1,8 +1,19 @@
 export const INDUSTRY_PROMPTS: Record<string, { chips: string[], templates: ((keyword: string) => string)[] }> = {
-  "SaaS": {
-    chips: ["B2B SaaS", "AI Tool", "CRM Software", "Analytics Dashboard", "Project Management", "Fintech"],
-    templates: [
-      (keyword: string) => `Design a modern, high-converting SaaS landing page for a ${keyword} product.
+      "SaaS": {
+            chips: ["B2B SaaS", "AI Tool", "CRM Software", "Analytics Dashboard"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a modern, high-converting SaaS landing page for a ${keyword} product.
 The design should feel innovative, trustworthy, and product-led, inspired by top-tier SaaS marketing sites.
 Header
 Sticky navbar, transparent turning solid on scroll
@@ -22,8 +33,6 @@ Product Showcase
 Large product screenshot/mockup section with floating UI detail callouts
 Integrations
 Row of integration logos with short supporting copy
-Pricing
-3-tier pricing cards (Starter, Growth, Enterprise) with a highlighted "Most Popular" plan
 Testimonials
 Masonry or carousel of customer quotes with photo, name, role, company
 Stats
@@ -44,7 +53,18 @@ Animations
 Fade-in on scroll, staggered card reveals, counter animation, hover lift on cards, smooth CTA button transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, soft shadows, rounded corners throughout.`,
-      (keyword: string) => `Design a modern, high-converting SaaS landing page for a ${keyword} product.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a modern, high-converting SaaS landing page for a ${keyword} product.
 The design should feel innovative, trustworthy, and product-led, inspired by top-tier SaaS marketing sites.
 
 Style
@@ -68,8 +88,6 @@ Product Showcase
 Large product screenshot/mockup section with floating UI detail callouts
 Integrations
 Row of integration logos with short supporting copy
-Pricing
-3-tier pricing cards (Starter, Growth, Enterprise) with a highlighted "Most Popular" plan
 Testimonials
 Masonry or carousel of customer quotes with photo, name, role, company
 Stats
@@ -90,7 +108,18 @@ Animations
 Fade-in on scroll, staggered card reveals, counter animation, hover lift on cards, smooth CTA button transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, soft shadows, rounded corners throughout.`,
-      (keyword: string) => `Design a modern, high-converting SaaS landing page for a ${keyword} product.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a modern, high-converting SaaS landing page for a ${keyword} product.
 The design should feel innovative, trustworthy, and product-led, inspired by top-tier SaaS marketing sites.
 
 Style
@@ -114,8 +143,6 @@ Product Showcase
 Large product screenshot/mockup section with floating UI detail callouts
 Integrations
 Row of integration logos with short supporting copy
-Pricing
-3-tier pricing cards (Starter, Growth, Enterprise) with a highlighted "Most Popular" plan
 Testimonials
 Masonry or carousel of customer quotes with photo, name, role, company
 Stats
@@ -136,7 +163,18 @@ Animations
 Fade-in on scroll, staggered card reveals, counter animation, hover lift on cards, smooth CTA button transitions
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, soft shadows, rounded corners throughout.`,
-      (keyword: string) => `Design a modern, high-converting SaaS landing page for a ${keyword} product.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a modern, high-converting SaaS landing page for a ${keyword} product.
 The design should feel innovative, trustworthy, and product-led, inspired by top-tier SaaS marketing sites.
 
 Style
@@ -160,8 +198,6 @@ Product Showcase
 Large product screenshot/mockup section with floating UI detail callouts
 Integrations
 Row of integration logos with short supporting copy
-Pricing
-3-tier pricing cards (Starter, Growth, Enterprise) with a highlighted "Most Popular" plan
 Testimonials
 Masonry or carousel of customer quotes with photo, name, role, company
 Stats
@@ -182,12 +218,23 @@ Animations
 Fade-in on scroll, staggered card reveals, counter animation, hover lift on cards, smooth CTA button transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, soft shadows, rounded corners throughout.`
-    ]
-  },
-  "Agency": {
-    chips: ["Digital Marketing", "Web Development", "SEO Agency", "Creative Studio", "PR Agency", "Social Media"],
-    templates: [
-      (keyword: string) => `Design a bold, high-converting landing page for a ${keyword} agency.
+            ]
+      },
+      "Agency": {
+            chips: ["Digital Marketing", "Web Development", "SEO Agency", "Creative Studio"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a bold, high-converting landing page for a ${keyword} agency.
 The design should feel confident, creative, and results-driven, inspired by top award-winning agency portfolios.
 Header
 Minimal sticky navbar: Logo left
@@ -223,7 +270,18 @@ Animations
 Scroll reveal on headlines and cards, image hover zoom, button hover fill/underline animation, smooth section transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, confident bold typography throughout.`,
-      (keyword: string) => `Design a bold, high-converting landing page for a ${keyword} agency.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting landing page for a ${keyword} agency.
 The design should feel confident, creative, and results-driven, inspired by top award-winning agency portfolios.
 
 Style
@@ -263,7 +321,18 @@ Animations
 Scroll reveal on headlines and cards, image hover zoom, button hover fill/underline animation, smooth section transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, confident bold typography throughout.`,
-      (keyword: string) => `Design a bold, high-converting landing page for a ${keyword} agency.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting landing page for a ${keyword} agency.
 The design should feel confident, creative, and results-driven, inspired by top award-winning agency portfolios.
 
 Style
@@ -303,7 +372,18 @@ Animations
 Scroll reveal on headlines and cards, image hover zoom, button hover fill/underline animation, smooth section transitions
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, confident bold typography throughout.`,
-      (keyword: string) => `Design a bold, high-converting landing page for a ${keyword} agency.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting landing page for a ${keyword} agency.
 The design should feel confident, creative, and results-driven, inspired by top award-winning agency portfolios.
 
 Style
@@ -343,12 +423,23 @@ Animations
 Scroll reveal on headlines and cards, image hover zoom, button hover fill/underline animation, smooth section transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, confident bold typography throughout.`
-    ]
-  },
-  "E-commerce": {
-    chips: ["Fashion Apparel", "Tech Gadgets", "Beauty Products", "Home Decor", "Fitness Gear", "Subscription Box"],
-    templates: [
-      (keyword: string) => `Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
+            ]
+      },
+      "E-commerce": {
+            chips: ["Fashion Apparel", "Tech Gadgets", "Beauty Products", "Home Decor"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
 The design should feel desirable, trustworthy, and shoppable, inspired by top DTC brand websites.
 Header
 Sticky navbar: Logo center or left, Cart icon
@@ -386,7 +477,18 @@ Animations
 Product image hover zoom, scroll reveal on sections, add-to-cart micro-interaction, smooth carousel transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium product photography treatment throughout.`,
-      (keyword: string) => `Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
 The design should feel desirable, trustworthy, and shoppable, inspired by top DTC brand websites.
 
 Style
@@ -428,7 +530,18 @@ Animations
 Product image hover zoom, scroll reveal on sections, add-to-cart micro-interaction, smooth carousel transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium product photography treatment throughout.`,
-      (keyword: string) => `Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
 The design should feel desirable, trustworthy, and shoppable, inspired by top DTC brand websites.
 
 Style
@@ -470,7 +583,18 @@ Animations
 Product image hover zoom, scroll reveal on sections, add-to-cart micro-interaction, smooth carousel transitions
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium product photography treatment throughout.`,
-      (keyword: string) => `Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a vibrant, high-converting e-commerce landing page for a ${keyword} brand.
 The design should feel desirable, trustworthy, and shoppable, inspired by top DTC brand websites.
 
 Style
@@ -512,12 +636,23 @@ Animations
 Product image hover zoom, scroll reveal on sections, add-to-cart micro-interaction, smooth carousel transitions
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium product photography treatment throughout.`
-    ]
-  },
-  "Healthcare": {
-    chips: ["Dental Care", "Pediatrics", "Mental Health", "Cosmetic Surgery", "Telehealth", "Physical Therapy"],
-    templates: [
-      (keyword: string) => `Design a clean, reassuring landing page for a ${keyword} practice.
+            ]
+      },
+      "Healthcare": {
+            chips: ["Dental Care", "Pediatrics", "Mental Health", "Cosmetic Surgery"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a clean, reassuring landing page for a ${keyword} practice.
 The design should feel calm, trustworthy, and professional, inspired by top modern healthcare websites.
 Header
 Sticky navbar: Logo left, Contact
@@ -553,7 +688,18 @@ Animations
 Gentle fade-in on scroll, subtle hover lift on cards, smooth carousel transitions — nothing jarring or fast
 Design Requirements
 Pixel-perfect, fully responsive, accessible (WCAG-friendly contrast), calm high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, reassuring landing page for a ${keyword} practice.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a clean, reassuring landing page for a ${keyword} practice.
 The design should feel calm, trustworthy, and professional, inspired by top modern healthcare websites.
 
 Style
@@ -593,7 +739,18 @@ Animations
 Gentle fade-in on scroll, subtle hover lift on cards, smooth carousel transitions — nothing jarring or fast
 Design Requirements
 Pixel-perfect, fully responsive, accessible (WCAG-friendly contrast), calm high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, reassuring landing page for a ${keyword} practice.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a clean, reassuring landing page for a ${keyword} practice.
 The design should feel calm, trustworthy, and professional, inspired by top modern healthcare websites.
 
 Style
@@ -633,7 +790,18 @@ Animations
 Gentle fade-in on scroll, subtle hover lift on cards, smooth carousel transitions — nothing jarring or fast
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible (WCAG-friendly contrast), calm high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, reassuring landing page for a ${keyword} practice.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a clean, reassuring landing page for a ${keyword} practice.
 The design should feel calm, trustworthy, and professional, inspired by top modern healthcare websites.
 
 Style
@@ -673,12 +841,23 @@ Animations
 Gentle fade-in on scroll, subtle hover lift on cards, smooth carousel transitions — nothing jarring or fast
 Design Requirements
 Pixel-perfect, fully responsive, accessible (WCAG-friendly contrast), calm high-conversion layout, consistent 8px spacing system throughout.`
-    ]
-  },
-  "Real Estate": {
-    chips: ["Luxury Homes", "Commercial Properties", "Property Management", "Home Valuation", "Real Estate Agent", "First-Time Buyers"],
-    templates: [
-      (keyword: string) => `Design a premium, elegant landing page focused on ${keyword}.
+            ]
+      },
+      "Real Estate": {
+            chips: ["Luxury Homes", "Commercial Properties", "Property Management", "Home Valuation"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
 Header
 Transparent navbar becoming solid on scroll
@@ -715,7 +894,18 @@ Animations
 Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky header transition
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
-      (keyword: string) => `Design a premium, elegant landing page focused on ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
 
 Style
@@ -756,7 +946,18 @@ Animations
 Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky header transition
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
-      (keyword: string) => `Design a premium, elegant landing page focused on ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
 
 Style
@@ -797,7 +998,18 @@ Animations
 Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky header transition
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
-      (keyword: string) => `Design a premium, elegant landing page focused on ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
 
 Style
@@ -838,12 +1050,23 @@ Animations
 Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky header transition
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`
-    ]
-  },
-  "Plumber": {
-    chips: ["Emergency Plumbing", "Drain Cleaning", "Water Heaters", "Pipe Repair", "Commercial Plumbing", "Leak Detection"],
-    templates: [
-      (keyword: string) => `Design a bold, high-converting local service landing page for a ${keyword} business.
+            ]
+      },
+      "Plumber": {
+            chips: ["Emergency Plumbing", "Drain Cleaning", "Water Heaters", "Pipe Repair"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a bold, high-converting local service landing page for a ${keyword} business.
 The design should feel reliable, fast, and trustworthy, inspired by top local trade service websites.
 Header
 Sticky navbar: Logo left, Contact
@@ -864,8 +1087,6 @@ Before/After or Work Gallery
 Photo grid showcasing completed ${keyword} jobs
 Customer Reviews
 Carousel or grid of star-rated reviews with customer name and short quote
-Pricing / Estimate Note
-Section reassuring transparent, upfront pricing with no hidden fees
 FAQ
 Accordion answering common questions about ${keyword}, response time, and cost
 Final CTA
@@ -882,7 +1103,18 @@ Animations
 Subtle fade-in on scroll, button hover states, gentle pulse on the "Call Now" button
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout optimized for mobile "click-to-call", consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a bold, high-converting local service landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting local service landing page for a ${keyword} business.
 The design should feel reliable, fast, and trustworthy, inspired by top local trade service websites.
 
 Style
@@ -907,8 +1139,6 @@ Before/After or Work Gallery
 Photo grid showcasing completed ${keyword} jobs
 Customer Reviews
 Carousel or grid of star-rated reviews with customer name and short quote
-Pricing / Estimate Note
-Section reassuring transparent, upfront pricing with no hidden fees
 FAQ
 Accordion answering common questions about ${keyword}, response time, and cost
 Final CTA
@@ -925,7 +1155,18 @@ Animations
 Subtle fade-in on scroll, button hover states, gentle pulse on the "Call Now" button
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout optimized for mobile "click-to-call", consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a bold, high-converting local service landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting local service landing page for a ${keyword} business.
 The design should feel reliable, fast, and trustworthy, inspired by top local trade service websites.
 
 Style
@@ -950,8 +1191,6 @@ Before/After or Work Gallery
 Photo grid showcasing completed ${keyword} jobs
 Customer Reviews
 Carousel or grid of star-rated reviews with customer name and short quote
-Pricing / Estimate Note
-Section reassuring transparent, upfront pricing with no hidden fees
 FAQ
 Accordion answering common questions about ${keyword}, response time, and cost
 Final CTA
@@ -968,7 +1207,18 @@ Animations
 Subtle fade-in on scroll, button hover states, gentle pulse on the "Call Now" button
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout optimized for mobile "click-to-call", consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a bold, high-converting local service landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a bold, high-converting local service landing page for a ${keyword} business.
 The design should feel reliable, fast, and trustworthy, inspired by top local trade service websites.
 
 Style
@@ -993,8 +1243,6 @@ Before/After or Work Gallery
 Photo grid showcasing completed ${keyword} jobs
 Customer Reviews
 Carousel or grid of star-rated reviews with customer name and short quote
-Pricing / Estimate Note
-Section reassuring transparent, upfront pricing with no hidden fees
 FAQ
 Accordion answering common questions about ${keyword}, response time, and cost
 Final CTA
@@ -1011,12 +1259,23 @@ Animations
 Subtle fade-in on scroll, button hover states, gentle pulse on the "Call Now" button
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout optimized for mobile "click-to-call", consistent 8px spacing system throughout.`
-    ]
-  },
-  "Lawyer": {
-    chips: ["Criminal Lawyer", "Family Law", "Legal Consultancy", "Corporate Lawyer", "Personal Injury", "Immigration Law"],
-    templates: [
-      (keyword: string) => `Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
+            ]
+      },
+      "Lawyer": {
+            chips: ["Criminal Lawyer", "Family Law", "Legal Consultancy", "Corporate Lawyer"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
 The design should feel sophisticated, trustworthy, and high-end, inspired by top international law firm websites.
 Header
 Transparent navigation that becomes solid on scroll
@@ -1071,7 +1330,18 @@ Fields: Full Name, Email Address, Phone Number, Legal Service (Dropdown: Corpora
 Submit Button: Book Free Consultation.
 Form Features: Modern rounded input fields (10–12px radius), Floating labels, Client-side validation, Success confirmation message, Mobile responsive, Gold accent on focus state, Subtle shadow and hover effects.
 Privacy note below the button: "Your information is kept confidential and will never be shared."`,
-      (keyword: string) => `Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
 The design should feel sophisticated, trustworthy, and high-end, inspired by top international law firm websites.
 
 Style
@@ -1130,7 +1400,18 @@ Fields: Full Name, Email Address, Phone Number, Legal Service (Dropdown: Corpora
 Submit Button: Book Free Consultation.
 Form Features: Modern rounded input fields (10–12px radius), Floating labels, Client-side validation, Success confirmation message, Mobile responsive, Gold accent on focus state, Subtle shadow and hover effects.
 Privacy note below the button: "Your information is kept confidential and will never be shared."`,
-      (keyword: string) => `Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
 The design should feel sophisticated, trustworthy, and high-end, inspired by top international law firm websites.
 
 Style
@@ -1189,7 +1470,18 @@ Fields: Full Name, Email Address, Phone Number, Legal Service (Dropdown: Corpora
 Submit Button: Book Free Consultation.
 Form Features: Modern rounded input fields (10–12px radius), Floating labels, Client-side validation, Success confirmation message, Mobile responsive, Gold accent on focus state, Subtle shadow and hover effects.
 Privacy note below the button: "Your information is kept confidential and will never be shared."`,
-      (keyword: string) => `Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a premium, modern, luxury landing page for a law firm specializing in ${keyword}.
 The design should feel sophisticated, trustworthy, and high-end, inspired by top international law firm websites.
 
 Style
@@ -1248,12 +1540,23 @@ Fields: Full Name, Email Address, Phone Number, Legal Service (Dropdown: Corpora
 Submit Button: Book Free Consultation.
 Form Features: Modern rounded input fields (10–12px radius), Floating labels, Client-side validation, Success confirmation message, Mobile responsive, Gold accent on focus state, Subtle shadow and hover effects.
 Privacy note below the button: "Your information is kept confidential and will never be shared."`
-    ]
-  },
-  "Other": {
-    chips: ["Consulting", "Event Booking", "Local Service", "Fitness", "Restaurant", "Education"],
-    templates: [
-      (keyword: string) => `Design a clean, professional, high-converting landing page for a ${keyword} business.
+            ]
+      },
+      "Other": {
+            chips: ["Consulting", "Event Booking", "Local Service", "Fitness"],
+            templates: [
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width — MUST include an embedded inline lead capture form on the right or below the headline)
+2. Trust/Stats Bar
+3. Services / Features
+4. About / Our Story
+5. How It Works / Process
+6. Testimonials
+7. Team / Experts
+8. FAQ (accordion)
+9. Final CTA + Lead Capture Form
+10. Footer
+Design a clean, professional, high-converting landing page for a ${keyword} business.
 The design should feel trustworthy, modern, and tailored to the specific goals of a ${keyword} audience.
 Header
 Sticky navbar: Logo left, Contact
@@ -1289,7 +1592,18 @@ Animations
 Fade-in on scroll, hover lift on cards, smooth carousel transitions, button hover states
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, professional, high-converting landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (full-width, bold headline + CTA)
+2. Services / Features (prominent cards)
+3. How It Works / Process (numbered steps)
+4. Stats / Social Proof numbers
+5. Team / Experts
+6. Lead Capture Form (mid-page, inline, compelling)
+7. Testimonials
+8. About / Our Story
+9. FAQ (accordion)
+10. Footer
+Design a clean, professional, high-converting landing page for a ${keyword} business.
 The design should feel trustworthy, modern, and tailored to the specific goals of a ${keyword} audience.
 
 Style
@@ -1329,7 +1643,18 @@ Animations
 Fade-in on scroll, hover lift on cards, smooth carousel transitions, button hover states
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, professional, high-converting landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
+2. Stats / Social Proof numbers
+3. About / Our Story
+4. Services / Features
+5. Testimonials (prominent, large quotes)
+6. Team / Experts
+7. How It Works / Process
+8. Lead Capture Form
+9. FAQ (accordion)
+10. Footer
+Design a clean, professional, high-converting landing page for a ${keyword} business.
 The design should feel trustworthy, modern, and tailored to the specific goals of a ${keyword} audience.
 
 Style
@@ -1369,7 +1694,18 @@ Animations
 Fade-in on scroll, hover lift on cards, smooth carousel transitions, button hover states
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system throughout.`,
-      (keyword: string) => `Design a clean, professional, high-converting landing page for a ${keyword} business.
+                  (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
+1. Hero (minimal, bold)
+2. About / Our Story (right after hero)
+3. Testimonials
+4. Services / Features
+5. Stats / Social Proof numbers
+6. Lead Capture Form (prominent, centered)
+7. How It Works / Process
+8. Team / Experts
+9. FAQ (accordion)
+10. Footer
+Design a clean, professional, high-converting landing page for a ${keyword} business.
 The design should feel trustworthy, modern, and tailored to the specific goals of a ${keyword} audience.
 
 Style
@@ -1409,26 +1745,26 @@ Animations
 Fade-in on scroll, hover lift on cards, smooth carousel transitions, button hover states
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system throughout.`
-    ]
-  }
+            ]
+      }
 };
 
 export const getIndustryKey = (industry: string) => {
-  if (!industry) return 'Other';
+      if (!industry) return 'Other';
 
-  const exactMatch = Object.keys(INDUSTRY_PROMPTS).find(
-    k => k.toLowerCase() === industry.toLowerCase()
-  );
-  if (exactMatch) return exactMatch;
+      const exactMatch = Object.keys(INDUSTRY_PROMPTS).find(
+            k => k.toLowerCase() === industry.toLowerCase()
+      );
+      if (exactMatch) return exactMatch;
 
-  const norm = industry.toLowerCase();
-  if (norm.includes('lawyer') || norm.includes('legal')) return 'Lawyer';
-  if (norm.includes('plumb')) return 'Plumber';
-  if (norm.includes('real estate') || norm.includes('property')) return 'Real Estate';
-  if (norm.includes('health') || norm.includes('medical') || norm.includes('dental') || norm.includes('clinic')) return 'Healthcare';
-  if (norm.includes('saas') || norm.includes('software') || norm.includes('tech')) return 'SaaS';
-  if (norm.includes('agency') || norm.includes('marketing')) return 'Agency';
-  if (norm.includes('e-commerce') || norm.includes('ecommerce') || norm.includes('shop') || norm.includes('store')) return 'E-commerce';
+      const norm = industry.toLowerCase();
+      if (norm.includes('lawyer') || norm.includes('legal')) return 'Lawyer';
+      if (norm.includes('plumb')) return 'Plumber';
+      if (norm.includes('real estate') || norm.includes('property')) return 'Real Estate';
+      if (norm.includes('health') || norm.includes('medical') || norm.includes('dental') || norm.includes('clinic')) return 'Healthcare';
+      if (norm.includes('saas') || norm.includes('software') || norm.includes('tech')) return 'SaaS';
+      if (norm.includes('agency') || norm.includes('marketing')) return 'Agency';
+      if (norm.includes('e-commerce') || norm.includes('ecommerce') || norm.includes('shop') || norm.includes('store')) return 'E-commerce';
 
-  return 'Other';
+      return 'Other';
 };

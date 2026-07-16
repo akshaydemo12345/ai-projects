@@ -1137,7 +1137,11 @@ const CreatePagePage = () => {
       const industryKey = getIndustryKey(getProjectIndustry(project));
       const { chips, templates } = INDUSTRY_PROMPTS[industryKey];
 
-      const keyword = activeChip || chips[Math.floor(Math.random() * chips.length)];
+      // Always pick a fresh random chip for true variation
+      const randomChipIdx = Math.floor(Math.random() * chips.length);
+      const keyword = chips[randomChipIdx];
+
+      // Always pick a new random template variant
       const randomIdx = Math.floor(Math.random() * templates.length);
       const randomTemplate = templates[randomIdx];
 
@@ -1146,7 +1150,7 @@ const CreatePagePage = () => {
       setActiveChip(keyword);
       setMethodError("");
       setIsGeneratingPrompt(false);
-      toast.success("Magic prompt generated!");
+      toast.success("✨ Magic prompt generated!");
     }, 600);
   };
 
@@ -1710,15 +1714,17 @@ ${enrichedContent}
                       key={chipLabel}
                       onClick={() => {
                         const { templates } = INDUSTRY_PROMPTS[getIndustryKey(getProjectIndustry(project))];
-                        // Use the currently active template variant instead of picking a new random one
-                        const currentTemplate = templates[activeTemplateIndex] || templates[0];
-                        setAiPrompt(currentTemplate(chipLabel));
+                        // Pick a completely random variant
+                        const newIdx = Math.floor(Math.random() * templates.length);
+                        const newTemplate = templates[newIdx];
+                        setAiPrompt(newTemplate(chipLabel));
                         setActiveChip(chipLabel);
+                        setActiveTemplateIndex(newIdx);
                         setMethodError("");
                       }}
                       className={`text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all border ${activeChip === chipLabel
-                          ? "bg-violet-600 text-white border-violet-600 shadow-md scale-105"
-                          : "text-gray-500 bg-white hover:bg-violet-50 hover:text-violet-600 border-gray-200 hover:border-violet-200"
+                        ? "bg-violet-600 text-white border-violet-600 shadow-md scale-105"
+                        : "text-gray-500 bg-white hover:bg-violet-50 hover:text-violet-600 border-gray-200 hover:border-violet-200"
                         }`}
                     >
                       {chipLabel}
