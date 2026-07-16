@@ -17,6 +17,7 @@ import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
 import { law04Html, law04Styles } from "../templates/law/templates04";
 import { law05Html, law05Styles } from "../templates/law/templates05";
+import { law06Html, law06Styles } from "../templates/law/templates06";
 import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
 import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
@@ -58,6 +59,13 @@ const LANDING_TEMPLATES = [
     tag: "Law Firm",
     img: "/assets/templates/LawFirm/screenshot05.png",
     gradient: "linear-gradient(135deg, #111111 0%, #b79b6c 100%)",
+  },
+  {
+    id: "law-06",
+    name: "Ashcroft & Vale",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates06/screenshot.png",
+    gradient: "linear-gradient(135deg, #0c1426 0%, #C8A15A 100%)",
   },
   {
     id: "healthcare-01",
@@ -168,6 +176,7 @@ const getTemplateContent = (id: string) => {
     case "law-03": return { html: law03Html, css: law03Styles };
     case "law-04": return { html: law04Html, css: law04Styles };
     case "law-05": return { html: law05Html, css: law05Styles };
+    case "law-06": return { html: law06Html, css: law06Styles };
     case "healthcare-01": return { html: healthcare01Html, css: healthcare01Styles };
     case "healthcare-02": return { html: healthcare02Html, css: healthcare02Styles };
     case "healthcare-03": return { html: healthcare03Html, css: healthcare03Styles };
