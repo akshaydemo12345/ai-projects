@@ -1909,9 +1909,21 @@ exports.verifyPlugin = async (req, res, next) => {
         // Domain mismatch!
         console.error(`🛑 Domain Security Violation for Project "${project.name}": Expected ${project.websiteUrl}, got ${incomingDomain}`);
 
-        // Update project table - if not verified API then false
-        project.isVerified = false;
-        await Project.updateOne({ _id: project._id }, { $set: { isVerified: false, verificationStatus: 'failed' } });
+        // Update project table - only the Plugin flag flips false here.
+        // The Script integration's verified state is independent and must
+        // not be touched by a Plugin-side domain mismatch.
+        project.isPluginVerified = false;
+        const aggregateVerifiedAfterFail = !!project.isScriptVerified;
+        await Project.updateOne(
+          { _id: project._id },
+          {
+            $set: {
+              isPluginVerified: false,
+              isVerified: aggregateVerifiedAfterFail,
+              verificationStatus: aggregateVerifiedAfterFail ? 'active' : 'failed'
+            }
+          }
+        );
 
         return res.status(403).json({
           status: 'error',
@@ -1925,11 +1937,27 @@ exports.verifyPlugin = async (req, res, next) => {
       'title slug content seo template domain publishedAt'
     );
 
-    // Force verification to true on every successful plugin verification
-    project.isVerified = true;
+    // Force plugin verification to true on every successful plugin check.
+    // This must never mark the Script integration as verified — that flag
+    // (isScriptVerified) is only ever set by the Script verification flow.
+    const now = new Date();
+    project.isPluginVerified = true;
+    project.pluginVerifiedAt = now;
+    project.isVerified = true; // aggregate: at least one method is verified
     project.verificationStatus = 'active';
-    project.verifiedAt = new Date();
-    await Project.updateOne({ _id: project._id }, { $set: { isVerified: true, verificationStatus: 'active', verifiedAt: new Date() } });
+    project.verifiedAt = now;
+    await Project.updateOne(
+      { _id: project._id },
+      {
+        $set: {
+          isPluginVerified: true,
+          pluginVerifiedAt: now,
+          isVerified: true,
+          verificationStatus: 'active',
+          verifiedAt: now
+        }
+      }
+    );
 
     const normalizedBackendBase = `${config.api.baseUrl}/api/v1/proxy`;
 
@@ -1948,6 +1976,7 @@ exports.verifyPlugin = async (req, res, next) => {
     res.status(200).json({
       status: 'active',
       isVerified: true,
+      isPluginVerified: true,
       source_url: project.websiteUrl || domain,   // BUG-FIX #3: plugin's class-api.php reads this in update_options()
       target_url: normalizedBackendBase,
       target_domain: config.api.baseUrl.replace(/^https?:\/\//i, ''),

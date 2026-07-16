@@ -42,6 +42,10 @@ export interface Project {
   userId: string;
   isDeleted: boolean;
   isVerified?: boolean;
+  isPluginVerified?: boolean;
+  pluginVerifiedAt?: string | null;
+  isScriptVerified?: boolean;
+  scriptVerifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   logoUrl?: string;

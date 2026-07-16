@@ -1,208 +1,199 @@
 /**
- * PageCraft AI - Smart Embed SDK
- * Usage: <script src=".../embed.js" data-token="TOKEN" data-page="SLUG" async></script>
+ * Buildify AI — Script Integration embed loader.
+ * ------------------------------------------------------------------------
+ * Usage (must be the FIRST thing in <head>, not async/defer — see below):
+ *
+ *   <script src="https://YOUR_API_HOST/embed.js" data-token="PC-XXXX"></script>
+ *
+ * WHY THIS FILE WAS REWRITTEN
+ * ------------------------------------------------------------------------
+ * The previous version fetched the landing-page HTML asynchronously and
+ * injected it into the DOM via `element.innerHTML = data.html`. Browsers
+ * never execute <script> tags that are inserted via innerHTML (a standard
+ * security restriction), which is why published pages served through the
+ * Script integration were missing scripts and any styling that depended on
+ * those scripts running — while the Preview URL (a real page load) and the
+ * WordPress Plugin path (HTML rendered server-side by PHP, then served as a
+ * real page load) both worked fine.
+ *
+ * FIX
+ * ------------------------------------------------------------------------
+ * This version makes a SYNCHRONOUS request (deliberately — this is why the
+ * script must be un-deferred and placed first in <head>, so it can run and
+ * finish before the browser starts parsing/painting the host page's own
+ * "not found" content) and, if a matching landing page exists, replaces the
+ * entire document with `document.write()`. Content written this way is fed
+ * through the browser's normal HTML parser, so <script>, <style>, and
+ * <link rel="stylesheet"> tags all execute/apply exactly as they would on a
+ * real page load — no manual re-execution hacks required.
+ *
+ * If the script ever ends up loaded late (e.g. async/defer set by mistake,
+ * or injected after the document has already finished loading), a
+ * best-effort fallback path is used instead: fetch the HTML, inject it, and
+ * manually re-create any <script> tags so they still execute. This is a
+ * safety net only — correct placement (see above) is what avoids the
+ * "flash of native 404 content" the integration instructions warn about.
  */
 (function () {
-  console.log('Running....');
-  const currentScript = document.currentScript || (function () {
-    const scripts = document.getElementsByTagName('script');
-    return scripts[scripts.length - 1];
-  })();
+  'use strict';
 
-  // Inject overlay synchronously to hide native 404 flash
-  const overlayBg = (currentScript && currentScript.getAttribute('data-overlay-color')) || '#ffffff';
-  
-  const style = document.createElement('style');
-  style.id = 'pc-style-overlay';
-  style.textContent = 'body { display: none !important; } #pc-overlay { position:fixed;inset:0;z-index:2147483647;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center; } #pc-spinner { width:40px;height:40px;border:3px solid rgba(0,0,0,0.1);border-top:3px solid #3498db;border-radius:50%;animation:pc-spin 1s linear infinite; } @keyframes pc-spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }';
-  if (document.head) document.head.appendChild(style);
-  else document.documentElement.appendChild(style);
+  var currentScript =
+    document.currentScript ||
+    (function () {
+      var scripts = document.getElementsByTagName('script');
+      return scripts[scripts.length - 1];
+    })();
 
-  const overlay = document.createElement('div');
-  overlay.id = 'pc-overlay';
-  overlay.innerHTML = '<div id="pc-spinner"></div>';
-  document.documentElement.appendChild(overlay);
+  if (!currentScript) return;
 
-  function removeOverlay() {
-    const styleEl = document.getElementById('pc-style-overlay');
-    if (styleEl) styleEl.remove();
-    const overlayEl = document.getElementById('pc-overlay');
-    if (overlayEl) overlayEl.remove();
-  }
-
-  const url = new URL(currentScript.src, window.location.origin);
-  const token = currentScript.getAttribute('data-token') || url.searchParams.get('token');
-  const searchParams = new URLSearchParams(window.location.search);
-  const qPage = searchParams.get('pg') || searchParams.get('landing') || searchParams.get('page') || searchParams.get('p') || searchParams.get('slug') || searchParams.get('route');
-  const attrPageId = currentScript.getAttribute('data-page-id');
-  const attrPage = currentScript.getAttribute('data-page');
-  const hashRaw = window.location.hash.replace(/^#+\/*/, ''); // Remove # and leading slashes
-  // Support both #lp/test-script and #page=lp/test-script, while stripping query params
-  const hashPage = (hashRaw.includes('page=') ? hashRaw.split('page=')[1] : hashRaw).split('?')[0].replace(/\/+$/, '');
-  const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  const rawPathPage = pathParts.length > 0 && pathParts[0] !== '' ? pathParts.join('/') : null;
-  // Strip trailing /thank-you so slug resolves correctly on direct access to the thank-you URL
-  const pathPage = rawPathPage ? rawPathPage.replace(/\/thank-you\/?$/, '') : null;
-
-  // PRIORITY: URL (Query > Hash) > Script Attributes > URL Path
-  // This enables dynamic routing via URL even if a data-page is set on the script tag.
-  const page = qPage || hashPage || attrPageId || attrPage || pathPage;
-
-  console.log('💎 [SDK] Resolved Slug:', page);
-
-  // Re-initialize on hash change to support SPA-like navigation
-  window.addEventListener('hashchange', () => {
-    console.log('🔄 [SDK] Hash changed, reloading for routing...');
-    window.location.reload();
-  });
-
-  const apiBase = url.origin;
-
-  function buildLandingUrl() {
-    const origin = window.location.origin;
-    const path = window.location.pathname.replace(/\/+$|^\/+$/g, '');
-    const search = window.location.search;
-    const currentFullUrl = window.location.href;
-
-    // If the browser URL already contains a path, preserve it exactly.
-    if (path && path !== '') {
-      return currentFullUrl;
-    }
-
-    // If no path is present, but we know the page slug, reconstruct the intended URL.
-    if (page) {
-      const pagePath = page.startsWith('/') ? page : `/${page}`;
-      const params = new URLSearchParams(search);
-      ['pg', 'landing', 'page', 'p'].forEach(key => params.delete(key));
-      const queryString = params.toString();
-      return `${origin}${pagePath}${queryString ? `?${queryString}` : ''}`;
-    }
-
-    return currentFullUrl;
-  }
-
-  const landingUrl = buildLandingUrl();
-  const previousReferrer = document.referrer;
-  console.log('🌐 [SDK] Landing URL for tracking:', previousReferrer);
-
-  /**
-   * Captures UTM parameters strictly from the current browser URL.
-   * If a parameter is absent from the URL, its value resolves to null.
-   * SessionStorage and LocalStorage are avoided to satisfy no-caching constraints.
-   */
-  function getUTMParameters() {
-    const utms = {};
-    try {
-      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-      
-      // Parse main URL search params
-      let params = new URLSearchParams(window.location.search);
-      
-      // Fallback/Merge with hash-based query parameters (useful in SPAs)
-      if (window.location.hash && window.location.hash.includes('?')) {
-        const hashQuery = window.location.hash.split('?')[1];
-        const hashParams = new URLSearchParams(hashQuery);
-        hashParams.forEach((v, k) => {
-          if (!params.has(k)) {
-            params.append(k, v);
-          }
-        });
-      }
-      
-      let hasUtm = false;
-      for (let i = 0; i < utmKeys.length; i++) {
-        if (params.get(utmKeys[i])) { hasUtm = true; break; }
-      }
-
-      utmKeys.forEach(key => {
-        let val = params.get(key);
-        if (hasUtm) {
-          if (val) {
-            try { sessionStorage.setItem('dm_' + key, val); localStorage.setItem('dm_' + key, val); } catch(e){}
-          } else {
-            try { sessionStorage.removeItem('dm_' + key); localStorage.removeItem('dm_' + key); } catch(e){}
-          }
-        } else {
-          try { sessionStorage.removeItem('dm_' + key); localStorage.removeItem('dm_' + key); } catch(e){}
-        }
-
-        // Read from storage if we didn't just clear it and URL lacked it
-        if (!val) {
-          try { val = sessionStorage.getItem('dm_' + key) || localStorage.getItem('dm_' + key); } catch(e){}
-        }
-
-        utms[key.toLowerCase()] = val || null;
-      });
-    } catch (e) {
-      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
-      utmKeys.forEach(key => {
-        utms[key.toLowerCase()] = null;
-      });
-    }
-    return utms;
-  }
-
-  console.log('🚀 PageCraft AI: Initializing...', {
-    detectedPage: page,
-    source: qPage ? 'URL Query' : attrPage ? 'Data Attribute' : hashPage ? 'Hash' : pathPage ? 'URL Path' : 'None',
-    token: token ? 'Provided' : 'Missing',
-    href: window.location.href
-  });
+  var token = currentScript.getAttribute('data-token');
+  var explicitPageId = currentScript.getAttribute('data-page-id');
 
   if (!token) {
-    console.error('PageCraft AI: Missing data-token in embed script');
+    console.error('[Buildify AI] embed.js is missing the required data-token attribute.');
     return;
   }
 
-  if (!page || page === '') {
-    console.error('PageCraft AI: Could not determine page slug from data-page or URL path');
-    return;
+  // Derive the API base from this script's own src, so the same file works
+  // across environments (localhost, staging, production) without edits.
+  var apiBase = currentScript.src.replace(/\/embed\.js(?:\?.*)?$/, '');
+
+  var domain = window.location.hostname;
+  var path = window.location.pathname;
+
+  function buildApiUrl() {
+    var params = [
+      'domain=' + encodeURIComponent(domain),
+      'path=' + encodeURIComponent(path),
+      'apiKey=' + encodeURIComponent(token)
+    ];
+    if (explicitPageId) {
+      params.push('pageId=' + encodeURIComponent(explicitPageId));
+    }
+    return apiBase + '/api/page?' + params.join('&');
   }
 
-  async function loadPage() {
+  function parseResponse(rawText) {
     try {
-      console.log('PageCraft AI: Loading page...', page);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      // We use the public endpoint that returns the rendered HTML or at least the raw data
-      const endpoint = /^[0-9a-fA-F]{24}$/.test(String(page || ''))
-        ? `${apiBase}/api/public/page?page=${encodeURIComponent(page)}`
-        : `${apiBase}/api/public/page/${encodeURIComponent(page)}`;
-      const response = await fetch(endpoint, {
-        headers: {
-          'bypass-tunnel-reminder': 'true'
-        },
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Failed to load page: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.status !== 'success' && !result.data && !result.html) {
-        throw new Error(result.message || 'Unknown error from API');
-      }
-
-      if (result.html) {
-        document.open();
-        document.write(result.html);
-        document.close();
-      } else {
-        removeOverlay();
-      }
-
+      var data = JSON.parse(rawText);
+      if (data && data.status === 'success' && data.html) return data;
+      return null;
     } catch (err) {
-      console.error('PageCraft AI Error:', err);
-      removeOverlay();
+      console.error('[Buildify AI] Could not parse embed response:', err);
+      return null;
     }
   }
 
-  // Do not wait for DOMContentLoaded, execute immediately
-  loadPage();
+  // ── Re-execute <script> tags inside a container that was populated via
+  // innerHTML (browsers won't run them otherwise). Only used by the
+  // late-load fallback path below — the primary path (document.write)
+  // doesn't need this since the browser's parser handles it natively.
+  function executeScripts(container) {
+    if (!container) return;
+    var scripts = container.querySelectorAll('script');
+    window.__PC_SCRIPT_REGISTRY__ = window.__PC_SCRIPT_REGISTRY__ || {};
+    var registry = window.__PC_SCRIPT_REGISTRY__;
+
+    scripts.forEach(function (oldScript) {
+      var src = oldScript.getAttribute('src');
+      if (src) {
+        if (registry[src]) {
+          oldScript.remove();
+          return;
+        }
+        registry[src] = true;
+      }
+
+      var newScript = document.createElement('script');
+      Array.prototype.forEach.call(oldScript.attributes, function (attr) {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      newScript.textContent = oldScript.textContent || '';
+
+      if (oldScript.parentNode) {
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      }
+    });
+  }
+
+  // ── PRIMARY PATH: synchronous request + full document.write() ──────────
+  function loadSync() {
+    var xhr = new XMLHttpRequest();
+    try {
+      xhr.open('GET', buildApiUrl(), false); // false => synchronous
+      xhr.send(null);
+    } catch (err) {
+      console.error('[Buildify AI] embed.js request failed:', err);
+      return;
+    }
+
+    if (xhr.status !== 200) {
+      // No matching landing page for this URL — leave the host page alone
+      // so its own content (or native 404) renders normally.
+      return;
+    }
+
+    var data = parseResponse(xhr.responseText);
+    if (!data) return;
+
+    document.open();
+    document.write(data.html);
+    document.close();
+  }
+
+  // ── FALLBACK PATH: used only if this script somehow runs after the
+  // document has already finished loading (wrong placement). document.write
+  // is unsafe to call at that point (it would wipe the already-rendered
+  // page unexpectedly in some browsers), so fetch + inject + re-execute
+  // scripts manually instead.
+  function loadAsyncFallback() {
+    console.warn(
+      '[Buildify AI] embed.js loaded after the page finished parsing. ' +
+      'For best results, place this script — without async/defer — as the ' +
+      'first item in <head>. Falling back to async injection.'
+    );
+
+    fetch(buildApiUrl())
+      .then(function (res) {
+        return res.status === 200 ? res.text() : null;
+      })
+      .then(function (rawText) {
+        if (!rawText) return;
+        var data = parseResponse(rawText);
+        if (!data) return;
+
+        var container = document.createElement('div');
+        container.innerHTML = data.html;
+
+        // Move any <style>/<link> tags from the fetched document's <head>
+        // into the real document <head> so they take effect the same way
+        // they would on a normal page load.
+        var fetchedHead = container.querySelector('head');
+        if (fetchedHead) {
+          Array.prototype.slice.call(fetchedHead.children).forEach(function (node) {
+            document.head.appendChild(node);
+          });
+        }
+
+        var fetchedBody = container.querySelector('body') || container;
+        document.body.innerHTML = '';
+        Array.prototype.slice.call(fetchedBody.childNodes).forEach(function (node) {
+          document.body.appendChild(node);
+        });
+
+        executeScripts(document.body);
+        executeScripts(document.head);
+      })
+      .catch(function (err) {
+        console.error('[Buildify AI] embed.js fallback request failed:', err);
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    // Script is running early, as intended — safe to block and fully
+    // replace the document.
+    loadSync();
+  } else {
+    loadAsyncFallback();
+  }
 })();

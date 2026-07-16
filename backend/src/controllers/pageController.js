@@ -979,15 +979,44 @@ exports.updatePage = async (req, res, next) => {
         return res.status(404).json({ status: 'fail', message: 'Project not found' });
       }
 
-      const { verified, message } = await verifyProjectIntegration(project);
+      const { verified, method, message } = await verifyProjectIntegration(project);
 
-      // Sync the stored flag with what we just observed, in both directions,
-      // so the UI reflects current reality rather than the last check ever run.
-      await Project.findByIdAndUpdate(project._id, {
-        isVerified: verified,
-        verificationStatus: verified ? 'verified' : 'failed',
-        verifiedAt: verified ? new Date() : project.verifiedAt
-      });
+      // This live scan can't tell WHICH method (Plugin vs Script) it saw —
+      // it just checks whether the token appears anywhere on the page. So it
+      // must never blindly overwrite isPluginVerified / isScriptVerified,
+      // and must never force the aggregate isVerified to false when a
+      // specific method is still independently marked verified — that would
+      // silently disagree with what the Integration panel is showing for
+      // that method. It may only ever RAISE the aggregate (confirm a method
+      // that a `<script>` tag detection maps to), never lower it.
+      if (verified && method === 'script') {
+        await Project.findByIdAndUpdate(project._id, {
+          isScriptVerified: true,
+          scriptVerifiedAt: new Date(),
+          isVerified: true,
+          verificationStatus: 'active',
+          verifiedAt: new Date()
+        });
+      } else if (verified && (method === 'meta' || method === 'raw-html')) {
+        // Token found outside a <script> tag — consistent with how the
+        // WordPress Plugin injects it (shortcode/widget output), not the
+        // manual embed snippet.
+        await Project.findByIdAndUpdate(project._id, {
+          isPluginVerified: true,
+          pluginVerifiedAt: new Date(),
+          isVerified: true,
+          verificationStatus: 'active',
+          verifiedAt: new Date()
+        });
+      } else {
+        // Recompute the aggregate strictly from the persisted per-method
+        // flags rather than writing the raw scan result over them.
+        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        await Project.findByIdAndUpdate(project._id, {
+          isVerified: aggregateVerified,
+          verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
+        });
+      }
 
       if (!verified) {
         return res.status(403).json({
@@ -1099,13 +1128,34 @@ exports.publishPage = async (req, res, next) => {
 
     const project = await Project.findById(page.projectId);
     if (project) {
-      const { verified, message } = await verifyProjectIntegration(project);
+      const { verified, method, message } = await verifyProjectIntegration(project);
 
-      await Project.findByIdAndUpdate(project._id, {
-        isVerified: verified,
-        verificationStatus: verified ? 'verified' : 'failed',
-        verifiedAt: verified ? new Date() : project.verifiedAt
-      });
+      // See the equivalent block in updatePage for why this never blindly
+      // overwrites isPluginVerified / isScriptVerified or force-lowers the
+      // aggregate below what those persisted per-method flags say.
+      if (verified && method === 'script') {
+        await Project.findByIdAndUpdate(project._id, {
+          isScriptVerified: true,
+          scriptVerifiedAt: new Date(),
+          isVerified: true,
+          verificationStatus: 'active',
+          verifiedAt: new Date()
+        });
+      } else if (verified && (method === 'meta' || method === 'raw-html')) {
+        await Project.findByIdAndUpdate(project._id, {
+          isPluginVerified: true,
+          pluginVerifiedAt: new Date(),
+          isVerified: true,
+          verificationStatus: 'active',
+          verifiedAt: new Date()
+        });
+      } else {
+        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        await Project.findByIdAndUpdate(project._id, {
+          isVerified: aggregateVerified,
+          verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
+        });
+      }
 
       if (!verified) {
         return res.status(403).json({

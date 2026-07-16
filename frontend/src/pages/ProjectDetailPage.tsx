@@ -2301,9 +2301,9 @@ const tokenAuth = localStorage.getItem("token");
                               {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                             </div>
                             <div className="mt-2 flex items-center gap-1.5">
-                              <span className={`h-2 w-2 rounded-full ${project?.isVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                              <span className={`h-2 w-2 rounded-full ${project?.isPluginVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                               <span className="text-[10px] font-medium text-muted-foreground">
-                                Status: <span className={project?.isVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isVerified ? 'Verified' : 'Pending Verification'}</span>
+                                Status: <span className={project?.isPluginVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isPluginVerified ? 'Verified' : 'Pending Verification'}</span>
                               </span>
                             </div>
                           </div>
@@ -2360,6 +2360,13 @@ const tokenAuth = localStorage.getItem("token");
                         </Button>
                       </div>
                       <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
+
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`h-2 w-2 rounded-full ${project?.isScriptVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          Status: <span className={project?.isScriptVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isScriptVerified ? 'Verified' : 'Pending Verification'}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

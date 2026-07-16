@@ -23,7 +23,7 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   const [name, setName] = useState(cleanProjectName(project.name) || "");
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
-  const allowedIndustries = ["SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate", "Other"];
+  const allowedIndustries = ["SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate", "Plumber", "Lawyer", "Other"];
   const initialIndustryRaw = project.websiteProfile?.industry?.industry || project.scrapedData?.industry || project.industry || project.category || "SaaS";
   const initialIndustry = allowedIndustries.includes(initialIndustryRaw) ? initialIndustryRaw : "General";
   const [industry, setIndustry] = useState(initialIndustry);
