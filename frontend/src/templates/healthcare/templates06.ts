@@ -12,7 +12,7 @@ export const healthcare06Styles = `
   --secondary-rgb: SECONDARY_RGB_PLACEHOLDER;
   --bg-light: #fdfdfd;
   --text-dark: #1f1f1f;
-  --text-muted: #64748b;
+  --text-muted: #3d3d3dff;
   --border-light: #f1f5f9;
   --spacing-section-padding: 80px;
   --spacing-gutter: 24px;
