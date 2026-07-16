@@ -4036,9 +4036,15 @@ const GrapesEditor = () => {
 
       setPublishedUrl(url);
       setPublishModalOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       setIsPublishing(false);
-      toast.error('Failed to publish page');
+      // The backend now live-checks the integration at publish time, so a
+      // 403 here specifically means "was verified before, isn't anymore" —
+      // surface that real reason instead of a generic failure message.
+      toast.error(err?.message || 'Failed to publish page', { style: { color: '#ef4444' } });
+      // Re-fetch the project so the "Verified" badge reflects the fresh
+      // status the server just observed (it may have just flipped to false).
+      queryClient.invalidateQueries({ queryKey: ['project', projId] });
     }
   };
 
