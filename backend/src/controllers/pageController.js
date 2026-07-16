@@ -631,29 +631,12 @@ exports.createPage = async (req, res, next) => {
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
 
-    // Set initial progress and persist so clients can poll immediately
+    // Set initial progress
     page.generationProgress = 5;
     await page.save();
 
-    // Return early to client so UI can poll for progress while generation continues
-    const frontendUrlEarly = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
-    const previewUrlEarly = `${frontendUrlEarly}/preview?page=${page._id}&token=${page.previewToken}`;
-    res.status(202).json({
-      success: true,
-      message: 'Landing page generation started',
-      data: {
-        pageId: page._id,
-        _id: page._id,
-        title: page.title,
-        slug: page.slug,
-        generationProgress: page.generationProgress || 5,
-        previewUrl: previewUrlEarly
-      }
-    });
-    // Note: continue processing asynchronously after responding
     // Increment pageCount
     await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: 1 } });
-
 
     // 7. AI Content Generation (Allows templates to be filled by AI if a prompt exists)
     let aiResponse = { sections: [], seo: {} };
@@ -684,7 +667,7 @@ exports.createPage = async (req, res, next) => {
           ctaText: ctaText || project.websiteProfile?.content?.hero?.ctaText || 'Get Started',
           tone: 'Professional',
           aiPrompt: promptToUse,
-          logoUrl: project.websiteProfile?.identity?.logoUrl || project.logoUrl || '',
+          logoUrl: page.logoUrl || project.websiteProfile?.identity?.logoUrl || project.logoUrl || '',
           primaryColor: page.primaryColor || project.websiteProfile?.logoColors?.primary || project.websiteProfile?.colors?.primary || project.primaryColor,
           secondaryColor: page.secondaryColor || project.websiteProfile?.logoColors?.secondary || project.websiteProfile?.colors?.secondary || project.secondaryColor,
           accentColor: page.accentColor || project.websiteProfile?.colors?.accent || project.secondaryColor || '#6366f1',
@@ -723,21 +706,18 @@ exports.createPage = async (req, res, next) => {
           error: aiErr.message,
           pageId: page._id
         });
-        // Fallback: If AI fails on a purely AI-generated page, we should halt rather than giving a blank page.
-        // req.body.content might be an object like { fullHtml: '...', html: '' } from the frontend
-        const isContentEmpty = !initialContent || 
-                               (typeof initialContent === 'string' && initialContent.trim().length === 0) || 
-                               (typeof initialContent === 'object' && (!initialContent.html || initialContent.html.trim().length === 0));
-                               
-        if (isContentEmpty && (!template || template === 'blank' || template === 'AI Generated Layout')) {
-          try {
-            await Page.findByIdAndUpdate(page._id, { 
-              status: 'error',
-              errorMessage: `AI Generation Error: ${aiErr.message}`
-            }).exec();
-          } catch(e) {}
-          return; // Stop further processing for this page
-        }
+        
+        // Since AI generation failed, delete the page and decrement the count
+        try {
+          await Page.findByIdAndDelete(page._id).exec();
+          await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: -1 } }).exec();
+        } catch (e) {}
+
+        return res.status(400).json({
+          success: false,
+          message: `AI Generation Error: ${aiErr.message}`,
+          data: {}
+        });
       }
     }
 
@@ -928,8 +908,24 @@ exports.createPage = async (req, res, next) => {
     // 8.5 Sync Form Schema Immediately
     await syncFormSchema(page);
 
-    // 9. Generation finished (we already responded earlier). Just log.
+    // 9. Generation finished (we are now responding here synchronously).
     logger.info(`Landing page generation finished for ${page._id}`);
+
+    const frontendUrlFinal = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrlFinal = `${frontendUrlFinal}/preview?page=${page._id}&token=${page.previewToken}`;
+
+    return res.status(201).json({
+      success: true,
+      message: 'Landing page created successfully',
+      data: {
+        pageId: page._id,
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        generationProgress: 100,
+        previewUrl: previewUrlFinal
+      }
+    });
 
   } catch (error) {
     logger.error("Create Page Final Error:", {
