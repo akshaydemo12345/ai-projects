@@ -13,6 +13,8 @@ import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/te
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
 import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
+import { healthcare05Html, healthcare05Styles } from "../templates/healthcare/templates05";
+import { healthcare06Html, healthcare06Styles } from "../templates/healthcare/templates06";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -221,7 +223,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal") && !h3.closest(".booking-form-box") && !h3.closest("form") && !h3.closest(".contact-form-card") && !h3.closest(".quick-booking-card") && !h3.closest(".service-form")
       );
 
       serviceHeadings.forEach((heading, idx) => {
@@ -559,6 +561,22 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/healthcare/templates04/H1.png",
     gradient: "linear-gradient(135deg, #1750A8 0%, #e6f2ff 100%)",
     prompt: "A professional medical healthcare landing page featuring a topbar, hero section with badges, 6-grid services, meet our specialists, and an appointment form.",
+  },
+  {
+    id: "healthcare-05",
+    name: "Strategic Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates05/screenshot.png",
+    gradient: "linear-gradient(135deg, #FFC107 0%, #002147 100%)",
+    prompt: "A professional healthcare strategy consulting landing page featuring a topbar, hero section with video overview, complete consulting services grid, about section, and a booking form. CRITICAL: You MUST include the full <div class=\"booking-form-box\"> and all its input fields EXACTLY as they appear in the original template. DO NOT skip or summarize the form or the service cards.",
+  },
+  {
+    id: "healthcare-06",
+    name: "Enterprise Advisory",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates06/screenshot.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #10b981 100%)",
+    prompt: "A professional corporate advisory landing page with a hero section, features grid, about section with metrics, and projects showcase.",
   },
 
   {
@@ -1173,6 +1191,8 @@ const CreatePagePage = () => {
           case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
           case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
           case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
+          case "healthcare-05": enrichedContent = healthcare05Html; enrichedStyles = healthcare05Styles; break;
+          case "healthcare-06": enrichedContent = healthcare06Html; enrichedStyles = healthcare06Styles; break;
           case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
           case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
           case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
@@ -1656,13 +1676,13 @@ ${enrichedContent}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-gray-700">Describe your page *</label>
-                  {/* <button
+                  <button
                     onClick={handleGenerateMagicPrompt}
                     disabled={!pageName.trim() || isGeneratingPrompt}
                     className="flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg px-2.5 py-1 transition-all disabled:opacity-40"
                   >
                     {isGeneratingPrompt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} ✨ Magic Write
-                  </button> */}
+                  </button>
                 </div>
                 <textarea
                   value={aiPrompt}
@@ -1978,6 +1998,8 @@ ${enrichedContent}
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
                 case "healthcare-04": tpHtml = healthcare04Html; tpStyles = healthcare04Styles; break;
+                case "healthcare-05": tpHtml = healthcare05Html; tpStyles = healthcare05Styles; break;
+                case "healthcare-06": tpHtml = healthcare06Html; tpStyles = healthcare06Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
                 case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
                 case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
@@ -2059,7 +2081,7 @@ ${enrichedContent}
                         <\/script>
                         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
                         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-                        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+                        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
                         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
                         ${tpHtml.includes('swiper') ? `
                         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
