@@ -30,7 +30,9 @@ import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
 import { law04Html, law04Styles } from "../templates/law/templates04";
 import { law05Html, law05Styles } from "../templates/law/templates05";
+import { law06Html, law06Styles } from "../templates/law/templates06";
 import { useState, useEffect, useRef } from "react";
+import { INDUSTRY_PROMPTS, getIndustryKey } from "../lib/industryPrompts";
 
 // Templates removed as per user request
 
@@ -531,6 +533,14 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A professional full-service law firm template with dark aesthetics, gold accents, practice areas, attorney grid, and elegant contact form.",
   },
   {
+    id: "law-06",
+    name: "Ashcroft & Vale",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates06/screenshot.png",
+    gradient: "linear-gradient(135deg, #0c1426 0%, #C8A15A 100%)",
+    prompt: "A premium, modern, luxury landing page for a law firm with dark navy backgrounds, gold accents, elegant typography, and case request forms.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -665,14 +675,6 @@ const LANDING_TEMPLATES: any[] = [
 
 const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance", "Plumber"];
 
-const PREDEFINED_PROMPTS = [
-  { label: "Lawyer", prompt: "A professional landing page for a law firm specializing in corporate law and personal injury. Include a hero section with headline and CTA, a lead-capture form (name, phone, case type), attorney profiles, trust badges (bar certifications, awards), client testimonials, and a footer with contact details." },
-  { label: "Plumber", prompt: "A high-converting landing page for an emergency plumbing service. Include a hero section with a clear 'Call Now' CTA, services offered (leaks, clogs, installation, water heaters), a quote request form, customer reviews with ratings, and a footer with service area and contact details." },
-  { label: "Real Estate", prompt: "A modern real estate landing page for a luxury property agency. Include a hero section with featured property, a property listings/gallery section, a lead capture form for home valuations, agent profiles with contact details, testimonials, and a footer." },
-  { label: "Medical", prompt: "A clean, trustworthy landing page for a medical clinic. Include a hero section with appointment booking CTA, an online booking form, doctor profiles, list of medical services, accepted insurances section, patient testimonials, and a footer with clinic hours and location." },
-  { label: "Book Keeping", prompt: "A professional landing page for a bookkeeping and accounting service targeting small businesses. Include a hero section with free-consultation CTA, a lead capture form, services section (tax preparation, payroll, financial consulting), pricing packages, client testimonials, and a footer with contact details." }
-];
-
 // ─── websiteProfile-aware project data helpers ────────────────────────────────
 // Extracts data from the new `websiteProfile` shape first, falls back to legacy fields.
 const getProjectIndustry = (p: any): string =>
@@ -776,6 +778,8 @@ const CreatePagePage = () => {
   const [logoPreviewBgClass, setLogoPreviewBgClass] = useState<string>("border border-slate-700 bg-slate-950 dark:border-slate-500 dark:bg-slate-950");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [loaderError, setLoaderError] = useState<string | null>(null);
+  const [activeChip, setActiveChip] = useState<string>("");
+  const [activeTemplateIndex, setActiveTemplateIndex] = useState<number>(0);
   const [showDelayedLoader, setShowDelayedLoader] = useState(false);
   const loaderTimeoutRef = useRef<number | null>(null);
 
@@ -1127,26 +1131,23 @@ const CreatePagePage = () => {
   const handleGenerateMagicPrompt = async () => {
     if (!pageName.trim()) { toast.error("Enter a page name first."); return; }
     setIsGeneratingPrompt(true);
-    try {
-      const res = await aiApi.generateDescription({
-        pageName,
-        industry: getProjectIndustry(project),
-        projectDesc: project?.description,
-        currentPrompt: aiPrompt.trim() || undefined,
-        projectId: id,
-        uiPrimaryColor: primaryColor,
-        uiSecondaryColor: secondaryColor,
-      });
-      const suggestionText = typeof res.data.suggestion === 'object'
-        ? res.data.suggestion.suggestion
-        : res.data.suggestion;
-      setAiPrompt(suggestionText);
-      toast.success(aiPrompt.trim() ? "Prompt expanded!" : "Magic prompt generated!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed");
-    } finally {
+
+    // Simulate local UI behavior without backend call
+    setTimeout(() => {
+      const industryKey = getIndustryKey(getProjectIndustry(project));
+      const { chips, templates } = INDUSTRY_PROMPTS[industryKey];
+
+      const keyword = activeChip || chips[Math.floor(Math.random() * chips.length)];
+      const randomIdx = Math.floor(Math.random() * templates.length);
+      const randomTemplate = templates[randomIdx];
+
+      setAiPrompt(randomTemplate(keyword));
+      setActiveTemplateIndex(randomIdx);
+      setActiveChip(keyword);
+      setMethodError("");
       setIsGeneratingPrompt(false);
-    }
+      toast.success("Magic prompt generated!");
+    }, 600);
   };
 
   const handleCreate = async () => {
@@ -1187,6 +1188,7 @@ const CreatePagePage = () => {
           case "law-03": enrichedContent = law03Html; enrichedStyles = law03Styles; break;
           case "law-04": enrichedContent = law04Html; enrichedStyles = law04Styles; break;
           case "law-05": enrichedContent = law05Html; enrichedStyles = law05Styles; break;
+          case "law-06": enrichedContent = law06Html; enrichedStyles = law06Styles; break;
           case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
           case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
           case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
@@ -1686,7 +1688,11 @@ ${enrichedContent}
                 </div>
                 <textarea
                   value={aiPrompt}
-                  onChange={(e) => { setAiPrompt(e.target.value); if (e.target.value.trim()) setMethodError(""); }}
+                  onChange={(e) => {
+                    setAiPrompt(e.target.value);
+                    setActiveChip("");
+                    if (e.target.value.trim()) setMethodError("");
+                  }}
                   placeholder="e.g. PPC landing page for a roofing company in Delhi targeting homeowners who need emergency roof repairs. Include trust badges, before/after photos, a quote form and real testimonials..."
                   className={`w-full min-h-[150px] border rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none ${methodError && activeMethod === 'ai'
                     ? 'border-red-400 bg-red-50/20 focus:border-red-400 focus:ring-2 focus:ring-red-100'
@@ -1699,13 +1705,23 @@ ${enrichedContent}
                   </p>
                 )}
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {PREDEFINED_PROMPTS.map(p => (
+                  {INDUSTRY_PROMPTS[getIndustryKey(getProjectIndustry(project))].chips.map((chipLabel, idx) => (
                     <button
-                      key={p.label}
-                      onClick={() => { setAiPrompt(p.prompt); setMethodError(""); }}
-                      className="text-[10px] font-semibold text-gray-500 bg-white hover:bg-violet-50 hover:text-violet-600 px-3 py-1.5 rounded-full transition-all border border-gray-200 hover:border-violet-200"
+                      key={chipLabel}
+                      onClick={() => {
+                        const { templates } = INDUSTRY_PROMPTS[getIndustryKey(getProjectIndustry(project))];
+                        // Use the currently active template variant instead of picking a new random one
+                        const currentTemplate = templates[activeTemplateIndex] || templates[0];
+                        setAiPrompt(currentTemplate(chipLabel));
+                        setActiveChip(chipLabel);
+                        setMethodError("");
+                      }}
+                      className={`text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all border ${activeChip === chipLabel
+                          ? "bg-violet-600 text-white border-violet-600 shadow-md scale-105"
+                          : "text-gray-500 bg-white hover:bg-violet-50 hover:text-violet-600 border-gray-200 hover:border-violet-200"
+                        }`}
                     >
-                      {p.label}
+                      {chipLabel}
                     </button>
                   ))}
                 </div>
@@ -1994,6 +2010,7 @@ ${enrichedContent}
                 case "law-03": tpHtml = law03Html; tpStyles = law03Styles; break;
                 case "law-04": tpHtml = law04Html; tpStyles = law04Styles; break;
                 case "law-05": tpHtml = law05Html; tpStyles = law05Styles; break;
+                case "law-06": tpHtml = law06Html; tpStyles = law06Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
