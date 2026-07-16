@@ -237,6 +237,10 @@ exports.getPublicPageBySlug = async (req, res, next) => {
       { new: true }
     ).select('title slug content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo template domain status previewToken projectId views primaryColor secondaryColor accentColor logoUrl websiteUrl thankYouUrl mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript noIndex noFollow metaTitle metaDescription');
 
+    if (!page) {
+      return next(new AppError('Page not found', 404));
+    }
+
     let primaryColor = page.primaryColor;
     let secondaryColor = page.secondaryColor;
     let logoUrl = page.logoUrl;

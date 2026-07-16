@@ -462,127 +462,79 @@ const withRetry = async (fn, { retries = 3, baseDelayMs = 2000 } = {}) => {
 // ═══════════════════════════════════════════════════════════
 const MAX_OUTPUT_TOKENS = 8000;
 
-const callAI = async (userPrompt, logoUrl = '', systemPrompt = '') => {
+// ═══════════════════════════════════════════════════════════
+//  RAW AI CALL  — returns plain text (no fence-parsing, no
+//  post-processing). Used by the two-pass landing-page generator
+//  so we can stitch two separate completions together cleanly.
+//  Works with either provider via a shared `messages` array of
+//  { role: 'user' | 'assistant', content: string }.
+// ═══════════════════════════════════════════════════════════
+const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS, temperature = 0.9 }) => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
   const preferOpenAI = process.env.PREFER_OPENAI === 'true';
   if (!anthropicKey && !openaiKey) throw new Error('No AI API key configured');
 
-  const promptStr = typeof userPrompt === 'string' ? userPrompt : '';
-  const primaryHex = promptStr.match(/PRIMARY COLOR:\s*(#[0-9a-fA-F]{3,6})/)?.[1] || '#7c3aed';
-  const secondaryHex = promptStr.match(/SECONDARY COLOR:\s*(#[0-9a-fA-F]{3,6})/)?.[1] || '#6366f1';
-  const businessName = promptStr.match(/BUSINESS NAME:\s*(.+)/)?.[1]?.trim() || 'brand';
-
-  const finalSystemPrompt = systemPrompt
-    .replace(/\[PRIMARY_HEX\]/g, primaryHex)
-    .replace(/\[SECONDARY_HEX\]/g, secondaryHex)
-    .replace(/\{\{BUSINESS_NAME_KEYWORD\}\}/g, businessName.toLowerCase().replace(/\s+/g, '-'));
-
-  // Helper to call OpenAI (extracted so it can be used as primary or fallback)
-  const tryOpenAI = async () => {
+  const tryOpenAIRaw = async () => {
     if (!openaiKey) throw new Error('No OpenAI API key configured');
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    logger.info(`[AI] OpenAI: ${model}`);
     const openai = new OpenAI({ apiKey: openaiKey });
     const response = await openai.chat.completions.create({
       model,
-      messages: [
-        { role: 'system', content: finalSystemPrompt },
-        { role: 'user', content: Array.isArray(userPrompt) ? JSON.stringify(userPrompt) : userPrompt }
-      ],
-      max_tokens: MAX_OUTPUT_TOKENS,
-      temperature: 0.95
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      max_tokens: maxTokens,
+      temperature,
     });
-    const rawText = response.choices[0].message.content;
     const usage = response.usage;
     return {
-      ...processResult(rawText, logoUrl),
-      aiUsage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model }
+      text: response.choices[0].message.content,
+      finishReason: response.choices[0].finish_reason,
+      usage: { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, totalTokens: usage.total_tokens, cost: calculateCost(model, usage.prompt_tokens, usage.completion_tokens), model },
     };
   };
 
   if (openaiKey && preferOpenAI) {
-    try {
-      return await tryOpenAI();
-    } catch (err) {
-      logger.error(`[AI] OpenAI (preferred) failed: ${err.message}`);
-      // fall through to Claude below
-    }
+    try { return await tryOpenAIRaw(); }
+    catch (err) { logger.error(`[AI-RAW] OpenAI (preferred) failed: ${err.message}`); }
   }
 
   if (anthropicKey) {
     const anthropic = new Anthropic({ apiKey: anthropicKey });
-    let lastError = null;
     for (const model of CLAUDE_MODEL_CANDIDATES) {
       try {
-        logger.info(`[AI] Claude: ${model}`);
         const response = await anthropic.messages.create({
-          model, max_tokens: MAX_OUTPUT_TOKENS, temperature: 0.95,
-          system: [
-            {
-              type: "text",
-              text: finalSystemPrompt,
-              cache_control: { type: "ephemeral" }
-            }
-          ],
-          messages: Array.isArray(userPrompt) ? userPrompt : [{ role: 'user', content: userPrompt }],
-        }, {
-          headers: { "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15,prompt-caching-2024-07-31" }
-        });
+          model, max_tokens: maxTokens, temperature,
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+          messages,
+        }, { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' } });
         const usage = response.usage;
-        let result = {
-          ...processResult(response.content[0].text, logoUrl),
-          aiUsage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model }
+        return {
+          text: response.content[0].text,
+          finishReason: response.stop_reason,
+          usage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model },
         };
-
-        // Safety net: if the model got cut off mid-page (stop_reason max_tokens
-        // or missing closing tags/footer), ask it once to finish the document.
-        if (response.stop_reason === 'max_tokens' || isHtmlIncomplete(result.fullHtml)) {
-          logger.warn('[AI] Output looked truncated — requesting continuation');
-          try {
-            const continued = await anthropic.messages.create({
-              model, max_tokens: MAX_OUTPUT_TOKENS, temperature: 0.7,
-              system: finalSystemPrompt,
-              messages: [
-                { role: 'user', content: userPrompt },
-                { role: 'assistant', content: response.content[0].text },
-                { role: 'user', content: 'Your previous response was cut off before the page was finished. Continue EXACTLY where you left off (do not repeat any earlier HTML) and finish the remaining sections plus the footer, ending with </body></html>.' }
-              ],
-            });
-            const combinedRaw = response.content[0].text + '\n' + continued.content[0].text;
-            const cUsage = continued.usage;
-            result = {
-              ...processResult(combinedRaw, logoUrl),
-              aiUsage: {
-                promptTokens: usage.input_tokens + cUsage.input_tokens,
-                completionTokens: usage.output_tokens + cUsage.output_tokens,
-                totalTokens: usage.input_tokens + usage.output_tokens + cUsage.input_tokens + cUsage.output_tokens,
-                cost: calculateCost(model, usage.input_tokens, usage.output_tokens) + calculateCost(model, cUsage.input_tokens, cUsage.output_tokens),
-                model
-              }
-            };
-          } catch (contErr) {
-            logger.error(`[AI] Continuation attempt failed: ${contErr.message}`);
-          }
-        }
-
-        return result;
       } catch (err) {
-        lastError = err;
-        logger.error(`[AI] Claude failed (${model}): ${err.message}`);
+        logger.error(`[AI-RAW] Claude failed (${model}): ${err.message}`);
         if (!String(err.message).toLowerCase().match(/not_found|model:/)) break;
       }
     }
-    // Claude failed — fall back to OpenAI if available
     if (openaiKey) {
-      logger.warn('[AI] All Claude models failed, falling back to OpenAI');
-      return await tryOpenAI();
+      logger.warn('[AI-RAW] All Claude models failed, falling back to OpenAI');
+      return await tryOpenAIRaw();
     }
-    throw lastError || new Error('All AI providers failed');
+    throw new Error('All AI providers failed');
   }
 
-  return await tryOpenAI();
+  return await tryOpenAIRaw();
 };
+
+const mergeUsage = (a, b) => ({
+  promptTokens: a.promptTokens + b.promptTokens,
+  completionTokens: a.completionTokens + b.completionTokens,
+  totalTokens: a.totalTokens + b.totalTokens,
+  cost: a.cost + b.cost,
+  model: b.model,
+});
 
 // ═══════════════════════════════════════════════════════════
 //  TEXT AI CALL  (Haiku — JSON / short structured outputs)
@@ -731,13 +683,13 @@ Your goal is to build a clean, modern, ultra-premium, high-converting landing pa
 Every page you build looks like it was crafted by a senior designer at a top agency — not generated. It has a clear visual identity, professional copy, and real personality.
 
 CHAOS SEED: ${chaosToken}
-This seed shapes your creative decisions. Every generation must feel genuinely fresh and different from any other — you will be given a specific LAYOUT DNA and SECTION BLUEPRINT below; follow them exactly, do not default to a generic "safe" layout.
+This seed shapes your creative decisions. Every generation must feel genuinely fresh and different from any other — you will be given a specific LAYOUT RECIPE and SECTIONS LIST below; follow them exactly, do not default to a generic "safe" layout.
 
 🚫 FORBIDDEN BAD PRACTICES (NEVER USE):
 - NEVER USE plain text without proper padding or margins.
 - NEVER USE outdated, ugly color combinations. Always keep it harmonious.
 - NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
-- NEVER reuse the exact same hero/section pattern you might default to — actively follow the LAYOUT DNA given to you.
+- NEVER reuse the exact same hero/section pattern you might default to — actively follow the LAYOUT RECIPE given to you.
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
@@ -766,8 +718,8 @@ USE data-reveal ONLY on these high-impact elements:
 - This is critical so the user's selected brand colors are automatically applied!
 
 5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
-- Use proven, high-converting web layouts, but strictly following the SECTION BLUEPRINT you are given — do not invent your own section order.
-- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT DNA explicitly says otherwise (e.g. neo-brutalist = no border-radius).
+- Use proven, high-converting web layouts, but strictly following the SECTIONS LIST you are given — do not invent your own section order.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT RECIPE explicitly says otherwise (e.g. neo-brutalist = no border-radius).
 - YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=N\` (change N for every image, never reuse the same number twice on one page). Every page must have beautiful, large photos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -781,7 +733,7 @@ Nothing else. No links. No hamburger menu. Ultra-minimal premium.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  HERO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Follow the LAYOUT DNA hero description exactly.
+Follow the LAYOUT RECIPE hero description exactly.
 Contains: H1 headline + subparagraph + ONE CTA button (unless the form placement below says the form goes in-hero).
 Image backgrounds: use picsum.photos/1600/900?random=[N]
 Always add a proper dark overlay so white text is readable.
@@ -802,7 +754,7 @@ You MUST design at an "Awwwards-winning" luxury agency level. Generic designs ar
 - OVERLAPPING LAYOUTS: Break out of the box! Make images overlap into the section above/below using negative margins (\`-mt-16\`) or absolute positioning.
 - GRADIENT TEXT: Use gradient text for key emphasis in headlines: \`bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]\`.
 - SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_30px_60px_rgba(0,_0,_0,_0.08)]\`) and scale effects.
-- 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners (unless LAYOUT DNA says no border-radius).
+- 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners (unless LAYOUT RECIPE says no border-radius).
 - 🚨 NO WOW.JS: DO NOT use the \`wow.js\` library or \`wow\` classes. ONLY use AOS for scroll animations!
 - MICRO-INTERACTIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
 - SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` / \`data-aos="zoom-in"\` with different delays. Initialize AOS: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
@@ -814,42 +766,22 @@ You MUST design at an "Awwwards-winning" luxury agency level. Generic designs ar
 - Google Fonts: Dynamically load the selected font pairing stylesheet in <head>
 - Brand colors via CSS variables: --primary and --secondary ONLY
 - Fully responsive, complete, and stunning HTML output.
-- 📱 MOBILE FIRST: use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` everywhere so it never breaks on phones.
+- 📱 MOBILE FIRST: use \`grid-cols-1 md:grid-cols-2 lg:grid-cols-X\` or \`flex-col md:flex-row\` everywhere. If you use \`flex\` for rows, you MUST add \`flex-wrap\` so content never overflows on small screens! Never let elements break the viewport width.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📤 OUTPUT FORMAT & TOKEN LIMITS (CRITICAL):
+📤 OUTPUT FORMAT & TWO-PART GENERATION (CRITICAL):
 IMPORTANT: All generated text content MUST be in English only. Do not use Hindi or any other language.
-CRITICAL TOKEN LIMIT: You have a generous output budget of ${MAX_OUTPUT_TOKENS} tokens — use it well, but budget carefully across ALL sections so you never run out before the footer.
+🚨 THIS PAGE IS BUILT ACROSS TWO SEPARATE RESPONSES FROM YOU (PART 1 and PART 2), so it never runs out of budget before reaching the footer. Each user message below will tell you exactly which part you are writing and which sections belong ONLY to that part. Never write a section that isn't listed for the CURRENT part, and never write a section twice.
 - NEVER write massive inline SVG codes. ALWAYS use FontAwesome 6 classes (e.g., <i class="fa-solid fa-star"></i>).
 - NEVER use Tailwind's arbitrary URL classes for background images (e.g. \`bg-[url('...')]\`). You MUST use inline styles for background images (e.g. \`<div style="background-image: url('...')">\`). This is critical to prevent CSS parser crashes.
 - Keep your HTML DOM structure clean and avoid excessively deep nested divs.
-- Do NOT generate excessively long placeholder text. Keep text punchy and concise — 1-2 sentences per paragraph max — so the ENTIRE page including the footer fits comfortably within budget.
-- 🚨 PRIORITY ORDER IF RUNNING LOW ON BUDGET: it is far better to finish ALL sections with shorter copy than to write long copy and leave the page unfinished. ALWAYS reach the closing \`</footer></body></html>\`.
-You MUST output the ENTIRE HTML document perfectly, closing \`</body>\` and \`</html>\` at the end!
-Return ONLY a complete HTML file inside one code block.
-No explanation before or after. No comments outside the HTML. Start with the HTML tag directly.
-\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-...complete premium page, including scripts at the bottom...
-</html>
-\`\`\`
+- Do NOT generate excessively long placeholder text. Keep text punchy and concise — 1-2 sentences per paragraph max.
+- 🚨 OUTPUT RAW HTML ONLY. Do NOT wrap your response in markdown code fences (no \`\`\` anywhere). Do NOT add any explanation, commentary, or preamble — start your response directly with HTML markup (or, in Part 2, directly with the next section's opening tag).
+- Follow the per-part instructions given in each user message exactly — they tell you precisely where to start and stop.
 `;
 
 // ─── USER PROMPT ─────────────────────────────────────────────────────────────────
-const buildUserPrompt = (input, recipe, formHTML, placement) => {
-  // Random FAQ layout constraints to prevent repetitive white-box accordion designs
-  const faqNudges = [
-    'FAQ DESIGN: Use a strict 2-column grid. No backgrounds on the items, just clean subtle bottom borders.',
-    'FAQ DESIGN: Place the FAQs in a narrow, elegant card floating over a large background image.',
-    'FAQ DESIGN: Use a completely dark, immersive background for the FAQ section with glowing border highlights on the active item.',
-    'FAQ DESIGN: Put the FAQ title and a massive image on the left half of the screen, and the accordion items stacked tightly on the right half.',
-    'FAQ DESIGN: Use a stark minimalist approach. Huge bold typography for the questions, no boxes, just pure text and subtle icons.'
-  ];
-  const randomFaqNudge = faqNudges[Math.floor(Math.random() * faqNudges.length)];
-
-  const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
-
+const buildBrandingLines = (input, recipe) => {
   const lines = [
     `BUSINESS NAME: ${input.businessName}`,
     `INDUSTRY: ${input.industry}`,
@@ -916,9 +848,8 @@ const buildUserPrompt = (input, recipe, formHTML, placement) => {
   }
 
   // ── PROCEDURAL LAYOUT RECIPE — freshly randomized every single call.
-  //    This is the main creative-direction lever. It combines 5 independent
-  //    style axes plus a freshly shuffled section order, so the odds of two
-  //    generations looking alike are astronomically low. ──
+  //    This is the main creative-direction lever, and it is repeated in
+  //    BOTH phase prompts so Part 2 stays visually consistent with Part 1. ──
   lines.push(
     `\n━━━ LAYOUT RECIPE FOR THIS PAGE (MANDATORY — FOLLOW EXACTLY, DO NOT SUBSTITUTE YOUR OWN DEFAULT) ━━━`,
     `COLOR MODE: ${recipe.colorMode.rule}`,
@@ -929,7 +860,22 @@ const buildUserPrompt = (input, recipe, formHTML, placement) => {
     `🚨 This exact combination was randomly generated fresh for this request. Follow it precisely — it is what makes this page visually distinct from any other page you've ever generated. Do not fall back on a "safe" generic layout.`
   );
 
-  lines.push(`🧩 ${randomFaqNudge}`);
+  return lines;
+};
+
+// ─── PHASE 1 PROMPT: <head> + navbar + hero + first half of sections ──────────────
+const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count) => {
+  const faqNudges = [
+    'FAQ DESIGN: Use a strict 2-column grid. No backgrounds on the items, just clean subtle bottom borders.',
+    'FAQ DESIGN: Place the FAQs in a narrow, elegant card floating over a large background image.',
+    'FAQ DESIGN: Use a completely dark, immersive background for the FAQ section with glowing border highlights on the active item.',
+    'FAQ DESIGN: Put the FAQ title and a massive image on the left half of the screen, and the accordion items stacked tightly on the right half.',
+    'FAQ DESIGN: Use a stark minimalist approach. Huge bold typography for the questions, no boxes, just pure text and subtle icons.'
+  ];
+  const randomFaqNudge = faqNudges[Math.floor(Math.random() * faqNudges.length)];
+
+  const lines = buildBrandingLines(input, recipe);
+  lines.push(`🧩 ${randomFaqNudge} (only relevant if a FAQ section appears in THIS part's list below)`);
   lines.push(`CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`);
 
   if (input.websiteContent) {
@@ -937,33 +883,64 @@ const buildUserPrompt = (input, recipe, formHTML, placement) => {
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
-  const orderedSections = [
+  const listedSections = [
     'Section 1 (Hero): follow the HERO LAYOUT above',
-    ...recipe.middleSections.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
-    `Section ${recipe.middleSections.length + 2} (Contact/Form): placement specified below`,
+    ...sectionsPart1.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
   ];
 
-  lines.push(`\n━━━ MANDATORY SECTION ORDER (YOU MUST FOLLOW THIS EXACT SEQUENCE, ${orderedSections.length} SECTIONS + FOOTER) ━━━`);
-  lines.push(orderedSections.join('\n'));
+  lines.push(`\n━━━ SECTIONS FOR THIS PART (WRITE ONLY THESE, IN THIS ORDER) ━━━`);
+  lines.push(listedSections.join('\n'));
 
-  lines.push(`\n━━━ CONTACT FORM PLACEMENT ━━━`);
-  lines.push(placementLabel);
+  lines.push(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THIS IS PART 1 OF 2 — FOLLOW THESE RULES EXACTLY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Output RAW HTML ONLY. Do NOT wrap your answer in markdown code fences (no \`\`\`). Do NOT add any explanation, comments, or preamble outside the HTML.
+2. Write, IN ORDER: <!DOCTYPE html>, <html>, a complete <head> (Tailwind CDN, FontAwesome, Google Fonts, AOS CSS, <title>, CSS variables for --primary/--secondary), the opening <body>, the sticky navbar (logo left + one CTA button right, nothing else), then EXACTLY the sections listed above in "SECTIONS FOR THIS PART" — nothing more.
+3. Do NOT write the contact form. Do NOT write a footer. Do NOT write closing </body> or </html> tags. Do NOT write the AOS init script.
+4. Simply STOP writing immediately after the closing tag of the last section listed above. There will be a PART 2 that continues this exact document — a total of ${sectionsPart1.length + sectionsPart2Count} content sections plus a contact form plus a footer are still to come, but NOT in this response.
+5. 📱 Mobile-first responsive classes throughout (grid-cols-1 md:grid-cols-2 lg:grid-cols-X, flex-col md:flex-row).
+6. Name your visual concept in an HTML comment right after <body>: <!-- RECIPE: ${recipe.colorMode.id} / ${recipe.cardStyle.slice(0, 30)}... -->
+7. Write REAL, industry-specific copy — not generic filler text. Keep paragraphs to 1-2 punchy sentences.
+`);
 
-  lines.push(`\n━━━ CONTACT FORM HTML (insert this VERBATIM inside the correct section) ━━━`);
+  return lines.join('\n');
+};
+
+// ─── PHASE 2 PROMPT: remaining sections + contact form + footer + closing tags ────
+const buildUserPromptPart2 = (input, recipe, sectionsPart2, formHTML, placement, sectionsPart1Count) => {
+  const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
+
+  const lines = [
+    `Continue the SAME landing page from PART 1 above. Do NOT repeat any earlier HTML (the <head>, navbar, hero, or earlier sections are already written — you have them as context). Continue writing EXACTLY where PART 1 left off.`,
+    `\n━━━ LAYOUT RECIPE REMINDER (stay consistent with PART 1) ━━━`,
+    `COLOR MODE: ${recipe.colorMode.rule}`,
+    `CARD / CONTAINER STYLE: use ${recipe.cardStyle} for every card, feature block, and testimonial — same as PART 1.`,
+    `DECORATIVE ACCENT: ${recipe.accentMotif}`,
+    `TYPOGRAPHY PAIRING: ${recipe.typography}`,
+  ];
+
+  const listedSections = sectionsPart2.map((s, i) => `Section ${sectionsPart1Count + i + 2} (${s.split(':')[0]}): ${s}`);
+  const formSectionNumber = sectionsPart1Count + sectionsPart2.length + 2;
+  listedSections.push(`Section ${formSectionNumber} (Contact/Form): ${placementLabel}`);
+
+  lines.push(`\n━━━ SECTIONS FOR THIS PART (WRITE ONLY THESE, IN THIS ORDER, THEN THE FOOTER) ━━━`);
+  lines.push(listedSections.join('\n'));
+
+  lines.push(`\n━━━ CONTACT FORM HTML (insert this VERBATIM inside the Contact/Form section) ━━━`);
   lines.push(formHTML);
 
   lines.push(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NOW BUILD — FOLLOW THESE FINAL RULES:
+THIS IS PART 2 OF 2 (FINAL) — FOLLOW THESE RULES EXACTLY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. 📱 STRICT MOBILE RESPONSIVENESS (CRITICAL): Your design MUST look perfect on mobile devices.
-2. Your hero MUST follow the HERO LAYOUT + COLOR MODE above exactly. Make it look extremely premium and trustworthy.
-3. Name your visual concept in an HTML comment at the top, e.g. <!-- RECIPE: ${recipe.colorMode.id} / ${recipe.cardStyle.slice(0, 30)}... -->
-4. Write REAL, industry-specific copy — not generic filler text.
-5. MANDATORY LEAD FORM (NO POPUPS): Include the given Lead Capture <form> block directly visible on the page, in the placement specified above. DO NOT hide it in a modal or popup. It must be INLINE and always visible. Style the form's outer wrapper card to match the CARD / CONTAINER STYLE above.
-6. 🔥 STRICT SECTION-ORDER COMPLIANCE: You MUST GENERATE AT LEAST ${orderedSections.length} SECTIONS (never fewer than 6) in the exact order listed in "MANDATORY SECTION ORDER" above. Do NOT invent your own section order or skip any listed section.
-7. ⚠️ COMPLETE THE FULL PAGE: Write concise, punchy copy so the entire document — every section plus the footer — fits and finishes within the token budget. An unfinished page is a failure even if the sections you did write look good.
-8. The page MUST end with a beautiful custom <footer> (logo, contact info, copyright), followed by the closing </html> tag. The footer must also use the same COLOR MODE and CARD STYLE as the rest of the page. Do NOT stop writing before finishing the footer and closing all HTML tags!
+1. Output RAW HTML ONLY. Do NOT wrap your answer in markdown code fences. Do NOT add any explanation, comments, or preamble.
+2. Do NOT rewrite the <head>, navbar, hero, or any section from PART 1. Start directly with the next section.
+3. MANDATORY LEAD FORM (NO POPUPS): Include the given Contact Form HTML VERBATIM, directly visible and INLINE (never in a modal/popup), styled to match the CARD / CONTAINER STYLE above. This is the ONLY form on the page.
+4. After all sections and the form, write a complete, beautiful custom <footer> tag: logo image \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, contact info line (phone & email), simple social icons, and a copyright line. If website content earlier contained an exact copyright string, use it verbatim with no year added; otherwise write "© BrandName. All rights reserved." with no year.
+5. After the footer, include the AOS init script: \`<script>AOS.init({duration: 1000, once: true});</script>\`
+6. Then close \`</body>\` and \`</html>\`. This MUST be the very last thing you write — the document must be 100% complete and valid.
+7. 📱 Mobile-first responsive classes throughout. Keep copy punchy (1-2 sentences per paragraph) so you comfortably finish within budget — an unfinished document is a failure even if it looks good so far.
 `);
 
   return lines.join('\n');
@@ -984,14 +961,20 @@ const generateLandingPageContent = async (input) => {
   // every single call. No fixed list to exhaust, so pages don't repeat.
   const recipe = buildLayoutRecipe();
 
+  // Split the 5 shuffled middle sections into two non-overlapping halves —
+  // this is what guarantees no section ever repeats: each section appears
+  // in exactly ONE of the two parts, never both.
+  const sectionsPart1 = recipe.middleSections.slice(0, 3);
+  const sectionsPart2 = recipe.middleSections.slice(3);
+
   // Resolve form from DB / scrape / fallback
   const { formHTML, placement, fieldCount, source } = resolveForm(input);
 
-  logger.info(`[AI] Generate | Business:${input.businessName} | ColorMode:${recipe.colorMode.id} | Sections:${recipe.middleSections.length + 2} | Form:${source}(${fieldCount} fields) | Placement:${placement} | Token:${chaosToken}`);
+  logger.info(`[AI] Generate | Business:${input.businessName} | ColorMode:${recipe.colorMode.id} | Sections:${recipe.middleSections.length + 2} (2-pass) | Form:${source}(${fieldCount} fields) | Placement:${placement} | Token:${chaosToken}`);
 
   const systemPrompt = buildSystemPrompt(chaosToken);
-  let userPrompt = buildUserPrompt(input, recipe, formHTML, placement);
 
+  let userPromptPart1 = buildUserPromptPart1(input, recipe, sectionsPart1, sectionsPart2.length);
   if (input.templateHtml) {
     let prevHtml = '';
     if (typeof input.templateHtml === 'string') {
@@ -999,10 +982,54 @@ const generateLandingPageContent = async (input) => {
     } else if (typeof input.templateHtml === 'object') {
       prevHtml = input.templateHtml.fullHtml || input.templateHtml.html || JSON.stringify(input.templateHtml);
     }
-    userPrompt += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different, matching the NEW recipe above):\n${prevHtml.substring(0, 2000)}`;
+    userPromptPart1 += `\n\n⚠️ PREVIOUS PAGE EXISTS (do NOT reuse its layout — invent something completely different, matching the NEW recipe above):\n${prevHtml.substring(0, 2000)}`;
   }
 
-  const aiResult = await callAI(userPrompt, input.logoUrl, systemPrompt);
+  // ── PASS 1: <head> + navbar + hero + first 3 sections. Fresh full budget. ──
+  const pass1 = await callAIRaw({ messages: [{ role: 'user', content: userPromptPart1 }], systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.95 });
+  let rawPart1 = pass1.text.replace(/```html/gi, '').replace(/```/g, '').trim();
+
+  const userPromptPart2 = buildUserPromptPart2(input, recipe, sectionsPart2, formHTML, placement, sectionsPart1.length);
+
+  // ── PASS 2: remaining sections + form + footer + closing tags. Fresh full budget. ──
+  let pass2 = await callAIRaw({
+    messages: [
+      { role: 'user', content: userPromptPart1 },
+      { role: 'assistant', content: rawPart1 },
+      { role: 'user', content: userPromptPart2 },
+    ],
+    systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.85,
+  });
+  let rawPart2 = pass2.text.replace(/```html/gi, '').replace(/```/g, '').trim();
+
+  // Safety net: if PASS 2 itself still got cut off before reaching the
+  // footer (rare, since it only has to write ~3 sections + form + footer),
+  // ask once more to finish, exactly like before but now on a much smaller
+  // remaining chunk so it reliably completes.
+  let combinedRaw = rawPart1 + '\n' + rawPart2;
+  if (pass2.finishReason === 'max_tokens' || isHtmlIncomplete(combinedRaw)) {
+    logger.warn('[AI] Part 2 still looked truncated — requesting one more continuation');
+    try {
+      const pass3 = await callAIRaw({
+        messages: [
+          { role: 'user', content: userPromptPart1 },
+          { role: 'assistant', content: rawPart1 },
+          { role: 'user', content: userPromptPart2 },
+          { role: 'assistant', content: rawPart2 },
+          { role: 'user', content: 'You were cut off before finishing. Continue EXACTLY where you left off (do not repeat any earlier HTML) and finish the remaining sections, the footer, the AOS init script, and close </body></html>. Output raw HTML only, no markdown fences.' },
+        ],
+        systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.7,
+      });
+      const rawPart3 = pass3.text.replace(/```html/gi, '').replace(/```/g, '').trim();
+      combinedRaw = rawPart1 + '\n' + rawPart2 + '\n' + rawPart3;
+      pass2.usage = mergeUsage(pass2.usage, pass3.usage);
+    } catch (contErr) {
+      logger.error(`[AI] Final continuation attempt failed: ${contErr.message}`);
+    }
+  }
+
+  const totalUsage = mergeUsage(pass1.usage, pass2.usage);
+  const aiResult = { ...processResult(combinedRaw, input.logoUrl), aiUsage: totalUsage };
 
   // INJECT ROBUST FALLBACK SCRIPT FOR ACCORDIONS, FORMS, AND AOS
   // This guarantees interactivity even if the AI forgets to generate the script

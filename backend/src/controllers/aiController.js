@@ -29,6 +29,7 @@ const generateSchema = z.object({
   pageId: z.string().optional(),
   services: z.array(z.string()).optional(),
   websiteContent: z.string().optional(),
+  logoUrl: z.string().optional(),
 });
 
 const analyzeWebsiteSchema = z.object({
