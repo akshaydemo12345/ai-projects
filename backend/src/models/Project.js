@@ -27,6 +27,12 @@ const projectSchema = new mongoose.Schema({
     unique: true,
   },
   isVerified: {
+    // Aggregate flag: true if EITHER the WordPress Plugin or the Script
+    // integration is verified. Kept for backward compatibility with code
+    // that only cares "is some integration live" (e.g. publish gating).
+    // Do not use this to render per-method status in the UI — use
+    // isPluginVerified / isScriptVerified instead, since a project can have
+    // one method verified and the other still pending.
     type: Boolean,
     default: false,
   },
@@ -36,6 +42,27 @@ const projectSchema = new mongoose.Schema({
     default: 'pending',
   },
   verifiedAt: {
+    type: Date,
+    default: null,
+  },
+  isPluginVerified: {
+    // Set exclusively by the WordPress Plugin verification flow
+    // (POST /plugin/verify). Verifying the Script must never change this.
+    type: Boolean,
+    default: false,
+  },
+  pluginVerifiedAt: {
+    type: Date,
+    default: null,
+  },
+  isScriptVerified: {
+    // Set exclusively by the Script verification flow
+    // (POST /projects/verify-script). Verifying the Plugin must never
+    // change this.
+    type: Boolean,
+    default: false,
+  },
+  scriptVerifiedAt: {
     type: Date,
     default: null,
   },

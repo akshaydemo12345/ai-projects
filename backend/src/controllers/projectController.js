@@ -181,7 +181,7 @@ exports.listProjects = async (req, res, next) => {
     // Only fields actually used by the frontend list views (ProjectsPage, LeadsPage sidebar)
     // Excludes: branding, scrapedData, themeSystem, business, colors, scrapeMeta, emailNotifications, etc.
     const projects = await Project.find({ userId: req.user._id })
-      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken isVerified logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt websiteProfile.identity websiteProfile.industry websiteProfile.logoColors websiteProfile.colors websiteProfile.extraction')
+      .select('_id name websiteUrl url category industry subIndustry preSlug apiToken isVerified isPluginVerified isScriptVerified logoUrl primaryColor secondaryColor pageCount leadCount publishedPageCount createdAt websiteProfile.identity websiteProfile.industry websiteProfile.logoColors websiteProfile.colors websiteProfile.extraction')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit)
@@ -250,7 +250,7 @@ exports.getProject = async (req, res, next) => {
     }
 
     const project = await Project.findOne({ _id: id, userId: req.user._id })
-      .select('_id name description preSlug apiToken isVerified pageCount leadCount publishedPageCount createdAt updatedAt websiteProfile')
+      .select('_id name description preSlug apiToken isVerified isPluginVerified isScriptVerified pageCount leadCount publishedPageCount createdAt updatedAt websiteProfile')
       .lean();
 
     if (!project) {
@@ -688,16 +688,27 @@ exports.verifyScript = async (req, res) => {
     // 3️⃣ PERSIST VERIFICATION STATUS
     // ─────────────────────────────
     // Keep the DB record in sync with reality in BOTH directions: mark
-    // isVerified true when found, but also flip it back to false when a
-    // previously-verified project's script is no longer detected. Without
-    // this, isVerified could only ever go true → stays true forever, even
-    // after the site owner removes the script.
+    // isScriptVerified true when found, but also flip it back to false when
+    // a previously-verified project's script is no longer detected. Without
+    // this, isScriptVerified could only ever go true → stays true forever,
+    // even after the site owner removes the script.
+    //
+    // Crucially, this must never write to isPluginVerified — Script and
+    // Plugin are independent integration methods, and verifying one must
+    // not flip the other's status. The shared `isVerified` flag is kept only
+    // as an aggregate ("is at least one method verified") for code that
+    // doesn't care which method — it is derived, never the source of truth.
+    const existingProject = await Project.findOne({ apiToken: token, isDeleted: { $ne: true } }).select('isPluginVerified');
+    const aggregateVerified = verified || !!existingProject?.isPluginVerified;
+
     const updatedProject = await Project.findOneAndUpdate(
       { apiToken: token, isDeleted: { $ne: true } },
       {
-        isVerified: verified,
-        verificationStatus: verified ? 'verified' : 'failed',
-        verifiedAt: verified ? new Date() : null
+        isScriptVerified: verified,
+        scriptVerifiedAt: verified ? new Date() : null,
+        isVerified: aggregateVerified,
+        verificationStatus: aggregateVerified ? 'active' : 'failed',
+        verifiedAt: aggregateVerified ? new Date() : null
       },
       { new: true }
     );
@@ -715,7 +726,11 @@ exports.verifyScript = async (req, res) => {
             _id: updatedProject._id,
             isVerified: updatedProject.isVerified,
             verificationStatus: updatedProject.verificationStatus,
-            verifiedAt: updatedProject.verifiedAt
+            verifiedAt: updatedProject.verifiedAt,
+            isPluginVerified: updatedProject.isPluginVerified,
+            pluginVerifiedAt: updatedProject.pluginVerifiedAt,
+            isScriptVerified: updatedProject.isScriptVerified,
+            scriptVerifiedAt: updatedProject.scriptVerifiedAt
           }
         : null
     });
