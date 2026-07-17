@@ -211,8 +211,8 @@ p, h1, h2, h3, h4, h5 { margin: 0; }
 .bg-brand-blue\/20 { background: rgba(PRIMARY_RGB_PLACEHOLDER,.2); }
 .bg-brand-orange { background: var(--secondary); }
 .bg-orange-500 { background: SECONDARY_COLOR_PLACEHOLDER; }
-.bg-indigo-500 { background: #6366f1; }
-.bg-emerald-500 { background: #10b981; }
+.bg-indigo-500 { background: var(--primary); }
+.bg-emerald-500 { background: var(--secondary); }
 
 .border-white { border-color: #fff; }
 .border-white\/10 { border-color: rgba(255,255,255,.1); }
@@ -258,7 +258,7 @@ p, h1, h2, h3, h4, h5 { margin: 0; }
 .group:hover.group-hover\:bg-brand-blue\/10,
 .group:hover .group-hover\:bg-brand-blue\/10 { background: rgba(PRIMARY_RGB_PLACEHOLDER,.1); }
 .hover\:text-white:hover { color: #fff; }
-.hover\:bg-orange-600:hover { background: #ea580c; }
+.hover\:bg-orange-600:hover { background: var(--secondary); }
 .hover\:bg-brand-blue:hover { background: var(--primary); }
 .hover\:bg-brand-blue\/90:hover { background: rgba(PRIMARY_RGB_PLACEHOLDER,.9); }
 .hover\:bg-white:hover { background: #fff; }
@@ -317,9 +317,7 @@ input:focus, select:focus {
 `;
 
 export const plumber03Html = `
-<link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -328,7 +326,7 @@ export const plumber03Html = `
     data-purpose="MainHeader">
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       <a class="logo flex items-center gap-2 text-white text-2xl font-bold tracking-tight" href="#">
-        LOGO_PLACEHOLDER
+        <img src="LOGO_URL_PLACEHOLDER" alt="Logo" class="h-8" />
       </a>
 
       <a data-editable="true" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-lg hover:shadow-orange-500/20"
@@ -507,8 +505,7 @@ export const plumber03Html = `
       <div class="relative">
         <!-- Image Mockups based on visual -->
         <div class="rounded-3xl overflow-hidden shadow-2xl">
-          <img data-editable-img="true" alt="Plumber at work" class="w-full"
-            src="/assets/templates/plumber/templates02/plumber.png" />
+          <img data-editable-img="true" src="/assets/templates/plumber/templates02/plumber.png" alt="Plumber at work" class="w-full" />
         </div>
       </div>
     </div>
@@ -697,8 +694,7 @@ export const plumber03Html = `
             were here in 20 minutes, stopped the leak instantly, and had everything fixed before sunrise. Incredibly
             professional."</p>
           <div class="flex items-center gap-4">
-            <img data-editable-img="true" alt="Sarah Jenkins" class="w-12 h-12 rounded-full object-cover"
-              src="/assets/templates/plumber/templates02/client-01.png" />
+            <img data-editable-img="true" src="/assets/templates/plumber/templates02/client-01.png" alt="Sarah Jenkins" class="w-12 h-12 rounded-full object-cover" />
             <div>
               <p data-editable="true" class="font-bold">Sarah Jenkins</p>
               <p data-editable="true" class="text-xs text-slate-400">Homeowner, Westside</p>
@@ -710,8 +706,7 @@ export const plumber03Html = `
             FlowTech is the only one I'll call from now on. Transparent pricing, no mess left behind, and the tech
             explained everything clearly."</p>
           <div class="flex items-center gap-4">
-            <img data-editable-img="true" alt="Michael Robertson" class="w-12 h-12 rounded-full object-cover"
-              src="/assets/templates/plumber/templates02/client-02.png" />
+            <img data-editable-img="true" src="/assets/templates/plumber/templates02/client-02.png" alt="Michael Robertson" class="w-12 h-12 rounded-full object-cover" />
             <div>
               <p data-editable="true" class="font-bold">Michael Robertson</p>
               <p data-editable="true" class="text-xs text-slate-400">Property Manager</p>
