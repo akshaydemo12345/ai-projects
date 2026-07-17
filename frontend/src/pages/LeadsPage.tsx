@@ -123,6 +123,10 @@ const LeadsPage = () => {
         sortBy
       }),
     placeholderData: keepPreviousData,
+    // 🔄 Auto-refresh so newly submitted leads show up without a manual page refresh.
+    refetchInterval: 15000,        // poll every 15s
+    refetchIntervalInBackground: false, // don't poll while tab is in background
+    refetchOnWindowFocus: true,    // instantly refresh when user tabs back in
   });
 
   // Reset to first page when any filter changes
