@@ -1072,19 +1072,84 @@ const CreatePagePage = () => {
     setPreviewTemplate(tpl);
   };
 
+  // Poll GET .../pages/:id/status until generation finishes (or fails), updating
+  // the loader's progress bar in real time. Started after the initial create
+  // call returns (which now responds immediately — see mutationFn below).
+  const pollGenerationStatus = (pageId: string, initialPage: any) => {
+    if (pollRef.current) window.clearInterval(pollRef.current);
+
+    const POLL_INTERVAL_MS = 2000;
+    // Generous ceiling so a genuinely slow generation isn't cut off client-side;
+    // this only guards against a runaway/stuck poll, not normal completion.
+    const POLL_TIMEOUT_MS = 10 * 60 * 1000;
+    const startedAt = Date.now();
+
+    pollRef.current = window.setInterval(async () => {
+      try {
+        const statusRes = await pagesApi.getStatus(id!, pageId);
+        if (typeof statusRes?.generationProgress === "number") {
+          setApiProgress(statusRes.generationProgress);
+        }
+
+        if (statusRes?.status === "draft") {
+          window.clearInterval(pollRef.current!);
+          pollRef.current = null;
+          queryClient.invalidateQueries({ queryKey: ["project", id] });
+          setCreatedPage({ ...initialPage, ...statusRes, _id: pageId });
+          setApiProgress(100);
+          setIsComplete(true);
+          return;
+        }
+
+        if (statusRes?.status === "failed") {
+          window.clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setLoaderError(statusRes.generationError || "Page generation failed. Please try again.");
+          return;
+        }
+
+        if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+          window.clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setLoaderError(
+            "This is taking much longer than expected. Your page may still finish generating — check My Pages in a few minutes."
+          );
+        }
+      } catch (err: any) {
+        // Transient network errors shouldn't kill the poll; only bail on repeated failure
+        console.warn("Status poll error:", err);
+      }
+    }, POLL_INTERVAL_MS);
+  };
+
   const createPageMutation = useMutation({
-    mutationFn: async (page: Partial<LandingPage>) => {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 180000)
-      );
-      return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
-    },
-    onSuccess: (newPage) => {
+    mutationFn: (page: Partial<LandingPage>) => pagesApi.create(id!, page),
+    onSuccess: (newPage: any) => {
+      const pageId = newPage?.pageId || newPage?._id;
+      if (!pageId) {
+        toast.error("Page creation failed unexpectedly.");
+        setShowDelayedLoader(false);
+        setShowLoader(false);
+        return;
+      }
+
+      if (typeof newPage?.generationProgress === "number") {
+        setApiProgress(newPage.generationProgress);
+      }
+
+      // Page was created with status "generating" — the AI content generation
+      // itself finishes asynchronously on the server. Poll for completion
+      // instead of waiting on the (now-fast) create request.
+      if (newPage.status === "generating") {
+        pollGenerationStatus(pageId, newPage);
+        return;
+      }
+
+      // Fallback: server already returned a finished page (e.g. non-AI path)
       queryClient.invalidateQueries({ queryKey: ["project", id] });
       setCreatedPage(newPage);
       setApiProgress(100);
       setIsComplete(true);
-      // ModernLoader will see isComplete=true and finish its animation, then call handleLoaderFinished
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
@@ -1441,8 +1506,13 @@ ${enrichedContent}
     <ModernLoader
       isComplete={isComplete}
       onFinished={handleLoaderFinished}
+      externalProgress={apiProgress}
       error={loaderError}
       onDismissError={() => {
+        if (pollRef.current) {
+          window.clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
         setShowLoader(false);
         setShowDelayedLoader(false);
         setIsComplete(false);

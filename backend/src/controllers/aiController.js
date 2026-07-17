@@ -9,6 +9,12 @@ const { scrapeWebsiteStructure, buildWebsiteProfile, SiteBlockedError } = requir
 const Page = require('../models/Page');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const GenerationJob = require('../models/GenerationJob');
+
+// Safety net only — normal generation finishes well under this. Only catches
+// a genuinely abandoned job (e.g. a server restart mid-generation) so the
+// client's poll gets a clean "failed" instead of spinning forever.
+const STALE_GENERATION_THRESHOLD_MS = 8 * 60 * 1000; // 8 minutes
 
 // ─── Zod Validation Schema ─────────────────────────────────────────────────────
 const generateSchema = z.object({
@@ -91,21 +97,58 @@ exports.generateContent = async (req, res, next) => {
       }
     }
 
-    // No pageId: generate synchronously so frontend can consume real AI HTML/CSS immediately.
+    // No pageId: nothing to persist yet, so there's no Page document to poll
+    // against via the usual status endpoint. Multi-pass generation (up to 3
+    // sequential ~8000-token completions) can comfortably exceed client/proxy/
+    // gateway timeouts, so — same reasoning as the pageId branch below —
+    // respond immediately with a job id and finish generation in the
+    // background. The client polls GET /ai/generate/status/:jobId until the
+    // job is "completed" (result) or "failed" (error).
     if (!input.pageId) {
-      const aiContent = await generateLandingPageContent({
-        ...input
+      const job = await GenerationJob.create({
+        userId: req.user._id,
+        status: 'generating',
+        progress: 5,
       });
-      user.credits = Math.max(0, user.credits - 1);
-      await user.save({ validateBeforeSave: false });
 
-      return res.status(200).json({
+      res.status(202).json({
         status: 'success',
+        message: 'AI generation started in the background.',
         data: {
-          content: aiContent,
-          creditsRemaining: user.credits,
+          jobId: job._id,
+          status: job.status,
+          progress: job.progress,
         },
       });
+
+      // ─── Background Job ─────────────────────────────────────────────────
+      setImmediate(async () => {
+        try {
+          const aiContent = await generateLandingPageContent({ ...input });
+
+          if (!aiContent || !aiContent.fullHtml || aiContent.fullHtml.trim().length < 50) {
+            throw new Error('AI generation returned no usable HTML. Please try again.');
+          }
+
+          user.credits = Math.max(0, user.credits - 1);
+          await user.save({ validateBeforeSave: false });
+
+          await GenerationJob.findByIdAndUpdate(job._id, {
+            status: 'completed',
+            progress: 100,
+            result: aiContent,
+            creditsRemaining: user.credits,
+          });
+        } catch (err) {
+          console.error('Background standalone AI generation failed:', err.message);
+          await GenerationJob.findByIdAndUpdate(job._id, {
+            status: 'failed',
+            error: err.message || 'AI generation failed. Please try again.',
+          }).catch(() => {});
+        }
+      });
+
+      return;
     }
 
     // 4. Update page status to 'generating' early if pageId provided
@@ -202,6 +245,47 @@ exports.generateContent = async (req, res, next) => {
       }
     });
 
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route   GET /ai/generate/status/:jobId
+ * @desc    Poll AI generation progress/status for a standalone job created
+ *          via POST /ai/generate (no pageId). Mirrors the pattern used for
+ *          page-linked generation (GET /projects/:id/pages/:id/status).
+ * @access  Private
+ */
+exports.getGenerationJobStatus = async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    let job = await GenerationJob.findOne({ _id: jobId, userId: req.user._id }).lean();
+
+    if (!job) {
+      return res.status(404).json({ status: 'fail', message: 'Generation job not found' });
+    }
+
+    if (job.status === 'generating') {
+      const stale = job.createdAt && (Date.now() - new Date(job.createdAt).getTime() > STALE_GENERATION_THRESHOLD_MS);
+      if (stale) {
+        const failMessage = 'Generation is taking unusually long and appears to have stalled (e.g. a server restart). Please try again.';
+        await GenerationJob.findByIdAndUpdate(job._id, { status: 'failed', error: failMessage }).catch(() => {});
+        job = { ...job, status: 'failed', error: failMessage };
+      }
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        jobId: job._id,
+        status: job.status,
+        progress: job.progress,
+        content: job.status === 'completed' ? job.result : undefined,
+        error: job.error || null,
+        creditsRemaining: job.creditsRemaining,
+      },
+    });
   } catch (err) {
     next(err);
   }
