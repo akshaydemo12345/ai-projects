@@ -82,6 +82,7 @@ const App = () => (
 
             {/* Public Landing Pages — Wildcard to support nested preSlugs */}
             <Route path="/preview/*" element={<PublicLandingPage />} />
+            <Route path="/template-preview" element={<PreviewPage />} />
             <Route path="/*" element={<PublicLandingPage />} />
 
 
