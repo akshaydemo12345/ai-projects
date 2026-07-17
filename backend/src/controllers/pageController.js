@@ -476,6 +476,55 @@ exports.updatePageSettings = async (req, res, next) => {
   }
 };
 
+// ─── GET /projects/:projectId/pages/:id/status ────────────────────────────────
+// Lightweight poll target for AI generation progress. Returns just enough for
+// the client to know when a page created via createPage has finished
+// generating in the background, so it can then load the full page/editor.
+// No content/styles blobs — same "lean" spirit as getPageSettings.
+// Safety net only — normal generation (even multi-pass, higher MAX_OUTPUT_TOKENS)
+// finishes well under this. This only catches a genuinely abandoned job, e.g.
+// a server restart that killed the background worker mid-generation, so the
+// client's poll gets a clean "failed" instead of spinning forever.
+const STALE_GENERATION_THRESHOLD_MS = 8 * 60 * 1000; // 8 minutes
+
+exports.getPageGenerationStatus = async (req, res, next) => {
+  try {
+    const { id, projectId } = req.params;
+    let page = await Page.findOne({ _id: id, userId: req.user._id, projectId })
+      .select('_id title slug status generationProgress generationError previewUrl createdAt updatedAt')
+      .lean();
+
+    if (!page) return res.status(404).json({ status: 'fail', message: 'Page not found' });
+
+    if (page.status === 'generating') {
+      const referenceTime = page.updatedAt || page.createdAt;
+      const stale = referenceTime && (Date.now() - new Date(referenceTime).getTime() > STALE_GENERATION_THRESHOLD_MS);
+      if (stale) {
+        const failMessage = 'Generation is taking unusually long and appears to have stalled (e.g. a server restart). Please try again.';
+        await Page.findByIdAndUpdate(page._id, { status: 'failed', generationError: failMessage }).catch(() => {});
+        page = { ...page, status: 'failed', generationError: failMessage };
+      }
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        pageId: page._id,
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        status: page.status,
+        generationProgress: page.generationProgress,
+        generationError: page.generationError || null,
+        previewUrl: page.previewUrl,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // ─── POST /projects/:projectId/pages (Enhanced with AI) ───────────────────────
 exports.createPage = async (req, res, next) => {
   logger.info(`Creating page for project ${req.params.projectId}`, { userId: req.user?._id });
@@ -638,6 +687,93 @@ exports.createPage = async (req, res, next) => {
     // Increment pageCount
     await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: 1 } });
 
+    const frontendUrlInitial = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
+    const previewUrlInitial = `${frontendUrlInitial}/preview?page=${page._id}&token=${page.previewToken}`;
+
+    // 7. Respond to the client right away instead of blocking on AI generation.
+    // AI content generation + image processing can comfortably exceed typical
+    // client/proxy/gateway timeouts. The page already exists in the DB with
+    // status "generating", so we hand the client its id immediately and finish
+    // the actual generation in the background. The client is expected to poll
+    // GET /projects/:projectId/pages/:id/status until status is "draft"
+    // (success) or "failed" (error), then navigate to the editor.
+    res.status(202).json({
+      success: true,
+      message: 'Page created. Content generation is in progress.',
+      data: {
+        pageId: page._id,
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        status: page.status,
+        generationProgress: page.generationProgress,
+        previewUrl: previewUrlInitial,
+      },
+    });
+
+    // Everything from here on runs after the response has already been sent.
+    // It must never write to `res` again — any failure is instead recorded on
+    // the Page document so the client's status poll can observe it.
+    runPageGeneration({
+      pageId: page._id,
+      projectId,
+      project,
+      camelAiPrompt,
+      ai_prompt,
+      targetAudience,
+      businessDescription,
+      business_description,
+      ctaText,
+      keywords,
+      figmaImage,
+      fonts: req.body.fonts,
+    }).catch((bgErr) => {
+      logger.error('Unhandled error in background page generation:', {
+        error: bgErr.message,
+        stack: bgErr.stack,
+        pageId: page._id,
+      });
+    });
+    return;
+
+  } catch (error) {
+    logger.error("Create Page Final Error:", {
+      message: error.message,
+      stack: error.stack,
+      projectId: req.params.projectId
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+      data: {}
+    });
+  }
+};
+
+// ─── Background worker: runs the actual AI generation for a page ──────────────
+// Invoked (not awaited) by createPage after it has already responded to the
+// client. Must never touch `res`. Progress/results/errors are persisted on
+// the Page document; the client observes them via GET .../pages/:id/status.
+async function runPageGeneration(opts) {
+  const {
+    pageId, projectId, project,
+    camelAiPrompt, ai_prompt, targetAudience, businessDescription, business_description,
+    ctaText, keywords, figmaImage, fonts,
+  } = opts;
+
+  const page = await Page.findById(pageId);
+  if (!page) return; // extremely unlikely: page vanished before generation started
+
+  // Snapshot the content/styles the page was created with, before anything
+  // below mutates `page` — used as the fallback if AI generation produces
+  // no usable HTML.
+  const initialContent = page.content;
+  const initialStyles = page.styles;
+  const initialLandingPageContent = page.landingPageContent;
+  const initialLandingPageStyles = page.landingPageStyles;
+
+  try {
     // 7. AI Content Generation (Allows templates to be filled by AI if a prompt exists)
     let aiResponse = { sections: [], seo: {} };
     const promptToUse = camelAiPrompt || ai_prompt || '';
@@ -645,79 +781,60 @@ exports.createPage = async (req, res, next) => {
     const isAIRequested = page.generationMethod === 'ai' || isTemplateWithPrompt;
 
     if (isAIRequested) {
-      try {
-        logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
-        // update progress: AI generation started
-        try { await Page.findByIdAndUpdate(page._id, { generationProgress: 10 }).exec(); } catch (e) { /* non-fatal */ }
+      logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
+      // update progress: AI generation started
+      try { await Page.findByIdAndUpdate(page._id, { generationProgress: 10 }).exec(); } catch (e) { /* non-fatal */ }
 
-        // If it's a template, we pass a hint to the AI service
-        // Merge scraped fonts with any fonts explicitly passed from the frontend
-        const resolvedFonts = {
-          bodyFont: req.body.fonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
-          headingFont: req.body.fonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
-          googleFonts: project.websiteProfile?.fonts?.googleFonts || [],
+      // If it's a template, we pass a hint to the AI service
+      // Merge scraped fonts with any fonts explicitly passed from the frontend
+      const resolvedFonts = {
+        bodyFont: fonts?.bodyFont || project.websiteProfile?.fonts?.bodyFont || project.websiteProfile?.fonts?.primaryFont || null,
+        headingFont: fonts?.headingFont || project.websiteProfile?.fonts?.headingFont || null,
+        googleFonts: project.websiteProfile?.fonts?.googleFonts || [],
+      };
+
+      const aiInput = {
+        businessName: project.name,
+        industry: project.websiteProfile?.industry?.industry || project.industry,
+        pageType: 'lead generation',
+        targetAudience: targetAudience || project.description || 'Business owners looking for ' + (project.websiteProfile?.industry?.industry || project.industry) + ' services',
+        businessDescription: businessDescription || business_description || project.websiteProfile?.identity?.description || project.description,
+        ctaText: ctaText || project.websiteProfile?.content?.hero?.ctaText || 'Get Started',
+        tone: 'Professional',
+        aiPrompt: promptToUse,
+        logoUrl: page.logoUrl || project.websiteProfile?.identity?.logoUrl || project.logoUrl || '',
+        primaryColor: page.primaryColor || project.websiteProfile?.logoColors?.primary || project.websiteProfile?.colors?.primary || project.primaryColor,
+        secondaryColor: page.secondaryColor || project.websiteProfile?.logoColors?.secondary || project.websiteProfile?.colors?.secondary || project.secondaryColor,
+        accentColor: page.accentColor || project.websiteProfile?.colors?.accent || project.secondaryColor || '#6366f1',
+        services: page.services || project.services || [],
+        keywords: keywords || project.websiteProfile?.seo?.keywords || [],
+        noIndex: page.noIndex || project.noIndex || false,
+        noFollow: page.noFollow || project.noFollow || false,
+        pageId: page._id,
+        // Pass the template HTML to the AI if it's a template enrichment task
+        templateHtml: isTemplateWithPrompt ? page.content : null,
+        isTemplate: page.generationMethod === 'template',
+        // Pass figma image if available
+        figmaImage: figmaImage || null,
+        // Pass scraped data from project (contains images/videos from website)
+        scrapedData: project.scrapedData || {},
+        // Fonts: merge incoming (from form) with scraped (from websiteProfile) — incoming takes priority
+        scrapedFonts: (resolvedFonts.bodyFont || resolvedFonts.headingFont) ? resolvedFonts : null,
+        scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null
+      };
+
+      const generatedResult = await AIService.generateLandingPageContent(aiInput);
+
+      if (generatedResult) {
+        aiResponse = {
+          sections: generatedResult.pageContent || [],
+          fullHtml: generatedResult.fullHtml,
+          fullCss: generatedResult.fullCss,
+          fullJs: generatedResult.fullJs,
+          seo: generatedResult.seo || {},
+          aiUsage: generatedResult.aiUsage
         };
-
-        const aiInput = {
-          businessName: project.name,
-          industry: project.websiteProfile?.industry?.industry || project.industry,
-          pageType: 'lead generation',
-          targetAudience: targetAudience || project.description || 'Business owners looking for ' + (project.websiteProfile?.industry?.industry || project.industry) + ' services',
-          businessDescription: businessDescription || business_description || project.websiteProfile?.identity?.description || project.description,
-          ctaText: ctaText || project.websiteProfile?.content?.hero?.ctaText || 'Get Started',
-          tone: 'Professional',
-          aiPrompt: promptToUse,
-          logoUrl: page.logoUrl || project.websiteProfile?.identity?.logoUrl || project.logoUrl || '',
-          primaryColor: page.primaryColor || project.websiteProfile?.logoColors?.primary || project.websiteProfile?.colors?.primary || project.primaryColor,
-          secondaryColor: page.secondaryColor || project.websiteProfile?.logoColors?.secondary || project.websiteProfile?.colors?.secondary || project.secondaryColor,
-          accentColor: page.accentColor || project.websiteProfile?.colors?.accent || project.secondaryColor || '#6366f1',
-          services: page.services || project.services || [],
-          keywords: keywords || project.websiteProfile?.seo?.keywords || [],
-          noIndex: page.noIndex || project.noIndex || false,
-          noFollow: page.noFollow || project.noFollow || false,
-          pageId: page._id,
-          // Pass the template HTML to the AI if it's a template enrichment task
-          templateHtml: isTemplateWithPrompt ? page.content : null,
-          isTemplate: page.generationMethod === 'template',
-          // Pass figma image if available
-          figmaImage: figmaImage || null,
-          // Pass scraped data from project (contains images/videos from website)
-          scrapedData: project.scrapedData || {},
-          // Fonts: merge incoming (from form) with scraped (from websiteProfile) — incoming takes priority
-          scrapedFonts: (resolvedFonts.bodyFont || resolvedFonts.headingFont) ? resolvedFonts : null,
-          scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null
-        };
-
-        const generatedResult = await AIService.generateLandingPageContent(aiInput);
-
-        if (generatedResult) {
-          aiResponse = {
-            sections: generatedResult.pageContent || [],
-            fullHtml: generatedResult.fullHtml,
-            fullCss: generatedResult.fullCss,
-            fullJs: generatedResult.fullJs,
-            seo: generatedResult.seo || {},
-            aiUsage: generatedResult.aiUsage
-          };
-          try { await Page.findByIdAndUpdate(page._id, { generationProgress: 60 }).exec(); } catch (e) { }
-        }
-      } catch (aiErr) {
-        logger.error('AI Generation Failed during page creation:', {
-          error: aiErr.message,
-          pageId: page._id
-        });
-        
-        // Since AI generation failed, delete the page and decrement the count
-        try {
-          await Page.findByIdAndDelete(page._id).exec();
-          await Project.findByIdAndUpdate(projectId, { $inc: { pageCount: -1 } }).exec();
-        } catch (e) {}
-
-        return res.status(400).json({
-          success: false,
-          message: `AI Generation Error: ${aiErr.message}`,
-          data: {}
-        });
+        try { await Page.findByIdAndUpdate(page._id, { generationProgress: 60 }).exec(); } catch (e) { }
       }
     }
 
@@ -903,44 +1020,36 @@ exports.createPage = async (req, res, next) => {
     try { await Page.findByIdAndUpdate(page._id, { generationProgress: 98 }).exec(); } catch (e) { }
     page.status = 'draft';
     page.generationProgress = 100;
+    page.generationError = undefined;
     await page.save();
 
     // 8.5 Sync Form Schema Immediately
     await syncFormSchema(page);
 
-    // 9. Generation finished (we are now responding here synchronously).
+    // 9. Generation finished. There is no request to respond to anymore —
+    // the client already has the pageId and is polling .../pages/:id/status,
+    // which will now report status: "draft", generationProgress: 100.
     logger.info(`Landing page generation finished for ${page._id}`);
 
-    const frontendUrlFinal = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
-    const previewUrlFinal = `${frontendUrlFinal}/preview?page=${page._id}&token=${page.previewToken}`;
-
-    return res.status(201).json({
-      success: true,
-      message: 'Landing page created successfully',
-      data: {
-        pageId: page._id,
-        _id: page._id,
-        title: page.title,
-        slug: page.slug,
-        generationProgress: 100,
-        previewUrl: previewUrlFinal
-      }
+  } catch (aiErr) {
+    logger.error('AI Generation Failed during background page generation:', {
+      error: aiErr.message,
+      stack: aiErr.stack,
+      pageId,
     });
 
-  } catch (error) {
-    logger.error("Create Page Final Error:", {
-      message: error.message,
-      stack: error.stack,
-      projectId: req.params.projectId
-    });
-
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Internal Server Error",
-      data: {}
-    });
+    // Mark the page as failed instead of deleting it and writing an HTTP
+    // response — the response was already sent. The client's status poll
+    // picks this up and can show a clear error (with the option to retry
+    // or delete the page) instead of a generic timeout.
+    try {
+      await Page.findByIdAndUpdate(pageId, {
+        status: 'failed',
+        generationError: aiErr.message || 'AI generation failed',
+      }).exec();
+    } catch (e) { /* non-fatal */ }
   }
-};
+}
 
 // ─── PUT /pages/:id or /projects/:projectId/pages/:id ─────────────────────────
 exports.updatePage = async (req, res, next) => {

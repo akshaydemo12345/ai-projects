@@ -31,6 +31,69 @@ const normalizeScript = (value = '') => {
 };
 
 /**
+ * SECURITY: Resolve a page by slug, scoped to a specific projectId.
+ * When projectId is provided, ALL queries include it — preventing cross-project leakage.
+ * Falls back to preSlug-matching multi-project search only when projectId is absent.
+ *
+ * @param {string} rawSlug  - full URL slug/path (may include preSlug prefix)
+ * @param {string|null} projectId  - scoped project id (from req.project._id or null)
+ * @param {string} [previewToken] - optional preview token
+ * @returns {Promise<Page|null>}
+ */
+const resolvePageBySlug = async (rawSlug, projectId, previewToken = '') => {
+  const cleanSlug = (rawSlug || '').replace(/^\/+|\/+$/g, '').replace(/^api\/v1\/proxy\//i, '');
+  if (!cleanSlug) return null;
+
+  const slugParts = cleanSlug.split('/');
+  const isThankYouPath = slugParts[slugParts.length - 1] === 'thank-you';
+  const pageSlug = isThankYouPath ? slugParts[slugParts.length - 2] : slugParts[slugParts.length - 1];
+  const urlPreSlug = isThankYouPath
+    ? slugParts.slice(0, slugParts.length - 2).join('/')
+    : slugParts.slice(0, slugParts.length - 1).join('/');
+
+  if (!pageSlug) return null;
+
+  // ── SCOPED PATH: projectId is known — use composite (projectId, slug) index ──
+  if (projectId) {
+    // Try exact nested path first
+    let page = await Page.findOne({ projectId, slug: pageSlug, isDeleted: { $ne: true } });
+    if (page) return page;
+
+    // Try full cleanSlug as slug (for flat-slug projects)
+    page = await Page.findOne({ projectId, slug: cleanSlug, isDeleted: { $ne: true } });
+    if (page) return page;
+
+    return null; // Hard stop — never leak pages from other projects
+  }
+
+  // ── UNSCOPED PATH: projectId unknown — use preSlug matching to disambiguate ──
+  const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+
+  if (potentialPages.length > 0) {
+    for (const p of potentialPages) {
+      const proj = await Project.findById(p.projectId);
+      const projectPreSlug = (proj?.preSlug || '').replace(/^\/+|\/+$/g, '');
+      if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) return p;
+    }
+  }
+
+  // Single-part slug fallback — only when there is no ambiguity
+  if (slugParts.length === 1) {
+    const p = await Page.findOne({ slug: pageSlug, isDeleted: { $ne: true } });
+    if (p) {
+      const proj = await Project.findById(p.projectId);
+      // Only serve if the project has no preSlug (i.e. pages are at the root)
+      // OR a valid previewToken is provided
+      if (proj && (!proj.preSlug || previewToken)) return p;
+    }
+  }
+
+  // Exact full-path slug fallback (flat projects without preSlug)
+  const exactPage = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
+  return exactPage || null;
+};
+
+/**
  * GET /api/public/page
  * Supports query param page={pageId} or legacy slug-based page lookups.
  * 100% Public endpoint — serves content WITHOUT requiring tokens for published pages.
@@ -40,12 +103,16 @@ exports.getPublicPageBySlug = async (req, res, next) => {
     const requestedPageId = String(req.query.page || req.query.pageId || '').trim();
     const pgSlug = String(req.query.pg || '').trim();
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
+    // SECURITY: use validated project from proxyAuth when available
+    const scopedProjectId = req.project ? String(req.project._id) : null;
     let pageDoc = null;
 
     // 0. Fastest path: if a previewToken is provided, try it directly first
     //    This handles draft pages accessed via the dashboard "View" or WP plugin ?token=
     if (previewToken) {
-      pageDoc = await Page.findOne({ previewToken, isDeleted: { $ne: true } });
+      const tokenQuery = { previewToken, isDeleted: { $ne: true } };
+      if (scopedProjectId) tokenQuery.projectId = scopedProjectId;
+      pageDoc = await Page.findOne(tokenQuery);
     }
 
     // 1. Resolve via ID or Preview Token
@@ -59,130 +126,20 @@ exports.getPublicPageBySlug = async (req, res, next) => {
 
       // If not found by ID/Token, treat requestedPageId as a potential slug
       if (!pageDoc && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
-        const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
-        const slugParts = cleanSlug.split('/');
-        let pageSlug = '';
-        let urlPreSlug = '';
-
-        if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-          pageSlug = slugParts[slugParts.length - 2];
-          urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-        } else {
-          pageSlug = slugParts[slugParts.length - 1];
-          urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-        }
-
-        if (pageSlug) {
-          const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-          for (const p of potentialPages) {
-            const project = await Project.findById(p.projectId);
-            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-              pageDoc = p;
-              break;
-            }
-          }
-
-          if (!pageDoc && slugParts.length === 1) {
-            const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-            if (p) {
-              const proj = await Project.findById(p.projectId);
-              if (proj && (!proj.preSlug || previewToken)) pageDoc = p;
-            }
-          }
-        }
+        pageDoc = await resolvePageBySlug(requestedPageId, scopedProjectId, previewToken);
       }
     }
 
     // 2. Resolve via 'pg' query parameter (Priority fallback)
     if (!pageDoc && pgSlug) {
-      const cleanSlug = pgSlug.replace(/^\/+|\/+$/g, '');
-      const slugParts = cleanSlug.split('/');
-      let pageSlug = '';
-      let urlPreSlug = '';
-
-      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-        pageSlug = slugParts[slugParts.length - 2];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-      } else {
-        pageSlug = slugParts[slugParts.length - 1];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-      }
-
-      if (pageSlug) {
-        const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-        if (potentialPages.length > 0) {
-          for (const p of potentialPages) {
-            const project = await Project.findById(p.projectId);
-            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-              pageDoc = p;
-              break;
-            }
-          }
-        }
-
-        if (!pageDoc && slugParts.length === 1) {
-          pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-          if (pageDoc) {
-            const project = await Project.findById(pageDoc.projectId);
-            if (project && project.preSlug) {
-              pageDoc = null;
-            }
-          }
-        }
-      }
+      pageDoc = await resolvePageBySlug(pgSlug, scopedProjectId, previewToken);
     }
 
     // 3. Resolve via URL path slug
     if (!pageDoc) {
       const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-      let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
-      cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
-      const slugParts = cleanSlug.split('/');
-
-      let pageSlug = '';
-      let urlPreSlug = '';
-
-      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-        pageSlug = slugParts[slugParts.length - 2];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-      } else {
-        pageSlug = slugParts[slugParts.length - 1];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-      }
-
-      if (!pageSlug) return next(new AppError('Page not found', 404));
-
-      const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-
-      if (potentialPages.length > 0) {
-        for (const p of potentialPages) {
-          const project = await Project.findById(p.projectId);
-          const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-          if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-            pageDoc = p;
-            break;
-          }
-        }
-      }
-
-      if (!pageDoc && slugParts.length === 1) {
-        pageDoc = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-        if (pageDoc) {
-          const project = await Project.findById(pageDoc.projectId);
-          // Only enforce preSlug for unpublished pages without a preview token.
-          // Published pages are always resolvable by slug directly (e.g. WP plugin, JSON API).
-          if (project && project.preSlug && pageDoc.status !== 'published' && !previewToken) {
-            pageDoc = null;
-          }
-        }
-      }
-
-      // Final exact match fallback for JSON API
-      if (!pageDoc) {
-        pageDoc = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
-      }
+      if (!rawSlug) return next(new AppError('Page not found', 404));
+      pageDoc = await resolvePageBySlug(rawSlug, scopedProjectId, previewToken);
     }
 
     // 4. Last-resort: try token / rawSlug as a MongoDB ObjectId (pageId or projectId)
@@ -1093,6 +1050,8 @@ exports.getPublicPageHTML = async (req, res, next) => {
     const previewToken = String(req.query.token || req.query.previewToken || '').trim();
     let isThankYou = String(req.query.status || req.query.thankyou || '').toLowerCase() === 'thank-you';
     const forceRender = req.query.render === 'true';
+    // SECURITY: use validated project from proxyAuth when available
+    const scopedProjectId = req.project ? String(req.project._id) : null;
     let page = null;
 
     // 1. Resolve via ID or Preview Token
@@ -1109,105 +1068,36 @@ exports.getPublicPageHTML = async (req, res, next) => {
 
       // If not found by ID/Token, treat requestedPageId as a potential slug
       if (!page && requestedPageId && !/^[0-9a-fA-F]{24}$/.test(requestedPageId)) {
-        const cleanSlug = requestedPageId.replace(/^\/+|\/+$/g, '');
-        const slugParts = cleanSlug.split('/');
-        let pageSlug = '';
-        let urlPreSlug = '';
-
-        if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-          pageSlug = slugParts[slugParts.length - 2];
-          urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-          isThankYou = true;
-        } else {
-          pageSlug = slugParts[slugParts.length - 1];
-          urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-        }
-
-        if (pageSlug) {
-          const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-          for (const p of potentialPages) {
-            const project = await Project.findById(p.projectId);
-            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-              page = p;
-              break;
-            }
-          }
-
-          if (!page && slugParts.length === 1) {
-            const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-            if (p) {
-              const proj = await Project.findById(p.projectId);
-              if (proj && !proj.preSlug) page = p;
-            }
-          }
+        const resolved = await resolvePageBySlug(requestedPageId, scopedProjectId, previewToken);
+        if (resolved) {
+          // Detect thank-you path
+          if (requestedPageId.replace(/^\/+|\/+$/g, '').endsWith('thank-you')) isThankYou = true;
+          page = resolved;
         }
       }
     }
 
     // 2. Resolve via 'pg' query parameter (Priority fallback)
     if (!page && pgSlug) {
-      const cleanSlug = pgSlug.replace(/^\/+|\/+$/g, '');
-      const slugParts = cleanSlug.split('/');
-      let pageSlug = '';
-      let urlPreSlug = '';
-
-      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-        pageSlug = slugParts[slugParts.length - 2];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-        isThankYou = true;
-      } else {
-        pageSlug = slugParts[slugParts.length - 1];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-      }
-
-      if (pageSlug) {
-        const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-        if (potentialPages.length > 0) {
-          for (const p of potentialPages) {
-            const project = await Project.findById(p.projectId);
-            const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-            if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-              page = p;
-              break;
-            }
-          }
-        }
-
-        if (!page && slugParts.length === 1) {
-          page = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-          if (page) {
-            const project = await Project.findById(page.projectId);
-            if (project && project.preSlug) {
-              page = null;
-            }
-          }
-        }
-      }
+      const cleanPg = pgSlug.replace(/^\/+|\/+$/g, '');
+      if (cleanPg.endsWith('thank-you')) isThankYou = true;
+      page = await resolvePageBySlug(cleanPg, scopedProjectId, previewToken);
     }
 
     // 3. Resolve via URL path slug
     if (!page) {
       const rawSlug = String(req.params.slug || req.params[0] || '').trim();
-      let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '');
-      cleanSlug = cleanSlug.replace(/^api\/v1\/proxy\//i, '');
+      let cleanSlug = rawSlug.replace(/^\/+|\/+$/g, '').replace(/^api\/v1\/proxy\//i, '');
       const slugParts = cleanSlug.split('/');
+      const lastPart = slugParts[slugParts.length - 1];
 
-      let pageSlug = '';
-      let urlPreSlug = '';
+      if (lastPart === 'thank-you') isThankYou = true;
 
-      if (slugParts.length > 1 && slugParts[slugParts.length - 1] === 'thank-you') {
-        pageSlug = slugParts[slugParts.length - 2];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 2).join('/');
-        isThankYou = true;
-      } else {
-        pageSlug = slugParts[slugParts.length - 1];
-        urlPreSlug = slugParts.slice(0, slugParts.length - 1).join('/');
-      }
-
-      if (!pageSlug && !forceRender) {
-        // If it's a domain-only hit, check if the domain itself is mapped to a page
-        const domainPage = await Page.findOne({ domain: req.get('host'), status: 'published', isDeleted: { $ne: true } });
+      if (!cleanSlug && !forceRender) {
+        // Domain-only hit: check if the domain itself is mapped to a page
+        const domainQuery = { domain: req.get('host'), status: 'published', isDeleted: { $ne: true } };
+        if (scopedProjectId) domainQuery.projectId = scopedProjectId;
+        const domainPage = await Page.findOne(domainQuery);
         if (domainPage) {
           page = domainPage;
         } else {
@@ -1259,32 +1149,9 @@ exports.getPublicPageHTML = async (req, res, next) => {
         }
       }
 
-      const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
-
-      if (potentialPages.length > 0) {
-        for (const p of potentialPages) {
-          const project = await Project.findById(p.projectId);
-          const projectPreSlug = (project?.preSlug || '').replace(/^\/+|\/+$/g, '');
-          if (projectPreSlug.toLowerCase() === urlPreSlug.toLowerCase()) {
-            page = p;
-            break;
-          }
-        }
-      }
-
-      if (!page && slugParts.length === 1) {
-        page = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
-        if (page) {
-          const project = await Project.findById(page.projectId);
-          if (project && project.preSlug) {
-            page = null;
-          }
-        }
-      }
-
-      // Final exact match fallback for HTML
-      if (!page) {
-        page = await Page.findOne({ slug: cleanSlug, isDeleted: { $ne: true } });
+      // SECURITY: use scoped resolver — enforces projectId when known
+      if (!page && cleanSlug) {
+        page = await resolvePageBySlug(cleanSlug, scopedProjectId, previewToken);
       }
     }
 
@@ -2178,13 +2045,15 @@ exports.getDynamicPage = async (req, res, next) => {
       project = await Project.findOne({ apiToken: apiKey });
     }
 
-    // 2. Find the page
+    // 2. Find the page — scope to project when known (uses composite (projectId, slug) index)
     let page = null;
-    const potentialPages = await Page.find({ slug: pageSlug, isDeleted: { $ne: true } });
+    const pageQuery = { slug: pageSlug, isDeleted: { $ne: true } };
+    if (project) pageQuery.projectId = project._id;
+    const potentialPages = await Page.find(pageQuery);
 
     if (potentialPages.length > 0) {
       for (const p of potentialPages) {
-        const proj = await Project.findById(p.projectId);
+        const proj = project || await Project.findById(p.projectId);
         const projectPreSlug = (proj?.preSlug || '').replace(/^\/+|\/+$/g, '');
 
         // If we have a specific project from apiKey, ensure it matches
@@ -2200,10 +2069,12 @@ exports.getDynamicPage = async (req, res, next) => {
 
     // Fallback for single-part slugs (only if no nested match found)
     if (!page && slugParts.length === 1) {
-      const p = await Page.findOne({ slug: slugParts[0], isDeleted: { $ne: true } });
+      const fallbackQuery = { slug: slugParts[0], isDeleted: { $ne: true } };
+      if (project) fallbackQuery.projectId = project._id;
+      const p = await Page.findOne(fallbackQuery);
       if (p) {
-        const proj = await Project.findById(p.projectId);
-        if (proj && !proj.preSlug) {
+        const proj = project || await Project.findById(p.projectId);
+        if (proj && (!proj.preSlug || project)) {
           page = p;
           if (!project) project = proj;
         }

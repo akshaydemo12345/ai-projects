@@ -76,6 +76,14 @@ router.get('/:projectId/pages', pageController.getPagesInProject);
 router.get('/:projectId/pages/:id/settings', pageController.getPageSettings);
 
 /**
+ * @route   GET /projects/:projectId/pages/:id/status
+ * @desc    Poll AI generation progress/status for a page created via POST .../pages.
+ *          Lightweight — no content/styles blobs. Used by the client instead of
+ *          waiting on the (potentially very slow) create request itself.
+ */
+router.get('/:projectId/pages/:id/status', pageController.getPageGenerationStatus);
+
+/**
  * @route   PATCH /projects/:projectId/pages/:id/settings
  * @desc    Update only settings fields — never touches content/styles blobs
  */

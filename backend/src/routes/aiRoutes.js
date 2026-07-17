@@ -22,6 +22,15 @@ const aiRateLimit = rateLimiter({
 router.post('/generate', protect, aiRateLimit, generateContent);
 
 /**
+ * @route   GET /ai/generate/status/:jobId
+ * @desc    Poll AI generation progress/status for a standalone job started
+ *          via POST /ai/generate (no pageId). Not rate-limited like other AI
+ *          routes since the client polls this every couple seconds.
+ * @access  Private (JWT)
+ */
+router.get('/generate/status/:jobId', protect, require('../controllers/aiController').getGenerationJobStatus);
+
+/**
  * @route   POST /ai/analyze-website
  * @desc    Analyze an existing website and generate optimized content
  * @access  Private (JWT)
