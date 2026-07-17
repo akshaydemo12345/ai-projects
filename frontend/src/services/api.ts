@@ -146,7 +146,7 @@ export interface LandingPage {
   title?: string;
   slug: string;
   type: "ppc" | "seo";
-  status: "draft" | "published" | "generating" | "archived";
+  status: "draft" | "published" | "generating" | "archived" | "failed";
   content?: any;
   styles?: string;
   // Dual-page support
@@ -181,6 +181,7 @@ export interface LandingPage {
   template?: string;
   templateId?: string;
   generationProgress?: number;
+  generationError?: string | null;
   figmaImage?: string;
   views: number;
   aiUsage?: {
@@ -549,6 +550,12 @@ export const pagesApi = {
       name: res.data.page.title || res.data.page.name || 'Untitled Page'
     };
   },
+  // Lightweight poll target for AI generation progress after `create()`.
+  // Returns { pageId, status: 'generating'|'draft'|'failed', generationProgress, generationError, previewUrl }
+  getStatus: async (projectId: string, pageId: string) => {
+    const res = await apiFetch(`/projects/${projectId}/pages/${pageId}/status`);
+    return res.data;
+  },
   create: async (projectId: string, data: any) => {
     // Normalization helper
     const normalizeScript = (value = '') => {
@@ -662,11 +669,75 @@ export const pagesApi = {
 
 // --- AI API ---
 export const aiApi = {
+  // Kicks off standalone AI landing-page generation and waits for it to
+  // finish, but — unlike a plain POST — does NOT hold a single HTTP request
+  // open for the whole (potentially multi-minute, multi-pass) generation.
+  // The backend responds immediately with a jobId (202) and finishes the
+  // actual generation in the background; here we poll GET
+  // /ai/generate/status/:jobId until it's done. This avoids client/proxy/
+  // gateway timeouts while keeping the same resolved shape callers expect.
   generate: async (data: any) => {
-    return apiFetch('/ai/generate', {
+    const initial = await apiFetch('/ai/generate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+
+    const jobId = initial?.data?.jobId;
+    // Some legacy/alternate paths (e.g. pageId provided) may still resolve
+    // immediately with a finished result — pass those straight through.
+    if (!jobId) return initial;
+
+    const POLL_INTERVAL_MS = 2000;
+    const POLL_TIMEOUT_MS = 10 * 60 * 1000; // generous ceiling, mirrors page-status polling
+    const MAX_CONSECUTIVE_ERRORS = 5;
+    const startedAt = Date.now();
+    let consecutiveErrors = 0;
+
+    while (true) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+
+      let statusRes: any;
+      try {
+        statusRes = await apiFetch(`/ai/generate/status/${jobId}`);
+        consecutiveErrors = 0;
+      } catch (err) {
+        // Transient network/auth-refresh/404-before-write-visible hiccups
+        // shouldn't kill the whole poll — only bail after repeated failures.
+        // Without this, a single blip here would reject generate() entirely
+        // and look like generation silently returned nothing.
+        consecutiveErrors += 1;
+        console.warn('AI generation status poll error:', err);
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          throw err instanceof Error ? err : new Error('Lost connection while checking generation status.');
+        }
+        continue;
+      }
+
+      const jobData = statusRes?.data;
+
+      if (jobData?.status === 'completed') {
+        if (!jobData.content) {
+          // Defensive: job says done but carried no payload — surface a real
+          // error instead of silently resolving to an empty result.
+          throw new Error('AI generation finished but returned no content. Please try again.');
+        }
+        return {
+          status: 'success',
+          data: {
+            content: jobData.content,
+            creditsRemaining: jobData.creditsRemaining,
+          },
+        };
+      }
+
+      if (jobData?.status === 'failed') {
+        throw new Error(jobData.error || 'AI generation failed. Please try again.');
+      }
+
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        throw new Error('This is taking much longer than expected. Please try again.');
+      }
+    }
   },
   analyze: async (url: string) => {
     return apiFetch('/ai/analyze-website', {

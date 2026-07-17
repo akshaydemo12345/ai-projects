@@ -134,12 +134,16 @@ const pageSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'published', 'generating'],
+    enum: ['draft', 'published', 'generating', 'failed'],
     default: 'draft',
   },
   generationProgress: {
     type: Number,
     default: 0,
+  },
+  generationError: {
+    type: String,
+    trim: true,
   },
   domain: {
     type: String,

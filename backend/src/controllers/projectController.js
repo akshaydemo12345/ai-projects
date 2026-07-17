@@ -361,7 +361,7 @@ exports.updateProject = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid Project ID' });
     }
 
-    const { name, description, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey } = req.body;
+    const { name, description, preSlug, fromName, fromEmail, adminNotification, userNotification, emailProvider, brevoKey, industry, subIndustry } = req.body;
 
     const updateData = {
       updatedAt: Date.now(),
@@ -377,9 +377,15 @@ exports.updateProject = async (req, res, next) => {
     if (emailProvider !== undefined) updateData.emailProvider = emailProvider;
     if (brevoKey !== undefined) updateData.brevoKey = brevoKey;
 
+    // industry / subIndustry are virtuals backed by websiteProfile.industry.*,
+    // so they must be written to that nested path directly.
+    if (industry !== undefined) updateData['websiteProfile.industry.industry'] = industry;
+    if (subIndustry !== undefined) updateData['websiteProfile.industry.subIndustry'] = subIndustry;
+
     // Update websiteProfile if provided
     if (req.body.websiteUrl) {
       updateData['websiteProfile.extraction.sourceUrl'] = normalizeDomain(req.body.websiteUrl);
+      updateData['websiteProfile.extraction.finalUrl'] = normalizeDomain(req.body.websiteUrl);
       updateData.scrapeMeta = updateData.scrapeMeta || {};
       updateData.scrapeMeta.sourceUrl = normalizeDomain(req.body.websiteUrl);
     }

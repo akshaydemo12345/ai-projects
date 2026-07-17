@@ -436,7 +436,7 @@ const processResult = (raw, logoUrl) => {
 // ═══════════════════════════════════════════════════════════
 //  RETRY HELPER
 // ═══════════════════════════════════════════════════════════
-const withRetry = async (fn, { retries = 3, baseDelayMs = 2000 } = {}) => {
+const withRetry = async (fn, { retries = 4, baseDelayMs = 2000 } = {}) => {
   let last;
   for (let i = 0; i < retries; i++) {
     try { return await fn(); }
@@ -462,6 +462,12 @@ const withRetry = async (fn, { retries = 3, baseDelayMs = 2000 } = {}) => {
 // ═══════════════════════════════════════════════════════════
 const MAX_OUTPUT_TOKENS = 8000;
 
+// Safety-net timeout for a single AI provider call. This is generous enough
+// to never trip during normal generation (even at higher MAX_OUTPUT_TOKENS),
+// it only guards against a genuinely hung upstream request tying up a
+// background job/process indefinitely.
+const AI_CALL_TIMEOUT_MS = 240000; // 4 minutes
+
 // ═══════════════════════════════════════════════════════════
 //  RAW AI CALL  — returns plain text (no fence-parsing, no
 //  post-processing). Used by the two-pass landing-page generator
@@ -478,7 +484,7 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
   const tryOpenAIRaw = async () => {
     if (!openaiKey) throw new Error('No OpenAI API key configured');
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const openai = new OpenAI({ apiKey: openaiKey });
+    const openai = new OpenAI({ apiKey: openaiKey, timeout: AI_CALL_TIMEOUT_MS });
     const response = await openai.chat.completions.create({
       model,
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
@@ -506,7 +512,7 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
           model, max_tokens: maxTokens, temperature,
           system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
           messages,
-        }, { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' } });
+        }, { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' }, timeout: AI_CALL_TIMEOUT_MS });
         const usage = response.usage;
         return {
           text: response.content[0].text,
@@ -542,9 +548,10 @@ const mergeUsage = (a, b) => ({
 const callAIText = async (systemPrompt, userPrompt) => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
+  const TEXT_CALL_TIMEOUT_MS = 60000; // short-output calls should never legitimately take this long
 
   if (anthropicKey) {
-    const client = new Anthropic({ apiKey: anthropicKey });
+    const client = new Anthropic({ apiKey: anthropicKey, timeout: TEXT_CALL_TIMEOUT_MS });
     const model = CLAUDE_MODELS.fast;
     try {
       const res = await withRetry(() => client.messages.create({
@@ -563,7 +570,7 @@ const callAIText = async (systemPrompt, userPrompt) => {
   }
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const client = new OpenAI({ apiKey: openaiKey });
+  const client = new OpenAI({ apiKey: openaiKey, timeout: TEXT_CALL_TIMEOUT_MS });
   const res = await withRetry(() => client.chat.completions.create({
     model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
     max_tokens: 2000, temperature: 0.7,
@@ -1285,12 +1292,40 @@ const generateDescriptionSuggestion = async ({ pageName, industry, projectDesc, 
 // ═══════════════════════════════════════════════════════════
 //  PROJECT SUGGESTIONS
 // ═══════════════════════════════════════════════════════════
+// Generic, industry-flavored fallback used only when the AI call itself
+// fails outright (e.g. provider overloaded/rate-limited past all retries).
+// Keeps the suggestions panel useful instead of empty during an outage.
+const FALLBACK_SUGGESTION_TEMPLATES = [
+  { title: 'Lead Generation Page', description: 'Capture qualified leads with a focused offer and contact form.' },
+  { title: 'Service Overview Page', description: 'Showcase your core services and what makes them different.' },
+  { title: 'Special Offer / Promo Page', description: 'Highlight a limited-time deal to drive quick conversions.' },
+  { title: 'Customer Testimonials Page', description: 'Build trust with social proof from happy customers.' },
+  { title: 'Free Consultation Page', description: 'Encourage visitors to book a no-obligation consultation.' },
+  { title: 'FAQ & Pricing Page', description: 'Answer common questions and clarify pricing upfront.' },
+];
+
+const buildFallbackSuggestions = (industry) => {
+  const label = industry ? ` for ${industry}` : '';
+  return FALLBACK_SUGGESTION_TEMPLATES.map(t => ({
+    title: t.title,
+    description: `${t.description}${label ? ` Tailored${label}.` : ''}`,
+  }));
+};
+
 const generateProjectSuggestions = async ({ projectName, industry, projectDescription, services, pageTitles }) => {
   const sys = `You are a digital marketing strategist. Return ONLY valid JSON array: [{"title":"Page Name","description":"Goal in one sentence"}]. No markdown.`;
   const user = [`PROJECT:${projectName}|INDUSTRY:${industry}`, `DESCRIPTION:${projectDescription}`, services?.length ? `SERVICES:${services.join(', ')}` : '', pageTitles?.length ? `AVOID:${pageTitles.join(', ')}` : '', 'Generate 6 unique landing page ideas.'].filter(Boolean).join('\n');
-  const r = await callAIText(sys, user);
+  let r;
+  try {
+    r = await callAIText(sys, user);
+  } catch (err) {
+    // Provider outage/overload (e.g. 529) or rate limit exhausted all retries —
+    // degrade to generic suggestions rather than surfacing an empty panel.
+    logger.error(`[AI] project suggestions call failed, using fallback: ${err.message}`);
+    return buildFallbackSuggestions(industry);
+  }
   try { return JSON.parse(r.text.trim().replace(/```json|```/g, '').trim()); }
-  catch { logger.error('[AI] project suggestions JSON parse failed'); return []; }
+  catch { logger.error('[AI] project suggestions JSON parse failed'); return buildFallbackSuggestions(industry); }
 };
 
 // ═══════════════════════════════════════════════════════════
