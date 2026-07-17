@@ -25,12 +25,25 @@ import { finance03Html, finance03Styles } from "../templates/finance/templates03
 import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
 import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
 import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
+import { plumber04Html, plumber04Styles } from "../templates/plumber/templates04";
+
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
 import { law03Html, law03Styles } from "../templates/law/templates03";
 import { law04Html, law04Styles } from "../templates/law/templates04";
 import { law05Html, law05Styles } from "../templates/law/templates05";
 import { law06Html, law06Styles } from "../templates/law/templates06";
+import { realEstate01Html, realEstate01Styles } from "../templates/real-estate/templates01";
+import { realEstate02Html, realEstate02Styles } from "../templates/real-estate/templates02";
+import { realEstate03Html, realEstate03Styles } from "../templates/real-estate/templates03";
+import { realEstate04Html, realEstate04Styles } from "../templates/real-estate/templates04";
+import { realEstate05Html, realEstate05Styles } from "../templates/real-estate/templates05";
+import { realEstate06Html, realEstate06Styles } from "../templates/real-estate/templates06";
+import { realEstate07Html, realEstate07Styles } from "../templates/real-estate/templates07";
+import { realEstate08Html, realEstate08Styles } from "../templates/real-estate/templates08";
+import { realEstate09Html, realEstate09Styles } from "../templates/real-estate/templates09";
+import { realEstate10Html, realEstate10Styles } from "../templates/real-estate/templates10";
+
 import { useState, useEffect, useRef } from "react";
 import { INDUSTRY_PROMPTS, getIndustryKey } from "../lib/industryPrompts";
 
@@ -225,68 +238,60 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     const services = project?.websiteProfile?.content?.services?.length ? project.websiteProfile.content.services : (project?.scrapedData?.services || []);
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
-        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal") && !h3.closest(".booking-form-box") && !h3.closest("form") && !h3.closest(".contact-form-card") && !h3.closest(".quick-booking-card") && !h3.closest(".service-form")
+        h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal") && !h3.closest(".booking-form-box") && !h3.closest("form") && !h3.closest(".contact-form-card") && !h3.closest(".quick-booking-card") && !h3.closest(".service-form") && !h3.closest(".pl04-form-overlay") && !h3.closest(".pl04-badge")
+          // Real Estate template exclusions for 01 through 10
+          && !h3.closest("[class*='re01-prop']") && !h3.closest("[class*='re01-step']") && !h3.closest("[class*='re01-team']") && !h3.closest("[class*='re01-testi']") && !h3.closest("[class*='re01-faq']") && !h3.closest("[class*='re01-client']") && !h3.closest("[class*='re01-blog']") && !h3.closest("[class*='re01-stat']") && !h3.closest("[class*='re01-timeline']") && !h3.closest("[class*='re01-service']") && !h3.closest("[class*='re01-feature']")
+          && !h3.closest("[class*='re02-prop']") && !h3.closest("[class*='re02-step']") && !h3.closest("[class*='re02-team']") && !h3.closest("[class*='re02-testi']") && !h3.closest("[class*='re02-faq']") && !h3.closest("[class*='re02-client']") && !h3.closest("[class*='re02-blog']") && !h3.closest("[class*='re02-stat']") && !h3.closest("[class*='re02-timeline']") && !h3.closest("[class*='re02-service']") && !h3.closest("[class*='re02-feature']")
+          && !h3.closest("[class*='re03-prop']") && !h3.closest("[class*='re03-step']") && !h3.closest("[class*='re03-team']") && !h3.closest("[class*='re03-testi']") && !h3.closest("[class*='re03-faq']") && !h3.closest("[class*='re03-client']") && !h3.closest("[class*='re03-blog']") && !h3.closest("[class*='re03-stat']") && !h3.closest("[class*='re03-timeline']") && !h3.closest("[class*='re03-service']") && !h3.closest("[class*='re03-feature']")
+          && !h3.closest("[class*='re04-prop']") && !h3.closest("[class*='re04-step']") && !h3.closest("[class*='re04-team']") && !h3.closest("[class*='re04-testi']") && !h3.closest("[class*='re04-faq']") && !h3.closest("[class*='re04-client']") && !h3.closest("[class*='re04-blog']") && !h3.closest("[class*='re04-stat']") && !h3.closest("[class*='re04-timeline']") && !h3.closest("[class*='re04-service']") && !h3.closest("[class*='re04-feature']")
+          && !h3.closest("[class*='re05-prop']") && !h3.closest("[class*='re05-step']") && !h3.closest("[class*='re05-team']") && !h3.closest("[class*='re05-testi']") && !h3.closest("[class*='re05-faq']") && !h3.closest("[class*='re05-client']") && !h3.closest("[class*='re05-blog']") && !h3.closest("[class*='re05-stat']") && !h3.closest("[class*='re05-timeline']") && !h3.closest("[class*='re05-service']") && !h3.closest("[class*='re05-feature']")
+          && !h3.closest("[class*='re06-prop']") && !h3.closest("[class*='re06-step']") && !h3.closest("[class*='re06-team']") && !h3.closest("[class*='re06-testi']") && !h3.closest("[class*='re06-faq']") && !h3.closest("[class*='re06-client']") && !h3.closest("[class*='re06-blog']") && !h3.closest("[class*='re06-stat']") && !h3.closest("[class*='re06-timeline']") && !h3.closest("[class*='re06-service']") && !h3.closest("[class*='re06-feature']")
+          && !h3.closest("[class*='re07-prop']") && !h3.closest("[class*='re07-step']") && !h3.closest("[class*='re07-team']") && !h3.closest("[class*='re07-testi']") && !h3.closest("[class*='re07-faq']") && !h3.closest("[class*='re07-client']") && !h3.closest("[class*='re07-blog']") && !h3.closest("[class*='re07-stat']") && !h3.closest("[class*='re07-timeline']") && !h3.closest("[class*='re07-service']") && !h3.closest("[class*='re07-feature']")
+          && !h3.closest("[class*='re08-prop']") && !h3.closest("[class*='re08-step']") && !h3.closest("[class*='re08-team']") && !h3.closest("[class*='re08-testi']") && !h3.closest("[class*='re08-faq']") && !h3.closest("[class*='re08-client']") && !h3.closest("[class*='re08-blog']") && !h3.closest("[class*='re08-stat']") && !h3.closest("[class*='re08-timeline']") && !h3.closest("[class*='re08-service']") && !h3.closest("[class*='re08-feature']")
+          && !h3.closest("[class*='re09-prop']") && !h3.closest("[class*='re09-step']") && !h3.closest("[class*='re09-team']") && !h3.closest("[class*='re09-testi']") && !h3.closest("[class*='re09-faq']") && !h3.closest("[class*='re09-client']") && !h3.closest("[class*='re09-blog']") && !h3.closest("[class*='re09-stat']") && !h3.closest("[class*='re09-timeline']") && !h3.closest("[class*='re09-service']") && !h3.closest("[class*='re09-feature']")
+          && !h3.closest("[class*='re10-prop']") && !h3.closest("[class*='re10-step']") && !h3.closest("[class*='re10-team']") && !h3.closest("[class*='re10-testi']") && !h3.closest("[class*='re10-faq']") && !h3.closest("[class*='re10-client']") && !h3.closest("[class*='re10-blog']") && !h3.closest("[class*='re10-stat']") && !h3.closest("[class*='re10-timeline']") && !h3.closest("[class*='re10-service']") && !h3.closest("[class*='re10-feature']")
       );
 
       serviceHeadings.forEach((heading, idx) => {
-        if (idx < services.length) {
-          const service = services[idx];
-          const serviceTitle = typeof service === "string" ? service : (service.title || service.name);
-          if (serviceTitle) {
-            heading.textContent = serviceTitle;
-            const parent = heading.parentElement;
+        // Reuse available services using modulo instead of removing cards
+        const service = services[idx % services.length];
+        const serviceTitle = typeof service === "string" ? service : (service.title || service.name);
+        if (serviceTitle) {
+          heading.textContent = serviceTitle;
+          const parent = heading.parentElement;
 
-            // Sync tab labels
-            if (parent && parent.classList.contains('tab-content-box')) {
-              const tabWrapper = parent.closest('.tabs-container');
-              if (tabWrapper) {
-                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
-                const boxIndex = allTabBoxes.indexOf(parent);
-                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
-                if (boxIndex > -1 && allTabItems[boxIndex]) {
-                  const span = allTabItems[boxIndex].querySelector('span:not(.tab-icon)');
-                  if (span) span.textContent = serviceTitle;
-                }
+          // Sync tab labels
+          if (parent && parent.classList.contains('tab-content-box')) {
+            const tabWrapper = parent.closest('.tabs-container');
+            if (tabWrapper) {
+              const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
+              const boxIndex = allTabBoxes.indexOf(parent);
+              const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
+              if (boxIndex > -1 && allTabItems[boxIndex]) {
+                const span = allTabItems[boxIndex].querySelector('span:not(.tab-icon)');
+                if (span) span.textContent = serviceTitle;
               }
-            }
-
-            // Sync accordion labels (e.g. healthcare template 04)
-            const accordionItem = heading.closest('.hc4-accordion-item, details');
-            if (accordionItem) {
-              const summary = accordionItem.querySelector('summary, .hc4-accordion-header');
-              if (summary) {
-                // Preserve the icon if it exists (usually an 'i' or 'span' at the end)
-                const icon = summary.querySelector('i, span, svg');
-                summary.textContent = serviceTitle;
-                if (icon) {
-                  summary.appendChild(document.createTextNode(" "));
-                  summary.appendChild(icon);
-                }
-              }
-            }
-
-            if (parent && typeof service !== "string" && service.description) {
-              const p = parent.querySelector("p");
-              if (p) p.textContent = service.description;
             }
           }
-        } else {
-          // Remove extra hardcoded service item
-          const parent = heading.closest(".service-card, .hc4-accordion-item, details, [class*='service-item'], [class*='feature-card'], .process-step, .tour-item, .place-col, .feat-item, .feature, .service-col, .v2-service-card") || heading.parentElement;
-          if (parent) {
-            // If we're removing a tab-content-box, we must also remove its tab-item button
-            if (parent.classList.contains('tab-content-box')) {
-              const tabWrapper = parent.closest('.tabs-container');
-              if (tabWrapper) {
-                const allTabBoxes = Array.from(tabWrapper.querySelectorAll('.tab-content-box'));
-                const boxIndex = allTabBoxes.indexOf(parent as Element);
-                const allTabItems = Array.from(tabWrapper.querySelectorAll('.tab-item'));
-                if (boxIndex > -1 && allTabItems[boxIndex]) {
-                  allTabItems[boxIndex].remove();
-                }
+
+          // Sync accordion labels (e.g. healthcare template 04)
+          const accordionItem = heading.closest('.hc4-accordion-item, details');
+          if (accordionItem) {
+            const summary = accordionItem.querySelector('summary, .hc4-accordion-header');
+            if (summary) {
+              // Preserve the icon if it exists (usually an 'i' or 'span' at the end)
+              const icon = summary.querySelector('i, span, svg');
+              summary.textContent = serviceTitle;
+              if (icon) {
+                summary.appendChild(document.createTextNode(" "));
+                summary.appendChild(icon);
               }
             }
-            parent.remove();
+          }
+
+          if (parent && typeof service !== "string" && service.description) {
+            const p = parent.querySelector("p");
+            if (p) p.textContent = service.description;
           }
         }
       });
@@ -295,7 +300,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     // 4. Inject Testimonials
     const testimonials = project?.websiteProfile?.content?.testimonials?.length ? project.websiteProfile.content.testimonials : (project?.scrapedData?.testimonials || []);
     if (testimonials.length > 0) {
-      const testiCards = Array.from(doc.querySelectorAll(".testi-card, .testimonial-card, .testimonial-item, .review-card"));
+      const testiCards = Array.from(doc.querySelectorAll(".testi-card, .testimonial-card, .testimonial-item, .review-card, [class*='re01-testimonial-card'], [class*='re02-testimonial-card']"));
       testiCards.forEach((card, idx) => {
         if (idx < testimonials.length) {
           const t = testimonials[idx];
@@ -313,7 +318,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     // 5. Inject FAQs
     const faqs = project?.websiteProfile?.content?.faqs?.length ? project.websiteProfile.content.faqs : (project?.scrapedData?.faq || project?.scrapedData?.faqs || []);
     if (faqs.length > 0) {
-      const faqItems = Array.from(doc.querySelectorAll("details, .faq-item, .v2-faq-item"));
+      const faqItems = Array.from(doc.querySelectorAll("details, .faq-item, .v2-faq-item, [class*='re01-faq-item'], [class*='re02-faq-item']"));
       faqItems.forEach((item, idx) => {
         if (idx < faqs.length) {
           const faq = faqs[idx];
@@ -334,86 +339,93 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     }
 
     // 6. Global override: Remove navigation menus as per user request
-    const menus = doc.querySelectorAll(".nav-links, .hc4-nav-links, .navbar-nav, .nav-menu, nav ul");
-    menus.forEach(menu => menu.remove());
+    // Skip nav removal for Real Estate templates (they use .re01-nav / .re02-nav etc which are needed)
+    const isRealEstateTemplate = !!doc.querySelector("[class*='re01-'], [class*='re02-'], [class*='re03-'], [class*='re04-'], [class*='re05-'], [class*='re06-'], [class*='re07-'], [class*='re08-'], [class*='re09-'], [class*='re10-']");
+    if (!isRealEstateTemplate) {
+      const menus = doc.querySelectorAll(".nav-links, .hc4-nav-links, .navbar-nav, .nav-menu, nav ul");
+      menus.forEach(menu => menu.remove());
+    }
 
     // 7. Global override: Remove all footer links (Quick Links, Services, Patient Portal, etc.)
-    const footerLinks = doc.querySelectorAll("footer ul, footer ol, footer nav, .footer-col ul, .footer-links, .foot-links, [class*='footer-links'], [class*='footer-nav']");
-    footerLinks.forEach(linkList => {
-      const parent = linkList.parentElement;
-      linkList.remove();
-      // Remove the column wrapper if only the heading is left
-      if (parent && parent.children.length === 1 && parent.children[0].tagName.match(/^H[1-6]$/i)) {
-        parent.remove();
-      }
-    });
-
-    // 8. Remove bottom privacy/terms text without breaking parent divs
-    const footerTextElements = doc.querySelectorAll("footer p, footer span, footer a, footer li");
-    let copyRightText = "© 2026 " + (project?.websiteProfile?.identity?.companyName || "PROJECT_NAME_PLACEHOLDER") + ". All rights reserved.";
-
-    footerTextElements.forEach(el => {
-      const text = el.textContent?.toLowerCase() || "";
-      if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
-        el.remove();
-      } else if (text.includes("©")) {
-        // Update copyright year to 2026 and store for moving
-        el.innerHTML = el.innerHTML.replace(/\b202\d\b/g, "2026");
-        copyRightText = el.textContent || copyRightText;
-        el.remove(); // We will move it to the brand column
-      }
-    });
-
-    // 9. Reformat Footer Brand Column (Add About Us, move copyright, remove social icons)
-    const footerBrandCols = doc.querySelectorAll("footer .footer-col, footer .fc-brand, footer .foot-col, footer .brand-col, footer > div > div");
-    footerBrandCols.forEach(col => {
-      const logo = col.querySelector(".logo, .footer-brand, .brand-logo, [href='#']");
-      if (logo && logo.textContent?.includes("LOGO_PLACEHOLDER")) {
-        // Found the brand column!
-
-        // 1. Remove social icons
-        const socials = col.querySelector(".socials, .footer-socials, .social-links, .social-icons");
-        if (socials) socials.remove();
-
-        const iconLinks = col.querySelectorAll("a:has(span.material-symbols-outlined), a:has(i), a:has(svg)");
-        iconLinks.forEach(l => {
-          if (!l.textContent?.trim()) l.remove();
-        });
-
-        // 2. Add 'About Us' title above the description
-        const desc = col.querySelector("p");
-        if (desc && !desc.previousElementSibling?.textContent?.includes("About Us")) {
-          const aboutTitle = doc.createElement("h4");
-          const existingTitle = doc.querySelector(".footer-title, .foot-title, h4");
-          aboutTitle.className = existingTitle ? existingTitle.className : "footer-title";
-          aboutTitle.textContent = "About Us";
-          aboutTitle.style.fontWeight = "700";
-          aboutTitle.style.marginBottom = "0.5rem";
-          aboutTitle.style.marginTop = "1rem";
-          col.insertBefore(aboutTitle, desc);
+    // Skip for Real Estate templates — they have fully designed footers
+    if (!isRealEstateTemplate) {
+      const footerLinks = doc.querySelectorAll("footer ul, footer ol, footer nav, .footer-col ul, .footer-links, .foot-links, [class*='footer-links'], [class*='footer-nav']");
+      footerLinks.forEach(linkList => {
+        const parent = linkList.parentElement;
+        linkList.remove();
+        // Remove the column wrapper if only the heading is left
+        if (parent && parent.children.length === 1 && parent.children[0].tagName.match(/^H[1-6]$/i)) {
+          parent.remove();
         }
+      });
 
-        // 3. Move copyright text to below the logo
-        const copyP = doc.createElement("p");
-        copyP.textContent = copyRightText;
-        copyP.style.fontSize = "0.875rem";
-        copyP.style.opacity = "0.7";
-        copyP.style.marginTop = "0.5rem";
-        copyP.style.marginBottom = "1.5rem";
+      // 8. Remove bottom privacy/terms text without breaking parent divs
+      const footerTextElements = doc.querySelectorAll("footer p, footer span, footer a, footer li");
+      let copyRightText = "© 2026 " + (project?.websiteProfile?.identity?.companyName || "PROJECT_NAME_PLACEHOLDER") + ". All rights reserved.";
 
-        col.insertBefore(copyP, logo.nextSibling);
-      }
-    });
+      footerTextElements.forEach(el => {
+        const text = el.textContent?.toLowerCase() || "";
+        if (text.includes("privacy") || text.includes("terms") || text.includes("accessibility") || text.includes("faq")) {
+          el.remove();
+        } else if (text.includes("©")) {
+          // Update copyright year to 2026 and store for moving
+          el.innerHTML = el.innerHTML.replace(/\b202\d\b/g, "2026");
+          copyRightText = el.textContent || copyRightText;
+          el.remove(); // We will move it to the brand column
+        }
+      });
 
-    // 10. Clean up empty footer-bottom wrappers
-    const footerBottoms = doc.querySelectorAll(".footer-bottom, .foot-bottom");
-    footerBottoms.forEach(fb => {
-      if (!fb.textContent?.trim()) fb.remove();
-    });
+      // 9. Reformat Footer Brand Column (Add About Us, move copyright, remove social icons)
+      const footerBrandCols = doc.querySelectorAll("footer .footer-col, footer .fc-brand, footer .foot-col, footer .brand-col, footer > div > div");
+      footerBrandCols.forEach(col => {
+        const logo = col.querySelector(".logo, .footer-brand, .brand-logo, [href='#']");
+        if (logo && logo.textContent?.includes("LOGO_PLACEHOLDER")) {
+          // Found the brand column!
 
-    // 9. Remove footer badges
-    const footerBadges = doc.querySelectorAll(".footer-badges, [class*='footer-badge']");
-    footerBadges.forEach(badge => badge.remove());
+          // 1. Remove social icons
+          const socials = col.querySelector(".socials, .footer-socials, .social-links, .social-icons");
+          if (socials) socials.remove();
+
+          const iconLinks = col.querySelectorAll("a:has(span.material-symbols-outlined), a:has(i), a:has(svg)");
+          iconLinks.forEach(l => {
+            if (!l.textContent?.trim()) l.remove();
+          });
+
+          // 2. Add 'About Us' title above the description
+          const desc = col.querySelector("p");
+          if (desc && !desc.previousElementSibling?.textContent?.includes("About Us")) {
+            const aboutTitle = doc.createElement("h4");
+            const existingTitle = doc.querySelector(".footer-title, .foot-title, h4");
+            aboutTitle.className = existingTitle ? existingTitle.className : "footer-title";
+            aboutTitle.textContent = "About Us";
+            aboutTitle.style.fontWeight = "700";
+            aboutTitle.style.marginBottom = "0.5rem";
+            aboutTitle.style.marginTop = "1rem";
+            col.insertBefore(aboutTitle, desc);
+          }
+
+          // 3. Move copyright text to below the logo
+          const copyP = doc.createElement("p");
+          copyP.textContent = copyRightText;
+          copyP.style.fontSize = "0.875rem";
+          copyP.style.opacity = "0.7";
+          copyP.style.marginTop = "0.5rem";
+          copyP.style.marginBottom = "1.5rem";
+
+          col.insertBefore(copyP, logo.nextSibling);
+        }
+      });
+
+      // 10. Clean up empty footer-bottom wrappers
+      const footerBottoms = doc.querySelectorAll(".footer-bottom, .foot-bottom");
+      footerBottoms.forEach(fb => {
+        if (!fb.textContent?.trim()) fb.remove();
+      });
+
+      // Remove footer badges
+      const footerBadges = doc.querySelectorAll(".footer-badges, [class*='footer-badge']");
+      footerBadges.forEach(badge => badge.remove());
+    }
 
     // 6. Inject Videos
     const videos = project?.scrapedData?.videos || [];
@@ -443,18 +455,22 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     }
 
     // 8. Fallback for other paragraphs
-    const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.`;
-    if (allParagraphs.length > 1) {
-      for (let i = 1; i < allParagraphs.length; i++) {
-        if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']") || allParagraphs[i].closest(".info-text") || allParagraphs[i].closest(".step-content") || allParagraphs[i].closest(".footer-bottom")) {
-          continue;
-        }
-        if (project?.scrapedData?.summary && i === 1) {
-          allParagraphs[i].textContent = project.scrapedData.summary;
-        } else if (project?.scrapedData?.about && i === 2) {
-          allParagraphs[i].textContent = project.scrapedData.about;
-        } else {
-          allParagraphs[i].textContent = fallbackText;
+    // Skip paragraph overwriting entirely for Real Estate templates — their content is already complete
+    const isRealEstateTemplate2 = !!doc.querySelector("[class*='re01-'], [class*='re02-']");
+    if (!isRealEstateTemplate2) {
+      const fallbackText = `Welcome to ${pageTitle}. We provide the best ${subIndustryText} solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.`;
+      if (allParagraphs.length > 1) {
+        for (let i = 1; i < allParagraphs.length; i++) {
+          if (allParagraphs[i].closest(".testi-card") || allParagraphs[i].closest(".v2-faq-item") || allParagraphs[i].closest("[class*='card']") || allParagraphs[i].closest(".info-text") || allParagraphs[i].closest(".step-content") || allParagraphs[i].closest(".footer-bottom")) {
+            continue;
+          }
+          if (project?.scrapedData?.summary && i === 1) {
+            allParagraphs[i].textContent = project.scrapedData.summary;
+          } else if (project?.scrapedData?.about && i === 2) {
+            allParagraphs[i].textContent = project.scrapedData.about;
+          } else {
+            allParagraphs[i].textContent = fallbackText;
+          }
         }
       }
     }
@@ -670,10 +686,98 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/plumber/templates03/screenshot.png",
     gradient: "linear-gradient(135deg, #0c0f0d 0%, #a6e028 100%)",
     prompt: "A dark-themed modern plumbing landing page with glowing accents, trust indicators, hero section, and lead capture form.",
+  },
+  {
+    id: "plumber-04",
+    name: "Modern Plumber 04",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/templates04/screenshotp.png",
+    gradient: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
+    prompt: "A modern plumbing landing page with a hero section, services grid, trust indicators, features, steps, and lead capture form. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"pl04-service-card\">, <div class=\"pl04-feature-item\">, <div class=\"pl04-process-step\">, <div class=\"pl04-testi-card\">, and <div class=\"pl04-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items.",
+  },
+  {
+    id: "realestate-01",
+    name: "Luxury Estate",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate1.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #c5a059 100%)",
+    prompt: "A premium, elegant luxury real estate landing page focusing on high-end property listings, expert agents, client testimonials, and lead capture. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"re01-property-card\">, <div class=\"re01-service-card\">, <div class=\"re01-step\">, <div class=\"re01-testimonial-card\">, <div class=\"re01-team-card\">, and <div class=\"re01-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes like bg-primary to text elements.",
+  },
+  {
+    id: "realestate-02",
+    name: "Lumina Homes",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate2.png",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #333333 100%)",
+    prompt: "A clean, modern real estate agency page with minimalist typography, split hero layout, verified property listings, and trust indicators. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE property card, service card, feature card, and blog/news card exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes to text elements.",
+  },
+  {
+    id: "realestate-03",
+    name: "Estate 03",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate3.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #c5a059 100%)",
+    prompt: "A premium, elegant luxury real estate landing page focusing on high-end property listings, expert agents, client testimonials, and lead capture. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"re03-property-card\">, <div class=\"re03-service-card\">, <div class=\"re03-step\">, <div class=\"re03-testimonial-card\">, <div class=\"re03-team-card\">, and <div class=\"re03-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes like bg-primary to text elements.",
+  },
+  {
+    id: "realestate-04",
+    name: "Agency 04",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate4.png",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #333333 100%)",
+    prompt: "A clean, modern real estate agency page with minimalist typography, split hero layout, verified property listings, and trust indicators. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE property card, service card, feature card, and blog/news card exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes to text elements.",
+  },
+  {
+    id: "realestate-05",
+    name: "Estate 05",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate5.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #c5a059 100%)",
+    prompt: "A premium, elegant luxury real estate landing page focusing on high-end property listings, expert agents, client testimonials, and lead capture. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"re05-property-card\">, <div class=\"re05-service-card\">, <div class=\"re05-step\">, <div class=\"re05-testimonial-card\">, <div class=\"re05-team-card\">, and <div class=\"re05-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes like bg-primary to text elements.",
+  },
+  {
+    id: "realestate-06",
+    name: "Agency 06",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate6.png",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #333333 100%)",
+    prompt: "A clean, modern real estate agency page with minimalist typography, split hero layout, verified property listings, and trust indicators. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE property card, service card, feature card, and blog/news card exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes to text elements.",
+  },
+  {
+    id: "realestate-07",
+    name: "Estate 07",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate7.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #c5a059 100%)",
+    prompt: "A premium, elegant luxury real estate landing page focusing on high-end property listings, expert agents, client testimonials, and lead capture. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"re07-property-card\">, <div class=\"re07-service-card\">, <div class=\"re07-step\">, <div class=\"re07-testimonial-card\">, <div class=\"re07-team-card\">, and <div class=\"re07-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes like bg-primary to text elements.",
+  },
+  {
+    id: "realestate-08",
+    name: "Agency 08",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate8.png",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #333333 100%)",
+    prompt: "A clean, modern real estate agency page with minimalist typography, split hero layout, verified property listings, and trust indicators. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE property card, service card, feature card, and blog/news card exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes to text elements.",
+  },
+  {
+    id: "realestate-09",
+    name: "Estate 09",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate9.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #c5a059 100%)",
+    prompt: "A premium, elegant luxury real estate landing page focusing on high-end property listings, expert agents, client testimonials, and lead capture. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"re09-property-card\">, <div class=\"re09-service-card\">, <div class=\"re09-step\">, <div class=\"re09-testimonial-card\">, <div class=\"re09-team-card\">, and <div class=\"re09-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes like bg-primary to text elements.",
+  },
+  {
+    id: "realestate-10",
+    name: "Agency 10",
+    tag: "Real Estate",
+    img: "/assets/templates/realEstate/RealEstate10.png",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #333333 100%)",
+    prompt: "A clean, modern real estate agency page with minimalist typography, split hero layout, verified property listings, and trust indicators. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE property card, service card, feature card, and blog/news card exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items. DO NOT add arbitrary Tailwind classes to text elements.",
   }
 ];
 
-const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance", "Plumber"];
+const TEMPLATE_CATEGORIES = ["All", "Law Firm", "Healthcare", "Travel", "Finance", "Plumber", "Real Estate"];
 
 // ─── websiteProfile-aware project data helpers ────────────────────────────────
 // Extracts data from the new `websiteProfile` shape first, falls back to legacy fields.
@@ -1209,6 +1313,17 @@ const CreatePagePage = () => {
           case "plumber-01": enrichedContent = plumber01Html; enrichedStyles = plumber01Styles; break;
           case "plumber-02": enrichedContent = plumber02Html; enrichedStyles = plumber02Styles; break;
           case "plumber-03": enrichedContent = plumber03Html; enrichedStyles = plumber03Styles; break;
+          case "plumber-04": enrichedContent = plumber04Html; enrichedStyles = plumber04Styles; break;
+          case "realestate-01": enrichedContent = realEstate01Html; enrichedStyles = realEstate01Styles; break;
+          case "realestate-02": enrichedContent = realEstate02Html; enrichedStyles = realEstate02Styles; break;
+          case "realestate-03": enrichedContent = realEstate03Html; enrichedStyles = realEstate03Styles; break;
+          case "realestate-04": enrichedContent = realEstate04Html; enrichedStyles = realEstate04Styles; break;
+          case "realestate-05": enrichedContent = realEstate05Html; enrichedStyles = realEstate05Styles; break;
+          case "realestate-06": enrichedContent = realEstate06Html; enrichedStyles = realEstate06Styles; break;
+          case "realestate-07": enrichedContent = realEstate07Html; enrichedStyles = realEstate07Styles; break;
+          case "realestate-08": enrichedContent = realEstate08Html; enrichedStyles = realEstate08Styles; break;
+          case "realestate-09": enrichedContent = realEstate09Html; enrichedStyles = realEstate09Styles; break;
+          case "realestate-10": enrichedContent = realEstate10Html; enrichedStyles = realEstate10Styles; break;
           default: enrichedContent = ""; enrichedStyles = "";
         }
       }
@@ -2033,6 +2148,17 @@ ${enrichedContent}
                 case "plumber-01": tpHtml = plumber01Html; tpStyles = plumber01Styles; break;
                 case "plumber-02": tpHtml = plumber02Html; tpStyles = plumber02Styles; break;
                 case "plumber-03": tpHtml = plumber03Html; tpStyles = plumber03Styles; break;
+                case "plumber-04": tpHtml = plumber04Html; tpStyles = plumber04Styles; break;
+                case "realestate-01": tpHtml = realEstate01Html; tpStyles = realEstate01Styles; break;
+                case "realestate-02": tpHtml = realEstate02Html; tpStyles = realEstate02Styles; break;
+                case "realestate-03": tpHtml = realEstate03Html; tpStyles = realEstate03Styles; break;
+                case "realestate-04": tpHtml = realEstate04Html; tpStyles = realEstate04Styles; break;
+                case "realestate-05": tpHtml = realEstate05Html; tpStyles = realEstate05Styles; break;
+                case "realestate-06": tpHtml = realEstate06Html; tpStyles = realEstate06Styles; break;
+                case "realestate-07": tpHtml = realEstate07Html; tpStyles = realEstate07Styles; break;
+                case "realestate-08": tpHtml = realEstate08Html; tpStyles = realEstate08Styles; break;
+                case "realestate-09": tpHtml = realEstate09Html; tpStyles = realEstate09Styles; break;
+                case "realestate-10": tpHtml = realEstate10Html; tpStyles = realEstate10Styles; break;
                 default: tpHtml = ""; tpStyles = ""; break;
               }
 
@@ -2213,6 +2339,34 @@ ${enrichedContent}
                                   self.__swiper = new window.Swiper(self, props);
                                 });
                               }
+                              document.addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                const form = e.target;
+                                const submitBtn = form.querySelector('button[type="submit"], input[type="submit"], button:not([type="button"])');
+                                if (submitBtn) {
+                                  const originalText = submitBtn.textContent || submitBtn.value;
+                                  if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Sending...';
+                                  else submitBtn.textContent = 'Sending...';
+                                  
+                                  setTimeout(function() {
+                                    if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Success! We will contact you soon.';
+                                    else submitBtn.textContent = 'Success! We will contact you soon.';
+                                    
+                                    const originalBg = submitBtn.style.backgroundColor;
+                                    const originalColor = submitBtn.style.color;
+                                    submitBtn.style.backgroundColor = '#10b981';
+                                    submitBtn.style.color = '#ffffff';
+                                    form.reset();
+                                    
+                                    setTimeout(function() {
+                                      if (submitBtn.tagName === 'INPUT') submitBtn.value = originalText;
+                                      else submitBtn.textContent = originalText;
+                                      submitBtn.style.backgroundColor = originalBg;
+                                      submitBtn.style.color = originalColor;
+                                    }, 4000);
+                                  }, 1500);
+                                }
+                              });
                             }
                             if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initInteractions); } else { initInteractions(); }
                           }();

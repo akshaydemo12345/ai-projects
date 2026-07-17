@@ -851,11 +851,11 @@ Pixel-perfect, fully responsive, accessible (WCAG-friendly contrast), calm high-
 2. Trust/Stats Bar
 3. Services / Features
 4. About / Our Story
-5. How It Works / Process
-6. Testimonials
-7. Team / Experts
+5. Featured Listings
+6. How It Works / Process
+7. Testimonials
 8. FAQ (accordion)
-9. Final CTA + Lead Capture Form
+9. Final CTA
 10. Footer
 Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
@@ -869,7 +869,7 @@ Headline centered on the promise of ${keyword}
 Supporting paragraph + CTA button
 Floating stats card: properties sold, years of experience, average days on market, client satisfaction %
 Featured Listings / Highlights
-Grid of 3-6 property cards relevant to ${keyword}: image, price, key details, "View Details" button
+Grid of 3-6 property cards relevant to ${keyword}: image, key details, location, "View Details" button
 Why Work With Us
 4 feature blocks: local expertise, negotiation skill, marketing reach, client-first process
 Agent / Team Profile
@@ -896,14 +896,14 @@ Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
                   (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
 1. Hero (full-width, bold headline + CTA)
-2. Services / Features (prominent cards)
-3. How It Works / Process (numbered steps)
-4. Stats / Social Proof numbers
-5. Team / Experts
+2. Featured Listings
+3. Stats / Social Proof numbers
+4. Services / Features
+5. How It Works / Process
 6. Lead Capture Form (mid-page, inline, compelling)
-7. Testimonials
-8. About / Our Story
-9. FAQ (accordion)
+7. About / Our Story
+8. Team / Experts
+9. Testimonials
 10. Footer
 Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
@@ -921,7 +921,7 @@ Headline centered on the promise of ${keyword}
 Supporting paragraph + CTA button
 Floating stats card: properties sold, years of experience, average days on market, client satisfaction %
 Featured Listings / Highlights
-Grid of 3-6 property cards relevant to ${keyword}: image, price, key details, "View Details" button
+Grid of 3-6 property cards relevant to ${keyword}: image, key details, location, "View Details" button
 Why Work With Us
 4 feature blocks: local expertise, negotiation skill, marketing reach, client-first process
 Agent / Team Profile
@@ -947,15 +947,15 @@ Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky he
 Design Requirements
 Pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
                   (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
-1. Hero (MUST have a compact inline form OR prominent single-field email/phone capture built into the hero section)
-2. Stats / Social Proof numbers
+1. Hero (minimal, bold)
+2. Lead Capture Form (prominent, centered right below hero)
 3. About / Our Story
 4. Services / Features
 5. Testimonials (prominent, large quotes)
-6. Team / Experts
-7. How It Works / Process
-8. Lead Capture Form
-9. FAQ (accordion)
+6. Featured Listings
+7. Stats / Social Proof
+8. FAQ (accordion)
+9. Final CTA
 10. Footer
 Design a premium, elegant landing page focused on ${keyword}.
 The design should feel aspirational, trustworthy, and high-end, inspired by top real estate and property brand websites.
@@ -973,7 +973,7 @@ Headline centered on the promise of ${keyword}
 Supporting paragraph + CTA button
 Floating stats card: properties sold, years of experience, average days on market, client satisfaction %
 Featured Listings / Highlights
-Grid of 3-6 property cards relevant to ${keyword}: image, price, key details, "View Details" button
+Grid of 3-6 property cards relevant to ${keyword}: image, key details, location, "View Details" button
 Why Work With Us
 4 feature blocks: local expertise, negotiation skill, marketing reach, client-first process
 Agent / Team Profile
@@ -999,14 +999,14 @@ Smooth fade-in, scroll reveal, image zoom on hover, counter animation, sticky he
 Design Requirements
 Creative, broken-grid, pixel-perfect, fully responsive, accessible, high-conversion layout, consistent 8px spacing system, premium real estate photography treatment throughout.`,
                   (keyword: string) => `IMPORTANT LAYOUT RULE: Arrange sections in this EXACT order:
-1. Hero (minimal, bold)
+1. Hero (split layout)
 2. About / Our Story (right after hero)
-3. Testimonials
-4. Services / Features
-5. Stats / Social Proof numbers
-6. Lead Capture Form (prominent, centered)
-7. How It Works / Process
-8. Team / Experts
+3. How It Works / Process
+4. Lead Capture Form (inline, elegant)
+5. Featured Listings
+6. Services / Features
+7. Team / Experts
+8. Testimonials
 9. FAQ (accordion)
 10. Footer
 Design a premium, elegant landing page focused on ${keyword}.
@@ -1025,7 +1025,7 @@ Headline centered on the promise of ${keyword}
 Supporting paragraph + CTA button
 Floating stats card: properties sold, years of experience, average days on market, client satisfaction %
 Featured Listings / Highlights
-Grid of 3-6 property cards relevant to ${keyword}: image, price, key details, "View Details" button
+Grid of 3-6 property cards relevant to ${keyword}: image, key details, location, "View Details" button
 Why Work With Us
 4 feature blocks: local expertise, negotiation skill, marketing reach, client-first process
 Agent / Team Profile
