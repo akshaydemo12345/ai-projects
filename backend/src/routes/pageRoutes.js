@@ -11,6 +11,7 @@ const {
   captureLead,
   getLeads,
   exportLeadsCsv,
+  claimRequest,
 } = require('../controllers/pageController');
 
 const router = express.Router();
@@ -22,6 +23,13 @@ const router = express.Router();
  * @desc    Capture a lead from a live/published landing page
  */
 router.post('/:id/leads', captureLead);
+
+/**
+ * @route   POST /pages/claim-request
+ * @desc    Submit a claim request for a page (when publishing is disabled)
+ *          Public: allows unauthenticated clients to request a claim.
+ */
+router.post('/claim-request', claimRequest);
 
 
 // ─── Protected Routes (Auth Required) ──────────────────────────────────────────
@@ -69,5 +77,6 @@ router.get('/:id/leads', protect, getLeads);
  * @desc    Download all captured leads for a page as a CSV file
  */
 router.get('/:id/export-leads', protect, exportLeadsCsv);
+
 
 module.exports = router;

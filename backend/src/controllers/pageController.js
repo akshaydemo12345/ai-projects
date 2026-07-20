@@ -10,6 +10,7 @@ const Project = require('../models/Project');
 const AIService = require('../services/aiService');
 const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
+const emailService = require('../services/emailService');
 const logger = require('../utils/logger');
 const config = require('../config');
 
@@ -1220,6 +1221,14 @@ exports.deletePage = async (req, res, next) => {
 // ─── POST /pages/:id/publish ──────────────────────────────────────────────────
 exports.publishPage = async (req, res, next) => {
   try {
+    // Check if Publish Engine is enabled
+    if (process.env.PUBLISH_ENGINE_ENABLED === 'false') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Publishing is currently disabled. Please use the Claim feature instead.'
+      });
+    }
+
     const parsed = publishPageSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -1465,6 +1474,135 @@ exports.exportLeadsCsv = async (req, res, next) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=leads-${page.slug}.csv`);
     return res.status(200).send(csvData);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── POST /pages/claim-request ────────────────────────────────────────────────
+exports.claimRequest = async (req, res, next) => {
+  try {
+    // Check if Publish Engine is disabled (Claim only available when Publish is disabled)
+    if (process.env.PUBLISH_ENGINE_ENABLED !== 'false') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Claim feature is only available when publishing is disabled.'
+      });
+    }
+
+    const { pageTitle, landingPageUrl, websiteUrl, clientEmail } = req.body;
+
+    if (!pageTitle) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Page title is required'
+      });
+    }
+
+    const adminEmail = process.env.ADMIN_MAIL || 'admin@gmail.com';
+
+    if (!adminEmail) {
+      return res.status(500).json({
+        status: 'fail',
+        message: 'Admin email is not configured'
+      });
+    }
+
+    // Prefer authenticated user's email, fall back to clientEmail from body, then 'N/A'
+    const userEmail = (req.user && req.user.email) ? req.user.email : (clientEmail || 'N/A');
+
+    // Try to determine the project website URL from the landing/preview URL when possible
+    let projectWebsiteUrl = websiteUrl || 'N/A';
+    try {
+      if (landingPageUrl) {
+        try {
+          const parsed = new URL(landingPageUrl);
+          // preview URL pattern: /preview?page=<pageId>&token=...
+          const pageId = parsed.searchParams.get('page');
+          if (pageId) {
+            const pageDoc = await Page.findById(pageId).select('projectId').lean();
+            if (pageDoc && pageDoc.projectId) {
+              const project = await Project.findById(pageDoc.projectId).select('websiteUrl').lean();
+              if (project && project.websiteUrl) projectWebsiteUrl = project.websiteUrl;
+            }
+          } else {
+            // Try to extract page id from editor URL paths like /editor/:id or /editor/:id/
+            const pathMatch = parsed.pathname.match(/\/editor\/(?:preview\/)?([a-f0-9]{24})/i);
+            if (pathMatch && pathMatch[1]) {
+              const pageDoc = await Page.findById(pathMatch[1]).select('projectId').lean();
+              if (pageDoc && pageDoc.projectId) {
+                const project = await Project.findById(pageDoc.projectId).select('websiteUrl').lean();
+                if (project && project.websiteUrl) projectWebsiteUrl = project.websiteUrl;
+              }
+            }
+          }
+        } catch (parseErr) {
+          // ignore URL parse errors
+        }
+      }
+    } catch (e) { }
+
+    try {
+      // Build a simple, clear HTML email body
+      const submittedAt = new Date().toISOString();
+      const htmlBody = `
+        <table style="width:100%;max-width:680px;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;">
+          <tr>
+            <td style="padding:20px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+              <h2 style="margin:0 0 8px;color:#111827">New Claim Request</h2>
+              <p style="margin:0 0 16px;color:#6b7280">A user has requested to claim the landing page. Details below.</p>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700;width:160px">Client Email</td>
+                  <td style="padding:8px 0;color:#111827"><a href="mailto:${userEmail}" style="color:#2563eb;text-decoration:none">${userEmail}</a></td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700">Landing Page</td>
+                  <td style="padding:8px 0;color:#111827"><a href="${landingPageUrl || '#'}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none">${landingPageUrl || 'N/A'}</a></td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700">Website URL</td>
+                  <td style="padding:8px 0;color:#111827"><a href="${projectWebsiteUrl || '#'}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none">${projectWebsiteUrl || 'N/A'}</a></td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700">Page Title</td>
+                  <td style="padding:8px 0;color:#111827">${pageTitle}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700">Submitted</td>
+                  <td style="padding:8px 0;color:#111827">${submittedAt}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#374151;font-weight:700">IP</td>
+                  <td style="padding:8px 0;color:#111827">${req.ip || 'N/A'}</td>
+                </tr>
+              </table>
+              <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Admin notification — verify ownership before proceeding.</p>
+            </td>
+          </tr>
+        </table>
+      `;
+
+      // Send email to admin
+      await emailService.sendEmail({
+        to: adminEmail,
+        subject: `New Page Claim Request - ${pageTitle}`,
+        htmlContent: htmlBody,
+        fromName: process.env.FROM_NAME || 'AI Landing Page Builder',
+        fromEmail: process.env.FROM_EMAIL || 'websitetestingid@gmail.com'
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Claim request sent successfully. An administrator will review your request.'
+      });
+    } catch (emailError) {
+      logger.error('Failed to send claim email:', emailError);
+      return res.status(500).json({
+        status: 'fail',
+        message: 'Failed to send claim request. Please try again later.'
+      });
+    }
   } catch (err) {
     next(err);
   }

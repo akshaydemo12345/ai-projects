@@ -347,7 +347,8 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     endpoint.includes('/auth/firebase') ||
     endpoint.includes('/auth/forgot-password') ||
     endpoint.includes('/auth/reset-password') ||
-    endpoint.includes('/auth/resend-verification-email');
+    endpoint.includes('/auth/resend-verification-email') ||
+    endpoint.includes('/auth/auto-login/');
 
   if (response.status === 401 && !hasRetried && !isPublicAuthRequest) {
     try {
@@ -429,6 +430,30 @@ export const authApi = {
   },
   getProfile: async () => {
     return apiFetch('/auth/profile');
+  },
+  sendAutoLoginLink: async (email: string) => {
+    return apiFetch('/auth/auto-login/send-link', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+  sendAutoLoginOtp: async (email: string) => {
+    return apiFetch('/auth/auto-login/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+  verifyAutoLoginOtp: async (email: string, otp: string) => {
+    return apiFetch('/auth/auto-login/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+  // Used by the /auto-login-callback page: after the backend sets the
+  // refreshToken cookie and redirects here, this exchanges that cookie
+  // for an access token (same call apiFetch already makes on a 401).
+  refreshSession: async () => {
+    return refreshAuthToken();
   },
 };
 

@@ -1,13 +1,75 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Zap, Star, Eye, Save, Image } from "lucide-react";
+import { Zap, Star, Eye, Save, Image, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import config from "@/config";
 
 interface EditorTopBarProps {
   title: string;
   onSave: () => void;
+  pageTitle?: string;
 }
 
-const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
+const EditorTopBar = ({ title, onSave, pageTitle }: EditorTopBarProps) => {
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
+  let storedUser: any = null;
+  try { storedUser = storedUserJson ? JSON.parse(storedUserJson) : null; } catch (e) { storedUser = null; }
+  useEffect(() => {
+    // Debug: log runtime feature flag to confirm env is applied
+    try {
+      // eslint-disable-next-line no-console
+      console.log('runtime: publishEngineEnabled=', config.features.publishEngineEnabled, 'VITE_PUBLISH_ENGINE_ENABLED=', import.meta.env.VITE_PUBLISH_ENGINE_ENABLED);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+  
+  const handleClaimRequest = async () => {
+    setClaimLoading(true);
+    try {
+      const landingPageUrl = window.location.href;
+      const websiteUrl = config.app.url || window.location.origin;
+
+      const token = localStorage.getItem('pagecraft_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${config.api.baseUrl}/pages/claim-request`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({
+          pageTitle: pageTitle || title,
+          landingPageUrl,
+          websiteUrl,
+          clientEmail: storedUser?.email || null,
+        }),
+      });
+      
+      if (response.ok) {
+        alert('Claim request sent successfully! The admin will review your request.');
+        setClaimOpen(false);
+      } else {
+        const data = await response.json().catch(() => null);
+        alert(data?.message || 'Failed to send claim request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Claim request error:', error);
+      alert('Error sending claim request');
+    } finally {
+      setClaimLoading(false);
+    }
+  };
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between border-b border-border bg-[hsl(240,20%,12%)] px-4">
       <div className="flex items-center gap-3">
@@ -70,9 +132,52 @@ const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
         >
           <Save style={{ width: "15px", height: "15px" }} /> Save
         </button>
-        <Link to="/dashboard/published">
-          <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs px-4">Publish</Button>
-        </Link>
+        {config.features.publishEngineEnabled ? (
+          <Link to="/dashboard/published">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs px-4">Publish</Button>
+          </Link>
+        ) : (
+          <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs px-4 flex items-center gap-2">
+                <Mail style={{ width: "14px", height: "14px" }} /> Claim
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Claim Page Request</DialogTitle>
+                <DialogDescription>
+                  Submit a claim request for this page. An administrator will review and approve your request.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Page Title</label>
+                  <p className="text-sm text-muted-foreground mt-1">{pageTitle || title}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Client Email</label>
+                  <p className="text-sm text-muted-foreground mt-1">{storedUser?.email || 'Not signed in'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Landing Page</label>
+                  <p className="text-sm text-muted-foreground mt-1 break-all">{window?.location?.href || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Website URL</label>
+                  <p className="text-sm text-muted-foreground mt-1">{config.app.url || window.location.origin}</p>
+                </div>
+                <Button 
+                  onClick={handleClaimRequest}
+                  disabled={claimLoading}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {claimLoading ? 'Sending...' : 'Send Claim Request'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );

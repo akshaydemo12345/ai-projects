@@ -367,6 +367,22 @@ const buildLeadCaptureScript = (page) => {
   }
   sUTM();
 
+  // Persistence Utility: Capture the TRUE original referrer at first landing.
+  // document.referrer reflects whatever the browser actually sent on this
+  // page's own navigation (already policy-truncated by the browser, but this
+  // is the most accurate value JS can see). We stash it once per session so
+  // that later fetch() calls to the API (which have their OWN Referer header
+  // pointing at this landing page, not the original site) don't overwrite it.
+  function sREF(){
+    try{
+      var existing = sessionStorage.getItem("dm_referrer");
+      if(!existing && document.referrer){
+        sessionStorage.setItem("dm_referrer", document.referrer);
+      }
+    }catch(e){}
+  }
+  sREF();
+
   function getUTM(k){
     var v=null;
     try{
@@ -376,6 +392,12 @@ const buildLeadCaptureScript = (page) => {
       var q=new URLSearchParams(window.location.search);
       v=q.get(k);
     }
+    return v || "";
+  }
+
+  function getReferrer(){
+    var v=null;
+    try{ v=sessionStorage.getItem("dm_referrer"); }catch(e){}
     return v || "";
   }
 
@@ -451,7 +473,8 @@ const buildLeadCaptureScript = (page) => {
       timestamp: new Date().getTime(),
       pageurl: window.location.href,  // full current URL with slug + UTM params (backend Issue #3 fix)
       url: window.location.href,
-      domain: window.location.hostname
+      domain: window.location.hostname,
+      referrer: getReferrer()  // original referrer captured on first landing, not this fetch()'s own Referer header
     };
 
     // Capture every single named field in the form
