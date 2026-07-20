@@ -37,6 +37,8 @@ const config = {
   features: {
     enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
     enableDebugMode: import.meta.env.VITE_ENABLE_DEBUG === 'true',
+    templateEngineEnabled: import.meta.env.VITE_TEMPLATE_ENGINE_ENABLED !== 'false',
+    publishEngineEnabled: import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false',
   },
 };
 
@@ -46,6 +48,12 @@ if (config.isDevelopment) {
     env: config.env,
     apiBaseUrl: config.api.baseUrl,
     appUrl: config.app.url,
+  });
+  console.log('🚀 Feature Flags:', {
+    publishEngineEnabled: config.features.publishEngineEnabled,
+    templateEngineEnabled: config.features.templateEngineEnabled,
+    VITE_PUBLISH_ENGINE_ENABLED: import.meta.env.VITE_PUBLISH_ENGINE_ENABLED,
+    VITE_TEMPLATE_ENGINE_ENABLED: import.meta.env.VITE_TEMPLATE_ENGINE_ENABLED,
   });
 }
 

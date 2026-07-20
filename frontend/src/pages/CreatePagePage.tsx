@@ -3,6 +3,7 @@ import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
   Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search, Globe
 } from "lucide-react";
+import config from "@/config";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
@@ -810,6 +811,12 @@ const CreatePagePage = () => {
   const [figmaPreview, setFigmaPreview] = useState<string | null>(null);
   const [figmaBase64, setFigmaBase64] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!config.features.templateEngineEnabled && activeMethod === "template") {
+      setActiveMethod("ai");
+    }
+  }, [activeMethod, config.features.templateEngineEnabled]);
 
   // Helper to get an image URL for a given industry (static dummy URLs – random selection)
   const industryImages: Record<string, string[]> = {
@@ -1726,23 +1733,26 @@ ${enrichedContent}
               </div>
             </section>
 
-            <section>
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Creation Method</p>
-              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-                {[
-                  { key: "ai" as const, label: "✨ Describe with AI", icon: <Brain className="h-3.5 w-3.5" /> },
-                  { key: "template" as const, label: "🗂️ Template", icon: <LayoutTemplate className="h-3.5 w-3.5" /> },
-                ].map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => setActiveMethod(m.key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${activeMethod === m.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                  >
-                    {m.icon} {m.label}
-                  </button>
-                ))}
-              </div>
-            </section>
+            {config.features.templateEngineEnabled && (
+              <section>
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Creation Method</p>
+                <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                  {[
+                    { key: "ai" as const, label: "✨ Describe with AI", icon: <Brain className="h-3.5 w-3.5" /> },
+                    { key: "template" as const, label: "🗂️ Template", icon: <LayoutTemplate className="h-3.5 w-3.5" /> },
+                  ].map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => setActiveMethod(m.key)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${activeMethod === m.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                    >
+                      {m.icon}
+                      <span className="ml-1">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {activeMethod === "ai" && (
               <section className="space-y-3">

@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
+import AutoLoginCallback from "./pages/AutoLoginCallback";
+import AutoLoginOtpPage from "./pages/AutoLoginotpPage";
 import EditorPage from "./pages/EditorPage";
 import PublishedPage from "./pages/PublishedPage";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -38,15 +40,22 @@ const queryClient = new QueryClient({
 const RootHandler = () => {
   const navigate = useNavigate();
   const pg = new URLSearchParams(window.location.search).get('pg');
-  
+  const email = new URLSearchParams(window.location.search).get('email');
+
   useEffect(() => {
+    if (email) {
+      // Someone opened "/?email=user@example.com" — send them into the
+      // auto-login OTP flow, preserving the email in the query string.
+      navigate(`/auto-login${window.location.search}`, { replace: true });
+      return;
+    }
     if (pg) {
       // Instantly redirect to clean slug URL
       navigate(`/${pg}`, { replace: true });
     }
-  }, [pg, navigate]);
+  }, [pg, email, navigate]);
 
-  if (pg) return null;
+  if (pg || email) return null;
   return <Index />;
 };
 
@@ -60,6 +69,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<RootHandler />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auto-login-callback" element={<AutoLoginCallback />} />
+            <Route path="/auto-login" element={<AutoLoginOtpPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
             
             {/* Protected Dashboard Routes */}
