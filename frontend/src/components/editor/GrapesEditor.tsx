@@ -4509,14 +4509,56 @@ const GrapesEditor = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
-          <button onClick={handlePublish} disabled={isPublishing} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #818cf8, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
-            padding: '7px 22px', fontSize: 13, fontWeight: 800, cursor: isPublishing ? 'not-allowed' : 'pointer',
-            boxShadow: isPublishing ? 'none' : '0 4px 15px rgba(124,58,237,0.4)',
-            transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
-          }}>
-            {isPublishing ? 'Publishing...' : <><RocketIcon /> Publish</>}
+          <button
+            onClick={import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? handlePublish : async () => {
+              // Claim flow: send claim request to backend
+              try {
+                setIsPublishing(true);
+                const clientRaw = localStorage.getItem('pagecraft_user') || localStorage.getItem('pagecraftUser') || null;
+                let clientEmail = null;
+                try { if (clientRaw) clientEmail = JSON.parse(clientRaw).email || null; } catch (e) { clientEmail = clientRaw; }
+                // Prefer a temporary preview URL for the landing page (not the editor URL)
+                const previewUrl = page?.previewUrl || (page?._id && page?.previewToken ? `${import.meta.env.VITE_APP_URL}/preview?page=${page._id}&token=${page.previewToken}` : null);
+                const body = {
+                  pageTitle: page?.name || pageTitle || 'Untitled Page',
+                  landingPageUrl: previewUrl || window.location.href,
+                  websiteUrl: import.meta.env.VITE_APP_URL || '',
+                  clientEmail
+                };
+                const base = import.meta.env.VITE_API_BASE_URL || '';
+                const token = localStorage.getItem('access_token') || null;
+                await fetch(`${base}/pages/claim-request`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify(body)
+                });
+                // notify user
+                try { toast.success('Claim request sent to admin.'); } catch (e) { console.log('Claim sent'); }
+              } catch (err) {
+                try { toast.error('Failed to send claim request.'); } catch (e) { console.error(err); }
+              } finally {
+                try { setIsPublishing(false); } catch (e) { }
+              }
+            }}
+            disabled={isPublishing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: isPublishing ? '#4c1d95' : 'linear-gradient(135deg, #818cf8, #6366f1)', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '7px 22px', fontSize: 13, fontWeight: 800, cursor: isPublishing ? 'not-allowed' : 'pointer',
+              boxShadow: isPublishing ? 'none' : '0 4px 15px rgba(124,58,237,0.4)',
+              transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
+            }}>
+            {isPublishing
+              ? (import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? 'Publishing...' : 'Claiming...')
+              : (
+                <>
+                  <RocketIcon /> {import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? 'Publish' : 'Claim'}
+                </>
+              )}
           </button>
         </div>
       </div>

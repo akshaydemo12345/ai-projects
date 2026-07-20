@@ -47,6 +47,51 @@ const createEmailVerificationToken = () => {
 const hashEmailVerificationToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
 
+// ─── Auto-Login OTP (email-based one-time code) ────────────────────────────────
+// User enters their email, gets a 6-digit code by email, enters it back —
+// proves they actually own that inbox before we log them in. The code is
+// stored only as a hash, expires quickly, and is invalidated after one use
+// or too many wrong guesses (see verifyAutoLoginOtp in authController.js).
+const createOtp = () => {
+  const otp = crypto.randomInt(100000, 999999).toString(); // 6-digit, no leading zero
+  const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+  return { otp, hashedOtp, expiresAt };
+};
+
+const hashOtp = (otp) =>
+  crypto.createHash('sha256').update(String(otp)).digest('hex');
+
+// ─── Auto-Login Link (URL-based, one click, no code to type) ──────────────────
+// Same idea as the OTP flow but the proof-of-inbox-ownership step is clicking
+// a link instead of typing a code. Only the hash is ever stored; the raw
+// token only ever exists in the emailed URL and briefly in the request query.
+const createAutoLoginToken = () => {
+  const loginToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(loginToken).digest('hex');
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+  return { loginToken, hashedToken, expiresAt };
+};
+
+const hashAutoLoginToken = (token) =>
+  crypto.createHash('sha256').update(String(token)).digest('hex');
+
+// Constant-time comparison for hex-encoded hashes (OTP, reset tokens, etc.)
+// Using `===` leaks timing information proportional to how many leading
+// characters match, which — while a very hard attack in practice over a
+// network — is trivial to close off with crypto.timingSafeEqual.
+const safeCompareHex = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  try {
+    const bufA = Buffer.from(a, 'hex');
+    const bufB = Buffer.from(b, 'hex');
+    if (bufA.length !== bufB.length || bufA.length === 0) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch (e) {
+    return false;
+  }
+};
+
 
 // ─── Send Access + Refresh Token Response ────────────────────────────────────
 const sendToken = (user, statusCode, res) => {
@@ -78,5 +123,10 @@ module.exports = {
   hashResetToken,
   createEmailVerificationToken,
   hashEmailVerificationToken,
+  createOtp,
+  hashOtp,
+  createAutoLoginToken,
+  hashAutoLoginToken,
+  safeCompareHex,
   sendToken,
 };

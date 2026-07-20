@@ -50,6 +50,13 @@ const userSchema = new mongoose.Schema({
   refreshToken: String,
   passwordResetToken: String,
   passwordResetExpiresAt: Date,
+  // Auto-login (OTP) — was missing before, causing OTP save to silently no-op
+  otpCode: { type: String, select: false },
+  otpExpiresAt: Date,
+  otpAttempts: { type: Number, default: 0 },
+  // Auto-login (URL / magic link)
+  autoLoginToken: { type: String, select: false },
+  autoLoginTokenExpiresAt: Date,
   createdAt: {
     type: Date,
     default: Date.now,

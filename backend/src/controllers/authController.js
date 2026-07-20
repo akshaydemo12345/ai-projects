@@ -7,11 +7,17 @@ const { getAuth } = require('firebase-admin').auth;
 const {
   sendToken,
   signToken,
+  signRefreshToken,
   verifyRefreshToken,
   createPasswordResetToken,
   createEmailVerificationToken,
   hashResetToken,
   hashEmailVerificationToken,
+  createOtp,
+  hashOtp,
+  createAutoLoginToken,
+  hashAutoLoginToken,
+  safeCompareHex,
 } = require('../utils/jwt');
 const logger = require('../utils/logger');
 const firebaseAdmin = require('../services/firebaseAdmin');
@@ -219,6 +225,271 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// ─── POST /auth/auto-login/send-otp ────────────────────────────────────────────
+// Step 1: Generate a 6-digit OTP and email it to the user.
+// Body: { email }
+exports.sendAutoLoginOtp = async (req, res, next) => {
+  try {
+    const emailService = require('../services/emailService');
+    const { email } = req.body;
+    if (!email) return next(new AppError('Please provide your email', 400));
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // New visitor — create a bare-bones account so the same ?email= link
+      // works for first-time users, not just returning ones. No password is
+      // set, so this account can only ever be accessed via OTP/magic-link
+      // (or a later "set password" flow), never brute-forced at /auth/login.
+      const namePlaceholder = email.split('@')[0];
+      user = await User.create({ name: namePlaceholder, email });
+      logger.info('Auto-created user via auto-login OTP', { userId: user._id, email });
+    }
+
+    const { otp, hashedOtp, expiresAt } = createOtp();
+    user.otpCode = hashedOtp;
+    user.otpExpiresAt = expiresAt;
+    user.otpAttempts = 0;
+    await user.save({ validateBeforeSave: false });
+
+    logger.info('Auto-login OTP requested', { userId: user._id, email });
+
+    const htmlContent = `
+      <h2>Your Login Code</h2>
+      <p>Enter this code to log in. It expires in 5 minutes and can only be used once.</p>
+      <p style="font-size: 32px; font-weight: bold; letter-spacing: 6px;">${otp}</p>
+      <p>If you didn't request this, you can safely ignore this email.</p>
+    `;
+
+    try {
+      await emailService.sendEmail({
+        to: email,
+        subject: 'Your Login Code - AI Landing Page Builder',
+        htmlContent,
+      });
+    } catch (emailError) {
+      console.error('❌ Failed to send OTP email:', emailError.message);
+      return next(new AppError('Unable to send login code. Please try again later.', 502));
+    }
+
+    const responsePayload = { status: 'success', message: 'A login code has been sent to your email.' };
+    if (process.env.NODE_ENV !== 'production') {
+      // Dev convenience only — logged server-side, NEVER returned in the HTTP
+      // response, so a misconfigured NODE_ENV can't leak it to an API caller.
+      logger.info(`🔑 [DEV ONLY] OTP for ${email}: ${otp}`);
+    }
+
+    res.status(200).json(responsePayload);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── POST /auth/auto-login/verify-otp ──────────────────────────────────────────
+// Step 2: User submits the code they received. Verify it and log them in.
+// Body: { email, otp }
+exports.verifyAutoLoginOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return next(new AppError('Email and OTP are required', 400));
+
+    const user = await User.findOne({ email }).select('+otpCode');
+    if (!user || !user.otpCode || !user.otpExpiresAt) {
+      return next(new AppError('Invalid or expired code. Please request a new one.', 401));
+    }
+
+    if (user.otpExpiresAt < Date.now()) {
+      user.otpCode = undefined;
+      user.otpExpiresAt = undefined;
+      user.otpAttempts = 0;
+      await user.save({ validateBeforeSave: false });
+      return next(new AppError('Code has expired. Please request a new one.', 401));
+    }
+
+    // Brute-force protection: lock out and force a fresh code after too many wrong guesses
+    if (user.otpAttempts >= 5) {
+      user.otpCode = undefined;
+      user.otpExpiresAt = undefined;
+      user.otpAttempts = 0;
+      await user.save({ validateBeforeSave: false });
+      return next(new AppError('Too many incorrect attempts. Please request a new code.', 429));
+    }
+
+    if (!safeCompareHex(hashOtp(otp), user.otpCode)) {
+      user.otpAttempts += 1;
+      await user.save({ validateBeforeSave: false });
+      return next(new AppError('Incorrect code. Please try again.', 401));
+    }
+
+    // Correct — single-use, clear immediately so it can't be replayed
+    user.otpCode = undefined;
+    user.otpExpiresAt = undefined;
+    user.otpAttempts = 0;
+    if (!user.isEmailVerified) user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
+
+    logger.info('User auto-logged in via OTP', { userId: user._id, email: user.email });
+    sendToken(user, 200, res);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── POST /auth/auto-login/send-link ───────────────────────────────────────────
+// Step 1: Generate a one-time URL token and email a clickable login link.
+// Body: { email }
+exports.sendAutoLoginLink = async (req, res, next) => {
+  try {
+    const emailService = require('../services/emailService');
+    const { email } = req.body;
+    if (!email) return next(new AppError('Please provide your email', 400));
+
+    const user = await User.findOne({ email });
+    // Always respond with success to prevent email enumeration attacks
+    if (!user) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'If that email exists, a login link has been sent.',
+      });
+    }
+
+    const { loginToken, hashedToken, expiresAt } = createAutoLoginToken();
+    user.autoLoginToken = hashedToken;
+    user.autoLoginTokenExpiresAt = expiresAt;
+    await user.save({ validateBeforeSave: false });
+
+    logger.info('Auto-login link requested', { userId: user._id, email });
+
+    const apiBaseUrl = (process.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+    const loginUrl = `${apiBaseUrl}/api/v1/auth/auto-login/verify?token=${loginToken}&email=${encodeURIComponent(email)}`;
+
+    const htmlContent = `
+      <h2>Your Login Link</h2>
+      <p>Click the button below to log in. This link expires in 15 minutes and can only be used once.</p>
+      <p><a href="${loginUrl}" style="display:inline-block;padding:12px 24px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:6px;">Log In</a></p>
+      <p>If the button doesn't work, copy and paste this URL into your browser:<br>${loginUrl}</p>
+      <p>If you didn't request this, you can safely ignore this email.</p>
+    `;
+
+    try {
+      await emailService.sendEmail({
+        to: email,
+        subject: 'Your Login Link - AI Landing Page Builder',
+        htmlContent,
+      });
+    } catch (emailError) {
+      console.error('❌ Failed to send auto-login link email:', emailError.message);
+      return next(new AppError('Unable to send login link. Please try again later.', 502));
+    }
+
+    const responsePayload = { status: 'success', message: 'A login link has been sent to your email.' };
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info(`🔗 [DEV ONLY] Auto-login link for ${email}: ${loginUrl}`);
+    }
+
+    res.status(200).json(responsePayload);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── GET /auth/auto-login/verify ───────────────────────────────────────────────
+// Step 2: User clicks the emailed link. This is a GET because it's a browser
+// navigation, not an API call — so it can't return JSON like the OTP flow
+// does. Instead: verify the token, set the SAME httpOnly refreshToken cookie
+// a normal login sets, then redirect into the app. The frontend picks the
+// session up from there via /auth/refresh-token (or /auth/session), same as
+// any returning user with a valid cookie.
+exports.verifyAutoLoginLink = async (req, res, next) => {
+  const frontendURL = (process.env.FRONTEND_URL || 'http://localhost:8080').replace(/\/+$/, '');
+  try {
+    const { token, email } = req.query;
+    if (!token || !email) {
+      return res.redirect(`${frontendURL}/login?error=invalid_link`);
+    }
+
+    const user = await User.findOne({ email }).select('+autoLoginToken');
+    if (!user || !user.autoLoginToken || !user.autoLoginTokenExpiresAt) {
+      return res.redirect(`${frontendURL}/login?error=invalid_link`);
+    }
+
+    if (user.autoLoginTokenExpiresAt < Date.now()) {
+      user.autoLoginToken = undefined;
+      user.autoLoginTokenExpiresAt = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.redirect(`${frontendURL}/login?error=link_expired`);
+    }
+
+    if (!safeCompareHex(hashAutoLoginToken(token), user.autoLoginToken)) {
+      return res.redirect(`${frontendURL}/login?error=invalid_link`);
+    }
+
+    // Correct — single-use, clear immediately so it can't be replayed
+    user.autoLoginToken = undefined;
+    user.autoLoginTokenExpiresAt = undefined;
+    if (!user.isEmailVerified) user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
+
+    // Set the same refreshToken cookie a normal login sets (see sendToken in utils/jwt.js)
+    const refreshToken = signRefreshToken(user._id);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 9999 * 24 * 60 * 60 * 1000,
+    });
+
+    logger.info('User auto-logged in via link', { userId: user._id, email: user.email });
+    // Land on a lightweight frontend route that calls /auth/refresh-token
+    // (using the cookie we just set) to populate localStorage, then
+    // forwards to the dashboard. Redirecting straight to /dashboard here
+    // would NOT work — the frontend only reads its access token from
+    // localStorage, and this response can only set a cookie, not run JS.
+    return res.redirect(`${frontendURL}/auto-login-callback`);
+  } catch (err) {
+    logger.error('Auto-login link verification failed', { error: err.message });
+    return res.redirect(`${frontendURL}/login?error=invalid_link`);
+  }
+};
+
+// ─── GET /auth/session ─────────────────────────────────────────────────────────
+// "Silent resume" for a returning, already-logged-in user — e.g. hitting
+// /dashboard directly without re-entering credentials. Safe by construction:
+// it reads ONLY the httpOnly refreshToken cookie set during a real login
+// (password / Google / OTP) — never a URL or body param — so it can't be
+// triggered by simply knowing/guessing a URL. No cookie = no session = 401,
+// and the frontend falls back to showing the login screen, not the dashboard.
+exports.checkSession = async (req, res, next) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
+      return res.status(401).json({ status: 'fail', message: 'No active session' });
+    }
+
+    let decoded;
+    try {
+      decoded = verifyRefreshToken(token);
+    } catch {
+      return res.status(401).json({ status: 'fail', message: 'Session expired. Please log in again.' });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ status: 'fail', message: 'Session expired. Please log in again.' });
+    }
+
+    const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
+    user.password = undefined;
+
+    res.status(200).json({
+      status: 'success',
+      accessToken,
+      data: { user },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── POST /auth/logout ────────────────────────────────────────────────────────
 exports.logout = async (req, res, next) => {
   try {
@@ -293,14 +564,14 @@ exports.forgotPassword = async (req, res, next) => {
     // For now: return token in response (dev only)
     const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
-    logger.info('Password reset requested', { userId: user._id, resetURL });
-
-    const responsePayload = { status: 'success', message: 'Password reset link sent.' };
+    logger.info('Password reset requested', { userId: user._id });
     if (process.env.NODE_ENV !== 'production') {
-      responsePayload.debug_resetURL = resetURL; // expose in dev only
+      // Dev convenience only — logged server-side, NEVER returned in the HTTP
+      // response, so a misconfigured NODE_ENV can't leak a working reset link.
+      logger.info(`🔑 [DEV ONLY] Password reset URL: ${resetURL}`);
     }
 
-    res.status(200).json(responsePayload);
+    res.status(200).json({ status: 'success', message: 'Password reset link sent.' });
   } catch (err) {
     next(err);
   }

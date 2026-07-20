@@ -368,6 +368,10 @@ exports.createLead = async (req, res) => {
             if (capturedPage) {
               pageInfoRows.push({ label: 'Page Slug', value: capturedPage });
             }
+            console.log(pageInfoRows, 'pageInfoRows');
+            if (ip_address) {
+              pageInfoRows.push({ label: 'IP Address', value: String(ip_address) });
+            }
             pageInfoRows.push({ label: 'Submitted At', value: new Date(submitted_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) });
 
             const adminMsg = `
