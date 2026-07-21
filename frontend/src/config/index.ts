@@ -39,6 +39,11 @@ const config = {
     enableDebugMode: import.meta.env.VITE_ENABLE_DEBUG === 'true',
     templateEngineEnabled: import.meta.env.VITE_TEMPLATE_ENGINE_ENABLED !== 'false',
     publishEngineEnabled: import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false',
+    // When true, the ?email=<email> auto-login flow skips OTP generation/
+    // validation entirely and authenticates the user directly. Must be kept
+    // in sync with the backend's STOP_OTP_VERIFICATION_EMAIL to avoid an
+    // authentication flow mismatch between client and server.
+    stopOtpVerificationEmail: import.meta.env.VITE_STOP_OTP_VERIFICATION_EMAIL === 'true',
   },
 };
 
