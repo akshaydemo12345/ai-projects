@@ -1099,6 +1099,14 @@ exports.updatePage = async (req, res, next) => {
       // silently disagree with what the Integration panel is showing for
       // that method. It may only ever RAISE the aggregate (confirm a method
       // that a `<script>` tag detection maps to), never lower it.
+      //
+      // Also: this scan is inherently Script-oriented. The Plugin method is
+      // verified out-of-band (WordPress calling POST /plugin/verify
+      // directly) and may not leave any detectable trace in the page's
+      // markup, so a scan miss does NOT prove the Plugin integration is
+      // gone. The publish gate must therefore key off the persisted
+      // aggregate (either method verified), never the raw scan result.
+      let aggregateVerified;
       if (verified && method === 'script') {
         await Project.findByIdAndUpdate(project._id, {
           isScriptVerified: true,
@@ -1107,6 +1115,7 @@ exports.updatePage = async (req, res, next) => {
           verificationStatus: 'active',
           verifiedAt: new Date()
         });
+        aggregateVerified = true;
       } else if (verified && (method === 'meta' || method === 'raw-html')) {
         // Token found outside a <script> tag — consistent with how the
         // WordPress Plugin injects it (shortcode/widget output), not the
@@ -1118,17 +1127,19 @@ exports.updatePage = async (req, res, next) => {
           verificationStatus: 'active',
           verifiedAt: new Date()
         });
+        aggregateVerified = true;
       } else {
         // Recompute the aggregate strictly from the persisted per-method
-        // flags rather than writing the raw scan result over them.
-        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        // flags. A scan miss only lowers the aggregate if NEITHER method is
+        // independently verified.
+        aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
         await Project.findByIdAndUpdate(project._id, {
           isVerified: aggregateVerified,
           verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
         });
       }
 
-      if (!verified) {
+      if (!aggregateVerified) {
         return res.status(403).json({
           status: 'fail',
           message: `Cannot publish: ${message}`
@@ -1250,7 +1261,11 @@ exports.publishPage = async (req, res, next) => {
 
       // See the equivalent block in updatePage for why this never blindly
       // overwrites isPluginVerified / isScriptVerified or force-lowers the
-      // aggregate below what those persisted per-method flags say.
+      // aggregate below what those persisted per-method flags say. Also see
+      // that block for why the Plugin method verifies out-of-band and can
+      // miss this HTML scan without actually being un-verified — the gate
+      // below must key off the persisted aggregate, not the raw scan result.
+      let aggregateVerified;
       if (verified && method === 'script') {
         await Project.findByIdAndUpdate(project._id, {
           isScriptVerified: true,
@@ -1259,6 +1274,7 @@ exports.publishPage = async (req, res, next) => {
           verificationStatus: 'active',
           verifiedAt: new Date()
         });
+        aggregateVerified = true;
       } else if (verified && (method === 'meta' || method === 'raw-html')) {
         await Project.findByIdAndUpdate(project._id, {
           isPluginVerified: true,
@@ -1267,15 +1283,16 @@ exports.publishPage = async (req, res, next) => {
           verificationStatus: 'active',
           verifiedAt: new Date()
         });
+        aggregateVerified = true;
       } else {
-        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
         await Project.findByIdAndUpdate(project._id, {
           isVerified: aggregateVerified,
           verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
         });
       }
 
-      if (!verified) {
+      if (!aggregateVerified) {
         return res.status(403).json({
           status: 'fail',
           message: `Cannot publish: ${message}`
