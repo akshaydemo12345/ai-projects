@@ -59,6 +59,15 @@ const config = {
     timeout: parseInt(process.env.PROXY_TIMEOUT, 10) || 10000,
     apiKey: process.env.PROXY_API_KEY || 'default-proxy-key',
   },
+
+  // Feature Flags
+  features: {
+    // When true, the ?email=<email> auto-login flow skips OTP generation/
+    // validation entirely and authenticates the user directly. Must be kept
+    // in sync with the frontend's VITE_STOP_OTP_VERIFICATION_EMAIL to avoid
+    // an authentication flow mismatch between client and server.
+    stopOtpVerificationEmail: process.env.STOP_OTP_VERIFICATION_EMAIL === 'true',
+  },
 };
 
 // Validation

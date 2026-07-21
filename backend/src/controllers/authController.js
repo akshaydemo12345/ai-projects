@@ -21,6 +21,7 @@ const {
 } = require('../utils/jwt');
 const logger = require('../utils/logger');
 const firebaseAdmin = require('../services/firebaseAdmin');
+const config = require('../config');
 const skipEmailVerification = true; // Hardcoded to skip verification as requested
 
 // ─── POST /auth/signup ────────────────────────────────────────────────────────
@@ -230,6 +231,10 @@ exports.login = async (req, res, next) => {
 // Body: { email }
 exports.sendAutoLoginOtp = async (req, res, next) => {
   try {
+    if (config.features.stopOtpVerificationEmail) {
+      return next(new AppError('OTP verification is currently disabled. Use /auto-login/authenticate instead.', 403));
+    }
+
     const emailService = require('../services/emailService');
     const { email } = req.body;
     if (!email) return next(new AppError('Please provide your email', 400));
@@ -289,6 +294,10 @@ exports.sendAutoLoginOtp = async (req, res, next) => {
 // Body: { email, otp }
 exports.verifyAutoLoginOtp = async (req, res, next) => {
   try {
+    if (config.features.stopOtpVerificationEmail) {
+      return next(new AppError('OTP verification is currently disabled. Use /auto-login/authenticate instead.', 403));
+    }
+
     const { email, otp } = req.body;
     if (!email || !otp) return next(new AppError('Email and OTP are required', 400));
 
@@ -328,6 +337,40 @@ exports.verifyAutoLoginOtp = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     logger.info('User auto-logged in via OTP', { userId: user._id, email: user.email });
+    sendToken(user, 200, res);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── POST /auth/auto-login/authenticate ────────────────────────────────────────
+// Active ONLY when STOP_OTP_VERIFICATION_EMAIL=true. Bypasses OTP generation
+// and validation entirely: a visitor hitting ?email=<email> is found-or-
+// created and logged in immediately, exactly like sendAutoLoginOtp would do
+// for a new visitor, minus the "email a code / wait for it" step.
+// Body: { email }
+exports.autoLoginDirect = async (req, res, next) => {
+  try {
+    if (!config.features.stopOtpVerificationEmail) {
+      return next(new AppError('Direct auto-login is disabled while OTP verification is enabled.', 403));
+    }
+
+    const { email } = req.body;
+    if (!email) return next(new AppError('Please provide your email', 400));
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Same bare-bones account creation as the OTP flow, so the same
+      // ?email= link works for first-time and returning visitors alike.
+      const namePlaceholder = email.split('@')[0];
+      user = await User.create({ name: namePlaceholder, email, isEmailVerified: true });
+      logger.info('Auto-created user via direct auto-login (OTP disabled)', { userId: user._id, email });
+    } else if (!user.isEmailVerified) {
+      user.isEmailVerified = true;
+      await user.save({ validateBeforeSave: false });
+    }
+
+    logger.info('User auto-logged in without OTP (STOP_OTP_VERIFICATION_EMAIL=true)', { userId: user._id, email });
     sendToken(user, 200, res);
   } catch (err) {
     next(err);

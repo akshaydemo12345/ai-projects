@@ -18,6 +18,7 @@ const {
   resendVerificationEmail,
   sendAutoLoginOtp,
   verifyAutoLoginOtp,
+  autoLoginDirect,
   sendAutoLoginLink,
   verifyAutoLoginLink,
   checkSession,
@@ -95,6 +96,18 @@ router.post(
   dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many attempts from this device. Please try again later.' }),
   dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many attempts for this account. Please try again later.', keyFn: (req) => (req.body?.email || '').toLowerCase() }),
   verifyAutoLoginOtp
+);
+
+/**
+ * POST /auth/auto-login/authenticate  — body: { email }
+ * Only active when STOP_OTP_VERIFICATION_EMAIL=true (see authController).
+ * Bypasses OTP generation/validation and logs the user in directly.
+ */
+router.post(
+  '/auto-login/authenticate',
+  validate(z.object({ email: z.string().email('Invalid email') })),
+  dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests for this email. Please try again later.', keyFn: (req) => (req.body?.email || '').toLowerCase() }),
+  autoLoginDirect
 );
 
 // ─── Auto-Login (Magic Link) ───────────────────────────────────────────────────
