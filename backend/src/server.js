@@ -1,4 +1,6 @@
-require('dotenv').config(); // API Key Fixed (Leading dash removed)
+require('dotenv').config({
+  path: '/home/ailandingpagessh/public_html/apiserver.ai-landingpages.sharehq.org/.env'
+})
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

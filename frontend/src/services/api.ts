@@ -449,6 +449,16 @@ export const authApi = {
       body: JSON.stringify({ email, otp }),
     });
   },
+  // Used instead of sendAutoLoginOtp/verifyAutoLoginOtp when OTP
+  // verification is disabled (VITE_STOP_OTP_VERIFICATION_EMAIL=true).
+  // Logs the user in directly from just their email — same response shape
+  // as login()/verifyAutoLoginOtp (accessToken + user).
+  autoLoginDirect: async (email: string) => {
+    return apiFetch('/auth/auto-login/authenticate', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
   // Used by the /auto-login-callback page: after the backend sets the
   // refreshToken cookie and redirects here, this exchanges that cookie
   // for an access token (same call apiFetch already makes on a 401).

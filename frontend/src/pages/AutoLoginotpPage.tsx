@@ -6,16 +6,25 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/services/api";
 import { toast } from "sonner";
+import config from "@/config";
 
 /**
- * URL-triggered OTP auto-login.
+ * URL-triggered auto-login.
  *
  * Flow: someone opens .../?email=user@example.com (or /auto-login?email=...)
+ *
+ * When VITE_STOP_OTP_VERIFICATION_EMAIL=false (OTP verification enabled):
  *   1. On mount, read `email` from the query string
  *   2. Immediately call POST /auth/auto-login/send-otp — no button click needed
  *   3. Show "check your inbox" + a 6-digit code input
  *   4. On submit, call POST /auth/auto-login/verify-otp
  *   5. On success: store the token via useAuth().login() and go to /dashboard
+ *
+ * When VITE_STOP_OTP_VERIFICATION_EMAIL=true (OTP verification disabled):
+ *   1. On mount, read `email` from the query string
+ *   2. Immediately call POST /auth/auto-login/authenticate — no OTP involved
+ *   3. On success: store the token via useAuth().login() and go straight to
+ *      /dashboard, skipping the code-entry UI entirely
  */
 const AutoLoginOtpPage = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +33,7 @@ const AutoLoginOtpPage = () => {
 
   const email = (searchParams.get("email") || "").trim();
 
-  const [status, setStatus] = useState<"sending" | "sent" | "verifying" | "error">("sending");
+  const [status, setStatus] = useState<"sending" | "sent" | "verifying" | "authenticating" | "error">("sending");
   const [errorMsg, setErrorMsg] = useState("");
   const [otp, setOtp] = useState("");
   const sentRef = useRef(false);
@@ -39,6 +48,26 @@ const AutoLoginOtpPage = () => {
     if (sentRef.current) return; // guard against double-fire (StrictMode / re-renders)
     sentRef.current = true;
 
+    if (config.features.stopOtpVerificationEmail) {
+      // OTP verification disabled — authenticate directly, no code to enter.
+      setStatus("authenticating");
+      (async () => {
+        try {
+          const res: any = await authApi.autoLoginDirect(email);
+          const token = res?.accessToken;
+          const user = res?.data?.user || res?.user;
+          if (!token || !user) throw new Error("Login response was incomplete.");
+
+          login(token, user);
+          navigate("/dashboard", { replace: true });
+        } catch (err: any) {
+          setStatus("error");
+          setErrorMsg(err?.message || "Something went wrong. Please try again.");
+        }
+      })();
+      return;
+    }
+
     (async () => {
       try {
         await authApi.sendAutoLoginOtp(email);
@@ -48,7 +77,7 @@ const AutoLoginOtpPage = () => {
         setErrorMsg(err?.message || "Something went wrong. Please try again.");
       }
     })();
-  }, [email]);
+  }, [email, login, navigate]);
 
   const handleResend = async () => {
     setStatus("sending");
@@ -82,7 +111,7 @@ const AutoLoginOtpPage = () => {
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
       setStatus("sent"); // back to the code-entry state, not a full error page
-      setErrorMsg(err?.message || "Incorrect or expired code. Please try again.");
+      setErrorMsg(err?.message || "OTP verification failed. Please check the code and try again.");
     }
   };
 
@@ -97,6 +126,13 @@ const AutoLoginOtpPage = () => {
           <>
             <Loader2 className="mx-auto mb-4 h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Sending your login code…</p>
+          </>
+        )}
+
+        {status === "authenticating" && (
+          <>
+            <Loader2 className="mx-auto mb-4 h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Logging you in…</p>
           </>
         )}
 
