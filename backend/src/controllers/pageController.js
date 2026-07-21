@@ -1499,14 +1499,6 @@ exports.exportLeadsCsv = async (req, res, next) => {
 // ─── POST /pages/claim-request ────────────────────────────────────────────────
 exports.claimRequest = async (req, res, next) => {
   try {
-    // Check if Publish Engine is disabled (Claim only available when Publish is disabled)
-    if (process.env.PUBLISH_ENGINE_ENABLED !== 'false') {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'Claim feature is only available when publishing is disabled.'
-      });
-    }
-
     const { pageTitle, landingPageUrl, websiteUrl, clientEmail } = req.body;
 
     if (!pageTitle) {

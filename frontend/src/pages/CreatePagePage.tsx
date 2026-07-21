@@ -3,7 +3,7 @@ import {
   ArrowLeft, Sparkles, Brain, Loader2, X, Upload,
   Figma, LayoutTemplate, CheckCircle2, ChevronRight, Zap, Eye, MapPin, Search, Globe
 } from "lucide-react";
-import config from "@/config";
+import config, { getFeatureFlagsForUser } from "@/config";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
@@ -738,6 +738,11 @@ const CreatePagePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
+  let storedUser: any = null;
+  try { storedUser = storedUserJson ? JSON.parse(storedUserJson) : null; } catch (e) { storedUser = null; }
+  const featureFlags = getFeatureFlagsForUser(storedUser?.role);
+
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
     queryFn: () => projectsApi.getById(id!),
@@ -813,10 +818,10 @@ const CreatePagePage = () => {
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!config.features.templateEngineEnabled && activeMethod === "template") {
+    if (!featureFlags.templateEngineEnabled && activeMethod === "template") {
       setActiveMethod("ai");
     }
-  }, [activeMethod, config.features.templateEngineEnabled]);
+  }, [activeMethod, featureFlags.templateEngineEnabled]);
 
   // Helper to get an image URL for a given industry (static dummy URLs – random selection)
   const industryImages: Record<string, string[]> = {
@@ -1733,7 +1738,7 @@ ${enrichedContent}
               </div>
             </section>
 
-            {config.features.templateEngineEnabled && (
+            {featureFlags.templateEngineEnabled && (
               <section>
                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Creation Method</p>
                 <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">

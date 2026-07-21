@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import config from "@/config";
+import config, { getFeatureFlagsForUser } from "@/config";
 
 interface EditorTopBarProps {
   title: string;
@@ -24,11 +24,12 @@ const EditorTopBar = ({ title, onSave, pageTitle }: EditorTopBarProps) => {
   const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
   let storedUser: any = null;
   try { storedUser = storedUserJson ? JSON.parse(storedUserJson) : null; } catch (e) { storedUser = null; }
+  const featureFlags = getFeatureFlagsForUser(storedUser?.role);
   useEffect(() => {
     // Debug: log runtime feature flag to confirm env is applied
     try {
       // eslint-disable-next-line no-console
-      console.log('runtime: publishEngineEnabled=', config.features.publishEngineEnabled, 'VITE_PUBLISH_ENGINE_ENABLED=', import.meta.env.VITE_PUBLISH_ENGINE_ENABLED);
+      console.log('runtime: publishEngineEnabled=', featureFlags.publishEngineEnabled, 'role=', storedUser?.role, 'VITE_PUBLISH_ENGINE_ENABLED=', import.meta.env.VITE_PUBLISH_ENGINE_ENABLED);
     } catch (e) {
       // ignore
     }
@@ -132,7 +133,7 @@ const EditorTopBar = ({ title, onSave, pageTitle }: EditorTopBarProps) => {
         >
           <Save style={{ width: "15px", height: "15px" }} /> Save
         </button>
-        {config.features.publishEngineEnabled ? (
+        {featureFlags.publishEngineEnabled ? (
           <Link to="/dashboard/published">
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs px-4">Publish</Button>
           </Link>

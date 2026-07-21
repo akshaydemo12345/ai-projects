@@ -23,6 +23,7 @@ import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
 import Pickr from "@simonwep/pickr";
 import "@simonwep/pickr/dist/themes/monolith.min.css";
+import { getFeatureFlagsForUser } from '@/config';
 
 const hexToRgbStr = (hex: string) => {
   const c = hex.replace('#', '');
@@ -58,6 +59,11 @@ const GrapesEditor = () => {
       queryClient.invalidateQueries({ queryKey: ['project', projId] });
     }
   });
+
+  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
+  let storedUser: any = null;
+  try { storedUser = storedUserJson ? JSON.parse(storedUserJson) : null; } catch (e) { storedUser = null; }
+  const featureFlags = getFeatureFlagsForUser(storedUser?.role);
 
   const [codeView, setCodeView] = useState(false);
   const [htmlCode, setHtmlCode] = useState('');
@@ -4510,7 +4516,7 @@ const GrapesEditor = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16 }}>
           <button
-            onClick={import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? handlePublish : async () => {
+            onClick={featureFlags.publishEngineEnabled ? handlePublish : async () => {
               // Claim flow: send claim request to backend
               try {
                 setIsPublishing(true);
@@ -4553,10 +4559,10 @@ const GrapesEditor = () => {
               transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: 0.5
             }}>
             {isPublishing
-              ? (import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? 'Publishing...' : 'Claiming...')
+              ? (featureFlags.publishEngineEnabled ? 'Publishing...' : 'Claiming...')
               : (
                 <>
-                  <RocketIcon /> {import.meta.env.VITE_PUBLISH_ENGINE_ENABLED !== 'false' ? 'Publish' : 'Claim'}
+                  <RocketIcon /> {featureFlags.publishEngineEnabled ? 'Publish' : 'Claim'}
                 </>
               )}
           </button>

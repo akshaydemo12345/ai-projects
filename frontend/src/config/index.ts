@@ -47,6 +47,23 @@ const config = {
   },
 };
 
+/**
+ * Returns the effective feature flags for a given user role.
+ * 'client' users always get both engines disabled, regardless of the
+ * VITE_TEMPLATE_ENGINE_ENABLED / VITE_PUBLISH_ENGINE_ENABLED env values.
+ * Any other role (or no role) falls back to the env-based defaults.
+ */
+export const getFeatureFlagsForUser = (role?: string | null) => {
+  if (role === 'client') {
+    return {
+      ...config.features,
+      templateEngineEnabled: false,
+      publishEngineEnabled: false,
+    };
+  }
+  return config.features;
+};
+
 // Validation
 if (config.isDevelopment) {
   console.log('🔧 Frontend Config:', {
