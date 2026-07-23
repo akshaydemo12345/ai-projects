@@ -58,12 +58,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         try {
           const res = await authApi.getProfile();
+
+          // Guard against a race with a fresher login that happened while
+          // this background request was in flight (e.g. the user landed on
+          // a ?email=... auto-login link while an old session was still
+          // being validated). If the stored token has since changed, a new
+          // session is already active — don't clobber it with this stale
+          // response.
+          if (localStorage.getItem("pagecraft_token") !== storedToken) {
+            setIsLoading(false);
+            return;
+          }
+
           const freshUser = res?.data?.user || res?.user;
           if (freshUser) {
             setUser(freshUser);
             localStorage.setItem("pagecraft_user", JSON.stringify(freshUser));
           }
         } catch (err) {
+          // Same race guard as above — if a new login has since replaced
+          // the token, this stale request failing is not a reason to log
+          // the new session out.
+          if (localStorage.getItem("pagecraft_token") !== storedToken) {
+            setIsLoading(false);
+            return;
+          }
+
           // 401 here means the token is invalid or the user no longer
           // exists (e.g. deleted from the DB) — apiFetch already strips
           // the stored token in that case, so just clear local state too.

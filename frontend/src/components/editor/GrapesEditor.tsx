@@ -4434,6 +4434,7 @@ const GrapesEditor = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {featureFlags.publishEngineEnabled && (
           <button
             onClick={downloadHtml}
             disabled={!hasSaved}
@@ -4450,6 +4451,7 @@ const GrapesEditor = () => {
           >
             <DownloadIcon /> <span style={{ marginLeft: 6 }}>Download HTML</span>
           </button>
+          )}
 
           {/* Status Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>

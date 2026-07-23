@@ -13,7 +13,7 @@ const RT_EXPIRES_IN = process.env.RT_EXPIRES_IN || '9999d';
 // Fields: id (for queries), name/email/plan/credits (for req.user in controllers).
 const signToken = (id, userMeta = {}) =>
   jwt.sign(
-    { id, name: userMeta.name, email: userMeta.email, plan: userMeta.plan, credits: userMeta.credits },
+    { id, name: userMeta.name, email: userMeta.email, plan: userMeta.plan, credits: userMeta.credits, role: userMeta.role },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
@@ -95,7 +95,7 @@ const safeCompareHex = (a, b) => {
 
 // ─── Send Access + Refresh Token Response ────────────────────────────────────
 const sendToken = (user, statusCode, res) => {
-  const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
+  const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits, role: user.role });
   const refreshToken = signRefreshToken(user._id);
 
   // Send refresh token as httpOnly cookie

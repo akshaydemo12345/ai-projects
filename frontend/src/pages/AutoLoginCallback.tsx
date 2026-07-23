@@ -31,6 +31,13 @@ const AutoLoginCallback = () => {
 
     const hydrateSession = async () => {
       try {
+        // Drop any existing cached session first. If one is left in place,
+        // AuthProvider's own mount-time validation of that old token can
+        // resolve after this flow logs in and silently overwrite the new
+        // session with the old user's data/role (race condition).
+        localStorage.removeItem("pagecraft_token");
+        localStorage.removeItem("pagecraft_user");
+
         const token = await authApi.refreshSession();
         const profileRes: any = await authApi.getProfile();
         const user = profileRes?.data?.user || profileRes?.user;

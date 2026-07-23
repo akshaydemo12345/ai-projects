@@ -520,7 +520,7 @@ exports.checkSession = async (req, res, next) => {
       return res.status(401).json({ status: 'fail', message: 'Session expired. Please log in again.' });
     }
 
-    const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
+    const accessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits, role: user.role });
     user.password = undefined;
 
     res.status(200).json({
@@ -571,7 +571,7 @@ exports.refreshToken = async (req, res, next) => {
     // if (!user.isEmailVerified) {
     //  return next(new AppError('Email address not verified', 403));
     // }
-    const newAccessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits });
+    const newAccessToken = signToken(user._id, { name: user.name, email: user.email, plan: user.plan, credits: user.credits, role: user.role });
 
     res.status(200).json({
       status: 'success',
@@ -763,7 +763,7 @@ exports.googleCallback = (req, res) => {
     );
   }
 
-  const accessToken = signToken(req.user._id, { name: req.user.name, email: req.user.email, plan: req.user.plan, credits: req.user.credits });
+  const accessToken = signToken(req.user._id, { name: req.user.name, email: req.user.email, plan: req.user.plan, credits: req.user.credits, role: req.user.role });
   const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
   logger.info('Google OAuth login', { userId: req.user._id });

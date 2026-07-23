@@ -48,6 +48,25 @@ const AutoLoginOtpPage = () => {
     if (sentRef.current) return; // guard against double-fire (StrictMode / re-renders)
     sentRef.current = true;
 
+    // If this browser already has a session for a *different* account,
+    // drop it immediately. Otherwise AuthProvider's own mount-time session
+    // check keeps validating the old token in the background and can win
+    // a race against this flow, silently overwriting the new login with
+    // the old user's data/role once it resolves.
+    const existingUserRaw = localStorage.getItem("pagecraft_user");
+    if (existingUserRaw) {
+      try {
+        const existingUser = JSON.parse(existingUserRaw);
+        if (existingUser?.email && existingUser.email !== email) {
+          localStorage.removeItem("pagecraft_token");
+          localStorage.removeItem("pagecraft_user");
+        }
+      } catch {
+        localStorage.removeItem("pagecraft_token");
+        localStorage.removeItem("pagecraft_user");
+      }
+    }
+
     if (config.features.stopOtpVerificationEmail) {
       // OTP verification disabled — authenticate directly, no code to enter.
       setStatus("authenticating");

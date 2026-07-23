@@ -18,7 +18,7 @@ const protect = async (req, res, next) => {
 
     // Access tokens are extremely long-lived (JWT_EXPIRES_IN, default 9999d),
     // so we MUST confirm the account still exists on every request. Without
-    // this, a deleted (or banned) user's existing token keeps working
+    // this, a deleted (or banned) user's existing token keeps working                            
     // forever — they'd stay "logged in" indefinitely instead of being
     // kicked out the moment their account is removed.
     const stillExists = await User.exists({ _id: decoded.id });
@@ -30,7 +30,7 @@ const protect = async (req, res, next) => {
     // full-document DB lookup — we've already confirmed the user exists above.
     // This eliminates one DB round-trip on every authenticated request.
     // Old tokens (id-only) fall back to a single DB fetch.
-    if (decoded.name && decoded.email && decoded.plan !== undefined) {
+    if (decoded.name && decoded.email && decoded.plan !== undefined && decoded.role) {
       req.user = {
         _id: decoded.id,
         id: decoded.id,
@@ -38,12 +38,14 @@ const protect = async (req, res, next) => {
         email: decoded.email,
         plan: decoded.plan,
         credits: decoded.credits ?? 0,
+        role: decoded.role,
       };
       return next();
     }
 
-    // Fallback for old tokens — fetch from DB once, then future logins will use new token format
-    const currentUser = await User.findById(decoded.id).select('_id name email plan credits').lean();
+    // Fallback for old tokens (issued before `role` was added to the payload)
+    // — fetch from DB once, then future logins will use new token format
+    const currentUser = await User.findById(decoded.id).select('_id name email plan credits role').lean();
     if (!currentUser) {
       return res.status(401).json({ status: 'fail', message: 'User no longer exists' });
     }
