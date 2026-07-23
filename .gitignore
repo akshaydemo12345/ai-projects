@@ -1,0 +1,20 @@
+node_modules/
+.env.local
+backend/.env
+frontend/.env
+.env.*.local
+dist/
+build/
+logs/
+*.log
+ 
+# Ignore database files
+backend/data/db/
+backend/db/
+ 
+# Allow .env.example files for documentation
+!.env.example
+ 
+# Explicitly allow domain-mapper.zip
+!domain-mapper.zip
+backend/logs/*
