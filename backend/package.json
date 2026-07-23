@@ -1,0 +1,47 @@
+{
+  "name": "ai-landing-page-backend",
+  "version": "1.0.0",
+  "description": "Backend for AI Landing Page Builder",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.87.0",
+    "@getbrevo/brevo": "^5.0.4",
+    "@resvg/resvg-js": "^2.6.2",
+    "@sparticuz/chromium": "^149.0.0",
+    "axios": "^1.15.2",
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.2.0",
+    "color-convert": "^2.0.1",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "firebase-admin": "^13.10.0",
+    "helmet": "^7.1.0",
+    "jimp": "^1.6.1",
+    "jsdom": "^24.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.0",
+    "morgan": "^1.10.0",
+    "node-vibrant": "^4.0.4",
+    "openai": "^6.36.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "playwright": "^1.60.0",
+    "punycode": "^2.3.1",
+    "puppeteer": "^25.3.0",
+    "puppeteer-core": "^25.1.0",
+    "qs": "^6.15.2",
+    "sharp": "^0.34.5",
+    "tinycolor2": "^1.6.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

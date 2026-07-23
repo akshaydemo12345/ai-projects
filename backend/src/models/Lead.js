@@ -1,0 +1,83 @@
+const mongoose = require('mongoose');
+
+const leadSchema = new mongoose.Schema({
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    required: true,
+    index: true
+  },
+  pageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Page',
+    required: true,
+    index: true
+  },
+  pageSlug: {
+    type: String,
+    required: true,
+    index: true
+  },
+  // 🔥 DYNAMIC DATA: Captures exactly what the FormSchema defines
+  data: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true
+  },
+  // 🔥 TRACKING META: For analytics and security
+  meta: {
+    ip: String,
+    userAgent: String,
+    referer: String,
+    domain: String,
+    url: String
+  },
+  trackingDetails: {
+    referral_url: String,
+    referral_source: String
+  },
+  utm: {
+    utm_source: String,
+    utm_medium: String,
+    utm_campaign: String,
+    utm_term: String,
+    utm_content: String,
+    gclid: String,
+    fbclid: String,
+    msclkid: String
+  },
+  // 🚀 FLATTENED UTMs for easier filtering and storage insurance
+  utm_source: { type: String, index: true },
+  utm_medium: { type: String, index: true },
+  utm_campaign: { type: String, index: true },
+  utm_term: String,
+  utm_content: String,
+  gclid: String,
+  fbclid: String,
+  msclkid: String,
+
+  // 🚀 EXPLICIT FLATTENED META FIELDS FOR ANALYTICS AND REGULATION COMPLIANCE
+  landing_page: { type: String, index: true },
+  referrer: String,
+  user_agent: String,
+  ip_address: String,
+  submitted_at: { type: Date, default: Date.now, index: true },
+
+  formData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: []
+  },
+
+  isDeleted: {
+    type: Boolean,
+    default: false
+  }
+}, { 
+  timestamps: true,
+  strict: false,
+  minimize: false // 🚀 CRITICAL: Ensure empty objects (like utm/meta) are still saved to DB
+});
+
+// Compound index for fast lookups
+leadSchema.index({ projectId: 1, createdAt: -1 });
+
+module.exports = mongoose.model('Lead', leadSchema);

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You | {{businessName}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      animation: fadeInPage 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInPage {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .header-shadow {
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    }
+
+    .hero-section {
+      background-color: #242f3e;
+      color: white;
+      padding: 100px 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .animate-content > * {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-content > *:nth-child(1) { animation-delay: 0.1s; }
+    .animate-content > *:nth-child(2) { animation-delay: 0.2s; }
+    .animate-content > *:nth-child(3) { animation-delay: 0.3s; }
+    .animate-content > *:nth-child(4) { animation-delay: 0.4s; }
+    .animate-content > *:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .check-circle {
+      width: 90px;
+      height: 90px;
+      border: 3px solid var(--primary, #7c3aed);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 50px auto !important;
+      color: var(--primary, #7c3aed);
+      position: relative;
+      background: transparent;
+    }
+
+    .check-circle svg {
+      width: 45px;
+      height: 45px;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawCheck 0.8s ease-in-out 0.4s forwards;
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .cta-button {
+      background-color: var(--primary, #7c3aed);
+      color: white;
+      padding: 16px 44px;
+      border-radius: 9999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      margin-top: 20px;
+    }
+
+    .cta-button:hover {
+      background-color: var(--secondary, #6366f1);
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    }
+
+    .cta-button svg {
+      width: 25px !important;
+    }
+
+    .footer-dark {
+      background-color: #1a222c;
+      color: #94a3b8;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .nav-link {
+      color: #334155;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary, #7c3aed);
+    }
+    
+    .offer-text {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+    
+    .offer-text strong {
+      color: white;
+      font-weight: 600;
+    }
+  
+    /* Force typography to inherit color so it overrides landing page styles but respects editor changes */
+    .hero-section h1,
+    .hero-section h2,
+    .hero-section h3,
+    .hero-section p {
+      color: inherit;
+    }
+</style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white py-6 header-shadow relative z-10">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+      <div class="text-2xl font-black  tracking-tighter">
+        {{#logoUrl}}
+          <img src="{{logoUrl}}" alt="{{businessName}}" class="h-8">
+        {{/logoUrl}}
+        {{^logoUrl}}
+          {{businessName}}
+        {{/logoUrl}}
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Hero Section -->
+  <main class="hero-section">
+    <div class="container mx-auto max-w-3xl px-6 animate-content">
+      <div class="check-circle mx-auto">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      
+      <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight">{{heading}}</h1>
+      
+      <p class="text-lg md:text-2xl  mb-6 max-w-2xl mx-auto leading-relaxed font-light">
+        {{subheading}}
+      </p>
+
+      {{#offerText}}
+      <div class="offer-text">
+        {{offerText}}
+      </div>
+      {{/offerText}}
+
+      <div>
+        <a href="{{ctaUrl}}" class="cta-button" >
+          <svg class="h-4 w-4 flex-shrink-0 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+          {{ctaText}}
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer-dark">
+    <div class="container mx-auto px-6">
+      <div class="mb-6">
+        <div class="text-2xl font-black text-white mb-2 tracking-tighter">{{businessName}}</div>
+        <p class="text-sm opacity-60">Thank you for choosing our services.</p>
+      </div>
+      <div class="pt-8 border-t border-white/5 text-xs opacity-40">
+        <p>&copy; 2026 {{businessName}}. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

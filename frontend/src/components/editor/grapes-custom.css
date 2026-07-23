@@ -1,0 +1,1645 @@
+/* ══════════════════════════════════════════════════════════
+   GrapesJS Custom Theme — Purple UI, Dark Mode
+   Matches the app's primary color: #6366f1
+   Focus on readability and premium contrast.
+══════════════════════════════════════════════════════════ */
+
+/* ── Main editor fills container ── */
+#gjs {
+  border: none !important;
+}
+
+.gjs-editor-cont {
+  height: 100% !important;
+  background-color: #0f172a !important;
+}
+
+.gjs-editor {
+  background: #0f172a !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  height: 100% !important;
+}
+
+/* Hide default GrapesJS panels — we use our own */
+.gjs-pn-panel,
+.gjs-pn-panels {
+  display: none !important;
+}
+
+.gjs-sm-sector-label {
+  font-weight: 500;
+}
+
+/* ── Canvas: background ── */
+.gjs-cv-canvas {
+  background: #2d3748 !important;
+  top: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.gjs-frame-wrapper {
+  padding: 24px !important;
+}
+
+.gjs-frame {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .25) !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+}
+
+/* ══════ BLOCK MANAGER ══════ */
+
+#blocks-container .gjs-blocks-c {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  padding: 12px !important;
+  gap: 10px !important;
+  background: transparent !important;
+}
+
+#blocks-container .gjs-block {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: calc(50% - 5px) !important;
+  min-height: 80px !important;
+  margin: 0 !important;
+  padding: 12px 6px !important;
+  background: #111827 !important;
+  border: 1px solid #2d3748 !important;
+  border-radius: 12px !important;
+  color: #e5e7eb !important;
+  /* Brighter for readability */
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  cursor: grab !important;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-sizing: border-box !important;
+}
+
+#blocks-container .gjs-block:hover {
+  background: #12121e !important;
+  border-color: #6366f1 !important;
+  color: #fff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .3) !important;
+}
+
+#blocks-container .gjs-block__media {
+  font-size: 24px !important;
+  margin-bottom: 6px !important;
+  line-height: 1 !important;
+  opacity: 0.9 !important;
+}
+
+#blocks-container .gjs-block:hover .gjs-block__media {
+  color: #6366f1 !important;
+  opacity: 1 !important;
+}
+
+/* Block categories */
+#blocks-container .gjs-block-category>.gjs-title {
+  padding: 14px 16px !important;
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid #2d3748 !important;
+  cursor: pointer !important;
+}
+
+#blocks-container .gjs-block-category>.gjs-title:hover {
+  color: #818cf8 !important;
+}
+
+/* ══════ LAYER MANAGER ══════ */
+
+#layers-container .gjs-layer {
+  background: #fff !important;
+  color: #1e293b !important;
+  border: none !important;
+  font-size: 13px !important;
+  padding: 4px 0 !important;
+}
+
+#layers-container .gjs-layer:hover,
+#layers-container .gjs-layer:focus,
+#layers-container .gjs-layer:active,
+#layers-container .gjs-layer.gjs-selected,
+#layers-container .gjs-layer.gjs-hovered,
+#layers-container .gjs-layer.gjs-active,
+#layers-container .gjs-layer * {
+  background: #fff !important;
+  background-color: #fff !important;
+}
+
+#layers-container .gjs-layer:hover,
+#layers-container .gjs-layer:focus,
+#layers-container .gjs-layer:active,
+#layers-container .gjs-layer.gjs-selected,
+#layers-container .gjs-layer.gjs-hovered,
+#layers-container .gjs-layer.gjs-active {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+#layers-container .gjs-layer-caret {
+  color: #64748b !important;
+}
+
+#layers-container .gjs-layer-title {
+  padding-left: 6px !important;
+}
+
+/* ══════ STYLE MANAGER & TRAITS ══════ */
+
+.gjs-editor * {
+  box-sizing: border-box;
+}
+
+/* Right Sidebar Panel / Views Container */
+.gjs-editor .gjs-pn-views-container {
+  background: #ffffff !important;
+  border-left: 1px solid #e5e7eb !important;
+}
+
+/* Tabs Header */
+.gjs-editor .gjs-pn-views {
+  background: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.gjs-editor .gjs-pn-views .gjs-pn-btn {
+  color: #6b7280 !important;
+  transition: all 0.2s !important;
+}
+
+.gjs-editor .gjs-pn-views .gjs-pn-btn:hover {
+  color: #111827 !important;
+}
+
+.gjs-editor .gjs-pn-views .gjs-pn-btn.gjs-pn-active {
+  color: #111827 !important;
+  background: #ffffff !important;
+  border-bottom: 2px solid #6366f1 !important;
+  box-shadow: none !important;
+}
+
+/* Sector / Section */
+.gjs-editor .gjs-sm-sector {
+  background: #ffffff !important;
+  border-bottom: none !important;
+}
+
+/* Section Header (Accordion Header) matching GrapesJS Studio */
+.gjs-editor .gjs-sm-sector-title {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #d1d5db !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+.gjs-editor .gjs-sm-sector-label {
+  order: 1 !important;
+  flex-grow: 1 !important;
+  text-align: left !important;
+  font-size: 12px !important;
+}
+
+.gjs-editor .gjs-sm-sector-caret {
+  order: 2 !important;
+  margin-right: 0 !important;
+  margin-left: 8px !important;
+  fill: none !important;
+  background-color: #6b7280 !important;
+  width: 14px !important;
+  height: 14px !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
+  transition: transform 0.2s ease !important;
+}
+
+.gjs-editor .gjs-sm-sector-title:hover .gjs-sm-sector-caret {
+  background-color: #000000 !important;
+}
+
+.gjs-editor .gjs-sm-sector-caret svg,
+.gjs-editor .gjs-sm-sector-caret path {
+  display: none !important;
+}
+
+/* Caret rotation: right when closed, down when open */
+.gjs-editor .gjs-sm-sector-caret {
+  transform: rotate(0deg) !important;
+}
+
+.gjs-editor .gjs-sm-open .gjs-sm-sector-caret {
+  transform: rotate(90deg) !important;
+}
+
+/* Properties Container */
+.gjs-editor .gjs-sm-properties {
+  padding: 12px !important;
+  background: #ffffff !important;
+}
+
+/* Single Property Layout */
+.gjs-editor .gjs-sm-property {
+  margin-bottom: 8px !important;
+}
+
+/* Label */
+.gjs-editor .gjs-sm-label,
+.gjs-editor .gjs-trt-label {
+  color: #111827 !important;
+  /* Darker, crisper text like screenshot */
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.gjs-editor .gjs-sm-property__composite .gjs-sm-label,
+.gjs-editor .gjs-sm-property__stack .gjs-sm-label {
+  margin-bottom: 4px !important;
+  font-size: 12px !important;
+  /* Slightly smaller for composite internal labels */
+  color: #4b5563 !important;
+}
+
+/* Fields (Inputs, Selects) */
+.gjs-editor .gjs-field {
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+.gjs-editor .gjs-field:focus-within {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.gjs-editor .gjs-field:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.gjs-editor .gjs-field input:not([type="checkbox"]):not([type="radio"]),
+.gjs-editor .gjs-field select,
+.gjs-editor .gjs-field textarea {
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 6px 10px !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+}
+
+.gjs-editor .gjs-field select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Arrows in select handled via native appearance none */
+
+/* =============================================
+   gjs-field-int — Integer / Number field
+   NOTE: .gjs-field-int is a CHILD of .gjs-field
+   So NO border/background here — parent handles it.
+   Only need display:flex so input + arrows are side-by-side.
+   ============================================= */
+.gjs-editor .gjs-field-int {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gjs-editor .gjs-field-int input[type="number"],
+.gjs-editor .gjs-field-int input {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 8px !important;
+  box-sizing: border-box !important;
+  /* Hide native browser number spinners — GrapesJS arrows are used instead */
+  -moz-appearance: textfield !important;
+}
+
+.gjs-editor .gjs-field-int input[type="number"]::-webkit-inner-spin-button,
+.gjs-editor .gjs-field-int input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* Swiper slider — field-int inside traits panel (same pattern) */
+.gjs-editor #traits-container .gjs-field-int {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gjs-editor #traits-container .gjs-field-int input {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 8px !important;
+  -moz-appearance: textfield !important;
+}
+
+.gjs-editor #traits-container .gjs-field-int input::-webkit-inner-spin-button,
+.gjs-editor #traits-container .gjs-field-int input::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* Numeric arrows - Redesigned to be subtle and not disturb layout */
+.gjs-editor .gjs-field-arrows {
+  display: flex !important;
+  flex-direction: column !important;
+  /* Restore normal order */
+  justify-content: center !important;
+  align-items: center !important;
+  width: 25px !important;
+  height: 100% !important;
+  background: #f9fafb !important;
+  border-left: 1px solid #d1d5db !important;
+  /* Vertical middle line */
+  position: relative !important;
+}
+
+.gjs-editor .gjs-field-arrow-u,
+.gjs-editor .gjs-field-arrow-d {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  color: #000000 !important;
+  width: 100% !important;
+}
+
+.gjs-editor .gjs-field-arrow-u {
+  margin-top: 2px !important;
+}
+
+.gjs-editor .gjs-field-arrow-d {
+  margin-bottom: 2px !important;
+}
+
+/* If arrows are drawn using CSS borders */
+.gjs-editor .gjs-field-arrow-u-c,
+.gjs-editor .gjs-field-arrow-u .gjs-field-arrow-u-c,
+.gjs-editor [data-arrow-up]::after {
+  content: '';
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-style: solid !important;
+  border-width: 0 4px 4px 4px !important;
+  /* Triangle pointing UP */
+  border-color: transparent transparent #000000 transparent !important;
+}
+
+.gjs-editor .gjs-field-arrow-d-c,
+.gjs-editor .gjs-field-arrow-d .gjs-field-arrow-d-c,
+.gjs-editor [data-arrow-down]::after {
+  content: '';
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-style: solid !important;
+  border-width: 4px 4px 0 4px !important;
+  /* Triangle pointing DOWN */
+  border-color: #000000 transparent transparent transparent !important;
+}
+
+/* If arrows are SVGs */
+.gjs-editor .gjs-field-arrows svg,
+.gjs-editor .gjs-field-arrows path {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+  width: 10px !important;
+  height: auto !important;
+  display: block !important;
+  margin: auto !important;
+}
+
+.gjs-editor .gjs-field-arrow-u:hover,
+.gjs-editor .gjs-field-arrow-d:hover {
+  color: #6366f1 !important;
+  background: #e5e7eb !important;
+}
+
+.gjs-editor .gjs-field-arrow-u:hover .gjs-field-arrow-u-c,
+.gjs-editor .gjs-field-arrow-u:hover[data-arrow-up]::after {
+  border-color: transparent transparent #6366f1 transparent !important;
+}
+
+.gjs-editor .gjs-field-arrow-d:hover .gjs-field-arrow-d-c,
+.gjs-editor .gjs-field-arrow-d:hover[data-arrow-down]::after {
+  border-color: #6366f1 transparent transparent transparent !important;
+}
+
+.gjs-editor .gjs-field-arrows:hover svg,
+.gjs-editor .gjs-field-arrows:hover path {
+  fill: #6366f1 !important;
+  stroke: #6366f1 !important;
+}
+
+/* Radio buttons / Flex toggles (e.g. text-align, display) */
+.gjs-editor .gjs-radio-items {
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.gjs-editor .gjs-radio-item {
+  border-right: 1px solid #d1d5db !important;
+  border-bottom: 1px solid #d1d5db !important;
+}
+
+.gjs-editor .gjs-radio-item:last-child {
+  border-right: none !important;
+}
+
+.gjs-editor .gjs-radio-item input {
+  display: none !important;
+}
+
+.gjs-editor .gjs-radio-item-label {
+  color: #4b5563 !important;
+  font-size: 13px !important;
+}
+
+.gjs-editor .gjs-radio-item input:checked+.gjs-radio-item-label {
+  background: #f3e8ff !important;
+  color: #7c3aed !important;
+  /* Matching GrapeJS Studio purple */
+}
+
+.gjs-editor .gjs-radio-item:hover {
+  background: #f3f4f6 !important;
+}
+
+/* Clear icon */
+.gjs-editor .gjs-sm-layer #gjs-sm-close-layer {
+  color: #000000 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  margin-left: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  opacity: 1 !important;
+}
+
+.gjs-editor .gjs-sm-layer #gjs-sm-close-layer:hover {
+  color: #000000 !important;
+  opacity: 0.7 !important;
+}
+
+/* Color Picker specific fixes */
+.gjs-editor .gjs-field-color-picker {
+  border: none !important;
+  cursor: pointer !important;
+  height: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.gjs-editor .gjs-sm-property__color .gjs-field {
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  padding: 0 6px !important;
+}
+
+/* Fix for overall layout scrolling when color picker opens */
+body:has(.gjs-editor) {
+  overflow: hidden !important;
+}
+
+/* Composite properties (e.g. margin, padding) */
+.gjs-editor .gjs-sm-property__composite {
+  background: #f9fafb !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Stack properties (Box shadow, Text shadow, Filters) */
+.gjs-editor .gjs-sm-property__stack {
+  background: #ffffff !important;
+  padding: 12px 0 !important;
+  border: none !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  border-radius: 0 !important;
+}
+
+.gjs-editor .gjs-sm-property__composite .gjs-sm-properties {
+  background: transparent !important;
+}
+
+.gjs-editor .gjs-sm-property__composite .gjs-sm-property {
+  width: 100% !important;
+}
+
+.gjs-editor .gjs-sm-property__composite .gjs-sm-label {
+  text-transform: capitalize !important;
+}
+
+/* Stack properties layout */
+.gjs-editor .gjs-sm-stack {
+  width: 100% !important;
+}
+
+.gjs-editor .gjs-sm-property__stack>.gjs-sm-label {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 8px !important;
+}
+
+/* Add button (+) for Stack properties */
+.gjs-editor .gjs-sm-stack #gjs-sm-add {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border: 1px solid #b5b5b5 !important;
+  border-radius: 4px !important;
+  color: #000000 !important;
+  background: #ffffff !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  margin-left: auto !important;
+  /* Push to the right */
+  opacity: 1 !important;
+}
+
+.gjs-editor .gjs-sm-stack #gjs-sm-add svg {
+  border: none !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.gjs-editor .gjs-sm-stack #gjs-sm-add svg path {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+  color: #000000 !important;
+}
+
+.gjs-editor .gjs-sm-add:hover,
+.gjs-editor .gjs-sm-btn-add:hover {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+.gjs-editor .gjs-sm-layer {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  margin-bottom: 8px !important;
+  border-radius: 4px !important;
+  padding: 6px !important;
+}
+
+/* Traits (Properties tab) */
+.gjs-editor #traits-container .gjs-trt-trait {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 12px !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  width: 100% !important;
+}
+
+/* Custom Accordion Header Trait */
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header {
+  padding: 0 !important;
+  border-bottom: none !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header .gjs-label {
+  display: none !important;
+  /* Hide the default label */
+}
+
+.gjs-editor #traits-container .gjs-trt-trait.gjs-trt-trait--accordion-header .gjs-field {
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-label {
+  color: #4b5563 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  flex-shrink: 0 !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field {
+  width: 100% !important;
+  height: 32px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* Buttons in SM/Traits */
+.gjs-editor .gjs-btn-prim {
+  background-color: #6366f1 !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.gjs-editor .gjs-btn-prim:hover {
+  background-color: #818cf8 !important;
+}
+
+/* Color Picker Container */
+.gjs-editor .gjs-clr-picker {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .1) !important;
+  border-radius: 8px !important;
+}
+
+.gjs-editor .gjs-clr-picker input {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 4px 6px !important;
+}
+
+.gjs-editor .gjs-clr-swatch,
+.gjs-editor .gjs-clr-color {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 4px !important;
+}
+
+/* Override default icons color */
+.gjs-editor .gjs-sm-icon {
+  fill: #4b5563 !important;
+}
+
+.gjs-editor .gjs-radio-item svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: currentColor !important;
+}
+
+/* Ensure flex for composite inner elements */
+/* Removed */
+
+/* ══════ CANVAS SELECTION ══════ */
+
+.gjs-selected {
+  outline: 2px solid #6366f1 !important;
+  outline-offset: -1px !important;
+}
+
+.gjs-hovered {
+  outline: 1px dashed #818cf8 !important;
+  outline-offset: -1px !important;
+}
+
+/* Toolbar on selected element */
+.gjs-toolbar {
+  background: #6366f1 !important;
+  border-radius: 6px 6px 0 0 !important;
+  padding: 4px 8px !important;
+}
+
+.gjs-toolbar-item {
+  color: #fff !important;
+  opacity: 0.9 !important;
+  padding: 3px 6px !important;
+  cursor: pointer !important;
+  border-radius: 3px !important;
+}
+
+.gjs-toolbar-item:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, .2) !important;
+}
+
+/* Badge */
+.gjs-badge {
+  background: #6366f1 !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  border-radius: 0 0 4px 0 !important;
+  padding: 3px 10px !important;
+}
+
+/* Drag placeholder */
+.gjs-placeholder {
+  border: 2px dashed #6366f1 !important;
+  background: rgba(124, 58, 237, .08) !important;
+  border-radius: 4px !important;
+}
+
+.gjs-placeholder-int {
+  background: #6366f1 !important;
+}
+
+/* Resize handles */
+.gjs-resizer-h {
+  border-color: #6366f1 !important;
+}
+
+/* ══════ SELECTOR MANAGER ══════ */
+.gjs-clm-tags {
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+/* Header & State Dropdown */
+.gjs-sm-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-bottom: 8px !important;
+}
+
+.gjs-clm-header-status {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+.gjs-clm-states {
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  padding: 2px 4px !important;
+  background: #fff !important;
+  color: #1e293b !important;
+}
+
+/* Add Class Input Row */
+.gjs-clm-sel {
+  display: flex !important;
+  align-items: center !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  background: #fff !important;
+}
+
+.gjs-clm-sel-b {
+  flex-grow: 1 !important;
+  margin-right: 8px !important;
+}
+
+.gjs-clm-sel-b input {
+  border: none !important;
+  outline: none !important;
+  width: 100% !important;
+  font-size: 12px !important;
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+.gjs-clm-btn-add {
+  color: #6366f1 !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  padding: 0px 6px !important;
+  border: 1px solid #c7d2fe !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Tags List */
+.gjs-clm-tags-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+
+.gjs-clm-tag {
+  background: #3b82f6 !important;
+  /* Blue like the screenshot */
+  color: #fff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.gjs-clm-tag-close {
+  cursor: pointer !important;
+  opacity: 0.8 !important;
+  font-size: 14px !important;
+}
+
+.gjs-clm-tag-close:hover {
+  opacity: 1 !important;
+}
+
+/* ══════ SCROLLBARS ══════ */
+
+#blocks-container::-webkit-scrollbar,
+#layers-container::-webkit-scrollbar,
+#styles-container::-webkit-scrollbar,
+#traits-container::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+#blocks-container::-webkit-scrollbar-track,
+#layers-container::-webkit-scrollbar-track,
+#styles-container::-webkit-scrollbar-track,
+#traits-container::-webkit-scrollbar-track {
+  background: #0f0f22 !important;
+}
+
+#blocks-container::-webkit-scrollbar-thumb,
+#layers-container::-webkit-scrollbar-thumb,
+#styles-container::-webkit-scrollbar-thumb,
+#traits-container::-webkit-scrollbar-thumb {
+  background: #2a2a4a !important;
+  border-radius: 4px !important;
+}
+
+#blocks-container::-webkit-scrollbar-thumb:hover,
+#styles-container::-webkit-scrollbar-thumb:hover {
+  background: #3a3a5a !important;
+}
+
+/* ══════ MISC ══════ */
+
+.gjs-off-prv {
+  display: none !important;
+}
+
+/* ── AI PROCESSING ANIMATION ── */
+@keyframes ai-pulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(124, 58, 237, 0));
+  }
+
+  50% {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.6));
+    outline: 2px solid #6366f1;
+  }
+
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(124, 58, 237, 0));
+  }
+}
+
+.ai-pulse-active {
+  animation: ai-pulse 0.8s ease-in-out infinite !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
+
+/* ── AI CHAT TYPING DOTS ── */
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ══════ GRAPESJS STUDIO (gs- prefix) ACCORDION OVERRIDES ══════ */
+
+.gjs-editor .gs-cmp-accordion-handler,
+.gjs-editor .gs-style-manager-sector-header {
+  background-color: #f9fafb !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #d1d5db !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  width: 100% !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  color: #111827 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  display: block !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler>div {
+  display: flex !important;
+  gap: 8px !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler__content {
+  text-align: left !important;
+  flex: 1 1 0% !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler__content>div {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler-toggle svg {
+  display: none !important;
+}
+
+.gjs-editor .gs-cmp-accordion-handler-toggle {
+  width: 14px !important;
+  height: 14px !important;
+  background-color: #6b7280 !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'%3E%3C/path%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  -webkit-mask-position: center !important;
+  transition: transform 0.2s !important;
+}
+
+.gjs-editor .gs-style-manager-sector-header:hover .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gs-cmp-accordion-handler:hover .gs-cmp-accordion-handler-toggle {
+  background-color: #000000 !important;
+}
+
+.gjs-editor [aria-expanded="true"] .gs-cmp-accordion-handler-toggle,
+.gjs-editor .gjs-sm-sector.gjs-sm-open .gs-cmp-accordion-handler-toggle {
+  transform: rotate(90deg) !important;
+}
+
+.gjs-editor .gs-cmp-accordion,
+.gjs-editor .gs-style-manager-sector {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Fallback for Tailwind utility classes used in the indicator dot */
+.gjs-editor .gs-utl-bg-amber-500 {
+  background-color: #f59e0b !important;
+}
+
+.gjs-editor .gs-utl-w-\[6px\] {
+  width: 6px !important;
+}
+
+.gjs-editor .gs-utl-h-\[6px\] {
+  height: 6px !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Beautiful Light-Themed Native Color Picker (Spectrum)
+   Styled to mimic modern pickers (like Pickr)
+══════════════════════════════════════════════════════════ */
+.sp-container {
+  position: absolute !important;
+  z-index: 9999999 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
+  min-height: 200px !important;
+  /* Force container height */
+  height: 200px !important;
+  width: 250px !important;
+}
+
+/* Hide the palette if we only want the picker container */
+.sp-palette-container {
+  display: none !important;
+}
+
+.sp-picker-container {
+  width: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+  position: relative !important;
+  height: 170px !important;
+  /* Fixed height to prevent collapse */
+  min-height: 170px !important;
+  display: block !important;
+}
+
+/* Top Color Preview */
+.sp-initial {
+  display: none !important;
+  /* Hide native initial to save space */
+}
+
+/* Top Container (holds map and hue) */
+.sp-top {
+  position: relative !important;
+  width: 100% !important;
+  height: 130px !important;
+  min-height: 130px !important;
+  margin-bottom: 12px !important;
+  display: block !important;
+}
+
+/* Gradient Map */
+.sp-color {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 4px !important;
+  right: 20px !important;
+  /* Make room for vertical hue slider */
+  height: 100% !important;
+  /* Fill .sp-top */
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+}
+
+/* Hue Slider */
+.sp-hue {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 4px !important;
+  left: auto !important;
+  right: 0 !important;
+  /* Push to the right edge */
+  width: 15px !important;
+  height: 100% !important;
+  /* Fill .sp-top */
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+}
+
+/* Dragger Handle */
+.sp-dragger {
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: transparent !important;
+}
+
+/* Slider Handle */
+.sp-slider {
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) !important;
+  background: transparent !important;
+  border-radius: 2px !important;
+  height: 6px !important;
+  left: -2px !important;
+  right: -2px !important;
+  opacity: 1 !important;
+}
+
+/* Bottom Controls Wrapper */
+.sp-button-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* HEX Input */
+.sp-input {
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 4px !important;
+  color: #4b5563 !important;
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+  width: 80px !important;
+  margin: 0 !important;
+}
+
+/* Save / OK Button */
+.sp-choose {
+  background-color: #3b82f6 !important;
+  /* Blue to match screenshot */
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  text-transform: none !important;
+  margin: 0 !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
+
+.sp-choose:hover {
+  background-color: #2563eb !important;
+}
+
+/* Cancel Button / Link */
+.sp-cancel {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  text-decoration: none !important;
+  margin-right: auto !important;
+  margin-left: 8px !important;
+  padding: 6px !important;
+}
+
+.sp-cancel:hover {
+  color: #111827 !important;
+}
+
+.gjs-editor .gs-utl-rounded-full {
+  border-radius: 9999px !important;
+}
+
+/* Force white background for styles and traits containers */
+#styles-container,
+#traits-container,
+.gjs-sm-sectors,
+.gjs-trt-traits {
+  background-color: #ffffff !important;
+}
+
+.gjs-editor .gjs-label-wrp {
+  width: 50% !important;
+  min-width: 50% !important;
+}
+
+/* Fix for checkbox traits to look like Toggle Switches */
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox,
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field[data-type="checkbox"],
+.gjs-editor #traits-container .gjs-trt-trait--checkbox .gjs-field {
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field-checkbox input,
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"],
+.gjs-editor #traits-container .gjs-trt-trait--checkbox input {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  width: 36px !important;
+  height: 20px !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  position: relative !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-color: #d1d5db !important;
+  border-radius: 20px !important;
+  outline: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #ffffff !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]:checked {
+  background-color: #8b5cf6 !important;
+  /* purple toggle like the screenshot */
+}
+
+.gjs-editor #traits-container .gjs-trt-trait input[type="checkbox"]:checked::after {
+  transform: translateX(16px) !important;
+}
+
+/* Swiper / Text Traits styling */
+.gjs-editor #traits-container .gjs-trt-trait--text {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait--text .gjs-label {
+  margin-bottom: 6px !important;
+}
+
+/* Hide grapesjs native fake checkbox if present */
+.gjs-editor #traits-container .gjs-trt-trait .gjs-chk-icon {
+  display: none !important;
+}
+
+/* FORCE SELECTOR MANAGER LIGHT THEME */
+.gjs-editor .gjs-clm-tags {
+  background: transparent !important;
+  color: #111827 !important;
+}
+
+.gjs-editor .gjs-clm-tags * {
+  color: #111827 !important;
+}
+
+.gjs-editor .gjs-clm-header {
+  padding-bottom: 8px !important;
+}
+
+.gjs-editor .gjs-clm-header-status {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #111827 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.gjs-editor .gjs-clm-states {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  height: 32px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 0 24px 0 8px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 12px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.gjs-editor .gjs-clm-states:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.gjs-editor .gjs-clm-sel {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0 8px !important;
+  height: 32px !important;
+  align-items: center !important;
+}
+
+.gjs-editor .gjs-clm-sel-b {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.gjs-editor .gjs-clm-sel-b input {
+  color: #111827 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  height: 100% !important;
+}
+
+.gjs-editor .gjs-clm-btn-add {
+  background: #ffffff !important;
+  color: #6366f1 !important;
+  border: none !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+.gjs-editor .gjs-clm-tags .gjs-sm-label {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  margin-top: 10px !important;
+  margin-bottom: 4px !important;
+}
+
+.gjs-editor .gjs-clm-tag {
+  background: #e0e7ff !important;
+  color: #4f46e5 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  border: 1px solid #c7d2fe !important;
+}
+
+.gjs-editor .gjs-clm-tag * {
+  color: #4f46e5 !important;
+}
+
+.gjs-editor .gjs-clm-tag-close {
+  color: #4f46e5 !important;
+  margin-left: 6px !important;
+  cursor: pointer !important;
+}
+
+.gjs-editor .gjs-clm-tags-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Native Selector Manager Layout */
+.gjs-editor #styles-container {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.gjs-editor #styles-container .gjs-sm-sectors {
+  order: 1 !important;
+}
+
+.gjs-editor #styles-container .gjs-clm-tags {
+  order: 2 !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 12px !important;
+  margin-top: 10px !important;
+  background: #ffffff !important;
+}
+
+/* Fix text colors and layout for Selected field */
+.gjs-editor .gjs-clm-header-status,
+.gjs-editor .gjs-clm-tags .gjs-sm-label,
+.gjs-editor .gjs-clm-tags .gjs-clm-label,
+.gjs-editor .gjs-clm-tags>div:first-child>div:first-child,
+.gjs-editor .gjs-clm-tags>div:last-child>div:first-child {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt,
+.gjs-editor .gjs-clm-select,
+.gjs-editor .gjs-clm-sel-row,
+.gjs-editor .gjs-clm-tags>div:last-child {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  margin-top: 10px !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-sm-label,
+.gjs-editor .gjs-clm-tags-pt .gjs-clm-label,
+.gjs-editor .gjs-clm-tags>div:last-child>div:first-child {
+  margin-bottom: 8px !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-field,
+.gjs-editor .gjs-clm-select .gjs-field,
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field {
+  width: 100% !important;
+  height: 32px !important;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-field:focus-within,
+.gjs-editor .gjs-clm-select .gjs-field:focus-within,
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field:focus-within {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.gjs-editor .gjs-clm-tags-pt .gjs-field input,
+.gjs-editor .gjs-clm-select .gjs-field input,
+.gjs-editor .gjs-clm-tags>div:last-child .gjs-field input {
+  color: #111827 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  width: 100% !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* =============================================
+   BUG FIX: Slider (range input) not working
+   Problem: .gjs-field has overflow:hidden which clips
+   the range thumb, and no range-specific styles exist.
+   ============================================= */
+
+/* 1. Override overflow:hidden for slider fields */
+.gjs-editor .gjs-field.gjs-field-slider,
+.gjs-editor .gjs-field.gjs-sm-property__slider .gjs-field,
+.gjs-editor .gjs-sm-property__slider .gjs-field {
+  overflow: visible !important;
+}
+
+/* 2. Range input proper styling */
+.gjs-editor .gjs-field input[type="range"],
+.gjs-editor input[type="range"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 4px 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  accent-color: #6366f1 !important;
+}
+
+/* 3. Also fix any parent containers of slider fields */
+.gjs-editor .gjs-sm-property__slider {
+  overflow: visible !important;
+}
+
+/* =============================================
+   BUG FIX: Select options not working
+   Problem: overflow:hidden on parent containers
+   clips the dropdown options list.
+   ============================================= */
+
+/* Fix select dropdown visibility */
+.gjs-editor .gjs-field-select,
+.gjs-editor .gjs-sm-property .gjs-field-select {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Allow native select dropdown to appear above everything */
+.gjs-editor .gjs-field select,
+.gjs-editor .gjs-trt-trait .gjs-field select {
+  position: relative !important;
+  z-index: 9999 !important;
+  cursor: pointer !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Fix traits panel select too */
+.gjs-editor #traits-container .gjs-field-select {
+  overflow: visible !important;
+}
+
+.gjs-editor #traits-container .gjs-trt-trait .gjs-field select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  z-index: 9999 !important;
+  cursor: pointer !important;
+}
+
+/* Fix styles panel container overflow */
+.gjs-editor .gjs-sm-properties,
+.gjs-editor .gjs-sm-sector,
+.gjs-editor .gjs-sm-property {
+  overflow: visible !important;
+}
+
+/* Fix select alignment by forcing input holder to 100% width */
+.gjs-editor .gjs-field.gjs-select > span {
+  width: 100% !important;
+}
+
+/* Fix slider thumb clipping and alignment */
+.gjs-editor .gjs-field-range,
+.gjs-editor .gjs-field-range input[type=range] {
+  overflow: visible !important;
+}
+
+.gjs-editor .gjs-field-range {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.gjs-editor input[type=range] {
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+.gjs-editor input[type=range]::-webkit-slider-thumb {
+  margin-top: auto !important;
+  transform: translateY(calc(-50% + 2px));
+}

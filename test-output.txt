@@ -1,0 +1,65 @@
+Extracted Fields: [
+  {
+    "field_name": "full_name",
+    "label": "Full name",
+    "type": "text",
+    "required": false,
+    "placeholder": "Full name",
+    "options": [],
+    "validation": {}
+  },
+  {
+    "field_name": "email_address",
+    "label": "Email address",
+    "type": "email",
+    "required": false,
+    "placeholder": "Email address",
+    "options": [],
+    "validation": {
+      "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+      "message": "Please enter a valid email address"
+    }
+  },
+  {
+    "field_name": "phone_number",
+    "label": "Phone number",
+    "type": "tel",
+    "required": false,
+    "placeholder": "Phone number",
+    "options": [],
+    "validation": {
+      "pattern": "^[0-9+()\\-\\s]{10,20}$",
+      "message": "Please enter a valid phone number"
+    }
+  },
+  {
+    "field_name": "address",
+    "label": "Address",
+    "type": "text",
+    "required": false,
+    "placeholder": "Address",
+    "options": [],
+    "validation": {}
+  },
+  {
+    "field_name": "field_0_4",
+    "label": "Field 0 4",
+    "type": "select",
+    "required": false,
+    "placeholder": "",
+    "options": [
+      "Web Development",
+      "Data Science"
+    ],
+    "validation": {}
+  },
+  {
+    "field_name": "comments",
+    "label": "Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "Comments",
+    "options": [],
+    "validation": {}
+  }
+]
