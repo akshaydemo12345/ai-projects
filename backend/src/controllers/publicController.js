@@ -12,6 +12,7 @@ const fs = require('fs');
 const { validateForm } = require('../utils/dynamicValidator');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { generateAdminEmailHTML } = require('../utils/emailTemplates');
 
 /**
  * Normalizes script content - wraps in script tags if not already present
@@ -452,6 +453,35 @@ const buildLeadCaptureScript = (page) => {
     var f=e.target;
     if(f.tagName!=="FORM")return;
     if(f.getAttribute("data-submitting")==="true"){e.preventDefault();return}
+
+    // VALIDATION: forms are rendered with novalidate (native browser check is off),
+    // and this listener runs in the capture phase + stopImmediatePropagation()s below,
+    // which means any separate in-page validation script never gets to run.
+    // So we do the required/email check here, before allowing submission through.
+    var invalid=false;
+    f.querySelectorAll("[required]").forEach(function(el){
+      var val=(el.value||"").trim();
+      var isCheckable=(el.type==="checkbox"||el.type==="radio");
+      var bad=isCheckable?!el.checked:(!val||(el.type==="email"&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)));
+      var err=el.nextElementSibling;
+      if(bad){
+        invalid=true;
+        el.style.borderColor="#ef4444";
+        el.style.outline="2px solid #ef4444";
+        if(err&&err.classList&&err.classList.contains("field-error"))err.classList.remove("hidden");
+      }else{
+        el.style.borderColor="";
+        el.style.outline="";
+        if(err&&err.classList&&err.classList.contains("field-error"))err.classList.add("hidden");
+      }
+    });
+    if(invalid){
+      e.preventDefault();
+      var firstBad=f.querySelector('[required][style*="border-color"]');
+      if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
+
     f.setAttribute("data-submitting","true");
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -1511,86 +1541,17 @@ exports.handleFormSubmission = async (req, res, next) => {
         // 1. Admin Notification
         if (project.adminNotification?.enabled && (project.adminNotification.email || project.adminEmail)) {
           const adminEmail = project.adminNotification.email || project.adminEmail;
-          const pColor = project.primaryColor || '#7c3aed';
-          // Intro message removed per user request
 
-          const adminMsg = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #f8fafc; }
-                .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-                .header { background-color: ${pColor}; padding: 40px 20px; text-align: center; color: #ffffff; }
-                .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; }
-                .header p { margin: 10px 0 0; opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-                .content { padding: 40px; }
-                .intro { font-size: 14px; color: #64748b; margin-bottom: 30px; text-align: center; white-space: pre-line; }
-                .data-card { background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-                .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
-                .data-row:last-child { border-bottom: none; }
-                .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-                .value { font-size: 14px; font-weight: 600; color: #1e293b; }
-                .footer { padding: 30px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
-                .footer p { margin: 5px 0; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1>New Lead Captured</h1>
-                  <p>${project.fromName || 'System Notification'}</p>
-                </div>
-                <div class="content">
-                  <div class="data-card">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      ${Object.entries(leadData).map(([key, value]) => {
-            if (value !== undefined && value !== null && typeof value === 'object') {
-              return '';
-            }
-            const displayValue = (value === undefined || value === null || value === '') ? 'Not provided' : String(value);
-            return `
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">${key.replace(/_/g, ' ')}</div>
-                          <div class="value">${displayValue}</div>
-                        </td>
-                      </tr>`;
-          }).join('')}
-                      ${Object.entries(utm).map(([key, value]) => value ? `
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">${key.replace(/_/g, ' ')}</div>
-                          <div class="value">${value}</div>
-                        </td>
-                      </tr>` : '').join('')}
-                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                          <div class="label">Page</div>
-                          <div class="value">${pageSlug || ''}</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0;">
-                          <div class="label">Referral URL</div>
-                          <div class="value" style="word-break: break-all; font-size: 13px;">
-                            ${rawData.url || rawData.pageUrl || 'Direct'}
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-                <div class="footer">
-                  <p>Powered by AI Landing Page Builder</p>
-                  <p>&copy; ${new Date().getFullYear()} ${project.fromName || 'All Rights Reserved'}</p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `;
+          const adminMsg = generateAdminEmailHTML({
+            project,
+            leadData,
+            utm,
+            landingPageUrl: rawData.url || rawData.pageUrl || '',
+            referrerUrl: rawData.referer || req.get('referer') || '',
+            pageSlug: pageSlug || '',
+            ip_address: req.ip,
+            submitted_at: new Date()
+          });
 
           emailService.sendEmail({
             to: adminEmail,

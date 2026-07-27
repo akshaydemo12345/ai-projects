@@ -11,6 +11,7 @@ const AIService = require('../services/aiService');
 const PublishService = require('../services/publishService');
 const SyncService = require('../services/syncService');
 const emailService = require('../services/emailService');
+const { generateNotificationEmailHTML } = require('../utils/emailTemplates');
 const logger = require('../utils/logger');
 const config = require('../config');
 
@@ -1543,45 +1544,32 @@ exports.claimRequest = async (req, res, next) => {
     } catch (e) { }
 
     try {
-      // Build a simple, clear HTML email body
-      const submittedAt = new Date().toISOString();
-      const htmlBody = `
-        <table style="width:100%;max-width:680px;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;">
-          <tr>
-            <td style="padding:20px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
-              <h2 style="margin:0 0 8px;color:#111827">New Claim Request</h2>
-              <p style="margin:0 0 16px;color:#6b7280">A user has requested to claim the landing page. Details below.</p>
-              <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700;width:160px">Client Email</td>
-                  <td style="padding:8px 0;color:#111827"><a href="mailto:${userEmail}" style="color:#2563eb;text-decoration:none">${userEmail}</a></td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700">Landing Page</td>
-                  <td style="padding:8px 0;color:#111827"><a href="${landingPageUrl || '#'}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none">${landingPageUrl || 'N/A'}</a></td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700">Website URL</td>
-                  <td style="padding:8px 0;color:#111827"><a href="${projectWebsiteUrl || '#'}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none">${projectWebsiteUrl || 'N/A'}</a></td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700">Page Title</td>
-                  <td style="padding:8px 0;color:#111827">${pageTitle}</td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700">Submitted</td>
-                  <td style="padding:8px 0;color:#111827">${submittedAt}</td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;color:#374151;font-weight:700">IP</td>
-                  <td style="padding:8px 0;color:#111827">${req.ip || 'N/A'}</td>
-                </tr>
-              </table>
-              <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Admin notification — verify ownership before proceeding.</p>
-            </td>
-          </tr>
-        </table>
-      `;
+      // Build the HTML email body using the shared admin notification card design
+      const submittedAt = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+      const _link = (url) => url
+        ? `<a href="${url}" target="_blank" rel="noopener" style="color: #2b5b84; text-decoration: none; word-break: break-all; overflow-wrap: break-word;">${url}</a>`
+        : 'N/A';
+
+      const htmlBody = generateNotificationEmailHTML({
+        headerTitle: 'New Page Claim Request',
+        headerSubtitle: 'CLAIM NOTIFICATION',
+        headerIcon: '📄',
+        sections: [
+          {
+            title: 'Claim Details',
+            icon: '📄',
+            rows: [
+              { label: 'Client Email', value: `<a href="mailto:${userEmail}" style="color: #2b5b84; text-decoration: none;">${userEmail}</a>` },
+              { label: 'Landing Page', value: _link(landingPageUrl) },
+              { label: 'Website URL', value: _link(projectWebsiteUrl) },
+              { label: 'Page Title', value: pageTitle },
+              { label: 'Submitted', value: submittedAt },
+              { label: 'IP Address', value: req.ip || 'N/A' }
+            ]
+          }
+        ],
+        fromName: process.env.FROM_NAME || 'AI Landing Page Builder'
+      });
 
       // Send email to admin
       await emailService.sendEmail({
