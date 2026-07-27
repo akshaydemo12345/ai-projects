@@ -24,6 +24,7 @@ import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01
 import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
 import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 import { plumber04Html, plumber04Styles } from "../templates/plumber/templates04";
+import { plumber05Html, plumber05Styles } from "../templates/plumber/templates05";
 
 import { realEstate01Html, realEstate01Styles } from "../templates/real-estate/templates01";
 import { realEstate02Html, realEstate02Styles } from "../templates/real-estate/templates02";
@@ -81,6 +82,34 @@ const LANDING_TEMPLATES = [
     gradient: "linear-gradient(135deg, #0c1426 0%, #C8A15A 100%)",
   },
   {
+    id: "law-07",
+    name: "Corporate Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates07/screenshot.png",
+    gradient: "linear-gradient(135deg, #14141a 0%, #000000 100%)",
+  },
+  {
+    id: "law-08",
+    name: "Editorial Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates08/screenshot.png",
+    gradient: "linear-gradient(135deg, #131313 0%, #f7f5f1 100%)",
+  },
+  {
+    id: "law-09",
+    name: "Justice Delivered",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot09.png",
+    gradient: "linear-gradient(135deg, #16161a 0%, #ffffff 100%)",
+  },
+  {
+    id: "law-10",
+    name: "Rights & Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot10.png",
+    gradient: "linear-gradient(135deg, #14140f 0%, #faf8f3 100%)",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -107,6 +136,48 @@ const LANDING_TEMPLATES = [
     tag: "Healthcare",
     img: "/assets/templates/healthcare/templates04/H1.png",
     gradient: "linear-gradient(135deg, #1750A8 0%, #e6f2ff 100%)",
+  },
+  {
+    id: "healthcare-05",
+    name: "Strategic Healthcare",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates05/screenshot.png",
+    gradient: "linear-gradient(135deg, #FFC107 0%, #002147 100%)",
+  },
+  {
+    id: "healthcare-06",
+    name: "Enterprise Advisory",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates06/screenshot.png",
+    gradient: "linear-gradient(135deg, #1f2937 0%, #10b981 100%)",
+  },
+  {
+    id: "healthcare-07",
+    name: "Compassionate Care",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates07/screenshot07.png",
+    gradient: "linear-gradient(135deg, #10241f 0%, #f6faf9 100%)",
+  },
+  {
+    id: "healthcare-08",
+    name: "Family Wellness Care",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates08/screenshot.png",
+    gradient: "linear-gradient(135deg, #24322c 0%, #fef3e7 100%)",
+  },
+  {
+    id: "healthcare-09",
+    name: "Modern Health Clinic",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates09/screenshot.png",
+    gradient: "linear-gradient(135deg, #0d1b2a 0%, #e8eef7 100%)",
+  },
+  {
+    id: "healthcare-10",
+    name: "Serene Private Practice",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates10/screenshot.png",
+    gradient: "linear-gradient(135deg, #1c211f 0%, #fbfaf7 100%)",
   },
   {
     id: "travel-01",
@@ -184,6 +255,13 @@ const LANDING_TEMPLATES = [
     tag: "Plumber",
     img: "/assets/templates/plumber/templates04/screenshotp.png",
     gradient: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)"
+  },
+  {
+    id: "plumber-05",
+    name: "Emergency Plumber 05",
+    tag: "Plumber",
+    img: "/assets/templates/Plumber/templates05/image1.jpg",
+    gradient: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)"
   },
   {
     id: "realestate-01",
@@ -282,6 +360,7 @@ const getTemplateContent = (id: string) => {
     case "plumber-02": return { html: plumber02Html, css: plumber02Styles };
     case "plumber-03": return { html: plumber03Html, css: plumber03Styles };
     case "plumber-04": return { html: plumber04Html, css: plumber04Styles };
+    case "plumber-05": return { html: plumber05Html, css: plumber05Styles };
 
     case "realestate-01": return { html: realEstate01Html, css: realEstate01Styles };
     case "realestate-02": return { html: realEstate02Html, css: realEstate02Styles };
@@ -414,11 +493,10 @@ const TemplatesPage = () => {
                 <button
                   key={cat}
                   onClick={() => setTemplateCategory(cat)}
-                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
-                    templateCategory === cat
-                      ? "bg-[#7c3aed] border-[#7c3aed] text-white shadow-md"
-                      : "bg-white border-gray-100 text-gray-400 hover:text-gray-700 hover:border-gray-200 shadow-sm"
-                  }`}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${templateCategory === cat
+                    ? "bg-[#7c3aed] border-[#7c3aed] text-white shadow-md"
+                    : "bg-white border-gray-100 text-gray-400 hover:text-gray-700 hover:border-gray-200 shadow-sm"
+                    }`}
                 >
                   {cat}
                 </button>
@@ -495,7 +573,7 @@ const TemplatesPage = () => {
 
       <Footer />
 
-      
+
     </div>
   );
 };

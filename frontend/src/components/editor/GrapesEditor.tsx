@@ -307,7 +307,7 @@ const GrapesEditor = () => {
       d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
       d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
       dbContent = d.body.innerHTML;
-      
+
       // Fix for older pages corrupted with leaked validation script text
       dbContent = dbContent.replace(/'; \} \}\); \} document\.readyState === 'loading'\?document\.addEventListener\('DOMContentLoaded',init\):init\(\); \}\)\(\);/g, '');
     } catch (e) { }
@@ -602,16 +602,71 @@ const GrapesEditor = () => {
               }
             }
 
-            // Handle custom FAQ toggles (e.g. Travel template)
-            const faqHead = e.target.closest('.faq-head, .v2-faq-summary');
+            // Handle custom FAQ toggles (e.g. Healthcare, Travel, Law templates)
+            const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .faq-item-head, .faq-item, .hc7-faq-item-head, .hc7-faq-item');
             if (faqHead && !faqHead.closest('details')) {
-              const item = faqHead.parentElement;
-              if (item && item.classList.contains('faq-item')) {
-                const allItems = document.querySelectorAll('.faq-item');
+              const item = faqHead.closest('.faq-item, .hc7-faq-item');
+              if (item) {
+                const allItems = document.querySelectorAll('.faq-item, .hc7-faq-item');
                 allItems.forEach(el => {
                   if (el !== item) el.classList.remove('active');
                 });
                 item.classList.toggle('active');
+              }
+            }
+
+            // ── Handle Doctors Slider (hc7-doc-prev / hc7-doc-next) ──
+            const docPrev = e.target.closest('.hc7-doc-prev');
+            const docNext = e.target.closest('.hc7-doc-next');
+            if (docPrev || docNext) {
+              const grid = document.querySelector('.hc7-doctor-grid') as HTMLElement;
+              if (grid) {
+                const cards = grid.querySelectorAll('.hc7-doctor-card');
+                if (cards.length) {
+                  let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                  const w = window.innerWidth;
+                  const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                  const maxIdx = Math.max(0, cards.length - visible);
+                  if (docNext) {
+                    curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                  } else {
+                    curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                  }
+                  grid.setAttribute('data-index', String(curIdx));
+                  const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+                  const moveAmount = (cardWidth + 24) * curIdx;
+                  grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+                }
+              }
+            }
+
+            // ── Handle Testimonial Slider (hc7-testimonial-prev / hc7-testimonial-next / hc7-testimonial-dots) ──
+            const testPrev = e.target.closest('.hc7-testimonial-prev');
+            const testNext = e.target.closest('.hc7-testimonial-next');
+            const testDot = e.target.closest('.hc7-testimonial-dots span');
+            if (testPrev || testNext || testDot) {
+              const slides = document.querySelectorAll('.hc7-testimonial-slide');
+              const dots = document.querySelectorAll('.hc7-testimonial-dots span');
+              if (slides.length) {
+                let curSlide = 0;
+                slides.forEach((s, idx) => { if (s.classList.contains('active')) curSlide = idx; });
+                if (testDot) {
+                  const dotsArr = Array.from(dots);
+                  curSlide = dotsArr.indexOf(testDot as any);
+                  if (curSlide < 0) curSlide = 0;
+                } else if (testNext) {
+                  curSlide = (curSlide + 1) % slides.length;
+                } else if (testPrev) {
+                  curSlide = (curSlide - 1 + slides.length) % slides.length;
+                }
+                slides.forEach((s, idx) => {
+                  if (idx === curSlide) s.classList.add('active');
+                  else s.classList.remove('active');
+                });
+                dots.forEach((d, idx) => {
+                  if (idx === curSlide) d.classList.add('active');
+                  else d.classList.remove('active');
+                });
               }
             }
 
@@ -2665,13 +2720,67 @@ const GrapesEditor = () => {
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           canvasDoc.addEventListener('click', (e: any) => {
-            // ── Travel-03: Destination slider arrow buttons ──
-            const canvasWin = editor.Canvas.getWindow() as any;
-            if (canvasWin?.t03DestSwiper) {
-              if (e.target.closest('.dest-prev')) {
-                canvasWin.t03DestSwiper.slidePrev();
-              } else if (e.target.closest('.dest-next')) {
-                canvasWin.t03DestSwiper.slideNext();
+            // ── Healthcare 07 Sliders & FAQ in Canvas ──
+            const docPrev = e.target.closest('.hc7-doc-prev');
+            const docNext = e.target.closest('.hc7-doc-next');
+            if (docPrev || docNext) {
+              const grid = canvasDoc.querySelector('.hc7-doctor-grid') as HTMLElement;
+              if (grid) {
+                const cards = grid.querySelectorAll('.hc7-doctor-card');
+                if (cards.length) {
+                  let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                  const w = canvasDoc.defaultView?.innerWidth || 1200;
+                  const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                  const maxIdx = Math.max(0, cards.length - visible);
+                  if (docNext) {
+                    curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                  } else {
+                    curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                  }
+                  grid.setAttribute('data-index', String(curIdx));
+                  const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+                  const moveAmount = (cardWidth + 24) * curIdx;
+                  grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+                }
+              }
+            }
+
+            const testPrev = e.target.closest('.hc7-testimonial-prev');
+            const testNext = e.target.closest('.hc7-testimonial-next');
+            const testDot = e.target.closest('.hc7-testimonial-dots span');
+            if (testPrev || testNext || testDot) {
+              const slides = canvasDoc.querySelectorAll('.hc7-testimonial-slide');
+              const dots = canvasDoc.querySelectorAll('.hc7-testimonial-dots span');
+              if (slides.length) {
+                let curSlide = 0;
+                slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+                if (testDot) {
+                  const dotsArr = Array.from(dots);
+                  curSlide = dotsArr.indexOf(testDot as any);
+                  if (curSlide < 0) curSlide = 0;
+                } else if (testNext) {
+                  curSlide = (curSlide + 1) % slides.length;
+                } else if (testPrev) {
+                  curSlide = (curSlide - 1 + slides.length) % slides.length;
+                }
+                slides.forEach((s: any, idx: number) => {
+                  if (idx === curSlide) s.classList.add('active');
+                  else s.classList.remove('active');
+                });
+                dots.forEach((d: any, idx: number) => {
+                  if (idx === curSlide) d.classList.add('active');
+                  else d.classList.remove('active');
+                });
+              }
+            }
+
+            const hc7FaqHead = e.target.closest('.hc7-faq-item-head, .hc7-faq-item');
+            if (hc7FaqHead) {
+              const item = hc7FaqHead.closest('.hc7-faq-item');
+              if (item) {
+                const wasActive = item.classList.contains('active');
+                canvasDoc.querySelectorAll('.hc7-faq-item').forEach((el: any) => el.classList.remove('active'));
+                if (!wasActive) item.classList.add('active');
               }
             }
 
@@ -3499,6 +3608,108 @@ const GrapesEditor = () => {
         }
       }
 
+      // 3. Handle FAQ Toggle when selected in Editor
+      let currentModel: any = model;
+      let faqWrapper: any = null;
+      while (currentModel) {
+        const classes = currentModel.getClasses?.() || [];
+        if (classes.includes('hc7-faq-item') || classes.includes('faq-item')) {
+          faqWrapper = currentModel;
+          break;
+        }
+        currentModel = currentModel.parent();
+      }
+      if (faqWrapper) {
+        const el = faqWrapper.getEl();
+        if (el) {
+          const wasActive = el.classList.contains('active');
+          const doc = el.ownerDocument;
+          doc.querySelectorAll('.hc7-faq-item, .faq-item').forEach((f: any) => f.classList.remove('active'));
+          if (!wasActive) el.classList.add('active');
+        }
+      }
+
+      // 4. Handle Doctors Slider Arrow Click when selected in Editor
+      let docNavModel: any = model;
+      let isDocPrev = false;
+      let isDocNext = false;
+      while (docNavModel) {
+        const classes = docNavModel.getClasses?.() || [];
+        if (classes.includes('hc7-doc-prev')) { isDocPrev = true; break; }
+        if (classes.includes('hc7-doc-next')) { isDocNext = true; break; }
+        docNavModel = docNavModel.parent();
+      }
+      if (isDocPrev || isDocNext) {
+        const doc = docNavModel.getEl()?.ownerDocument;
+        if (doc) {
+          const grid = doc.querySelector('.hc7-doctor-grid') as HTMLElement;
+          if (grid) {
+            const cards = grid.querySelectorAll('.hc7-doctor-card');
+            if (cards.length) {
+              let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+              const w = doc.defaultView?.innerWidth || 1200;
+              const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+              const maxIdx = Math.max(0, cards.length - visible);
+              if (isDocNext) {
+                curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+              } else {
+                curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+              }
+              grid.setAttribute('data-index', String(curIdx));
+              const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+              const moveAmount = (cardWidth + 24) * curIdx;
+              grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+            }
+          }
+        }
+      }
+
+      // 5. Handle Testimonial Slider Nav when selected in Editor
+      let testNavModel: any = model;
+      let isTestPrev = false;
+      let isTestNext = false;
+      let isTestDot = false;
+      while (testNavModel) {
+        const classes = testNavModel.getClasses?.() || [];
+        const parentClasses = testNavModel.parent()?.getClasses?.() || [];
+        if (classes.includes('hc7-testimonial-prev')) { isTestPrev = true; break; }
+        if (classes.includes('hc7-testimonial-next')) { isTestNext = true; break; }
+        if (testNavModel.get('tagName')?.toLowerCase() === 'span' && parentClasses.includes('hc7-testimonial-dots')) {
+          isTestDot = true;
+          break;
+        }
+        testNavModel = testNavModel.parent();
+      }
+      if (isTestPrev || isTestNext || isTestDot) {
+        const doc = testNavModel.getEl()?.ownerDocument;
+        if (doc) {
+          const slides = doc.querySelectorAll('.hc7-testimonial-slide');
+          const dots = doc.querySelectorAll('.hc7-testimonial-dots span');
+          if (slides.length) {
+            let curSlide = 0;
+            slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+            if (isTestDot) {
+              const el = testNavModel.getEl();
+              const dotsArr = Array.from(dots);
+              curSlide = dotsArr.indexOf(el as any);
+              if (curSlide < 0) curSlide = 0;
+            } else if (isTestNext) {
+              curSlide = (curSlide + 1) % slides.length;
+            } else if (isTestPrev) {
+              curSlide = (curSlide - 1 + slides.length) % slides.length;
+            }
+            slides.forEach((s: any, idx: number) => {
+              if (idx === curSlide) s.classList.add('active');
+              else s.classList.remove('active');
+            });
+            dots.forEach((d: any, idx: number) => {
+              if (idx === curSlide) d.classList.add('active');
+              else d.classList.remove('active');
+            });
+          }
+        }
+      }
+
       // Restore Swiper Pagination if wiped by GrapesJS re-render
       const swiperContainer = model.is('swiper-container') ? model : model.closest('[data-gjs-type="swiper-container"]');
       if (swiperContainer) {
@@ -3738,10 +3949,18 @@ const GrapesEditor = () => {
   };
 
   // ─── Preview ───
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!page?.slug) {
       toast.error('Please save your page first to generate a slug');
       return;
+    }
+    try {
+      toast.loading('Saving latest changes for preview...', { id: 'preview-save' });
+      await handleSave();
+      toast.dismiss('preview-save');
+    } catch (e) {
+      toast.dismiss('preview-save');
+      console.warn('Auto-save before preview failed:', e);
     }
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
     const token = page.previewToken ? `?token=${page.previewToken}` : '';
