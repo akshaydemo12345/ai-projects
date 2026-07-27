@@ -10,10 +10,51 @@ const cheerio = require('cheerio');
 const { fetchPageHtml } = require('../utils/puppeteerFetch');
 const { verifyProjectIntegration } = require('../utils/verifyIntegration');
 
+const getDomainKey = (url) => {
+  if (!url) return '';
+  return url.toString().trim().toLowerCase()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split('/')[0]
+    .split(':')[0]
+    .split('?')[0]
+    .split('#')[0];
+};
+
 // CREATE PROJECT
 exports.createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
+    const rawWebsite = req.body.websiteUrl || req.body.url || req.body.websiteProfile?.extraction?.sourceUrl;
+
+    if (rawWebsite) {
+      const domainKey = getDomainKey(rawWebsite);
+      if (domainKey) {
+        const userProjects = await Project.find({ userId: req.user._id, isDeleted: { $ne: true } });
+        const existingProject = userProjects.find(p => {
+          const urls = [
+            p.websiteUrl,
+            p.url,
+            p.scrapeMeta?.sourceUrl,
+            p.websiteProfile?.extraction?.sourceUrl,
+            p.websiteProfile?.extraction?.finalUrl
+          ].filter(Boolean);
+          return urls.some(u => getDomainKey(u) === domainKey);
+        });
+
+        if (existingProject) {
+          console.log(`[projectController] Reusing existing project (${existingProject._id}) for website: ${rawWebsite}`);
+          return res.status(200).json({
+            status: 'success',
+            reused: true,
+            data: {
+              project: existingProject
+            }
+          });
+        }
+      }
+    }
+
     const apiToken = req.body.apiToken || 'PC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
     // Fonts passed explicitly from the frontend (populated after Analyze Website)
@@ -749,5 +790,44 @@ exports.verifyScript = async (req, res) => {
       message: 'Verification failed',
       error: error.message
     });
+  }
+};
+
+// CHECK IF PROJECT ALREADY EXISTS FOR USER & WEBSITE
+exports.checkExistingProject = async (req, res, next) => {
+  try {
+    const rawUrl = req.query.websiteUrl || req.query.url;
+    if (!rawUrl) {
+      return res.status(200).json({ status: 'success', exists: false, project: null });
+    }
+
+    const domainKey = getDomainKey(rawUrl);
+    if (!domainKey) {
+      return res.status(200).json({ status: 'success', exists: false, project: null });
+    }
+
+    const userProjects = await Project.find({ userId: req.user._id, isDeleted: { $ne: true } });
+    const existingProject = userProjects.find(p => {
+      const urls = [
+        p.websiteUrl,
+        p.url,
+        p.scrapeMeta?.sourceUrl,
+        p.websiteProfile?.extraction?.sourceUrl,
+        p.websiteProfile?.extraction?.finalUrl
+      ].filter(Boolean);
+      return urls.some(u => getDomainKey(u) === domainKey);
+    });
+
+    if (existingProject) {
+      return res.status(200).json({
+        status: 'success',
+        exists: true,
+        project: existingProject
+      });
+    }
+
+    return res.status(200).json({ status: 'success', exists: false, project: null });
+  } catch (err) {
+    next(err);
   }
 };

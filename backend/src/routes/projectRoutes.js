@@ -15,6 +15,7 @@ router.post("/verify-script", verifyScript); // ✅ FIXED
 
 router.use(protect); // All routes below are protected
 
+router.get('/check', projectController.checkExistingProject);
 router.post('/', projectController.createProject);
 router.get('/', projectController.listProjects);
 router.get('/:id', projectController.getProject);

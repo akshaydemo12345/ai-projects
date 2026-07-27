@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,6 +9,7 @@ import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import AutoLoginCallback from "./pages/AutoLoginCallback";
 import AutoLoginOtpPage from "./pages/AutoLoginotpPage";
+import AutoProjectPage from "./pages/AutoProjectPage";
 import EditorPage from "./pages/EditorPage";
 import PublishedPage from "./pages/PublishedPage";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -28,14 +30,7 @@ import PublicLandingPage from "./pages/PublicLandingPage";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    },
-  },
-});
+
 
 const RootHandler = () => {
   const navigate = useNavigate();
@@ -75,6 +70,7 @@ const App = () => (
             
             {/* Protected Dashboard Routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/auto-project" element={<AutoProjectPage />} />
               <Route path="/editor/:projectId/:pageId" element={<EditorPage />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<ProjectsPage />} />

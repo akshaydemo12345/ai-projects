@@ -475,6 +475,10 @@ export const authApi = {
 
 // --- Projects API ---
 export const projectsApi = {
+  checkExisting: async (websiteUrl: string) => {
+    const res = await apiFetch(`/projects/check?websiteUrl=${encodeURIComponent(websiteUrl)}`);
+    return res; // { status: 'success', exists: boolean, project: Project | null }
+  },
   getAll: async () => {
     const res = await apiFetch('/projects');
     return res.data.projects;
