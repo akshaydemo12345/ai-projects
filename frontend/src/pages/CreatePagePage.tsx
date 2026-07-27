@@ -15,6 +15,10 @@ import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/te
 import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
 import { healthcare05Html, healthcare05Styles } from "../templates/healthcare/templates05";
 import { healthcare06Html, healthcare06Styles } from "../templates/healthcare/templates06";
+import { healthcare07Html, healthcare07Styles } from "../templates/healthcare/templates07";
+import { healthcare08Html, healthcare08Styles } from "../templates/healthcare/templates08";
+import { healthcare09Html, healthcare09Styles } from "../templates/healthcare/templates09";
+import { healthcare10Html, healthcare10Styles } from "../templates/healthcare/templates10";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -26,6 +30,7 @@ import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01
 import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
 import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 import { plumber04Html, plumber04Styles } from "../templates/plumber/templates04";
+import { plumber05Html, plumber05Styles } from "../templates/plumber/templates05";
 
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
@@ -33,6 +38,10 @@ import { law03Html, law03Styles } from "../templates/law/templates03";
 import { law04Html, law04Styles } from "../templates/law/templates04";
 import { law05Html, law05Styles } from "../templates/law/templates05";
 import { law06Html, law06Styles } from "../templates/law/templates06";
+import { law07Html, law07Styles } from "../templates/law/templates07";
+import { law08Html, law08Styles } from "../templates/law/templates08";
+import { law09Html, law09Styles } from "../templates/law/templates09";
+import { law10Html, law10Styles } from "../templates/law/templates10";
 import { realEstate01Html, realEstate01Styles } from "../templates/real-estate/templates01";
 import { realEstate02Html, realEstate02Styles } from "../templates/real-estate/templates02";
 import { realEstate03Html, realEstate03Styles } from "../templates/real-estate/templates03";
@@ -239,6 +248,7 @@ const injectScrapedDataIntoTemplate = (html: string, project: any, pageTitle: st
     if (services.length > 0) {
       const serviceHeadings = Array.from(doc.querySelectorAll("h3")).filter(
         h3 => !h3.closest(".testi-card") && !h3.closest(".v2-faq-item") && !h3.closest(".blog-card") && !h3.closest(".step-content") && !h3.closest("[class*='stat']") && !h3.closest("[class*='overlap-text']") && !h3.closest(".contact-info") && !h3.closest("#preview-mode-modal") && !h3.closest(".booking-form-box") && !h3.closest("form") && !h3.closest(".contact-form-card") && !h3.closest(".quick-booking-card") && !h3.closest(".service-form") && !h3.closest(".pl04-form-overlay") && !h3.closest(".pl04-badge")
+          && !h3.closest(".lf3-case-feature") && !h3.closest(".lf3-timeline-step")
           // Real Estate template exclusions for 01 through 10
           && !h3.closest("[class*='re01-prop']") && !h3.closest("[class*='re01-step']") && !h3.closest("[class*='re01-team']") && !h3.closest("[class*='re01-testi']") && !h3.closest("[class*='re01-faq']") && !h3.closest("[class*='re01-client']") && !h3.closest("[class*='re01-blog']") && !h3.closest("[class*='re01-stat']") && !h3.closest("[class*='re01-timeline']") && !h3.closest("[class*='re01-service']") && !h3.closest("[class*='re01-feature']")
           && !h3.closest("[class*='re02-prop']") && !h3.closest("[class*='re02-step']") && !h3.closest("[class*='re02-team']") && !h3.closest("[class*='re02-testi']") && !h3.closest("[class*='re02-faq']") && !h3.closest("[class*='re02-client']") && !h3.closest("[class*='re02-blog']") && !h3.closest("[class*='re02-stat']") && !h3.closest("[class*='re02-timeline']") && !h3.closest("[class*='re02-service']") && !h3.closest("[class*='re02-feature']")
@@ -557,6 +567,38 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A premium, modern, luxury landing page for a law firm with dark navy backgrounds, gold accents, elegant typography, and case request forms.",
   },
   {
+    id: "law-07",
+    name: "Corporate Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates07/screenshot.png",
+    gradient: "linear-gradient(135deg, #14141a 0%, #000000 100%)",
+    prompt: "A premium, modern landing page for a corporate law firm with dark backgrounds, split sections, and strong typography.",
+  },
+  {
+    id: "law-08",
+    name: "Editorial Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/templates08/screenshot.png",
+    gradient: "linear-gradient(135deg, #131313 0%, #f7f5f1 100%)",
+    prompt: "A modern editorial law firm landing page with an oversized typography hero, horizontal scrolling ticker, bento grid practice areas, and a clean dark contact form.",
+  },
+  {
+    id: "law-09",
+    name: "Justice Delivered",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot09.png",
+    gradient: "linear-gradient(135deg, #16161a 0%, #ffffff 100%)",
+    prompt: "A premium, modern law firm landing page with full-bleed strip gallery, minimal typography, masonry gallery, and a dark contact form.",
+  },
+  {
+    id: "law-10",
+    name: "Rights & Justice",
+    tag: "Law Firm",
+    img: "/assets/templates/LawFirm/screenshot10.png",
+    gradient: "linear-gradient(135deg, #14140f 0%, #faf8f3 100%)",
+    prompt: "A modern, sophisticated law firm landing page with a fixed sidebar navigation, diagonal split hero, horizontal scrolling case studies, and a radial services layout.",
+  },
+  {
     id: "healthcare-01",
     name: "Lumina Dental",
     tag: "Healthcare",
@@ -603,6 +645,38 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/healthcare/templates06/screenshot.png",
     gradient: "linear-gradient(135deg, #1f2937 0%, #10b981 100%)",
     prompt: "A professional corporate advisory landing page with a hero section, features grid, about section with metrics, and projects showcase.",
+  },
+  {
+    id: "healthcare-07",
+    name: "Compassionate Care",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates07/screenshot07.png",
+    gradient: "linear-gradient(135deg, #10241f 0%, #10241f 100%)",
+    prompt: "A premium, modern landing page for a healthcare clinic with split hero appointment scheduling, department grid, and trust indicators.",
+  },
+  {
+    id: "healthcare-08",
+    name: "Family Wellness Care",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates08/screenshot.png",
+    gradient: "linear-gradient(135deg, #24322c 0%, #fef3e7 100%)",
+    prompt: "A warm family wellness healthcare landing page featuring an asymmetric hero, horizontal services pills, 3-step care process, provider showcase, patient stories, and health tips.",
+  },
+  {
+    id: "healthcare-09",
+    name: "Modern Health Clinic",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates09/screenshot.png",
+    gradient: "linear-gradient(135deg, #0d1b2a 0%, #e8eef7 100%)",
+    prompt: "A modern health clinic landing page featuring interactive dashboard tiles, symptoms checker widget, doctor roster, and appointment booking.",
+  },
+  {
+    id: "healthcare-10",
+    name: "Serene Private Practice",
+    tag: "Healthcare",
+    img: "/assets/templates/healthcare/templates10/screenshot.png",
+    gradient: "linear-gradient(135deg, #1c211f 0%, #fbfaf7 100%)",
+    prompt: "A minimalist, boutique private medical practice landing page with full-bleed hero, philosophy section, doctor spotlight, interior gallery, and consultation booking.",
   },
 
   {
@@ -694,6 +768,14 @@ const LANDING_TEMPLATES: any[] = [
     img: "/assets/templates/plumber/templates04/screenshotp.png",
     gradient: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
     prompt: "A modern plumbing landing page with a hero section, services grid, trust indicators, features, steps, and lead capture form. CRITICAL INSTRUCTION: You MUST retain EVERY SINGLE <div class=\"pl04-service-card\">, <div class=\"pl04-feature-item\">, <div class=\"pl04-process-step\">, <div class=\"pl04-testi-card\">, and <div class=\"pl04-faq-item\"> exactly as provided in the original template. DO NOT skip, summarize, or delete any of these repeating items.",
+  },
+  {
+    id: "plumber-05",
+    name: "Emergency Plumber 05",
+    tag: "Plumber",
+    img: "/assets/templates/Plumber/templates05/image1.jpg",
+    gradient: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)",
+    prompt: "An emergency plumbing services landing page featuring a bright, clean, and professional aesthetic focusing on 30 years of experience. CRITICAL INSTRUCTION: You MUST retain exactly the existing structure.",
   },
   {
     id: "realestate-01",
@@ -1297,12 +1379,20 @@ const CreatePagePage = () => {
           case "law-04": enrichedContent = law04Html; enrichedStyles = law04Styles; break;
           case "law-05": enrichedContent = law05Html; enrichedStyles = law05Styles; break;
           case "law-06": enrichedContent = law06Html; enrichedStyles = law06Styles; break;
+          case "law-07": enrichedContent = law07Html; enrichedStyles = law07Styles; break;
+          case "law-08": enrichedContent = law08Html; enrichedStyles = law08Styles; break;
+          case "law-09": enrichedContent = law09Html; enrichedStyles = law09Styles; break;
+          case "law-10": enrichedContent = law10Html; enrichedStyles = law10Styles; break;
           case "healthcare-01": enrichedContent = healthcare01Html; enrichedStyles = healthcare01Styles; break;
           case "healthcare-02": enrichedContent = healthcare02Html; enrichedStyles = healthcare02Styles; break;
           case "healthcare-03": enrichedContent = healthcare03Html; enrichedStyles = healthcare03Styles; break;
           case "healthcare-04": enrichedContent = healthcare04Html; enrichedStyles = healthcare04Styles; break;
           case "healthcare-05": enrichedContent = healthcare05Html; enrichedStyles = healthcare05Styles; break;
           case "healthcare-06": enrichedContent = healthcare06Html; enrichedStyles = healthcare06Styles; break;
+          case "healthcare-07": enrichedContent = healthcare07Html; enrichedStyles = healthcare07Styles; break;
+          case "healthcare-08": enrichedContent = healthcare08Html; enrichedStyles = healthcare08Styles; break;
+          case "healthcare-09": enrichedContent = healthcare09Html; enrichedStyles = healthcare09Styles; break;
+          case "healthcare-10": enrichedContent = healthcare10Html; enrichedStyles = healthcare10Styles; break;
           case "travel-01": enrichedContent = travel01Html; enrichedStyles = travel01Styles; break;
           case "travel-02": enrichedContent = travel02Html; enrichedStyles = travel02Styles; break;
           case "travel-03": enrichedContent = travel03Html; enrichedStyles = travel03Styles; break;
@@ -1314,6 +1404,7 @@ const CreatePagePage = () => {
           case "plumber-02": enrichedContent = plumber02Html; enrichedStyles = plumber02Styles; break;
           case "plumber-03": enrichedContent = plumber03Html; enrichedStyles = plumber03Styles; break;
           case "plumber-04": enrichedContent = plumber04Html; enrichedStyles = plumber04Styles; break;
+          case "plumber-05": enrichedContent = plumber05Html; enrichedStyles = plumber05Styles; break;
           case "realestate-01": enrichedContent = realEstate01Html; enrichedStyles = realEstate01Styles; break;
           case "realestate-02": enrichedContent = realEstate02Html; enrichedStyles = realEstate02Styles; break;
           case "realestate-03": enrichedContent = realEstate03Html; enrichedStyles = realEstate03Styles; break;
@@ -2132,12 +2223,20 @@ ${enrichedContent}
                 case "law-04": tpHtml = law04Html; tpStyles = law04Styles; break;
                 case "law-05": tpHtml = law05Html; tpStyles = law05Styles; break;
                 case "law-06": tpHtml = law06Html; tpStyles = law06Styles; break;
+                case "law-07": tpHtml = law07Html; tpStyles = law07Styles; break;
+                case "law-08": tpHtml = law08Html; tpStyles = law08Styles; break;
+                case "law-09": tpHtml = law09Html; tpStyles = law09Styles; break;
+                case "law-10": tpHtml = law10Html; tpStyles = law10Styles; break;
                 case "healthcare-01": tpHtml = healthcare01Html; tpStyles = healthcare01Styles; break;
                 case "healthcare-02": tpHtml = healthcare02Html; tpStyles = healthcare02Styles; break;
                 case "healthcare-03": tpHtml = healthcare03Html; tpStyles = healthcare03Styles; break;
                 case "healthcare-04": tpHtml = healthcare04Html; tpStyles = healthcare04Styles; break;
                 case "healthcare-05": tpHtml = healthcare05Html; tpStyles = healthcare05Styles; break;
                 case "healthcare-06": tpHtml = healthcare06Html; tpStyles = healthcare06Styles; break;
+                case "healthcare-07": tpHtml = healthcare07Html; tpStyles = healthcare07Styles; break;
+                case "healthcare-08": tpHtml = healthcare08Html; tpStyles = healthcare08Styles; break;
+                case "healthcare-09": tpHtml = healthcare09Html; tpStyles = healthcare09Styles; break;
+                case "healthcare-10": tpHtml = healthcare10Html; tpStyles = healthcare10Styles; break;
                 case "travel-01": tpHtml = travel01Html; tpStyles = travel01Styles; break;
                 case "travel-02": tpHtml = travel02Html; tpStyles = travel02Styles; break;
                 case "travel-03": tpHtml = travel03Html; tpStyles = travel03Styles; break;
@@ -2149,6 +2248,7 @@ ${enrichedContent}
                 case "plumber-02": tpHtml = plumber02Html; tpStyles = plumber02Styles; break;
                 case "plumber-03": tpHtml = plumber03Html; tpStyles = plumber03Styles; break;
                 case "plumber-04": tpHtml = plumber04Html; tpStyles = plumber04Styles; break;
+                case "plumber-05": tpHtml = plumber05Html; tpStyles = plumber05Styles; break;
                 case "realestate-01": tpHtml = realEstate01Html; tpStyles = realEstate01Styles; break;
                 case "realestate-02": tpHtml = realEstate02Html; tpStyles = realEstate02Styles; break;
                 case "realestate-03": tpHtml = realEstate03Html; tpStyles = realEstate03Styles; break;
