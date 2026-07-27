@@ -1,5 +1,5 @@
   (function() {
-    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    var isInEditor = !!(window.editor || window.gjsEditor || (window.parent && (window.parent.editor || window.parent.gjsEditor)) || (window.frameElement && (window.frameElement.classList.contains('gjs-frame') || window.frameElement.id === 'gjs-frame')) || document.body.classList.contains('gjs-dashed') || document.body.classList.contains('gjs-cv-canvas'));
 
     // 1. Initialize core UI immediately (Reveal animations)
     const initUI = () => {

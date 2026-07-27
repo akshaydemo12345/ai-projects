@@ -755,6 +755,23 @@ const CreatePagePage = () => {
   const [methodError, setMethodError] = useState("");
   const [isSlugVerified, setIsSlugVerified] = useState(false);
   const [isVerifyingSlug, setIsVerifyingSlug] = useState(false);
+  // Dedupe guard: the last slug that was successfully verified (skip re-verifying
+  // an unchanged slug), and the slug currently in-flight (skip firing a second
+  // request for the same slug while one is already pending). Without these,
+  // name-blur, slug-blur, the 10s debounce, and form submit can each independently
+  // fire a verify call for the exact same slug.
+  const lastVerifiedSlugRef = useRef<string | null>(null);
+  const verifyingSlugRef = useRef<string | null>(null);
+  // Monotonically increasing id for each verify call. The external website
+  // check can take 5-6s (or longer) to time out. If the user clicks/blurs
+  // to another field (or edits the slug again) before that resolves, a NEW
+  // verify call starts while the OLD one is still in flight. Without this
+  // guard, whichever call happens to resolve LAST "wins" and overwrites
+  // slugError/isSlugVerified/isVerifyingSlug — even if it was for a stale
+  // slug value — which is what made verification appear to "break" whenever
+  // the user clicked elsewhere mid-check. Only the response matching the
+  // most recent request id is allowed to update state.
+  const verifyRequestIdRef = useRef(0);
 
   const { data: suggestionsData } = useQuery({
     queryKey: ["project-suggestions", id],
@@ -960,14 +977,44 @@ const CreatePagePage = () => {
       return true;
     }
 
+    // Already confirmed available for this exact slug — skip the network
+    // round-trip entirely (this is what stops the name-blur / slug-blur /
+    // debounce timer / submit paths from each re-hitting the server for the
+    // same unchanged slug).
+    if (lastVerifiedSlugRef.current === normalizedSlug) {
+      setSlugError("");
+      setIsSlugVerified(true);
+      return false;
+    }
+
+    // A request for this exact slug is already in flight from another trigger
+    // (e.g. blur fired while the debounce timer's call is still pending) —
+    // don't fire a duplicate; let the in-flight one resolve and set state.
+    if (verifyingSlugRef.current === normalizedSlug) {
+      return false;
+    }
+
+    verifyingSlugRef.current = normalizedSlug;
+    const requestId = ++verifyRequestIdRef.current;
     setIsVerifyingSlug(true);
     try {
       await pagesApi.verifySlug(id!, { slug: normalizedSlug });
+      // A newer verify call has started since this one was fired (e.g. the
+      // user clicked elsewhere, or edited the slug again, while the site
+      // check was still pending) — this response is stale, so don't let it
+      // stomp on whatever the newer call already decided.
+      if (verifyRequestIdRef.current !== requestId) {
+        return false;
+      }
       setSlugError("");
       setIsSlugVerified(true);
+      lastVerifiedSlugRef.current = normalizedSlug;
       // Success is shown via the green checkmark icon in the input — no toast
       return false;
     } catch (err: any) {
+      if (verifyRequestIdRef.current !== requestId) {
+        return false;
+      }
       const errorMsg = err.message || "This URL slug is unavailable.";
       // Show error inline in the input field only — no toast
       if (errorMsg.includes("already exists on website")) {
@@ -978,7 +1025,15 @@ const CreatePagePage = () => {
       setIsSlugVerified(false);
       return true;
     } finally {
-      setIsVerifyingSlug(false);
+      // Only the latest request gets to turn the spinner off / release the
+      // in-flight guard. If a stale request finishes after a newer one has
+      // already started, leave both alone — the newer request owns them.
+      if (verifyRequestIdRef.current === requestId) {
+        setIsVerifyingSlug(false);
+        if (verifyingSlugRef.current === normalizedSlug) {
+          verifyingSlugRef.current = null;
+        }
+      }
     }
   };
 
@@ -1839,11 +1894,36 @@ ${enrichedContent}
               </button>
               <button
                 onClick={handleCreate}
-                disabled={createPageMutation.isPending || !pageName.trim() || (activeMethod === 'ai' && !aiPrompt.trim()) || (activeMethod === 'template' && !selectedTemplate)}
+                disabled={
+                  createPageMutation.isPending ||
+                  isVerifyingSlug ||
+                  !isSlugVerified ||
+                  !pageName.trim() ||
+                  !pageSlug.trim() ||
+                  (activeMethod === 'ai' && !aiPrompt.trim()) ||
+                  (activeMethod === 'template' && !selectedTemplate)
+                }
                 className="flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
               >
-                {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> {activeMethod === 'ai' ? 'Generate with AI' : 'Start with Template'}</>}
+                {/* {createPageMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> {activeMethod === 'ai' ? 'Generate with AI' : 'Start with Template'}</>} */}
+
+                {isVerifyingSlug ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verifying URL...
+                  </>
+                ) : createPageMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {activeMethod === 'ai' ? 'Generate with AI' : 'Start with Template'}
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -28,7 +28,7 @@ exports.createProject = async (req, res, next) => {
       apiToken,
       preSlug: req.body.preSlug,
       scrapeMeta: {
-        sourceUrl: req.body.websiteUrl || req.body.url,
+        websiteUrl: req.body.websiteUrl || req.body.url,
         status: 'pending',
       },
     };

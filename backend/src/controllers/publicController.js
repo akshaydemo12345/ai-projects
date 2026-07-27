@@ -507,15 +507,17 @@ const buildLeadCaptureScript = (page) => {
       referrer: getReferrer()  // original referrer captured on first landing, not this fetch()'s own Referer header
     };
 
-    // Capture every single named field in the form
-    f.querySelectorAll('input, select, textarea').forEach(function(el) {
-      if (el.name) {
-        var val = el.value ? String(el.value).trim() : "";
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          if (el.checked) data[el.name] = val;
-        } else if (val !== "") {
-          data[el.name] = val;
-        }
+    // Capture every single field in the form
+    f.querySelectorAll('input, select, textarea').forEach(function(el, idx) {
+      if (el.type === 'submit' || el.type === 'button' || el.type === 'image') return;
+      var name = el.name || el.id || el.getAttribute('placeholder') || el.getAttribute('aria-label') || ('field_' + idx);
+      name = String(name).trim();
+      if (!name) name = 'field_' + idx;
+      var val = el.value ? String(el.value).trim() : "";
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        if (el.checked) data[name] = val;
+      } else if (val !== "") {
+        data[name] = val;
       }
     });
 
@@ -972,8 +974,26 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
       html = html.replace(/<\/head>/i, `${trackingMeta}\n${thankYouRedirectScript}\n</head>`);
     }
 
+    // Safe script builder for AI-generated JS
+    const buildSafeAiJsScript = (code) => {
+      if (!code || !code.trim()) return '';
+      try {
+        const wrappedCode = `(function() {
+          try {
+            ${code}
+          } catch (err) {
+            console.warn('⚠️ [AI JS Runtime Error]:', err);
+          }
+        })();`;
+        const encoded = Buffer.from(wrappedCode).toString('base64');
+        return `<script id="ai-custom-js">try { eval(atob("${encoded}")); } catch(e) { console.warn('⚠️ [AI JS Parse Error]:', e); }</script>`;
+      } catch (e) {
+        return `<script id="ai-custom-js">try { ${code} } catch(e) {}</script>`;
+      }
+    };
+
     // 5. Inject lead script and AI JS before </body>
-    const jsInjection = aiJs ? `<script>${aiJs}</script>` : '';
+    const jsInjection = buildSafeAiJsScript(aiJs);
     if (/<\/body>/i.test(html)) {
       html = html.replace(
         /<\/body>/i,
@@ -1024,6 +1044,14 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
     body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
   `;
 
+  const safeLegacyAiJs = (typeof content === 'object' && content?.fullJs) ? (function(code) {
+    if (!code || !code.trim()) return '';
+    try {
+      const wrapped = `(function() { try { ${code} } catch(err) { console.warn('⚠️ [AI JS Error]:', err); } })();`;
+      return `<script id="ai-custom-js">try { eval(atob("${Buffer.from(wrapped).toString('base64')}")); } catch(e) {}</script>`;
+    } catch(e) { return `<script>${code}</script>`; }
+  })(content.fullJs) : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1041,7 +1069,7 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
 </head>
 <body${bodyAttributes}>
     ${finalBodyContent}
-    ${aiJs ? `<script>${aiJs}</script>` : ''}
+    ${safeLegacyAiJs}
     ${leadScript}
     ${finalFooterScript}
     <script>
@@ -1468,22 +1496,22 @@ exports.handleFormSubmission = async (req, res, next) => {
     const _sysKeys = new Set(['pageId', 'pageSlug', 'projectId', 'timestamp', 'url', 'domain',
       'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
       'gclid', 'fbclid', 'msclkid', 'redirect', 'pageUrl', 'referer']);
-    const _schemaKeys = new Set(schema.fields.map(f => normalizeKey(f.name || f.field_name)));
+    const _schemaKeys = new Set((schema?.fields || []).map(f => normalizeKey(f.name || f.field_name)));
     Object.entries(rawData).forEach(([k, v]) => {
       if (!_sysKeys.has(k) && v !== undefined && v !== null && String(v).trim() !== '') {
         const nk = normalizeKey(k);
-        if (!_schemaKeys.has(nk) && !Object.keys(leadData).some(lk => normalizeKey(lk) === nk)) {
+        if (!leadData[k] && !Object.keys(leadData).some(lk => normalizeKey(lk) === nk)) {
           leadData[k] = typeof v === 'string' ? v.trim() : v;
         }
       }
     });
 
-    // FIX: Soft-warn — NEVER hard-fail on missing required fields.
+    // FIX: Soft-warn — NEVER hard-fail on missing required fields if we have any lead data.
     if (missingFields.length > 0) {
       logger.warn(`[FORM] Missing required fields [${missingFields.join(', ')}] on "${pageSlug}" — saving with available data`);
     }
     const _allEmpty = Object.values(leadData).every(v => !v || String(v).trim() === '');
-    if (_allEmpty && schema && schema.fields && schema.fields.length > 0) {
+    if (_allEmpty) {
       return res.status(400).json({ status: 'fail', message: 'No form data received', fields: missingFields });
     }
 

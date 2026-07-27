@@ -107,8 +107,8 @@ class DomainMapper_Rewriter {
             if ( ! $is_primary ) {
                 continue; // Skip subdomains — interceptor handles these at runtime.
             }
-            $text = str_ireplace( 'https://' . $host, 'http://' . $s, $text );
-            $text = str_ireplace( 'http://'  . $host, 'http://' . $s, $text );
+            $text = str_ireplace( 'https://' . $host, 'https://' . $s, $text );
+            $text = str_ireplace( 'http://'  . $host, 'https://' . $s, $text );
             $text = str_ireplace( '//' . $host,        '//' . $s,     $text );
         }
 
@@ -200,7 +200,7 @@ class DomainMapper_Rewriter {
                         if ($tag === 'form' && $attr === 'action' && str_starts_with($url, '/') && !str_starts_with($url, '//')) {
                             $target = $this->target_host;
                             if ($target) {
-                                return $m[1] . $m[2] . 'http://' . $this->source_host . '/dm-relay/' . $target . $url . $m[2];
+                                return $m[1] . $m[2] . 'https://' . $this->source_host . '/dm-relay/' . $target . $url . $m[2];
                             }
                         }
 
@@ -275,12 +275,12 @@ class DomainMapper_Rewriter {
             return $html;
         }
 
-        $base_tag = '<base href="http://' . esc_attr( $source ) . '/">';
+        $base_tag = '<base href="//' . esc_attr( $source ) . '/">';
 
         $interceptor = '';
         if ( class_exists( 'DomainMapper_Form_Interceptor' ) ) {
             // Serve the interceptor cleanly via an external virtual path
-            $interceptor = '<script src="http://' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
+            $interceptor = '<script src="//' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
         }
 
         $inject = "\n" . $base_tag . "\n" . $interceptor . "\n";
@@ -316,13 +316,13 @@ class DomainMapper_Rewriter {
 
             if ( $is_primary ) {
                 // Primary target → rewrite directly to source domain.
-                $text = str_ireplace( 'https://' . $host, 'http://' . $s, $text );
-                $text = str_ireplace( 'http://'  . $host, 'http://' . $s, $text );
+                $text = str_ireplace( 'https://' . $host, 'https://' . $s, $text );
+                $text = str_ireplace( 'http://'  . $host, 'https://' . $s, $text );
                 $text = str_ireplace( '//' . $host,       '//' . $s,      $text );
             } else {
                 // Subdomain / extra domain → route through /dm-relay/HOST/
                 // so the proxy can fetch it server-side (bypasses CORS).
-                $relay = 'http://' . $s . '/dm-relay/' . $host;
+                $relay = 'https://' . $s . '/dm-relay/' . $host;
                 $text  = str_ireplace( 'https://' . $host, $relay, $text );
                 $text  = str_ireplace( 'http://'  . $host, $relay, $text );
                 $text  = str_ireplace( '//' . $host,       '//' . $s . '/dm-relay/' . $host, $text );
@@ -418,7 +418,7 @@ class DomainMapper_Rewriter {
 
         // Root-relative → prepend source origin.
         if ( '/' === $first ) {
-            return 'http://' . $this->source_host . $url;
+            return 'https://' . $this->source_host . $url;
         }
 
         // Truly relative → resolve against base dir, then domain-replace.

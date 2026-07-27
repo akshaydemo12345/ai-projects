@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {verifyScript} from "../../../backend/src/controllers/projectController";
+import { getFeatureFlagsForUser } from "@/config";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -727,7 +728,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
           </div>
           <div className="flex-1">
             <h2 className="text-sm font-bold text-foreground">AI Generation Timeline</h2>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Usage History & Tracking</p>
+            {/* <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Usage History & Tracking</p> */}
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
@@ -755,7 +756,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
               </div>
 
               {/* IMAGE USAGE COST UI */}
-              <div className="grid grid-cols-2 gap-6 mb-6 pt-6 border-t border-border/50">
+              {/* <div className="grid grid-cols-2 gap-6 mb-6 pt-6 border-t border-border/50">
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1 flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -774,10 +775,10 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                     ${calculatedImgCost.toFixed(4)}
                   </p>
                 </div>
-              </div>
+              </div> */}
 
               {/* TOTAL GRAND COST & BALANCE SIMULATION */}
-              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20 mb-6">
+              {/* <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20 mb-6">
                 <div className="flex items-center justify-between mb-3 pb-3 border-b border-emerald-500/20">
                   <div>
                     <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Grand Total Cost</p>
@@ -786,10 +787,10 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                   <p className="text-2xl font-mono font-black text-emerald-600 dark:text-emerald-400">
                     -${calculatedTotalCost.toFixed(4)}
                   </p>
-                </div>
+                </div> */}
 
                 {/* API Global Usage (Real-time Fetch & Estimated) */}
-                <div className="space-y-2 pt-2 border-t border-border">
+                {/* <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex justify-between items-center text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
                     <span>Current Balance</span>
                     <span className="font-mono text-sm">
@@ -816,7 +817,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                     </>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               <div className="bg-background rounded-xl p-3 border border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -831,7 +832,7 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
           )}
 
           {/* History List */}
-          <div className="p-6 space-y-4">
+          {/* <div className="p-6 space-y-4">
             <p className="text-xs font-bold text-foreground flex items-center gap-2">
               <Activity className="h-3.5 w-3.5 text-primary" />
               Generation History
@@ -840,13 +841,13 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
             <div className="space-y-3">
               {history.length > 0 ? (
                 history.slice().reverse().map((item, index) => (
-                  <div key={index} className="relative pl-6 pb-2 last:pb-0">
+                  <div key={index} className="relative pl-6 pb-2 last:pb-0"> */}
                     {/* Timeline Connector */}
-                    {index !== history.length - 1 && (
+                    {/* {index !== history.length - 1 && (
                       <div className="absolute left-1.5 top-5 bottom-0 w-px bg-border" />
-                    )}
+                    )} */}
                     {/* Timeline Dot */}
-                    <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-background shadow-sm" />
+                    {/* <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-background shadow-sm" />
 
                     <div className="bg-muted/40 rounded-xl p-3 border border-border/50 hover:border-primary/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
@@ -887,14 +888,14 @@ const UsageModal = ({ page, onClose }: UsageModalProps) => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
 
-        <div className="px-6 py-4 bg-muted/20 border-t border-border">
+        {/* <div className="px-6 py-4 bg-muted/20 border-t border-border">
           <Button variant="outline" className="w-full h-10 border-border bg-background shadow-sm hover:bg-muted" onClick={onClose}>
             Close Details
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -1525,12 +1526,22 @@ const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(nul
     [cachedProjects, id]
   );
 
-  const { data: project, isLoading, error } = useQuery({
+  const { data: project, isLoading, error, refetch: refetchProject, isFetching: isCheckingStatus } = useQuery({
     queryKey: ["project", id],
     queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
     initialData: cachedProject,   // render header instantly while detail loads
-    staleTime: 30_000,            // mutations call invalidateQueries manually — no polling needed
+    staleTime: 30_000,            // mutations call invalidateQueries manually for in-app actions
+    // The WordPress Plugin verifies its token via a server-to-server call from the
+    // customer's site (see publicController.js) — it never touches this browser tab,
+    // so there's no local mutation to call invalidateQueries from. Poll lightly while
+    // verification is still pending so the badge flips on its own; stop once either
+    // integration method reports verified.
+    refetchInterval: (query) => {
+      const data = query.state.data as any;
+      const stillPending = !data || (!data.isPluginVerified && !data.isScriptVerified);
+      return stillPending ? 5000 : false;
+    },
   });
 
   // ── Query 2: Pages list (independent — only this section re-renders on change) ──
@@ -1708,6 +1719,10 @@ const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(nul
     // Set appropriate background color based on brightness
     setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
   };
+  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
+  let storedUser: any = null;
+  try { storedUser = storedUserJson ? JSON.parse(storedUserJson) : null; } catch (e) { storedUser = null; }
+  const featureFlags = getFeatureFlagsForUser(storedUser?.role);
 
 const handleVerifyScript = async () => {
   try {
@@ -2050,7 +2065,9 @@ const tokenAuth = localStorage.getItem("token");
                     <span className="text-center">Status</span>
                     <span className="text-center">Preview</span>
                     <span className="text-center">Leads</span>
-                    <span className="text-center">Usage</span>
+                    {featureFlags.publishEngineEnabled !== false && (
+                      <span className="text-center">Usage</span>
+                    )}
                     <span className="text-right">Actions</span>
                   </div>
                 )}
@@ -2150,6 +2167,7 @@ const tokenAuth = localStorage.getItem("token");
                           </div>
                         </div>
 
+                      {featureFlags.publishEngineEnabled !== false && (
                         <div className="flex flex-col items-center justify-start md:justify-center">
                           <div
                             onClick={(e) => {
@@ -2174,8 +2192,9 @@ const tokenAuth = localStorage.getItem("token");
                             )}
                           </div>
                         </div>
+                      )}
 
-                        <div className="flex items-center gap-2 justify-end">
+                        <div className="flex items-center gap-2 justify-center">
                           <Button
                             size="sm"
                             variant="outline"
@@ -2305,6 +2324,17 @@ const tokenAuth = localStorage.getItem("token");
                               <span className="text-[10px] font-medium text-muted-foreground">
                                 Status: <span className={project?.isPluginVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isPluginVerified ? 'Verified' : 'Pending Verification'}</span>
                               </span>
+                              {!project?.isPluginVerified && (
+                                <button
+                                  type="button"
+                                  onClick={() => refetchProject()}
+                                  disabled={isCheckingStatus}
+                                  className="ml-1 text-[10px] font-medium text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+                                  title="Re-check verification status"
+                                >
+                                  {isCheckingStatus ? "Checking…" : "Check status"}
+                                </button>
+                              )}
                             </div>
                           </div>
                         )

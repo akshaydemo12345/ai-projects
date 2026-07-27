@@ -34,7 +34,7 @@ class DomainMapper_Form_Interceptor {
         if ( empty( $source ) ) {
             return '';
         }
-        return '<script src="http://' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
+        return '<script src="//' . esc_attr( $source ) . '/dm-interceptor.js" defer></script>';
     }
 
     /**
@@ -45,7 +45,7 @@ class DomainMapper_Form_Interceptor {
         $source       = $this->strip_scheme( $this->settings['source_domain'] ?? '' );
         $target       = $this->strip_scheme( $this->settings['target_domain'] ?? '' );
         $bare         = (string) preg_replace( '/^www\./i', '', $target );
-        $relay_prefix = 'http://' . $source . '/dm-relay/';
+        $relay_prefix = '//' . $source . '/dm-relay/';
         $relay_domains = $this->get_relay_domains( $bare );
 
         $rp  = addslashes( $relay_prefix );
@@ -57,9 +57,10 @@ class DomainMapper_Form_Interceptor {
 (function() {
     'use strict';
 
+    var PROTOCOL      = (window.location && window.location.protocol && window.location.protocol.indexOf('http') === 0) ? window.location.protocol : 'https:';
     var SOURCE_HOST   = '{$sh}';
     var TARGET_HOST   = '{$th}';
-    var RELAY_PREFIX  = '{$rp}';
+    var RELAY_PREFIX  = PROTOCOL + '//' + SOURCE_HOST + '/dm-relay/';
     var RELAY_DOMAINS = {$rds};
 
     function rewriteUrl(url) {
@@ -78,7 +79,7 @@ class DomainMapper_Form_Interceptor {
 
         // Root-relative
         if (url.charAt(0) === '/' && url.charAt(1) !== '/') {
-            return 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + url;
+            return PROTOCOL + '//' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + url;
         }
 
         // Absolute
@@ -86,13 +87,13 @@ class DomainMapper_Form_Interceptor {
             var u = new URL(url, window.location.href);
             for (var i = 0; i < RELAY_DOMAINS.length; i++) {
                 if (u.hostname === RELAY_DOMAINS[i] || u.hostname.endsWith('.' + RELAY_DOMAINS[i])) {
-                    return 'http://' + SOURCE_HOST + '/dm-relay/' + u.hostname + u.pathname + u.search + u.hash;
+                    return PROTOCOL + '//' + SOURCE_HOST + '/dm-relay/' + u.hostname + u.pathname + u.search + u.hash;
                 }
             }
             if (u.hostname === SOURCE_HOST) {
                 var p = u.pathname;
                 if ((p.indexOf('.php') !== -1 || u.search.indexOf('action=') !== -1) && !p.startsWith('/wp-')) {
-                    return 'http://' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + p + u.search + u.hash;
+                    return PROTOCOL + '//' + SOURCE_HOST + '/dm-relay/' + TARGET_HOST + p + u.search + u.hash;
                 }
             }
         } catch(e) {}
@@ -225,23 +226,22 @@ class DomainMapper_Form_Interceptor {
             form.method = 'POST';
             form.action = rewriteUrl(form.action);
 
-            // Intercept if it looks like a lead form (has email or name)
-            if (form.querySelector('input[type="email"]') || form.querySelector('input[name*="name"]')) {
+            // Intercept form if it contains input, select or textarea elements
+            if (form.querySelector('input, select, textarea')) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 
-                var btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
-                var originalText = btn ? btn.innerHTML : 'Submit';
+                var btn = form.querySelector('button[type="submit"]') || form.querySelector('button') || form.querySelector('input[type="submit"]');
+                var originalText = btn ? (btn.innerHTML || btn.value) : 'Submit';
                 if (btn) {
                     btn.disabled = true;
-                    btn.innerHTML = 'Sending...';
+                    if (btn.tagName === 'INPUT') btn.value = 'Sending...';
+                    else btn.innerHTML = 'Sending...';
                 }
 
-                var fd = new FormData(form);
-                
                 // Discover metadata from page if available (injected by backend)
-                var pageId = document.querySelector('meta[name="dm-page-id"]')?.content || '';
-                var projectId = document.querySelector('meta[name="dm-project-id"]')?.content || '';
+                var pageId = (document.querySelector('meta[name="dm-page-id"]') || {}).content || '';
+                var projectId = (document.querySelector('meta[name="dm-project-id"]') || {}).content || '';
                 
                 // Robust Slug Detection: Handle nested paths
                 var pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -251,13 +251,34 @@ class DomainMapper_Form_Interceptor {
                     pageId: pageId,
                     projectId: projectId,
                     pageSlug: resolvedSlug,
-                    timestamp: new Date().getTime()
+                    timestamp: new Date().getTime(),
+                    url: window.location.href,
+                    domain: window.location.hostname
                 };
 
-                // Capture ALL fields dynamically
-                fd.forEach(function(v, k) {
-                    if (k && v && String(v).trim() !== "") data[k] = v;
+                // Capture ALL input, select, textarea fields dynamically (handles missing name attribute)
+                var inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(function(el, idx) {
+                    if (el.type === 'submit' || el.type === 'button' || el.type === 'image') return;
+                    var fieldName = el.name || el.id || el.getAttribute('placeholder') || el.getAttribute('aria-label') || ('field_' + idx);
+                    fieldName = String(fieldName).trim();
+                    if (!fieldName) fieldName = 'field_' + idx;
+
+                    var val = el.value ? String(el.value).trim() : "";
+                    if (el.type === 'checkbox' || el.type === 'radio') {
+                        if (el.checked) data[fieldName] = val;
+                    } else if (val !== "") {
+                        data[fieldName] = val;
+                    }
                 });
+
+                // Also merge FormData for completeness
+                try {
+                    var fd = new FormData(form);
+                    fd.forEach(function(v, k) {
+                        if (k && v && String(v).trim() !== "") data[k] = String(v).trim();
+                    });
+                } catch(_fdErr) {}
 
                 submitLead(data, form, btn, originalText);
             }

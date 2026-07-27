@@ -155,26 +155,40 @@ const generateUniqueSlug = async (base, projectId, excludeId = null) => {
   return uniqueSlug;
 };
 
-// Fast HEAD-first fetch with GET fallback, short timeout so live "as-you-type" checks stay snappy.
+// Race HEAD and GET concurrently (instead of sequential fallback), short
+// timeout so live "as-you-type" checks stay snappy.
 const fastFetch = async (url, timeoutMs) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
+  const attempt = async (method) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      return await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
-    } catch (headErr) {
-      // Some servers reject HEAD - fall back to GET
-      logger.debug(`HEAD failed for ${url}, trying GET: ${headErr?.message}`);
-      return await fetch(url, { method: 'GET', signal: controller.signal, redirect: 'follow' });
+      return await fetch(url, { method, signal: controller.signal, redirect: 'follow' });
+    } finally {
+      clearTimeout(timeoutId);
     }
-  } finally {
-    clearTimeout(timeoutId);
+  };
+
+  // Some real-world servers/WAFs silently drop or never answer HEAD requests
+  // at all (industrialtubecorp.com does this consistently). Sequentially
+  // waiting out HEAD's full timeout before even starting GET doubled our
+  // worst-case latency for exactly the sites where GET was always going to
+  // be the one that works — and left GET's own window too tight when the
+  // origin is genuinely just slow (~2.5-3s response times seen in practice).
+  // Racing both concurrently means whichever responds first wins, and total
+  // wait time stays bounded by timeoutMs instead of 2x timeoutMs.
+  try {
+    return await Promise.any([attempt('HEAD'), attempt('GET')]);
+  } catch (aggregateErr) {
+    // Promise.any throws an AggregateError when every attempt rejected —
+    // surface the first underlying error so callers' error logging stays
+    // meaningful instead of just "All promises were rejected".
+    throw (aggregateErr?.errors && aggregateErr.errors[0]) || aggregateErr;
   }
 };
 
 // Returns { exists: boolean, verified: boolean }.
 // verified=false means the external site could not be reached - caller must NOT block on this.
-const checkPageExistsOnExternalWebsite = async (project, slug, { timeoutMs = 2500 } = {}) => {
+const checkPageExistsOnExternalWebsite = async (project, slug, { timeoutMs = 5000 } = {}) => {
   if (!project?.websiteUrl || !slug) {
     logger.debug(`Skipping external website check: websiteUrl=${!!project?.websiteUrl}, slug=${!!slug}`);
     return { exists: false, verified: false };
@@ -217,6 +231,16 @@ const checkPageExistsOnExternalWebsite = async (project, slug, { timeoutMs = 250
 // Helper: Ensure project ownership
 const checkProjectOwnership = async (projectId, userId) => {
   return await Project.exists({ _id: projectId, userId });
+};
+
+// ─── Helper: Global published-slug uniqueness check ───────────────────────────
+// Slugs must be unique across ALL published/live pages, regardless of project.
+// Returns the conflicting page (lean, minimal fields) if one exists, else null.
+const findPublishedSlugConflict = async (slug, { excludePageId } = {}) => {
+  if (!slug) return null;
+  const query = { slug, status: 'published', isDeleted: { $ne: true } };
+  if (excludePageId) query._id = { $ne: excludePageId };
+  return Page.findOne(query).select('_id projectId slug').lean();
 };
 
 /**
@@ -298,6 +322,18 @@ exports.verifyPageSlug = async (req, res, next) => {
       });
     }
 
+    // Global collision with any PUBLISHED/live page (any project) — slugs must
+    // be globally unique among published pages, mirroring the hard rejection
+    // enforced server-side in createPage.
+    const publishedConflict = await findPublishedSlugConflict(normalizedSlug);
+    if (publishedConflict) {
+      return res.status(400).json({
+        success: false,
+        message: 'This slug is already in use by a published page. Please choose a different slug.',
+        data: {}
+      });
+    }
+
     // If the current project has a configured websiteUrl, check other projects
     // that use the same website URL and slug — block only in that case.
     if (project.websiteUrl) {
@@ -334,35 +370,42 @@ exports.verifyPageSlug = async (req, res, next) => {
     }
 
     // Check if page exists on external website if websiteUrl is configured.
-    // External check is best-effort and NEVER blocks creation if the site is unreachable.
+    // This is the "typeahead" verify step (fired on blur / debounce while the
+    // user is still editing the form), so it must respond fast — it must NOT
+    // make the user sit through the external site's 5-6s timeout every time
+    // they click away or keep typing. The external check is fired here in the
+    // background (not awaited) and just logged; it never blocks this response.
+    // The real, authoritative external check still runs synchronously in
+    // createPage at actual submission time, so nothing unsafe slips through —
+    // this endpoint is only ever a fast, best-effort preview.
     let checkedExternal = false;
     let externalCheckMessage = '';
 
     if (project.websiteUrl) {
-      const { exists: existsOnWebsite, verified } = await checkPageExistsOnExternalWebsite(project, normalizedSlug);
-      checkedExternal = verified;
+        const { exists, verified } =
+            await checkPageExistsOnExternalWebsite(
+                project,
+                normalizedSlug,
+                { timeoutMs: 10000 }
+            );
 
-      if (verified && existsOnWebsite) {
-        logger.info(`Page slug "${normalizedSlug}" already exists on website "${project.websiteUrl}"`);
-        return res.status(400).json({
-          success: false,
-          message: 'Page already exists on website',
-          data: {}
-        });
-      }
-
-      externalCheckMessage = verified
-        ? 'checked on your website'
-        : 'website could not be reached, only checked internally';
-    } else {
-      logger.debug(`Skipping external website check: project.websiteUrl not configured for project ${projectId}`);
-      externalCheckMessage = 'internal database only';
+        if (verified && exists) {
+            return res.status(400).json({
+                success: false,
+                message: "This page already exists on your website.",
+                data: {
+                    slug: normalizedSlug
+                }
+            });
+        }
     }
 
     return res.status(200).json({
-      success: true,
-      message: 'Slug is available',
-      data: { slug: normalizedSlug, checkedExternal, externalCheckMessage }
+        success: true,
+        message: "Slug is available",
+        data: {
+            slug: normalizedSlug
+        }
     });
   } catch (err) {
     next(err);
@@ -600,6 +643,20 @@ exports.createPage = async (req, res, next) => {
         success: false,
         message: "You do not have permission to add pages to this project",
         data: {}
+      });
+    }
+
+    // 4.5 Global slug uniqueness check against PUBLISHED/live pages.
+    // Slugs must be globally unique across all published pages (any project) —
+    // unlike the same-project draft dedup below, this is a hard rejection, not
+    // an auto-resolve, since a URL collision with a live page is a real conflict.
+    const requestedSlug = normalizeSlug(finalSlug || slug || title) || 'untitled';
+    const publishedConflict = await findPublishedSlugConflict(requestedSlug);
+    if (publishedConflict) {
+      return res.status(400).json({
+        success: false,
+        message: 'This slug is already in use by a published page. Please choose a different slug.',
+        data: { field: 'slug', slug: requestedSlug }
       });
     }
 
@@ -1090,16 +1147,29 @@ exports.updatePage = async (req, res, next) => {
         return res.status(404).json({ status: 'fail', message: 'Project not found' });
       }
 
-      const { verified, method, message } = await verifyProjectIntegration(project);
+      const { verified, method, reachable, message } = await verifyProjectIntegration(project);
 
       // This live scan can't tell WHICH method (Plugin vs Script) it saw —
-      // it just checks whether the token appears anywhere on the page. So it
-      // must never blindly overwrite isPluginVerified / isScriptVerified,
-      // and must never force the aggregate isVerified to false when a
-      // specific method is still independently marked verified — that would
-      // silently disagree with what the Integration panel is showing for
-      // that method. It may only ever RAISE the aggregate (confirm a method
-      // that a `<script>` tag detection maps to), never lower it.
+      // it just checks whether the token appears anywhere on the page —
+      // but it CAN tell whether it actually reached and scanned the live
+      // page (`reachable: true`) versus failed to reach it at all
+      // (`reachable: false`, e.g. network error, 403, 404).
+      //
+      // Those two cases need opposite handling:
+      //  - reachable + not found  → a REAL "integration is not live right
+      //    now" signal (script removed, plugin deactivated, etc.). Both
+      //    per-method flags must be synced down to false here, the same way
+      //    verifyScript() syncs them in both directions — otherwise a flag
+      //    that was only ever set to `true` (e.g. isPluginVerified, which
+      //    is flipped on by the WordPress plugin's out-of-band POST
+      //    /plugin/verify call but never flipped off when the plugin is
+      //    deactivated) would stay true forever, and this gate would never
+      //    actually block a stale/removed integration from publishing.
+      //  - NOT reachable → inconclusive. We didn't actually get to look at
+      //    the page, so this says nothing about whether the integration is
+      //    present. Don't punish the project for a transient failure —
+      //    fall back to the persisted per-method flags.
+      let aggregateVerified;
       if (verified && method === 'script') {
         await Project.findByIdAndUpdate(project._id, {
           isScriptVerified: true,
@@ -1119,10 +1189,21 @@ exports.updatePage = async (req, res, next) => {
           verificationStatus: 'active',
           verifiedAt: new Date()
         });
+        aggregateVerified = true;
+      } else if (reachable) {
+        // Live scan reached the website, but integration token was NOT found!
+        // This is a definitive signal that the plugin has been deactivated or the script removed.
+        await Project.findByIdAndUpdate(project._id, {
+          isPluginVerified: false,
+          isScriptVerified: false,
+          isVerified: false,
+          verificationStatus: 'inactive'
+        });
+        aggregateVerified = false;
       } else {
-        // Recompute the aggregate strictly from the persisted per-method
-        // flags rather than writing the raw scan result over them.
-        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        // Live scan was inconclusive (network error, bot block, or unreachable site).
+        // Fall back to stored DB status without clearing persisted flags.
+        aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
         await Project.findByIdAndUpdate(project._id, {
           isVerified: aggregateVerified,
           verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
@@ -1132,7 +1213,7 @@ exports.updatePage = async (req, res, next) => {
       if (!verified) {
         return res.status(403).json({
           status: 'fail',
-          message: `Cannot publish: ${message}`
+          message: message || `Cannot publish: your project's integration (Plugin or Script) is deactivated or missing on the live website. Please activate the plugin or add the embed script, then click Verify.`
         });
       }
     }
@@ -1247,11 +1328,14 @@ exports.publishPage = async (req, res, next) => {
 
     const project = await Project.findById(page.projectId);
     if (project) {
-      const { verified, method, message } = await verifyProjectIntegration(project);
+      const { verified, method, reachable, message } = await verifyProjectIntegration(project);
 
-      // See the equivalent block in updatePage for why this never blindly
-      // overwrites isPluginVerified / isScriptVerified or force-lowers the
-      // aggregate below what those persisted per-method flags say.
+      // See the equivalent block in updatePage for the full reasoning.
+      // Short version: a scan miss only counts as real proof the
+      // integration is gone when the site was actually reachable and
+      // scanned (reachable === true). An unreachable/blocked check is
+      // inconclusive and must not downgrade anything.
+      let aggregateVerified;
       if (verified && method === 'script') {
         await Project.findByIdAndUpdate(project._id, {
           isScriptVerified: true,
@@ -1269,7 +1353,14 @@ exports.publishPage = async (req, res, next) => {
           verifiedAt: new Date()
         });
       } else {
-        const aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        // Live scan was inconclusive OR reachable-but-token-not-found.
+        // During a publish attempt we do NOT wipe persisted flags — the plugin
+        // output can be cached/delayed after a reactivation, and a single scan
+        // miss during publish is not authoritative enough to lock the user out.
+        // Flags are only cleared by an explicit "Verify" button click
+        // (verifyScript / verifyPlugin endpoints). Fall back to what the DB says.
+        aggregateVerified = !!(project.isPluginVerified || project.isScriptVerified);
+        // Keep isVerified in sync with the aggregate
         await Project.findByIdAndUpdate(project._id, {
           isVerified: aggregateVerified,
           verificationStatus: aggregateVerified ? 'active' : project.verificationStatus
@@ -1279,7 +1370,7 @@ exports.publishPage = async (req, res, next) => {
       if (!verified) {
         return res.status(403).json({
           status: 'fail',
-          message: `Cannot publish: ${message}`
+          message: `Cannot publish: your project's integration (Plugin or Script) could not be confirmed. Please go to Settings → Integration and click Verify.`
         });
       }
     }
@@ -1306,7 +1397,7 @@ exports.publishPage = async (req, res, next) => {
     const oldStatus = page.status;
     page.status = 'published';
     page.publishedAt = Date.now();
-    page.updatedAt = Date.now(); parsed.data.domain
+    page.updatedAt = Date.now();
 
     if (!page.apiToken) {
       page.apiToken = crypto.randomBytes(32).toString('hex');

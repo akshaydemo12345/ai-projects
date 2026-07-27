@@ -26,6 +26,18 @@ const projectSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
+  // Persisted backing field for the `websiteUrl` virtual below. Needed
+  // because several places in the codebase (plugin verify domain-locking,
+  // auto-authorize on first request, etc.) do `project.websiteUrl = X;
+  // await project.save()` expecting that to persist. Without a real field
+  // + setter behind the virtual, those assignments were silently dropped
+  // (Mongoose virtuals are get-only unless a `.set()` is defined), which
+  // caused publish-time verification to keep checking the stale
+  // scrape-time URL instead of the domain that was actually verified.
+  lockedWebsiteUrl: {
+    type: String,
+    default: null,
+  },
   isVerified: {
     // Aggregate flag: true if EITHER the WordPress Plugin or the Script
     // integration is verified. Kept for backward compatibility with code
@@ -406,9 +418,17 @@ projectSchema.virtual('keywords').get(function () {
   return this.websiteProfile?.seo?.keywords || [];
 });
 
-projectSchema.virtual('websiteUrl').get(function () {
-  return this.websiteProfile?.extraction?.sourceUrl || this.websiteProfile?.extraction?.finalUrl;
-});
+projectSchema.virtual('websiteUrl')
+  .get(function () {
+    // Prefer the domain that was actually locked/verified (plugin verify,
+    // script verify, or first live request) over the original scrape-time
+    // URL, since that's the domain integration checks (e.g. at publish
+    // time) need to agree with.
+    return this.lockedWebsiteUrl || this.websiteProfile?.extraction?.sourceUrl || this.websiteProfile?.extraction?.finalUrl;
+  })
+  .set(function (value) {
+    this.lockedWebsiteUrl = value;
+  });
 
 projectSchema.virtual('category').get(function () {
   return this.industry;

@@ -296,6 +296,9 @@ HTACCESS;
         // REST API for remote cache flushing.
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 
+        // Head meta tag for live verification.
+        add_action( 'wp_head', [ $this, 'output_meta_tag' ] );
+
         // Proxy — priority 1, before anything else.
         // The proxy's intercept() checks is_path_allowed() internally and
         // returns early when no paths are configured, so it is safe to register
@@ -375,10 +378,20 @@ HTACCESS;
     }
 
     /**
+     * Output verification meta tag in head.
+     */
+    public function output_meta_tag(): void {
+        $api_key = $this->settings['api_key'] ?? '';
+        if ( ! empty( $api_key ) ) {
+            echo '<meta name="buildify-api-key" content="' . esc_attr( $api_key ) . '">' . "\n";
+        }
+    }
+
+    /**
      * Verify that the request comes from our backend using the API key.
      */
     public function check_rest_permission( \WP_REST_Request $request ): bool {
-        $header_key = $request->get_header( 'X-DM-API-Key' );
+        $header_key = $request->get_header( 'X-DM-API-Key' ) ?: $request->get_param( 'api_key' );
         $stored_key = $this->settings['api_key'] ?? '';
 
         if ( empty( $stored_key ) ) {

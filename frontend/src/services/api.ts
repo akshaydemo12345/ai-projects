@@ -249,10 +249,20 @@ export function getFriendlyErrorMessage(message: string, status?: number, errors
     return 'Incorrect email or password. Please try again.';
   }
   if (status === 403) {
-    // Publish-time live verification failures carry a specific, actionable
-    // reason ("Cannot publish: ...") from verifyIntegration.js — surfacing
-    // it directly is far more useful than a generic permission message.
-    if (msg.includes('cannot publish') || msg.includes('verif') || msg.includes('integration')) {
+    // Publishing / integration-verification failures already carry a specific,
+    // user-actionable reason from the backend (e.g. "Cannot publish: plugin
+    // verification marker not found — the plugin may be deactivated").
+    // Overwriting that with a generic "no permission" message hides the real
+    // cause, so only fall back to the generic text when the backend message
+    // isn't actually about permissions/publishing/verification.
+    if (
+      msg.includes('cannot publish') ||
+      msg.includes('publish') ||
+      msg.includes('verif') ||
+      msg.includes('plugin') ||
+      msg.includes('script') ||
+      msg.includes('integration')
+    ) {
       return message;
     }
     return 'You do not have permission to perform this action.';

@@ -27,6 +27,9 @@ const verifyProjectIntegration = async (project) => {
     return {
       verified: false,
       method: null,
+      // Nothing was actually fetched/scanned, so callers must not treat this
+      // as proof the integration is gone — it's an inconclusive result.
+      reachable: false,
       message: 'Project is missing a website URL or API token, so integration cannot be verified.'
     };
   }
@@ -43,10 +46,16 @@ const verifyProjectIntegration = async (project) => {
   } catch (fetchErr) {
     const status = fetchErr.response?.status;
 
+    // reachable: false on every branch below — the page could not be
+    // fetched at all, so a "not verified" result here says nothing about
+    // whether the integration is actually present. Callers should treat
+    // this as inconclusive (keep last-known status) rather than as a real
+    // "integration removed" signal.
     if (status === 403 || status === 401) {
       return {
         verified: false,
         method: null,
+        reachable: false,
         message: 'The website blocked our verification request (403). It may have bot/firewall protection enabled.'
       };
     }
@@ -54,12 +63,14 @@ const verifyProjectIntegration = async (project) => {
       return {
         verified: false,
         method: null,
+        reachable: false,
         message: 'The website URL could not be found (404). Please check it is still correct.'
       };
     }
     return {
       verified: false,
       method: null,
+      reachable: false,
       message: `Could not reach the website to verify the integration: ${fetchErr.message}`
     };
   }
@@ -94,12 +105,40 @@ const verifyProjectIntegration = async (project) => {
     foundIn = 'raw-html';
   }
 
+  // Fallback: If HTML scan did not detect token, attempt a REST API ping to the WordPress plugin
+  if (!found && url && token) {
+    try {
+      const restEndpoint = `${url.replace(/\/$/, '')}/wp-json/domain-mapper/v1/flush?api_key=${encodeURIComponent(token)}`;
+      const response = await fetch(restEndpoint, {
+        method: 'POST',
+        headers: {
+          'X-DM-API-Key': token,
+          'User-Agent': 'Buildify-Verifier/1.0'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (response.ok) {
+        found = true;
+        foundIn = 'meta'; // Classify as plugin integration
+      }
+    } catch (restErr) {
+      // REST ping attempt failed — plugin is likely deactivated or not installed
+    }
+  }
+
   return {
     verified: found,
     method: foundIn,
+    // The page WAS successfully fetched and scanned, so this result — found
+    // or not — reflects the site's actual current state. If `found` is
+    // false here, that's a real "integration is not present right now"
+    // signal (script removed, plugin deactivated, etc.), not a fluke of
+    // network access, and callers should act on it.
+    reachable: true,
     message: found
-      ? `Integration script detected in ${foundIn} ✅`
-      : 'Integration script was not found on the website. It may have been removed, deactivated, or the site may have changed.'
+      ? `Integration script/plugin detected in ${foundIn} ✅`
+      : 'Integration script/plugin was not found on the website. It may have been removed, deactivated, or the site may have changed.'
   };
 };
 
