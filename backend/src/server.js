@@ -1,6 +1,4 @@
-require('dotenv').config({
-  path: '/home/ailandingpagessh/public_html/apiserver.ai-landingpages.sharehq.org/.env'
-})
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

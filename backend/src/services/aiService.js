@@ -297,15 +297,12 @@ const resolveForm = (input) => {
 
   // ── Placement logic ──
   let placement;
-  if (source === 'database' && input.formPlacement) {
+  if (input.formPlacement) {
     // Controller explicitly told us where to put it
     placement = input.formPlacement;
-  } else if (source === 'database') {
-    placement = 'after-features'; // DB forms are important — show early
-  } else if (source === 'scrape' && fields.length >= 4) {
-    placement = 'after-about';    // Detailed scrape form → mid-page
   } else {
-    // Fallback or minimal scrape → random placement keeps pages varied
+    // Completely randomize form placement to keep pages structurally unique!
+    // (sometimes in-hero, sometimes after-about, before-footer, etc.)
     placement = FORM_PLACEMENTS[Math.floor(Math.random() * FORM_PLACEMENTS.length)];
   }
 
@@ -676,7 +673,19 @@ const buildLayoutRecipe = () => {
   const cardStyle = pick(CARD_STYLES);
   const accentMotif = pick(ACCENT_MOTIFS);
   const typography = pick(TYPOGRAPHY_PAIRS);
-  const middleSections = shuffle(SECTION_POOL).slice(0, 5);
+
+  const featureSections = SECTION_POOL.filter(s => s.startsWith('Features:'));
+  const testimonialSections = SECTION_POOL.filter(s => s.startsWith('Testimonials:'));
+  const otherSections = SECTION_POOL.filter(s => !s.startsWith('Features:') && !s.startsWith('Testimonials:'));
+
+  // Guarantee at least 1 Feature and 1 Testimonial section for a high-converting baseline
+  let middleSections = [
+    pick(featureSections),
+    pick(testimonialSections),
+    ...shuffle(otherSections).slice(0, 3)
+  ];
+  middleSections = shuffle(middleSections);
+
   return { colorMode, heroLayout, cardStyle, accentMotif, typography, middleSections };
 };
 
@@ -697,6 +706,7 @@ This seed shapes your creative decisions. Every generation must feel genuinely f
 - NEVER USE outdated, ugly color combinations. Always keep it harmonious.
 - NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
 - NEVER reuse the exact same hero/section pattern you might default to — actively follow the LAYOUT RECIPE given to you.
+- NEVER CREATE A GENERIC DESIGN: Every generation MUST look visually distinct and structurally unique compared to a standard corporate site. Force asymmetrical layouts or overlapping elements if the recipe allows it!
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
@@ -725,8 +735,9 @@ USE data-reveal ONLY on these high-impact elements:
 - This is critical so the user's selected brand colors are automatically applied!
 
 5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
-- Use proven, high-converting web layouts, but strictly following the SECTIONS LIST you are given — do not invent your own section order.
-- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT RECIPE explicitly says otherwise (e.g. neo-brutalist = no border-radius).
+- Use proven, high-converting web layouts, but strictly following the SECTIONS LIST you are given — do not invent your own section order unless explicitly requested by the user.
+- 🚨 DEFAULT LANDING PAGE RULE: If the user provides a very short prompt like "landing page", you MUST automatically ensure the page feels complete. It must have a strong Hero, clear Features/Benefits, Trust-building Testimonials, an FAQ, and a Lead Form, even if they didn't explicitly list them.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT RECIPE explicitly says otherwise.
 - YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=N\` (change N for every image, never reuse the same number twice on one page). Every page must have beautiful, large photos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -885,6 +896,12 @@ const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count) 
   lines.push(`🧩 ${randomFaqNudge} (only relevant if a FAQ section appears in THIS part's list below)`);
   lines.push(`CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`);
 
+  if (input.aiPrompt) {
+    lines.push(`\n━━━ USER'S SPECIFIC INSTRUCTIONS ━━━`);
+    lines.push(`The user has explicitly requested: "${input.aiPrompt}"`);
+    lines.push(`🚨 CRITICAL INSTRUCTION: You MUST incorporate the user's specific request into the page copy, design, and sections! If they ask for specific sections (e.g. pricing, testimonials, features, maps), you must weave them into the layout and content, even if it means modifying the randomly assigned sections below.`);
+  }
+
   if (input.websiteContent) {
     lines.push(`\n━━━ SCRAPED WEBSITE CONTENT (use real names, facts, copy from this) ━━━`);
     lines.push(input.websiteContent.substring(0, 3500));
@@ -926,6 +943,12 @@ const buildUserPromptPart2 = (input, recipe, sectionsPart2, formHTML, placement,
     `DECORATIVE ACCENT: ${recipe.accentMotif}`,
     `TYPOGRAPHY PAIRING: ${recipe.typography}`,
   ];
+
+  if (input.aiPrompt) {
+    lines.push(`\n━━━ USER'S SPECIFIC INSTRUCTIONS (REMINDER) ━━━`);
+    lines.push(`The user requested: "${input.aiPrompt}"`);
+    lines.push(`🚨 Make sure to fulfill these requirements in the remaining sections below!`);
+  }
 
   const listedSections = sectionsPart2.map((s, i) => `Section ${sectionsPart1Count + i + 2} (${s.split(':')[0]}): ${s}`);
   const formSectionNumber = sectionsPart1Count + sectionsPart2.length + 2;

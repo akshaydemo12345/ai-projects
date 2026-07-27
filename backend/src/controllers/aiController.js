@@ -399,7 +399,7 @@ exports.extractProject = async (req, res, next) => {
     let themeData = null;
     if (!skipVisualTheme) {
       try {
-        const visualProfile = await extractThemeProfile(url, { screenshot: false, timeout: 25_000 });
+        const visualProfile = await extractThemeProfile(url, { screenshot: true, timeout: 25_000 });
         themeData = mapThemeProfileToThemeData(visualProfile);
       } catch (themeErr) {
         console.warn(`[aiController] visual theme extraction skipped: ${themeErr.message}`);
