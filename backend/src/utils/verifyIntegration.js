@@ -33,7 +33,12 @@ const verifyProjectIntegration = async (project) => {
 
   let html;
   try {
-    const result = await fetchPageHtml(url, { timeout: 15000 });
+    // We only need the raw HTML to scan for the embed script/token — waiting
+    // for full network-idle (default) makes this fail on real sites that keep
+    // background connections alive (analytics, chat widgets, etc.). Stop as
+    // soon as the initial document is parsed, and give it a more realistic
+    // timeout so this publish-time gate doesn't false-fail on normal sites.
+    const result = await fetchPageHtml(url, { timeout: 30000, waitUntil: 'domcontentloaded' });
     html = result.html;
   } catch (fetchErr) {
     const status = fetchErr.response?.status;

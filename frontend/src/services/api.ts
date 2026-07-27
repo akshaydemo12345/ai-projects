@@ -249,6 +249,12 @@ export function getFriendlyErrorMessage(message: string, status?: number, errors
     return 'Incorrect email or password. Please try again.';
   }
   if (status === 403) {
+    // Publish-time live verification failures carry a specific, actionable
+    // reason ("Cannot publish: ...") from verifyIntegration.js — surfacing
+    // it directly is far more useful than a generic permission message.
+    if (msg.includes('cannot publish') || msg.includes('verif') || msg.includes('integration')) {
+      return message;
+    }
     return 'You do not have permission to perform this action.';
   }
   if (status === 404) {
