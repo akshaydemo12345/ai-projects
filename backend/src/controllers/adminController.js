@@ -125,7 +125,7 @@ exports.getUserById = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const schema = z.object({
-      role:    z.enum(['user', 'admin']).optional(),
+      role:    z.enum(['user', 'admin', 'client']).optional(),
       plan:    z.enum(['free', 'pro', 'enterprise']).optional(),
       credits: z.number().int().min(0).optional(),
     });

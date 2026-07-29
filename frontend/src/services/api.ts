@@ -459,10 +459,20 @@ export const authApi = {
   // verification is disabled (VITE_STOP_OTP_VERIFICATION_EMAIL=true).
   // Logs the user in directly from just their email — same response shape
   // as login()/verifyAutoLoginOtp (accessToken + user).
-  autoLoginDirect: async (email: string) => {
-    return apiFetch('/auth/auto-login/authenticate', {
+  autoLoginDirect: async (email: string, params?: { ts?: string; sig?: string; website?: string; apiKey?: string }) => {
+    const query = new URLSearchParams();
+    if (email) query.set('email', email);
+    if (params?.ts) query.set('ts', params.ts);
+    if (params?.sig) query.set('sig', params.sig);
+    if (params?.website) query.set('website', params.website);
+    if (params?.apiKey) query.set('apiKey', params.apiKey);
+
+    const queryString = query.toString();
+    const endpoint = queryString ? `/auth/auto-login/authenticate?${queryString}` : '/auth/auto-login/authenticate';
+
+    return apiFetch(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, ...params }),
     });
   },
   // Used by the /auto-login-callback page: after the backend sets the

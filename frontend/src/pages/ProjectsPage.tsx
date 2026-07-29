@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Search, Globe, TrendingUp, Users, Zap, LayoutGrid, List,
-  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2, Mail, Settings2, X, LayoutDashboard
+  ExternalLink, FileText, MoreVertical, Trash2, Edit3, FolderOpen, Copy, CheckCircle2, Mail, Settings2, X, LayoutDashboard, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { projectsApi, aiApi } from "@/services/api";
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, cleanProjectName, getDifferentiatedProjectName } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
+import { useAuth } from "@/hooks/useAuth";
 
 // ─── Edit Project Modal ──────────────────────────────────────
 interface EditProjectModalProps {
@@ -160,7 +161,38 @@ const ProjectLogoIcon = ({ project }: { project: any }) => {
 // ─── Main Component ──────────────────────────────────────────
 const ProjectsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (user?.role === 'client') {
+      (async () => {
+        try {
+          const userProjects = await projectsApi.getAll();
+          if (userProjects && userProjects.length > 0) {
+            const activeId = localStorage.getItem("active_project_id");
+            const matched = userProjects.find((p: any) => p._id === activeId);
+            const targetProj = matched || userProjects[0];
+            if (targetProj?._id) {
+              localStorage.setItem("active_project_id", targetProj._id);
+              navigate(`/dashboard/projects/${targetProj._id}/create-page`, { replace: true });
+              return;
+            }
+          }
+          const res = await projectsApi.create({ name: "My Project", category: "General" });
+          const newProj = res?.data?.project || res?.project;
+          if (newProj?._id) {
+            localStorage.setItem("active_project_id", newProj._id);
+            navigate(`/dashboard/projects/${newProj._id}/create-page`, { replace: true });
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to redirect client role user from dashboard:", err);
+        }
+      })();
+    }
+  }, [user, navigate]);
+
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -171,6 +203,7 @@ const ProjectsPage = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: projectsApi.getAll,
+    enabled: user?.role !== 'client',
   });
 
   const deleteMutation = useMutation({
@@ -222,6 +255,15 @@ const ProjectsPage = () => {
   const publishedPages = projects.reduce(
     (sum: number, p: any) => sum + (p.publishedPageCount || 0), 0
   );
+
+  if (user?.role === 'client') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm font-medium text-muted-foreground">Opening Create New Page...</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

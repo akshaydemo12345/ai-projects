@@ -179,6 +179,9 @@ const AutoLoginOtpPage = () => {
 
   const email = (searchParams.get("email") || "").trim();
   const website = (searchParams.get("website") || "").trim();
+  const ts = (searchParams.get("ts") || searchParams.get("timestamp") || "").trim();
+  const sig = (searchParams.get("sig") || searchParams.get("signature") || "").trim();
+  const apiKey = (searchParams.get("apiKey") || "").trim();
 
   const [status, setStatus] = useState<"sending" | "sent" | "verifying" | "authenticating" | "creating_project" | "error">("sending");
   const [loadingMessage, setLoadingMessage] = useState("Authenticating...");
@@ -186,20 +189,44 @@ const AutoLoginOtpPage = () => {
   const [otp, setOtp] = useState("");
   const sentRef = useRef(false);
 
-  // Helper to handle post-auth flow (project creation in background of same screen -> redirect)
+  // Helper to handle post-auth flow (project creation in background of same screen -> redirect to Create New Page)
   const processPostAuth = async (websiteUrl: string) => {
     if (websiteUrl) {
       setLoadingMessage("Setting up your project...");
       try {
         const projectId = await createProjectFromWebsite(websiteUrl);
-        navigate(`/dashboard/projects/${projectId}/create-page`, { replace: true });
-        return;
+        if (projectId) {
+          localStorage.setItem("active_project_id", projectId);
+          navigate(`/dashboard/projects/${projectId}/create-page`, { replace: true });
+          return;
+        }
       } catch (err: any) {
         console.error("Auto project creation failed:", err);
-        toast.error("Could not automatically create project. Opening dashboard.");
-        navigate("/dashboard", { replace: true });
+      }
+    }
+
+    setLoadingMessage("Opening page builder...");
+    try {
+      const existingProjects = await projectsApi.getAll();
+      if (existingProjects && existingProjects.length > 0) {
+        const activeId = localStorage.getItem("active_project_id");
+        const matched = existingProjects.find((p: any) => p._id === activeId);
+        const targetProj = matched || existingProjects[0];
+        if (targetProj?._id) {
+          localStorage.setItem("active_project_id", targetProj._id);
+          navigate(`/dashboard/projects/${targetProj._id}/create-page`, { replace: true });
+          return;
+        }
+      }
+      const res = await projectsApi.create({ name: "My Project", category: "General" });
+      const proj = res?.data?.project || res?.project;
+      if (proj?._id) {
+        localStorage.setItem("active_project_id", proj._id);
+        navigate(`/dashboard/projects/${proj._id}/create-page`, { replace: true });
         return;
       }
+    } catch (e) {
+      console.error("Failed to redirect to create-page:", e);
     }
     navigate("/dashboard", { replace: true });
   };
@@ -220,7 +247,7 @@ const AutoLoginOtpPage = () => {
 
       (async () => {
         try {
-          const res: any = await authApi.autoLoginDirect(email);
+          const res: any = await authApi.autoLoginDirect(email, { ts, sig, website, apiKey });
           const token = res?.accessToken;
           const user = res?.data?.user || res?.user;
           if (!token || !user) throw new Error("Login response was incomplete.");

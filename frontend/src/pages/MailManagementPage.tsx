@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { CheckCircle2, Settings2, HelpCircle, Globe } from "lucide-react";
 import {
   Select,
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getAdminNotifConfig, saveAdminNotifConfig, AdminNotifConfig,
   getUserAutoReplyConfig, saveUserAutoReplyConfig, UserAutoReplyConfig,
@@ -116,6 +117,8 @@ const NotificationPanel = ({
 
 // ─── Page ─────────────────────────────────────────────────
 const MailManagementPage = () => {
+  const { user: currentUser } = useAuth();
+  const isClientRole = currentUser?.role === 'client';
   const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
@@ -169,7 +172,9 @@ const MailManagementPage = () => {
       projectsApi.getAll().then((data) => {
         const projs = data || [];
         setProjects(projs);
-        const pid = searchParams.get("projectId") || (projs.length > 0 ? projs[0]._id : "");
+        const activeId = localStorage.getItem("active_project_id");
+        const matched = projs.find((p: any) => p._id === activeId);
+        const pid = searchParams.get("projectId") || matched?._id || (projs.length > 0 ? projs[0]._id : "");
         if (pid) handleProjectSelect(pid, projs);
         setLoading(false);
       }).catch(() => setLoading(false));
@@ -251,6 +256,9 @@ const MailManagementPage = () => {
 
   const handleProjectSelect = (pid: string, currentProjects?: any[]) => {
     setSelectedProject(pid);
+    if (pid) {
+      localStorage.setItem("active_project_id", pid);
+    }
     const projs = currentProjects || projects;
     const proj = projs.find(p => p._id === pid);
     if (proj) {
@@ -313,27 +321,42 @@ const MailManagementPage = () => {
 
           <div className="flex flex-col gap-1.5 w-full md:w-auto">
             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Current Project</label>
-            <Select
-              value={selectedProject}
-              onValueChange={(val) => val && handleProjectSelect(val)}
-              {...({ modal: false } as any)}
-            >
-              <SelectTrigger className="h-10 w-full md:min-w-[240px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-foreground shadow-sm hover:border-primary/30 focus:ring-2 focus:ring-primary/20 transition-all gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-5 w-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}>
-                    <Globe className="h-3 w-3 text-white" />
-                  </div>
-                  <span className="truncate">
-                    {projects.find((p: any) => p._id === selectedProject)?.name || "Select project"}
-                  </span>
+            {isClientRole && projects.length <= 1 ? (
+              <Link
+                to={`/dashboard/projects/${selectedProject || projects[0]?._id}`}
+                className="h-10 w-full md:min-w-[240px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-foreground shadow-sm flex items-center gap-2 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group"
+                title="Go to Project Dashboard"
+              >
+                <div className="h-5 w-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}>
+                  <Globe className="h-3 w-3 text-white" />
                 </div>
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((p: any) => (
-                  <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <span className="truncate group-hover:text-primary transition-colors">
+                  {projects.find((p: any) => p._id === selectedProject)?.name || projects[0]?.name || "Select project"}
+                </span>
+              </Link>
+            ) : (
+              <Select
+                value={selectedProject}
+                onValueChange={(val) => val && handleProjectSelect(val)}
+                {...({ modal: false } as any)}
+              >
+                <SelectTrigger className="h-10 w-full md:min-w-[240px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-foreground shadow-sm hover:border-primary/30 focus:ring-2 focus:ring-primary/20 transition-all gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-5 w-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}>
+                      <Globe className="h-3 w-3 text-white" />
+                    </div>
+                    <span className="truncate">
+                      {projects.find((p: any) => p._id === selectedProject)?.name || "Select project"}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((p: any) => (
+                    <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </div>

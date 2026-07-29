@@ -99,14 +99,23 @@ router.post(
 );
 
 /**
- * POST /auth/auto-login/authenticate  — body: { email }
- * Only active when STOP_OTP_VERIFICATION_EMAIL=true (see authController).
- * Bypasses OTP generation/validation and logs the user in directly.
+ * Secure Direct Auto-Login (GET & POST)
+ * Handles auto-login with email, ts, sig (HMAC), or API key verification.
  */
-router.post(
-  '/auto-login/authenticate',
-  validate(z.object({ email: z.string().email('Invalid email') })),
-  dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests for this email. Please try again later.', keyFn: (req) => (req.body?.email || '').toLowerCase() }),
+router.route('/auto-login/authenticate')
+  .get(
+    dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests for this email. Please try again later.', keyFn: (req) => (req.query?.email || '').toLowerCase() }),
+    autoLoginDirect
+  )
+  .post(
+    validate(z.object({ email: z.string().email('Invalid email') })),
+    dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests for this email. Please try again later.', keyFn: (req) => (req.body?.email || '').toLowerCase() }),
+    autoLoginDirect
+  );
+
+router.get(
+  '/auto-login',
+  dbRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests for this email. Please try again later.', keyFn: (req) => (req.query?.email || '').toLowerCase() }),
   autoLoginDirect
 );
 

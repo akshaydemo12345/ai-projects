@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Globe, FolderOpen, Users, Settings, CreditCard, Receipt, ChevronDown, LogOut, Sun, MailOpen, Layout,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, LayoutDashboard
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { projectsApi } from "@/services/api";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +33,16 @@ const DashboardSidebar = () => {
     return stored === "true";
   });
 
+  const { data: userProjects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: projectsApi.getAll,
+    enabled: user?.role === 'client',
+  });
+  const activeId = localStorage.getItem("active_project_id");
+  const matchedProject = (userProjects as any[]).find((p: any) => p._id === activeId);
+  const clientProjectId = matchedProject?._id || (userProjects.length > 0 ? (userProjects as any[])[0]._id : null);
+  const clientProjectHref = clientProjectId ? `/dashboard/projects/${clientProjectId}` : "/dashboard";
+
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const next = !prev;
@@ -42,7 +54,7 @@ const DashboardSidebar = () => {
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return location.pathname === "/dashboard";
-    return location.pathname.startsWith(href);
+    return location.pathname === href || (href !== "/dashboard" && location.pathname.startsWith(href));
   };
 
   const handleLogout = async () => {
@@ -53,6 +65,13 @@ const DashboardSidebar = () => {
   const userInitials = user?.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()
     : "U";
+
+  const currentNavItems = user?.role === 'client'
+    ? [
+        { icon: LayoutDashboard, label: "My Project", href: clientProjectHref },
+        ...navItems.filter(i => i.href !== "/dashboard")
+      ]
+    : navItems;
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -68,7 +87,7 @@ const DashboardSidebar = () => {
 
         {/* Workspace Logo */}
         <div className={`p-4 flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+          <Link to={user?.role === 'client' ? clientProjectHref : "/dashboard"} className="flex items-center gap-2 min-w-0">
             {isCollapsed ? (
               <img
                 src="/assets/Buildify-logo-mini.png"
@@ -87,7 +106,7 @@ const DashboardSidebar = () => {
 
         {/* Navigation */}
         <nav className="space-y-1 px-3">
-          {navItems.map((item) => {
+          {currentNavItems.map((item) => {
             const active = isActive(item.href);
             const linkEl = (
               <Link

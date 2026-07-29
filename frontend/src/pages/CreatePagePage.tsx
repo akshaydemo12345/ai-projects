@@ -7,6 +7,7 @@ import config from "@/config";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, pagesApi, aiApi, type Project, type LandingPage } from "@/services/api";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { getImageAverageBrightness, getLogoPreviewContainerClasses, normalizeLogoUrl } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { PickrColorInput } from "@/components/ui/PickrColorInput";
@@ -736,7 +737,14 @@ type CreationMethod = "ai" | "figma" | "template";
 const CreatePagePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem("active_project_id", id);
+    }
+  }, [id]);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -1555,13 +1563,17 @@ ${enrichedContent}
       <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
       {/* ══ TOP NAV ══ */}
       <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center gap-3 shadow-sm">
-        <button
-          onClick={() => navigate(`/dashboard/projects/${id}`)}
-          className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <span className="text-gray-300">/</span>
+        {user?.role !== 'client' && (
+          <>
+            <button
+              onClick={() => navigate(`/dashboard/projects/${id}`)}
+              className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <span className="text-gray-300">/</span>
+          </>
+        )}
         {project && (
           <span className="flex items-center gap-2 text-sm text-gray-400 truncate max-w-[160px]">
             {/* Favicon: use state to track load failure so Globe fallback renders correctly */}

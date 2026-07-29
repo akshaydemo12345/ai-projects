@@ -68,6 +68,16 @@ const config = {
     // an authentication flow mismatch between client and server.
     stopOtpVerificationEmail: process.env.STOP_OTP_VERIFICATION_EMAIL === 'true',
   },
+
+  // Secure Auto-Login Configuration
+  autoLogin: {
+    secret: process.env.AUTO_LOGIN_SECRET || process.env.JWT_SECRET || 'auto-login-secure-secret-key-change-in-production',
+    apiKey: process.env.AUTO_LOGIN_API_KEY || '',
+    ipWhitelist: (process.env.AUTO_LOGIN_IP_WHITELIST || '').split(',').map(ip => ip.trim()).filter(Boolean),
+    requireSignature: process.env.AUTO_LOGIN_REQUIRE_SIGNATURE === 'true',
+    maxFailedAttemptsWindow: 5,
+    windowMs: 15 * 60 * 1000,
+  },
 };
 
 // Validation

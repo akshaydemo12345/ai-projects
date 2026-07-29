@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { authApi } from "@/services/api";
+import { authApi, projectsApi } from "@/services/api";
 
 /**
  * Landing spot for the auto-login magic link.
@@ -16,7 +16,7 @@ import { authApi } from "@/services/api";
  *   1. Call /auth/refresh-token (sends the cookie automatically) -> access token
  *   2. Call /auth/profile with that token -> user object
  *   3. Store both via useAuth().login() -> same as a normal login
- *   4. Go to the dashboard
+ *   4. Go directly to Create New Page (/create-page)
  */
 const AutoLoginCallback = () => {
   const navigate = useNavigate();
@@ -40,6 +40,29 @@ const AutoLoginCallback = () => {
         }
 
         login(token, user);
+
+        try {
+          const userProjects = await projectsApi.getAll();
+          if (userProjects && userProjects.length > 0) {
+            const activeId = localStorage.getItem("active_project_id");
+            const matched = userProjects.find((p: any) => p._id === activeId);
+            const targetProj = matched || userProjects[0];
+            if (targetProj?._id) {
+              localStorage.setItem("active_project_id", targetProj._id);
+              navigate(`/dashboard/projects/${targetProj._id}/create-page`, { replace: true });
+              return;
+            }
+          }
+          const res = await projectsApi.create({ name: "My Project", category: "General" });
+          const proj = res?.data?.project || res?.project;
+          if (proj?._id) {
+            localStorage.setItem("active_project_id", proj._id);
+            navigate(`/dashboard/projects/${proj._id}/create-page`, { replace: true });
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to redirect to create-page in callback:", e);
+        }
         navigate("/dashboard", { replace: true });
       } catch (err) {
         console.error("Auto-login callback failed:", err);

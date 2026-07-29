@@ -19,6 +19,15 @@ const {
   hashAutoLoginToken,
   safeCompareHex,
 } = require('../utils/jwt');
+const {
+  getClientIp,
+  verifyHmacSignature,
+  verifyApiKey,
+  isIpWhitelisted,
+  checkSuspiciousActivity,
+  logAutoLoginAttempt,
+  sendGenericAuthError,
+} = require('../utils/autoLoginSecurity');
 const logger = require('../utils/logger');
 const firebaseAdmin = require('../services/firebaseAdmin');
 const config = require('../config');
@@ -246,8 +255,11 @@ exports.sendAutoLoginOtp = async (req, res, next) => {
       // set, so this account can only ever be accessed via OTP/magic-link
       // (or a later "set password" flow), never brute-forced at /auth/login.
       const namePlaceholder = email.split('@')[0];
-      user = await User.create({ name: namePlaceholder, email });
+      user = await User.create({ name: namePlaceholder, email, role: 'client' });
       logger.info('Auto-created user via auto-login OTP', { userId: user._id, email });
+    } else if (user.role !== 'client') {
+      user.role = 'client';
+      await user.save({ validateBeforeSave: false });
     }
 
     const { otp, hashedOtp, expiresAt } = createOtp();
@@ -334,6 +346,7 @@ exports.verifyAutoLoginOtp = async (req, res, next) => {
     user.otpExpiresAt = undefined;
     user.otpAttempts = 0;
     if (!user.isEmailVerified) user.isEmailVerified = true;
+    if (user.role !== 'client') user.role = 'client';
     await user.save({ validateBeforeSave: false });
 
     logger.info('User auto-logged in via OTP', { userId: user._id, email: user.email });
@@ -343,37 +356,111 @@ exports.verifyAutoLoginOtp = async (req, res, next) => {
   }
 };
 
-// ─── POST /auth/auto-login/authenticate ────────────────────────────────────────
-// Active ONLY when STOP_OTP_VERIFICATION_EMAIL=true. Bypasses OTP generation
-// and validation entirely: a visitor hitting ?email=<email> is found-or-
-// created and logged in immediately, exactly like sendAutoLoginOtp would do
-// for a new visitor, minus the "email a code / wait for it" step.
-// Body: { email }
+// ─── POST /auth/auto-login/authenticate & GET /auth/auto-login ────────────────
+// Secure Auto-Login handler
+// Requirements:
+// 1. Existing URL format support (GET /auto-login?email=user@example.com&ts=...&sig=...)
+// 2. Validate request originates from trusted source (HMAC Signature, API Key, IP Whitelist, or OTP bypass mode)
+// 3. Rate limiting and suspicious activity monitoring (log & alert on multiple failed attempts)
+// 4. Account verification (must exist or be auto-created if trusted, and must be active / not suspended)
+// 5. Create new secure session/JWT (accessToken + httpOnly refreshToken cookie)
+// 6. Security logging to AutoLoginLog with IP, User-Agent, Country, Timestamp, Email, Status & Reason
+// 7. Generic 401 error response to prevent user enumeration
 exports.autoLoginDirect = async (req, res, next) => {
+  const email = (req.body?.email || req.query?.email || '').trim().toLowerCase();
+  const ts = req.body?.ts || req.query?.ts || req.body?.timestamp || req.query?.timestamp;
+  const sig = req.body?.sig || req.query?.sig || req.body?.signature || req.query?.signature;
+  const apiKey = req.body?.apiKey || req.query?.apiKey || req.headers['x-api-key'];
+  const website = req.body?.website || req.query?.website || '';
+
+  const clientIp = getClientIp(req);
+
   try {
-    if (!config.features.stopOtpVerificationEmail) {
-      return next(new AppError('Direct auto-login is disabled while OTP verification is enabled.', 403));
+    if (!email) {
+      await logAutoLoginAttempt(req, { email: 'unknown', status: 'FAILED', reason: 'MISSING_EMAIL', trustedSource: 'UNTRUSTED' });
+      return sendGenericAuthError(res, 401);
     }
 
-    const { email } = req.body;
-    if (!email) return next(new AppError('Please provide your email', 400));
+    // Check recent failed attempts for suspicious activity
+    const { isSuspicious } = await checkSuspiciousActivity(email, clientIp);
+    if (isSuspicious) {
+      await logAutoLoginAttempt(req, { email, status: 'FAILED', reason: 'SUSPICIOUS_ACTIVITY_LIMIT_EXCEEDED', trustedSource: 'UNTRUSTED' });
+      return sendGenericAuthError(res, 429);
+    }
 
+    // Determine trusted source
+    let trustedSource = null;
+    let isTrusted = false;
+
+    if (sig && ts && verifyHmacSignature(email, ts, sig, website)) {
+      trustedSource = 'HMAC_SIGNATURE';
+      isTrusted = true;
+    } else if (apiKey && verifyApiKey(apiKey)) {
+      trustedSource = 'API_KEY';
+      isTrusted = true;
+    } else if (isIpWhitelisted(clientIp)) {
+      trustedSource = 'IP_WHITELIST';
+      isTrusted = true;
+    } else if (config.features.stopOtpVerificationEmail && !config.autoLogin.requireSignature) {
+      trustedSource = 'DIRECT_BYPASS';
+      isTrusted = true;
+    }
+
+    // If signature is required by config or source is untrusted -> reject safely with generic error
+    if (!isTrusted || (config.autoLogin.requireSignature && trustedSource !== 'HMAC_SIGNATURE' && trustedSource !== 'API_KEY')) {
+      await logAutoLoginAttempt(req, {
+        email,
+        status: 'FAILED',
+        reason: !isTrusted ? 'INVALID_OR_MISSING_SIGNATURE_OR_KEY' : 'SIGNATURE_REQUIRED_BY_POLICY',
+        trustedSource: trustedSource || 'UNTRUSTED',
+      });
+      return sendGenericAuthError(res, 401);
+    }
+
+    // Verify user account exists & is active
     let user = await User.findOne({ email });
-    if (!user) {
-      // Same bare-bones account creation as the OTP flow, so the same
-      // ?email= link works for first-time and returning visitors alike.
+
+    if (user) {
+      if (user.isActive === false || user.isSuspended === true) {
+        await logAutoLoginAttempt(req, { email, status: 'FAILED', reason: 'ACCOUNT_SUSPENDED_OR_INACTIVE', trustedSource });
+        return sendGenericAuthError(res, 401);
+      }
+
+      let isUpdated = false;
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        isUpdated = true;
+      }
+      if (user.role !== 'client') {
+        user.role = 'client';
+        isUpdated = true;
+      }
+      if (isUpdated) {
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      // Auto-create new user account if request originates from a trusted source
       const namePlaceholder = email.split('@')[0];
-      user = await User.create({ name: namePlaceholder, email, isEmailVerified: true });
-      logger.info('Auto-created user via direct auto-login (OTP disabled)', { userId: user._id, email });
-    } else if (!user.isEmailVerified) {
-      user.isEmailVerified = true;
-      await user.save({ validateBeforeSave: false });
+      user = await User.create({
+        name: namePlaceholder,
+        email,
+        role: 'client',
+        isEmailVerified: true,
+        isActive: true,
+        isSuspended: false,
+      });
+      logger.info('Auto-created user via verified secure auto-login', { userId: user._id, email, trustedSource });
     }
 
-    logger.info('User auto-logged in without OTP (STOP_OTP_VERIFICATION_EMAIL=true)', { userId: user._id, email });
+    // Log success audit entry
+    await logAutoLoginAttempt(req, { email, status: 'SUCCESS', reason: 'AUTHENTICATED_SUCCESSFULLY', trustedSource });
+
+    // Create session / JWT response
     sendToken(user, 200, res);
   } catch (err) {
-    next(err);
+    logger.error('Unhandled error in autoLoginDirect', { error: err.message, email, clientIp });
+    await logAutoLoginAttempt(req, { email: email || 'unknown', status: 'FAILED', reason: `SERVER_ERROR: ${err.message}`, trustedSource: 'UNTRUSTED' });
+    return sendGenericAuthError(res, 500);
   }
 };
 
@@ -470,6 +557,7 @@ exports.verifyAutoLoginLink = async (req, res, next) => {
     user.autoLoginToken = undefined;
     user.autoLoginTokenExpiresAt = undefined;
     if (!user.isEmailVerified) user.isEmailVerified = true;
+    if (user.role !== 'client') user.role = 'client';
     await user.save({ validateBeforeSave: false });
 
     // Set the same refreshToken cookie a normal login sets (see sendToken in utils/jwt.js)

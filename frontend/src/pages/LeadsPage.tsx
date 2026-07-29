@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import {
   Search, Download, Trash2, Mail, Phone,
   FileText, ArrowUpDown, Filter, Loader2, Clock, CheckCircle2,
@@ -19,6 +19,7 @@ import { leadsApi, projectsApi, pagesApi, type Lead } from "@/services/api";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 /**
@@ -30,6 +31,8 @@ import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 const LeadsPage = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const { user: currentUser } = useAuth();
+  const isClientRole = currentUser?.role === 'client';
 
   // ── URL param pre-fill ────────────────────────────────────────────────────
   const [filterProjectId, setFilterProjectId] = useState<string>(
@@ -88,6 +91,25 @@ const LeadsPage = () => {
     queryKey: ["projects"],
     queryFn: projectsApi.getAll,
   });
+
+  const hasInitializedRef = useRef(false);
+
+  useEffect(() => {
+    if (isClientRole && projects.length > 0 && !filterProjectId && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      const activeId = localStorage.getItem("active_project_id");
+      const matched = (projects as any[]).find((p: any) => p._id === activeId);
+      if (matched?._id || projects[0]?._id) {
+        setFilterProjectId(matched?._id || projects[0]._id);
+      }
+    }
+  }, [isClientRole, projects, filterProjectId]);
+
+  useEffect(() => {
+    if (filterProjectId) {
+      localStorage.setItem("active_project_id", filterProjectId);
+    }
+  }, [filterProjectId]);
 
   // ── Pages list (filtered by selected project) ─────────────────────────────
   const { data: projectPages = [] } = useQuery({
@@ -285,7 +307,8 @@ const LeadsPage = () => {
     try {
       setIsExporting(true);
       setExportMenuOpen(false);
-      const blob = await leadsApi.export({});   // no filters → all leads
+      const exportParams = isClientRole ? { projectId: filterProjectId || (projects as any[])[0]?._id } : {};
+      const blob = await leadsApi.export(exportParams);   // for client role → scope to client project
       triggerDownload(blob, `leads_all_${format(new Date(), "yyyy-MM-dd")}.csv`);
       toast.success("All leads exported successfully.");
     } catch (err) {
@@ -431,7 +454,7 @@ const LeadsPage = () => {
                       <Download className="h-4 w-4 mt-0.5 text-slate-500 flex-shrink-0" />
                       <div>
                         <p className="text-sm font-semibold text-slate-900 dark:text-white">Export All</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Download every lead (no filters)</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{isClientRole ? "Download all leads for this project" : "Download every lead (no filters)"}</p>
                       </div>
                     </button>
                     <div className="h-px bg-slate-100 dark:bg-slate-800 mx-3" />
@@ -482,23 +505,36 @@ const LeadsPage = () => {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Project dropdown */}
-          <Select value={filterProjectId || "all-projects"} onValueChange={(val) => {
-            setFilterProjectId(val === "all-projects" ? "" : val);
-            setFilterPageId("");
-          }}>
-            <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
-              <div className="flex items-center gap-2">
-                <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <SelectValue placeholder="All Projects" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-projects">All Projects</SelectItem>
-              {(projects as any[]).map((p: any) => (
-                <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isClientRole && (projects as any[]).length <= 1 ? (
+            <Link
+              to={`/dashboard/projects/${filterProjectId || (projects as any[])[0]?._id}`}
+              className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center gap-2 min-w-[140px] w-auto text-sm font-medium hover:border-primary/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all cursor-pointer group"
+              title="Go to Project Dashboard"
+            >
+              <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0 group-hover:text-primary" />
+              <span className="truncate group-hover:text-primary transition-colors">
+                {(projects as any[]).find((p: any) => p._id === filterProjectId)?.name || (projects as any[])[0]?.name || "Project"}
+              </span>
+            </Link>
+          ) : (
+            <Select value={filterProjectId || "all-projects"} onValueChange={(val) => {
+              setFilterProjectId(val === "all-projects" ? "" : val);
+              setFilterPageId("");
+            }}>
+              <SelectTrigger className="flex-1 sm:flex-none h-10 bg-slate-50 dark:bg-slate-800 px-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors hover:border-slate-300 min-w-[140px] w-auto text-sm font-medium focus:ring-0 focus:ring-offset-0">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="All Projects" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-projects">All Projects</SelectItem>
+                {(projects as any[]).map((p: any) => (
+                  <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Page dropdown */}
           <Select

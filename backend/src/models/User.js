@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'client'],
     default: 'user',
   },
   googleId: {
@@ -36,7 +36,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-    emailVerificationToken: String,
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  isSuspended: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: String,
   emailVerificationExpiresAt: Date,
   plan: {
     type: String,

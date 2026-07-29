@@ -17,6 +17,7 @@ import { projectsApi, pagesApi, aiApi, statsApi, type Project, type LandingPage 
 import { toast } from "sonner";
 import { copyToClipboard, cleanUrl, normalizeLogoUrl, getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
 import { ModernLoader } from "@/components/ui/ModernLoader";
+import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1511,11 +1512,18 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
 const [isVerifying, setIsVerifying] = useState(false);
 const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(null);
 
+
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem("active_project_id", id);
+    }
+  }, [id]);
 
   // ── Query 1: Project meta (header, stats, integration panel) ─────────────────
   // Seeds instantly from the projects list cache so the header renders with zero delay.
@@ -1827,12 +1835,14 @@ const tokenAuth = localStorage.getItem("token");
       <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm mr-2"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back
-          </button>
+          {user?.role !== 'client' && (
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm mr-2"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+          )}
 
           <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-slate-200 shadow-sm">
             {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (
@@ -1858,31 +1868,40 @@ const tokenAuth = localStorage.getItem("token");
             />
           </div>
 
-          <Select
-            value={id}
-            onValueChange={(val) => {
-              if (val && val !== id) {
-                navigate(`/dashboard/projects/${val}`);
-              }
-            }}
-            {...({ modal: false } as any)}
-          >
-            <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
-              <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
-                {(project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
-                  ? (project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
-                    .replace(/^https?:\/\//, '').replace(/\/$/, '')
-                  : project.name}
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              {(cachedProjects as any[]).map((p: any) => (
-                <SelectItem key={p._id} value={p._id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {user?.role === 'client' && (cachedProjects as any[]).length <= 1 ? (
+            <span className="text-lg font-bold text-foreground truncate max-w-[200px] sm:max-w-[300px]">
+              {(project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
+                ? (project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
+                  .replace(/^https?:\/\//, '').replace(/\/$/, '')
+                : project.name}
+            </span>
+          ) : (
+            <Select
+              value={id}
+              onValueChange={(val) => {
+                if (val && val !== id) {
+                  navigate(`/dashboard/projects/${val}`);
+                }
+              }}
+              {...({ modal: false } as any)}
+            >
+              <SelectTrigger className="border-0 p-0 h-auto w-auto bg-transparent hover:bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 flex items-center justify-start gap-1 cursor-pointer max-w-[200px] sm:max-w-[300px] focus:outline-none">
+                <span className="text-lg font-bold text-foreground truncate hover:text-primary transition-colors">
+                  {(project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)
+                    ? (project.name || project.websiteProfile?.extraction?.sourceUrl || project.websiteProfile?.extraction?.finalUrl)!
+                      .replace(/^https?:\/\//, '').replace(/\/$/, '')
+                    : project.name}
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                {(cachedProjects as any[]).map((p: any) => (
+                  <SelectItem key={p._id} value={p._id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">
             {displayCategory}
