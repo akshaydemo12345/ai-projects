@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getAdminNotifConfig, saveAdminNotifConfig, AdminNotifConfig,
   getUserAutoReplyConfig, saveUserAutoReplyConfig, UserAutoReplyConfig,
@@ -304,7 +305,96 @@ const MailManagementPage = () => {
   const patchAdmin = (k: keyof AdminNotifConfig, v: any) => setAdminCfg((c) => ({ ...c, [k]: v }));
   const patchUser = (k: keyof UserAutoReplyConfig, v: any) => setUserCfg((c) => ({ ...c, [k]: v }));
 
-  if (loading) return <div className="p-8 animate-pulse">Loading settings...</div>;
+  if (loading) {
+    return (
+      <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
+        {/* Header Skeleton */}
+        <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border bg-white dark:bg-slate-900">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-52 rounded-lg bg-slate-200 dark:bg-slate-800" />
+              <Skeleton className="h-3.5 w-80 sm:w-96 rounded-md bg-slate-100 dark:bg-slate-800/60" />
+            </div>
+            <div className="flex flex-col gap-1.5 w-full md:w-auto">
+              <Skeleton className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800 ml-1" />
+              <Skeleton className="h-10 w-full md:w-60 rounded-xl bg-slate-200 dark:bg-slate-800" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area Skeleton */}
+        <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-4 py-4 space-y-4 flex-1">
+          {/* Email Provider Card Skeleton */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-8 py-5 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-800/10">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-6 w-20 rounded-md bg-slate-200 dark:bg-slate-800" />
+                <Skeleton className="h-4 w-32 rounded-md bg-slate-200 dark:bg-slate-800" />
+              </div>
+              <div className="flex items-center gap-6">
+                <Skeleton className="h-5 w-36 rounded-full bg-slate-200 dark:bg-slate-800" />
+                <Skeleton className="h-5 w-28 rounded-full bg-slate-200 dark:bg-slate-800" />
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-8 flex flex-col xl:flex-row items-start justify-between gap-6 xl:gap-10">
+              <div className="flex-1 w-full max-w-3xl space-y-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-32 rounded bg-slate-200 dark:bg-slate-800" />
+                  <Skeleton className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                </div>
+              </div>
+              <div className="xl:w-64 w-full flex flex-col gap-3">
+                <Skeleton className="h-11 w-full rounded-xl bg-slate-200 dark:bg-slate-800" />
+              </div>
+            </div>
+          </div>
+
+          {/* Grid Cards Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/40 pb-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-40 rounded-md bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-3 w-56 rounded bg-slate-100 dark:bg-slate-800/60" />
+                  </div>
+                  <Skeleton className="h-6 w-12 rounded-full bg-slate-200 dark:bg-slate-800" />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-10 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-10 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                    <Skeleton className="h-24 w-full rounded-xl bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                </div>
+
+                <Skeleton className="h-11 w-full rounded-xl bg-slate-200 dark:bg-slate-800 mt-4" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 min-h-full flex flex-col" style={{ background: "#f2f2f2" }}>
