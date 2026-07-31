@@ -1835,14 +1835,7 @@ const tokenAuth = localStorage.getItem("token");
       <div className="px-4 sm:px-4 pt-6 pb-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
-          {user?.role !== 'client' && (
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="h-8 px-3 text-xs font-semibold inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm mr-2"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back
-            </button>
-          )}
+
 
           <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-slate-200 shadow-sm">
             {(project.websiteProfile?.identity?.favicon || project.logoUrl) ? (

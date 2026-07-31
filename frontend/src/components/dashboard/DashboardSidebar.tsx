@@ -36,12 +36,14 @@ const DashboardSidebar = () => {
   const { data: userProjects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: projectsApi.getAll,
-    enabled: user?.role === 'client',
   });
+  // Synchronously extract project ID from URL or localStorage so it doesn't flash /dashboard on refresh
+  const urlMatch = location.pathname.match(/\/dashboard\/projects\/([^\/]+)/);
+  const urlProjectId = urlMatch && urlMatch[1] !== 'new' ? urlMatch[1] : null;
   const activeId = localStorage.getItem("active_project_id");
   const matchedProject = (userProjects as any[]).find((p: any) => p._id === activeId);
-  const clientProjectId = matchedProject?._id || (userProjects.length > 0 ? (userProjects as any[])[0]._id : null);
-  const clientProjectHref = clientProjectId ? `/dashboard/projects/${clientProjectId}` : "/dashboard";
+  const activeProjectId = urlProjectId || activeId || matchedProject?._id || (userProjects.length > 0 ? (userProjects as any[])[0]._id : null);
+  const projectHref = activeProjectId ? `/dashboard/projects/${activeProjectId}` : "/dashboard/projects/new";
 
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
@@ -66,12 +68,10 @@ const DashboardSidebar = () => {
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()
     : "U";
 
-  const currentNavItems = user?.role === 'client'
-    ? [
-        { icon: LayoutDashboard, label: "My Project", href: clientProjectHref },
-        ...navItems.filter(i => i.href !== "/dashboard")
-      ]
-    : navItems;
+  const currentNavItems = [
+    { icon: LayoutDashboard, label: "My Project", href: projectHref },
+    ...navItems.filter(i => i.href !== "/dashboard")
+  ];
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -87,7 +87,7 @@ const DashboardSidebar = () => {
 
         {/* Workspace Logo */}
         <div className={`p-4 flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-          <Link to={user?.role === 'client' ? clientProjectHref : "/dashboard"} className="flex items-center gap-2 min-w-0">
+          <Link to={projectHref} className="flex items-center gap-2 min-w-0">
             {isCollapsed ? (
               <img
                 src="/assets/Buildify-logo-mini.png"
