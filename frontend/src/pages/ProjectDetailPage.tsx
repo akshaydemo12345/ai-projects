@@ -1552,7 +1552,6 @@ const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(nul
   const [viewingUsagePage, setViewingUsagePage] = useState<LandingPage | null>(null);
   const [tokenCopied, setTokenCopied] = useState(false);
   // Integration panel state
-  const [integTab, setIntegTab] = useState<"wordpress" | "script">("wordpress");
   const [integTokenCopied, setIntegTokenCopied] = useState(false);
   const [integScriptCopied, setIntegScriptCopied] = useState(false);
   const [integrationOpen, setIntegrationOpen] = useState(false);
@@ -2247,131 +2246,71 @@ const tokenAuth = localStorage.getItem("token");
                 </div>
                 <h2 className="text-base font-bold text-foreground">Integration </h2>
               </div>
-              <p className="text-[11px] text-muted-foreground ml-10">WordPress or Script</p>
+              <p className="text-[11px] text-muted-foreground ml-10">WordPress Plugin</p>
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex gap-1 bg-muted p-1 rounded-xl">
-                {([
+              <div className="space-y-4">
+                {[
                   {
-                    id: "wordpress" as const, icon: (
-                      <img src="/assets/wordpress-logo.webp" alt="WP" className="h-4 w-4 object-contain" />
-                    ), label: "WP"
+                    num: 1, title: "Download Plugin", desc: "Install a plugin in your WordPress website", extra: (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[10px] mt-1.5 gap-1.5"
+                        onClick={() => {
+                          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+                          window.open(`${apiBaseUrl}/plugin/download`, '_blank');
+                          toast.success("Plugin download started successfully.");
+                        }}
+                      >
+                        <Download className="h-3 w-3" /> Download
+                      </Button>
+                    )
                   },
-                  { id: "script" as const, icon: <Code2 className="h-3.5 w-3.5" />, label: "Script" },
-                ]).map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setIntegTab(m.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${integTab === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
-                  >
-                    {m.icon} {m.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-5">
-                {integTab === "wordpress" && (
-                  <div className="space-y-4">
-                    {[
-                      {
-                        num: 1, title: "Download Plugin", desc: "Install a plugin in your WordPress website", extra: (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-[10px] mt-1.5 gap-1.5"
-                            onClick={() => {
-                              const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-                              window.open(`${apiBaseUrl}/plugin/download`, '_blank');
-                              toast.success("Plugin download started successfully.");
-                            }}
-                          >
-                            <Download className="h-3 w-3" /> Download
-                          </Button>
-                        )
-                      },
-                      {
-                        num: 2, title: "Website  Token", desc: "Copy & paste the API token in the plugin settings", extra: (
-                          <div className="mt-1.5 w-full">
-                            <div
-                              onClick={copyToken}
-                              className={`flex items-center gap-2 border rounded-lg px-2 py-1 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
-                            >
-                              <span className={`text-[10px] font-mono truncate max-w-[110px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
-                              {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
-                            </div>
-                            <div className="mt-2 flex items-center gap-1.5">
-                              <span className={`h-2 w-2 rounded-full ${project?.isPluginVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                              <span className="text-[10px] font-medium text-muted-foreground">
-                                Status: <span className={project?.isPluginVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isPluginVerified ? 'Verified' : 'Pending Verification'}</span>
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      },
-                    ].map((s) => (
-                      <div key={s.num} className="flex gap-2.5">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-start gap-2 pr-1">
-                            <p className="text-xs font-semibold text-foreground">{s.title}</p>
-                            {s.num === 2 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowTokenHelp(true);
-                                }}
-                                className="h-5 w-5 rounded-lg bg-primary/5 hover:bg-primary/15 flex items-center justify-center text-primary transition-all hover:scale-110 active:scale-95 border border-primary/10"
-                                title="Show Guide"
-                              >
-                                <Info className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
-                          {s.extra}
+                  {
+                    num: 2, title: "Website  Token", desc: "Copy & paste the API token in the plugin settings", extra: (
+                      <div className="mt-1.5 w-full">
+                        <div
+                          onClick={copyToken}
+                          className={`flex items-center gap-2 border rounded-lg px-2 py-1 cursor-pointer w-full justify-between transition-all ${integTokenCopied ? "bg-emerald-50 border-emerald-200" : "bg-muted border-border hover:border-primary/30"}`}
+                        >
+                          <span className={`text-[10px] font-mono truncate max-w-[110px] ${integTokenCopied ? "text-emerald-700" : ""}`}>{project.apiToken}</span>
+                          {integTokenCopied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                        </div>
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className={`h-2 w-2 rounded-full ${project?.isPluginVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            Status: <span className={project?.isPluginVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isPluginVerified ? 'Verified' : 'Pending Verification'}</span>
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {integTab === "script" && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Embed Code</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`h-7 text-[10px] gap-1.5 transition-all ${integScriptCopied ? "text-emerald-600 bg-emerald-50" : ""}`}
-                          onClick={handleCopyScript}
-                        >
-                          {integScriptCopied ? <><CheckCircle2 className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleVerifyScript}
-                          disabled={isVerifying}
-                        >
-                          {isVerifying ? "Verifying..." : "Verify"}
-                        </Button>
+                    )
+                  },
+                ].map((s) => (
+                  <div key={s.num} className="flex gap-2.5">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-start gap-2 pr-1">
+                        <p className="text-xs font-semibold text-foreground">{s.title}</p>
+                        {s.num === 2 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowTokenHelp(true);
+                            }}
+                            className="h-5 w-5 rounded-lg bg-primary/5 hover:bg-primary/15 flex items-center justify-center text-primary transition-all hover:scale-110 active:scale-95 border border-primary/10"
+                            title="Show Guide"
+                          >
+                            <Info className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
-                      <pre className="text-[9px] font-mono bg-muted rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all border border-border">{scriptCode}</pre>
-
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`h-2 w-2 rounded-full ${project?.isScriptVerified ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          Status: <span className={project?.isScriptVerified ? "text-emerald-600 font-bold" : "text-slate-500"}>{project?.isScriptVerified ? 'Verified' : 'Pending Verification'}</span>
-                        </span>
-                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
+                      {s.extra}
                     </div>
                   </div>
-                )}
-
-
+                ))}
               </div>
             </div>
           </div>
