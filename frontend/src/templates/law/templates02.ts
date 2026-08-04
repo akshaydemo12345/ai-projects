@@ -372,41 +372,41 @@ export const law02Html = `
           <h3>Discover Solutions</h3>
           <p>We provide comprehensive legal strategies tailored to the complexities of your specific case, ensuring your interests are vigorously protected at every stage.</p>
           <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
         
         <div class="tab-content-box" id="panel-2">
           <h3>Corporate Law Mastery</h3>
           <p>From mergers and acquisitions to corporate governance, our business law attorneys ensure your enterprise operates smoothly and safely.</p>
           <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-3">
           <h3>Family Law & Divorce</h3>
           <p>Navigate difficult family transitions with our compassionate and experienced attorneys focusing on child custody and asset division.</p>
           <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-4">
           <h3>Real Estate Legalities</h3>
           <p>We handle complex real estate transactions, zoning laws, and property disputes, providing a solid foundation for your investments.</p>
           <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-5">
           <h3>Criminal Defense</h3>
           <p>Aggressive and strategic defense to protect your rights, freedom, and future against criminal charges at state and federal levels.</p>
           <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
       </div>
     </div>
     
     <div class="tabs-action animate-up">
-      <a href="#contact" class="btn btn-primary">View All Services</a>
+      <a href="javascript:void(0);" class="btn btn-primary">View All Services</a>
     </div>
   </div>
 </section>
@@ -520,7 +520,7 @@ export const law02Html = `
       <h2 data-editable="true">The strongest legal position is the one taken early.</h2>
       <p data-editable="true">Speak to a senior advocate today — free, confidential, no obligation.</p>
     </div>
-    <a data-editable="true" href="#contact" class="btn btn-dark">Book Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
+    <a data-editable="true" href="javascript:void(0);" class="btn btn-dark">Book Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
   </div>
 </section>
 
@@ -532,12 +532,12 @@ export const law02Html = `
 
     </div>
     <div><h4 data-editable="true">Contact</h4><p><i class="fa-solid fa-phone" style="color: var(--primary);"></i> <a data-editable="true" href="tel:+918888888888" style="color: var(--primary); text-decoration: none;">+91 88888 88888</a></p><p><i class="fa-solid fa-envelope" style="color: var(--primary);"></i> <a data-editable="true" href="mailto:hello@vermachambers.in" style="color: var(--primary); text-decoration: none;">hello@vermachambers.in</a></p><p><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> <span data-editable="true" style="color: var(--primary);">Nariman Point, Mumbai 400021</span></p></div>
-    <div><h4 data-editable="true">Follow</h4><div class="socials"><a data-editable="true" href="#"><i class="fa-brands fa-linkedin-in"></i></a><a data-editable="true" href="#"><i class="fa-brands fa-instagram"></i></a><a data-editable="true" href="#"><i class="fa-brands fa-x-twitter"></i></a></div></div>
+    <div><h4 data-editable="true">Follow</h4><div class="socials"><a data-editable="true" href="javascript:void(0);"><i class="fa-brands fa-linkedin-in"></i></a><a data-editable="true" href="javascript:void(0);"><i class="fa-brands fa-instagram"></i></a><a data-editable="true" href="javascript:void(0);"><i class="fa-brands fa-x-twitter"></i></a></div></div>
   </div>
   <div class="copyright">© 2025 Verma Law Chambers · As per Bar Council of India rules, this is not advertisement or solicitation.</div>
 </footer>
 
-<a data-editable="true" href="#contact" class="float-cta"><i class="fa-solid fa-phone-volume"></i></a>
+<a data-editable="true" href="javascript:void(0);" class="float-cta"><i class="fa-solid fa-phone-volume"></i></a>
 
 <script>
 (function() {

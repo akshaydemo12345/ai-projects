@@ -266,11 +266,11 @@ body.js-enabled .animate-up.in-view { opacity: 1; transform: translateY(0); }
 export const law07Html = `
 <header class="header">
   <div class="container header-inner">
-    <a href="#" class="logo">
+    <a href="javascript:void(0);" class="logo">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       <span>PROJECT_NAME_PLACEHOLDER<span class="logo-sub">Rights & Justice</span></span>
     </a>
-    <a href="#contact" class="btn btn-primary">Free Quote</a>
+    <a href="javascript:void(0);" class="btn btn-primary">Free Quote</a>
   </div>
 </header>
 
@@ -281,7 +281,7 @@ export const law07Html = `
       <h1>Strong legal <span class="italic-accent">solutions for</span> your business.</h1>
       <p>Trusted corporate legal solutions that protect businesses, ensure compliance, and support sustainable growth.</p>
       <div class="hero-actions">
-        <a href="#about" class="btn btn-primary">Learn More</a>
+        <a href="javascript:void(0);" class="btn btn-primary">Learn More</a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -308,7 +308,7 @@ export const law07Html = `
       <div class="badge">About Firm</div>
       <h2>Strength in law, <span class="italic-accent">strength</span> in results.</h2>
       <p>Your trusted partner in corporate law and business protection. We deliver reliable corporate legal services with a focus on integrity, precision, and long-term success.</p>
-      <a href="#services" class="btn btn-primary">Read More</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Read More</a>
       <div class="split-foot">
         <div class="rating-block">
           <h3>4.92</h3>
@@ -326,26 +326,26 @@ export const law07Html = `
   <div class="container">
     <div class="services-header animate-up">
       <h2>Innovative legal <span class="italic-accent">and corporate</span> service solutions.</h2>
-      <a href="#contact" class="btn btn-primary">All Services</a>
+      <a href="javascript:void(0);" class="btn btn-primary">All Services</a>
     </div>
     <div class="services-grid animate-up">
       <div class="service-card">
         <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
         <h3>Regulatory Compliance</h3>
         <p>Ensuring full compliance with corporate laws, regulatory bodies, and government regulations.</p>
-        <a href="#contact" class="link-primary">Learn More →</a>
+        <a href="javascript:void(0);" class="link-primary">Learn More →</a>
       </div>
       <div class="service-card">
         <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
         <h3>Corporate Advisory</h3>
         <p>Strategic legal advisory for corporate governance, compliance, and business structuring.</p>
-        <a href="#contact" class="link-primary">Learn More →</a>
+        <a href="javascript:void(0);" class="link-primary">Learn More →</a>
       </div>
       <div class="service-card">
         <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
         <h3>Mergers & Acquisitions</h3>
         <p>Expert handling of mergers, acquisitions, restructuring, and due diligence processes.</p>
-        <a href="#contact" class="link-primary">Learn More →</a>
+        <a href="javascript:void(0);" class="link-primary">Learn More →</a>
       </div>
     </div>
     <div class="trusted-row animate-up">
@@ -445,7 +445,7 @@ export const law07Html = `
   <div class="container">
     <div class="cases-header animate-up">
       <h2>Legal solutions for <span class="italic-accent">business</span> growth.</h2>
-      <a href="#contact" class="btn btn-primary">All Cases</a>
+      <a href="javascript:void(0);" class="btn btn-primary">All Cases</a>
     </div>
     <div class="case-list animate-up">
       <div class="case-row">
@@ -490,7 +490,7 @@ export const law07Html = `
             <img src="/assets/templates/LawFirm/templates07/review-03.png" alt="Expert">
             <img src="/assets/templates/LawFirm/templates07/review-01.png" alt="Expert">
           </div>
-          <a href="#contact">Trusted legal insights from experts →</a>
+          <a href="javascript:void(0);">Trusted legal insights from experts →</a>
         </div>
       </div>
     </div>
@@ -530,9 +530,9 @@ export const law07Html = `
           <h4>Mia Wong</h4>
           <p>Senior Legal Advisor</p>
           <div class="team-socials">
-            <a href="#">f</a>
-            <a href="#">x</a>
-            <a href="#">in</a>
+            <a href="javascript:void(0);">f</a>
+            <a href="javascript:void(0);">x</a>
+            <a href="javascript:void(0);">in</a>
           </div>
         </div>
       </div>
@@ -602,34 +602,34 @@ export const law07Html = `
 <footer class="footer">
   <div class="container footer-top">
     <div class="footer-brand">
-      <a href="#" class="logo">
+      <a href="javascript:void(0);" class="logo">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
         PROJECT_NAME_PLACEHOLDER
       </a>
       <p>Trusted corporate legal solutions that protect businesses, ensure compliance, and support sustainable growth.</p>
       <div class="footer-socials">
-        <a href="#">f</a>
-        <a href="#">x</a>
-        <a href="#">in</a>
+        <a href="javascript:void(0);">f</a>
+        <a href="javascript:void(0);">x</a>
+        <a href="javascript:void(0);">in</a>
       </div>
     </div>
     <div class="footer-col">
       <h4>Quick Links</h4>
       <ul>
-        <li><a href="#about">About Us</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#cases">Case Studies</a></li>
-        <li><a href="#team">Attorneys</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="javascript:void(0);">About Us</a></li>
+        <li><a href="javascript:void(0);">Services</a></li>
+        <li><a href="javascript:void(0);">Case Studies</a></li>
+        <li><a href="javascript:void(0);">Attorneys</a></li>
+        <li><a href="javascript:void(0);">Contact</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>Services</h4>
       <ul>
-        <li><a href="#services">SERVICES_PLACEHOLDER</a></li>
-        <li><a href="#services">Corporate Advisory</a></li>
-        <li><a href="#services">Mergers & Acquisitions</a></li>
-        <li><a href="#services">Regulatory Compliance</a></li>
+        <li><a href="javascript:void(0);">SERVICES_PLACEHOLDER</a></li>
+        <li><a href="javascript:void(0);">Corporate Advisory</a></li>
+        <li><a href="javascript:void(0);">Mergers & Acquisitions</a></li>
+        <li><a href="javascript:void(0);">Regulatory Compliance</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -646,9 +646,9 @@ export const law07Html = `
     <div class="container footer-bottom-inner">
       <div class="copyright">© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</div>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Disclaimer</a>
+        <a href="javascript:void(0);">Privacy Policy</a>
+        <a href="javascript:void(0);">Terms of Service</a>
+        <a href="javascript:void(0);">Disclaimer</a>
       </div>
     </div>
   </div>

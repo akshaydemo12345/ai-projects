@@ -1306,25 +1306,16 @@ export const healthcare04Html = `
         <span><i class="far fa-clock"></i> Mon - Sat: 8:00 AM - 9:00 PM</span>
       </div>
       <div class="hc4-topbar-right">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-facebook-f"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-twitter"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-instagram"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-linkedin-in"></i></a>
       </div>
     </div>
   </div>
 
   <!-- Navbar -->
-  <nav class="hc4-navbar">
-    <div class="hc4-container">
-        <div class="hc4-logo">
-          <span>LOGO_PLACEHOLDER</span>
-        </div>
-      <div class="hc4-nav-actions">
-        <button class="hc4-btn-primary">GET A QUOTE</button>
-      </div>
-    </div>
-  </nav>
+  
 
   <!-- Hero Section -->
   <section class="hc4-hero">
@@ -1431,54 +1422,54 @@ export const healthcare04Html = `
           <div class="hc4-service-icon"><i class="fas fa-heartbeat"></i></div>
           <h4>Cardiology</h4>
           <p>Advanced cardiac care, diagnostics, and treatment plans tailored for your heart health.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-brain"></i></div>
           <h4>Neurology</h4>
           <p>Comprehensive neurological evaluations and innovative treatments for nerve disorders.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-tooth"></i></div>
           <h4>Dental Care</h4>
           <p>Professional dental services ensuring a healthy, bright smile for you and your family.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-bone"></i></div>
           <h4>Orthopedics</h4>
           <p>Specialized bone and joint care to help you maintain an active and pain-free lifestyle.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-eye"></i></div>
           <h4>Eye Care</h4>
           <p>Complete vision tests, eye treatments, and surgical solutions for optimal vision.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-lungs"></i></div>
           <h4>Pulmonary</h4>
           <p>Expert respiratory care and therapies for asthma, COPD, and other lung conditions.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-baby"></i></div>
           <h4>Pediatrics</h4>
           <p>Specialized physical, mental, and behavioral care for infants, children, and teens.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="hc4-service-card">
           <div class="hc4-service-icon"><i class="fas fa-dna"></i></div>
           <h4>Oncology</h4>
           <p>Compassionate care combined with advanced oncology research and therapies.</p>
-          <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+          <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
 
       <div class="hc4-bottom-info">
-        Need custom medical consultations? <a href="#">Learn more about our health solutions.</a>
+        Need custom medical consultations? <a href="javascript:void(0);">Learn more about our health solutions.</a>
       </div>
     </div>
   </section>
@@ -1728,7 +1719,7 @@ export const healthcare04Html = `
             <span class="hc4-blog-date">Oct 12, 2026</span>
             <h4>Advanced Technology in Modern Healthcare</h4>
             <p>Discover how new AI tools are transforming patient diagnostics and treatment plans globally.</p>
-            <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
         <div class="hc4-blog-card">
@@ -1739,7 +1730,7 @@ export const healthcare04Html = `
             <span class="hc4-blog-date">Oct 05, 2026</span>
             <h4>Top 10 Tips for Heart Health and Wellness</h4>
             <p>Learn simple everyday habits that can significantly reduce your risk of cardiovascular diseases.</p>
-            <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
         <div class="hc4-blog-card">
@@ -1750,7 +1741,7 @@ export const healthcare04Html = `
             <span class="hc4-blog-date">Sep 28, 2026</span>
             <h4>Understanding Pediatric Nutrition Guidelines</h4>
             <p>A comprehensive guide for parents to ensure their children get the right balance of vitamins.</p>
-            <a href="#" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="hc4-service-link">Read More <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -1783,32 +1774,32 @@ export const healthcare04Html = `
           </div>
           <p>Providing reliable, world-class medical services for you and your family. We are committed to your long-term health and wellbeing.</p>
           <div class="hc4-footer-socials">
-            <a href="#" class="hc4-footer-social"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="hc4-footer-social"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="hc4-footer-social"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="hc4-footer-social"><i class="fab fa-linkedin-in"></i></a>
+            <a href="javascript:void(0);" class="hc4-footer-social"><i class="fab fa-facebook-f"></i></a>
+            <a href="javascript:void(0);" class="hc4-footer-social"><i class="fab fa-twitter"></i></a>
+            <a href="javascript:void(0);" class="hc4-footer-social"><i class="fab fa-instagram"></i></a>
+            <a href="javascript:void(0);" class="hc4-footer-social"><i class="fab fa-linkedin-in"></i></a>
           </div>
         </div>
         
         <div>
           <h5>Quick Links</h5>
           <ul class="hc4-footer-links">
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">Our Services</a></li>
-            <li><a href="#">Meet The Doctors</a></li>
-            <li><a href="#">Latest News</a></li>
-            <li><a href="#">Contact Us</a></li>
+            <li><a href="javascript:void(0);">About Us</a></li>
+            <li><a href="javascript:void(0);">Our Services</a></li>
+            <li><a href="javascript:void(0);">Meet The Doctors</a></li>
+            <li><a href="javascript:void(0);">Latest News</a></li>
+            <li><a href="javascript:void(0);">Contact Us</a></li>
           </ul>
         </div>
         
         <div>
           <h5>Departments</h5>
           <ul class="hc4-footer-links">
-            <li><a href="#">Cardiology</a></li>
-            <li><a href="#">Neurology</a></li>
-            <li><a href="#">Dental Care</a></li>
-            <li><a href="#">Orthopedics</a></li>
-            <li><a href="#">Eye Care</a></li>
+            <li><a href="javascript:void(0);">Cardiology</a></li>
+            <li><a href="javascript:void(0);">Neurology</a></li>
+            <li><a href="javascript:void(0);">Dental Care</a></li>
+            <li><a href="javascript:void(0);">Orthopedics</a></li>
+            <li><a href="javascript:void(0);">Eye Care</a></li>
           </ul>
         </div>
         

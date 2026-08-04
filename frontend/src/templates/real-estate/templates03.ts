@@ -419,7 +419,7 @@ export const realEstate03Html = `
 <div class="re03-wrap">
   <!-- Header -->
   <header class="re03-header">
-    <a href="#" class="re03-logo" style="display: block; font-size: 1.5rem; font-weight: bold; color: var(--primary);">
+    <a href="javascript:void(0);" class="re03-logo" style="display: block; font-size: 1.5rem; font-weight: bold; color: var(--primary);">
       LOGO_PLACEHOLDER
     </a>
   </header>

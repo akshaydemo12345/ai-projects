@@ -846,7 +846,7 @@ export const plumber04Html = `
             <strong>PHONE_PLACEHOLDER</strong>
           </div>
         </div>
-        <a href="#quote" class="pl04-btn">Book Online</a>
+        <a href="javascript:void(0);" class="pl04-btn">Book Online</a>
       </div>
     </div>
   </header>
@@ -859,8 +859,8 @@ export const plumber04Html = `
         <h1 class="pl04-title">Expert Plumbing Solutions for Your Home & Business.</h1>
         <p>Don't let plumbing problems disrupt your life. Our certified professionals are ready to fix, install, and maintain your systems with a 100% satisfaction guarantee.</p>
         <div class="pl04-hero-actions">
-          <a href="#services" class="pl04-btn pl04-btn-outline">Explore Services</a>
-          <a href="#quote" class="pl04-btn">Get a Free Estimate</a>
+          <a href="javascript:void(0);" class="pl04-btn pl04-btn-outline">Explore Services</a>
+          <a href="javascript:void(0);" class="pl04-btn">Get a Free Estimate</a>
         </div>
       </div>
     </div>
@@ -916,7 +916,7 @@ export const plumber04Html = `
           <li><i class="fas fa-check-circle"></i> Long-lasting Guaranteed Results</li>
         </ul>
         
-        <a href="#quote" class="pl04-btn">Discover More</a>
+        <a href="javascript:void(0);" class="pl04-btn">Discover More</a>
       </div>
     </div>
   </section>
@@ -938,7 +938,7 @@ export const plumber04Html = `
             <div class="pl04-service-icon"><i class="fas fa-tint"></i></div>
             <h3>Drain Cleaning</h3>
             <p>Stubborn clogs are no match for our advanced hydro-jetting and snaking technologies. We restore full flow fast.</p>
-            <a href="#quote" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
         
@@ -950,7 +950,7 @@ export const plumber04Html = `
             <div class="pl04-service-icon"><i class="fas fa-thermometer-half"></i></div>
             <h3>Water Heaters</h3>
             <p>From traditional tanks to modern tankless systems, we handle repairs, maintenance, and energy-efficient installations.</p>
-            <a href="#quote" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
         
@@ -962,7 +962,7 @@ export const plumber04Html = `
             <div class="pl04-service-icon"><i class="fas fa-wrench"></i></div>
             <h3>Pipe Repair</h3>
             <p>Expert leak detection and pipe repair services to protect your property from devastating water damage.</p>
-            <a href="#quote" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="pl04-link">Book Service <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -977,7 +977,7 @@ export const plumber04Html = `
           <h2>Need Emergency Plumbing Help?</h2>
           <p>Our fleet is fully stocked and ready to dispatch to your location 24/7.</p>
         </div>
-        <a href="#quote" class="pl04-btn" style="background-color: #ffffff; color: var(--primary) !important;">Call Us Immediately</a>
+        <a href="javascript:void(0);" class="pl04-btn" style="background-color: #ffffff; color: var(--primary) !important;">Call Us Immediately</a>
       </div>
     </div>
   </section>
@@ -1149,10 +1149,10 @@ export const plumber04Html = `
         <div>
           <h4 class="pl04-footer-title">Quick Links</h4>
           <ul class="pl04-footer-links">
-            <li><a href="#about"><i class="fas fa-angle-right"></i> About Us</a></li>
-            <li><a href="#services"><i class="fas fa-angle-right"></i> Our Services</a></li>
-            <li><a href="#quote"><i class="fas fa-angle-right"></i> Request a Quote</a></li>
-            <li><a href="#"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
+            <li><a href="javascript:void(0);"><i class="fas fa-angle-right"></i> About Us</a></li>
+            <li><a href="javascript:void(0);"><i class="fas fa-angle-right"></i> Our Services</a></li>
+            <li><a href="javascript:void(0);"><i class="fas fa-angle-right"></i> Request a Quote</a></li>
+            <li><a href="javascript:void(0);"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
           </ul>
         </div>
         

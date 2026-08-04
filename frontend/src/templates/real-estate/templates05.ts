@@ -639,7 +639,7 @@ export const realEstate05Html = `
         LOGO_PLACEHOLDER
       </div>
      
-      <a href="#contact" class="re05-btn-primary" style="padding: 10px 20px;">Get Valuation</a>
+      <a href="javascript:void(0);" class="re05-btn-primary" style="padding: 10px 20px;">Get Valuation</a>
     </div>
   </header>
 <section class="re05-split-hero" style="display: flex; min-height: 90vh; background-color: #000; color: #fff;">
@@ -647,8 +647,8 @@ export const realEstate05Html = `
       <h1 style="font-size: 4.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: -2px; margin-bottom: 30px; line-height: 1;">The New Standard.</h1>
       <p style="font-size: 1.4rem; color: #888; margin-bottom: 50px; max-width: 500px;">Minimalist aesthetics. Maximum impact. Find your perfect space in the urban jungle.</p>
       <div style="display: flex; gap: 20px;">
-        <a href="#properties" style="padding: 20px 40px; background: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Properties</a>
-        <a href="#about" style="padding: 20px 40px; border: 2px solid #fff; color: #fff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Our Story</a>
+        <a href="javascript:void(0);" style="padding: 20px 40px; background: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Properties</a>
+        <a href="javascript:void(0);" style="padding: 20px 40px; border: 2px solid #fff; color: #fff; text-decoration: none; font-weight: bold; font-size: 1.1rem;">Our Story</a>
       </div>
     </div>
     <div style="flex: 1; background-image: url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center;"></div>
@@ -799,7 +799,7 @@ export const realEstate05Html = `
         </div>
       </div>
       <div style="text-align: center; margin-top: 48px;">
-        <a href="#" class="re05-btn-outline">View All Properties</a>
+        <a href="javascript:void(0);" class="re05-btn-outline">View All Properties</a>
       </div>
     </div>
   </section>

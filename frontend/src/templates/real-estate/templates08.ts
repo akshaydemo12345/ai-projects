@@ -263,9 +263,9 @@ export const realEstate08Html = `
       </div>
       <div class="re08-topbar-right">
         <span>Follow Us:</span>
-        <a href="#" style="color:#ccc;">Fb</a>
-        <a href="#" style="color:#ccc;">Tw</a>
-        <a href="#" style="color:#ccc;">In</a>
+        <a href="javascript:void(0);" style="color:#ccc;">Fb</a>
+        <a href="javascript:void(0);" style="color:#ccc;">Tw</a>
+        <a href="javascript:void(0);" style="color:#ccc;">In</a>
       </div>
     </div>
   </div>
@@ -273,10 +273,10 @@ export const realEstate08Html = `
   <!-- Header (No Nav Menu) -->
   <header class="re08-header">
     <div class="re08-container re08-header-inner">
-      <a href="#" class="re08-logo">
+      <a href="javascript:void(0);" class="re08-logo">
         LOGO_PLACEHOLDER
       </a>
-      <a href="#contact" class="re08-btn">Get A Quote</a>
+      <a href="javascript:void(0);" class="re08-btn">Get A Quote</a>
     </div>
   </header>
 
@@ -286,7 +286,7 @@ export const realEstate08Html = `
       <div class="re08-hero-text">
         <h1>Book Your Dream Home With Invest</h1>
         <p>Find the perfect property tailored to your lifestyle. We offer exclusive listings in the most sought-after locations.</p>
-        <a href="#contact" class="re08-btn">Discover More</a>
+        <a href="javascript:void(0);" class="re08-btn">Discover More</a>
       </div>
       <div class="re08-hero-right-space"></div>
     </div>
@@ -346,7 +346,7 @@ export const realEstate08Html = `
           <div class="re08-proj-info">
             <h3>Modern Glass Villa</h3>
             <p>A stunning architectural masterpiece with panoramic views and state-of-the-art amenities.</p>
-            <a href="#" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
           </div>
         </div>
         <div class="re08-proj-card">
@@ -354,7 +354,7 @@ export const realEstate08Html = `
           <div class="re08-proj-info">
             <h3>Urban Loft Apartment</h3>
             <p>Located in the heart of the city, offering a vibrant lifestyle and contemporary design.</p>
-            <a href="#" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
           </div>
         </div>
         <div class="re08-proj-card">
@@ -362,7 +362,7 @@ export const realEstate08Html = `
           <div class="re08-proj-info">
             <h3>Suburban Family Home</h3>
             <p>Spacious and serene, perfect for families looking for comfort and a strong community.</p>
-            <a href="#" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--secondary); font-weight:bold; text-decoration:none;">View Details &rarr;</a>
           </div>
         </div>
       </div>
@@ -376,7 +376,7 @@ export const realEstate08Html = `
         <h4 style="color:var(--secondary); text-transform:uppercase; font-size:0.9rem; margin-bottom:10px;">Why Choose Us</h4>
         <h2>Our Agency Features</h2>
         <p>We provide a full spectrum of real estate services to meet all your needs. Whether you are buying, selling, or investing, we have you covered with expert advice and premium care.</p>
-        <a href="#contact" class="re08-btn" style="background:var(--primary); margin-top:20px;">Contact Us</a>
+        <a href="javascript:void(0);" class="re08-btn" style="background:var(--primary); margin-top:20px;">Contact Us</a>
       </div>
       <div class="re08-srv-right">
         <div class="re08-srv-item">
@@ -419,7 +419,7 @@ export const realEstate08Html = `
         <h2>Everything You Need To Know</h2>
         <p>Buying or selling a home is a major life decision. We want to make sure you have all the information you need to make the best choice. Here are some of the most common questions we get from our clients.</p>
         <p>If you have any other questions, feel free to reach out to our dedicated support team. We are always here to help you navigate the real estate market.</p>
-        <a href="#contact" class="re08-btn">Ask a Question</a>
+        <a href="javascript:void(0);" class="re08-btn">Ask a Question</a>
       </div>
       <div class="re08-faq-right">
         <div class="re08-faq-item">
@@ -447,7 +447,7 @@ export const realEstate08Html = `
     <div class="re08-container">
       <h4 style="color:var(--secondary); text-transform:uppercase; letter-spacing:2px; margin-bottom:10px;">Don't Miss Out</h4>
       <h2>Make an appointment now</h2>
-      <a href="#contact" class="re08-btn">Book Appointment</a>
+      <a href="javascript:void(0);" class="re08-btn">Book Appointment</a>
     </div>
   </section>
 
@@ -551,9 +551,9 @@ export const realEstate08Html = `
             <h3 style="margin-bottom:5px;">Sarah Connor</h3>
             <p style="color:var(--secondary); font-size:0.85rem; margin-bottom:10px;">Senior Agent</p>
             <div style="display:flex; gap:10px;">
-              <a href="#" style="color:#666; text-decoration:none;">Fb</a>
-              <a href="#" style="color:#666; text-decoration:none;">Tw</a>
-              <a href="#" style="color:#666; text-decoration:none;">In</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">Fb</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">Tw</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">In</a>
             </div>
           </div>
         </div>
@@ -563,9 +563,9 @@ export const realEstate08Html = `
             <h3 style="margin-bottom:5px;">David Miller</h3>
             <p style="color:var(--secondary); font-size:0.85rem; margin-bottom:10px;">Broker</p>
             <div style="display:flex; gap:10px;">
-              <a href="#" style="color:#666; text-decoration:none;">Fb</a>
-              <a href="#" style="color:#666; text-decoration:none;">Tw</a>
-              <a href="#" style="color:#666; text-decoration:none;">In</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">Fb</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">Tw</a>
+              <a href="javascript:void(0);" style="color:#666; text-decoration:none;">In</a>
             </div>
           </div>
         </div>
@@ -615,21 +615,21 @@ export const realEstate08Html = `
           <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&w=600&q=80">
           <div class="re08-proj-info">
             <h4 style="font-size:1.1rem; margin-bottom:10px;">How Luxury Suite Offers the Perfect Blend</h4>
-            <a href="#" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
           </div>
         </div>
         <div class="re08-proj-card">
           <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?ixlib=rb-4.0.3&w=600&q=80">
           <div class="re08-proj-info">
             <h4 style="font-size:1.1rem; margin-bottom:10px;">Guest Spotlight: Memorable Moments at Villa</h4>
-            <a href="#" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
           </div>
         </div>
         <div class="re08-proj-card">
           <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&w=600&q=80">
           <div class="re08-proj-info">
             <h4 style="font-size:1.1rem; margin-bottom:10px;">Behind the Scenes: The Art of Creating Luxury</h4>
-            <a href="#" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:0.9rem;">Read More &rarr;</a>
           </div>
         </div>
       </div>
@@ -641,7 +641,7 @@ export const realEstate08Html = `
     <div class="re08-container">
       <div class="re08-foot-grid">
         <div class="re08-foot-col">
-          <a href="#" style="color:#fff; font-size:1.8rem; font-weight:bold; text-decoration:none; display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <a href="javascript:void(0);" style="color:#fff; font-size:1.8rem; font-weight:bold; text-decoration:none; display:flex; align-items:center; gap:10px; margin-bottom:10px;">
              <div style="width:30px; height:30px; background:#fff; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1rem;">H</div>
              LOGO_PLACEHOLDER
           </a>
@@ -650,9 +650,9 @@ export const realEstate08Html = `
         <div class="re08-foot-col" style="text-align: right;">
           <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">Follow Us</h3>
           <div style="display:flex; gap:15px; justify-content:flex-end;">
-            <a href="#" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">Fb</a>
-            <a href="#" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">Tw</a>
-            <a href="#" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">In</a>
+            <a href="javascript:void(0);" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">Fb</a>
+            <a href="javascript:void(0);" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">Tw</a>
+            <a href="javascript:void(0);" style="width:35px; height:35px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;">In</a>
           </div>
         </div>
       </div>

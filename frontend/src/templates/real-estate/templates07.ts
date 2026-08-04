@@ -655,7 +655,7 @@ export const realEstate07Html = `
   <!-- Floating Pill Header -->
   <div class="re07-header-wrapper">
     <div class="re07-header">
-      <a href="#" class="re07-logo">
+      <a href="javascript:void(0);" class="re07-logo">
         
         LOGO_PLACEHOLDER
       </a>
@@ -663,7 +663,7 @@ export const realEstate07Html = `
       
       <div class="re07-header-right">
         
-        <a href="#contact" class="re07-header-btn">Get A Quote</a>
+        <a href="javascript:void(0);" class="re07-header-btn">Get A Quote</a>
       </div>
     </div>
   </div>
@@ -676,8 +676,8 @@ export const realEstate07Html = `
         <h1>Welcome to Your Luxurious Haven</h1>
         <p>Discover elegance and comfort in our meticulously designed properties. Your dream home awaits in the most exclusive neighborhoods.</p>
         <div class="re07-hero-buttons">
-          <a href="#contact" class="re07-btn" style="color:var(--primary);">Discover More</a>
-          <a href="#" class="re07-hero-play">
+          <a href="javascript:void(0);" class="re07-btn" style="color:var(--primary);">Discover More</a>
+          <a href="javascript:void(0);" class="re07-hero-play">
             <div class="re07-hero-play-icon">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </div>
@@ -711,7 +711,7 @@ export const realEstate07Html = `
         <span class="re07-badge re07-badge-dark">About Our Agency</span>
         <h2>Elegance Every Detail Welcome Suite Villa</h2>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
-        <a href="#" class="re07-btn re07-btn-dark" style="margin-top: 10px;">Read More</a>
+        <a href="javascript:void(0);" class="re07-btn re07-btn-dark" style="margin-top: 10px;">Read More</a>
       </div>
     </div>
   </section>
@@ -847,7 +847,7 @@ export const realEstate07Html = `
         <h2>Home Waiting For You Here Schedule A Tour</h2>
         <p>Book a private tour with our agents to explore the luxury and comfort of our properties firsthand.</p>
         <div style="display:flex; align-items:center; gap:20px;">
-          <a href="#contact" class="re07-btn">Schedule Tour</a>
+          <a href="javascript:void(0);" class="re07-btn">Schedule Tour</a>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
@@ -870,7 +870,7 @@ export const realEstate07Html = `
           <div class="re07-news-content">
             <span class="re07-news-date">August 12, 2026</span>
             <h4>Discover The Best Real Estate Opportunities</h4>
-            <a href="#" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
           </div>
         </div>
         <div class="re07-news-card">
@@ -878,7 +878,7 @@ export const realEstate07Html = `
           <div class="re07-news-content">
             <span class="re07-news-date">August 18, 2026</span>
             <h4>Top Design Trends For Luxury Villas</h4>
-            <a href="#" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
           </div>
         </div>
         <div class="re07-news-card">
@@ -886,7 +886,7 @@ export const realEstate07Html = `
           <div class="re07-news-content">
             <span class="re07-news-date">August 24, 2026</span>
             <h4>How To Choose The Perfect Neighborhood</h4>
-            <a href="#" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); text-decoration:none; font-weight:bold; font-size:0.85rem;">Read More &rarr;</a>
           </div>
         </div>
       </div>
@@ -929,14 +929,14 @@ export const realEstate07Html = `
         
         <div class="re07-footer-links">
           <div class="re07-footer-links-col">
-            <a href="#">Home</a>
-            <a href="#">Properties</a>
-            <a href="#">Gallery</a>
+            <a href="javascript:void(0);">Home</a>
+            <a href="javascript:void(0);">Properties</a>
+            <a href="javascript:void(0);">Gallery</a>
           </div>
           <div class="re07-footer-links-col">
-            <a href="#">Blog</a>
-            <a href="#">Pages</a>
-            <a href="#">Contact</a>
+            <a href="javascript:void(0);">Blog</a>
+            <a href="javascript:void(0);">Pages</a>
+            <a href="javascript:void(0);">Contact</a>
           </div>
         </div>
         

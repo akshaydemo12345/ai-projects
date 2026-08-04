@@ -367,17 +367,7 @@ footer { background: var(--dark); color: #94a3b8; padding: 5rem 0 2rem; margin-t
 `
 
 export const travel02Html = `
-<nav class="navbar">
-  <div class="container nav-inner">
-    <a href="#" class="logo">
-     LOGO_PLACEHOLDER
-    </a>
 
-    <div class="nav-actions">
-      <button class="btn-signup">Book Now</button>
-    </div>
-  </div>
-</nav>
 
 <section class="hero">
   <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=2000" class="hero-bg-img" alt="Travel Destination" />
@@ -512,7 +502,7 @@ export const travel02Html = `
               <span class="price-old">$450</span>
               <span class="price-val">$340</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -532,7 +522,7 @@ export const travel02Html = `
               <span class="price-old">$350</span>
               <span class="price-val">$280</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -552,7 +542,7 @@ export const travel02Html = `
               <span class="price-old">$420</span>
               <span class="price-val">$340</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -572,7 +562,7 @@ export const travel02Html = `
               <span class="price-old">$400</span>
               <span class="price-val">$340</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -593,7 +583,7 @@ export const travel02Html = `
               <span class="price-old">$550</span>
               <span class="price-val">$410</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -613,7 +603,7 @@ export const travel02Html = `
               <span class="price-old">$650</span>
               <span class="price-val">$520</span>
             </div>
-            <a href="#" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
+            <a href="javascript:void(0);" class="btn-link">Book <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -692,7 +682,7 @@ export const travel02Html = `
       <div class="offer-content">
         <h2>Enjoy Limited-Time Offer</h2>
         <p>Take advantage of our exclusive limited-time offer and enjoy unbeatable deals! Book now to save big on your dream vacation.</p>
-        <a href="#" class="btn-white">Claim Your Deal</a>
+        <a href="javascript:void(0);" class="btn-white">Claim Your Deal</a>
       </div>
       <div class="offer-img-box">
         <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800" alt="World Monuments">
@@ -829,7 +819,7 @@ export const travel02Html = `
           <span><i class="far fa-comment"></i> 12 Comments</span>
         </div>
         <h3 class="blog-title">Ultimate Travel Planning Guide: 10 Tips</h3>
-        <a href="#" class="blog-link">Read More →</a>
+        <a href="javascript:void(0);" class="blog-link">Read More →</a>
       </div>
       <div class="blog-card">
         <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" alt="Blog" class="blog-img">
@@ -838,7 +828,7 @@ export const travel02Html = `
           <span><i class="far fa-comment"></i> 8 Comments</span>
         </div>
         <h3 class="blog-title">Top Destinations to Explore for Unforgettable Adventures</h3>
-        <a href="#" class="blog-link">Read More →</a>
+        <a href="javascript:void(0);" class="blog-link">Read More →</a>
       </div>
       <div class="blog-card">
         <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=400" alt="Blog" class="blog-img">
@@ -847,7 +837,7 @@ export const travel02Html = `
           <span><i class="far fa-comment"></i> 24 Comments</span>
         </div>
         <h3 class="blog-title">Smart Packing Tips to Travel Light Without Missing Essentials</h3>
-        <a href="#" class="blog-link">Read More →</a>
+        <a href="javascript:void(0);" class="blog-link">Read More →</a>
       </div>
     </div>
     
@@ -888,32 +878,32 @@ export const travel02Html = `
       <div class="foot-col">
         <h4>Company</h4>
         <div class="foot-links">
-          <a href="#">About Us</a>
-          <a href="#">Community Blog</a>
-          <a href="#">Careers</a>
-          <a href="#">Contact Us</a>
-          <a href="#">Our Partners</a>
+          <a href="javascript:void(0);">About Us</a>
+          <a href="javascript:void(0);">Community Blog</a>
+          <a href="javascript:void(0);">Careers</a>
+          <a href="javascript:void(0);">Contact Us</a>
+          <a href="javascript:void(0);">Our Partners</a>
         </div>
       </div>
       
       <div class="foot-col">
         <h4>Services</h4>
         <div class="foot-links">
-          <a href="#">Tour Guide</a>
-          <a href="#">Tour Booking</a>
-          <a href="#">Hotel Booking</a>
-          <a href="#">Flight Booking</a>
-          <a href="#">Rental Services</a>
+          <a href="javascript:void(0);">Tour Guide</a>
+          <a href="javascript:void(0);">Tour Booking</a>
+          <a href="javascript:void(0);">Hotel Booking</a>
+          <a href="javascript:void(0);">Flight Booking</a>
+          <a href="javascript:void(0);">Rental Services</a>
         </div>
       </div>
       
       <div class="foot-col">
         <h4>Follow Us</h4>
         <div class="foot-links">
-          <a href="#"><i class="fab fa-facebook-f"></i> Facebook</a>
-          <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
-          <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
-          <a href="#"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
+          <a href="javascript:void(0);"><i class="fab fa-facebook-f"></i> Facebook</a>
+          <a href="javascript:void(0);"><i class="fab fa-twitter"></i> Twitter</a>
+          <a href="javascript:void(0);"><i class="fab fa-instagram"></i> Instagram</a>
+          <a href="javascript:void(0);"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
         </div>
       </div>
     </div>
@@ -921,10 +911,10 @@ export const travel02Html = `
     <div class="foot-bottom">
       <p>&copy; 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
       <div class="socials">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-facebook-f"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-twitter"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-instagram"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-linkedin-in"></i></a>
       </div>
     </div>
   </div>

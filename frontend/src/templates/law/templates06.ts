@@ -409,7 +409,7 @@ export const law06Html = `
 <!-- Header -->
   <header id="hdr" class="fixed top-0 inset-x-0 z-50 transition-smooth">
     <div class="max-w-7xl mx-auto px-6 flex items-center justify-between py-4">
-      <a data-editable="true" href="#home" class="flex items-center gap-2 text-white">
+      <a data-editable="true" href="javascript:void(0);" class="flex items-center gap-2 text-white">
         LOGO_PLACEHOLDER
       </a>
    
@@ -421,7 +421,7 @@ export const law06Html = `
           </svg>
           <span data-editable="true" class="text-sm font-medium">(800) 555-0199</span>
         </a>
-        <a data-editable="true" href="#consult"
+        <a data-editable="true" href="javascript:void(0);"
           class="bg-primary text-white px-5 py-2.5 text-sm font-semibold uppercase tracking-wider hover:shadow-gold transition-smooth">Free
           Consultation</a>
       </div>
@@ -435,12 +435,12 @@ export const law06Html = `
     </div>
     <div id="mobileMenu" class="lg:hidden hidden bg-navy-deep border-t border-white/10">
       <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-4">
-        <a data-editable="true" href="#home" class="text-white/90 hover:text-gold">Home</a>
-        <a data-editable="true" href="#practice" class="text-white/90 hover:text-gold">Practice Areas</a>
-        <a data-editable="true" href="#about" class="text-white/90 hover:text-gold">About</a>
-        <a data-editable="true" href="#attorneys" class="text-white/90 hover:text-gold">Attorneys</a>
-        <a data-editable="true" href="#contact" class="text-white/90 hover:text-gold">Contact</a>
-        <a data-editable="true" href="#consult"
+        <a data-editable="true" href="javascript:void(0);" class="text-white/90 hover:text-gold">Home</a>
+        <a data-editable="true" href="javascript:void(0);" class="text-white/90 hover:text-gold">Practice Areas</a>
+        <a data-editable="true" href="javascript:void(0);" class="text-white/90 hover:text-gold">About</a>
+        <a data-editable="true" href="javascript:void(0);" class="text-white/90 hover:text-gold">Attorneys</a>
+        <a data-editable="true" href="javascript:void(0);" class="text-white/90 hover:text-gold">Contact</a>
+        <a data-editable="true" href="javascript:void(0);"
           class="bg-primary text-white px-5 py-3 text-sm font-semibold uppercase tracking-wider text-center">Free
           Consultation</a>
       </div>
@@ -855,7 +855,7 @@ export const law06Html = `
           </svg>
           (800) 555-0199
         </a>
-        <a data-editable="true" href="#consult"
+        <a data-editable="true" href="javascript:void(0);"
           class="inline-block border-2 border-gold text-gold px-8 py-3.5 font-semibold uppercase tracking-wider text-sm hover:bg-gold hover:text-navy-deep transition-smooth">Request
           Callback</a>
       </div>
@@ -872,36 +872,36 @@ export const law06Html = `
         <p data-editable="true" class="text-sm leading-relaxed mb-6">A premier legal practice dedicated to delivering exceptional outcomes
           with integrity and discretion.</p>
         <div class="flex gap-3">
-          <a data-editable="true" href="#"
+          <a data-editable="true" href="javascript:void(0);"
             class="grid h-9 w-9 place-items-center border border-white/15 hover:bg-gold hover:text-navy-deep hover:border-gold transition-smooth">f</a>
-          <a data-editable="true" href="#"
+          <a data-editable="true" href="javascript:void(0);"
             class="grid h-9 w-9 place-items-center border border-white/15 hover:bg-gold hover:text-navy-deep hover:border-gold transition-smooth">in</a>
-          <a data-editable="true" href="#"
+          <a data-editable="true" href="javascript:void(0);"
             class="grid h-9 w-9 place-items-center border border-white/15 hover:bg-gold hover:text-navy-deep hover:border-gold transition-smooth">𝕏</a>
-          <a data-editable="true" href="#"
+          <a data-editable="true" href="javascript:void(0);"
             class="grid h-9 w-9 place-items-center border border-white/15 hover:bg-gold hover:text-navy-deep hover:border-gold transition-smooth">ig</a>
         </div>
       </div>
       <div>
         <h4 data-editable="true" class="font-serif text-lg text-white mb-5">Quick Links</h4>
         <ul class="space-y-3 text-sm">
-          <li data-editable="true"><a data-editable="true" href="#home" class="hover:text-gold transition-smooth">Home</a></li>
-          <li data-editable="true"><a data-editable="true" href="#practice" class="hover:text-gold transition-smooth">Practice Areas</a></li>
-          <li data-editable="true"><a data-editable="true" href="#about" class="hover:text-gold transition-smooth">About Us</a></li>
-          <li data-editable="true"><a data-editable="true" href="#attorneys" class="hover:text-gold transition-smooth">Attorneys</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Case Results</a></li>
-          <li data-editable="true"><a data-editable="true" href="#contact" class="hover:text-gold transition-smooth">Contact</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Home</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Practice Areas</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">About Us</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Attorneys</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Case Results</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Contact</a></li>
         </ul>
       </div>
       <div>
         <h4 data-editable="true" class="font-serif text-lg text-white mb-5">Practice Areas</h4>
         <ul class="space-y-3 text-sm">
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Criminal Defense</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Family Law</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Corporate Law</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Real Estate</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Civil Litigation</a></li>
-          <li data-editable="true"><a data-editable="true" href="#" class="hover:text-gold transition-smooth">Estate Planning</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Criminal Defense</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Family Law</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Corporate Law</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Real Estate</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Civil Litigation</a></li>
+          <li data-editable="true"><a data-editable="true" href="javascript:void(0);" class="hover:text-gold transition-smooth">Estate Planning</a></li>
         </ul>
       </div>
       <div>
@@ -920,9 +920,9 @@ export const law06Html = `
       <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between gap-4 text-xs text-white/60">
         <div>© <span data-editable="true" id="yr"></span> Ashcroft &amp; Vale LLP. All rights reserved.</div>
         <div class="flex gap-6">
-          <a data-editable="true" href="#" class="hover:text-gold">Privacy Policy</a>
-          <a data-editable="true" href="#" class="hover:text-gold">Terms of Service</a>
-          <a data-editable="true" href="#" class="hover:text-gold">Legal Disclaimer</a>
+          <a data-editable="true" href="javascript:void(0);" class="hover:text-gold">Privacy Policy</a>
+          <a data-editable="true" href="javascript:void(0);" class="hover:text-gold">Terms of Service</a>
+          <a data-editable="true" href="javascript:void(0);" class="hover:text-gold">Legal Disclaimer</a>
         </div>
       </div>
       <div class="max-w-7xl mx-auto px-6 pb-6 text-[11px] text-white/45 leading-relaxed">

@@ -169,7 +169,7 @@ details[open] .lf9-faq-toggle { transform: rotate(45deg); }
 export const law09Html = `
 <header class="lf9-header">
   <div class="container lf9-header-inner">
-    <a href="#" class="lf9-mark logo"><img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=150" alt="Law Firm Logo" style="height: 40px; width: auto; border-radius: 4px;"></a>
+    <a href="javascript:void(0);" class="lf9-mark logo"><img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=150" alt="Law Firm Logo" style="height: 40px; width: auto; border-radius: 4px;"></a>
     <span class="lf9-header-phone">PHONE_PLACEHOLDER</span>
   </div>
 </header>
@@ -190,7 +190,7 @@ export const law09Html = `
       <div class="eyebrow">Trusted Legal Practice</div>
       <h1>Legal counsel that reads every detail before it becomes a problem.</h1>
       <p>We work closely with founders, families, and enterprises to resolve legal matters before they escalate — and to defend them firmly when they do.</p>
-      <a href="#services" class="btn btn-line" style="border-color: rgba(255,255,255,0.4); color: #fff;">Explore Our Practice</a>
+      <a href="javascript:void(0);" class="btn btn-line" style="border-color: rgba(255,255,255,0.4); color: #fff;">Explore Our Practice</a>
       <div class="lf9-hero-stats">
         <div><h3>18+</h3><p>Years Practicing</p></div>
         <div><h3>96%</h3><p>Success Rate</p></div>
@@ -380,10 +380,10 @@ export const law09Html = `
     <div class="lf9-footer-col">
       <h4>Navigate</h4>
       <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#services">Practice</a></li>
-        <li><a href="#team">Attorneys</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="javascript:void(0);">About</a></li>
+        <li><a href="javascript:void(0);">Practice</a></li>
+        <li><a href="javascript:void(0);">Attorneys</a></li>
+        <li><a href="javascript:void(0);">Contact</a></li>
       </ul>
     </div>
     <div class="lf9-footer-col">

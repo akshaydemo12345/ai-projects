@@ -310,18 +310,18 @@ export const healthcare10Html = `
 <!-- Header -->
 <header class="hc10-header">
   <div class="container hc10-header-inner">
-    <a href="#" class="hc10-logo">
+    <a href="javascript:void(0);" class="hc10-logo">
       LOGO_PLACEHOLDER
     </a>
     <ul class="hc10-nav">
-      <li><a href="#heritage">30-Yr Journey</a></li>
-      <li><a href="#services">Specialties</a></li>
-      <li><a href="#timeline">Milestones</a></li>
-      <li><a href="#doctors">Senior Doctors</a></li>
-      <li><a href="#testimonials">Stories</a></li>
-      <li><a href="#faq">FAQ</a></li>
+      <li><a href="javascript:void(0);">30-Yr Journey</a></li>
+      <li><a href="javascript:void(0);">Specialties</a></li>
+      <li><a href="javascript:void(0);">Milestones</a></li>
+      <li><a href="javascript:void(0);">Senior Doctors</a></li>
+      <li><a href="javascript:void(0);">Stories</a></li>
+      <li><a href="javascript:void(0);">FAQ</a></li>
     </ul>
-    <a href="#appointment" class="btn btn-primary">Book Priority Visit</a>
+    <a href="javascript:void(0);" class="btn btn-primary">Book Priority Visit</a>
   </div>
 </header>
 
@@ -467,7 +467,7 @@ export const healthcare10Html = `
         <div class="hc10-founder-name">Dr. Arthur Pendelton — Founder & Chief Medical Officer (30+ Yrs Exp)</div>
       </div>
 
-      <a href="#appointment" class="btn btn-primary">Book Consultation With Senior Specialist</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Book Consultation With Senior Specialist</a>
     </div>
   </div>
 </section>
@@ -592,7 +592,7 @@ export const healthcare10Html = `
           <h4>Dr. Arthur Pendelton</h4>
           <span class="spec">Founder & Chief Cardiologist</span>
           <span class="exp">30+ Years Experience</span>
-          <a href="#appointment" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
+          <a href="javascript:void(0);" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
         </div>
       </div>
 
@@ -604,7 +604,7 @@ export const healthcare10Html = `
           <h4>Dr. Evelyn Vance</h4>
           <span class="spec">Head of Neurosurgery</span>
           <span class="exp">24+ Years Experience</span>
-          <a href="#appointment" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
+          <a href="javascript:void(0);" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
         </div>
       </div>
 
@@ -616,7 +616,7 @@ export const healthcare10Html = `
           <h4>Dr. Marcus Sterling</h4>
           <span class="spec">Chair of Orthopedics</span>
           <span class="exp">22+ Years Experience</span>
-          <a href="#appointment" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
+          <a href="javascript:void(0);" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
         </div>
       </div>
 
@@ -628,7 +628,7 @@ export const healthcare10Html = `
           <h4>Dr. Sophia Rodriguez</h4>
           <span class="spec">Pediatric Department Chair</span>
           <span class="exp">20+ Years Experience</span>
-          <a href="#appointment" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
+          <a href="javascript:void(0);" class="btn btn-secondary" style="width:100%; font-size:0.82rem; padding:0.6rem 1rem;">Book Consultation</a>
         </div>
       </div>
     </div>
@@ -790,22 +790,22 @@ export const healthcare10Html = `
       <div class="hc10-footer-col">
         <h4>Quick Navigation</h4>
         <ul>
-          <li><a href="#heritage">Our 30-Yr Journey</a></li>
-          <li><a href="#services">Specialties</a></li>
-          <li><a href="#timeline">Milestones</a></li>
-          <li><a href="#doctors">Senior Directors</a></li>
-          <li><a href="#appointment">Book Consultation</a></li>
+          <li><a href="javascript:void(0);">Our 30-Yr Journey</a></li>
+          <li><a href="javascript:void(0);">Specialties</a></li>
+          <li><a href="javascript:void(0);">Milestones</a></li>
+          <li><a href="javascript:void(0);">Senior Directors</a></li>
+          <li><a href="javascript:void(0);">Book Consultation</a></li>
         </ul>
       </div>
 
       <div class="hc10-footer-col">
         <h4>Specialties</h4>
         <ul>
-          <li><a href="#services">Cardiology</a></li>
-          <li><a href="#services">Neurosurgery</a></li>
-          <li><a href="#services">Orthopedics</a></li>
-          <li><a href="#services">Oncology</a></li>
-          <li><a href="#services">Emergency Trauma</a></li>
+          <li><a href="javascript:void(0);">Cardiology</a></li>
+          <li><a href="javascript:void(0);">Neurosurgery</a></li>
+          <li><a href="javascript:void(0);">Orthopedics</a></li>
+          <li><a href="javascript:void(0);">Oncology</a></li>
+          <li><a href="javascript:void(0);">Emergency Trauma</a></li>
         </ul>
       </div>
 

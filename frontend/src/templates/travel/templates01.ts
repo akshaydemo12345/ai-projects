@@ -368,12 +368,12 @@ export const travel01Html = `
 <!-- NAV -->
 <header class="nav" id="nav">
   <div class="container nav__inner">
-    <a data-editable="true" href="#" class="brand">
+    <a data-editable="true" href="javascript:void(0);" class="brand">
       <span data-editable="true" class="brand__mark">✦</span>
       <span data-editable="true" class="brand__text">Wanderly</span>
     </a>
    
-    <a data-editable="true" href="#book" class="btn btn--primary btn--sm">Book Now →</a>
+    <a data-editable="true" href="javascript:void(0);" class="btn btn--primary btn--sm">Book Now →</a>
   </div>
 </header>
 
@@ -425,7 +425,7 @@ export const travel01Html = `
     </div>
   </div>
 
-  <a data-editable="true" href="#trust" class="scroll-hint">Scroll<span data-editable="true"></span></a>
+  <a data-editable="true" href="javascript:void(0);" class="scroll-hint">Scroll<span data-editable="true"></span></a>
 </section>
 
 <!-- TRUST -->
@@ -477,7 +477,7 @@ export const travel01Html = `
           <div class="dest-card__meta"><span data-editable="true" class="tag">Greece</span><span data-editable="true" class="rating">★ 4.9</span></div>
           <h3 data-editable="true">Santorini Escape</h3>
           <p data-editable="true">Cliff-side villas, sunset caldera cruise, wine tasting in ancient vineyards.</p>
-          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,299</strong></div><a data-editable="true" href="#book" class="link-arrow">Book →</a></div>
+          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,299</strong></div><a data-editable="true" href="javascript:void(0);" class="link-arrow">Book →</a></div>
         </div>
       </article>
       <article class="dest-card" data-reveal>
@@ -486,7 +486,7 @@ export const travel01Html = `
           <div class="dest-card__meta"><span data-editable="true" class="tag">Indonesia</span><span data-editable="true" class="rating">★ 4.8</span></div>
           <h3 data-editable="true">Bali Serenity</h3>
           <p data-editable="true">Ubud rice terraces, temple hopping, private beach club days & spa rituals.</p>
-          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$899</strong></div><a data-editable="true" href="#book" class="link-arrow">Book →</a></div>
+          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$899</strong></div><a data-editable="true" href="javascript:void(0);" class="link-arrow">Book →</a></div>
         </div>
       </article>
       <article class="dest-card" data-reveal>
@@ -495,7 +495,7 @@ export const travel01Html = `
           <div class="dest-card__meta"><span data-editable="true" class="tag">UAE</span><span data-editable="true" class="rating">★ 4.9</span></div>
           <h3 data-editable="true">Dubai Luxury</h3>
           <p data-editable="true">Burj Al Arab stays, desert dune safaris, yacht marina evenings.</p>
-          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,099</strong></div><a data-editable="true" href="#book" class="link-arrow">Book →</a></div>
+          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,099</strong></div><a data-editable="true" href="javascript:void(0);" class="link-arrow">Book →</a></div>
         </div>
       </article>
       <article class="dest-card" data-reveal>
@@ -504,11 +504,11 @@ export const travel01Html = `
           <div class="dest-card__meta"><span data-editable="true" class="tag">Switzerland</span><span data-editable="true" class="rating">★ 5.0</span></div>
           <h3 data-editable="true">Swiss Alps Retreat</h3>
           <p data-editable="true">Glacier trains, chalet stays, Lucerne lake mornings, chocolate ateliers.</p>
-          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,899</strong></div><a data-editable="true" href="#book" class="link-arrow">Book →</a></div>
+          <div class="dest-card__foot"><div><small>From</small><strong data-editable="true">$1,899</strong></div><a data-editable="true" href="javascript:void(0);" class="link-arrow">Book →</a></div>
         </div>
       </article>
     </div>
-    <div class="center-btn"><a data-editable="true" href="#packages" class="btn btn--outline">Explore all 120+ destinations →</a></div>
+    <div class="center-btn"><a data-editable="true" href="javascript:void(0);" class="btn btn--outline">Explore all 120+ destinations →</a></div>
   </div>
 </section>
 
@@ -577,7 +577,7 @@ export const travel01Html = `
         <p data-editable="true">Thailand, Vietnam & Cambodia — culture, cuisine, temples & beaches.</p>
         <ul><li data-editable="true">✓ 10 Days across 3 countries</li><li data-editable="true">✓ Domestic flights included</li><li data-editable="true">✓ Food tours & cooking class</li><li data-editable="true">✓ Bespoke itinerary</li></ul>
         <div class="offer__price"><del>$2,599</del><strong data-editable="true">$1,499</strong><span data-editable="true">/person</span></div>
-        <a data-editable="true" href="#book" class="btn btn--outline btn--block">Book Now</a>
+        <a data-editable="true" href="javascript:void(0);" class="btn btn--outline btn--block">Book Now</a>
       </div>
       <div class="offer offer--featured" data-reveal>
         <span data-editable="true" class="offer__badge">★ Most Popular</span>
@@ -585,7 +585,7 @@ export const travel01Html = `
         <p data-editable="true">Overwater villa, private beach dinner, sunset cruise & couples spa.</p>
         <ul><li data-editable="true">✓ 7 Nights luxury villa</li><li data-editable="true">✓ All meals included</li><li data-editable="true">✓ Seaplane transfers</li><li data-editable="true">✓ Water sports & excursions</li></ul>
         <div class="offer__price"><del>$3,499</del><strong data-editable="true">$1,999</strong><span data-editable="true">/couple</span></div>
-        <a data-editable="true" href="#book" class="btn btn--gold btn--block">Reserve This Deal</a>
+        <a data-editable="true" href="javascript:void(0);" class="btn btn--gold btn--block">Reserve This Deal</a>
         <small class="offer__urgency">⚡ 4 slots left this month</small>
       </div>
       <div class="offer" data-reveal>
@@ -593,7 +593,7 @@ export const travel01Html = `
         <p data-editable="true">Paris, Rome, Barcelona, Amsterdam in 12 unforgettable days.</p>
         <ul><li data-editable="true">✓ First-class train travel</li><li data-editable="true">✓ 4★ boutique hotels</li><li data-editable="true">✓ Skip-the-line access</li><li data-editable="true">✓ Private city guides</li></ul>
         <div class="offer__price"><del>$4,299</del><strong data-editable="true">$2,799</strong><span data-editable="true">/person</span></div>
-        <a data-editable="true" href="#book" class="btn btn--outline btn--block">Book Now</a>
+        <a data-editable="true" href="javascript:void(0);" class="btn btn--outline btn--block">Book Now</a>
       </div>
     </div>
   </div>
@@ -738,7 +738,7 @@ export const travel01Html = `
     <h2 data-editable="true" class="h-lg">Let's <em>go beautifully.</em></h2>
     <p data-editable="true">Book today and save up to 45%. Limited seats available for summer 2026.</p>
     <div class="cta__actions">
-      <a data-editable="true" href="#book" class="btn btn--gold btn--lg">Get My Free Quote</a>
+      <a data-editable="true" href="javascript:void(0);" class="btn btn--gold btn--lg">Get My Free Quote</a>
       <a data-editable="true" href="tel:+15550102026" class="btn btn--ghost btn--lg">📞 Call +1 (555) 010-2026</a>
     </div>
   </div>
@@ -748,22 +748,22 @@ export const travel01Html = `
 <footer class="footer">
   <div class="container footer__inner">
     <div class="footer__brand">
-      <a data-editable="true" href="#" class="brand"><span data-editable="true" class="brand__mark">✦</span><span data-editable="true" class="brand__text">Wanderly</span></a>
+      <a data-editable="true" href="javascript:void(0);" class="brand"><span data-editable="true" class="brand__mark">✦</span><span data-editable="true" class="brand__text">Wanderly</span></a>
       <p data-editable="true" class="footer__desc">Premium travel, thoughtfully designed. Explore more, worry less. Since 2014.</p>
       <div class="socials">
-        <a data-editable="true" href="#" aria-label="Instagram">Ig</a>
-        <a data-editable="true" href="#" aria-label="Facebook">Fb</a>
-        <a data-editable="true" href="#" aria-label="YouTube">Yt</a>
-        <a data-editable="true" href="#" aria-label="TikTok">Tk</a>
+        <a data-editable="true" href="javascript:void(0);" aria-label="Instagram">Ig</a>
+        <a data-editable="true" href="javascript:void(0);" aria-label="Facebook">Fb</a>
+        <a data-editable="true" href="javascript:void(0);" aria-label="YouTube">Yt</a>
+        <a data-editable="true" href="javascript:void(0);" aria-label="TikTok">Tk</a>
       </div>
     </div>
     <div>
       <h4 data-editable="true">Company</h4>
-      <a data-editable="true" href="#">About Us</a><a data-editable="true" href="#">Careers</a><a data-editable="true" href="#">Press</a><a data-editable="true" href="#">Blog</a>
+      <a data-editable="true" href="javascript:void(0);">About Us</a><a data-editable="true" href="javascript:void(0);">Careers</a><a data-editable="true" href="javascript:void(0);">Press</a><a data-editable="true" href="javascript:void(0);">Blog</a>
     </div>
     <div>
       <h4 data-editable="true">Support</h4>
-      <a data-editable="true" href="#">Contact</a><a data-editable="true" href="#">Help Center</a><a data-editable="true" href="#">Cancellation</a><a data-editable="true" href="#">Terms</a>
+      <a data-editable="true" href="javascript:void(0);">Contact</a><a data-editable="true" href="javascript:void(0);">Help Center</a><a data-editable="true" href="javascript:void(0);">Cancellation</a><a data-editable="true" href="javascript:void(0);">Terms</a>
     </div>
     <div>
       <h4 data-editable="true">Contact</h4>

@@ -957,11 +957,11 @@ export const healthcare06Html = `
             <div>
                 <h4 data-editable="true" class="footer-col-title">Quick Links</h4>
                 <ul class="footer-links">
-                    <li data-editable="true"><a data-editable="true" href="#">Home</a></li>
-                    <li data-editable="true"><a data-editable="true" href="#">Services</a></li>
-                    <li data-editable="true"><a data-editable="true" href="#">About Us</a></li>
-                    <li data-editable="true"><a data-editable="true" href="#">Insights</a></li>
-                    <li data-editable="true"><a data-editable="true" href="#">Contact</a></li>
+                    <li data-editable="true"><a data-editable="true" href="javascript:void(0);">Home</a></li>
+                    <li data-editable="true"><a data-editable="true" href="javascript:void(0);">Services</a></li>
+                    <li data-editable="true"><a data-editable="true" href="javascript:void(0);">About Us</a></li>
+                    <li data-editable="true"><a data-editable="true" href="javascript:void(0);">Insights</a></li>
+                    <li data-editable="true"><a data-editable="true" href="javascript:void(0);">Contact</a></li>
                 </ul>
             </div>
             
@@ -986,13 +986,13 @@ export const healthcare06Html = `
             <div>
                 <h4 data-editable="true" class="footer-col-title">Follow Us</h4>
                 <div class="footer-social">
-                    <a data-editable="true" class="footer-social-link" href="#">
+                    <a data-editable="true" class="footer-social-link" href="javascript:void(0);">
                         <span data-editable="true" class="material-symbols-outlined">share</span>
                     </a>
-                    <a data-editable="true" class="footer-social-link" href="#">
+                    <a data-editable="true" class="footer-social-link" href="javascript:void(0);">
                         <span data-editable="true" class="material-symbols-outlined">public</span>
                     </a>
-                    <a data-editable="true" class="footer-social-link" href="#">
+                    <a data-editable="true" class="footer-social-link" href="javascript:void(0);">
                         <span data-editable="true" class="material-symbols-outlined">chat</span>
                     </a>
                 </div>
@@ -1003,8 +1003,8 @@ export const healthcare06Html = `
         <div class="footer-bottom">
             <p data-editable="true">© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</p>
             <div class="footer-bottom-links">
-                <a data-editable="true" href="#">Privacy Policy</a>
-                <a data-editable="true" href="#">Terms of Service</a>
+                <a data-editable="true" href="javascript:void(0);">Privacy Policy</a>
+                <a data-editable="true" href="javascript:void(0);">Terms of Service</a>
             </div>
         </div>
     </footer>

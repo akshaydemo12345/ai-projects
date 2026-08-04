@@ -26,11 +26,23 @@ import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance01Html, finance01Styles } from "../templates/finance/templates01";
 import { finance02Html, finance02Styles } from "../templates/finance/templates02";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { finance04Html, finance04Styles } from "../templates/finance/templates04";
+import { finance05Html, finance05Styles } from "../templates/finance/templates05";
+import { finance06Html, finance06Styles } from "../templates/finance/templates06";
+import { finance07Html, finance07Styles } from "../templates/finance/templates07";
+import { finance08Html, finance08Styles } from "../templates/finance/templates08";
+import { finance09Html, finance09Styles } from "../templates/finance/templates09";
+import { finance10Html, finance10Styles } from "../templates/finance/templates10";
 import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
 import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
 import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 import { plumber04Html, plumber04Styles } from "../templates/plumber/templates04";
 import { plumber05Html, plumber05Styles } from "../templates/plumber/templates05";
+import { plumber06Html, plumber06Styles } from "../templates/plumber/templates06";
+import { plumber07Html, plumber07Styles } from "../templates/plumber/templates07";
+import { plumber08Html, plumber08Styles } from "../templates/plumber/templates08";
+import { plumber09Html, plumber09Styles } from "../templates/plumber/templates09";
+import { plumber10Html, plumber10Styles } from "../templates/plumber/templates10";
 
 import { law01Html, law01Styles } from "../templates/law/templates01";
 import { law02Html, law02Styles } from "../templates/law/templates02";
@@ -738,6 +750,62 @@ const LANDING_TEMPLATES: any[] = [
     prompt: "A crisp, data-centric finance landing page ith beautiful gradient backgrounds, real-time analytics mockups, glassmorphism, animations, and lead capture forms.",
   },
   {
+    id: "finance-04",
+    name: "Finova Institutional",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance04.png",
+    gradient: "linear-gradient(135deg, #09090b 0%, #27272a 100%)",
+    prompt: "A dark-themed modern finance template for institutional wealth with high contrast, Trust Bar, Process timeline, and metrics.",
+  },
+  {
+    id: "finance-05",
+    name: "ClearBank Minimal",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance05.png",
+    gradient: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+    prompt: "A clean and minimal light theme finance template ideal for retail banking, with clear pricing, services, and large typography.",
+  },
+  {
+    id: "finance-06",
+    name: "Nexus Consulting",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance06.png",
+    gradient: "linear-gradient(135deg, #1e293b 0%, #f8fafc 100%)",
+    prompt: "A corporate hybrid finance template featuring a dark elegant header transitioning into a clean light content section.",
+  },
+  {
+    id: "finance-07",
+    name: "BlockFin Protocol",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance07.png",
+    gradient: "linear-gradient(135deg, #050505 0%, #111111 100%)",
+    prompt: "An ultra-modern dark finance template with neon green accents, tech-focused typography, and crypto/DeFi aesthetic.",
+  },
+  {
+    id: "finance-08",
+    name: "TrustBank Classic",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance08.png",
+    gradient: "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)",
+    prompt: "A trustworthy light theme banking template using classic blue tones, traditional grid layouts, and a solid corporate feel.",
+  },
+  {
+    id: "finance-09",
+    name: "Capital Advisory",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance09.png",
+    gradient: "linear-gradient(135deg, #111111 0%, #ffffff 100%)",
+    prompt: "A high-contrast finance template using bold serif fonts, extremely large typography, and minimalist monochrome styling.",
+  },
+  {
+    id: "finance-10",
+    name: "Aurelius Wealth",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance10.png",
+    gradient: "linear-gradient(135deg, #000000 0%, #c5a059 100%)",
+    prompt: "A premium luxury finance template in deep black and gold colors, focused on high-net-worth private advisory.",
+  },
+  {
     id: "plumber-01",
     name: "ProPlumb Solutions",
     tag: "Plumber",
@@ -773,9 +841,49 @@ const LANDING_TEMPLATES: any[] = [
     id: "plumber-05",
     name: "Emergency Plumber 05",
     tag: "Plumber",
-    img: "/assets/templates/Plumber/templates05/image1.jpg",
+    img: "/assets/templates/plumber/screenshot1.png",
     gradient: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)",
     prompt: "An emergency plumbing services landing page featuring a bright, clean, and professional aesthetic focusing on 30 years of experience. CRITICAL INSTRUCTION: You MUST retain exactly the existing structure.",
+  },
+  {
+    id: "plumber-06",
+    name: "Full-Service Plumber 06",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/screenshot2.png",
+    gradient: "linear-gradient(135deg, #101828 0%, #1e3a8a 100%)",
+    prompt: "A professional plumbing services landing page with hero section, transparent pricing packages, customer reviews, detailed services list, and a clean lead capture form.",
+  },
+  {
+    id: "plumber-07",
+    name: "Aqua Flow Experts",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber07.png",
+    gradient: "linear-gradient(135deg, #101828 0%, #1e3a8a 100%)",
+    prompt: "A sleek plumbing landing page emphasizing fast, reliable service, customer reviews, detailed services list, and an easy booking form.",
+  },
+  {
+    id: "plumber-08",
+    name: "Pipeline Pros",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber08.png",
+    gradient: "linear-gradient(135deg, #091d2d 0%, #49607e 100%)",
+    prompt: "A trustworthy plumbing service page featuring detailed expertise, clear pricing packages, process timeline, and a highly visible contact form.",
+  },
+  {
+    id: "plumber-09",
+    name: "EcoPlumb Solutions",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber09.png",
+    gradient: "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+    prompt: "An eco-friendly, modern plumbing service template with soft rounded corners, green accents, and a focus on water-saving upgrades and community trust.",
+  },
+  {
+    id: "plumber-10",
+    name: "Elite Plumbing",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber10.png",
+    gradient: "linear-gradient(135deg, #000000 0%, #434343 100%)",
+    prompt: "A high-end luxury plumbing template featuring a minimal aesthetic, black and white colors, and an emphasis on premium residential renovations and VIP service.",
   },
   {
     id: "realestate-01",
@@ -1400,11 +1508,23 @@ const CreatePagePage = () => {
           case "finance-01": enrichedContent = finance01Html; enrichedStyles = finance01Styles; break;
           case "finance-02": enrichedContent = finance02Html; enrichedStyles = finance02Styles; break;
           case "finance-03": enrichedContent = finance03Html; enrichedStyles = finance03Styles; break;
+          case "finance-04": enrichedContent = finance04Html; enrichedStyles = finance04Styles; break;
+          case "finance-05": enrichedContent = finance05Html; enrichedStyles = finance05Styles; break;
+          case "finance-06": enrichedContent = finance06Html; enrichedStyles = finance06Styles; break;
+          case "finance-07": enrichedContent = finance07Html; enrichedStyles = finance07Styles; break;
+          case "finance-08": enrichedContent = finance08Html; enrichedStyles = finance08Styles; break;
+          case "finance-09": enrichedContent = finance09Html; enrichedStyles = finance09Styles; break;
+          case "finance-10": enrichedContent = finance10Html; enrichedStyles = finance10Styles; break;
           case "plumber-01": enrichedContent = plumber01Html; enrichedStyles = plumber01Styles; break;
           case "plumber-02": enrichedContent = plumber02Html; enrichedStyles = plumber02Styles; break;
           case "plumber-03": enrichedContent = plumber03Html; enrichedStyles = plumber03Styles; break;
           case "plumber-04": enrichedContent = plumber04Html; enrichedStyles = plumber04Styles; break;
           case "plumber-05": enrichedContent = plumber05Html; enrichedStyles = plumber05Styles; break;
+          case "plumber-06": enrichedContent = plumber06Html; enrichedStyles = plumber06Styles; break;
+          case "plumber-07": enrichedContent = plumber07Html; enrichedStyles = plumber07Styles; break;
+          case "plumber-08": enrichedContent = plumber08Html; enrichedStyles = plumber08Styles; break;
+          case "plumber-09": enrichedContent = plumber09Html; enrichedStyles = plumber09Styles; break;
+          case "plumber-10": enrichedContent = plumber10Html; enrichedStyles = plumber10Styles; break;
           case "realestate-01": enrichedContent = realEstate01Html; enrichedStyles = realEstate01Styles; break;
           case "realestate-02": enrichedContent = realEstate02Html; enrichedStyles = realEstate02Styles; break;
           case "realestate-03": enrichedContent = realEstate03Html; enrichedStyles = realEstate03Styles; break;
@@ -1473,9 +1593,7 @@ const CreatePagePage = () => {
 body, p, a, span, li, input, select, textarea { font-family: ${bodyFont} !important; }
 h1, h2, h3, h4, h5, h6, .font-h1, .font-h2, .font-h3 { font-family: ${headingFont} !important; }
 
-/* Only override header/footer colors if they don't explicitly rely on var(--primary) */
-.header, header, .site-header, .p3-site-header { background-color: var(--header-bg); color: var(--header-text); }
-.header a, header a, .site-header a, .nav-menu a { color: var(--header-text); }
+/* Let the template's own CSS handle header/footer colors for better design integrity */
 
 .footer, footer, .site-footer { background-color: var(--footer-bg); color: var(--footer-text); }
 .footer p, footer p, .footer a, footer a, .site-footer p, .site-footer a, .footer-bottom p { color: var(--footer-text); }
@@ -2244,11 +2362,23 @@ ${enrichedContent}
                 case "finance-01": tpHtml = finance01Html; tpStyles = finance01Styles; break;
                 case "finance-02": tpHtml = finance02Html; tpStyles = finance02Styles; break;
                 case "finance-03": tpHtml = finance03Html; tpStyles = finance03Styles; break;
+                case "finance-04": tpHtml = finance04Html; tpStyles = finance04Styles; break;
+                case "finance-05": tpHtml = finance05Html; tpStyles = finance05Styles; break;
+                case "finance-06": tpHtml = finance06Html; tpStyles = finance06Styles; break;
+                case "finance-07": tpHtml = finance07Html; tpStyles = finance07Styles; break;
+                case "finance-08": tpHtml = finance08Html; tpStyles = finance08Styles; break;
+                case "finance-09": tpHtml = finance09Html; tpStyles = finance09Styles; break;
+                case "finance-10": tpHtml = finance10Html; tpStyles = finance10Styles; break;
                 case "plumber-01": tpHtml = plumber01Html; tpStyles = plumber01Styles; break;
                 case "plumber-02": tpHtml = plumber02Html; tpStyles = plumber02Styles; break;
                 case "plumber-03": tpHtml = plumber03Html; tpStyles = plumber03Styles; break;
                 case "plumber-04": tpHtml = plumber04Html; tpStyles = plumber04Styles; break;
                 case "plumber-05": tpHtml = plumber05Html; tpStyles = plumber05Styles; break;
+                case "plumber-06": tpHtml = plumber06Html; tpStyles = plumber06Styles; break;
+                case "plumber-07": tpHtml = plumber07Html; tpStyles = plumber07Styles; break;
+                case "plumber-08": tpHtml = plumber08Html; tpStyles = plumber08Styles; break;
+                case "plumber-09": tpHtml = plumber09Html; tpStyles = plumber09Styles; break;
+                case "plumber-10": tpHtml = plumber10Html; tpStyles = plumber10Styles; break;
                 case "realestate-01": tpHtml = realEstate01Html; tpStyles = realEstate01Styles; break;
                 case "realestate-02": tpHtml = realEstate02Html; tpStyles = realEstate02Styles; break;
                 case "realestate-03": tpHtml = realEstate03Html; tpStyles = realEstate03Styles; break;

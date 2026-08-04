@@ -204,10 +204,10 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 export const healthcare08Html = `
 <header class="hc8-header">
   <div class="container hc8-header-inner">
-    <a href="#" class="hc8-logo">
+    <a href="javascript:void(0);" class="hc8-logo">
       LOGO_PLACEHOLDER
     </a>
-    <a href="#appointment" class="btn btn-primary">Book A Visit</a>
+    <a href="javascript:void(0);" class="btn btn-primary">Book A Visit</a>
   </div>
 </header>
 
@@ -218,8 +218,8 @@ export const healthcare08Html = `
       <h1>Whole-family care, close to home.</h1>
       <p>From little ones to grandparents, our clinic brings warm, personal healthcare to every stage of life — all under one friendly roof.</p>
       <div class="hc8-hero-actions">
-        <a href="#appointment" class="btn btn-primary">Book Appointment</a>
-        <a href="#services" class="btn btn-outline">Our Services</a>
+        <a href="javascript:void(0);" class="btn btn-primary">Book Appointment</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Our Services</a>
       </div>
       <div class="hc8-hero-badges">
         <div class="hc8-hero-badge"><span class="ic">✓</span>Same-day visits</div>
@@ -384,7 +384,7 @@ export const healthcare08Html = `
       <h2>Ready to feel better?</h2>
       <p>Book your visit today — most appointments confirmed within a few hours.</p>
     </div>
-    <a href="#appointment" class="btn btn-white">Book Appointment</a>
+    <a href="javascript:void(0);" class="btn btn-white">Book Appointment</a>
   </div>
 </section>
 
@@ -418,17 +418,17 @@ export const healthcare08Html = `
     <div class="hc8-footer-col">
       <h4>Navigate</h4>
       <ul>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#doctors">Our Team</a></li>
-        <li><a href="#appointment">Book A Visit</a></li>
+        <li><a href="javascript:void(0);">Services</a></li>
+        <li><a href="javascript:void(0);">Our Team</a></li>
+        <li><a href="javascript:void(0);">Book A Visit</a></li>
       </ul>
     </div>
     <div class="hc8-footer-col">
       <h4>Services</h4>
       <ul>
-        <li><a href="#services">SERVICES_PLACEHOLDER</a></li>
-        <li><a href="#services">Family Medicine</a></li>
-        <li><a href="#services">Urgent Care</a></li>
+        <li><a href="javascript:void(0);">SERVICES_PLACEHOLDER</a></li>
+        <li><a href="javascript:void(0);">Family Medicine</a></li>
+        <li><a href="javascript:void(0);">Urgent Care</a></li>
       </ul>
     </div>
     <div class="hc8-footer-col">

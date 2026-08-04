@@ -199,9 +199,9 @@ export const law10Html = `
       <p>EMAIL_PLACEHOLDER</p>
       <p>ADDRESS_PLACEHOLDER</p>
       <div class="lf10-sidebar-socials">
-        <a href="#">f</a>
-        <a href="#">x</a>
-        <a href="#">in</a>
+        <a href="javascript:void(0);">f</a>
+        <a href="javascript:void(0);">x</a>
+        <a href="javascript:void(0);">in</a>
       </div>
     </div>
   </aside>
@@ -213,7 +213,7 @@ export const law10Html = `
           <span class="lf10-tab">Case No. <span>2026-01</span></span>
           <h1>Legal strategy built like a well-argued case.</h1>
           <p>Every matter we take on is treated with the same discipline: understand the facts, plan the argument, and execute without hesitation.</p>
-          <a href="#contact" class="btn btn-solid">Open A Consultation</a>
+          <a href="javascript:void(0);" class="btn btn-solid">Open A Consultation</a>
         </div>
         <div class="lf10-hero-photo lf10-reveal" style="transition-delay: 0.15s;">
           <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800" alt="Attorney portrait">
@@ -375,9 +375,9 @@ export const law10Html = `
     <footer class="lf10-footer">
       <div>© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</div>
       <div class="lf10-footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Disclaimer</a>
+        <a href="javascript:void(0);">Privacy Policy</a>
+        <a href="javascript:void(0);">Terms of Service</a>
+        <a href="javascript:void(0);">Disclaimer</a>
       </div>
     </footer>
   </main>

@@ -363,8 +363,8 @@ export const law03Html = `
 <!-- Navbar -->
 <header class="nav" id="nav">
   <div class="container nav-inner">
-    <a data-editable="true" href="#" class="logo">LOGO_PLACEHOLDER</a>
-    <a data-editable="true" href="#consult" class="btn btn-primary">Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
+    <a data-editable="true" href="javascript:void(0);" class="logo">LOGO_PLACEHOLDER</a>
+    <a data-editable="true" href="javascript:void(0);" class="btn btn-primary">Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
     <button data-editable="true" class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
   </div>
 </header>
@@ -377,8 +377,8 @@ export const law03Html = `
       <h1 data-editable="true">When the law feels heavy, <span data-editable="true" class="ital">we carry it with you.</span></h1>
       <p data-editable="true" class="lead">Vaeltra Law is a full-service firm of trial-tested attorneys defending individuals, families and enterprises across 14 practice areas. Over two decades. 5,200 cases won. A record that speaks in courtrooms — not in slogans.</p>
       <div class="hero-cta">
-        <a data-editable="true" href="#consult" class="btn btn-primary">Book Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
-        <a data-editable="true" href="#practice" class="btn btn-ghost">Explore Practice Areas</a>
+        <a data-editable="true" href="javascript:void(0);" class="btn btn-primary">Book Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
+        <a data-editable="true" href="javascript:void(0);" class="btn btn-ghost">Explore Practice Areas</a>
       </div>
       <ul class="hero-bullets">
         <li data-editable="true"><i class="fa-solid fa-circle-check"></i> No-fee promise on injury cases</li>
@@ -648,7 +648,7 @@ export const law03Html = `
   <div class="container">
     <div class="foot-top">
       <div class="fc-brand">
-        <a data-editable="true" href="#" class="logo light">LOGO_PLACEHOLDER</a>
+        <a data-editable="true" href="javascript:void(0);" class="logo light">LOGO_PLACEHOLDER</a>
         <p data-editable="true">A boutique full-service law firm serving individuals and enterprises across 12 states. Trial-tested. Client-obsessed.</p>
         <div class="socials">
           <a data-editable="true"><i class="fa-brands fa-linkedin"></i></a>

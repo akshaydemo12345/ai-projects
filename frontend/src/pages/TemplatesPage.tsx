@@ -7,6 +7,12 @@ import { healthcare01Html, healthcare01Styles } from "../templates/healthcare/te
 import { healthcare02Html, healthcare02Styles } from "../templates/healthcare/templates02";
 import { healthcare03Html, healthcare03Styles } from "../templates/healthcare/templates03";
 import { healthcare04Html, healthcare04Styles } from "../templates/healthcare/templates04";
+import { healthcare05Html, healthcare05Styles } from "../templates/healthcare/templates05";
+import { healthcare06Html, healthcare06Styles } from "../templates/healthcare/templates06";
+import { healthcare07Html, healthcare07Styles } from "../templates/healthcare/templates07";
+import { healthcare08Html, healthcare08Styles } from "../templates/healthcare/templates08";
+import { healthcare09Html, healthcare09Styles } from "../templates/healthcare/templates09";
+import { healthcare10Html, healthcare10Styles } from "../templates/healthcare/templates10";
 import { travel01Html, travel01Styles } from "../templates/travel/templates01";
 import { travel02Html, travel02Styles } from "../templates/travel/templates02";
 import { travel03Html, travel03Styles } from "../templates/travel/templates03";
@@ -20,11 +26,23 @@ import { law05Html, law05Styles } from "../templates/law/templates05";
 import { law06Html, law06Styles } from "../templates/law/templates06";
 import { travel04Html, travel04Styles } from "../templates/travel/templates04";
 import { finance03Html, finance03Styles } from "../templates/finance/templates03";
+import { finance04Html, finance04Styles } from "../templates/finance/templates04";
+import { finance05Html, finance05Styles } from "../templates/finance/templates05";
+import { finance06Html, finance06Styles } from "../templates/finance/templates06";
+import { finance07Html, finance07Styles } from "../templates/finance/templates07";
+import { finance08Html, finance08Styles } from "../templates/finance/templates08";
+import { finance09Html, finance09Styles } from "../templates/finance/templates09";
+import { finance10Html, finance10Styles } from "../templates/finance/templates10";
 import { plumber01Html, plumber01Styles } from "../templates/plumber/templates01";
 import { plumber02Html, plumber02Styles } from "../templates/plumber/templates02";
 import { plumber03Html, plumber03Styles } from "../templates/plumber/templates03";
 import { plumber04Html, plumber04Styles } from "../templates/plumber/templates04";
 import { plumber05Html, plumber05Styles } from "../templates/plumber/templates05";
+import { plumber06Html, plumber06Styles } from "../templates/plumber/templates06";
+import { plumber07Html, plumber07Styles } from "../templates/plumber/templates07";
+import { plumber08Html, plumber08Styles } from "../templates/plumber/templates08";
+import { plumber09Html, plumber09Styles } from "../templates/plumber/templates09";
+import { plumber10Html, plumber10Styles } from "../templates/plumber/templates10";
 
 import { realEstate01Html, realEstate01Styles } from "../templates/real-estate/templates01";
 import { realEstate02Html, realEstate02Styles } from "../templates/real-estate/templates02";
@@ -229,6 +247,55 @@ const LANDING_TEMPLATES = [
     gradient: "linear-gradient(135deg, #0f172a 0%, #4f46e5 100%)",
   },
   {
+    id: "finance-04",
+    name: "Finova Modern",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance04.png",
+    gradient: "linear-gradient(135deg, #09090b 0%, #18181b 100%)",
+  },
+  {
+    id: "finance-05",
+    name: "Clarity Minimal",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance05.png",
+    gradient: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+  },
+  {
+    id: "finance-06",
+    name: "Nexus Consulting",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance06.png",
+    gradient: "linear-gradient(135deg, #1e293b 0%, #f8fafc 100%)",
+  },
+  {
+    id: "finance-07",
+    name: "BlockFin Protocol",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance07.png",
+    gradient: "linear-gradient(135deg, #050505 0%, #111111 100%)",
+  },
+  {
+    id: "finance-08",
+    name: "TrustBank Classic",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance08.png",
+    gradient: "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)",
+  },
+  {
+    id: "finance-09",
+    name: "Capital Advisory",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance09.png",
+    gradient: "linear-gradient(135deg, #111111 0%, #ffffff 100%)",
+  },
+  {
+    id: "finance-10",
+    name: "Aurelius Wealth",
+    tag: "Finance",
+    img: "/assets/templates/finance/Finance10.png",
+    gradient: "linear-gradient(135deg, #000000 0%, #c5a059 100%)",
+  },
+  {
     id: "plumber-01",
     name: "ProPlumb Solutions",
     tag: "Plumber",
@@ -260,8 +327,43 @@ const LANDING_TEMPLATES = [
     id: "plumber-05",
     name: "Emergency Plumber 05",
     tag: "Plumber",
-    img: "/assets/templates/Plumber/templates05/image1.jpg",
+    img: "/assets/templates/plumber/screenshot1.png",
     gradient: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)"
+  },
+  {
+    id: "plumber-06",
+    name: "Full-Service Plumber 06",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/screenshot2.png",
+    gradient: "linear-gradient(135deg, #101828 0%, #1e3a8a 100%)"
+  },
+  {
+    id: "plumber-07",
+    name: "Aqua Flow Experts",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber07.png",
+    gradient: "linear-gradient(135deg, #101828 0%, #1e3a8a 100%)"
+  },
+  {
+    id: "plumber-08",
+    name: "Pipeline Pros",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber08.png",
+    gradient: "linear-gradient(135deg, #091d2d 0%, #49607e 100%)"
+  },
+  {
+    id: "plumber-09",
+    name: "EcoPlumb Solutions",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber09.png",
+    gradient: "linear-gradient(135deg, #10b981 0%, #047857 100%)"
+  },
+  {
+    id: "plumber-10",
+    name: "Elite Plumbing",
+    tag: "Plumber",
+    img: "/assets/templates/plumber/Plumber10.png",
+    gradient: "linear-gradient(135deg, #000000 0%, #434343 100%)"
   },
   {
     id: "realestate-01",
@@ -349,6 +451,12 @@ const getTemplateContent = (id: string) => {
     case "healthcare-02": return { html: healthcare02Html, css: healthcare02Styles };
     case "healthcare-03": return { html: healthcare03Html, css: healthcare03Styles };
     case "healthcare-04": return { html: healthcare04Html, css: healthcare04Styles };
+    case "healthcare-05": return { html: healthcare05Html, css: healthcare05Styles };
+    case "healthcare-06": return { html: healthcare06Html, css: healthcare06Styles };
+    case "healthcare-07": return { html: healthcare07Html, css: healthcare07Styles };
+    case "healthcare-08": return { html: healthcare08Html, css: healthcare08Styles };
+    case "healthcare-09": return { html: healthcare09Html, css: healthcare09Styles };
+    case "healthcare-10": return { html: healthcare10Html, css: healthcare10Styles };
     case "travel-01": return { html: travel01Html, css: travel01Styles };
     case "travel-02": return { html: travel02Html, css: travel02Styles };
     case "travel-03": return { html: travel03Html, css: travel03Styles };
@@ -356,11 +464,23 @@ const getTemplateContent = (id: string) => {
     case "finance-01": return { html: finance01Html, css: finance01Styles };
     case "finance-02": return { html: finance02Html, css: finance02Styles };
     case "finance-03": return { html: finance03Html, css: finance03Styles };
+    case "finance-04": return { html: finance04Html, css: finance04Styles };
+    case "finance-05": return { html: finance05Html, css: finance05Styles };
+    case "finance-06": return { html: finance06Html, css: finance06Styles };
+    case "finance-07": return { html: finance07Html, css: finance07Styles };
+    case "finance-08": return { html: finance08Html, css: finance08Styles };
+    case "finance-09": return { html: finance09Html, css: finance09Styles };
+    case "finance-10": return { html: finance10Html, css: finance10Styles };
     case "plumber-01": return { html: plumber01Html, css: plumber01Styles };
     case "plumber-02": return { html: plumber02Html, css: plumber02Styles };
     case "plumber-03": return { html: plumber03Html, css: plumber03Styles };
     case "plumber-04": return { html: plumber04Html, css: plumber04Styles };
     case "plumber-05": return { html: plumber05Html, css: plumber05Styles };
+    case "plumber-06": return { html: plumber06Html, css: plumber06Styles };
+    case "plumber-07": return { html: plumber07Html, css: plumber07Styles };
+    case "plumber-08": return { html: plumber08Html, css: plumber08Styles };
+    case "plumber-09": return { html: plumber09Html, css: plumber09Styles };
+    case "plumber-10": return { html: plumber10Html, css: plumber10Styles };
 
     case "realestate-01": return { html: realEstate01Html, css: realEstate01Styles };
     case "realestate-02": return { html: realEstate02Html, css: realEstate02Styles };
