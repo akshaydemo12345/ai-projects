@@ -612,7 +612,7 @@ export const healthcare01Html = `
 <!-- TopNavBar -->
 <header class="site-header">
 <div class="header-wrapper">
-<a class="header-logo" href="#">LOGO_PLACEHOLDER</a>
+<a class="header-logo" href="javascript:void(0);">LOGO_PLACEHOLDER</a>
 
 <div class="header-actions">
 <a class="action-call" href="tel:1234567890">
@@ -711,7 +711,7 @@ export const healthcare01Html = `
 <div class="service-icon text-primary"><span class="material-symbols-outlined">dentistry</span></div>
 <h3 class="font-h3 text-on-surface">General Dentistry</h3>
 <p class="font-body-md text-secondary">Routine checkups, cleanings, and preventative care for all ages.</p>
-<a class="service-link" href="#">
+<a class="service-link" href="javascript:void(0);">
 <span>Learn More</span>
 <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
 </a>
@@ -721,7 +721,7 @@ export const healthcare01Html = `
 <div class="service-icon text-primary"><span class="material-symbols-outlined">auto_fix_high</span></div>
 <h3 class="font-h3 text-on-surface">Cosmetic Dentistry</h3>
 <p class="font-body-md text-secondary">Teeth whitening, veneers, and smile makeovers for a perfect look.</p>
-<a class="service-link" href="#">
+<a class="service-link" href="javascript:void(0);">
 <span>Learn More</span>
 <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
 </a>
@@ -731,7 +731,7 @@ export const healthcare01Html = `
 <div class="service-icon text-primary"><span class="material-symbols-outlined">align_horizontal_center</span></div>
 <h3 class="font-h3 text-on-surface">Orthodontics</h3>
 <p class="font-body-md text-secondary">Invisalign and traditional braces to align your teeth perfectly.</p>
-<a class="service-link" href="#">
+<a class="service-link" href="javascript:void(0);">
 <span>Learn More</span>
 <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
 </a>
@@ -741,7 +741,7 @@ export const healthcare01Html = `
 <div class="service-icon text-primary"><span class="material-symbols-outlined">medical_services</span></div>
 <h3 class="font-h3 text-on-surface">Dental Implants</h3>
 <p class="font-body-md text-secondary">Permanent solutions for missing teeth with natural-looking results.</p>
-<a class="service-link" href="#">
+<a class="service-link" href="javascript:void(0);">
 <span>Learn More</span>
 <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
 </a>
@@ -985,33 +985,23 @@ Absolutely. We reserve specific slots daily for emergency cases. If you're exper
 <div class="footer-grid">
 <!-- Col 1 -->
 <div class="footer-col" style="gap: 1.5rem;">
-<a class="footer-brand" href="#">LOGO_PLACEHOLDER</a>
+<a class="footer-brand" href="javascript:void(0);">LOGO_PLACEHOLDER</a>
 <p class="font-body-md text-secondary">Pioneering dental care with luxury comfort and advanced clinical expertise since 2009.</p>
 <div class="footer-socials">
-<a href="#"><span class="material-symbols-outlined">public</span></a>
-<a href="#"><span class="material-symbols-outlined">chat</span></a>
-<a href="#"><span class="material-symbols-outlined">video_camera_front</span></a>
+<a href="javascript:void(0);"><span class="material-symbols-outlined">public</span></a>
+<a href="javascript:void(0);"><span class="material-symbols-outlined">chat</span></a>
+<a href="javascript:void(0);"><span class="material-symbols-outlined">video_camera_front</span></a>
 </div>
 </div>
 <!-- Col 2 -->
 <div class="footer-col" style="gap: 1rem;">
 <h4 class="footer-title">Quick Links</h4>
-<nav class="footer-links font-body-md">
-<a href="#">Our Services</a>
-<a href="#">About Our Team</a>
-<a href="#">Success Stories</a>
-<a href="#">Patient Portal</a>
-</nav>
+
 </div>
 <!-- Col 3 -->
 <div class="footer-col" style="gap: 1rem;">
 <h4 class="footer-title">Support</h4>
-<nav class="footer-links font-body-md">
-<a href="#">Privacy Policy</a>
-<a href="#">Terms of Service</a>
-<a href="#">Accessibility</a>
-<a href="#">FAQs</a>
-</nav>
+
 </div>
 <!-- Col 4 -->
 <div class="footer-col" style="gap: 1rem;">

@@ -248,10 +248,11 @@ const extractFieldsFromScrape = (scrapedText) => {
 // ═══════════════════════════════════════════════════════════
 
 const FORM_PLACEMENTS = [
-  'in-hero',            // right inside the hero section (side-by-side)
+  'in-hero',            // right inside the hero section
+  'in-hero',            // (weighted 2x)
   'after-features',     // section 3 — early, high visibility
+  'after-features',     // (weighted 2x)
   'after-about',        // mid page
-  'after-testimonials', // late page
   'own-section',        // dedicated full-width contact section
   'before-footer',      // last section before footer
 ];
@@ -293,25 +294,21 @@ const resolveForm = (input) => {
   }
 
   const submitLabel = input.ctaText || input.formSubmitLabel || 'Send Message';
-  const formHTML = buildFormHTML(fields, submitLabel);
 
   // ── Placement logic ──
   let placement;
-  if (source === 'database' && input.formPlacement) {
+  if (input.formPlacement) {
     // Controller explicitly told us where to put it
     placement = input.formPlacement;
-  } else if (source === 'database') {
-    placement = 'after-features'; // DB forms are important — show early
-  } else if (source === 'scrape' && fields.length >= 4) {
-    placement = 'after-about';    // Detailed scrape form → mid-page
   } else {
-    // Fallback or minimal scrape → random placement keeps pages varied
+    // Completely randomize form placement to keep pages structurally unique!
+    // (sometimes in-hero, sometimes after-about, before-footer, etc.)
     placement = FORM_PLACEMENTS[Math.floor(Math.random() * FORM_PLACEMENTS.length)];
   }
 
   logger.info(`[AI] Form: source=${source} fields=${fields.length} placement=${placement}`);
 
-  return { formHTML, placement, fieldCount: fields.length, source };
+  return { fields, submitLabel, placement, fieldCount: fields.length, source };
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -604,6 +601,25 @@ const COLOR_MODES = [
   { id: 'gradient-brand', rule: 'Hero and one closing section use a diagonal or radial primary→secondary brand gradient (white text on top). Body sections alternate light (dark text) and dark (white text) — always match text color to its own background.' },
   { id: 'glass-dark', rule: 'Deep dark gradient background (#1a0533 to #0a1628 style) runs through the whole page. Cards are frosted glass: backdrop-blur, translucent white border, white/#e2e8f0 text throughout.' },
   { id: 'warm-ivory', rule: 'Warm ivory/cream background (#faf8f4) throughout, no hero image, dark warm-brown/black serif text. Brand color used sparingly as a thin accent line or small badge, never as a large fill.' },
+  { id: 'monochrome-pop', rule: 'Strictly black, white, and gray throughout the entire page. Only buttons, links, and tiny key accents use the primary brand color for a dramatic pop.' },
+  { id: 'neon-cyber', rule: 'Extremely dark, almost black background (#000000). Bright neon primary and secondary colors used for glowing text, borders, and intense gradients. High contrast.' },
+  { id: 'earthy-organic', rule: 'Soft sage greens, warm tans, and off-whites. Never use pure #fff or #000. Use muted brand colors and brown/dark-green text for a calming, natural feel.' },
+  { id: 'vibrant-duotone', rule: 'High energy! Alternating sections of solid primary color (with white text) and solid white (with primary color text). Extremely bold blocking.' },
+  { id: 'pastel-dream', rule: 'Very light, washed-out pastel backgrounds (light blue, light pink, pale yellow). Dark muted text. Soft, friendly, and approachable.' },
+  { id: 'corporate-blue', rule: 'Classic trustworthy enterprise feel. White background, light gray sections, and a strong, deep navy/blue primary color. Clean and conservative.' }
+];
+
+const STANDALONE_FORM_STYLES = [
+  'a 50/50 split layout: contact details (address, map, email) on the left, and the form on the right.',
+  'a massive, perfectly centered card floating over a beautiful blurred background image.',
+  'a dark-mode inverted section: if the page is light, this form section must have a pitch-black background with white text.',
+  'a minimalistic, borderless form where inputs are just single bottom-border lines (no boxes).',
+  'an asymmetric overlapping layout: the form card overlaps an image collage next to it.',
+  'a stark typography-led layout: massive "SAY HELLO" text running down the left side vertically, form on the right.',
+  'a grid layout: the inputs are arranged in a multi-column CSS grid instead of just stacking vertically.',
+  'a playful skeuomorphic style: inputs look like pressed physical buttons or paper slots.',
+  'a two-tone split background: the left half of the screen is primary color, the right half is white. The form sits exactly in the middle.',
+  'a highly padded, premium museum feel: tiny form in the absolute center surrounded by massive white space.'
 ];
 
 const HERO_LAYOUTS = [
@@ -615,6 +631,33 @@ const HERO_LAYOUTS = [
   'Bottom-anchored text sitting over a full-bleed image or gradient, gradient fades from transparent at top to solid at bottom.',
   'Offset/overlapping composition — a small stat card or badge visually overlaps the corner of the hero image.',
   'Slanted-feel hero using an angled CSS gradient background (NOT clip-path) instead of a photo.',
+  'Ultra-wide masonry: headline on top left, followed by a beautiful 3-image collage taking up the right half of the hero.',
+  'Floating central card: the entire hero content sits inside a massive, elevated rounded-3xl card floating over a blurred background.',
+  'Dual-CTA split: headline in center, with two equally prominent buttons (primary and secondary) side-by-side below it.',
+  'Side-navigation feel: title and text pressed hard against the left edge in a narrow column, massive bleeding image on the right.',
+  'Text-heavy editorial hero: huge drop-cap, multiple paragraphs of compelling copy, a subtle abstract illustration on the side.',
+  'Grid-locked hero: The hero is split into 4 distinct quadrants (boxes with borders) containing text, image, stats, and CTA respectively.',
+  'Vertical split: Top half is entirely dark with bright text, bottom half is a massive panoramic image.',
+  'Circular cutout: A massive circular image mask on the right, with sleek typography wrapping on the left.',
+  'Video-player mockup: A huge 16:9 faux-video player in the center, with the headline sitting elegantly above it.',
+  'Search-bar focus: Instead of a normal CTA button, the hero features a massive, prominent search input bar in the center.',
+  'Diagonal split: An angled background gradient separating a solid color top left from an image bottom right (using standard CSS gradients, NO clip-path).',
+  'Marquee background: The background of the hero is a continuous scrolling marquee of huge, faint typography.',
+  'Bottom-up layout: The main headline is pushed to the absolute bottom left of the hero section, overlapping the next section.',
+  'Floating elements: Small floating avatars, icons, and stat-bubbles scattered randomly around a centered headline.',
+  'Step-by-step hero: Headline on left, and a quick 3-step visual process diagram (1-2-3) on the right.',
+  'Interactive terminal: For dev tools, a faux code-editor window dominating the right half of the screen.',
+  'Typographic poster: No imagery, just extremely huge, tightly-spaced, beautifully set typography filling the entire viewport.',
+  'Layered depth: Foreground text, middle-ground cutout image, background subtle pattern—creating a 3D parallax feel.',
+  'Split screen with alternating scroll: Left side is sticky with the headline, right side shows a grid of small images.',
+  'Hero with side-tabs: A large hero area with vertical navigation tabs on the far right edge to switch content.',
+  'Magazine cover: Massive headline behind a cutout portrait image, overlapping the text like a fashion magazine.',
+  'Minimalist wireframe: Stripped back, thin borders, blueprint aesthetic with raw text and structural outlines.',
+  'Immersive dark mode: Pitch black background, single glowing gradient orb behind a stark white headline.',
+  'Polaroid scatter: Headline on the left, right side features a scattered pile of polaroid-style image frames.',
+  'Data dashboard: Right half of the hero is a complex, beautiful, semi-transparent UI dashboard mockup.',
+  'Typographic portrait: The shape of the text block forms a silhouette, or text wraps tightly around an irregular image.',
+  'Horizontal scroll teaser: Hero that suggests horizontal movement, with items bleeding off the right edge of the screen.'
 ];
 
 const CARD_STYLES = [
@@ -624,6 +667,25 @@ const CARD_STYLES = [
   'borderless content blocks separated only by generous whitespace and a thin 1px divider line',
   'cards with a single colored accent bar along the top edge',
   'pill/rounded-full badges and capsule-shaped containers',
+  'cards with subtle inner-shadows (inset) and thick padding',
+  'cards wrapped in a glowing, semi-transparent brand-color border',
+  'asymmetric borders: thick left border, no other borders, light background fill',
+  'overlapping stacked cards effect (using absolute positioning or negative margins)',
+  'monochrome dark cards with vibrant neon text/icon highlights',
+  'cards with a harsh drop shadow (e.g., box-shadow: 8px 8px 0px #000)',
+  'cards that look like torn paper or have jagged SVG edges',
+  'hyper-minimalist cards: no background, no border, just an icon and text floating in space',
+  'cards with a gradient border mask (border is a gradient, background is solid)',
+  'skeuomorphic cards: subtle gradients and highlights to look like physical plastic or metal',
+  'origami cards: folded corner effects using CSS triangles',
+  'cards with a massive, faded watermark icon filling the background',
+  'two-tone cards: top half is image/color, bottom half is white text area, sharp division',
+  'interactive-lift cards: designed to look pressed down, lifting up on hover',
+  'cards wrapped in dotted or dashed borders for a playful/blueprint feel',
+  'cards with extreme padding (p-12 or p-16) for a highly spacious, premium museum feel',
+  'dark mode cards with a subtle noise/grain texture overlay',
+  'cards that are perfectly square (aspect-square) regardless of content',
+  'cards shaped like arches (rounded-t-full, straight bottom)'
 ];
 
 const ACCENT_MOTIFS = [
@@ -633,6 +695,15 @@ const ACCENT_MOTIFS = [
   'large ghost/outline numerals or icons behind section headings',
   'small uppercase tracked-out brand-color kicker labels above every section heading',
   'no extra decoration at all — pure typography, whitespace, and color carry the design',
+  'subtle abstract SVG wave shapes at the top and bottom boundaries of sections',
+  'tiny plus (+) signs forming a subtle repeating pattern in the background',
+  'sharp diagonal slashes acting as separators between columns',
+  'a persistent thin border around the entire viewport (body framed in a box)',
+  'colored dot matrices (halftone patterns) floating in corners of sections',
+  'vertical typography running down the left and right margins of the page',
+  'massive oversized quotation marks used purely as background decoration',
+  'retro 8-bit style pixelated accents or borders',
+  'hand-drawn/scribbled SVG arrows pointing to important elements'
 ];
 
 const TYPOGRAPHY_PAIRS = [
@@ -640,6 +711,34 @@ const TYPOGRAPHY_PAIRS = [
   'large serif display headlines paired with simple sans-serif body text (editorial feel)',
   'uppercase tracked-out headlines paired with normal-case body text (structured, technical feel)',
   'mixed-weight headlines (a thin word next to a bold word in the same line) with sans-serif body text',
+  'monospaced technical fonts for headlines, clean sans-serif for body',
+  'ultra-thin elegant sans-serif headlines with slightly thicker body text',
+  'italicized serif headlines mixed with brutalist heavy sans-serif subheadings',
+  'all-lowercase massive, friendly sans-serif headlines',
+  'condensed, tall, and tight sans-serif headlines (like Impact or Anton style)',
+  'playful rounded sans-serif fonts for a friendly, approachable SaaS feel'
+];
+
+const INTERACTION_EFFECTS = [
+  'Cards and images slightly scale up (hover:scale-105) with a smooth transition (transition-transform duration-300). Buttons have a subtle hover shadow.',
+  'Elements lift aggressively on hover (-translate-y-2) with a harsh drop shadow appearing underneath (hover:shadow-[8px_8px_0_0_#000]).',
+  'Buttons feature a subtle internal gradient that shifts on hover. Cards glow slightly with the brand color on hover (hover:shadow-[0_0_15px_var(--primary)]).',
+  'Links feature an animated underline that expands from left to right on hover. Images have a very slow, continuous zoom-in effect inside a fixed container (overflow-hidden).',
+  'Cards tilt slightly (using transform rotate) or skew when hovered for a dynamic, playful feeling.',
+  'Buttons are magnetic-style: very rounded (rounded-full) and they slightly shrink (hover:scale-95) when clicked. Cards have no hover effect, keeping it extremely static and editorial.',
+  'Everything feels hyper-responsive: extremely fast transitions (duration-150), bright hover text colors, and prominent outline rings on focus/hover.',
+  'Images turn from grayscale to full-color on hover (grayscale hover:grayscale-0). Buttons have an arrow icon that slides 4px to the right on hover (group-hover:translate-x-1).'
+];
+
+const SECTION_TRANSITIONS = [
+  'Use harsh diagonal angled cuts (achieved via rotated SVG shapes or angled CSS gradients, NEVER clip-path) to transition between sections instead of straight horizontal lines.',
+  'Use beautiful fluid SVG wave dividers at the top and bottom of dark sections to create a liquid, organic flow.',
+  'Use slight overlapping negative margins so sections visually break out of their horizontal boundaries and overlap the section above them.',
+  'Keep section dividers perfectly straight and flat, but use a thick 4px border-bottom in the primary color between every single section.',
+  'Use jagged, torn-paper style SVG dividers between sections for a grunge/creative aesthetic.',
+  'No background color changes between sections; the entire page flows as one continuous canvas separated only by massive whitespace.',
+  'Use staggered overlapping rectangles so the transition between sections looks like a solid staircase.',
+  'Every section is a standalone "card" with rounded corners floating on a universal background color (e.g. gray body, white sections).'
 ];
 
 // Pool of possible middle-page sections. Hero, the contact form, and the
@@ -648,19 +747,40 @@ const TYPOGRAPHY_PAIRS = [
 // C(14,5) × 5! (order matters) gives well over 240,000 distinct sequences.
 const SECTION_POOL = [
   'Trust bar: horizontal scrolling logo/credential marquee',
+  'Trust bar: grayscale logos in a static, perfectly centered 5-column grid',
   'Stats row: 3-4 bold large numbers with short labels',
+  'Stats row: huge typographic numbers running off the edge of the screen',
   'Features: asymmetric bento-grid cards (mixed col-spans, varied sizes)',
   'Features: zig-zag rows alternating image-left/text-right then text-left/image-right',
   'Features: clean 3-column icon + heading + paragraph cards',
-  'About/Story: full-bleed image with an overlaid text caption',
+  'Features: 4-column ultra-minimalist grid (tiny icon, huge title, no border)',
+  'Features: vertical list with massive numbers (01, 02, 03) anchoring each row',
+  'Features: interactive-looking horizontal tabs (design it to look like clicked tabs)',
+  'Features: single massive feature block with a side-by-side overlapping image collage',
+  'Features: dark inverted section highlighting 3 core benefits with glowing icons',
+  'About/Story: full-bleed image with an overlaid text caption box on the bottom right',
+  'About/Story: split 50/50 screen with a rich background color on the text side',
+  'About/Story: narrow, centered single column of beautiful editorial text (like a magazine)',
+  'About/Story: large founder portrait on left, personal signature and quote on right',
   'Process: numbered step timeline, vertical or horizontal',
+  'Process: 3 connected overlapping circles or interconnected cards',
+  'Process: zigzag stepping stones design leading down the page',
   'Testimonials: masonry layout with uneven card heights',
   'Testimonials: one large featured quote plus 2-3 smaller supporting quotes',
   'Testimonials: staggered/offset 2-column grid of quote cards',
+  'Testimonials: horizontally scrolling overflow row of square review cards',
+  'Testimonials: single massive, dramatic quote centered on screen with a large avatar',
   'Gallery: horizontal scrolling image showcase (flex-row overflow-x-auto)',
   'Gallery: 2x2 or 3x2 image grid with short captions',
+  'Gallery: asymmetrical collage (one huge image, two small stacked images)',
   'FAQ: accordion section using accordion-item / accordion-header / accordion-content classes',
+  'FAQ: 2-column grid of raw text questions and answers (no boxes, just pure text)',
+  'FAQ: sidebar with a sticky heading on the left, questions scrolling on the right',
   'Pricing or package comparison: 2-3 simple plan cards',
+  'Pricing: single premium package breakdown (one large, highly detailed card)',
+  'Video Placeholder: A massive 16:9 black box with a centered play icon (use an SVG) mimicking a video player',
+  'Call to Action: A narrow, highly-colored banner stripping across the page with a single button',
+  'Mission Statement: A massive full-screen bold typographic statement, no images',
 ];
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
@@ -676,18 +796,32 @@ const buildLayoutRecipe = () => {
   const cardStyle = pick(CARD_STYLES);
   const accentMotif = pick(ACCENT_MOTIFS);
   const typography = pick(TYPOGRAPHY_PAIRS);
-  const middleSections = shuffle(SECTION_POOL).slice(0, 5);
-  return { colorMode, heroLayout, cardStyle, accentMotif, typography, middleSections };
+  const interaction = pick(INTERACTION_EFFECTS);
+  const transition = pick(SECTION_TRANSITIONS);
+
+  const featureSections = SECTION_POOL.filter(s => s.startsWith('Features:'));
+  const testimonialSections = SECTION_POOL.filter(s => s.startsWith('Testimonials:'));
+  const otherSections = SECTION_POOL.filter(s => !s.startsWith('Features:') && !s.startsWith('Testimonials:'));
+
+  // Guarantee at least 1 Feature and 1 Testimonial section for a high-converting baseline
+  let middleSections = [
+    pick(featureSections),
+    pick(testimonialSections),
+    ...shuffle(otherSections).slice(0, 3)
+  ];
+  middleSections = shuffle(middleSections);
+
+  return { colorMode, heroLayout, cardStyle, accentMotif, typography, interaction, transition, middleSections };
 };
 
 // ═══════════════════════════════════════════════════════════
 //  SYSTEM PROMPT
 // ═══════════════════════════════════════════════════════════
 const buildSystemPrompt = (chaosToken) => `
-You are an elite Principal UI Engineer and Creative Director with over 15 years of experience designing world-class, premium enterprise and SaaS websites.
-Your goal is to build a clean, modern, ultra-premium, high-converting landing page that feels trustworthy, professional, and visually stunning. Your layouts must reflect absolute mastery of CSS grids, beautiful whitespace, and high-end typography.
+You are an absolute legend: a veteran Principal UI Engineer and Creative Director with over 30 years of elite development experience crafting world-class, premium enterprise and SaaS websites.
+Your goal is to build a clean, modern, ultra-premium, high-converting landing page that feels trustworthy, professional, and visually stunning. Your layouts must reflect absolute mastery of CSS grids, flawless semantic HTML5, fluid responsive design, beautiful whitespace, and high-end typography.
 
-Every page you build looks like it was crafted by a senior designer at a top agency — not generated. It has a clear visual identity, professional copy, and real personality.
+Every line of code you write is a masterclass in frontend development. Every page you build looks like it was meticulously hand-crafted by an elite team at a top global agency over months — not generated. It has a clear visual identity, professional copy, and absolute pixel-perfect precision.
 
 CHAOS SEED: ${chaosToken}
 This seed shapes your creative decisions. Every generation must feel genuinely fresh and different from any other — you will be given a specific LAYOUT RECIPE and SECTIONS LIST below; follow them exactly, do not default to a generic "safe" layout.
@@ -697,6 +831,8 @@ This seed shapes your creative decisions. Every generation must feel genuinely f
 - NEVER USE outdated, ugly color combinations. Always keep it harmonious.
 - NEVER cramp elements together. Always use generous whitespace (e.g. py-24).
 - NEVER reuse the exact same hero/section pattern you might default to — actively follow the LAYOUT RECIPE given to you.
+- NEVER CREATE A GENERIC DESIGN: Every generation MUST look visually distinct and structurally unique compared to a standard corporate site. Force asymmetrical layouts or overlapping elements if the recipe allows it!
+- EXTREME STRUCTURAL VARIETY REQUIRED: Every single section on the page MUST have a completely different internal HTML structure and grid layout from the others. If one section uses a 2-column grid, the next MUST use an overlapping masonry layout, a full-bleed asymmetric background, or horizontal scrolling cards. DO NOT repeat the same basic flex/grid layouts. Be wildly creative with Tailwind classes!
 
 🏆 30-YEARS EXPERIENCED PRINCIPAL DEVELOPER CODING PATTERNS:
 
@@ -716,7 +852,7 @@ USE data-reveal ONLY on these high-impact elements:
 
 3. PREMIUM MINIMALIST FOOTER AT THE BOTTOM (MANDATORY):
 - Every landing page MUST go all the way down to the bottom and end with a beautiful, custom, high-end Minimalist Footer section wrapped in a real <footer> tag.
-- The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, a clean address or contact info line (phone & email), simple social icons, and a copyright notice.
+- The footer should include the logo tag \`<img src="{{LOGO_URL}}" alt="Logo" class="h-14 w-auto object-contain">\`, a clean address or contact info line (phone & email), simple social icons, and a copyright notice.
 - 🚨 COPYRIGHT RULE: Use EXACTLY the copyright text found in the user's website content if available. DO NOT add the current year or make up your own copyright string! If no copyright is provided, just write "© BrandName. All rights reserved." without any year.
 
 4. STRICT BRAND COLORS & VARIABLES:
@@ -725,15 +861,16 @@ USE data-reveal ONLY on these high-impact elements:
 - This is critical so the user's selected brand colors are automatically applied!
 
 5. PREMIUM & HIGH-CONVERTING STRUCTURE (CRITICAL):
-- Use proven, high-converting web layouts, but strictly following the SECTIONS LIST you are given — do not invent your own section order.
-- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT RECIPE explicitly says otherwise (e.g. neo-brutalist = no border-radius).
+- Use proven, high-converting web layouts, but strictly following the SECTIONS LIST you are given — do not invent your own section order unless explicitly requested by the user.
+- 🚨 DEFAULT LANDING PAGE RULE: If the user provides a very short prompt like "landing page", you MUST automatically ensure the page feels complete. It must have a strong Hero, clear Features/Benefits, Trust-building Testimonials, an FAQ, and a Lead Form, even if they didn't explicitly list them.
+- Keep structural elements clean and modern (rectangles, rounded-2xl or rounded-3xl corners, clean grids) UNLESS the LAYOUT RECIPE explicitly says otherwise.
 - YOU MUST USE RICH PLACEHOLDER IMAGES in your designs! Use \`https://picsum.photos/1200/800?random=N\` (change N for every image, never reuse the same number twice on one page). Every page must have beautiful, large photos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  NAVBAR
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sticky. Contains ONLY:
-  Left: <img src="{{LOGO_URL}}" alt="Logo" style="height:2rem;width:auto">
+  Left: <img src="{{LOGO_URL}}" alt="Logo" style="height:3.5rem;width:auto;object-fit:contain">
   Right: ONE styled CTA button
 Nothing else. No links. No hamburger menu. Ultra-minimal premium.
 
@@ -764,7 +901,7 @@ You MUST design at an "Awwwards-winning" luxury agency level. Generic designs ar
 - 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners (unless LAYOUT RECIPE says no border-radius).
 - 🚨 NO WOW.JS: DO NOT use the \`wow.js\` library or \`wow\` classes. ONLY use AOS for scroll animations!
 - MICRO-INTERACTIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
-- SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` / \`data-aos="zoom-in"\` with different delays. Initialize AOS: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
+- SCROLL ANIMATIONS: ONLY use AOS for scroll animations (data-aos="fade-up"). 🚨 CRITICAL: NEVER write your own custom CSS for animations (e.g. NEVER write [data-reveal] or opacity: 0 rules). Custom opacity: 0 rules break the editor! ALWAYS use AOS via CDN (<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ TECHNICAL REQUIREMENTS:
@@ -854,24 +991,29 @@ const buildBrandingLines = (input, recipe) => {
     lines.push(`LOGO URL (actual): ${input.branding.logoUrl}`);
   }
 
-  // ── PROCEDURAL LAYOUT RECIPE — freshly randomized every single call.
-  //    This is the main creative-direction lever, and it is repeated in
-  //    BOTH phase prompts so Part 2 stays visually consistent with Part 1. ──
+  // ── AUTONOMOUS DESIGN FREEDOM ──
   lines.push(
-    `\n━━━ LAYOUT RECIPE FOR THIS PAGE (MANDATORY — FOLLOW EXACTLY, DO NOT SUBSTITUTE YOUR OWN DEFAULT) ━━━`,
-    `COLOR MODE: ${recipe.colorMode.rule}`,
-    `HERO LAYOUT: ${recipe.heroLayout}`,
-    `CARD / CONTAINER STYLE: use ${recipe.cardStyle} for every card, feature block, and testimonial throughout the page.`,
-    `DECORATIVE ACCENT: ${recipe.accentMotif}`,
-    `TYPOGRAPHY PAIRING: ${recipe.typography}`,
-    `🚨 This exact combination was randomly generated fresh for this request. Follow it precisely — it is what makes this page visually distinct from any other page you've ever generated. Do not fall back on a "safe" generic layout.`
+    `\n━━━ DYNAMIC DESIGN FREEDOM (INVENT A UNIQUE DESIGN LANGUAGE) ━━━`,
+    `AUTONOMOUS DESIGN: Do NOT use a standard or fixed layout! You MUST invent a COMPLETELY UNIQUE, ultra-premium design language for this specific page.`,
+    `HERO LAYOUT: Invent a unique, high-converting hero section (e.g., overlapping images, asymmetrical splits, glassmorphism, or immersive full-bleed backgrounds).`,
+    `CARD / CONTAINER STYLE: Invent a beautiful card style (e.g., neo-brutalist borders, soft diffused shadows, frosted glass, or minimal floating elements) and apply it consistently.`,
+    `DECORATIVE ACCENT: Add unique decorative elements (e.g., glowing background orbs, faint grid-lines, overlapping shapes, or minimalist typography patterns).`,
+    `SECTION TRANSITIONS: ${recipe.transition || 'Use dynamic fluid SVG waves or staggered overlaps between sections to break the boxy grid look (NO clip-paths).'}`,
+    `MICRO-INTERACTIONS: ${recipe.interaction || 'Ensure buttons have premium hover states and cards use subtle transform transitions.'}`,
+    `SECTION VARIETY: Make every section structurally different from the others. Surprise me with creative use of CSS grids, negative margins, and Tailwind classes.`
   );
 
   return lines;
 };
 
 // ─── PHASE 1 PROMPT: <head> + navbar + hero + first half of sections ──────────────
-const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count) => {
+// 🔧 FIX: now accepts `formCtx` = { formInHero, formInPart1, fields, submitLabel, placement } so that when
+// placement === 'in-hero' the form is actually written into the hero here in Part 1
+// (previously the form was ALWAYS inserted somewhere inside Part 2's sections,
+// no matter what `placement` said — 'in-hero' was silently ignored).
+const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count, formCtx = {}) => {
+  const { formInHero = false, formInPart1 = false, fields = [], submitLabel = 'Send Message', placement = '' } = formCtx;
+
   const faqNudges = [
     'FAQ DESIGN: Use a strict 2-column grid. No backgrounds on the items, just clean subtle bottom borders.',
     'FAQ DESIGN: Place the FAQs in a narrow, elegant card floating over a large background image.',
@@ -885,18 +1027,65 @@ const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count) 
   lines.push(`🧩 ${randomFaqNudge} (only relevant if a FAQ section appears in THIS part's list below)`);
   lines.push(`CRITICAL RULE: You must design a highly professional, modern, and trustworthy layout tailored to this specific business.`);
 
+  // 🔧 FIX: form-in-hero support — previously 'in-hero' placement was chosen
+  // randomly by resolveForm() but never actually honored anywhere in the code.
+  if (formInHero) {
+    const heroFormStyles = [
+      'positioned on the RIGHT side of the hero, balancing the text on the left.',
+      'positioned on the LEFT side of the hero, with the main headline/image on the right.',
+      'designed as a floating, semi-transparent OVERLAY card directly on top of the hero background image.',
+      'placed dead-center below the headline as a sleek, wide, inline horizontal form.',
+      'built into a dark Sidebar on the edge of the hero section.',
+      'placed inside a glassmorphism card overlapping the bottom edge of the hero.'
+    ];
+    const randomHeroFormStyle = heroFormStyles[Math.floor(Math.random() * heroFormStyles.length)];
+
+    lines.push(`\n━━━ CONTACT FORM GOES IN THE HERO (MANDATORY) ━━━`);
+    lines.push(`The Hero section (Section 1) MUST include an inline contact form ${randomHeroFormStyle} — it must sit naturally within the hero layout.`);
+    lines.push(`The <form> tag MUST have id="contact-form".`);
+    lines.push(`You MUST integrate exactly these fields: ${JSON.stringify(fields)}`);
+    lines.push(`The submit button MUST have text: "${submitLabel}".`);
+    lines.push(`All required fields must have the \`required\` attribute.`);
+    lines.push(`This is the ONLY form on the page — do not add another one anywhere else. There is no separate Contact/Form section in Part 2.`);
+  }
+
+  if (input.aiPrompt) {
+    lines.push(`\n━━━ USER'S SPECIFIC INSTRUCTIONS ━━━`);
+    lines.push(`The user has explicitly requested: "${input.aiPrompt}"`);
+    lines.push(`🚨 CRITICAL INSTRUCTION: You MUST incorporate the user's specific request into the page copy, design, and sections! If they ask for specific sections (e.g. pricing, testimonials, features, maps), you must weave them into the layout and content, even if it means modifying the randomly assigned sections below.`);
+  }
+
   if (input.websiteContent) {
     lines.push(`\n━━━ SCRAPED WEBSITE CONTENT (use real names, facts, copy from this) ━━━`);
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
   const listedSections = [
-    'Section 1 (Hero): follow the HERO LAYOUT above',
+    'Section 1 (Hero): follow the HERO LAYOUT above' + (formInHero ? ' — INCLUDING the inline contact form described above' : ''),
     ...sectionsPart1.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
   ];
 
+  if (formInPart1 && !formInHero && fields && fields.length > 0) {
+    const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
+    const formInsertIndex = Math.floor(Math.random() * (listedSections.length + 1));
+    listedSections.splice(formInsertIndex, 0, `Section (Contact/Form): ${placementLabel}`);
+  }
+
+  // Re-number sequentially
+  const renumberedSections = listedSections.map((s, i) => s.replace(/Section \d+ \(/, `Section ${i + 1} (`).replace('Section (', `Section ${i + 1} (`));
+
   lines.push(`\n━━━ SECTIONS FOR THIS PART (WRITE ONLY THESE, IN THIS ORDER) ━━━`);
-  lines.push(listedSections.join('\n'));
+  lines.push(renumberedSections.join('\n'));
+
+  if (formInPart1 && !formInHero && fields && fields.length > 0) {
+    lines.push(`\n━━━ CONTACT FORM REQUIREMENTS ━━━`);
+    lines.push(`Design a beautiful Contact Form for the section labeled (Contact/Form).`);
+    lines.push(`You MUST integrate these fields: ${JSON.stringify(fields)}`);
+    lines.push(`The form MUST have id="contact-form" on the <form> tag.`);
+    lines.push(`The submit button MUST have text: "${submitLabel}".`);
+    const randomFormStyle = STANDALONE_FORM_STYLES[Math.floor(Math.random() * STANDALONE_FORM_STYLES.length)];
+    lines.push(`Adapt the layout to fit the section seamlessly. Specifically, design it as: ${randomFormStyle}`);
+  }
 
   lines.push(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -904,38 +1093,75 @@ THIS IS PART 1 OF 2 — FOLLOW THESE RULES EXACTLY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. Output RAW HTML ONLY. Do NOT wrap your answer in markdown code fences (no \`\`\`). Do NOT add any explanation, comments, or preamble outside the HTML.
 2. Write, IN ORDER: <!DOCTYPE html>, <html>, a complete <head> (Tailwind CDN, FontAwesome, Google Fonts, AOS CSS, <title>, CSS variables for --primary/--secondary), the opening <body>, the sticky navbar (logo left + one CTA button right, nothing else), then EXACTLY the sections listed above in "SECTIONS FOR THIS PART" — nothing more.
-3. Do NOT write the contact form. Do NOT write a footer. Do NOT write closing </body> or </html> tags. Do NOT write the AOS init script.
-4. Simply STOP writing immediately after the closing tag of the last section listed above. There will be a PART 2 that continues this exact document — a total of ${sectionsPart1.length + sectionsPart2Count} content sections plus a contact form plus a footer are still to come, but NOT in this response.
+3. ${formInHero ? 'The contact form is already written INSIDE the hero section as instructed above. Do NOT write a separate contact-form section later.' : formInPart1 ? 'Do NOT write a footer.' : 'Do NOT write the contact form. Do NOT write a footer.'} Do NOT write closing </body> or </html> tags. Do NOT write the AOS init script.
+4. Simply STOP writing immediately after the closing tag of the last section listed above. There will be a PART 2 that continues this exact document — a total of ${sectionsPart1.length + sectionsPart2Count} content sections plus a footer${formInPart1 ? '' : ' plus a contact form'} are still to come, but NOT in this response.
 5. 📱 Mobile-first responsive classes throughout (grid-cols-1 md:grid-cols-2 lg:grid-cols-X, flex-col md:flex-row).
 6. Name your visual concept in an HTML comment right after <body>: <!-- RECIPE: ${recipe.colorMode.id} / ${recipe.cardStyle.slice(0, 30)}... -->
-7. Write REAL, industry-specific copy — not generic filler text. Keep paragraphs to 1-2 punchy sentences.
+7. CRITICAL CTA BEHAVIOR: Every single "Call to Action" button across the entire page (in the navbar, hero, or sections) MUST have \`href="#contact-form"\`. Do not use "#contact" or "#form".
+8. Write REAL, industry-specific copy — not generic filler text. Keep paragraphs to 1-2 punchy sentences.
 `);
 
   return lines.join('\n');
 };
 
-// ─── PHASE 2 PROMPT: remaining sections + contact form + footer + closing tags ────
-const buildUserPromptPart2 = (input, recipe, sectionsPart2, formHTML, placement, sectionsPart1Count) => {
+// 🔧 FIX #1: now receives `formInHero` — if the form was already written into the
+//    hero in Part 1, we must NOT insert another Contact/Form section here.
+// 🔧 FIX #2: now also receives and forwards `input.websiteContent` — previously
+//    Part 2 (which usually contains Features/Testimonials/FAQ/Pricing) had NO
+//    access to the scraped business content at all, so the AI fell back to
+//    generic filler copy for most of the page.
+const buildUserPromptPart2 = (input, recipe, sectionsPart2, fields, submitLabel, placement, sectionsPart1Count, formInHero = false, formInPart1 = false) => {
   const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
 
   const lines = [
     `Continue the SAME landing page from PART 1 above. Do NOT repeat any earlier HTML (the <head>, navbar, hero, or earlier sections are already written — you have them as context). Continue writing EXACTLY where PART 1 left off.`,
-    `\n━━━ LAYOUT RECIPE REMINDER (stay consistent with PART 1) ━━━`,
-    `COLOR MODE: ${recipe.colorMode.rule}`,
-    `CARD / CONTAINER STYLE: use ${recipe.cardStyle} for every card, feature block, and testimonial — same as PART 1.`,
-    `DECORATIVE ACCENT: ${recipe.accentMotif}`,
-    `TYPOGRAPHY PAIRING: ${recipe.typography}`,
+    `\n━━━ DYNAMIC DESIGN FREEDOM REMINDER ━━━`,
+    `Remember: Do NOT use a fixed, hardcoded layout! Continue using the completely unique, ultra-premium design language you invented in PART 1.`,
+    `Make sure every new section generated in this part has a structurally different internal HTML layout from the previous ones!`,
   ];
 
-  const listedSections = sectionsPart2.map((s, i) => `Section ${sectionsPart1Count + i + 2} (${s.split(':')[0]}): ${s}`);
-  const formSectionNumber = sectionsPart1Count + sectionsPart2.length + 2;
-  listedSections.push(`Section ${formSectionNumber} (Contact/Form): ${placementLabel}`);
+  if (input.aiPrompt) {
+    lines.push(`\n━━━ USER'S SPECIFIC INSTRUCTIONS (REMINDER) ━━━`);
+    lines.push(`The user requested: "${input.aiPrompt}"`);
+    lines.push(`🚨 Make sure to fulfill these requirements in the remaining sections below!`);
+  }
+
+  // 🔧 FIX: give Part 2 the same scraped business content as Part 1, so
+  // Features / Testimonials / FAQ / Pricing sections stay factually relevant
+  // to the actual website instead of generic AI filler.
+  if (input.websiteContent) {
+    lines.push(`\n━━━ SCRAPED WEBSITE CONTENT (use real names, facts, copy from this — do NOT invent generic filler) ━━━`);
+    lines.push(input.websiteContent.substring(0, 3500));
+  }
+
+  const listedSections = sectionsPart2.map((s, i) => `Section (${s.split(':')[0]}): ${s}`);
+
+  // 🔧 FIX: only insert a separate Contact/Form section when the form is NOT
+  // already generated in Part 1 (either in hero or as a standalone section).
+  if (!formInPart1) {
+    // Randomly insert the form among the remaining sections in Part 2, instead of always at the very end
+    const formInsertIndex = Math.floor(Math.random() * (listedSections.length + 1));
+    listedSections.splice(formInsertIndex, 0, `Section (Contact/Form): ${placementLabel}`);
+  }
+
+  // Re-number sequentially
+  const renumberedSections = listedSections.map((s, i) => s.replace('Section (', `Section ${sectionsPart1Count + i + 2} (`));
 
   lines.push(`\n━━━ SECTIONS FOR THIS PART (WRITE ONLY THESE, IN THIS ORDER, THEN THE FOOTER) ━━━`);
-  lines.push(listedSections.join('\n'));
+  lines.push(renumberedSections.join('\n'));
 
-  lines.push(`\n━━━ CONTACT FORM HTML (insert this VERBATIM inside the Contact/Form section) ━━━`);
-  lines.push(formHTML);
+  if (!formInHero) {
+    lines.push(`\n━━━ CONTACT FORM REQUIREMENTS ━━━`);
+    lines.push(`Design a beautiful Contact Form for the section labeled (Contact/Form).`);
+    lines.push(`You MUST integrate these fields: ${JSON.stringify(fields)}`);
+    lines.push(`The form MUST have id="contact-form" on the <form> tag.`);
+    lines.push(`The submit button MUST have text: "${submitLabel}".`);
+    const randomFormStyle = STANDALONE_FORM_STYLES[Math.floor(Math.random() * STANDALONE_FORM_STYLES.length)];
+    lines.push(`Adapt the layout to fit the section. Specifically, design it as: ${randomFormStyle}`);
+  } else {
+    lines.push(`\n━━━ CONTACT FORM REMINDER ━━━`);
+    lines.push(`The contact form was already written INSIDE the hero section back in Part 1 (id="contact-form"). Do NOT add another form anywhere in this part.`);
+  }
 
   lines.push(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -943,11 +1169,14 @@ THIS IS PART 2 OF 2 (FINAL) — FOLLOW THESE RULES EXACTLY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. Output RAW HTML ONLY. Do NOT wrap your answer in markdown code fences. Do NOT add any explanation, comments, or preamble.
 2. Do NOT rewrite the <head>, navbar, hero, or any section from PART 1. Start directly with the next section.
-3. MANDATORY LEAD FORM (NO POPUPS): Include the given Contact Form HTML VERBATIM, directly visible and INLINE (never in a modal/popup), styled to match the CARD / CONTAINER STYLE above. This is the ONLY form on the page.
-4. After all sections and the form, write a complete, beautiful custom <footer> tag: logo image \`<img src="{{LOGO_URL}}" alt="Logo" class="h-8 w-auto">\`, contact info line (phone & email), simple social icons, and a copyright line. If website content earlier contained an exact copyright string, use it verbatim with no year added; otherwise write "© BrandName. All rights reserved." with no year.
+3. ${formInHero
+      ? 'The lead form already exists inside the hero from Part 1 — do NOT add a second form anywhere in this part.'
+      : 'MANDATORY LEAD FORM (NO POPUPS): Design a custom, responsive HTML form in the Contact/Form section. It MUST contain the required fields above, the form tag MUST have id="contact-form", and it must be INLINE (never in a popup).'}
+4. After all sections${formInHero ? '' : ' and the form'}, write a complete, beautiful custom <footer> tag: logo image \`<img src="{{LOGO_URL}}" alt="Logo" class="h-14 w-auto object-contain">\`, contact info line (phone & email), simple social icons, and a copyright line. If website content earlier contained an exact copyright string, use it verbatim with no year added; otherwise write "© BrandName. All rights reserved." with no year.
 5. After the footer, include the AOS init script: \`<script>AOS.init({duration: 1000, once: true});</script>\`
 6. Then close \`</body>\` and \`</html>\`. This MUST be the very last thing you write — the document must be 100% complete and valid.
-7. 📱 Mobile-first responsive classes throughout. Keep copy punchy (1-2 sentences per paragraph) so you comfortably finish within budget — an unfinished document is a failure even if it looks good so far.
+7. CRITICAL CTA BEHAVIOR: Every single "Call to Action" button in this part MUST have \`href="#contact-form"\`. Do not use "#contact" or "#form".
+8. 📱 Mobile-first responsive classes throughout. Keep copy punchy (1-2 sentences per paragraph) so you comfortably finish within budget — an unfinished document is a failure even if it looks good so far.
 `);
 
   return lines.join('\n');
@@ -975,13 +1204,23 @@ const generateLandingPageContent = async (input) => {
   const sectionsPart2 = recipe.middleSections.slice(3);
 
   // Resolve form from DB / scrape / fallback
-  const { formHTML, placement, fieldCount, source } = resolveForm(input);
+  const { fields, submitLabel, placement, fieldCount, source } = resolveForm(input);
+
+  // 🔧 FIX: this flag now actually drives where the form gets written.
+  const formInHero = placement === 'in-hero';
+
+  // Completely randomize whether the standalone form section is written in Part 1 (top half) or Part 2 (bottom half).
+  // 80% chance the standalone form is placed in Part 1 (top half) to ensure high visibility.
+  const formInPart1 = formInHero || Math.random() > 0.2;
 
   logger.info(`[AI] Generate | Business:${input.businessName} | ColorMode:${recipe.colorMode.id} | Sections:${recipe.middleSections.length + 2} (2-pass) | Form:${source}(${fieldCount} fields) | Placement:${placement} | Token:${chaosToken}`);
 
   const systemPrompt = buildSystemPrompt(chaosToken);
 
-  let userPromptPart1 = buildUserPromptPart1(input, recipe, sectionsPart1, sectionsPart2.length);
+  let userPromptPart1 = buildUserPromptPart1(
+    input, recipe, sectionsPart1, sectionsPart2.length,
+    { formInHero, formInPart1, fields, submitLabel, placement }
+  );
   if (input.templateHtml) {
     let prevHtml = '';
     if (typeof input.templateHtml === 'string') {

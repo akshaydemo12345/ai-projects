@@ -119,6 +119,7 @@ const GrapesEditor = () => {
   // Publish
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
@@ -307,7 +308,7 @@ const GrapesEditor = () => {
       d.querySelectorAll('.swiper-wrapper').forEach(w => (w as HTMLElement).removeAttribute('style'));
       d.querySelectorAll('.swiper-container').forEach(c => c.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden'));
       dbContent = d.body.innerHTML;
-      
+
       // Fix for older pages corrupted with leaked validation script text
       dbContent = dbContent.replace(/'; \} \}\); \} document\.readyState === 'loading'\?document\.addEventListener\('DOMContentLoaded',init\):init\(\); \}\)\(\);/g, '');
     } catch (e) { }
@@ -431,6 +432,9 @@ const GrapesEditor = () => {
         .replace(/LOGO_URL_PLACEHOLDER/g, currentPage.logoUrl || '')
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
+
+      // ─── Map body styles to GrapesJS wrapper for all templates ───
+      finalStyles = finalStyles.replace(/(^|\s|\})body\s*\{/g, '$1body, [data-gjs-type="wrapper"], .gjs-dashed {');
 
       // ─── Inject template CSS FIRST into canvas <iframe> ───
       // (branding-vars must come AFTER template-styles so it wins the cascade)
@@ -602,16 +606,71 @@ const GrapesEditor = () => {
               }
             }
 
-            // Handle custom FAQ toggles (e.g. Travel template)
-            const faqHead = e.target.closest('.faq-head, .v2-faq-summary');
+            // Handle custom FAQ toggles (e.g. Healthcare, Travel, Law templates)
+            const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .faq-item-head, .faq-item, .hc7-faq-item-head, .hc7-faq-item');
             if (faqHead && !faqHead.closest('details')) {
-              const item = faqHead.parentElement;
-              if (item && item.classList.contains('faq-item')) {
-                const allItems = document.querySelectorAll('.faq-item');
+              const item = faqHead.closest('.faq-item, .hc7-faq-item');
+              if (item) {
+                const allItems = document.querySelectorAll('.faq-item, .hc7-faq-item');
                 allItems.forEach(el => {
                   if (el !== item) el.classList.remove('active');
                 });
                 item.classList.toggle('active');
+              }
+            }
+
+            // ── Handle Doctors Slider (hc7-doc-prev / hc7-doc-next) ──
+            const docPrev = e.target.closest('.hc7-doc-prev');
+            const docNext = e.target.closest('.hc7-doc-next');
+            if (docPrev || docNext) {
+              const grid = document.querySelector('.hc7-doctor-grid') as HTMLElement;
+              if (grid) {
+                const cards = grid.querySelectorAll('.hc7-doctor-card');
+                if (cards.length) {
+                  let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                  const w = window.innerWidth;
+                  const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                  const maxIdx = Math.max(0, cards.length - visible);
+                  if (docNext) {
+                    curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                  } else {
+                    curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                  }
+                  grid.setAttribute('data-index', String(curIdx));
+                  const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+                  const moveAmount = (cardWidth + 24) * curIdx;
+                  grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+                }
+              }
+            }
+
+            // ── Handle Testimonial Slider (hc7-testimonial-prev / hc7-testimonial-next / hc7-testimonial-dots) ──
+            const testPrev = e.target.closest('.hc7-testimonial-prev');
+            const testNext = e.target.closest('.hc7-testimonial-next');
+            const testDot = e.target.closest('.hc7-testimonial-dots span');
+            if (testPrev || testNext || testDot) {
+              const slides = document.querySelectorAll('.hc7-testimonial-slide');
+              const dots = document.querySelectorAll('.hc7-testimonial-dots span');
+              if (slides.length) {
+                let curSlide = 0;
+                slides.forEach((s, idx) => { if (s.classList.contains('active')) curSlide = idx; });
+                if (testDot) {
+                  const dotsArr = Array.from(dots);
+                  curSlide = dotsArr.indexOf(testDot as any);
+                  if (curSlide < 0) curSlide = 0;
+                } else if (testNext) {
+                  curSlide = (curSlide + 1) % slides.length;
+                } else if (testPrev) {
+                  curSlide = (curSlide - 1 + slides.length) % slides.length;
+                }
+                slides.forEach((s, idx) => {
+                  if (idx === curSlide) s.classList.add('active');
+                  else s.classList.remove('active');
+                });
+                dots.forEach((d, idx) => {
+                  if (idx === curSlide) d.classList.add('active');
+                  else d.classList.remove('active');
+                });
               }
             }
 
@@ -2665,13 +2724,67 @@ const GrapesEditor = () => {
         const canvasDoc = editor.Canvas.getDocument();
         if (canvasDoc) {
           canvasDoc.addEventListener('click', (e: any) => {
-            // ── Travel-03: Destination slider arrow buttons ──
-            const canvasWin = editor.Canvas.getWindow() as any;
-            if (canvasWin?.t03DestSwiper) {
-              if (e.target.closest('.dest-prev')) {
-                canvasWin.t03DestSwiper.slidePrev();
-              } else if (e.target.closest('.dest-next')) {
-                canvasWin.t03DestSwiper.slideNext();
+            // ── Healthcare 07 Sliders & FAQ in Canvas ──
+            const docPrev = e.target.closest('.hc7-doc-prev');
+            const docNext = e.target.closest('.hc7-doc-next');
+            if (docPrev || docNext) {
+              const grid = canvasDoc.querySelector('.hc7-doctor-grid') as HTMLElement;
+              if (grid) {
+                const cards = grid.querySelectorAll('.hc7-doctor-card');
+                if (cards.length) {
+                  let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                  const w = canvasDoc.defaultView?.innerWidth || 1200;
+                  const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                  const maxIdx = Math.max(0, cards.length - visible);
+                  if (docNext) {
+                    curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                  } else {
+                    curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                  }
+                  grid.setAttribute('data-index', String(curIdx));
+                  const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+                  const moveAmount = (cardWidth + 24) * curIdx;
+                  grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+                }
+              }
+            }
+
+            const testPrev = e.target.closest('.hc7-testimonial-prev');
+            const testNext = e.target.closest('.hc7-testimonial-next');
+            const testDot = e.target.closest('.hc7-testimonial-dots span');
+            if (testPrev || testNext || testDot) {
+              const slides = canvasDoc.querySelectorAll('.hc7-testimonial-slide');
+              const dots = canvasDoc.querySelectorAll('.hc7-testimonial-dots span');
+              if (slides.length) {
+                let curSlide = 0;
+                slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+                if (testDot) {
+                  const dotsArr = Array.from(dots);
+                  curSlide = dotsArr.indexOf(testDot as any);
+                  if (curSlide < 0) curSlide = 0;
+                } else if (testNext) {
+                  curSlide = (curSlide + 1) % slides.length;
+                } else if (testPrev) {
+                  curSlide = (curSlide - 1 + slides.length) % slides.length;
+                }
+                slides.forEach((s: any, idx: number) => {
+                  if (idx === curSlide) s.classList.add('active');
+                  else s.classList.remove('active');
+                });
+                dots.forEach((d: any, idx: number) => {
+                  if (idx === curSlide) d.classList.add('active');
+                  else d.classList.remove('active');
+                });
+              }
+            }
+
+            const hc7FaqHead = e.target.closest('.hc7-faq-item-head, .hc7-faq-item');
+            if (hc7FaqHead) {
+              const item = hc7FaqHead.closest('.hc7-faq-item');
+              if (item) {
+                const wasActive = item.classList.contains('active');
+                canvasDoc.querySelectorAll('.hc7-faq-item').forEach((el: any) => el.classList.remove('active'));
+                if (!wasActive) item.classList.add('active');
               }
             }
 
@@ -2824,7 +2937,7 @@ const GrapesEditor = () => {
               overflow-x: hidden;
             }
             /* FORCE ALL ANIMATED ELEMENTS TO BE VISIBLE IN THE EDITOR */
-            [data-aos], .fade-up, .opacity-0 {
+            [data-aos], [data-reveal], .fade-up, .opacity-0 {
               opacity: 1 !important;
               transform: none !important;
               visibility: visible !important;
@@ -3499,6 +3612,108 @@ const GrapesEditor = () => {
         }
       }
 
+      // 3. Handle FAQ Toggle when selected in Editor
+      let currentModel: any = model;
+      let faqWrapper: any = null;
+      while (currentModel) {
+        const classes = currentModel.getClasses?.() || [];
+        if (classes.includes('hc7-faq-item') || classes.includes('faq-item')) {
+          faqWrapper = currentModel;
+          break;
+        }
+        currentModel = currentModel.parent();
+      }
+      if (faqWrapper) {
+        const el = faqWrapper.getEl();
+        if (el) {
+          const wasActive = el.classList.contains('active');
+          const doc = el.ownerDocument;
+          doc.querySelectorAll('.hc7-faq-item, .faq-item').forEach((f: any) => f.classList.remove('active'));
+          if (!wasActive) el.classList.add('active');
+        }
+      }
+
+      // 4. Handle Doctors Slider Arrow Click when selected in Editor
+      let docNavModel: any = model;
+      let isDocPrev = false;
+      let isDocNext = false;
+      while (docNavModel) {
+        const classes = docNavModel.getClasses?.() || [];
+        if (classes.includes('hc7-doc-prev')) { isDocPrev = true; break; }
+        if (classes.includes('hc7-doc-next')) { isDocNext = true; break; }
+        docNavModel = docNavModel.parent();
+      }
+      if (isDocPrev || isDocNext) {
+        const doc = docNavModel.getEl()?.ownerDocument;
+        if (doc) {
+          const grid = doc.querySelector('.hc7-doctor-grid') as HTMLElement;
+          if (grid) {
+            const cards = grid.querySelectorAll('.hc7-doctor-card');
+            if (cards.length) {
+              let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+              const w = doc.defaultView?.innerWidth || 1200;
+              const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+              const maxIdx = Math.max(0, cards.length - visible);
+              if (isDocNext) {
+                curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+              } else {
+                curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+              }
+              grid.setAttribute('data-index', String(curIdx));
+              const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+              const moveAmount = (cardWidth + 24) * curIdx;
+              grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+            }
+          }
+        }
+      }
+
+      // 5. Handle Testimonial Slider Nav when selected in Editor
+      let testNavModel: any = model;
+      let isTestPrev = false;
+      let isTestNext = false;
+      let isTestDot = false;
+      while (testNavModel) {
+        const classes = testNavModel.getClasses?.() || [];
+        const parentClasses = testNavModel.parent()?.getClasses?.() || [];
+        if (classes.includes('hc7-testimonial-prev')) { isTestPrev = true; break; }
+        if (classes.includes('hc7-testimonial-next')) { isTestNext = true; break; }
+        if (testNavModel.get('tagName')?.toLowerCase() === 'span' && parentClasses.includes('hc7-testimonial-dots')) {
+          isTestDot = true;
+          break;
+        }
+        testNavModel = testNavModel.parent();
+      }
+      if (isTestPrev || isTestNext || isTestDot) {
+        const doc = testNavModel.getEl()?.ownerDocument;
+        if (doc) {
+          const slides = doc.querySelectorAll('.hc7-testimonial-slide');
+          const dots = doc.querySelectorAll('.hc7-testimonial-dots span');
+          if (slides.length) {
+            let curSlide = 0;
+            slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+            if (isTestDot) {
+              const el = testNavModel.getEl();
+              const dotsArr = Array.from(dots);
+              curSlide = dotsArr.indexOf(el as any);
+              if (curSlide < 0) curSlide = 0;
+            } else if (isTestNext) {
+              curSlide = (curSlide + 1) % slides.length;
+            } else if (isTestPrev) {
+              curSlide = (curSlide - 1 + slides.length) % slides.length;
+            }
+            slides.forEach((s: any, idx: number) => {
+              if (idx === curSlide) s.classList.add('active');
+              else s.classList.remove('active');
+            });
+            dots.forEach((d: any, idx: number) => {
+              if (idx === curSlide) d.classList.add('active');
+              else d.classList.remove('active');
+            });
+          }
+        }
+      }
+
       // Restore Swiper Pagination if wiped by GrapesJS re-render
       const swiperContainer = model.is('swiper-container') ? model : model.closest('[data-gjs-type="swiper-container"]');
       if (swiperContainer) {
@@ -3632,6 +3847,26 @@ const GrapesEditor = () => {
       htmlWithScripts += `\n<script>\n${js}\n</script>`;
     }
 
+    // --- FRONTEND SIMULATION: Inject CTA Scroll Script ---
+    // Instead of modifying the backend AI generator, we inject this frontend patch 
+    // into the HTML right before saving it to the database.
+    if (!htmlWithScripts.includes('cta-smooth-scroll')) {
+      htmlWithScripts += `\n<script id="cta-smooth-scroll">
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a, button').forEach(function(btn) {
+    if (btn.type === 'submit' || btn.closest('form')) return;
+    btn.removeAttribute('href'); // Remove # so no URL changes
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var formElement = document.querySelector('form#contact-form') || document.querySelector('form');
+      if (formElement) formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+});
+</script>`;
+    }
+
     const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
       metaDescription: metaDesc,
@@ -3738,14 +3973,25 @@ const GrapesEditor = () => {
   };
 
   // ─── Preview ───
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!page?.slug) {
       toast.error('Please save your page first to generate a slug');
       return;
     }
+    
+    try {
+      toast.loading('Saving latest changes for preview...', { id: 'preview-save' });
+      await handleSave();
+      toast.dismiss('preview-save');
+    } catch (e) {
+      toast.dismiss('preview-save');
+      console.warn('Auto-save before preview failed:', e);
+    }
+    
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
     const token = page.previewToken ? `?token=${page.previewToken}` : '';
     const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
+    
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };
@@ -3948,7 +4194,7 @@ const GrapesEditor = () => {
     if (!editorRef.current) return;
 
     if (!project?.isVerified) {
-      toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+      toast.error('Please verify that the required plugin is installed and configured correctly before publishing the page.', {
         style: { color: '#ef4444' }
       });
       return;
@@ -4429,7 +4675,7 @@ const GrapesEditor = () => {
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={downloadHtml}
+            onClick={() => setDownloadModalOpen(true)}
             disabled={!hasSaved}
             style={{
               ...outlineBtn,
@@ -4453,7 +4699,7 @@ const GrapesEditor = () => {
               onChange={(e) => {
                 const val = e.target.value as any;
                 if (val === 'published' && !project?.isVerified) {
-                  toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+                  toast.error('Please verify that the required plugin is installed and configured correctly before publishing the page.', {
                     style: { color: '#ef4444' }
                   });
                   // Revert the select element visually
@@ -5373,6 +5619,59 @@ const GrapesEditor = () => {
         </div>
       )}
 
+      {/* ═══════════════ DOWNLOAD HTML MODAL ═══════════════ */}
+      {downloadModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 450, background: '#ffffff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'publishPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc' }}>
+              <h2 style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <DownloadIcon /> Export HTML Package
+              </h2>
+              <button
+                onClick={() => setDownloadModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px', color: '#334155', fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <div style={{ color: '#3b82f6', marginTop: 2 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: '#0f172a', fontSize: 14, fontWeight: 600 }}>Important Note on Forms</h4>
+                  <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+                    The downloaded HTML package contains static files. To make the Contact Form work on your own server, you will need to integrate it with a 3rd-party form processor (like Jotform or Netlify Forms)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                onClick={() => setDownloadModalOpen(false)}
+                style={{ padding: '8px 16px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#475569', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setDownloadModalOpen(false);
+                  downloadHtml();
+                }}
+                style={{ padding: '8px 16px', background: '#059669', border: 'none', color: '#ffffff', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <DownloadIcon /> Proceed to Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* ═══════════════ CODE VIEW MODAL ═══════════════ */}
@@ -5382,7 +5681,7 @@ const GrapesEditor = () => {
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Code Editor</span>
             <div style={{ flex: 1 }} />
             <button onClick={applyCode} style={{ ...modalBtn, background: '#818cf8' }}>Apply Code</button>
-            <button onClick={downloadHtml} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
+            <button onClick={() => setDownloadModalOpen(true)} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
             <button onClick={() => setCodeView(false)} style={{ ...modalBtn, background: '#374151' }}>Close</button>
           </div>
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>

@@ -257,32 +257,50 @@ const PublicLandingPage = () => {
     if (!pageResponse) return '';
     const res = pageResponse as any;
     const meta = res.meta || {};
-    let aiHtml = res.landingPageContent || res.data || (typeof res.content === 'string' ? res.content : res.content?.fullHtml) || '';
-    let aiCss = res.landingPageStyles || res.styles || (typeof res.content === 'object' ? res.content?.fullCss : '') || '';
+    const extractHtmlString = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'string') return val;
+      if (typeof val === 'object') {
+        return val.fullHtml || val.html || val.content || '';
+      }
+      return '';
+    };
+
+    const extractCssString = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'string') return val;
+      if (typeof val === 'object') {
+        return val.fullCss || val.css || val.styles || '';
+      }
+      return '';
+    };
+
+    let rawHtml = extractHtmlString(res.landingPageContent) || extractHtmlString(res.content) || extractHtmlString(res.data);
+    let rawCss = extractCssString(res.landingPageStyles) || extractCssString(res.styles) || extractCssString(res.content) || extractCssString(res.data);
+
     const BRAND_PRIMARY = res.primaryColor || meta?.primaryColor || '#7c3aed';
     const BRAND_SECONDARY = res.secondaryColor || meta?.secondaryColor || '#6366f1';
 
-    // ─── Replace ALL placeholders in both HTML and CSS ───
-    // IMPORTANT: RGB placeholders must use actual "R, G, B" strings, not hex!
-    // Otherwise rgba(SECONDARY_RGB_PLACEHOLDER, 0.2) breaks with rgba(#1a3a2e, 0.2)
     let pRgb = '124, 58, 237';
     let sRgb = '99, 102, 241';
     try { pRgb = hexToRgbStr(BRAND_PRIMARY); } catch (e) { }
     try { sRgb = hexToRgbStr(BRAND_SECONDARY); } catch (e) { }
 
-    const applyPlaceholders = (str: string) => str
-      .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_PRIMARY)
-      .replace(/SECONDARY_COLOR_PLACEHOLDER/g, BRAND_SECONDARY)
-      .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
-      .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
-      // Also clean up any circular var() references that may have been saved
-      .replace(/:\s*var\(--primary\)/g, `: ${BRAND_PRIMARY}`)
-      .replace(/:\s*var\(--secondary\)/g, `: ${BRAND_SECONDARY}`)
-      .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
-      .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
+    const applyPlaceholders = (str: string) => {
+      if (!str || typeof str !== 'string') return '';
+      return str
+        .replace(/PRIMARY_COLOR_PLACEHOLDER/g, BRAND_PRIMARY)
+        .replace(/SECONDARY_COLOR_PLACEHOLDER/g, BRAND_SECONDARY)
+        .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
+        .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
+        .replace(/:\s*var\(--primary\)/g, `: ${BRAND_PRIMARY}`)
+        .replace(/:\s*var\(--secondary\)/g, `: ${BRAND_SECONDARY}`)
+        .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:56px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
+        .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
+    };
 
-    aiHtml = applyPlaceholders(aiHtml);
-    aiCss = applyPlaceholders(aiCss);
+    let aiHtml = applyPlaceholders(rawHtml);
+    let aiCss = applyPlaceholders(rawCss);
 
     // ─── Also replace any remaining var(--primary) references with real color fallback ───
     const BRAND_COLOR = BRAND_PRIMARY;
@@ -302,8 +320,15 @@ const PublicLandingPage = () => {
       <base href="${window.location.origin}/" />
       <title>${extractedTitle}</title>
       ${extractedFavicon}
-      ${aiHtml.includes('swiper') ? `
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+      <style id="ai-animation-fallback-fix">
+        /* Fallback: if elements have opacity:0 or data-reveal but no script runs to animate them, force them visible */
+        [data-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+          visibility: visible !important;
+        }
+      </style>
       <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
       <style id="swiper-custom-fixes">
         .swiper-button-next:after, .swiper-button-prev:after { content: '' !important; display: block !important; width: 100%; height: 100%; background-color: var(--swiper-navigation-color, currentColor); -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
@@ -319,7 +344,7 @@ const PublicLandingPage = () => {
               setTimeout(initAllSwipers, 100);
               return;
             }
-            document.querySelectorAll('.swiper-container').forEach(function(self) {
+            document.querySelectorAll('.swiper-container, .swiper, [data-gjs-type="swiper-container"], .slider, .clients-slider, .testimonial-slider, .testimonials-slider, .review-slider, .reviews-slider, .carousel').forEach(function(self) {
               if (self.__swiper) return;
               
               // Clean up remnants from GrapesJS editor state so Swiper can init fresh
@@ -368,13 +393,22 @@ const PublicLandingPage = () => {
                   pauseOnMouseEnter: bool('autoplayPauseOnMouseEnter'), reverseDirection: bool('autoplayReverseDirection')
                 };
               }
-              if (bool('navigation')) {
-                props.navigation = { nextEl: self.querySelector('.swiper-button-next'), prevEl: self.querySelector('.swiper-button-prev') };
+              var nextNav = self.querySelector('.swiper-button-next, .slider-btn.next, .dest-next, .next') || (self.parentElement ? self.parentElement.querySelector('.swiper-button-next, .slider-btn.next, .dest-next, .next') : null);
+              var prevNav = self.querySelector('.swiper-button-prev, .slider-btn.prev, .dest-prev, .prev') || (self.parentElement ? self.parentElement.querySelector('.swiper-button-prev, .slider-btn.prev, .dest-prev, .prev') : null);
+              if (bool('navigation') !== false || nextNav || prevNav) {
+                props.navigation = {
+                  nextEl: nextNav || self.querySelector('.swiper-button-next'),
+                  prevEl: prevNav || self.querySelector('.swiper-button-prev')
+                };
               }
-              props.pagination = {
-                el: self.querySelector('.swiper-pagination'), type: getAttr('pagination') || 'bullets',
-                clickable: true
-              };
+              var pagEl = self.querySelector('.swiper-pagination') || (self.parentElement ? self.parentElement.querySelector('.swiper-pagination') : null);
+              if (pagEl) {
+                props.pagination = {
+                  el: pagEl,
+                  type: getAttr('pagination') || 'bullets',
+                  clickable: true
+                };
+              }
               if (bool('scrollbar')) {
                 props.scrollbar = { el: self.querySelector('.swiper-scrollbar'), hide: true };
               }
@@ -437,7 +471,7 @@ const PublicLandingPage = () => {
             initAllSwipers();
           }
         })();
-      </script>` : ''}
+      </script>
       ${aiHtml.includes('<details') ? `
       <style id="faq-custom-fixes">
         details { cursor: pointer; }
@@ -553,6 +587,31 @@ const PublicLandingPage = () => {
             });
           }, 2000);
 
+          // ─── FORCE CTA BUTTONS TO SCROLL TO FORM (FOOLPROOF INTERCEPT) ───
+          document.addEventListener('click', function(e) {
+            var el = e.target.closest('a, button');
+            if (!el) return;
+            
+            var href = el.getAttribute('href');
+            var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form') || 
+                        (el.tagName === 'BUTTON' && el.type !== 'submit') ||
+                        (el.classList.contains('btn-primary') || el.classList.contains('btn-secondary') || el.classList.contains('cta-btn'));
+                        
+            if (isCTA && !el.closest('form')) {
+              e.preventDefault();
+              e.stopPropagation(); // Stop any other scripts from causing a reload
+              
+              var formSection = document.getElementById('contact-form') || document.querySelector('form');
+              if (formSection) {
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight form briefly to draw attention
+                formSection.style.transition = 'box-shadow 0.3s';
+                formSection.style.boxShadow = '0 0 0 4px var(--primary)';
+                setTimeout(function() { formSection.style.boxShadow = 'none'; }, 1000);
+              }
+            }
+          }, true); // Use Capture phase to intercept first!
+
           // ─── Tab interaction (law01 and any tab-based template) ───
           function initTabs() {
             // Enable JS-driven styles (animate-up, tab CSS etc)
@@ -617,35 +676,86 @@ const PublicLandingPage = () => {
               });
             });
 
-            // ─── Custom FAQ toggles (e.g. Travel template & AI generation) ───
+            // ─── Custom FAQ & Accordion Toggles ───
             document.addEventListener('click', function(e) {
-              const faqHead = e.target.closest('.faq-head, .v2-faq-summary, .accordion-header');
-              if (faqHead && !faqHead.closest('details')) {
-                const item = faqHead.closest('.faq-item, .accordion-item');
-                if (item) {
-                  const allItems = document.querySelectorAll('.faq-item, .accordion-item');
-                  
-                  const content = item.querySelector('.faq-body, .accordion-content');
-                  const icon = faqHead.querySelector('.accordion-icon, .fa-chevron-down');
-                  const isOpen = content && !content.classList.contains('hidden');
+              if (e.target.closest('details')) return;
+              
+              // Ignore Healthcare 07 elements as templates07.ts has its own native script
+              if (e.target.closest('.hc7-faq-item, .hc7-faq-item-head, .hc7-doc-prev, .hc7-doc-next, .hc7-testimonial-prev, .hc7-testimonial-next, .hc7-testimonial-dots, .hc7-day, .hc7-time')) {
+                return;
+              }
 
+              let accHeader = e.target.closest(
+                '.accordion-header, .faq-header, .faq-head, .v2-faq-summary, ' +
+                '.faq-item-head, .accordion-button, .faq-question, ' +
+                '.accordion-toggle, .lf10-faq-item-head'
+              );
+              let item = null;
+              let content = null;
+
+              if (!accHeader) {
+                const genericHeader = e.target.closest('.cursor-pointer, [cursor="pointer"]');
+                if (genericHeader && genericHeader.parentElement) {
+                  const sibling = genericHeader.nextElementSibling;
+                  if (sibling && (sibling.classList.contains('hidden') || sibling.classList.contains('faq-body') || sibling.classList.contains('accordion-content') || genericHeader.querySelector('svg, i'))) {
+                    accHeader = genericHeader;
+                    item = genericHeader.parentElement;
+                    content = sibling;
+                  }
+                }
+              }
+
+              if (!accHeader) {
+                const faqItemTarget = e.target.closest('.faq-item, .accordion-item');
+                if (faqItemTarget) {
+                  item = faqItemTarget;
+                  accHeader = item.querySelector('.faq-head, .faq-header, .faq-item-head, .accordion-header, .cursor-pointer') || item;
+                }
+              }
+
+              if (accHeader) {
+                if (!item) item = accHeader.closest('.accordion-item, .faq-item, .border-b, [class*="border"]');
+                if (item) {
+                  const wasActive = item.classList.contains('active');
+                  const allItems = document.querySelectorAll('.accordion-item, .faq-item');
+                  
                   allItems.forEach(function(el) {
                     if (el !== item) {
                       el.classList.remove('active');
-                      const c = el.querySelector('.faq-body, .accordion-content');
+                      const c = el.querySelector('.accordion-content, .faq-body, .faq-answer');
                       if (c) c.classList.add('hidden');
-                      const i = el.querySelector('.accordion-icon, .fa-chevron-down');
-                      if (i) i.classList.remove('rotate-180');
+                      const i = el.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus');
+                      if (i) {
+                        i.classList.remove('rotate-180');
+                        if (i.classList.contains('fa-minus')) { i.classList.remove('fa-minus'); i.classList.add('fa-plus'); }
+                      }
                     }
                   });
-                  item.classList.toggle('active');
-                  
-                  if (!isOpen && content) {
-                    content.classList.remove('hidden');
-                    if (icon) icon.classList.add('rotate-180');
-                  } else if (isOpen && content) {
-                    content.classList.add('hidden');
-                    if (icon) icon.classList.remove('rotate-180');
+
+                  if (wasActive) {
+                    item.classList.remove('active');
+                  } else {
+                    item.classList.add('active');
+                  }
+
+                  if (!content) content = item.querySelector('.accordion-content, .faq-body, .faq-answer') || accHeader.nextElementSibling;
+                  if (content) {
+                    if (item.classList.contains('active')) {
+                      content.classList.remove('hidden');
+                    } else {
+                      content.classList.add('hidden');
+                    }
+                  }
+
+                  const icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg, i');
+                  if (icon) {
+                    if (item.classList.contains('active')) {
+                      icon.classList.add('rotate-180');
+                      if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                    } else {
+                      icon.classList.remove('rotate-180');
+                      if (icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                    }
                   }
                 }
               }
@@ -782,7 +892,7 @@ const PublicLandingPage = () => {
 
   return (
     <div className="w-full h-screen overflow-hidden bg-white">
-      <iframe key={blobUrl} src={blobUrl} title="Preview" className="w-full h-full border-none" />
+      <iframe srcDoc={documentToWrite} title="Preview" className="w-full h-full border-none" />
     </div>
   );
 };

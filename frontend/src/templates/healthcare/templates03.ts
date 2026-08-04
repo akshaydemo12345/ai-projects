@@ -452,7 +452,7 @@ export const healthcare03Html = `
 <!-- ═══ HEADER ═══ -->
 <header class="p3-header">
   <div class="p3-header-inner">
-    <a class="p3-logo" href="#">
+    <a class="p3-logo" href="javascript:void(0);">
       LOGO_PLACEHOLDER
     </a>
    
@@ -717,7 +717,7 @@ export const healthcare03Html = `
           <p class="p3-doctor-name">Dr Khalid Ahmed</p>
           <p class="p3-doctor-spec">Interventional Cardiology</p>
           <p class="p3-doctor-exp">22 years · Former NHS Consultant</p>
-          <a class="p3-doctor-book" href="#">Book Consultation</a>
+          <a class="p3-doctor-book" href="javascript:void(0);">Book Consultation</a>
         </div>
       </div>
       <div class="p3-doctor-card">
@@ -728,7 +728,7 @@ export const healthcare03Html = `
           <p class="p3-doctor-name">Dr Sonia Patel</p>
           <p class="p3-doctor-spec">Oncology & Genomics</p>
           <p class="p3-doctor-exp">18 years · Harvard-trained</p>
-          <a class="p3-doctor-book" href="#">Book Consultation</a>
+          <a class="p3-doctor-book" href="javascript:void(0);">Book Consultation</a>
         </div>
       </div>
       <div class="p3-doctor-card">
@@ -739,7 +739,7 @@ export const healthcare03Html = `
           <p class="p3-doctor-name">Dr Eva Larsson</p>
           <p class="p3-doctor-spec">Neurosurgery</p>
           <p class="p3-doctor-exp">15 years · Oxford DPhil</p>
-          <a class="p3-doctor-book" href="#">Book Consultation</a>
+          <a class="p3-doctor-book" href="javascript:void(0);">Book Consultation</a>
         </div>
       </div>
       <div class="p3-doctor-card">
@@ -750,7 +750,7 @@ export const healthcare03Html = `
           <p class="p3-doctor-name">Dr Emmanuel Okonkwo</p>
           <p class="p3-doctor-spec">Endocrinology & Diabetes</p>
           <p class="p3-doctor-exp">12 years · King's College</p>
-          <a class="p3-doctor-book" href="#">Book Consultation</a>
+          <a class="p3-doctor-book" href="javascript:void(0);">Book Consultation</a>
         </div>
       </div>
     </div>
@@ -887,30 +887,18 @@ export const healthcare03Html = `
       </div>
       <p class="p3-footer-desc">Precision medicine for the modern era. Research-backed, data-driven, deeply human.</p>
       <div class="p3-footer-socials">
-        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">public</span></a>
-        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">science</span></a>
-        <a class="p3-footer-s-btn" href="#"><span class="material-symbols-outlined">video_camera_front</span></a>
+        <a class="p3-footer-s-btn" href="javascript:void(0);"><span class="material-symbols-outlined">public</span></a>
+        <a class="p3-footer-s-btn" href="javascript:void(0);"><span class="material-symbols-outlined">science</span></a>
+        <a class="p3-footer-s-btn" href="javascript:void(0);"><span class="material-symbols-outlined">video_camera_front</span></a>
       </div>
     </div>
     <div class="p3-footer-col">
       <h5>Specialties</h5>
-      <nav class="p3-footer-links">
-        <a href="#">Cardiovascular</a>
-        <a href="#">Oncology</a>
-        <a href="#">Neuroscience</a>
-        <a href="#">Endocrinology</a>
-        <a href="#">Genomics</a>
-      </nav>
+      
     </div>
     <div class="p3-footer-col">
       <h5>Patients</h5>
-      <nav class="p3-footer-links">
-        <a href="#">Book Appointment</a>
-        <a href="#">Patient Portal</a>
-        <a href="#">Insurance Info</a>
-        <a href="#">Research Trials</a>
-        <a href="#">Patient Stories</a>
-      </nav>
+      
     </div>
     <div class="p3-footer-col">
       <h5>Contact</h5>
