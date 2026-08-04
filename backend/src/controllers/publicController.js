@@ -12,6 +12,7 @@ const fs = require('fs');
 const { validateForm } = require('../utils/dynamicValidator');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { dispatchWebhook } = require('../services/webhookQueue');
 
 /**
  * Normalizes script content - wraps in script tags if not already present
@@ -1658,6 +1659,52 @@ exports.handleFormSubmission = async (req, res, next) => {
           }).catch(err => console.error('User Email Error:', err));
         }
       }
+    }
+
+    // ─── WEBHOOK DISPATCH (ASYNC) ──────────────────────────────────────────
+    try {
+      let formSchema = schema 
+        || (lead.pageId ? await FormSchema.findOne({ page_id: lead.pageId }) : null)
+        || (lead.projectId ? await FormSchema.findOne({ project_id: lead.projectId }) : null);
+
+      if ((!formSchema || !formSchema.webhook || !formSchema.webhook.url) && lead.projectId) {
+        const fallbackSchema = await FormSchema.findOne({
+          project_id: lead.projectId,
+          "webhook.enabled": true,
+          "webhook.url": { $ne: "" }
+        });
+        if (fallbackSchema) {
+          formSchema = fallbackSchema;
+        }
+      }
+
+      if (formSchema && formSchema.webhook && formSchema.webhook.enabled) {
+        logger.info(`🚀 [WEBHOOK] Dispatching webhook for WP/Public lead ${lead._id} to ${formSchema.webhook.url}`);
+        const payload = {
+          event: "form.lead_submitted",
+          leadId: lead._id,
+          projectId: lead.projectId,
+          pageId: lead.pageId,
+          pageSlug: lead.pageSlug,
+          submittedAt: lead.submitted_at || lead.createdAt,
+          leadData: lead.data || {},
+          formData: lead.formData || [],
+          utm: lead.utm || {},
+          meta: lead.meta || {}
+        };
+
+        dispatchWebhook({
+          formId: formSchema._id,
+          leadId: lead._id,
+          webhookConfig: formSchema.webhook,
+          payload,
+          isTest: false
+        }).catch(err => logger.error("❌ [WEBHOOK] Dispatch Queue Error:", err));
+      } else {
+        logger.info(`ℹ️ [WEBHOOK] Webhook skipped for WP/Public lead ${lead._id}. (formSchema found: ${!!formSchema}, enabled: ${formSchema?.webhook?.enabled})`);
+      }
+    } catch (webhookErr) {
+      logger.error('❌ [WEBHOOK] Trigger Logic Failed:', webhookErr);
     }
 
     // 6. Resolve Thank You URL (Check Page settings for custom URL)

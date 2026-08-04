@@ -993,10 +993,22 @@ const generateLandingPageContent = async (input) => {
   }
 
   // ── PASS 1: <head> + navbar + hero + first 3 sections. Fresh full budget. ──
+  if (typeof input.onProgress === 'function') {
+    try { await input.onProgress(25, 'Generating Header & Navigation...', 'generating_header'); } catch (e) {}
+  }
+
   const pass1 = await callAIRaw({ messages: [{ role: 'user', content: userPromptPart1 }], systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.95 });
   let rawPart1 = pass1.text.replace(/```html/gi, '').replace(/```/g, '').trim();
 
+  if (typeof input.onProgress === 'function') {
+    try { await input.onProgress(40, 'Writing Hero Section & Headline Copy...', 'writing_hero'); } catch (e) {}
+  }
+
   const userPromptPart2 = buildUserPromptPart2(input, recipe, sectionsPart2, formHTML, placement, sectionsPart1.length);
+
+  if (typeof input.onProgress === 'function') {
+    try { await input.onProgress(50, 'Creating Features & Services Section...', 'creating_features'); } catch (e) {}
+  }
 
   // ── PASS 2: remaining sections + form + footer + closing tags. Fresh full budget. ──
   let pass2 = await callAIRaw({
@@ -1008,6 +1020,10 @@ const generateLandingPageContent = async (input) => {
     systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.85,
   });
   let rawPart2 = pass2.text.replace(/```html/gi, '').replace(/```/g, '').trim();
+
+  if (typeof input.onProgress === 'function') {
+    try { await input.onProgress(60, 'Generating Testimonials & Social Proof...', 'testimonials'); } catch (e) {}
+  }
 
   // Safety net: if PASS 2 itself still got cut off before reaching the
   // footer (rare, since it only has to write ~3 sections + form + footer),

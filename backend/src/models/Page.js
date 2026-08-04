@@ -141,6 +141,15 @@ const pageSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  generationStepText: {
+    type: String,
+    trim: true,
+  },
+  generationStage: {
+    type: String,
+    trim: true,
+    default: 'analyzing',
+  },
   generationError: {
     type: String,
     trim: true,
