@@ -1167,3 +1167,75 @@ export const userApi = {
     });
   },
 };
+
+// --- Forms & Webhooks API ---
+export interface WebhookHeader {
+  key: string;
+  value: string;
+}
+
+export interface WebhookConfig {
+  enabled: boolean;
+  url: string;
+  method: "POST" | "PUT";
+  headers: WebhookHeader[];
+  secret?: string;
+}
+
+export interface WebhookLogItem {
+  _id: string;
+  formId: string;
+  leadId?: string | null;
+  url: string;
+  method: "POST" | "PUT";
+  requestHeaders: Record<string, string>;
+  requestPayload: any;
+  responseStatus: number;
+  responseBody: string;
+  deliveryStatus: "pending" | "success" | "failed";
+  attempts: number;
+  error?: string;
+  idempotencyKey: string;
+  isTest?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const formsApi = {
+  getSchemaByProject: async (projectId: string) => {
+    const res = await apiFetch(`/api/forms/project/${projectId}`);
+    return res.data;
+  },
+  getSchemaByPageSlug: async (slug: string) => {
+    const res = await apiFetch(`/api/forms/page/${slug}`);
+    return res.data;
+  },
+  getSchemaByPageId: async (pageId: string) => {
+    const res = await apiFetch(`/api/forms/by-page-id/${pageId}`);
+    return res.data;
+  },
+  getWebhookConfigAndLogs: async (formSchemaId: string) => {
+    const res = await apiFetch(`/api/forms/${formSchemaId}/webhook`);
+    return res.data as { webhook: WebhookConfig; logs: WebhookLogItem[] };
+  },
+  updateWebhookConfig: async (formSchemaId: string, config: WebhookConfig) => {
+    const res = await apiFetch(`/api/forms/${formSchemaId}/webhook`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+    return res.data;
+  },
+  testWebhook: async (formSchemaId: string, payload?: Partial<WebhookConfig>) => {
+    const res = await apiFetch(`/api/forms/${formSchemaId}/webhook/test`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+    return res;
+  },
+  resendWebhook: async (logId: string) => {
+    const res = await apiFetch(`/api/forms/webhook-logs/${logId}/resend`, {
+      method: 'POST',
+    });
+    return res;
+  }
+};

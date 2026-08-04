@@ -7,6 +7,7 @@ const { validateForm, normalizeData } = require('../utils/dynamicValidator');
 const logger = require('../utils/logger');
 const { syncFormSchema } = require('../utils/schemaSync');
 const emailService = require('../services/emailService');
+const { dispatchWebhook } = require('../services/webhookQueue');
 
 /**
  * @desc    Create a new dynamic lead from a landing page form
@@ -21,14 +22,17 @@ exports.createLead = async (req, res) => {
     logger.info(`[LEAD] New Submission: ${pageSlug} (${pageId})`);
 
     // 1. Fetch Page and Dynamic Schema
-    const page = await Page.findById(pageId) || await Page.findOne({ slug: pageSlug });
-    let schema = await FormSchema.findOne({
-      $or: [
-        { page_id: pageId },
-        { project_id: projectId, page_slug: pageSlug },
-        { page_slug: pageSlug }
-      ].filter(obj => Object.values(obj)[0])
-    });
+    const page = (pageId && /^[0-9a-fA-F]{24}$/.test(pageId)) ? await Page.findById(pageId) : await Page.findOne({ slug: pageSlug });
+    const targetPageId = page ? page._id : (pageId && /^[0-9a-fA-F]{24}$/.test(pageId) ? pageId : null);
+    const targetProjectId = page ? page.projectId : (projectId && /^[0-9a-fA-F]{24}$/.test(projectId) ? projectId : null);
+
+    let schema = null;
+    if (targetPageId) {
+      schema = await FormSchema.findOne({ page_id: targetPageId });
+    }
+    if (!schema && targetProjectId) {
+      schema = await FormSchema.findOne({ project_id: targetProjectId });
+    }
 
     if (!schema || !schema.fields?.length) {
       logger.warn(`❌ [LEAD] No schema found for page: ${pageSlug || pageId}. Triggering auto-sync.`);
@@ -501,6 +505,52 @@ exports.createLead = async (req, res) => {
       }
     } catch (emailErr) {
       logger.error('Email Trigger Logic Failed:', emailErr);
+    }
+
+    // ─── WEBHOOK DISPATCH (ASYNC) ──────────────────────────────────────────
+    try {
+      let formSchema = schema 
+        || (finalPageId ? await FormSchema.findOne({ page_id: finalPageId }) : null)
+        || (finalProjectId ? await FormSchema.findOne({ project_id: finalProjectId }) : null);
+
+      if ((!formSchema || !formSchema.webhook || !formSchema.webhook.url) && finalProjectId) {
+        const fallbackSchema = await FormSchema.findOne({
+          project_id: finalProjectId,
+          "webhook.enabled": true,
+          "webhook.url": { $ne: "" }
+        });
+        if (fallbackSchema) {
+          formSchema = fallbackSchema;
+        }
+      }
+
+      if (formSchema && formSchema.webhook && formSchema.webhook.enabled) {
+        logger.info(`🚀 [WEBHOOK] Dispatching webhook for lead ${lead._id} to ${formSchema.webhook.url}`);
+        const payload = {
+          event: "form.lead_submitted",
+          leadId: lead._id,
+          projectId: lead.projectId,
+          pageId: lead.pageId,
+          pageSlug: lead.pageSlug,
+          submittedAt: lead.submitted_at || lead.createdAt,
+          leadData: lead.data || {},
+          formData: lead.formData || [],
+          utm: lead.utm || {},
+          meta: lead.meta || {}
+        };
+
+        dispatchWebhook({
+          formId: formSchema._id,
+          leadId: lead._id,
+          webhookConfig: formSchema.webhook,
+          payload,
+          isTest: false
+        }).catch(whErr => logger.error('Webhook Dispatch Error:', whErr));
+      } else {
+        logger.info(`ℹ️ [WEBHOOK] Webhook skipped for lead ${lead._id}. (formSchema found: ${!!formSchema}, enabled: ${formSchema?.webhook?.enabled})`);
+      }
+    } catch (webhookErr) {
+      logger.error('Webhook Trigger Logic Failed:', webhookErr);
     }
 
     return res.status(201).json({

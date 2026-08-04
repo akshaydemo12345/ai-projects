@@ -22,7 +22,17 @@ const FormSchema = new mongoose.Schema({
     ref: "Page",
     required: true
   },
-  fields: [FormFieldSchema]
+  fields: [FormFieldSchema],
+  webhook: {
+    enabled: { type: Boolean, default: false },
+    url: { type: String, default: "", trim: true },
+    method: { type: String, enum: ["POST", "PUT"], default: "POST" },
+    headers: [{
+      key: { type: String, trim: true },
+      value: { type: String, trim: true }
+    }],
+    secret: { type: String, default: "" }
+  }
 }, { timestamps: true });
 
 // Ensure one schema per page

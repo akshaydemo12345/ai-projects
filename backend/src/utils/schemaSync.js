@@ -42,15 +42,26 @@ const syncFormSchema = async (page) => {
 
     logger.info(`📝 [SCHEMA] Syncing ${fields.length} fields for page ${page._id} (${page.title})`);
 
-    // Ensure we don't have a unique index block by doing a clean find-and-modify
-    // specifically on the page_id which is our new primary key for schemas.
+    let existingSchema = await FormSchema.findOne({ page_id: page._id });
+    let updateFields = {
+      project_id: page.projectId,
+      fields,
+      updatedAt: Date.now()
+    };
+
+    if (!existingSchema && page.projectId) {
+      const projWebhookSchema = await FormSchema.findOne({
+        project_id: page.projectId,
+        'webhook.url': { $ne: '' }
+      });
+      if (projWebhookSchema && projWebhookSchema.webhook) {
+        updateFields.webhook = projWebhookSchema.webhook;
+      }
+    }
+
     const schema = await FormSchema.findOneAndUpdate(
       { page_id: page._id },
-      { 
-        project_id: page.projectId,
-        fields,
-        updatedAt: Date.now() 
-      },
+      updateFields,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

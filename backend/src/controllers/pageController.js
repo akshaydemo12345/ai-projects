@@ -492,7 +492,7 @@ exports.getPageGenerationStatus = async (req, res, next) => {
   try {
     const { id, projectId } = req.params;
     let page = await Page.findOne({ _id: id, userId: req.user._id, projectId })
-      .select('_id title slug status generationProgress generationError previewUrl createdAt updatedAt')
+      .select('_id title slug status generationProgress generationStepText generationStage generationError previewUrl createdAt updatedAt')
       .lean();
 
     if (!page) return res.status(404).json({ status: 'fail', message: 'Page not found' });
@@ -516,6 +516,8 @@ exports.getPageGenerationStatus = async (req, res, next) => {
         slug: page.slug,
         status: page.status,
         generationProgress: page.generationProgress,
+        generationStepText: page.generationStepText || '',
+        generationStage: page.generationStage || 'analyzing',
         generationError: page.generationError || null,
         previewUrl: page.previewUrl,
       },
@@ -681,8 +683,9 @@ exports.createPage = async (req, res, next) => {
       previewToken: crypto.randomBytes(16).toString('hex'),
     });
 
-    // Set initial progress
+    // Set initial progress and step status
     page.generationProgress = 5;
+    page.generationStepText = 'Analyzing requirements & preparing page layout...';
     await page.save();
 
     // Increment pageCount
@@ -783,8 +786,14 @@ async function runPageGeneration(opts) {
 
     if (isAIRequested) {
       logger.info(`Starting AI generation for page ${page._id} (Template: ${isTemplateWithPrompt})`);
-      // update progress: AI generation started
-      try { await Page.findByIdAndUpdate(page._id, { generationProgress: 10 }).exec(); } catch (e) { /* non-fatal */ }
+      // update progress: AI generation started - Brand Identity & Colors
+      try {
+        await Page.findByIdAndUpdate(page._id, {
+          generationProgress: 10,
+          generationStepText: 'Extracting Brand Identity & Typography...',
+          generationStage: 'brand_identity',
+        }).exec();
+      } catch (e) { /* non-fatal */ }
 
       // If it's a template, we pass a hint to the AI service
       // Merge scraped fonts with any fonts explicitly passed from the frontend
@@ -821,7 +830,14 @@ async function runPageGeneration(opts) {
         scrapedData: project.scrapedData || {},
         // Fonts: merge incoming (from form) with scraped (from websiteProfile) — incoming takes priority
         scrapedFonts: (resolvedFonts.bodyFont || resolvedFonts.headingFont) ? resolvedFonts : null,
-        scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null
+        scrapedTheme: project.websiteProfile?.theme || project.scrapedData?.theme || null,
+        onProgress: async (p, t, stage) => {
+          try {
+            const updateObj = { generationProgress: p, generationStepText: t };
+            if (stage) updateObj.generationStage = stage;
+            await Page.findByIdAndUpdate(page._id, updateObj).exec();
+          } catch (e) {}
+        }
       };
 
       const generatedResult = await AIService.generateLandingPageContent(aiInput);
@@ -835,14 +851,20 @@ async function runPageGeneration(opts) {
           seo: generatedResult.seo || {},
           aiUsage: generatedResult.aiUsage
         };
-        try { await Page.findByIdAndUpdate(page._id, { generationProgress: 60 }).exec(); } catch (e) { }
+        try {
+          await Page.findByIdAndUpdate(page._id, {
+            generationProgress: 65,
+            generationStepText: 'Building High-Converting CTA & Lead Form...',
+            generationStage: 'cta_lead_form',
+          }).exec();
+        } catch (e) { }
       }
     }
 
     const frontendUrl = config.frontend?.url || process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'http://localhost:5000';
     const previewUrl = `${frontendUrl}/preview?page=${page._id}&token=${page.previewToken}`;
 
-    // 8. Update Page with AI Results
+    // ── STEP 1: Process AI Content & Styles ──
     if (aiResponse.fullHtml && aiResponse.fullHtml.trim().length > 100) {
       let processedHtml = aiResponse.fullHtml;
 
@@ -874,12 +896,18 @@ async function runPageGeneration(opts) {
         page.styles = brandingStyles + (aiResponse.fullCss || '');
       }
 
-      // Set landingPageContent and landingPageStyles
       page.landingPageContent = processedHtml;
       page.landingPageStyles = page.styles;
 
+      try {
+        await Page.findByIdAndUpdate(page._id, {
+          generationProgress: 75,
+          generationStepText: 'Creating Responsive Footer & Links...',
+          generationStage: 'footer',
+        }).exec();
+      } catch (e) { }
+
     } else {
-      // AI generation essentially failed or skipped, keep initial content/styles
       console.log('⚠️ AI response too short or empty, or generation skipped. Preserving initial content');
       page.content = initialContent || page.content;
       page.styles = (initialStyles || page.styles || '') + `
@@ -890,12 +918,44 @@ async function runPageGeneration(opts) {
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
-      // Set landingPageContent and landingPageStyles
       page.landingPageContent = initialLandingPageContent || (typeof page.content === 'string' ? page.content : (page.content?.fullHtml || ''));
       page.landingPageStyles = initialLandingPageStyles || page.styles;
     }
 
-    // 8.1 Replace Unsplash/Picsum/Freepik/Placeholder images with getimg.ai API generated images
+    // ── STEP 2: Other Setup (SEO, Meta, Form Schema Sync) ──
+    page.seo = aiResponse.seo || {};
+
+    // Title & Meta tags sync
+    if ((page.title === 'Untitled Page' || page.title === 'AI Generated Page') && page.seo.title) {
+      page.title = page.seo.title.split('|')[0].trim();
+    }
+    if (!page.metaTitle && page.seo.title) {
+      page.metaTitle = page.seo.title;
+    }
+    if (!page.metaDescription && page.seo.description) {
+      page.metaDescription = page.seo.description;
+    }
+    page.previewUrl = previewUrl;
+
+    // Sync Form Schema Immediately
+    await syncFormSchema(page);
+
+    try {
+      await Page.findByIdAndUpdate(page._id, {
+        generationProgress: 80,
+        generationStepText: 'Optimizing SEO & Metadata...',
+        generationStage: 'optimizing_seo',
+      }).exec();
+    } catch (e) { }
+
+    // ── STEP 3 (AT THE END): Image Generation & Processing ──
+    try {
+      await Page.findByIdAndUpdate(page._id, {
+        generationProgress: 90,
+        generationStepText: 'Finalizing Page & Ready...',
+        generationStage: 'finalizing',
+      }).exec();
+    } catch (e) { }
     let generatedImageCount = 0;
     try {
       const ImageGenerationService = require('../services/imageGenerationService');
@@ -903,9 +963,9 @@ async function runPageGeneration(opts) {
       const subIndustryToUse = project.scrapedData?.subIndustry || page.industry || 'General';
       const industryToUse = page.industry || project.industry || 'General';
 
-      logger.info(`[ImageGenerationService] Processing page images for project industry: "${industryToUse}", sub-industry: "${subIndustryToUse}"`);
+      logger.info(`[ImageGenerationService] Processing page images at end for industry: "${industryToUse}", sub-industry: "${subIndustryToUse}"`);
 
-      // 1. Process page.content if it is a string (AI generation HTML)
+      // 1. Process page.content string
       if (typeof page.content === 'string') {
         const result = await ImageGenerationService.replacePlaceholdersInHtml(
           page.content,
@@ -913,9 +973,10 @@ async function runPageGeneration(opts) {
           subIndustryToUse
         );
         page.content = result.html;
+        page.landingPageContent = result.html;
         generatedImageCount += result.imageCount || 0;
       }
-      // 2. Process page.content if it is an object (template generation data)
+      // 2. Process page.content object
       else if (page.content && typeof page.content === 'object') {
         if (page.content.fullHtml) {
           const result = await ImageGenerationService.replacePlaceholdersInHtml(
@@ -924,6 +985,7 @@ async function runPageGeneration(opts) {
             subIndustryToUse
           );
           page.content.fullHtml = result.html;
+          page.landingPageContent = result.html;
           generatedImageCount += result.imageCount || 0;
         }
         if (page.content.html) {
@@ -937,23 +999,13 @@ async function runPageGeneration(opts) {
         }
       }
 
-      // 3. Process page.landingPageContent (full HTML page stored for preview/publish)
-      if (page.landingPageContent && typeof page.landingPageContent === 'string') {
-        const result = await ImageGenerationService.replacePlaceholdersInHtml(
-          page.landingPageContent,
-          industryToUse,
-          subIndustryToUse
-        );
-        page.landingPageContent = result.html;
-        generatedImageCount += result.imageCount || 0;
-
-        // Re-extract updated CSS to fix stock images in CSS rules
-        const styleRegex = new RegExp('<style[^>]*>([\\\\s\\\\S]*?)<\\\\/style>', 'gi');
-        const styleMatches = page.landingPageContent.match(styleRegex);
-        if (styleMatches) {
-          const tagRegex = new RegExp('<\\\\/?style[^>]*>', 'gi');
-          const extractedCss = styleMatches.map(s => s.replace(tagRegex, '')).join('\n');
-          const brandingStyles = `
+      // Re-extract updated CSS to fix stock images in CSS rules
+      const styleRegex = new RegExp('<style[^>]*>([\\\\s\\\\S]*?)<\\\\/style>', 'gi');
+      const styleMatches = page.landingPageContent.match(styleRegex);
+      if (styleMatches) {
+        const tagRegex = new RegExp('<\\\\/?style[^>]*>', 'gi');
+        const extractedCss = styleMatches.map(s => s.replace(tagRegex, '')).join('\n');
+        const brandingStyles = `
 :root {
   --primary: ${page.primaryColor};
   --secondary: ${page.secondaryColor};
@@ -961,23 +1013,18 @@ async function runPageGeneration(opts) {
   --button-gradient: linear-gradient(135deg, ${page.primaryColor}, ${page.secondaryColor});
 }
 `;
-          page.styles = brandingStyles + extractedCss;
-          page.landingPageStyles = page.styles;
-        }
+        page.styles = brandingStyles + extractedCss;
+        page.landingPageStyles = page.styles;
       }
-      // update progress after images processed
-      try { await Page.findByIdAndUpdate(page._id, { generationProgress: 85 }).exec(); } catch (e) { }
+
+      try { await Page.findByIdAndUpdate(page._id, { generationProgress: 98, generationStepText: 'Image processing complete. Finalizing page...' }).exec(); } catch (e) { }
     } catch (imgErr) {
       logger.error('[ImageGenerationService] Error during image replacement:', imgErr);
     }
 
-    page.seo = aiResponse.seo || {};
-
-    // 8.2 Update Page with Cumulative AI Usage and History
+    // ── STEP 4: Update Cumulative AI Usage & Finalize ──
     if (aiResponse.aiUsage || generatedImageCount > 0) {
       const currentUsage = page.aiUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0, cost: 0, imageCount: 0, imageCost: 0 };
-
-      // cost of images: $0.002 per image
       const newImageCost = generatedImageCount * 0.002;
       const newTextCost = aiResponse.aiUsage?.cost || 0;
 
@@ -1003,29 +1050,11 @@ async function runPageGeneration(opts) {
       });
     }
 
-    // If we have a generic title, try to use the AI-generated one
-    if ((page.title === 'Untitled Page' || page.title === 'AI Generated Page') && page.seo.title) {
-      page.title = page.seo.title.split('|')[0].trim();
-    }
-
-    // Sync metaTitle and metaDescription if they are empty but AI generated SEO data
-    if (!page.metaTitle && page.seo.title) {
-      page.metaTitle = page.seo.title;
-    }
-    if (!page.metaDescription && page.seo.description) {
-      page.metaDescription = page.seo.description;
-    }
-
-    page.previewUrl = previewUrl;
-    // final touches
-    try { await Page.findByIdAndUpdate(page._id, { generationProgress: 98 }).exec(); } catch (e) { }
     page.status = 'draft';
     page.generationProgress = 100;
+    page.generationStepText = 'Page ready!';
     page.generationError = undefined;
     await page.save();
-
-    // 8.5 Sync Form Schema Immediately
-    await syncFormSchema(page);
 
     // 9. Generation finished. There is no request to respond to anymore —
     // the client already has the pageId and is polling .../pages/:id/status,

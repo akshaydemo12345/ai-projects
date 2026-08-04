@@ -303,9 +303,9 @@ async function replacePlaceholdersInHtml(
   subIndustry
 ) {
 
-  // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = true;
-  // 👆👆👆
+  // 👇 Enable live AI images by default; can be disabled with DISABLE_AI_IMAGES=true in .env
+  const DISABLE_AI_IMAGES_FOR_TESTING = process.env.DISABLE_AI_IMAGES === 'true';
+  // 👆
 
   if (!htmlContent || typeof htmlContent !== 'string') {
     return { html: htmlContent, imageCount: 0 };
@@ -401,30 +401,38 @@ async function replacePlaceholdersInHtml(
     );
 
     /**
-     * GENERATE ALL
+     * GENERATE ALL IN PARALLEL WITH FAILSAFE FALLBACKS
      */
-    const results = [];
-    for (const img of imagesToReplace) {
-      let newUrl;
-      if (DISABLE_AI_IMAGES_FOR_TESTING) {
-        newUrl = getLocalFallbackImage(industry, htmlContent);
-      } else {
-        const prompt = getPromptForIndustry(industry, subIndustry, img.context);
-        const width = 800;
-        const height = 600;
-        newUrl = await generateGetImgUrl(prompt, width, height);
-      }
+    const results = await Promise.all(
+      imagesToReplace.map(async (img) => {
+        try {
+          let newUrl;
+          if (DISABLE_AI_IMAGES_FOR_TESTING) {
+            newUrl = getLocalFallbackImage(industry, htmlContent);
+          } else {
+            const prompt = getPromptForIndustry(industry, subIndustry, img.context);
+            const width = 800;
+            const height = 600;
+            newUrl = await generateGetImgUrl(prompt, width, height);
+          }
 
-      results.push({
-        type: img.type,
-        element: img.element,
-        originalSrc: img.src,
-        newUrl
-      });
-
-      // Add a small delay between requests to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+          return {
+            type: img.type,
+            element: img.element,
+            originalSrc: img.src,
+            newUrl: newUrl || getLocalFallbackImage(industry, htmlContent)
+          };
+        } catch (err) {
+          logger.error(`[ImageGenerationService] Error generating image: ${err.message}`);
+          return {
+            type: img.type,
+            element: img.element,
+            originalSrc: img.src,
+            newUrl: getLocalFallbackImage(industry, htmlContent)
+          };
+        }
+      })
+    );
 
     /**
      * APPLY URLS
@@ -473,30 +481,34 @@ async function replacePlaceholdersInHtml(
       }
     }
 
+    let remainingResults = [];
     if (remainingUrls.length > 0) {
       logger.info(`[ImageGenerationService] Found ${remainingUrls.length} background/inline images`);
 
-      const remainingResults = [];
-      for (const item of remainingUrls) {
-        const context = {
-          isHero: item.isHero,
-          sectionClass: item.isHero ? 'hero' : ''
-        };
-        let newUrl;
-        if (DISABLE_AI_IMAGES_FOR_TESTING) {
-          newUrl = getLocalFallbackImage(industry, htmlContent);
-        } else {
-          const prompt = getPromptForIndustry(industry, subIndustry, context);
-          const width = 1200;
-          const height = 800;
-          newUrl = await generateGetImgUrl(prompt, width, height);
-        }
+      remainingResults = await Promise.all(
+        remainingUrls.map(async (item) => {
+          try {
+            const context = {
+              isHero: item.isHero,
+              sectionClass: item.isHero ? 'hero' : ''
+            };
+            let newUrl;
+            if (DISABLE_AI_IMAGES_FOR_TESTING) {
+              newUrl = getLocalFallbackImage(industry, htmlContent);
+            } else {
+              const prompt = getPromptForIndustry(industry, subIndustry, context);
+              const width = 1200;
+              const height = 800;
+              newUrl = await generateGetImgUrl(prompt, width, height);
+            }
 
-        remainingResults.push({ originalUrl: item.url, newUrl });
-
-        // Add a small delay between requests to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+            return { originalUrl: item.url, newUrl: newUrl || getLocalFallbackImage(industry, htmlContent) };
+          } catch (err) {
+            logger.error(`[ImageGenerationService] Error generating background image: ${err.message}`);
+            return { originalUrl: item.url, newUrl: getLocalFallbackImage(industry, htmlContent) };
+          }
+        })
+      );
 
       remainingResults.forEach(res => {
         if (res && res.newUrl) {

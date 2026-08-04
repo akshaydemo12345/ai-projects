@@ -885,6 +885,8 @@ const CreatePagePage = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [createdPage, setCreatedPage] = useState<any>(null);
   const [apiProgress, setApiProgress] = useState<number | undefined>(undefined);
+  const [apiStatusText, setApiStatusText] = useState<string | undefined>(undefined);
+  const [apiStage, setApiStage] = useState<string | undefined>(undefined);
   const pollRef = useRef<number | null>(null);
   const [faviconBroken, setFaviconBroken] = useState(false);
 
@@ -1118,6 +1120,12 @@ const CreatePagePage = () => {
         const statusRes = await pagesApi.getStatus(id!, pageId);
         if (typeof statusRes?.generationProgress === "number") {
           setApiProgress(statusRes.generationProgress);
+        }
+        if (statusRes?.generationStepText) {
+          setApiStatusText(statusRes.generationStepText);
+        }
+        if (statusRes?.generationStage) {
+          setApiStage(statusRes.generationStage);
         }
 
         if (statusRes?.status === "draft") {
@@ -1536,6 +1544,8 @@ ${enrichedContent}
       isComplete={isComplete}
       onFinished={handleLoaderFinished}
       externalProgress={apiProgress}
+      externalStatus={apiStatusText}
+      externalStage={apiStage}
       error={loaderError}
       onDismissError={() => {
         if (pollRef.current) {
