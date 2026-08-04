@@ -321,6 +321,14 @@ const PublicLandingPage = () => {
       <title>${extractedTitle}</title>
       ${extractedFavicon}
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+      <style id="ai-animation-fallback-fix">
+        /* Fallback: if elements have opacity:0 or data-reveal but no script runs to animate them, force them visible */
+        [data-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+          visibility: visible !important;
+        }
+      </style>
       <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
       <style id="swiper-custom-fixes">
         .swiper-button-next:after, .swiper-button-prev:after { content: '' !important; display: block !important; width: 100%; height: 100%; background-color: var(--swiper-navigation-color, currentColor); -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }

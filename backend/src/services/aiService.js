@@ -901,7 +901,7 @@ You MUST design at an "Awwwards-winning" luxury agency level. Generic designs ar
 - 🚨 FORBIDDEN CSS (CRITICAL): NEVER use \`clip-path\`, \`polygon\`, or \`diagonal-slice\`. Clip paths break the GrapesJS editor UI rendering! Keep containers as standard rectangles with rounded corners (unless LAYOUT RECIPE says no border-radius).
 - 🚨 NO WOW.JS: DO NOT use the \`wow.js\` library or \`wow\` classes. ONLY use AOS for scroll animations!
 - MICRO-INTERACTIONS: Every button and card MUST have a premium hover state (e.g. \`transition-all duration-700 ease-out hover:-translate-y-2 hover:shadow-2xl\`).
-- SCROLL ANIMATIONS: Include the AOS library via CDN (\`<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">\` and \`<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>\`) and use \`data-aos="fade-up"\` / \`data-aos="zoom-in"\` with different delays. Initialize AOS: \`<script>AOS.init({duration: 1000, once: true});</script>\`.
+- SCROLL ANIMATIONS: ONLY use AOS for scroll animations (data-aos="fade-up"). 🚨 CRITICAL: NEVER write your own custom CSS for animations (e.g. NEVER write [data-reveal] or opacity: 0 rules). Custom opacity: 0 rules break the editor! ALWAYS use AOS via CDN (<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ TECHNICAL REQUIREMENTS:
