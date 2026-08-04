@@ -1,192 +1,205 @@
-// Master Template — Travel 04 (City Weekends Edition)
-// 100% Matching the provided screenshot layout and urban aesthetics
+// Master Template — Travel 04 (Consulting Redesign)
+// 100% Matching the provided Consulting screenshot layout
 
 export const travel04Styles = `
 :root {
   --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
+  --text-dark: #111827;
+  --text-gray: #4b5563;
+  --bg-light: #f9fafb;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; color: #111; line-height: 1.6; overflow-x: hidden; }
 
-.container { max-width: 1240px; margin: 0 auto; padding: 0 1.5rem; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #fff; color: var(--text-gray); line-height: 1.6; overflow-x: hidden; }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
 img { max-width: 100%; display: block; }
 a { text-decoration: none; color: inherit; transition: 0.3s; }
+h1, h2, h3, h4, h5, h6 { color: var(--text-dark); line-height: 1.2; }
 
-/* Navigation */
-.nav { padding: 1.5rem 0; background: #fff; border-bottom: 1px solid #f3f4f6; position: sticky; top: 0; z-index: 1000; }
-.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #000; }
-.nav-links { display: flex; flex-wrap: wrap; gap: 2rem; }
-.nav-links a { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: capitalize; }
-.nav-links a:hover { color: var(--primary); }
-.nav-right { display: flex; flex-wrap: wrap; align-items: center; gap: 2rem; }
-.btn-primary { background-color: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); padding: 0.6rem 1.4rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer; }
+/* Top Header */
+.top-header { background: #fff; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+.top-header-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.logo-area { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800; color: var(--text-dark); }
+.logo-icon { color: var(--primary); font-size: 1.8rem; }
+.header-info { display: flex; align-items: center; gap: 2rem; font-size: 0.85rem; }
+.info-item { display: flex; align-items: center; gap: 10px; }
+.info-item i { color: var(--primary); font-size: 1.1rem; }
+.info-text { display: flex; flex-direction: column; }
+.info-text span:first-child { font-weight: 600; color: var(--text-dark); }
+.btn-quote { background: var(--primary); color: #fff; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; transition: opacity 0.3s; }
+.btn-quote:hover { opacity: 0.9; }
 
 /* Hero Section */
-.hero { padding: 6rem 0 10rem; background: #fafafa; }
-.hero-inner { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6rem; align-items: center; }
-.hero-text span { background: var(--primary); color: #000; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 2rem; }
-.hero h1 { font-size: 4.5rem; font-weight: 800; line-height: 1.05; margin-bottom: 2rem; letter-spacing: -2px; }
-.hero p { font-size: 1.2rem; color: #64748b; margin-bottom: 4rem; max-width: 500px; }
+.hero { position: relative; padding: 8rem 0; text-align: center; color: #fff; background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=1920'); background-size: cover; background-position: center; }
+.hero-content { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; }
+.hero h1 { font-size: 4rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; }
+.hero p { font-size: 1.25rem; font-weight: 300; margin-bottom: 2.5rem; }
+.hero-btns { display: flex; gap: 1rem; justify-content: center; }
+.btn-solid { background: var(--primary); color: #fff; padding: 1rem 2rem; border-radius: 4px; font-weight: 600; }
+.btn-outline { background: #fff; color: var(--primary); padding: 1rem 2rem; border-radius: 4px; font-weight: 600; }
 
-/* Hero Form */
-.hero-form { background: #fff; padding: 2.5rem; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 20px 40px rgba(0,0,0,0.03); }
-.hero-form h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 2rem; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-.form-group label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 0.5rem; letter-spacing: 0.5px; }
-.form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; font-weight: 600; }
-.btn-submit { grid-column: span 2; background: var(--btn-bg, var(--primary)); color: var(--btn-text, #000); border: none; padding: 1.2rem; border-radius: 6px; font-weight: 800; text-transform: uppercase; margin-top: 1rem; cursor: pointer; }
+/* Features Section */
+.features { padding: 5rem 0; background: #fff; }
+.features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; text-align: center; }
+.feature-icon { width: 60px; height: 60px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1.5rem; }
+.features h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+.features p { font-size: 0.9rem; color: var(--text-gray); }
 
-/* Hero Visual */
-.hero-visual { position: relative; }
-.hero-img-wrap { border-radius: 24px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.1); }
-.hero-img-wrap img { width: 100%; height: 600px; object-fit: cover; }
-.weather-badge { position: absolute; top: 30px; right: 30px; background: #fff; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
-.weather-badge h4 { font-size: 1.5rem; font-weight: 800; }
-.weather-badge span { font-size: 0.7rem; color: #94a3b8; font-weight: 700; }
-.location-badge { position: absolute; bottom: 30px; left: 30px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 0.8rem 1.5rem; border-radius: 30px; font-size: 0.8rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* Our Services */
+.services { padding: 5rem 0; background: var(--primary); color: #fff; }
+.services h2 { color: #fff; font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; text-align: center; }
+.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.service-card { background: transparent; }
+.service-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px 8px 0 0; }
+.service-content { padding: 1.5rem 0; }
+.service-content h3 { color: #fff; font-size: 1.25rem; margin-bottom: 1rem; font-weight: 600; }
+.service-content p { color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 1rem; }
+.service-content a { color: #fff; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.service-content a i { font-size: 0.7rem; }
 
-/* Brands Bar */
-.brands { padding: 4rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
-.brand-grid { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; opacity: 0.4; }
-.brand-grid span { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #64748b; }
+/* Why Choose Us */
+.why-choose { padding: 5rem 0; background: #fff; }
+.why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+.why-img img { border-radius: 8px; }
+.why-content h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem; }
+.why-content p { margin-bottom: 2.5rem; font-size: 1rem; }
+.progress-wrap { margin-bottom: 1.5rem; }
+.progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark); text-transform: uppercase; }
+.progress-bar { width: 100%; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary); }
 
-/* Trending Section */
-.trending { padding: 10rem 0; }
-.section-tag { color: #64748b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 1rem; }
-.section-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; line-height: 1.1; }
-.section-title span { background: var(--primary); padding: 0 10px; border-radius: 4px; }
+/* Testimonials */
+.testimonials { padding: 5rem 0; background: var(--bg-light); text-align: center; }
+.testimonials h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; }
+.test-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; text-align: left; }
+.test-card { background: #fff; padding: 2rem; border-radius: 8px; border: 1px solid #e5e7eb; }
+.test-author { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.test-author img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+.test-info h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+.test-info span { font-size: 0.8rem; color: var(--text-gray); }
+.test-card p { font-size: 0.95rem; font-style: italic; color: var(--text-gray); }
 
-.trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-.trend-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; overflow: hidden; display: grid; grid-template-columns: 1fr 1.2fr; transition: 0.3s; }
-.trend-card:hover { transform: translateY(-10px); box-shadow: 0 30px 60px rgba(0,0,0,0.05); }
-.trend-img { position: relative; height: 100%; }
-.trend-img img { width: 100%; height: 100%; object-fit: cover; }
-.trend-num { position: absolute; top: 15px; left: 15px; background: #000; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; }
-.trend-info { padding: 2.5rem; display: flex; flex-wrap: wrap; flex-direction: column; justify-content: space-between; }
-.trend-info h3 { font-size: 1.5rem; margin-bottom: 1rem; }
-.trend-info p { color: #64748b; font-size: 0.9rem; margin-bottom: 2rem; }
-.trend-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 1.5rem; margin-top: 1rem; padding-top: 1.5rem; }
-.price { font-weight: 800; font-size: 1.1rem; }
-.price span { font-size: 0.7rem; color: #94a3b8; margin-right: 5px; }
-.btn-view { color: var(--primary); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid transparent; }
-.btn-view:hover { border-color: var(--primary); }
+/* Stats */
+.stats { background: #1e3a8a; /* Darker blue for stats */ padding: 4rem 0; color: #fff; text-align: center; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+.stat-item h3 { color: #fff; font-size: 3.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+.stat-item p { font-size: 1rem; font-weight: 500; }
 
-/* How It Works (Dark) */
-.how { padding: 10rem 0; background: #000; color: #fff; border-radius: 40px; margin: 0 2rem; }
-.how h2 { font-size: 3.5rem; font-weight: 800; margin-bottom: 5rem; max-width: 600px; line-height: 1.1; }
-.step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem; }
-.step-item { background: rgba(255,255,255,0.05); padding: 3rem; border-radius: 20px; position: relative; }
-.step-num { color: PRIMARY_COLOR_PLACEHOLDER; font-weight: 800; font-size: 0.8rem; margin-bottom: 1.5rem; display: block; }
-.step-item h3 { font-size: 1.5rem; margin-bottom: 1rem; }
-.step-item p { color: #94a3b8; font-size: 0.95rem; }
+/* CTA Form Strip */
+.cta-strip { background: #111827; padding: 3rem 0; color: #fff; text-align: center; }
+.cta-strip p { font-size: 1.1rem; margin-bottom: 2rem; }
+.inline-form { display: flex; justify-content: center; gap: 1rem; max-width: 900px; margin: 0 auto; }
+.inline-form input { flex: 1; padding: 0.85rem; border-radius: 4px; border: none; font-family: inherit; }
+.inline-form button { background: var(--primary); color: #fff; border: none; padding: 0.85rem 2rem; border-radius: 4px; font-weight: 600; cursor: pointer; }
+
+/* Our Projects */
+.projects { padding: 5rem 0; background: #fff; }
+.projects h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; text-align: left; }
+.project-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.project-card { position: relative; overflow: hidden; border-radius: 8px; }
+.project-card img { width: 100%; height: 250px; object-fit: cover; transition: transform 0.5s; }
+.project-card:hover img { transform: scale(1.05); }
+.project-info { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); padding: 1rem; display: flex; justify-content: space-between; align-items: center; transform: translateY(100%); transition: transform 0.3s; }
+.project-card:hover .project-info { transform: translateY(0); }
+.project-info h4 { font-size: 0.9rem; font-weight: 600; }
+.project-info i { color: var(--primary); }
+
+/* Parallax Banner */
+.banner { background-image: linear-gradient(rgba(11, 86, 164, 0.85), rgba(11, 86, 164, 0.85)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1920'); background-size: cover; background-position: center; background-attachment: fixed; padding: 6rem 0; text-align: center; color: #fff; }
+.banner h2 { color: #fff; font-size: 2.5rem; font-weight: 800; max-width: 800px; margin: 0 auto; }
+
+/* Latest News */
+.news { padding: 5rem 0; background: #fff; }
+.news h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; }
+.news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.news-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 1.5rem; }
+.news-date { font-size: 0.8rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem; display: block; text-transform: uppercase; }
+.news-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+.news-card p { font-size: 0.95rem; margin-bottom: 1rem; }
+.news-card a { font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+
+/* Partners */
+.partners { padding: 3rem 0; background: var(--bg-light); border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
+.partner-grid { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 2rem; }
+.partner-grid img { height: 40px; opacity: 0.6; filter: grayscale(100%); transition: 0.3s; }
+.partner-grid img:hover { opacity: 1; filter: grayscale(0%); }
 
 /* Footer */
-footer { padding: 6rem 0 3rem; background: #000; color: #fff; margin-top: 10rem; }
-.foot-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4rem; margin-bottom: 3rem; }
-.foot-links { display: flex; flex-wrap: wrap; gap: 2rem; }
-.foot-links a { font-size: 0.8rem; color: #94a3b8; font-weight: 600; }
-.foot-social { display: flex; flex-wrap: wrap; gap: 1rem; }
-.social-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 0.8rem; }
-
-/* Creative Vibe Panels */
-.vibes { padding: 10rem 0; background: #fff; }
-.vibe-container { display: flex; flex-wrap: wrap; gap: 1rem; height: 500px; margin-top: 4rem; }
-.vibe-panel { flex: 1; border-radius: 20px; overflow: hidden; position: relative; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; background: #111; }
-.vibe-panel:hover { flex: 2; }
-.vibe-panel::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1; transition: 0.3s; }
-.vibe-panel:hover::before { background: rgba(0,0,0,0.2); }
-
-.vibe-content { position: absolute; bottom: 40px; left: 40px; right: 40px; z-index: 10; color: #fff; }
-.vibe-content h3 { font-size: 1.8rem; margin-bottom: 1rem; }
-.vibe-content p { font-size: 0.9rem; opacity: 0; transform: translateY(20px); transition: 0.5s 0.2s; }
-.vibe-panel:hover .vibe-content p { opacity: 1; transform: translateY(0); }
-
-.vibe-panel.night { }
-.vibe-panel.culture { }
-.vibe-panel.foodie { }
-
-/* 24-Hour Timeline */
-.timeline-sec { padding: 12rem 0; background: #f9fafb; }
-.timeline-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8rem; align-items: start; }
-.timeline-visual { position: relative; padding-left: 40px; }
-.timeline-line { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e2e8f0; overflow: hidden; }
-.timeline-line::after { 
-    content: ''; position: absolute; top: -100px; left: 0; width: 2px; height: 100px; 
-    background: linear-gradient(to bottom, transparent, var(--primary)); 
-    animation: moveLine 3s infinite linear; 
-}
-
-@keyframes moveLine {
-    0% { top: -100px; }
-    100% { top: 100%; }
-}
-
-.timeline-event { position: relative; margin-bottom: 5rem; }
-.timeline-event::before { content: ''; position: absolute; left: -46px; top: 10px; width: 12px; height: 12px; background: #fff; border: 3px solid var(--primary); border-radius: 50%; z-index: 10; }
-.time { font-weight: 800; font-size: 0.8rem; color: var(--primary); margin-bottom: 1rem; display: block; }
-.event-card { background: #fff; padding: 2.5rem; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
-.event-card h4 { font-size: 1.25rem; margin-bottom: 0.75rem; }
-.event-card p { font-size: 0.9rem; color: #64748b; }
-.event-card.highlight { border-left: 4px solid var(--primary); background: #fff; }
+.footer { background: #111827; color: #9ca3af; padding: 4rem 0 2rem; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 4rem; margin-bottom: 3rem; }
+.footer-logo { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; }
+.footer-logo i { color: var(--primary); }
+.footer-contact p { margin-bottom: 0.5rem; font-size: 0.9rem; }
+.footer h4 { color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; }
+.footer-links { display: flex; flex-direction: column; gap: 0.75rem; }
+.footer-links a { font-size: 0.9rem; }
+.footer-links a:hover { color: #fff; }
+.social-links { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.social-links a { width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; transition: 0.3s; }
+.social-links a:hover { background: var(--primary); }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+.footer-bottom-links { display: flex; gap: 1.5rem; }
 
 @media (max-width: 1024px) {
-  .hero-inner { grid-template-columns: 1fr !important; text-align: center; gap: 4rem; }
-  .hero h1 { font-size: 3.5rem; }
-  .hero p { margin: 0 auto 4rem; }
-  .hero-form { margin: 0 auto; max-width: 500px; }
-  .trend-grid { grid-template-columns: 1fr !important; }
-  .step-grid { grid-template-columns: 1fr 1fr !important; }
-  .vibe-container { flex-direction: column; height: auto; }
-  .vibe-panel { height: 300px; }
-  .vibe-panel:hover { flex: 1; }
-  .vibe-content p { opacity: 1; transform: translateY(0); }
-  .timeline-grid { grid-template-columns: 1fr !important; gap: 4rem; }
+  .hero h1 { font-size: 3rem; }
+  .features-grid, .stats-grid, .project-grid { grid-template-columns: repeat(2, 1fr); }
+  .services-grid, .test-grid, .news-grid { grid-template-columns: repeat(2, 1fr); }
+  .why-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .header-info { display: none; }
+  .hero h1 { font-size: 2.5rem; }
+  .services-grid, .test-grid, .news-grid, .footer-grid { grid-template-columns: 1fr; }
+  .inline-form { flex-direction: column; }
+  .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
 }
 @media (max-width: 640px) {
-  .hero h1 { font-size: 2.8rem; }
-  .form-grid { grid-template-columns: 1fr !important; }
-  .btn-submit { grid-column: span 1; }
-  .step-grid { grid-template-columns: 1fr !important; }
-  .brand-grid { flex-wrap: wrap; gap: 2rem; justify-content: center; }
-  .how h2, .section-title { font-size: 2.5rem; }
-  .foot-top { flex-direction: column; gap: 3rem; text-align: center; }
-  .foot-links { flex-direction: column; gap: 1.5rem; }
+  .features-grid, .stats-grid, .project-grid { grid-template-columns: 1fr; }
+  .hero-btns { flex-direction: column; }
 }
 
-
-  /* Extracted Template Inline Styles */
-  .tpl-templates04-1 { background: var(--primary); color: #000; }
-  .tpl-templates04-2 { color: #64748b; }
-  .tpl-templates04-3 { color: #00ff00; }
-  .tpl-templates04-4 { color: #64748b; }
-  .tpl-templates04-5 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
-  .tpl-templates04-6 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
-  .tpl-templates04-7 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
-  .tpl-templates04-8 { color: var(--secondary); border: 1px solid var(--secondary); border-radius: 2px; }
-  .tpl-templates04-9 { background: var(--primary); color: #000; }
-  .tpl-templates04-10 { background: #fff; color: #000; }
-  .tpl-templates04-11 { border-top: 1px solid #e2e8f0; }
-  .tpl-templates04-12 { color: #64748b; }
-  .tpl-templates04-13 { color: #64748b; }
-  .tpl-templates04-14 { color: #64748b; }
-  .tpl-templates04-15 { color: var(--primary); }
-  .tpl-templates04-16 { color: #fff; }
-  .tpl-templates04-17 { color: #64748b; }
-  .tpl-templates04-18 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+/* Template inline styling classes */
+.tpl-templates04-1 { color: var(--primary); }
+.tpl-templates04-2 { background: var(--primary); }
+.tpl-templates04-3 { color: var(--text-dark); }
+.tpl-templates04-4 { color: #fff; }
 `
 
 export const travel04Html = `
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<header class="nav">
-  <div class="container nav-inner">
-    <div class="logo">LOGO_PLACEHOLDER</div>
-    <div class="nav-right">
-       <a href="javascript:void(0);" class="btn-primary tpl-templates04-1"  >Sign in</a>
-       <a href="javascript:void(0);" class="btn-primary">Get Started</a>
+<!-- Top Header -->
+<header class="top-header">
+  <div class="container top-header-inner">
+    <div class="logo-area">
+      LOGO_PLACEHOLDER
+    </div>
+    <div class="header-info">
+      <div class="info-item">
+        <i class="fa-solid fa-phone"></i>
+        <div class="info-text">
+          <span>1-800-123-4567</span>
+          <span style="color: var(--text-gray);">info@consulting.com</span>
+        </div>
+      </div>
+      <div class="info-item">
+        <i class="fa-solid fa-location-dot"></i>
+        <div class="info-text">
+          <span>8th floor, 379 Hudson St</span>
+          <span style="color: var(--text-gray);">New York, NY 10018</span>
+        </div>
+      </div>
+      <div class="info-item">
+        <i class="fa-regular fa-clock"></i>
+        <div class="info-text">
+          <span>09:00 am - 06:00 pm</span>
+          <span style="color: var(--text-gray);">Mon-Friday</span>
+        </div>
+      </div>
+      <button class="btn-quote">Get A Quote</button>
     </div>
   </div>
 </header>
@@ -194,292 +207,319 @@ export const travel04Html = `
 <main>
   <!-- HERO SECTION -->
   <section class="hero">
-    <div class="container hero-inner">
-      <div class="hero-content">
-        <span>✦ NEW — 24-hour city breaks from $299</span>
-        <h1>Cities that never sleep, weekends that never end.</h1>
-        <p>Curated 48-hour itineraries in the world's most electric cities. Hotels, food, hidden bars — all sorted.</p>
+    <div class="container hero-content">
+      <h1>Experience. Expertise</h1>
+      <p>Comprehensive financial advice and financial services that are tailored to meet your individual needs.</p>
+      <div class="hero-btns">
+        <a href="javascript:void(0);" class="btn-solid">Our Services</a>
+        <a href="javascript:void(0);" class="btn-outline">Request Consultation</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section class="features">
+    <div class="container features-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>Advanced Analytics</h3>
+        <p>Quisque pulvinar libero dolor, quis bibendum eros euismod sit amet. Proin dapibus dictum ex.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-lightbulb"></i></div>
+        <h3>Thought Leadership</h3>
+        <p>Pellentesque non diam euismod metus vehicula metus. Donec sed velit placerat eros vehicula.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-chess-knight"></i></div>
+        <h3>Growth Strategy</h3>
+        <p>Ut id elit ut eros finibus, tempor sed magna. Pellentesque non diam euismod metus velimus.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+        <h3>Savings Time & Money</h3>
+        <p>Pellentesque non diam euismod metus vehicula metus. Donec sed velit placerat eros fermentum.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUR SERVICES -->
+  <section class="services">
+    <div class="container">
+      <h2>Our Services</h2>
+      <div class="services-grid">
+        <div class="service-card">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800" alt="Corporate Finance">
+          <div class="service-content">
+            <h3>Corporate Finance</h3>
+            <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+            <a href="javascript:void(0);"><i class="fa-solid fa-chevron-right"></i> Learn More</a>
+          </div>
+        </div>
+        <div class="service-card">
+          <img src="https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&q=80&w=800" alt="Information Technology">
+          <div class="service-content">
+            <h3>Information Technology</h3>
+            <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+            <a href="javascript:void(0);"><i class="fa-solid fa-chevron-right"></i> Learn More</a>
+          </div>
+        </div>
+        <div class="service-card">
+          <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800" alt="Insurance Consulting">
+          <div class="service-content">
+            <h3>Insurance Consulting</h3>
+            <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+            <a href="javascript:void(0);"><i class="fa-solid fa-chevron-right"></i> Learn More</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY CHOOSE US -->
+  <section class="why-choose">
+    <div class="container why-grid">
+      <div class="why-img">
+        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" alt="Why Choose Us">
+      </div>
+      <div class="why-content">
+        <h2>Why Choose Us</h2>
+        <p>Who we are, how we work, our timeline and our values. Phasellus mauris urna, facilisis vel odio id, ac interdum scelerisque mauris. Phasellus pulvinar elementum ornare. Cras scelerisque eu metus tincidunt euismod.</p>
         
-        <form class="hero-form">
-          <h3>// Book your weekend <span class="tpl-templates04-2" style="font-weight: 400">Plan your city break</span></h3>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" name="full_name" placeholder="Your name" required>
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" name="email_address" placeholder="EMAIL_PLACEHOLDER" required>
-            </div>
-            <div class="form-group">
-              <label>City</label>
-              <select name="city" required><option>Pick a city</option><option>Tokyo</option><option>New York</option><option>London</option></select>
-            </div>
-            <div class="form-group">
-              <label>Travelers</label>
-              <select name="travelers" required><option>1 Traveler</option><option>2 Travelers</option></select>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label>Weekend Of</label>
-              <input type="date" name="travel_date" required>
-            </div>
-            <button type="submit" class="btn-submit">Plan My Weekend →</button>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Income</span>
+            <span>80%</span>
           </div>
-        </form>
-      </div>
-      
-      <div class="hero-visual">
-        <div class="hero-img-wrap">
-          <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800" alt="City Night">
-        </div>
-        <div class="weather-badge">
-           <h4>92°F</h4>
-           <span>Tokyo — Clear Night</span>
-        </div>
-        <div class="location-badge">
-           <i class="fa-solid fa-circle tpl-templates04-3"  style="font-size: 0.5rem"></i>
-           <span>Tokyo Weekend <span class="tpl-templates04-4" style="font-weight: 400">Sat—Sun • From $450</span></span>
-           <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; margin-left: 10px;"></i>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- BRANDS BAR -->
-  <section class="brands">
-    <div class="container brand-grid">
-       <span>FEATURED IN</span>
-       <span>CONDÉ NAST</span>
-       <span>NYTIMES</span>
-       <span>FORBES</span>
-       <span>WIRED</span>
-       <span>MONOCLE</span>
-    </div>
-  </section>
-
-  <!-- TRENDING SECTION -->
-  <section class="trending" id="trending">
-    <div class="container">
-      <span class="section-tag">// Trending Now</span>
-      <h2 class="section-title">Where everyone's <span>going</span> this weekend.</h2>
-      
-      <div class="trend-grid">
-        <div class="trend-card">
-          <div class="trend-img">
-            <img src="https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&q=80&w=600" alt="New York">
-            <div class="trend-num">01</div>
-          </div>
-          <div class="trend-info">
-             <h3>New York <span class="tpl-templates04-5" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">USA</span></h3>
-             <p>Skyline, slices, and the Brooklyn after-hours scene.</p>
-             <div class="trend-footer">
-                <div class="price"><span>From</span> $580</div>
-                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
-             </div>
-          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
         </div>
         
-        <div class="trend-card">
-          <div class="trend-img">
-            <img src="https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&q=80&w=600" alt="London">
-            <div class="trend-num">02</div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Opportunity</span>
+            <span>90%</span>
           </div>
-          <div class="trend-info">
-             <h3>London <span class="tpl-templates04-6" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">UK</span></h3>
-             <p>Markets, museums, and pubs that have outlasted empires.</p>
-             <div class="trend-footer">
-                <div class="price"><span>From</span> $420</div>
-                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
-             </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+        </div>
+        
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Transformation</span>
+            <span>75%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="container">
+      <h2>Testimonials</h2>
+      <div class="test-grid">
+        <div class="test-card">
+          <div class="test-author">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150" alt="Ava Gilbert">
+            <div class="test-info">
+              <h4>Ava Gilbert</h4>
+              <span>Chief Executive Officer, Envato</span>
+            </div>
+          </div>
+          <p>"Ma aci dolores ipsum dolor sit amet, consectetur adipiscing elit. Proin sapien augue, dictum et gravida et, viverra et est."</p>
+        </div>
+        <div class="test-card">
+          <div class="test-author">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150" alt="Kevin Pater">
+            <div class="test-info">
+              <h4>Kevin Pater</h4>
+              <span>Chief Marketing Officer, Envato</span>
+            </div>
+          </div>
+          <p>"Ma aci dolores ipsum dolor sit amet, consectetur adipiscing elit. Proin sapien augue, dictum et gravida et, viverra et est."</p>
+        </div>
+        <div class="test-card">
+          <div class="test-author">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=150" alt="Averi Nelson">
+            <div class="test-info">
+              <h4>Averi Nelson</h4>
+              <span>Chief Executive Officer, Envato</span>
+            </div>
+          </div>
+          <p>"Ma aci dolores ipsum dolor sit amet, consectetur adipiscing elit. Proin sapien augue, dictum et gravida et, viverra et est."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="stat-item">
+        <h3>325</h3>
+        <p>Cases completed</p>
+      </div>
+      <div class="stat-item">
+        <h3>25</h3>
+        <p>Consultants</p>
+      </div>
+      <div class="stat-item">
+        <h3>12</h3>
+        <p>Awards Winning</p>
+      </div>
+      <div class="stat-item">
+        <h3>100%</h3>
+        <p>Satisfied customers</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA STRIP -->
+  <section class="cta-strip">
+    <div class="container">
+      <p>If you need to speak to us about a general query fill in the form below and we will call you back within the same working day.</p>
+      <form class="inline-form">
+        <input type="text" name="name" placeholder="Name (e.g. John Doe) *" required>
+        <input type="email" name="email" placeholder="Email Address *" required>
+        <input type="tel" name="phone" placeholder="Phone Number *" required>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- OUR PROJECTS -->
+  <section class="projects">
+    <div class="container">
+      <h2>Our Projects</h2>
+      <div class="project-grid">
+        <div class="project-card">
+          <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=600" alt="Business growth solutions">
+          <div class="project-info">
+            <h4>Business growth solutions</h4>
+            <i class="fa-solid fa-chevron-right"></i>
           </div>
         </div>
-
-        <div class="trend-card">
-          <div class="trend-img">
-            <img src="https://images.unsplash.com/photo-1508964942454-1a56651d54ac?auto=format&fit=crop&q=80&w=600" alt="Singapore">
-            <div class="trend-num">03</div>
-          </div>
-          <div class="trend-info">
-             <h3>Singapore <span class="tpl-templates04-7" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">SG</span></h3>
-             <p>Hawker stalls by night. Infinity pools by morning.</p>
-             <div class="trend-footer">
-                <div class="price"><span>From</span> $800</div>
-                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
-             </div>
+        <div class="project-card">
+          <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=600" alt="Complex company network">
+          <div class="project-info">
+            <h4>Complex company network</h4>
+            <i class="fa-solid fa-chevron-right"></i>
           </div>
         </div>
-
-        <div class="trend-card">
-          <div class="trend-img">
-            <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=600" alt="Rome">
-            <div class="trend-num">04</div>
+        <div class="project-card">
+          <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=600" alt="Experience in finance">
+          <div class="project-info">
+            <h4>Experience in finance</h4>
+            <i class="fa-solid fa-chevron-right"></i>
           </div>
-          <div class="trend-info">
-             <h3>Rome <span class="tpl-templates04-8" style="font-size: 0.6rem; font-weight: 800; padding: 2px 4px; vertical-align: middle; margin-left: 10px">IT</span></h3>
-             <p>2,000 years of history, one perfect cacio e pepe.</p>
-             <div class="trend-footer">
-                <div class="price"><span>From</span> $510</div>
-                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
-             </div>
+        </div>
+        <div class="project-card">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600" alt="Global consumer insights">
+          <div class="project-info">
+            <h4>Global consumer insights</h4>
+            <i class="fa-solid fa-chevron-right"></i>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CREATIVE SECTION 01: VIBE PANELS -->
-  <section class="vibes">
+  <!-- PARALLAX BANNER -->
+  <section class="banner">
     <div class="container">
-      <span class="section-tag" style="text-align: center; display: block;">// choose your persona</span>
-      <h2 class="section-title" style="text-align: center; margin-bottom: 5rem;">What's your <span>weekend</span> vibe?</h2>
-      <div class="vibe-container">
-        <div class="vibe-panel night" style="position: relative; overflow: hidden;">
-          <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Night Vibe">
-          <div style="position: relative; z-index: 2;">
-           <div class="vibe-content">
-              <h3>The Night Owl</h3>
-              <p>Underground jazz, neon alleys, and sunrise breakfasts. We know where the lights stay on.</p>
-              <a href="javascript:void(0);" class="btn-hero-white tpl-templates04-9"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Nightlife</a>
-           </div>
-           </div>
-          </div>
+      <h2>We are experts in consulting services and solutions</h2>
+    </div>
+  </section>
+
+  <!-- LATEST NEWS -->
+  <section class="news">
+    <div class="container">
+      <h2>Latest News</h2>
+      <div class="news-grid">
+        <div class="news-card">
+          <img src="https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=600" alt="Improve margins and topochen quickly">
+          <span class="news-date">July 18, 2026</span>
+          <h3>Improve margins and topochen quickly</h3>
+          <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+          <a href="javascript:void(0);">Continue reading</a>
         </div>
-        <div class="vibe-panel culture" style="position: relative; overflow: hidden;">
-          <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Culture Vibe">
-          <div style="position: relative; z-index: 2;">
-           <div class="vibe-content">
-              <h3>The Culture Vulture</h3>
-              <p>Hidden galleries, Brutalist landmarks, and centuries of stories told in stone.</p>
-              <a href="javascript:void(0);" class="btn-hero-white tpl-templates04-10"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Arts</a>
-           </div>
-           </div>
-          </div>
+        <div class="news-card">
+          <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=600" alt="Delight customers and operate faster">
+          <span class="news-date">July 18, 2026</span>
+          <h3>Delight customers and operate faster</h3>
+          <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+          <a href="javascript:void(0);">Continue reading</a>
         </div>
-        <div class="vibe-panel foodie" style="position: relative; overflow: hidden;">
-          <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Foodie Vibe">
-          <div style="position: relative; z-index: 2;">
-           <div class="vibe-content">
-              <h3>The Global Foodie</h3>
-              <p>Michelin stars meet street stalls. Every meal is a destination in itself.</p>
-              <a href="javascript:void(0);" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Tastes</a>
-           </div>
-           </div>
-          </div>
+        <div class="news-card">
+          <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&q=80&w=600" alt="Strategy experience and analytical">
+          <span class="news-date">July 17, 2026</span>
+          <h3>Strategy experience and analytical</h3>
+          <p>Phasellus lorem enim, luctus ut velit eget, convallis egestas eros. Sed ornare ligula eget tortor tempus, quis porta tellus dictum.</p>
+          <a href="javascript:void(0);">Continue reading</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CREATIVE SECTION 02: 24-HOUR TIMELINE -->
-  <section class="timeline-sec">
-    <div class="container">
-      <div class="timeline-grid">
-        <div class="timeline-text">
-           <span class="section-tag">// the 48-hour blueprint</span>
-           <h2>A weekend <br>without <br>a single <span>wasted</span> second.</h2>
-           <p style="margin-bottom: 3rem;">Our itineraries are built by architects, chefs, and night-shift poets. Every minute matters.</p>
-           
-           <div class="tpl-templates04-11" style="padding-top: 3rem">
-              <div style="margin-bottom: 2rem;">
-                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ Skip-the-line Access</h4>
-                 <p class="tpl-templates04-12">We handle all reservations and priority entries before you even land.</p>
-              </div>
-              <div style="margin-bottom: 2rem;">
-                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ Curated Secret Maps</h4>
-                 <p class="tpl-templates04-13">Get a digital map with offline markers for spots that don't appear on Google.</p>
-              </div>
-              <div>
-                 <h4 style="font-weight: 800; margin-bottom: 0.5rem;">✦ 24/7 City Concierge</h4>
-                 <p class="tpl-templates04-14">One WhatsApp text away from a table at the city's most exclusive rooftop.</p>
-              </div>
-           </div>
-        </div>
-        <div class="timeline-visual">
-           <div class="timeline-line"></div>
-           <div class="timeline-event">
-              <div class="time">SATURDAY 09:00 AM</div>
-              <div class="event-card">
-                 <h4>The Wake Up Call</h4>
-                 <p>Espresso in a 100-year-old roastery hidden in an alleyway, followed by a private canal tour.</p>
-              </div>
-           </div>
-           <div class="timeline-event">
-              <div class="time">SATURDAY 02:00 PM</div>
-              <div class="event-card">
-                 <h4>The Mid-Day Rush</h4>
-                 <p>Quick skip-the-line access to a private art gallery that only opens twice a month.</p>
-              </div>
-           </div>
-           <div class="timeline-event">
-              <div class="time">SATURDAY 10:00 PM</div>
-              <div class="event-card highlight">
-                 <h4>The Neon Descent</h4>
-                 <p>Access to a legendary speakeasy hidden behind a laundromat door. Password provided.</p>
-              </div>
-           </div>
-           <div class="timeline-event">
-              <div class="time">SUNDAY 11:00 AM</div>
-              <div class="event-card">
-                 <h4>The Skyline Brunch</h4>
-                 <p>Rooftop dining with a 360-degree view of the city's waking architecture.</p>
-              </div>
-           </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="how" id="how">
-    <div class="container">
-      <span class="section-tag tpl-templates04-15"  >// how it works</span>
-      <h2>Three steps. One unforgettable weekend.</h2>
-      
-      <div class="step-grid">
-        <div class="step-item">
-           <span class="step-num">01</span>
-           <h3>Pick a city</h3>
-           <p>Browse 60+ cities with curated 48-hour plans built by locals.</p>
-        </div>
-        <div class="step-item">
-           <span class="step-num">02</span>
-           <h3>Customize</h3>
-           <p>Swap restaurants, add experiences, and book hotels in one tap.</p>
-        </div>
-        <div class="step-item">
-           <span class="step-num">03</span>
-           <h3>Just go</h3>
-           <p>Show up. We handle every reservation, transfer, and surprise.</p>
-        </div>
-      </div>
+  <!-- PARTNERS -->
+  <section class="partners">
+    <div class="container partner-grid">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png" alt="Partner 1">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/1200px-IBM_logo.svg.png" alt="Partner 2">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1920px-Microsoft_logo_%282012%29.svg.png" alt="Partner 3">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Cisco_logo_blue_2016.svg/1200px-Cisco_logo_blue_2016.svg.png" alt="Partner 4">
     </div>
   </section>
 </main>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="container">
-      <div class="foot-top">
-         <div class="logo tpl-templates04-16"  style="font-size: 1.5rem; letter-spacing: 2px">LOGO_PLACEHOLDER</div>
-         <div class="foot-links">
-            <a href="javascript:void(0);">Cities</a>
-            <a href="javascript:void(0);">Guides</a>
-            <a href="javascript:void(0);">Help</a>
-            <a href="javascript:void(0);">Press</a>
-            <a href="javascript:void(0);">Privacy</a>
-         </div>
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">
+          LOGO_PLACEHOLDER
+        </div>
+        <div class="footer-contact">
+          <h4>Contact us</h4>
+          <p>Address: 8th floor, 379 Hudson St, New York, NY 10018</p>
+          <p>Phone: 1-800-123-4567</p>
+          <p>Email: info@consulting.com</p>
+        </div>
       </div>
-      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-         <p class="tpl-templates04-17">© 2026 metro.travel - built for the weekend</p>
-         <div class="foot-social">
-            <div class="social-icon"><i class="fa-brands fa-instagram"></i></div>
-            <div class="social-icon"><i class="fa-brands fa-twitter"></i></div>
-            <div class="social-icon"><i class="fa-brands fa-tiktok"></i></div>
-         </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <div class="footer-links">
+          <a href="javascript:void(0);">About</a>
+          <a href="javascript:void(0);">Contact Us</a>
+          <a href="javascript:void(0);">Terms & Conditions</a>
+          <a href="javascript:void(0);">Privacy Policy</a>
+          <a href="javascript:void(0);">Site Map</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Follow us</h4>
+        <div class="social-links">
+          <a href="javascript:void(0);"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="javascript:void(0);"><i class="fa-brands fa-twitter"></i></a>
+          <a href="javascript:void(0);"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="javascript:void(0);"><i class="fa-brands fa-instagram"></i></a>
+        </div>
       </div>
     </div>
-  </footer>
-
+    
+    <div class="footer-bottom">
+      <p>© 2026 Consulting. All rights reserved.</p>
+      <div class="footer-bottom-links">
+        <a href="javascript:void(0);">About</a>
+        <a href="javascript:void(0);">Contact Us</a>
+        <a href="javascript:void(0);">Terms & Conditions</a>
+        <a href="javascript:void(0);">Privacy Policy</a>
+        <a href="javascript:void(0);">Site Map</a>
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script id="core-interactions">
   (function() {
@@ -539,9 +579,8 @@ export const travel04Html = `
                 wrapper.style.width = '100%';
                 
                 var computed = window.getComputedStyle(input);
-                if (window.getComputedStyle(input.parentElement).display === 'grid') {
-                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
-                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
+                if (window.getComputedStyle(input.parentElement).display === 'grid' || window.getComputedStyle(input.parentElement).display === 'flex') {
+                    // Do nothing for flex in this specific inline form, wrapper handles it
                 }
                 
                 input.parentNode.insertBefore(wrapper, input);
@@ -557,6 +596,7 @@ export const travel04Html = `
               err.style.display = 'block';
               err.style.marginTop = '4px';
               err.style.fontWeight = '500';
+              err.style.textAlign = 'left';
               err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
               input.parentNode.insertBefore(err, input.nextSibling);
             } else {
@@ -576,12 +616,11 @@ export const travel04Html = `
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div class="tpl-templates04-18" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; ">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div style="padding: 20px; text-align: center; color: #fff; width: 100%;"><h3 style="margin: 0 0 10px 0;">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
           }, 1000);
         }
       }
     }, true);
   })();
 </script>
-
 `

@@ -295,7 +295,7 @@ const PublicLandingPage = () => {
         .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
         .replace(/:\s*var\(--primary\)/g, `: ${BRAND_PRIMARY}`)
         .replace(/:\s*var\(--secondary\)/g, `: ${BRAND_SECONDARY}`)
-        .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:40px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
+        .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:56px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
     };
 
@@ -336,7 +336,7 @@ const PublicLandingPage = () => {
               setTimeout(initAllSwipers, 100);
               return;
             }
-            document.querySelectorAll('.swiper-container, .swiper, [data-gjs-type="swiper-container"], .slider, .clients-slider').forEach(function(self) {
+            document.querySelectorAll('.swiper-container, .swiper, [data-gjs-type="swiper-container"], .slider, .clients-slider, .testimonial-slider, .testimonials-slider, .review-slider, .reviews-slider, .carousel').forEach(function(self) {
               if (self.__swiper) return;
               
               // Clean up remnants from GrapesJS editor state so Swiper can init fresh
@@ -578,6 +578,31 @@ const PublicLandingPage = () => {
               el.classList.add("revealed");
             });
           }, 2000);
+
+          // ─── FORCE CTA BUTTONS TO SCROLL TO FORM (FOOLPROOF INTERCEPT) ───
+          document.addEventListener('click', function(e) {
+            var el = e.target.closest('a, button');
+            if (!el) return;
+            
+            var href = el.getAttribute('href');
+            var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form') || 
+                        (el.tagName === 'BUTTON' && el.type !== 'submit') ||
+                        (el.classList.contains('btn-primary') || el.classList.contains('btn-secondary') || el.classList.contains('cta-btn'));
+                        
+            if (isCTA && !el.closest('form')) {
+              e.preventDefault();
+              e.stopPropagation(); // Stop any other scripts from causing a reload
+              
+              var formSection = document.getElementById('contact-form') || document.querySelector('form');
+              if (formSection) {
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight form briefly to draw attention
+                formSection.style.transition = 'box-shadow 0.3s';
+                formSection.style.boxShadow = '0 0 0 4px var(--primary)';
+                setTimeout(function() { formSection.style.boxShadow = 'none'; }, 1000);
+              }
+            }
+          }, true); // Use Capture phase to intercept first!
 
           // ─── Tab interaction (law01 and any tab-based template) ───
           function initTabs() {

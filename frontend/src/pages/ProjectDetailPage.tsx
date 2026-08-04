@@ -2174,7 +2174,7 @@ const ProjectDetailPage = () => {
                       <img src="/assets/wordpress-logo.webp" alt="WP" className="h-4 w-4 object-contain" />
                     ), label: "WP"
                   },
-                  { id: "script" as const, icon: <Code2 className="h-3.5 w-3.5" />, label: "Script" },
+                  // { id: "script" as const, icon: <Code2 className="h-3.5 w-3.5" />, label: "Script" },
                 ]).map((m) => (
                   <button
                     key={m.id}

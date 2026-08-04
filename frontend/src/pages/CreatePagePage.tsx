@@ -1391,7 +1391,7 @@ const CreatePagePage = () => {
   const createPageMutation = useMutation({
     mutationFn: async (page: Partial<LandingPage>) => {
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 180000)
+        setTimeout(() => reject(new Error("Generation timed out. Please try again.")), 480000)
       );
       return Promise.race([pagesApi.create(id!, page), timeoutPromise]) as Promise<LandingPage>;
     },

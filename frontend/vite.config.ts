@@ -22,14 +22,14 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {
         // Centralized proxy configuration - all routes use the same backend URL
-        '/auth': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/user': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/projects': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/pages': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/ai': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/api': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/leads': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
-        '/plugin': { target: backendUrl, changeOrigin: true, timeout: 300000, proxyTimeout: 300000 },
+        '/auth': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/user': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/projects': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/pages': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/ai': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/api': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/leads': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
+        '/plugin': { target: backendUrl, changeOrigin: true, timeout: 480000, proxyTimeout: 480000 },
       }
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
