@@ -268,7 +268,7 @@ export const law04Html = `
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <header class="header">
   <div class="container header-inner">
-    <a href="#" class="logo">
+    <a href="javascript:void(0);" class="logo">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       PROJECT_NAME_PLACEHOLDER
     </a>
@@ -287,7 +287,7 @@ export const law04Html = `
         <svg class="deco-swoosh deco-swoosh-1" viewBox="0 0 100 20"><path d="M0 15 Q 50 -5 100 15"/></svg>
       </div>
       <p>Providing expert legal guidance and compassionate support during your most challenging times. We stand by you.</p>
-      <a href="#contact" class="btn btn-primary">Book Consultation</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Book Consultation</a>
     </div>
     
     <div class="hero-visual">
@@ -336,7 +336,7 @@ export const law04Html = `
       <h2>Experienced Divorce Lawyers By Your Side</h2>
       <p>Navigating family law matters requires a delicate balance of compassion and assertive legal strategy. Our experienced attorneys are dedicated to protecting your interests and achieving the best possible outcome for you and your family.</p>
       <p>We understand that every case is unique. That's why we take the time to listen, understand your goals, and develop a customized legal approach tailored to your specific needs.</p>
-      <a href="#services" class="btn btn-primary" style="margin-top:1rem;">Learn More</a>
+      <a href="javascript:void(0);" class="btn btn-primary" style="margin-top:1rem;">Learn More</a>
     </div>
   </div>
 </section>
@@ -493,7 +493,7 @@ export const law04Html = `
           <span class="blog-meta">Divorce Law</span>
           <h3>Everything You Need to Know About Child Custody</h3>
           <p>Understanding the factors courts consider when determining custody arrangements...</p>
-          <a href="#" class="read-more">Read More</a>
+          <a href="javascript:void(0);" class="read-more">Read More</a>
         </div>
       </div>
       <div class="blog-card">
@@ -502,7 +502,7 @@ export const law04Html = `
           <span class="blog-meta">Asset Division</span>
           <h3>How Business Assets Are Divided in a Divorce</h3>
           <p>A comprehensive guide to protecting your business interests during separation...</p>
-          <a href="#" class="read-more">Read More</a>
+          <a href="javascript:void(0);" class="read-more">Read More</a>
         </div>
       </div>
       <div class="blog-card">
@@ -511,7 +511,7 @@ export const law04Html = `
           <span class="blog-meta">Legal Advice</span>
           <h3>5 Common Mistakes to Avoid During Proceedings</h3>
           <p>Protect yourself by avoiding these frequent pitfalls in family law cases...</p>
-          <a href="#" class="read-more">Read More</a>
+          <a href="javascript:void(0);" class="read-more">Read More</a>
         </div>
       </div>
     </div>
@@ -554,7 +554,7 @@ export const law04Html = `
     <div class="footer-inner">
       <div class="footer-col">
         <div class="footer-logo">
-         <a href="#" class="logo">
+         <a href="javascript:void(0);" class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             PROJECT_NAME_PLACEHOLDER
           </a>
@@ -565,18 +565,18 @@ export const law04Html = `
       <div class="footer-col">
         <h4>Quick Links</h4>
         <ul class="footer-links">
-          <li><a href="#about">About Us</a></li>
-          <li><a href="#services">Practice Areas</a></li>
-          <li><a href="#attorneys">Our Attorneys</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li><a href="javascript:void(0);">About Us</a></li>
+          <li><a href="javascript:void(0);">Practice Areas</a></li>
+          <li><a href="javascript:void(0);">Our Attorneys</a></li>
+          <li><a href="javascript:void(0);">Contact</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Legal</h4>
         <ul class="footer-links">
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
-          <li><a href="#">Disclaimer</a></li>
+          <li><a href="javascript:void(0);">Privacy Policy</a></li>
+          <li><a href="javascript:void(0);">Terms of Service</a></li>
+          <li><a href="javascript:void(0);">Disclaimer</a></li>
         </ul>
       </div>
       <div class="footer-col">

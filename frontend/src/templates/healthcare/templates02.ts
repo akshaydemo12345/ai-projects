@@ -442,7 +442,7 @@ export const healthcare02Html = `
 <!-- ═══ HEADER ═══ -->
 <header class="v2-header">
   <div class="v2-header-inner">
-    <a class="v2-logo" href="#">
+    <a class="v2-logo" href="javascript:void(0);">
       LOGO_PLACEHOLDER
     </a>
     <div class="v2-header-cta">
@@ -518,25 +518,25 @@ export const healthcare02Html = `
         <div class="v2-service-icon"><span class="material-symbols-outlined">cardiology</span></div>
         <h3>Cardiology</h3>
         <p>Advanced cardiac diagnostics, ECG, echocardiography and intervention by board-certified cardiologists.</p>
-        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+        <a class="v2-service-link" href="javascript:void(0);">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
       <div class="v2-service-card">
         <div class="v2-service-icon"><span class="material-symbols-outlined">neurology</span></div>
         <h3>Neurology</h3>
         <p>Comprehensive neurological assessments, brain MRI analysis and headache management clinics.</p>
-        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+        <a class="v2-service-link" href="javascript:void(0);">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
       <div class="v2-service-card">
         <div class="v2-service-icon"><span class="material-symbols-outlined">orthopedics</span></div>
         <h3>Orthopaedics</h3>
         <p>Joint replacement, sports injury rehabilitation and minimally invasive spinal procedures.</p>
-        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+        <a class="v2-service-link" href="javascript:void(0);">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
       <div class="v2-service-card">
         <div class="v2-service-icon"><span class="material-symbols-outlined">child_care</span></div>
         <h3>Paediatrics</h3>
         <p>Gentle, age-appropriate care for children from newborns through to adolescence, with specialist support.</p>
-        <a class="v2-service-link" href="#">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
+        <a class="v2-service-link" href="javascript:void(0);">Learn More <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
     </div>
   </div>
@@ -833,30 +833,18 @@ export const healthcare02Html = `
       </div>
       <p class="v2-footer-desc">Premium private healthcare delivered with clinical excellence and genuine compassion since 2004.</p>
       <div class="v2-footer-socials">
-        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">public</span></a>
-        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">chat_bubble</span></a>
-        <a class="v2-footer-social-link" href="#"><span class="material-symbols-outlined">video_camera_front</span></a>
+        <a class="v2-footer-social-link" href="javascript:void(0);"><span class="material-symbols-outlined">public</span></a>
+        <a class="v2-footer-social-link" href="javascript:void(0);"><span class="material-symbols-outlined">chat_bubble</span></a>
+        <a class="v2-footer-social-link" href="javascript:void(0);"><span class="material-symbols-outlined">video_camera_front</span></a>
       </div>
     </div>
     <div class="v2-footer-col">
       <h4>Services</h4>
-      <nav class="v2-footer-links">
-        <a href="#">Cardiology</a>
-        <a href="#">Neurology</a>
-        <a href="#">Orthopaedics</a>
-        <a href="#">Paediatrics</a>
-        <a href="#">General Medicine</a>
-      </nav>
+      
     </div>
     <div class="v2-footer-col">
       <h4>Company</h4>
-      <nav class="v2-footer-links">
-        <a href="#">About Us</a>
-        <a href="#">Our Doctors</a>
-        <a href="#">Patient Stories</a>
-        <a href="#">Careers</a>
-        <a href="#">Press</a>
-      </nav>
+      
     </div>
     <div class="v2-footer-col">
       <h4>Contact</h4>

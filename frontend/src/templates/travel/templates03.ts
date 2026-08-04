@@ -374,9 +374,9 @@ export const travel03Html = `
 <!-- Navbar -->
 <header class="nav">
   <div class="container nav-inner">
-    <a data-editable="true" href="#" class="logo"><i class="fa-solid fa-sun"></i> Kanra</a>
+    <a data-editable="true" href="javascript:void(0);" class="logo"><i class="fa-solid fa-sun"></i> Kanra</a>
     
-    <a data-editable="true" href="#" class="btn btn-primary">Get the App <i class="fa-solid fa-arrow-right"></i></a>
+    <a data-editable="true" href="javascript:void(0);" class="btn btn-primary">Get the App <i class="fa-solid fa-arrow-right"></i></a>
     
   </div>
 </header>
@@ -392,8 +392,8 @@ export const travel03Html = `
       </div>
       <p data-editable="true" class="lead">To get the best of your adventure you just need to leave and go where you like. We are waiting for you — packed, planned and personal.</p>
       <div class="hero-cta">
-        <a data-editable="true" href="#tickets" class="btn btn-primary">Plan a Trip <i class="fa-solid fa-arrow-right"></i></a>
-        <a data-editable="true" href="#" class="watch">
+        <a data-editable="true" href="javascript:void(0);" class="btn btn-primary">Plan a Trip <i class="fa-solid fa-arrow-right"></i></a>
+        <a data-editable="true" href="javascript:void(0);" class="watch">
           <span data-editable="true" class="play"><i class="fa-solid fa-play"></i></span>
           <span data-editable="true">Watch Our<br/><b>Story</b></span>
         </a>
@@ -516,11 +516,11 @@ export const travel03Html = `
     </div>
     <div style="padding: 10px 0 30px; overflow: hidden;">
       <div class="dest-grid" >
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-venice.jpg" alt="Venice"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Venice</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" alt="Iceland"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Iceland</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-moab.jpg" alt="Moab"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Moab</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-arizona.jpg" alt="Arizona"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Arizona</span></a>
-        <a href="#" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/patagonia.png" alt="Paris"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Paris</span></a>
+        <a href="javascript:void(0);" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-venice.jpg" alt="Venice"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Venice</span></a>
+        <a href="javascript:void(0);" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-iceland.jpg" alt="Iceland"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Iceland</span></a>
+        <a href="javascript:void(0);" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-moab.jpg" alt="Moab"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Moab</span></a>
+        <a href="javascript:void(0);" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/dest-arizona.jpg" alt="Arizona"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Arizona</span></a>
+        <a href="javascript:void(0);" class="dest reveal" data-editable="true"><img data-editable-img="true" src="/assets/templates/travel/templates03/patagonia.png" alt="Paris"/><span data-editable="true" class="pin"><i class="fa-solid fa-location-dot"></i> Paris</span></a>
       </div>
     </div>
   </div>
@@ -769,7 +769,7 @@ export const travel03Html = `
 
     </div>
     <div class="foot-cols">
-      <div class="fc-brand"><a data-editable="true" href="#" class="logo light"><i class="fa-solid fa-sun"></i> Kanra</a></div>
+      <div class="fc-brand"><a data-editable="true" href="javascript:void(0);" class="logo light"><i class="fa-solid fa-sun"></i> Kanra</a></div>
       <div><b>Contact</b><a data-editable="true"><i class="fa-solid fa-envelope"></i> getemail@kanra.com</a><a data-editable="true"><i class="fa-solid fa-phone"></i> (270) 555-0117</a></div>
       <div><b>Company</b><a data-editable="true">Career</a><a data-editable="true">Developers</a><a data-editable="true">Our Story</a></div>
       <div><b>Kanra</b><a data-editable="true">Why Kanra</a><a data-editable="true">Customer</a><a data-editable="true">Press Info</a></div>

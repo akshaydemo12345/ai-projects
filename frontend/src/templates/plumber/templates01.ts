@@ -17,6 +17,16 @@ export const plumber01Styles = `
   --spacing-gutter: 24px;
 }
 
+/* GrapesJS Editor Override */
+body, .gjs-dashed, [data-gjs-type="wrapper"], main {
+    background-color: var(--bg-light) !important;
+    color: var(--text-dark) !important;
+}
+h1, h2, h3, h4, h5, h6, p, span, div, a {
+    color: inherit;
+}
+
+
         *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
@@ -518,7 +528,7 @@ export const plumber01Html = `
 <header class="site-header">
     <div class="container header-inner">
         <div class="header-left">
-            <a data-editable="true" class="brand-logo font-headline-md" href="#">LOGO_PLACEHOLDER</a>
+            <a data-editable="true" class="brand-logo font-headline-md" href="javascript:void(0);">LOGO_PLACEHOLDER</a>
         </div>
         <div class="header-actions">
             <div class="contact-info">
@@ -617,7 +627,7 @@ export const plumber01Html = `
                 </div>
                 <h4 data-editable="true" class="font-headline-md">Drain Cleaning</h4>
                 <p data-editable="true" class="font-body-md">Hydro-jetting and advanced snaking to clear the toughest blockages and restore full flow to your pipes.</p>
-                <a data-editable="true" class="font-label-bold feature-link" href="#">
+                <a data-editable="true" class="font-label-bold feature-link" href="javascript:void(0);">
                     Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span>
                 </a>
             </div>
@@ -628,7 +638,7 @@ export const plumber01Html = `
                 </div>
                 <h4 data-editable="true" class="font-headline-md">Pipe Repair</h4>
                 <p data-editable="true" class="font-body-md">Non-invasive leak detection and durable pipe replacement using modern, corrosion-resistant materials.</p>
-                <a data-editable="true" class="font-label-bold feature-link" href="#">
+                <a data-editable="true" class="font-label-bold feature-link" href="javascript:void(0);">
                     Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span>
                 </a>
             </div>
@@ -639,7 +649,7 @@ export const plumber01Html = `
                 </div>
                 <h4 data-editable="true" class="font-headline-md">Water Heaters</h4>
                 <p data-editable="true" class="font-body-md">Installation and repair of high-efficiency tankless and traditional water heating systems.</p>
-                <a data-editable="true" class="font-label-bold feature-link" href="#">
+                <a data-editable="true" class="font-label-bold feature-link" href="javascript:void(0);">
                     Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span>
                 </a>
             </div>
@@ -810,30 +820,30 @@ export const plumber01Html = `
 <footer class="site-footer">
     <div class="footer-grid">
         <div class="footer-col">
-            <a data-editable="true" class="footer-brand" href="#">PROJECT_NAME_PLACEHOLDER</a>
+            <a data-editable="true" class="footer-brand" href="javascript:void(0);">PROJECT_NAME_PLACEHOLDER</a>
             <p data-editable="true" class="font-body-md footer-desc">Your professional partner for residential and commercial plumbing. Quality you can trust, service you can depend on.</p>
             <div class="social-links">
-                <a data-editable="true" class="social-link" href="#"><span data-editable="true" class="material-symbols-outlined">public</span></a>
-                <a data-editable="true" class="social-link" href="#"><span data-editable="true" class="material-symbols-outlined">share</span></a>
-                <a data-editable="true" class="social-link" href="#"><span data-editable="true" class="material-symbols-outlined">alternate_email</span></a>
+                <a data-editable="true" class="social-link" href="javascript:void(0);"><span data-editable="true" class="material-symbols-outlined">public</span></a>
+                <a data-editable="true" class="social-link" href="javascript:void(0);"><span data-editable="true" class="material-symbols-outlined">share</span></a>
+                <a data-editable="true" class="social-link" href="javascript:void(0);"><span data-editable="true" class="material-symbols-outlined">alternate_email</span></a>
             </div>
         </div>
         <div class="footer-col">
             <h6 data-editable="true" class="font-label-bold">Quick Links</h6>
             <ul class="footer-links font-body-md">
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Privacy Policy</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Terms of Service</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Emergency Contact</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">FAQ</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Privacy Policy</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Terms of Service</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Emergency Contact</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">FAQ</a></li>
             </ul>
         </div>
         <div class="footer-col">
             <h6 data-editable="true" class="font-label-bold">Services</h6>
             <ul class="footer-links font-body-md">
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Residential Plumbing</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Commercial Systems</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Gas Line Repair</a></li>
-                <li data-editable="true"><a data-editable="true" class="footer-link" href="#">Kitchen &amp; Bath</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Residential Plumbing</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Commercial Systems</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Gas Line Repair</a></li>
+                <li data-editable="true"><a data-editable="true" class="footer-link" href="javascript:void(0);">Kitchen &amp; Bath</a></li>
             </ul>
         </div>
         <div class="footer-col">

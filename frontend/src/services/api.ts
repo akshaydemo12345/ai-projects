@@ -330,7 +330,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   // Create abort controller for timeout
   const controller = new AbortController();
-  const timeout = 300000; // 5 minutes timeout for AI generation
+  const timeout = 480000; // 8 minutes timeout for AI generation
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   const { _retry, ...fetchOptions } = options as any;
 

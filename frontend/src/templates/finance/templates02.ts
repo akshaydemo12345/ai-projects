@@ -1,468 +1,518 @@
-// Master Template — PROJECT_NAME_PLACEHOLDER
-// Institutional Grade Corporate Design — Focused on Trust, Clarity, and Professionalism
-// Inspired by Global Investment Banks and Asset Management Firms
-
 export const finance02Styles = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Public+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Work+Sans:wght@300;400;500;600&display=swap');
 
 :root {
   --primary: PRIMARY_COLOR_PLACEHOLDER;
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
-  --accent: var(--primary);
-  --slate: #475569;
-  --bg-light: #fdfdfd;
-  --border: #e2e8f0;
-  --text-dark: var(--secondary);
+  --bg-color: #f8f9fa;
+  --bg-dark: var(--secondary);
+  --text-main: #333333;
+  --text-muted: #6c757d;
+  --border-light: #e9ecef;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.3s ease; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Work Sans', sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; color: var(--bg-dark); }
 
-html { scroll-behavior: smooth; }
+a { text-decoration: none; color: inherit; transition: 0.3s; }
+img { max-width: 100%; display: block; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-body { 
-  font-family: 'Public Sans', sans-serif; 
-  background: var(--bg-light); 
-  color: var(--text-dark); 
-  line-height: 1.7; 
-  overflow-x: hidden;
-}
+/* 1. Header */
+.header-02 { background: #fff; border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.header-top { background: var(--bg-dark); color: #fff; padding: 5px 0; font-size: 12px; }
+.header-top-inner { display: flex; justify-content: flex-end; gap: 20px; }
+.header-top-inner a:hover { color: var(--secondary); }
+.header-main { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+.logo-02 { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+.nav-02 { display: flex; gap: 30px; }
+.nav-02 a { font-weight: 500; font-size: 15px; color: var(--text-main); position: relative; }
+.nav-02 a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--primary); transition: 0.3s; }
+.nav-02 a:hover::after { width: 100%; }
+.btn-02 { background: var(--primary); color: #fff; padding: 10px 25px; border-radius: 4px; font-weight: 500; font-size: 14px; border: 1px solid var(--primary); }
+.btn-02:hover { background: #fff; color: var(--primary); }
 
-h1, h2, h3 { 
-  font-family: 'Playfair Display', serif; 
-  font-weight: 700; 
-  color: var(--secondary); 
-}
+/* 2. Hero Slider */
+.hero-slider-sec { position: relative; overflow: hidden; background: var(--bg-dark); }
+.hero-slider-container { width: 100%; height: 650px; }
+.hero-slide { position: relative; height: 100%; width: 100%; background-size: cover; background-position: center; display: flex; align-items: center; }
+.hero-slide::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--secondary) 95%, transparent) 0%, color-mix(in srgb, var(--secondary) 40%, transparent) 100%); z-index: 1; }
+.hero-content { position: relative; z-index: 2; max-width: 600px; color: #fff; }
+.hero-content span { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary); font-weight: 600; display: block; margin-bottom: 15px; }
+.hero-content h1 { color: #fff; font-size: 37px; font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
+.hero-content p { font-size: 18px; color: #e9ecef; margin-bottom: 30px; font-weight: 300; }
+.swiper-pagination-bullet { background: #fff !important; opacity: 0.5; width: 10px; height: 10px; }
+.swiper-pagination-bullet-active { background: var(--secondary) !important; opacity: 1; width: 25px; border-radius: 5px; }
 
-.container { 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  padding: 0 2rem; 
-}
+/* 3. At a Glance Stats */
+.stats-02 { background: #fff; padding: 60px 0; border-bottom: 1px solid var(--border-light); }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; text-align: center; }
+.stat-box h3 { font-size: 28px; color: var(--primary); font-weight: 700; margin-bottom: 10px; }
+.stat-box p { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 500; }
 
-.section-padding { padding: 8rem 0; }
+/* 4. Expertise Section */
+.expertise-02 { padding: 100px 0; background: var(--bg-color); }
+.expertise-02 h2 { text-align: center; font-size: 29px; margin-bottom: 60px; }
+.exp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.exp-card { background: #fff; border: 1px solid var(--border-light); padding: 40px; transition: 0.3s; position: relative; overflow: hidden; }
+.exp-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 0; background: var(--secondary); transition: 0.3s; }
+.exp-card:hover { box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+.exp-card:hover::before { height: 100%; }
+.exp-card i { font-size: 24px; color: var(--primary); margin-bottom: 20px; }
+.exp-card h4 { font-size: 17px; margin-bottom: 15px; }
+.exp-card p { color: var(--text-muted); font-size: 15px; line-height: 1.7; }
 
-.text-accent { color: var(--accent); }
+/* 5. Institutional Insights */
+.insights-02 { padding: 100px 0; background: #fff; }
+.insights-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; }
+.insights-header h2 { font-size: 29px; }
+.insights-header a { color: var(--primary); font-weight: 600; border-bottom: 1px solid var(--primary); padding-bottom: 2px; }
+.ins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.ins-main-card { position: relative; height: 500px; display: flex; align-items: flex-end; padding: 40px; }
+.ins-main-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; filter: brightness(0.7); }
+.ins-main-content { position: relative; z-index: 2; color: #fff; }
+.ins-main-content span { background: var(--secondary); color: var(--bg-dark); padding: 4px 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 15px; display: inline-block; }
+.ins-main-content h3 { color: #fff; font-size: 24px; margin-bottom: 15px; line-height: 1.2; }
+.ins-side-list { display: flex; flex-direction: column; gap: 30px; }
+.ins-side-item { display: flex; gap: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 30px; }
+.ins-side-item img { width: 150px; height: 100px; object-fit: cover; }
+.ins-side-text span { color: var(--secondary); font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; display: block; }
+.ins-side-text h4 { font-size: 16px; margin-bottom: 10px; line-height: 1.3; }
 
-/* NAVBAR */
-.nav {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  z-index: 1000;
-  padding: 2rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+/* 6. Corporate Responsibility */
+.responsibility-02 { background: var(--bg-dark); color: #fff; padding: 100px 0; }
+.resp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.resp-text h2 { color: #fff; font-size: 29px; margin-bottom: 30px; }
+.resp-text p { color: #adb5bd; margin-bottom: 40px; font-size: 16px; }
+.resp-list { list-style: none; display: flex; flex-direction: column; gap: 20px; }
+.resp-list li { display: flex; align-items: flex-start; gap: 15px; }
+.resp-list i { color: var(--secondary); font-size: 16px; margin-top: 5px; }
+.resp-list h5 { color: #fff; font-size: 18px; margin-bottom: 5px; }
+.resp-list p { color: #adb5bd; font-size: 14px; margin: 0; }
+.resp-img { position: relative; }
+.resp-img img { width: 100%; border-radius: 4px; }
+.resp-badge { position: absolute; bottom: -30px; left: -30px; background: var(--primary); padding: 30px; color: #fff; text-align: center; }
+.resp-badge h3 { color: #fff; font-size: 33px; margin: 0; line-height: 1; }
+.resp-badge span { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
 
-.nav-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+/* 7. Leadership */
+.leadership-02 { padding: 100px 0; background: #fff; text-align: center; }
+.leadership-02 h2 { font-size: 29px; margin-bottom: 60px; }
+.lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
+.lead-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; margin-bottom: 20px; filter: grayscale(100%); transition: 0.3s; }
+.lead-card:hover img { filter: grayscale(0%); }
+.lead-card h4 { font-size: 16px; margin-bottom: 5px; }
+.lead-card p { color: var(--primary); font-size: 14px; font-weight: 500; }
 
-.nav-links { display: flex; flex-wrap: wrap; gap: 3rem; align-items: center; }
-.nav-links a { text-decoration: none; color: #fff; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-.nav-links a:hover { opacity: 1; }
+/* 8. Global Offices */
+.offices-02 { padding: 80px 0; background: var(--bg-color); border-top: 1px solid var(--border-light); }
+.offices-02 h2 { text-align: center; font-size: 24px; margin-bottom: 50px; }
+.office-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
+.office-card h5 { font-size: 18px; margin-bottom: 10px; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; display: inline-block; }
+.office-card p { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
 
-.btn-nav {
-  background: var(--btn-bg, var(--primary)) ;
-  color: var(--btn-text, #fff) ;
-  padding: 0.9rem 2.5rem;
-  font-weight: 700;
-  text-decoration: none;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+/* 9. Contact / Form */
+.contact-02 { padding: 100px 0; background: #fff; }
+.contact-container { max-width: 800px; margin: 0 auto; text-align: center; }
+.contact-container h2 { font-size: 29px; margin-bottom: 20px; }
+.contact-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; margin-top: 40px; }
+.contact-form input, .contact-form select, .contact-form textarea { width: 100%; padding: 15px; border: 1px solid var(--border-light); font-family: 'Work Sans', sans-serif; font-size: 15px; outline: none; background: var(--bg-color); transition: 0.3s; }
+.contact-form input:focus, .contact-form textarea:focus { border-color: var(--primary); }
+.form-full-02 { grid-column: span 2; }
+.btn-submit-02 { background: var(--bg-dark); color: #fff; padding: 15px 30px; border: none; font-size: 16px; font-weight: 500; cursor: pointer; transition: 0.3s; width: 100%; }
+.btn-submit-02:hover { background: var(--primary); }
 
-/* CORPORATE HERO */
-.hero {
-  height: 90vh;
-  min-height: 800px;
-  background: var(--secondary) ;
-  display: flex; flex-wrap: wrap;
-  align-items: center;
-  position: relative;
-  color: #fff;
-  overflow: hidden;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 10;
-  max-width: 800px;
-}
-
-.hero h1 { 
-  font-size: clamp(3rem, 5vw, 4.5rem); 
-  color: #fff; 
-  margin-bottom: 2rem; 
-  line-height: 1.1;
-}
-
-.hero p { 
-  font-size: 1.25rem; 
-  color: rgba(255,255,255,0.7); 
-  margin-bottom: 3.5rem; 
-  max-width: 600px;
-  font-weight: 300;
-}
-
-.hero-btns { display: flex; flex-wrap: wrap; gap: 1.5rem; }
-.btn-hero-primary { background: var(--btn-bg, var(--primary)) ; color: var(--btn-text, #fff) ; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; }
-.btn-hero-outline { border: 1px solid #fff; color: #fff; padding: 1.2rem 3rem; font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
-.btn-hero-outline:hover { background: #fff; color: var(--secondary); }
-
-/* INSTITUTIONAL FORM SECTION */
-.form-section {
-  background: #fff;
-  padding: 6rem;
-  margin-top: -100px;
-  position: relative;
-  z-index: 20;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.1);
-  border-top: 5px solid var(--primary);
-}
-
-.form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: center; }
-
-.form-text h2 { font-size: 2.5rem; margin-bottom: 1.5rem; }
-.form-text p { color: var(--slate); margin-bottom: 2rem; }
-
-.contact-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.form-group { display: flex; flex-wrap: wrap; flex-direction: column; gap: 0.5rem; }
-.form-group.full { grid-column: span 2; }
-.form-group label { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--slate); letter-spacing: 1px; }
-.form-group input, .form-group select {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  outline: none;
-  font-family: inherit;
-  font-size: 1rem;
-  color: var(--secondary);
-}
-.form-group input:focus { border-color: var(--primary); }
-
-.btn-form {
-  grid-column: span 2;
-  background: var(--btn-bg, var(--primary));
-  color: var(--btn-text, #fff);
-  padding: 1.2rem;
-  border: none;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  cursor: pointer;
-}
-.btn-form:hover { background: var(--secondary) !important; color: var(--btn-text, #fff) !important; }
-
-/* TRUST SECTION */
-.trust-logos { padding: 4rem 0; border-bottom: 1px solid var(--border); }
-.logo-flex { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; opacity: 1; filter: grayscale(0); color: #000; }
-.logo-flex img { height: 30px; }
-
-/* SERVICES GRID */
-.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem; }
-.service-item { border-left: 2px solid #000; padding-left: 2rem; }
-.service-item:hover { border-left-color: var(--primary); transform: translateX(10px); }
-.service-item span { color: var(--primary); font-weight: 700; font-size: 0.9rem; }
-.service-item h3 { font-size: 1.5rem; margin: 1rem 0; }
-.service-item p { color: var(--slate); font-size: 0.95rem; }
-
-/* EXPERTISE CONTENT */
-.expertise-block { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
-.expertise-img { height: 600px; }
-
-/* FOOTER */
-.footer {
-  background: var(--secondary);
-  color: #fff;
-  padding: 6rem 0 3rem;
-}
-
-.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 4rem; }
-.footer-logo { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; }
-.footer-p { color: rgba(255,255,255,0.5); font-size: 0.9rem; max-width: 300px; }
-.footer h4 { color: #fff; font-family: 'Public Sans', sans-serif; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 1px; }
-.footer ul { list-style: none; }
-.footer ul li { margin-bottom: 0.8rem; }
-.footer ul li a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9rem; }
-.footer ul li a:hover { color: #fff; }
-
-.footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 3rem; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; }
-
-/* GLOBAL PRESENCE */
-.global-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4rem; text-align: center; }
-.global-item h3 { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
-.global-item p { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: 0.8rem; color: var(--slate); }
-
-/* CORE VALUES */
-.values-section { background: var(--primary) ; color: #fff; text-align: center; }
-.values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
-.value-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.1); }
-.value-card:hover { background: rgba(255,255,255,0.05); border-color: #fff; }
-.value-card i { font-size: 2rem; color: #fff; margin-bottom: 2rem; display: block; }
-.value-card h4 { font-family: 'Public Sans', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
-
-/* MINIMAL CTA */
-.cta-minimal { background: #fff; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.cta-minimal h2 { font-size: 3rem; margin-bottom: 2rem; }
-.btn-cta-dark { background: var(--secondary); color: #fff; padding: 1.2rem 4rem; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; display: inline-block; }
-.btn-cta-dark:hover { background: var(--accent); }
+/* 10. Footer */
+.footer-02 { background: var(--bg-dark); color: #fff; padding: 80px 0 30px; }
+.footer-grid-02 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 50px; margin-bottom: 60px; }
+.logo-footer-02 { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800; color: #fff; margin-bottom: 20px; display: block; }
+.footer-02 p { color: #adb5bd; font-size: 14px; margin-bottom: 20px; line-height: 1.8; }
+.footer-02 h4 { color: #fff; font-size: 18px; margin-bottom: 20px; font-family: 'Work Sans', sans-serif; }
+.footer-links-02 a { display: block; color: #adb5bd; margin-bottom: 10px; font-size: 14px; }
+.footer-links-02 a:hover { color: var(--secondary); }
+.footer-bottom-02 { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; display: flex; justify-content: space-between; font-size: 13px; color: #6c757d; }
 
 @media (max-width: 1024px) {
-  .hero-content { text-align: center; margin: 0 auto; }
-  .hero-btns { justify-content: center; }
-  .form-grid { grid-template-columns: 1fr; padding: 3rem; }
-  .services-grid { grid-template-columns: 1fr 1fr; }
-  .expertise-block { grid-template-columns: 1fr; }
-  .global-grid { grid-template-columns: 1fr; gap: 3rem; }
-  .values-grid { grid-template-columns: 1fr 1fr; }
-  .nav-links { display: none; }
+  .hero-slider-container { height: 500px; }
+  .stats-grid, .lead-grid, .office-grid { grid-template-columns: repeat(2, 1fr); }
+  .exp-grid, .ins-grid, .resp-grid { grid-template-columns: 1fr; }
+  .ins-main-card { height: 400px; }
+  .resp-img { margin-top: 60px; }
+  .footer-grid-02 { grid-template-columns: 1fr 1fr; }
 }
-
-@media (max-width: 640px) {
-  .services-grid { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .header-top, .nav-02 { display: none; }
+  .hero-content h1 { font-size: 28px; }
+  .stats-grid, .lead-grid, .office-grid { grid-template-columns: 1fr; }
   .contact-form { grid-template-columns: 1fr; }
-  .form-group.full { grid-column: span 1; }
-  .btn-form { grid-column: span 1; }
+  .form-full-02 { grid-column: span 1; }
+  .footer-grid-02 { grid-template-columns: 1fr; }
+  .footer-bottom-02 { flex-direction: column; gap: 15px; text-align: center; }
+  .resp-badge { left: 0; right: 0; bottom: -20px; text-align: center; }
 }
 
 
-  /* Extracted Template Inline Styles */
-  .tpl-templates02-1 { background: linear-gradient(rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.9)); }
-  .tpl-templates02-2 { color: var(--primary); }
-  .tpl-templates02-3 { color: var(--slate); }
-  .tpl-templates02-4 { color: #000; }
-  .tpl-templates02-5 { color: var(--primary); }
-  .tpl-templates02-6 { background: #f8fafc; }
-  .tpl-templates02-7 { color: var(--primary); }
-  .tpl-templates02-8 { color: var(--slate); }
-  .tpl-templates02-9 { background: var(--primary); }
-  .tpl-templates02-10 { background: var(--primary); }
-  .tpl-templates02-11 { background: var(--primary); }
-  .tpl-templates02-12 { color: SECONDARY_COLOR_PLACEHOLDER; border-bottom: 2px solid var(--primary); }
-  .tpl-templates02-13 { color: var(--primary); }
-  .tpl-templates02-14 { color: #fff; }
-  .tpl-templates02-15 { color: var(--primary); }
-  .tpl-templates02-16 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+/* Premium Form Styles */
+.premium-form { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+.premium-form input, .premium-form textarea, .premium-form select { 
+    width: 100%; 
+    padding: 16px 20px; 
+    border-radius: 8px; 
+    border: 1px solid var(--primary); 
+    background: color-mix(in srgb, var(--primary) 5%, transparent); 
+    color: inherit; 
+    font-family: inherit; 
+    font-size: 15px; 
+    outline: none; 
+    transition: 0.3s all;
+}
+
+.premium-form input::placeholder, .premium-form textarea::placeholder {
+    color: currentColor;
+    opacity: 0.5;
+}
+
+.premium-form input:focus, .premium-form textarea:focus {
+    border-color: var(--secondary);
+    background: color-mix(in srgb, var(--secondary) 10%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 15%, transparent);
+}
+.premium-form button {
+    padding: 18px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+}
+.premium-form button:hover {
+    background: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--secondary) 30%, transparent);
+}
+
 `;
 
 export const finance02Html = `
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!-- Swiper CSS (GrapesJS Built-in) -->
 
-<nav class="nav">
-  <div class="container nav-inner">
-    <div class="logo" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
-      <span style="font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">LOGO_PLACEHOLDER</span>
-    </div>
+<!-- 1. Header -->
+<header class="header-02">
+  
+  <div class="header-main container">
+    <div class="logo-02">LOGO_PLACEHOLDER</div>
+    
+    <a href="#contact" class="btn-02">Contact Us</a>
   </div>
-</nav>
+</header>
 
-<section class="hero">
-  <div class="hero-overlay" style="overflow: hidden;">
-    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;" alt="Hero Background">
-    <div class="tpl-templates02-1" style="position: absolute; inset: 0; z-index: 2"></div>
-  </div>
-  <div class="container">
-    <div class="hero-content">
-      <h1>Preserving Wealth. <br>Building <span class="text-primary" style="color: var(--primary);">Legacies.</span></h1>
-      <p>Global institutional-grade investment management and strategic advisory for multi-generational success.</p>
-      <div class="hero-btns">
-        <a href="#contact" class="btn-hero-primary">Our Expertise</a>
-        <a href="#about" class="btn-hero-outline">Learn More</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="container" id="contact">
-  <div class="form-section">
-    <div class="form-grid">
-      <div class="form-text">
-        <span class="tpl-templates02-2" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px">Inquiry</span>
-        <h2>Begin Your Consultation</h2>
-        <p>Connect with our senior advisors for a comprehensive analysis of your global financial objectives.</p>
-        <div style="margin-top: 2rem;">
-          <h4 style="margin-bottom: 0.5rem;">Corporate HQ</h4>
-          <p class="tpl-templates02-3">ADDRESS_PLACEHOLDER</p>
+<main>
+  <!-- 2. Hero Slider (Swiper) -->
+  <section class="hero-slider-sec">
+    <div data-gjs-type="swiper-container" class="swiper-container hero-slider-container"data-slides-per-view="1" data-autoplay="true" data-speed="800" data-loop="true" data-pagination="bullets">
+      <div data-gjs-type="swiper-wrapper" class="swiper-wrapper">
+        <div data-gjs-type="swiper-slide" class="swiper-slide">
+          <div class="hero-slide"style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000');">
+            <div class="container">
+              <div class="hero-content">
+                <span>Global Asset Management</span>
+                <h1>Navigating Markets with Precision.</h1>
+                <p>Delivering institutional-grade investment strategies and rigorous risk management to safeguard and grow capital across market cycles.</p>
+                <a href="#" class="btn-02">Explore Strategies</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div data-gjs-type="swiper-slide" class="swiper-slide">
+          <div class="hero-slide"style="background-image: url('https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?auto=format&fit=crop&q=80&w=2000');">
+            <div class="container">
+              <div class="hero-content">
+                <span>Investment Banking</span>
+                <h1>Strategic Advisory. Flawless Execution.</h1>
+                <p>Providing premier M&A, restructuring, and capital raising advisory services to corporations and governments worldwide.</p>
+                <a href="#" class="btn-02">Our Services</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div data-gjs-type="swiper-slide" class="swiper-slide">
+          <div class="hero-slide"style="background-image: url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=2000');">
+            <div class="container">
+              <div class="hero-content">
+                <span>Quantitative Research</span>
+                <h1>Data-Driven Alpha Generation.</h1>
+                <p>Leveraging advanced analytics and proprietary algorithms to identify inefficiencies and structure optimal portfolios.</p>
+                <a href="#" class="btn-02">Read Research</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <form class="contact-form">
-        <div class="form-group">
-          <label>First Name</label>
-          <input type="text" name="first_name" placeholder="John" required>
+      <div data-gjs-type="swiper-pagination" class="swiper-pagination"></div>
+    </div>
+  </section>
+
+  <!-- 3. At a Glance Stats -->
+  <section class="stats-02">
+    <div class="stats-grid container">
+      <div class="stat-box">
+        <h3>$1.2T</h3>
+        <p>Assets Under Management</p>
+      </div>
+      <div class="stat-box">
+        <h3>85+</h3>
+        <p>Countries Served</p>
+      </div>
+      <div class="stat-box">
+        <h3>4,500</h3>
+        <p>Global Professionals</p>
+      </div>
+      <div class="stat-box">
+        <h3>1992</h3>
+        <p>Year Established</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Expertise Section -->
+  <section class="expertise-02"id="expertise">
+    <div class="container">
+      <h2>Institutional Expertise</h2>
+      <div class="exp-grid">
+        <div class="exp-card">
+          <i class="fa-solid fa-chart-pie"></i>
+          <h4>Equities</h4>
+          <p>Active and systematic equity strategies designed to capture alpha across global developed and emerging markets.</p>
         </div>
-        <div class="form-group">
-          <label>Last Name</label>
-          <input type="text" name="last_name" placeholder="Doe" required>
+        <div class="exp-card">
+          <i class="fa-solid fa-money-bill-trend-up"></i>
+          <h4>Fixed Income</h4>
+          <p>Navigating interest rate cycles with deep credit analysis and macro-driven sovereign debt strategies.</p>
         </div>
-        <div class="form-group full">
-          <label>Inquiry Type</label>
-          <select name="inquiry_type" required>
-            <option>Investment Management</option>
-            <option>Wealth Planning</option>
-            <option>Corporate Advisory</option>
+        <div class="exp-card">
+          <i class="fa-solid fa-gem"></i>
+          <h4>Alternative Investments</h4>
+          <p>Access to private equity, real estate, hedge funds, and private credit for enhanced portfolio diversification.</p>
+        </div>
+        <div class="exp-card">
+          <i class="fa-solid fa-scale-balanced"></i>
+          <h4>Advisory & M&A</h4>
+          <p>Unbiased, strategic advice for complex mergers, acquisitions, and corporate restructuring.</p>
+        </div>
+        <div class="exp-card">
+          <i class="fa-solid fa-shield-halved"></i>
+          <h4>Risk Solutions</h4>
+          <p>Custom hedging strategies using derivatives to manage currency, rate, and commodity exposures.</p>
+        </div>
+        <div class="exp-card">
+          <i class="fa-solid fa-leaf"></i>
+          <h4>Sustainable Investing</h4>
+          <p>Integrating ESG factors into the investment process to drive sustainable long-term performance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Insights -->
+  <section class="insights-02"id="insights">
+    <div class="container">
+      <div class="insights-header">
+        <h2>Latest Research & Insights</h2>
+        <a href="#">View All Insights <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="ins-grid">
+        <div class="ins-main-card">
+          <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800" alt="Market">
+          <div class="ins-main-content">
+            <span>Macro Outlook</span>
+            <h3>Navigating the Global Monetary Transition in 2026</h3>
+            <p>Our Chief Investment Office outlines the structural shifts in inflation and interest rates.</p>
+          </div>
+        </div>
+        <div class="ins-side-list">
+          <div class="ins-side-item">
+            <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=400" alt="Data">
+            <div class="ins-side-text">
+              <span>Equities</span>
+              <h4>The AI Premium: Separating Fundamentals from Hype</h4>
+              <p style="font-size: 14px; color: var(--text-muted);">An analysis of tech valuations.</p>
+            </div>
+          </div>
+          <div class="ins-side-item">
+            <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400" alt="Office">
+            <div class="ins-side-text">
+              <span>Alternatives</span>
+              <h4>Private Credit's Growing Role in Institutional Portfolios</h4>
+              <p style="font-size: 14px; color: var(--text-muted);">Yield opportunities in direct lending.</p>
+            </div>
+          </div>
+          <div class="ins-side-item"style="border: none;">
+            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400" alt="Green">
+            <div class="ins-side-text">
+              <span>ESG</span>
+              <h4>Energy Transition Infrastructure Investments</h4>
+              <p style="font-size: 14px; color: var(--text-muted);">Capitalizing on the green shift.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Corporate Responsibility -->
+  <section class="responsibility-02"id="responsibility">
+    <div class="resp-grid container">
+      <div class="resp-text">
+        <h2>Corporate Responsibility</h2>
+        <p>We recognize that our fiduciary duty extends beyond financial returns. We are committed to fostering sustainable economic growth, championing diversity, and adhering to the highest standards of corporate governance.</p>
+        <ul class="resp-list">
+          <li>
+            <i class="fa-solid fa-check-circle"></i>
+            <div>
+              <h5>Net Zero Commitment</h5>
+              <p>Targeting net zero greenhouse gas emissions across our operations by 2030.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fa-solid fa-check-circle"></i>
+            <div>
+              <h5>Diversity & Inclusion</h5>
+              <p>Fostering an inclusive workplace where diverse perspectives drive better investment outcomes.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fa-solid fa-check-circle"></i>
+            <div>
+              <h5>Community Engagement</h5>
+              <p>Dedicating capital and employee expertise to empower underserved communities globally.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="resp-img">
+        <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800" alt="Corporate">
+        <div class="resp-badge">
+          <h3>$500M+</h3>
+          <span>Committed to Impact</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Leadership -->
+  <section class="leadership-02"id="leadership">
+    <div class="container">
+      <h2>Executive Leadership</h2>
+      <div class="lead-grid">
+        <div class="lead-card">
+          <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" alt="CEO">
+          <h4>William Sterling</h4>
+          <p>Chief Executive Officer</p>
+        </div>
+        <div class="lead-card">
+          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" alt="CIO">
+          <h4>Eleanor Vance</h4>
+          <p>Chief Investment Officer</p>
+        </div>
+        <div class="lead-card">
+          <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400" alt="CFO">
+          <h4>Marcus Chen</h4>
+          <p>Chief Financial Officer</p>
+        </div>
+        <div class="lead-card">
+          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400" alt="COO">
+          <h4>Sarah Jenkins</h4>
+          <p>Chief Operating Officer</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Global Offices -->
+  <section class="offices-02">
+    <div class="container">
+      <h2>Global Presence</h2>
+      <div class="office-grid">
+        <div class="office-card">
+          <h5>New York</h5>
+          <p>Global Headquarters<br>200 Financial St<br>New York, NY 10005<br>+1 212 555 0100</p>
+        </div>
+        <div class="office-card">
+          <h5>London</h5>
+          <p>EMEA Headquarters<br>25 Canary Wharf<br>London E14 5AB<br>+44 20 7946 0958</p>
+        </div>
+        <div class="office-card">
+          <h5>Hong Kong</h5>
+          <p>APAC Headquarters<br>88 Queensway<br>Admiralty, Hong Kong<br>+852 5808 9988</p>
+        </div>
+        <div class="office-card">
+          <h5>Frankfurt</h5>
+          <p>Eurozone Hub<br>Taunusanlage 12<br>60325 Frankfurt<br>+49 69 1234 5678</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Contact Form -->
+  <section class="contact-02"id="contact">
+    <div class="contact-container container">
+      <h2>Institutional Inquiries</h2>
+      <p style="color: var(--text-muted);">Please direct all institutional, media, and investor relations inquiries through the secure channel below.</p>
+      <form class="contact-form"onsubmit="event.preventDefault();">
+        <div><input type="text" placeholder="First Name" required></div>
+        <div><input type="text" placeholder="Last Name" required></div>
+        <div><input type="email" placeholder="Corporate Email" required></div>
+        <div><input type="text" placeholder="Institution / Company" required></div>
+        <div class="form-full-02">
+          <select required>
+            <option value="">Select Inquiry Type...</option>
+            <option>Asset Management</option>
+            <option>Investment Banking</option>
+            <option>Media & Press</option>
+            <option>Investor Relations</option>
           </select>
         </div>
-        <div class="form-group full">
-          <label>Email Address</label>
-          <input type="email" name="email_address" placeholder="john@firm.com" required>
-        </div>
-        <button type="submit" class="btn-form">Request Consultation</button>
+        <div class="form-full-02"><textarea placeholder="Message Details" rows="5" required></textarea></div>
+        <div class="form-full-02"><button type="submit" class="btn-submit-02">Submit Inquiry</button></div>
       </form>
     </div>
-  </div>
-</section>
+  </section>
+</main>
 
-<div class="container">
-  <div class="trust-logos">
-    <div class="logo-flex tpl-templates02-4"  >
-      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">GOLDMAN SACHS</span>
-      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">JP MORGAN</span>
-      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">MORGAN STANLEY</span>
-      <span style="font-weight:800;font-size:0.9rem;letter-spacing:2px">UBS</span>
-    </div>
-  </div>
-</div>
-
-<section class="section-padding container" id="services">
-  <div style="text-align: center; margin-bottom: 6rem;">
-    <span class="tpl-templates02-5" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Areas of Expertise</span>
-    <h2 style="margin-top: 1.5rem;">Unrivaled Financial <br>Intelligence</h2>
-  </div>
-
-  <div class="services-grid">
-    <div class="service-item">
-      <span>01</span>
-      <h3>Asset Management</h3>
-      <p>Precision-engineered portfolios tailored to your risk profile and long-term capital preservation goals.</p>
-    </div>
-    <div class="service-item">
-      <span>02</span>
-      <h3>Wealth Strategy</h3>
-      <p>Comprehensive estate and tax optimization strategies designed to protect your global interests across generations.</p>
-    </div>
-    <div class="service-item">
-      <span>03</span>
-      <h3>Corporate Advisory</h3>
-      <p>Navigating mergers, acquisitions, and complex capital structures with unmatched institutional experience.</p>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding tpl-templates02-6"   id="about">
-  <div class="container expertise-block">
-    <div class="expertise-img" style="position: relative; overflow: hidden;">
-      <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" alt="Expertise Background">
-    </div>
-    <div class="expertise-content">
-      <span class="tpl-templates02-7" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px">Our Heritage</span>
-      <h2 style="margin: 1.5rem 0;">A Tradition of <br>Excellence.</h2>
-      <p class="tpl-templates02-8" style="margin-bottom: 2rem">For over three decades, we have been the trusted partner for global families and institutions, providing the clarity needed to navigate complex financial landscapes.</p>
-      <ul style="list-style: none; display: flex; flex-wrap: wrap; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
-        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-9" style="width: 20px; height: 1px"></div> Institutional Risk Management</li>
-        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-10" style="width: 20px; height: 1px"></div> Global Market Access</li>
-        <li style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-weight: 700;"><div class="tpl-templates02-11" style="width: 20px; height: 1px"></div> Discreet Advisory Services</li>
-      </ul>
-      <a href="#contact" class="tpl-templates02-12" style="font-weight: 800; text-decoration: none; padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem">View Our Report</a>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding container">
-  <div class="global-grid">
-    <div class="global-item">
-      <h3>$4.2B</h3>
-      <p>Assets Under Advisory</p>
-    </div>
-    <div class="global-item">
-      <h3>12+</h3>
-      <p>International Offices</p>
-    </div>
-    <div class="global-item">
-      <h3>98%</h3>
-      <p>Client Retention Rate</p>
-    </div>
-  </div>
-</section>
-
-<section class="section-padding values-section">
+<!-- 10. Footer -->
+<footer class="footer-02">
   <div class="container">
-    <span class="tpl-templates02-13" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Philosophy</span>
-    <h2 class="tpl-templates02-14" style="margin-top: 1.5rem">The Pillars of Our Success</h2>
-    <div class="values-grid">
-      <div class="value-card">
-        <i class="fa-solid fa-shield-halved"></i>
-        <h4>Integrity</h4>
+    <div class="footer-grid-02">
+      <div>
+        <a href="#" class="logo-footer-02">LOGO_PLACEHOLDER</a>
+        <p>A leading global financial institution providing asset management, investment banking, and advisory services to corporations, governments, and institutions worldwide.</p>
+        <div style="display: flex; gap: 15px; font-size: 16px;">
+          <a href="#" style="color: #adb5bd;"><i class="fa-brands fa-linkedin"></i></a>
+          <a href="#" style="color: #adb5bd;"><i class="fa-twitter fa-brands"></i></a>
+          <a href="#" style="color: #adb5bd;"><i class="fa-youtube fa-brands"></i></a>
+        </div>
       </div>
-      <div class="value-card">
-        <i class="fa-solid fa-gem"></i>
-        <h4>Excellence</h4>
-      </div>
-      <div class="value-card">
-        <i class="fa-solid fa-eye-slash"></i>
-        <h4>Discretion</h4>
-      </div>
-      <div class="value-card">
-        <i class="fa-solid fa-chart-line"></i>
-        <h4>Vision</h4>
+      
+      
+      
+    </div>
+    <div class="footer-bottom-02">
+      <div>&copy; 2026 Institutional Corporate Group. All rights reserved.</div>
+      <div style="display: flex; gap: 20px;">
+        <a href="#">Site Map</a>
+        <a href="#">Security</a>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="section-padding cta-minimal">
-  <div class="container">
-    <span class="tpl-templates02-15" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px">Next Steps</span>
-    <h2 style="margin: 1.5rem 0 3rem;">Ready to Secure Your <br>Financial Future?</h2>
-    <a href="#contact" class="btn-cta-dark">Request an Introduction</a>
-  </div>
-</section>
-
-<footer class="footer">
-  <div class="container footer-grid">
-    <div>
-      <div class="footer-logo" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
-        <span style="font-size: 1.1rem; font-weight: 800; letter-spacing: 1px;">LOGO_PLACEHOLDER</span>
-      </div>
-      <p class="footer-p">A global investment and advisory firm dedicated to the preservation and expansion of institutional and private wealth.</p>
-    </div>
-    <div class="footer-links">
-      <h4>Intelligence</h4>
-      <ul>
-        <li><a href="#">Market Analysis</a></li>
-        <li><a href="#">Economic Outlook</a></li>
-        <li><a href="#">Strategic Reports</a></li>
-      </ul>
-    </div>
-    <div class="footer-links">
-      <h4>The Firm</h4>
-      <ul>
-        <li><a href="#">Our Heritage</a></li>
-        <li><a href="#">Leadership</a></li>
-        <li><a href="#">Global Offices</a></li>
-      </ul>
-    </div>
-    <div class="footer-links">
-      <h4>Inquiries</h4>
-      <ul>
-        <li><a href="#">Contact Us</a></li>
-        <li><a href="#">Client Portal</a></li>
-        <li><a href="#">Media Center</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="container footer-bottom">
-    <p>© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved. Member FINRA/SIPC. Disclosures and Privacy Policy.</p>
   </div>
 </footer>
-
 
 <script id="core-interactions">
   (function() {
@@ -477,7 +527,7 @@ export const finance02Html = `
           e.stopImmediatePropagation();
           var existingModal = document.getElementById("preview-mode-modal");
           if (existingModal) existingModal.remove();
-          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--primary) 70%, transparent); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: var(--secondary);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: var(--secondary); margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\\'preview-mode-modal\\').remove()" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\\'var(--primary)\\'" onmouseout="this.style.background=\\'var(--primary)\\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
           document.body.insertAdjacentHTML("beforeend", modalHtml);
           return;
         }
@@ -491,16 +541,16 @@ export const finance02Html = `
             input.dataset.valSetup = 'true';
             input.addEventListener('input', function() {
               if (input.value.trim()) {
-                input.style.outline = '2px solid #22c55e';
+                input.style.outline = '2px solid var(--primary)';
                 input.style.outlineOffset = '1px';
-                input.style.borderColor = '#22c55e';
+                input.style.borderColor = 'var(--primary)';
                 if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
                   input.nextElementSibling.style.display = 'none';
                 }
               } else {
-                input.style.outline = '2px solid #ef4444';
+                input.style.outline = '2px solid var(--secondary)';
                 input.style.outlineOffset = '1px';
-                input.style.borderColor = '#ef4444';
+                input.style.borderColor = 'var(--secondary)';
                 if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
                   input.nextElementSibling.style.display = 'block';
                 }
@@ -510,9 +560,9 @@ export const finance02Html = `
 
           if (!input.value.trim() && input.hasAttribute('required')) {
             isValid = false;
-            input.style.outline = '2px solid #ef4444';
+            input.style.outline = '2px solid var(--secondary)';
             input.style.outlineOffset = '1px';
-            input.style.borderColor = '#ef4444';
+            input.style.borderColor = 'var(--secondary)';
             
             if (!input.parentElement.classList.contains('val-wrapper')) {
                 var wrapper = document.createElement('div');
@@ -535,7 +585,7 @@ export const finance02Html = `
               var fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'This field';
               var err = document.createElement('span');
               err.className = 'val-error';
-              err.style.color = '#ef4444';
+              err.style.color = 'var(--secondary)';
               err.style.fontSize = '12px';
               err.style.display = 'block';
               err.style.marginTop = '4px';
@@ -554,17 +604,17 @@ export const finance02Html = `
         } else {
           e.preventDefault();
           var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
+          var isBtnElement = e.target.querySelector('button[type="submit"]');
           if (btn) {
-            if(btn.innerText) btn.innerText = 'Sending...';
+            if(isBtnElement) btn.innerHTML = 'Sending...';
             else btn.value = 'Sending...';
           }
           setTimeout(function() {
-            e.target.innerHTML = '<div class="tpl-templates02-16" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; ">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div class="tpl-templates01-13"style="padding: 30px; text-align: center; border: 1px solid var(--border-light); background: var(--bg-color);"><h3 style="margin: 0 0 10px 0; font-size: 19px; font-family: \\'Playfair Display\\', serif; color: var(--primary);">Inquiry Received</h3><p style="margin: 0;">A representative will contact you shortly.</p></div>';
           }, 1000);
         }
       }
     }, true);
   })();
 </script>
-
-`
+`;

@@ -16,9 +16,11 @@ interface EditorTopBarProps {
   title: string;
   onSave: () => void;
   pageTitle?: string;
+  onPreview?: () => void;
+
 }
 
-const EditorTopBar = ({ title, onSave, pageTitle }: EditorTopBarProps) => {
+const EditorTopBar = ({ title, onSave, pageTitle, onPreview }: EditorTopBarProps) => {
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimLoading, setClaimLoading] = useState(false);
   const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('pagecraft_user') : null;
@@ -95,6 +97,7 @@ const EditorTopBar = ({ title, onSave, pageTitle }: EditorTopBarProps) => {
       <div className="flex items-center gap-2">
         <button 
           title="Live Preview"
+          onClick={onPreview}
           style={{
             display: "flex",
             alignItems: "center",
