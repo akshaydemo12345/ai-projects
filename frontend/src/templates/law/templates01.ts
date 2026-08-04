@@ -384,11 +384,11 @@ body.js-enabled .animate-fade.in-view {
 export const law01Html = `
 <header class="header">
   <div class="container header-inner">
-    <a href="#" class="logo">
+    <a href="javascript:void(0);" class="logo">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       PROJECT_NAME_PLACEHOLDER
     </a>
-    <a href="#contact" class="btn btn-primary">Request A Call</a>
+    <a href="javascript:void(0);" class="btn btn-primary">Request A Call</a>
   </div>
 </header>
 
@@ -413,8 +413,8 @@ export const law01Html = `
       <p>Providing relentless advocacy and strategic counsel for clients navigating complex legal challenges.</p>
       
       <div class="hero-actions">
-        <a href="#contact" class="btn btn-primary">Get Started</a>
-        <a href="#about" class="btn btn-outline">
+        <a href="javascript:void(0);" class="btn btn-primary">Get Started</a>
+        <a href="javascript:void(0);" class="btn btn-outline">
           <span class="play-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
           Our Story
         </a>
@@ -505,7 +505,7 @@ export const law01Html = `
         <p>"Legal proceedings can be emotionally draining. We shoulder the legal burden so you can focus on moving forward."</p>
       </div>
       
-      <a href="#contact" class="btn btn-primary">Contact Us</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Contact Us</a>
     </div>
   </div>
 </section>
@@ -550,41 +550,41 @@ export const law01Html = `
           <h3>Discover Solutions</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
         
         <div class="tab-content-box" id="panel-2">
           <h3>Corporate Law Mastery</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-3">
           <h3>Family Law & Divorce</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-4">
           <h3>Real Estate Legalities</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
 
         <div class="tab-content-box" id="panel-5">
           <h3>Criminal Defense</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
-          <a href="#contact" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
         </div>
       </div>
     </div>
     
     <div class="tabs-action animate-up">
-      <a href="#contact" class="btn btn-primary">View All Services</a>
+      <a href="javascript:void(0);" class="btn btn-primary">View All Services</a>
     </div>
   </div>
 </section>
@@ -753,7 +753,7 @@ export const law01Html = `
   <div class="footer-cta">
     <div class="container animate-up">
       <h2>Schedule A Free Consultation With Our Experienced Legal Team.</h2>
-      <a href="#contact" class="btn btn-white">Request A Call</a>
+      <a href="javascript:void(0);" class="btn btn-white">Request A Call</a>
     </div>
   </div>
   
@@ -761,9 +761,9 @@ export const law01Html = `
     <div class="container footer-bottom-inner">
       <div class="copyright">© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</div>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Disclaimer</a>
+        <a href="javascript:void(0);">Privacy Policy</a>
+        <a href="javascript:void(0);">Terms of Service</a>
+        <a href="javascript:void(0);">Disclaimer</a>
       </div>
     </div>
   </div>

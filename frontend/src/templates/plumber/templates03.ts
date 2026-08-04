@@ -17,6 +17,16 @@ export const plumber03Styles = `
   --spacing-section-padding: 80px;
   --spacing-gutter: 24px;
 }
+
+/* GrapesJS Editor Override */
+body, .gjs-dashed, [data-gjs-type="wrapper"], main {
+    background-color: #fff !important;
+    color: var(--text-dark) !important;
+}
+h1, h2, h3, h4, h5, h6, p, span, div, a {
+    color: inherit;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
@@ -324,16 +334,7 @@ export const plumber03Html = `
 <!-- BEGIN: Header -->
   <header class="fixed w-full z-50 bg-brand-navy/95 backdrop-blur-sm border-b border-white/10"
     data-purpose="MainHeader">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      <a class="logo flex items-center gap-2 text-white text-2xl font-bold tracking-tight" href="#">
-        <img src="LOGO_URL_PLACEHOLDER" alt="Logo" class="h-8" />
-      </a>
-
-      <a data-editable="true" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-lg hover:shadow-orange-500/20"
-        href="tel:5551234567">
-        Emergency Service
-      </a>
-    </nav>
+    
   </header>
   <!-- END: Header -->
   <!-- BEGIN: Hero Section -->
@@ -524,7 +525,7 @@ export const plumber03Html = `
         <h3 data-editable="true" class="text-xl font-bold mb-4">Emergency Repair</h3>
         <p data-editable="true" class="text-slate-600 mb-8 text-sm">Available 24/7 for burst pipes, severe leaks, and major blockages that
           need immediate attention.</p>
-        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="#">
+        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="javascript:void(0);">
           Learn More
           <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
             viewbox="0 0 24 24">
@@ -539,7 +540,7 @@ export const plumber03Html = `
         <h3 data-editable="true" class="text-xl font-bold mb-4">Drain Cleaning</h3>
         <p data-editable="true" class="text-slate-600 mb-8 text-sm">Professional hydro-jetting and snaking to remove stubborn clogs and
           restore perfect flow.</p>
-        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="#">
+        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="javascript:void(0);">
           Learn More
           <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
             viewbox="0 0 24 24">
@@ -554,7 +555,7 @@ export const plumber03Html = `
         <h3 data-editable="true" class="text-xl font-bold mb-4">Water Heaters</h3>
         <p data-editable="true" class="text-slate-600 mb-8 text-sm">Installation, repair, and maintenance for both tank and tankless water
           heating systems.</p>
-        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="#">
+        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="javascript:void(0);">
           Learn More
           <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
             viewbox="0 0 24 24">
@@ -569,7 +570,7 @@ export const plumber03Html = `
         <h3 data-editable="true" class="text-xl font-bold mb-4">Pipe Replacement</h3>
         <p data-editable="true" class="text-slate-600 mb-8 text-sm">Comprehensive repiping services for aging, corroded, or damaged plumbing
           systems.</p>
-        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="#">
+        <a data-editable="true" class="inline-flex items-center text-sm font-bold group-hover:text-brand-blue" href="javascript:void(0);">
           Learn More
           <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
             viewbox="0 0 24 24">
@@ -748,7 +749,7 @@ export const plumber03Html = `
   <footer class="bg-brand-navy text-white pt-20 pb-10" data-purpose="MainFooter">
     <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-16 mb-8">
       <div class="col-span-1 md:col-span-1 space-y-6">
-        <a class="logo flex items-center gap-2 text-white text-2xl font-bold tracking-tight" href="#">
+        <a class="logo flex items-center gap-2 text-white text-2xl font-bold tracking-tight" href="javascript:void(0);">
           LOGO_PLACEHOLDER
         </a>
         <p data-editable="true" class="text-slate-400 text-sm leading-relaxed">
@@ -759,21 +760,21 @@ export const plumber03Html = `
       <div class="space-y-6">
         <h5 data-editable="true" class="font-bold text-lg">Services</h5>
         <ul class="space-y-4 text-slate-400 text-sm">
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Emergency Repair</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Drain Cleaning</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Water Heater Services</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Pipe Replacement</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Leak Detection</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Emergency Repair</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Drain Cleaning</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Water Heater Services</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Pipe Replacement</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Leak Detection</a></li>
         </ul>
       </div>
       <div class="space-y-6">
         <h5 data-editable="true" class="font-bold text-lg">Company</h5>
         <ul class="space-y-4 text-slate-400 text-sm">
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">About Us</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Our Team</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Reviews</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Service Areas</a></li>
-          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="#">Contact</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">About Us</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Our Team</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Reviews</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Service Areas</a></li>
+          <li data-editable="true"><a data-editable="true" class="hover:text-white transition-colors" href="javascript:void(0);">Contact</a></li>
         </ul>
       </div>
       <div class="space-y-6" id="contact">

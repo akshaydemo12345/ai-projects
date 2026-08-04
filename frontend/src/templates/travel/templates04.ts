@@ -185,8 +185,8 @@ export const travel04Html = `
   <div class="container nav-inner">
     <div class="logo">LOGO_PLACEHOLDER</div>
     <div class="nav-right">
-       <a href="#" class="btn-primary tpl-templates04-1"  >Sign in</a>
-       <a href="#contact" class="btn-primary">Get Started</a>
+       <a href="javascript:void(0);" class="btn-primary tpl-templates04-1"  >Sign in</a>
+       <a href="javascript:void(0);" class="btn-primary">Get Started</a>
     </div>
   </div>
 </header>
@@ -274,7 +274,7 @@ export const travel04Html = `
              <p>Skyline, slices, and the Brooklyn after-hours scene.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $580</div>
-                <a href="#" class="btn-view">View Trip →</a>
+                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
              </div>
           </div>
         </div>
@@ -289,7 +289,7 @@ export const travel04Html = `
              <p>Markets, museums, and pubs that have outlasted empires.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $420</div>
-                <a href="#" class="btn-view">View Trip →</a>
+                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
              </div>
           </div>
         </div>
@@ -304,7 +304,7 @@ export const travel04Html = `
              <p>Hawker stalls by night. Infinity pools by morning.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $800</div>
-                <a href="#" class="btn-view">View Trip →</a>
+                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
              </div>
           </div>
         </div>
@@ -319,7 +319,7 @@ export const travel04Html = `
              <p>2,000 years of history, one perfect cacio e pepe.</p>
              <div class="trend-footer">
                 <div class="price"><span>From</span> $510</div>
-                <a href="#" class="btn-view">View Trip →</a>
+                <a href="javascript:void(0);" class="btn-view">View Trip →</a>
              </div>
           </div>
         </div>
@@ -339,7 +339,7 @@ export const travel04Html = `
            <div class="vibe-content">
               <h3>The Night Owl</h3>
               <p>Underground jazz, neon alleys, and sunrise breakfasts. We know where the lights stay on.</p>
-              <a href="#" class="btn-hero-white tpl-templates04-9"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Nightlife</a>
+              <a href="javascript:void(0);" class="btn-hero-white tpl-templates04-9"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Nightlife</a>
            </div>
            </div>
           </div>
@@ -350,7 +350,7 @@ export const travel04Html = `
            <div class="vibe-content">
               <h3>The Culture Vulture</h3>
               <p>Hidden galleries, Brutalist landmarks, and centuries of stories told in stone.</p>
-              <a href="#" class="btn-hero-white tpl-templates04-10"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Arts</a>
+              <a href="javascript:void(0);" class="btn-hero-white tpl-templates04-10"  style="padding: 0.5rem 1rem; font-size: 0.7rem">Explore Arts</a>
            </div>
            </div>
           </div>
@@ -361,7 +361,7 @@ export const travel04Html = `
            <div class="vibe-content">
               <h3>The Global Foodie</h3>
               <p>Michelin stars meet street stalls. Every meal is a destination in itself.</p>
-              <a href="#" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Tastes</a>
+              <a href="javascript:void(0);" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.7rem;">Explore Tastes</a>
            </div>
            </div>
           </div>
@@ -462,11 +462,11 @@ export const travel04Html = `
       <div class="foot-top">
          <div class="logo tpl-templates04-16"  style="font-size: 1.5rem; letter-spacing: 2px">LOGO_PLACEHOLDER</div>
          <div class="foot-links">
-            <a href="#">Cities</a>
-            <a href="#">Guides</a>
-            <a href="#">Help</a>
-            <a href="#">Press</a>
-            <a href="#">Privacy</a>
+            <a href="javascript:void(0);">Cities</a>
+            <a href="javascript:void(0);">Guides</a>
+            <a href="javascript:void(0);">Help</a>
+            <a href="javascript:void(0);">Press</a>
+            <a href="javascript:void(0);">Privacy</a>
          </div>
       </div>
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">

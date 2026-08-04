@@ -504,7 +504,7 @@ export const realEstate04Html = `
   <section class="re04-hero">
     <div class="re04-hero-menu">
       <div style="font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 20px;">LOGO_PLACEHOLDER</div>
-      <a href="#" class="re04-btn">Download CTA</a>
+      <a href="javascript:void(0);" class="re04-btn">Download CTA</a>
     </div>
     
     <div class="re04-hero-box">
@@ -543,7 +543,7 @@ export const realEstate04Html = `
         <h2 class="re04-heading">Who is it for?</h2>
         <p>Write here more about your company, including its background, mission, and values. Introduce your team members and highlight any notable achievements or milestones. Share your vision for the future and how you plan to achieve it.</p>
         <p>Don't forget to include your contact information for further inquiries or collaborations.</p>
-        <a href="#" class="re04-btn re04-btn-outline" style="margin-top:20px;">Download CTA</a>
+        <a href="javascript:void(0);" class="re04-btn re04-btn-outline" style="margin-top:20px;">Download CTA</a>
       </div>
     </div>
   </section>
@@ -598,7 +598,7 @@ export const realEstate04Html = `
         <p>offers for the sale of apartments, houses, plots, and commercial premises.</p>
       </div>
     </div>
-    <a href="#" class="re04-btn re04-btn-dark">Download CTA</a>
+    <a href="javascript:void(0);" class="re04-btn re04-btn-dark">Download CTA</a>
   </section>
 
   <!-- Offers -->
@@ -623,7 +623,7 @@ export const realEstate04Html = `
         <p>Describe the features of your product and the key benefits they offer to your customers. Describe the features of your product and the key benefits they offer to your customers.</p>
         <div class="re04-offer-price">
           <span>Price:</span> $ 180000
-          <a href="#" class="re04-btn">Download CTA</a>
+          <a href="javascript:void(0);" class="re04-btn">Download CTA</a>
         </div>
       </div>
     </div>
@@ -644,7 +644,7 @@ export const realEstate04Html = `
         <p>Describe the features of your product and the key benefits they offer to your customers. Describe the features of your product and the key benefits they offer to your customers.</p>
         <div class="re04-offer-price">
           <span>Price:</span> $ 80000
-          <a href="#" class="re04-btn">Download CTA</a>
+          <a href="javascript:void(0);" class="re04-btn">Download CTA</a>
         </div>
       </div>
     </div>

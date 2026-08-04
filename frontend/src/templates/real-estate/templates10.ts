@@ -238,7 +238,7 @@ export const realEstate10Html = `
   <!-- Header -->
   <header class="re10-header">
     <div class="re10-container re10-header-inner">
-      <a href="#" class="re10-logo">
+      <a href="javascript:void(0);" class="re10-logo">
         LOGO_PLACEHOLDER
       </a>
    
@@ -251,7 +251,7 @@ export const realEstate10Html = `
       <h4>Care & Child</h4>
       <h1>We Help Kids To Get Good Education</h1>
       <p>We are a non-profit organization dedicated to bringing education, food, and medical support to underprivileged children around the world.</p>
-      <a href="#contact" class="re10-btn re10-btn-sec" style="font-size: 1.1rem; padding: 15px 40px;">Donate Now</a>
+      <a href="javascript:void(0);" class="re10-btn re10-btn-sec" style="font-size: 1.1rem; padding: 15px 40px;">Donate Now</a>
     </div>
   </section>
 
@@ -290,7 +290,7 @@ export const realEstate10Html = `
         <h2 class="re10-sec-title">Help A Child Today & Build A Better Future</h2>
         <p>Our foundation works tirelessly to provide essential resources to children living in poverty. We believe that every child deserves access to quality education, nutritious food, and basic healthcare.</p>
         <p>By partnering with local communities and global organizations, we create sustainable programs that empower children and their families to break the cycle of poverty.</p>
-        <a href="#contact" class="re10-btn">Read More</a>
+        <a href="javascript:void(0);" class="re10-btn">Read More</a>
       </div>
     </div>
   </section>
@@ -314,7 +314,7 @@ export const realEstate10Html = `
               <div>Raised: <span>$45,000</span></div>
               <div>Goal: <span>$60,000</span></div>
             </div>
-            <a href="#contact" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
+            <a href="javascript:void(0);" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
           </div>
         </div>
         <div class="re10-cause-card">
@@ -330,7 +330,7 @@ export const realEstate10Html = `
               <div>Raised: <span>$25,000</span></div>
               <div>Goal: <span>$50,000</span></div>
             </div>
-            <a href="#contact" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
+            <a href="javascript:void(0);" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
           </div>
         </div>
         <div class="re10-cause-card">
@@ -346,7 +346,7 @@ export const realEstate10Html = `
               <div>Raised: <span>$90,000</span></div>
               <div>Goal: <span>$100,000</span></div>
             </div>
-            <a href="#contact" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
+            <a href="javascript:void(0);" class="re10-btn" style="width:100%; text-align:center;">Donate Now</a>
           </div>
         </div>
       </div>
@@ -426,7 +426,7 @@ export const realEstate10Html = `
   <section class="re10-banner">
     <div class="re10-container re10-banner-content">
       <h2>Education is a child's right, not a privilege.</h2>
-      <a href="#contact" class="re10-btn">Sponsor A Child</a>
+      <a href="javascript:void(0);" class="re10-btn">Sponsor A Child</a>
     </div>
   </section>
 
@@ -441,8 +441,8 @@ export const realEstate10Html = `
           <h3>John Anderson</h3>
           <p>Field Director</p>
           <div class="re10-team-social">
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
           </div>
         </div>
         <div class="re10-team-card">
@@ -450,8 +450,8 @@ export const realEstate10Html = `
           <h3>Sarah Mitchell</h3>
           <p>Medical Coordinator</p>
           <div class="re10-team-social">
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
           </div>
         </div>
         <div class="re10-team-card">
@@ -459,8 +459,8 @@ export const realEstate10Html = `
           <h3>David Chen</h3>
           <p>Education Lead</p>
           <div class="re10-team-social">
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-            <a href="#"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+            <a href="javascript:void(0);"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg></a>
           </div>
         </div>
       </div>
@@ -491,7 +491,7 @@ export const realEstate10Html = `
     <div class="re10-container">
       <div class="re10-foot-grid">
         <div class="re10-foot-col">
-          <a href="#" class="re10-logo" style="margin-bottom:20px;">
+          <a href="javascript:void(0);" class="re10-logo" style="margin-bottom:20px;">
             LOGO_PLACEHOLDER
           </a>
           <p>We are a dedicated non-profit organization striving to bring education, healthcare, and joy to children living in poverty around the world. Join our mission today.</p>

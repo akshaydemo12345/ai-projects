@@ -14,6 +14,16 @@ export const plumber05Styles = `
   --accent: #ef4444;
 }
 
+/* GrapesJS Editor Override */
+body, .gjs-dashed, [data-gjs-type="wrapper"], main {
+    background-color: var(--bg-white) !important;
+    color: var(--text-body) !important;
+}
+h1, h2, h3, h4, h5, h6, p, span, div, a {
+    color: inherit;
+}
+
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Inter', sans-serif; color: var(--text-body); background: var(--bg-white); line-height: 1.6; overflow-x: hidden; }
 h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; color: var(--text-dark); line-height: 1.2; font-weight: 700; }
@@ -194,7 +204,7 @@ img { max-width: 100%; display: block; }
 export const plumber05Html = `
 <header class="header">
   <div class="container header-inner">
-    <a data-editable="true" href="#" class="logo">
+    <a data-editable="true" href="javascript:void(0);" class="logo">
       LOGO_PLACEHOLDER
     </a>
     <div class="header-right">
@@ -271,19 +281,19 @@ export const plumber05Html = `
         <div class="srv-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4-4 8-8.5 8-13a8 8 0 0 0-16 0c0 4.5 4 9 8 13z"></path></svg></div>
         <h3 data-editable="true">Advanced Leak Detection</h3>
         <p data-editable="true">Non-invasive thermal and acoustic technology to pinpoint hidden leaks without destroying your walls or floors.</p>
-        <a data-editable="true" href="#" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        <a data-editable="true" href="javascript:void(0);" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
       </div>
       <div class="srv-card">
         <div class="srv-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8M12 8v8"></path></svg></div>
         <h3 data-editable="true">Hydro-Jet Drain Clearing</h3>
         <p data-editable="true">High-pressure water jetting that doesn't just poke a hole in the clog, but completely scrubs your pipes clean.</p>
-        <a data-editable="true" href="#" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        <a data-editable="true" href="javascript:void(0);" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
       </div>
       <div class="srv-card">
         <div class="srv-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"></rect><path d="M7 8V6a5 5 0 0 1 10 0v2"></path></svg></div>
         <h3 data-editable="true">Tankless Water Heaters</h3>
         <p data-editable="true">Premium installation of endless hot water systems that save energy and space in your luxury home.</p>
-        <a data-editable="true" href="#" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        <a data-editable="true" href="javascript:void(0);" class="srv-link">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
       </div>
     </div>
   </div>
@@ -500,18 +510,18 @@ export const plumber05Html = `
         <h3 data-editable="true">PROJECT_NAME_PLACEHOLDER</h3>
         <p data-editable="true">Setting the gold standard in premium plumbing services for over 30 years. Quality craftsmanship, transparent pricing, and 24/7 reliability.</p>
         <div class="f-socials">
-          <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-          <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
-          <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a>
+          <a href="javascript:void(0);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+          <a href="javascript:void(0);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+          <a href="javascript:void(0);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a>
         </div>
       </div>
       <div class="f-links">
         <h4 data-editable="true">Quick Links</h4>
         <ul>
-          <li><a data-editable="true" href="#">Home</a></li>
-          <li><a data-editable="true" href="#">About Us</a></li>
-          <li><a data-editable="true" href="#">Our Services</a></li>
-          <li><a data-editable="true" href="#">Contact</a></li>
+          <li><a data-editable="true" href="javascript:void(0);">Home</a></li>
+          <li><a data-editable="true" href="javascript:void(0);">About Us</a></li>
+          <li><a data-editable="true" href="javascript:void(0);">Our Services</a></li>
+          <li><a data-editable="true" href="javascript:void(0);">Contact</a></li>
         </ul>
       </div>
       <div class="f-links">

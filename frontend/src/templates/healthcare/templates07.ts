@@ -225,7 +225,7 @@ details.hc7-faq-item[open] .hc7-faq-toggle { background: var(--primary); color: 
 export const healthcare07Html = `
 <header class="hc7-header">
   <div class="container hc7-header-inner">
-    <a href="#" class="hc7-logo" style="display: flex; align-items: center; gap: 0.5rem;">
+    <a href="javascript:void(0);" class="hc7-logo" style="display: flex; align-items: center; gap: 0.5rem;">
       LOGO_PLACEHOLDER
     </a>
     <div class="hc7-header-emergency" style="gap: 1.5rem; align-items: center;">
@@ -233,7 +233,7 @@ export const healthcare07Html = `
         <span style="font-size: 0.9rem;">Call Us: <strong>PHONE_PLACEHOLDER</strong></span>
         <span style="font-size: 0.75rem;">Email: <strong>EMAIL_PLACEHOLDER</strong></span>
       </div>
-      <a href="#appointment" class="btn btn-primary">Book Appointment</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Book Appointment</a>
     </div>
   </div>
 </header>
@@ -246,8 +246,8 @@ export const healthcare07Html = `
       <h1>Your health, guided by <span class="italic">experts</span> who care.</h1>
       <p>From routine checkups to specialized treatment, our team combines modern medicine with genuine, patient-first care at every visit.</p>
       <div class="hc7-hero-actions">
-        <a href="#appointment" class="btn btn-primary">Book An Appointment</a>
-        <a href="#departments" class="btn btn-outline">Our Departments</a>
+        <a href="javascript:void(0);" class="btn btn-primary">Book An Appointment</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Our Departments</a>
       </div>
       <div class="hc7-hero-trust">
        <div class="hc7-avatar-group">
@@ -548,18 +548,18 @@ export const healthcare07Html = `
     <div class="hc7-footer-col">
       <h4>Navigate</h4>
       <ul>
-        <li><a href="#departments">Departments</a></li>
-        <li><a href="#doctors">Our Doctors</a></li>
-        <li><a href="#appointment">Book Appointment</a></li>
+        <li><a href="javascript:void(0);">Departments</a></li>
+        <li><a href="javascript:void(0);">Our Doctors</a></li>
+        <li><a href="javascript:void(0);">Book Appointment</a></li>
       </ul>
     </div>
     <div class="hc7-footer-col">
       <h4>Departments</h4>
       <ul>
-        <li><a href="#departments">SERVICES_PLACEHOLDER</a></li>
-        <li><a href="#departments">Pediatrics</a></li>
-        <li><a href="#departments">Orthopedics</a></li>
-        <li><a href="#departments">Emergency Care</a></li>
+        <li><a href="javascript:void(0);">SERVICES_PLACEHOLDER</a></li>
+        <li><a href="javascript:void(0);">Pediatrics</a></li>
+        <li><a href="javascript:void(0);">Orthopedics</a></li>
+        <li><a href="javascript:void(0);">Emergency Care</a></li>
       </ul>
     </div>
     <div class="hc7-footer-col">

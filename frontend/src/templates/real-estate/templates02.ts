@@ -648,7 +648,7 @@ export const realEstate02Html = `
     <div class="re02-container re02-header-inner">
       <div class="re02-logo">LOGO_PLACEHOLDER</div>
     
-      <a href="#contact" class="re02-btn re02-btn-primary">Contact Us</a>
+      <a href="javascript:void(0);" class="re02-btn re02-btn-primary">Contact Us</a>
     </div>
   </header>
 
@@ -659,8 +659,8 @@ export const realEstate02Html = `
       <h1 class="re02-title-main">Find Your Perfect Place to Call Home.</h1>
       <p class="re02-text-lead">We specialize in curating remarkable properties for discerning individuals. Experience real estate with a fresh, modern perspective.</p>
       <div class="re02-hero-btns">
-        <a href="#properties" class="re02-btn re02-btn-secondary">Explore Homes</a>
-        <a href="#about" class="re02-btn re02-btn-primary">Learn More</a>
+        <a href="javascript:void(0);" class="re02-btn re02-btn-secondary">Explore Homes</a>
+        <a href="javascript:void(0);" class="re02-btn re02-btn-primary">Learn More</a>
       </div>
     </div>
     <div class="re02-hero-image"></div>
@@ -778,7 +778,7 @@ export const realEstate02Html = `
       </div>
       
       <div style="text-align:center; margin-top: 50px;">
-        <a href="#" class="re02-btn re02-btn-secondary">Browse All Listings</a>
+        <a href="javascript:void(0);" class="re02-btn re02-btn-secondary">Browse All Listings</a>
       </div>
     </div>
   </section>
@@ -795,7 +795,7 @@ export const realEstate02Html = `
           <h2 class="re02-title-main">Redefining Real Estate Excellence.</h2>
           <p class="re02-text-lead">Founded on the principles of integrity, innovation, and uncompromising service. We believe that finding a home is more than a transaction—it's a life-changing experience.</p>
           <p style="color: #666; margin-bottom: 30px; line-height: 1.7;">Our dedicated team leverages cutting-edge technology and profound market analytics to provide you with insights that truly matter, ensuring you make informed decisions every step of the way.</p>
-          <a href="#" class="re02-btn re02-btn-primary">Meet The Team</a>
+          <a href="javascript:void(0);" class="re02-btn re02-btn-primary">Meet The Team</a>
         </div>
       </div>
     </div>
@@ -905,7 +905,7 @@ export const realEstate02Html = `
           <div class="re02-blog-content">
             <span class="re02-blog-date">Oct 12, 2026</span>
             <h3>Top Interior Design Trends for Luxury Homes this Fall</h3>
-            <a href="#" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
           </div>
         </div>
         <div class="re02-blog-card">
@@ -913,7 +913,7 @@ export const realEstate02Html = `
           <div class="re02-blog-content">
             <span class="re02-blog-date">Sep 28, 2026</span>
             <h3>Understanding the Shift in Suburban Real Estate Markets</h3>
-            <a href="#" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
           </div>
         </div>
         <div class="re02-blog-card">
@@ -921,7 +921,7 @@ export const realEstate02Html = `
           <div class="re02-blog-content">
             <span class="re02-blog-date">Sep 15, 2026</span>
             <h3>How to Prepare Your Home for a High-End Valuation</h3>
-            <a href="#" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
+            <a href="javascript:void(0);" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.9rem;">Read Article &rarr;</a>
           </div>
         </div>
       </div>

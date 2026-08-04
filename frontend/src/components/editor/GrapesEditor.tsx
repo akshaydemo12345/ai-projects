@@ -432,6 +432,9 @@ const GrapesEditor = () => {
         .replace(/LOGO_PLACEHOLDER/g, currentPage.logoUrl ? `<img src="${currentPage.logoUrl}" alt="Logo" />` : 'LOGO')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, currentPage.title || 'Your Brand');
 
+      // ─── Map body styles to GrapesJS wrapper for all templates ───
+      finalStyles = finalStyles.replace(/(^|\s|\})body\s*\{/g, '$1body, [data-gjs-type="wrapper"], .gjs-dashed {');
+
       // ─── Inject template CSS FIRST into canvas <iframe> ───
       // (branding-vars must come AFTER template-styles so it wins the cascade)
       if (canvasDoc) {

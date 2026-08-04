@@ -22,6 +22,16 @@ export const plumber02Styles = `
       --section-padding: 96px;
     }
 
+/* GrapesJS Editor Override */
+body, .gjs-dashed, [data-gjs-type="wrapper"], main {
+    background-color: var(--bg-light) !important;
+    color: var(--text-dark) !important;
+}
+h1, h2, h3, h4, h5, h6, p, span, div, a {
+    color: inherit;
+}
+
+
     /* Reset */
     *,
     *::before,
@@ -1142,7 +1152,7 @@ export const plumber02Html = `
 <!-- TopAppBar -->
   <header class="header">
     <div class="container header-inner">
-      <a data-editable="true" class="brand-logo" style="font-size: 24px; font-weight: 800; color: #0f172a;" href="#">LOGO_PLACEHOLDER</a>
+      <a data-editable="true" class="brand-logo" style="font-size: 24px; font-weight: 800; color: #0f172a;" href="javascript:void(0);">LOGO_PLACEHOLDER</a>
       <div class="header-actions">
         <button data-editable="true" class="btn-emergency">Emergency Call</button>
         <button data-editable="true" class="btn-primary" id="open-modal-header">Book Online</button>
@@ -1270,7 +1280,7 @@ export const plumber02Html = `
           <div class="card-icon"><span data-editable="true" class="material-symbols-outlined">plumbing</span></div>
           <h3 data-editable="true" class="text-h2 mb-4">Emergency Repair</h3>
           <p data-editable="true">Burst pipes, major leaks, or sewage backups. Our rapid response team is available 24/7/365.</p>
-          <a data-editable="true" class="link" href="#">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
+          <a data-editable="true" class="link" href="javascript:void(0);">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
         </div>
         <!-- Featured Card -->
         <div class="service-featured">
@@ -1286,21 +1296,21 @@ export const plumber02Html = `
           <div class="card-icon"><span data-editable="true" class="material-symbols-outlined">water_damage</span></div>
           <h3 data-editable="true" class="text-h2 mb-4">Drain Cleaning</h3>
           <p data-editable="true">Using hydro-jetting technology to clear even the most stubborn blockages without pipe damage.</p>
-          <a data-editable="true" class="link" href="#">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
+          <a data-editable="true" class="link" href="javascript:void(0);">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
         </div>
         <!-- Service Card 3 -->
         <div class="card">
           <div class="card-icon"><span data-editable="true" class="material-symbols-outlined">hot_tub</span></div>
           <h3 data-editable="true" class="text-h2 mb-4">Water Heaters</h3>
           <p data-editable="true">Expert installation and maintenance of traditional and high-efficiency tankless systems.</p>
-          <a data-editable="true" class="link" href="#">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
+          <a data-editable="true" class="link" href="javascript:void(0);">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
         </div>
         <!-- Service Card 4 -->
         <div class="card">
           <div class="card-icon"><span data-editable="true" class="material-symbols-outlined">foundation</span></div>
           <h3 data-editable="true" class="text-h2 mb-4">Sewer Lines</h3>
           <p data-editable="true">Trenchless repair methods that save your landscaping while restoring main line function.</p>
-          <a data-editable="true" class="link" href="#">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
+          <a data-editable="true" class="link" href="javascript:void(0);">Learn More <span data-editable="true" class="material-symbols-outlined">arrow_forward</span></a>
         </div>
       </div>
     </div>
@@ -1495,7 +1505,7 @@ export const plumber02Html = `
   <footer class="footer">
     <div class="container footer-grid">
       <div>
-        <a data-editable="true" class="footer-logo" href="#">LOGO_PLACEHOLDER</a>
+        <a data-editable="true" class="footer-logo" href="javascript:void(0);">LOGO_PLACEHOLDER</a>
         <p data-editable="true" class="footer-desc">Redefining professional trade services with precision, integrity, and elite craftsmanship.</p>
     
       </div>

@@ -248,13 +248,13 @@ details[open] .lf3-faq-toggle { background: var(--primary); transform: rotate(45
 export const law08Html = `
 <header class="lf3-header">
   <div class="container lf3-header-inner">
-    <a href="#" class="lf3-mark logo">
+    <a href="javascript:void(0);" class="lf3-mark logo">
       <span class="lf3-mark-index">§</span>
       PROJECT_NAME_PLACEHOLDER
     </a>
     <div class="lf3-header-meta">
       <span>PHONE_PLACEHOLDER</span>
-      <a href="#contact" class="btn btn-solid">Consult Us</a>
+      <a href="javascript:void(0);" class="btn btn-solid">Consult Us</a>
     </div>
   </div>
 </header>
@@ -266,7 +266,7 @@ export const law08Html = `
         <div class="eyebrow">Established Legal Practice</div>
         <h1>Precision counsel for <span class="italic">complex</span> matters.</h1>
         <p>A boutique legal practice built on rigorous strategy, plain-spoken advice, and outcomes that hold up under pressure.</p>
-        <a href="#contact" class="btn btn-solid">Book A Consultation</a>
+        <a href="javascript:void(0);" class="btn btn-solid">Book A Consultation</a>
       </div>
       <div class="lf3-hero-frame">
         <div class="lf3-hero-index">01</div>
@@ -298,7 +298,7 @@ export const law08Html = `
       <div class="lf3-about-copy">
         <p>We advise founders, families, and enterprises on the matters that matter most — combining sharp legal reasoning with a genuine understanding of what our clients are trying to achieve.</p>
       </div>
-      <a href="#services" class="btn btn-line">Our Approach</a>
+      <a href="javascript:void(0);" class="btn btn-line">Our Approach</a>
     </div>
     <div class="lf3-about-list lf3-reveal" style="transition-delay: 0.15s;">
       <div class="lf3-about-row">
@@ -505,7 +505,7 @@ export const law08Html = `
         <div class="eyebrow">Case Studies</div>
         <h2>Results our clients have relied on.</h2>
       </div>
-      <a href="#contact" class="btn btn-line">View All Cases</a>
+      <a href="javascript:void(0);" class="btn btn-line">View All Cases</a>
     </div>
     <div class="lf3-cases-grid lf3-reveal">
       <div class="lf3-case-feature">
@@ -567,7 +567,7 @@ export const law08Html = `
   <div class="container lf3-cta-inner">
     <h2>Have a legal matter that needs clear direction?</h2>
     <div class="lf3-cta-actions">
-      <a href="#contact" class="btn btn-cream">Talk To An Attorney</a>
+      <a href="javascript:void(0);" class="btn btn-cream">Talk To An Attorney</a>
     </div>
   </div>
 </section>
@@ -610,10 +610,10 @@ export const law08Html = `
     <div class="lf3-footer-col">
       <h4>Navigate</h4>
       <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#services">Practice Areas</a></li>
-        <li><a href="#cases">Case Studies</a></li>
-        <li><a href="#team">Attorneys</a></li>
+        <li><a href="javascript:void(0);">About</a></li>
+        <li><a href="javascript:void(0);">Practice Areas</a></li>
+        <li><a href="javascript:void(0);">Case Studies</a></li>
+        <li><a href="javascript:void(0);">Attorneys</a></li>
       </ul>
     </div>
     <div class="lf3-footer-col">
@@ -621,7 +621,7 @@ export const law08Html = `
       <ul>
         <li><a href="tel:PHONE_PLACEHOLDER">PHONE_PLACEHOLDER</a></li>
         <li><a href="mailto:EMAIL_PLACEHOLDER">EMAIL_PLACEHOLDER</a></li>
-        <li><a href="#contact">ADDRESS_PLACEHOLDER</a></li>
+        <li><a href="javascript:void(0);">ADDRESS_PLACEHOLDER</a></li>
       </ul>
     </div>
     <div class="lf3-footer-col">
@@ -636,9 +636,9 @@ export const law08Html = `
   <div class="container lf3-footer-bottom">
     <div>© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</div>
     <div class="lf3-footer-links">
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Service</a>
-      <a href="#">Disclaimer</a>
+      <a href="javascript:void(0);">Privacy Policy</a>
+      <a href="javascript:void(0);">Terms of Service</a>
+      <a href="javascript:void(0);">Disclaimer</a>
     </div>
   </div>
 </footer>

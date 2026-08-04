@@ -612,9 +612,9 @@ export const law05Html = `
       <div class="top-bar-item"><i class="fas fa-envelope"></i> example@lawfirm.com</div>
       <div class="top-bar-item"><i class="fas fa-phone"></i> +1 (123) 456-7890</div>
       <div class="social-links">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-facebook-f"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-twitter"></i></a>
+        <a href="javascript:void(0);"><i class="fab fa-linkedin-in"></i></a>
       </div>
     </div>
   </div>
@@ -633,7 +633,7 @@ export const law05Html = `
       <span class="hero-subtitle">Professional</span>
       <h1>LAW FIRM</h1>
       <p>We are a leading law firm in the financial and business industry with more than 20 years of experience.</p>
-      <a href="#contact" class="btn btn-primary">Contact Now</a>
+      <a href="javascript:void(0);" class="btn btn-primary">Contact Now</a>
     </div>
   </section>
 
@@ -755,7 +755,7 @@ export const law05Html = `
                 </div>
               </div>
               <p>"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."</p>
-              <a href="#" class="read-more">Contact Attorney</a>
+              <a href="javascript:void(0);" class="read-more">Contact Attorney</a>
             </div>
             <div data-gjs-type="swiper-slide" class="swiper-slide testi-content">
               <div class="testi-author">
@@ -765,7 +765,7 @@ export const law05Html = `
                 </div>
               </div>
               <p>"Absolutely fantastic representation. The team handled my corporate dispute with incredible precision. They guided us every step of the way."</p>
-              <a href="#" class="read-more">Contact Attorney</a>
+              <a href="javascript:void(0);" class="read-more">Contact Attorney</a>
             </div>
             <div data-gjs-type="swiper-slide" class="swiper-slide testi-content">
               <div class="testi-author">
@@ -775,7 +775,7 @@ export const law05Html = `
                 </div>
               </div>
               <p>"I felt completely supported during a very stressful time. Their empathetic approach and sharp legal strategy secured the best possible outcome."</p>
-              <a href="#" class="read-more">Contact Attorney</a>
+              <a href="javascript:void(0);" class="read-more">Contact Attorney</a>
             </div>
           </div>
           <div data-gjs-type="swiper-pagination" class="swiper-pagination"></div>
@@ -896,10 +896,10 @@ export const law05Html = `
         <div class="footer-col">
           <h4>Practice Areas</h4>
           <ul>
-            <li><a href="#">Family Law</a></li>
-            <li><a href="#">Corporate Law</a></li>
-            <li><a href="#">Real Estate</a></li>
-            <li><a href="#">Criminal Defense</a></li>
+            <li><a href="javascript:void(0);">Family Law</a></li>
+            <li><a href="javascript:void(0);">Corporate Law</a></li>
+            <li><a href="javascript:void(0);">Real Estate</a></li>
+            <li><a href="javascript:void(0);">Criminal Defense</a></li>
           </ul>
         </div>
         <div class="footer-col">

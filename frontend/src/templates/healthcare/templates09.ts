@@ -204,12 +204,12 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
 export const healthcare09Html = `
 <header class="hc9-header">
   <div class="container hc9-header-inner">
-    <a href="#" class="hc9-logo">
+    <a href="javascript:void(0);" class="hc9-logo">
       LOGO_PLACEHOLDER
     </a>
     <div class="hc9-header-status">
       <span class="dot"></span> Accepting new patients
-      <a href="#appointment" class="btn btn-primary" style="margin-left: 1.25rem;">Book Now</a>
+      <a href="javascript:void(0);" class="btn btn-primary" style="margin-left: 1.25rem;">Book Now</a>
     </div>
   </div>
 </header>
@@ -221,8 +221,8 @@ export const healthcare09Html = `
       <h1>Healthcare, organized around clarity.</h1>
       <p>Real-time appointment availability, transparent care teams, and a facility built for efficient, modern medicine.</p>
       <div class="hc9-hero-actions">
-        <a href="#appointment" class="btn btn-primary">Book An Appointment</a>
-        <a href="#departments" class="btn btn-outline">View Departments</a>
+        <a href="javascript:void(0);" class="btn btn-primary">Book An Appointment</a>
+        <a href="javascript:void(0);" class="btn btn-outline">View Departments</a>
       </div>
     </div>
     <div class="hc9-tile-grid hc9-reveal" style="transition-delay: 0.15s;">
@@ -264,7 +264,7 @@ export const healthcare09Html = `
   <div class="container">
     <div class="hc9-departments-head hc9-reveal">
       <h2>SERVICES_PLACEHOLDER</h2>
-      <a href="#appointment" class="btn btn-outline">Book A Department</a>
+      <a href="javascript:void(0);" class="btn btn-outline">Book A Department</a>
     </div>
     <div class="hc9-reveal">
       <div class="hc9-dept-row">
@@ -310,25 +310,25 @@ export const healthcare09Html = `
         <div class="hc9-doc-name"><img src="https://images.openai.com/static-rsc-4/Tro9NlWedL2lItuxi3wZmQyF1aHbWi-PoMs04rWooPhNHlhPTQzqEUXqWUi9GblBQed5DafC7ce7nPazhnC0vsvUvPoURC6qebVvKs-kyRplXaNwDvFT09GzdTMdf_kYTjy9LoX9dQYFfhO-bNfr0SCtG-T5So_It9tT6nI8tSp4xETvg2MmtgcSPX8LdW-u?purpose=inline" alt="Doctor"><h4>Dr. Sarah Bennett</h4></div>
         <span>Cardiology</span>
         <span class="hc9-availability"><span class="dot"></span>Today, 3:00 PM</span>
-        <a href="#appointment" class="btn btn-outline">Book</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Book</a>
       </div>
       <div class="hc9-doctor-row2">
         <div class="hc9-doc-name"><img src="https://images.openai.com/static-rsc-4/xRN_7E9HZuTnvxsIS7mv7xb4u1OlsdJJ_d5kskhQuqo9fmuYcLc4V6SpkkN5NbsCVInSUDgZ0Zvtup9EglRexLf4AuKgYiyT-lWcZPQrTdr5gVgFI-yOTH4JY5VdV0R6DKQLX7DsPE_bmptC2po7YgKzNq3iM2gdaV1JXLk8W0OA22ffnBMArOMUX5wzyPeY?purpose=inline" alt="Doctor"><h4>Dr. James Carter</h4></div>
         <span>Pediatrics</span>
         <span class="hc9-availability"><span class="dot"></span>Tomorrow, 10:00 AM</span>
-        <a href="#appointment" class="btn btn-outline">Book</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Book</a>
       </div>
       <div class="hc9-doctor-row2">
         <div class="hc9-doc-name"><img src="https://images.openai.com/static-rsc-4/XGvAphxu7RqgPAPODUpqxSveXSxCjSplUhOwy2fZZ-87gQtDHi7wN4xWlk9-0fBeOcrmEux5IecTnIv1OUMIGhJHINa4q3V64x2rvJnxWn4qd6NKF7H6g7sQB9F57ci4kTxN2QN5_uxWONV75bKK8tP0awVBB9kmfqTRDHTjGWw?purpose=inline" alt="Doctor"><h4>Dr. Mia Wong</h4></div>
         <span>Orthopedics</span>
         <span class="hc9-availability"><span class="dot"></span>Today, 5:30 PM</span>
-        <a href="#appointment" class="btn btn-outline">Book</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Book</a>
       </div>
       <div class="hc9-doctor-row2">
         <div class="hc9-doc-name"><img src="https://images.openai.com/static-rsc-4/Tro9NlWedL2lItuxi3wZmQyF1aHbWi-PoMs04rWooPhNHlhPTQzqEUXqWUi9GblBQed5DafC7ce7nPazhnC0vsvUvPoURC6qebVvKs-kyRplXaNwDvFT09GzdTMdf_kYTjy9LoX9dQYFfhO-bNfr0SCtG-T5So_It9tT6nI8tSp4xETvg2MmtgcSPX8LdW-u?purpose=inline" alt="Doctor"><h4>Dr. Daniel Scott</h4></div>
         <span>Emergency Care</span>
         <span class="hc9-availability"><span class="dot"></span>Available Now</span>
-        <a href="#appointment" class="btn btn-outline">Book</a>
+        <a href="javascript:void(0);" class="btn btn-outline">Book</a>
       </div>
     </div>
   </div>
@@ -405,17 +405,17 @@ export const healthcare09Html = `
     <div class="hc9-footer-col">
       <h4>Navigate</h4>
       <ul>
-        <li><a href="#departments">Departments</a></li>
-        <li><a href="#doctors">Doctor Availability</a></li>
-        <li><a href="#appointment">Book Appointment</a></li>
+        <li><a href="javascript:void(0);">Departments</a></li>
+        <li><a href="javascript:void(0);">Doctor Availability</a></li>
+        <li><a href="javascript:void(0);">Book Appointment</a></li>
       </ul>
     </div>
     <div class="hc9-footer-col">
       <h4>Departments</h4>
       <ul>
-        <li><a href="#departments">SERVICES_PLACEHOLDER</a></li>
-        <li><a href="#departments">Pediatrics</a></li>
-        <li><a href="#departments">Emergency Care</a></li>
+        <li><a href="javascript:void(0);">SERVICES_PLACEHOLDER</a></li>
+        <li><a href="javascript:void(0);">Pediatrics</a></li>
+        <li><a href="javascript:void(0);">Emergency Care</a></li>
       </ul>
     </div>
     <div class="hc9-footer-col">

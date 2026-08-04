@@ -1,574 +1,231 @@
 export const finance03Styles = `
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 :root {
   --primary: PRIMARY_COLOR_PLACEHOLDER;
+  --primary-light: color-mix(in srgb, var(--primary) 10%, transparent);
   --secondary: SECONDARY_COLOR_PLACEHOLDER;
-  --text-dark: #0f172a;
-  --text-muted: #64748b;
-  --bg-light: #f3f6f5;
-  --white: #ffffff;
-  --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  --secondary-light: color-mix(in srgb, var(--secondary) 10%, transparent);
+  --bg-color: #f9fbfa;
+  --text-dark: #111827;
+  --text-gray: #6b7280;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--text-dark); line-height: 1.6; overflow-x: hidden; }
 
-body {
-  font-family: 'Outfit', sans-serif;
-  color: var(--text-dark);
-  background-color: var(--white);
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-  height: auto;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: var(--transition);
-}
-
+.container { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+a { text-decoration: none; color: inherit; transition: 0.3s; }
+img { max-width: 100%; display: block; object-fit: cover; }
 ul { list-style: none; }
 
-.container {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* Floating Animations for Shapes */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes float {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(10deg); }
-  100% { transform: translateY(0) rotate(0deg); }
-}
-@keyframes floatReverse {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(20px) rotate(-10deg); }
-  100% { transform: translateY(0) rotate(0deg); }
-}
-@keyframes pulseGlow {
-  0% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 0.5; }
-}
-
-/* Base animations that play immediately */
-.animate-up { opacity: 0; animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-
-/* Decorative Tiny Shapes (Creative elements) */
-.deco-shape {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-}
-.deco-circle {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: 8px solid var(--secondary);
-  opacity: 0.4;
-  animation: float 6s infinite ease-in-out;
-}
-.deco-dot {
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: var(--primary);
-  opacity: 0.3;
-  animation: floatReverse 5s infinite ease-in-out;
-}
-.deco-cross {
-  width: 30px; height: 30px;
-  opacity: 0.4;
-  animation: float 7s infinite ease-in-out;
-}
-.deco-cross::before, .deco-cross::after {
-  content: ''; position: absolute; background: var(--secondary); border-radius: 10px;
-}
-.deco-cross::before { width: 100%; height: 6px; top: 12px; left: 0; }
-.deco-cross::after { height: 100%; width: 6px; top: 0; left: 12px; }
-
 /* Buttons */
-.btn-yellow, .btn-green, .btn-white {
-  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 0.95rem;
-  text-transform: capitalize; position: relative; overflow: hidden; z-index: 1;
-  cursor: pointer; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
-.btn-yellow::before, .btn-green::before, .btn-white::before {
-  content: ''; position: absolute; top: 0; left: -100%;
-  width: 100%; height: 100%; transition: all 0.5s ease; z-index: -1; border-radius: 50px;
-}
-.btn-yellow:hover::before, .btn-green:hover::before, .btn-white:hover::before { left: 0; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s; border: none; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: color-mix(in srgb, var(--primary) 80%, black); }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn-secondary:hover { background: color-mix(in srgb, var(--secondary) 80%, black); }
 
-.btn-yellow { background: var(--btn-bg, var(--secondary)); color: var(--btn-text, var(--white)); }
-.btn-yellow::before { background: var(--secondary); }
-.btn-yellow:hover { color: var(--btn-text, var(--white)) !important; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.3); transform: translateY(-3px); }
+/* Section Titles */
+.sec-tag { display: inline-flex; align-items: center; gap: 8px; color: var(--secondary); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.sec-tag i { font-size: 14px; }
+.sec-title h2 { font-size: 40px; font-weight: 800; color: var(--text-dark); margin-bottom: 20px; line-height: 1.2; letter-spacing: -1px; }
+.sec-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.7; }
+.text-center { text-align: center; }
 
-.btn-green { background: var(--btn-bg, var(--primary)); color: var(--btn-text, var(--white)); }
-.btn-green::before { background: var(--secondary); }
-.btn-green:hover { color: var(--btn-text, var(--white)) !important; box-shadow: 0 10px 25px rgba(var(--secondary-rgb), 0.3); transform: translateY(-3px); }
+/* 1. Top Bar */
+.topbar { background: var(--primary); padding: 10px 0; color: #fff; font-size: 13px; font-weight: 500; }
+.topbar-inner { display: flex; justify-content: space-between; align-items: center; }
+.top-info { display: flex; gap: 24px; }
+.top-info span { display: flex; align-items: center; gap: 8px; }
+.top-info i { color: var(--secondary); }
+.top-social { display: flex; gap: 16px; }
+.top-social a:hover { color: var(--secondary); }
 
-.btn-white { background: var(--white); color: var(--primary); }
-.btn-white::before { background: var(--primary); }
-.btn-white:hover { color: var(--white); transform: translateY(-3px); }
+/* 2. Header */
+.header { background: #fff; padding: 15px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 100; }
+.header-inner { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 26px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 5px; }
+.logo span { color: var(--secondary); }
 
-/* Topbar */
-.topbar { background-color: var(--primary); color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; padding: 12px 0; }
-.topbar-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-.topbar-left, .topbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 25px; }
-.topbar-left i { color: var(--secondary); margin-right: 8px; font-size: 1rem; }
-.topbar-right a {
-  width: 30px; height: 30px; background: rgba(255,255,255,0.1); display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  border-radius: 50%; transition: var(--transition); color: var(--white);
-}
-.topbar-right a:hover { background: var(--secondary); color: var(--white); transform: translateY(-2px); }
-
-/* Header */
-.header {
-  background: var(--white); padding: 15px 0; position: sticky; top: 0; z-index: 1000;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.05);
-}
-.header-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-.logo { font-size: 2rem; font-weight: 800; color: var(--primary); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
-
-/* Hero Section */
-.hero {
-  background-color: var(--bg-light);
-  background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  padding: 90px 0 160px; 
-  position: relative; 
-  z-index: 1;
-}
-.hero::after {
-  content: ''; position: absolute; inset: 0;
-  background: rgba(243, 246, 245, 0.92); /* Light overlay so text is readable */
-  z-index: -1;
-}
-.hero-shape-1 {
-  position: absolute; top: 15%; left: 8%; width: 60px; height: 60px;
-  border: 12px solid var(--secondary); border-radius: 50%; opacity: 0.4;
-  animation: float 6s infinite ease-in-out;
-}
-.hero-inner { display: grid; grid-template-columns: 1fr 450px; align-items: center; gap: 80px; }
-.hero-tag {
-  background: rgba(var(--primary-rgb), 0.1); color: var(--primary); padding: 8px 20px; border-radius: 30px;
-  font-size: 0.9rem; font-weight: 700; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 25px;
-  border: 1px solid rgba(var(--primary-rgb), 0.2);
-}
+/* 3. Hero Section */
+.hero { padding: 80px 0 160px; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, #fff) 0%, #ffffff 50%, color-mix(in srgb, var(--secondary) 8%, #fff) 100%); position: relative; overflow: hidden; }
+.hero-bg-circle { position: absolute; top: 10%; left: 5%; width: 50px; height: 50px; border: 4px solid var(--secondary); border-radius: 50%; opacity: 0.3; }
+.hero-grid { display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; }
+.hero-tag { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-color); padding: 8px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 24px; }
 .hero-tag i { color: var(--secondary); }
-.hero-content h1 { font-size: 4rem; line-height: 1.15; font-weight: 800; margin-bottom: 25px; color: var(--text-dark); letter-spacing: -1px; }
-.hero-content h1 span { position: relative; display: inline-block; }
-.hero-content h1 span::after {
-  content: ''; position: absolute; bottom: 8px; left: 0; width: 100%; height: 12px;
-  background: var(--secondary); opacity: 0.4; z-index: -1; transform: rotate(-2deg);
-}
-.hero-content p { font-size: 1.15rem; color: var(--text-muted); margin-bottom: 40px; max-width: 90%; line-height: 1.7; }
+.hero-content h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; color: var(--text-dark); letter-spacing: -1.5px; }
+.hero-content p { font-size: 18px; color: var(--text-gray); margin-bottom: 32px; max-width: 500px; }
 
-/* Hero Form Section (Right Side) */
-.hero-form-wrapper {
-  background: var(--white); padding: 40px; border-radius: 20px;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.1); position: relative; z-index: 10;
-  border-top: 5px solid var(--secondary);
-}
-.hero-form-header { text-align: center; margin-bottom: 25px; }
-.hero-form-header h3 { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
-.hero-form-header p { color: var(--text-muted); font-size: 0.95rem; }
-.hero-form-contact {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px;
-  background: var(--bg-light); padding: 15px; border-radius: 12px;
-  margin-bottom: 25px; font-weight: 700; color: var(--primary); text-align: left;
-}
-.hero-form-contact i {
-  font-size: 1.8rem; color: var(--secondary);
-  background: var(--white); width: 50px; height: 50px; border-radius: 50%;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-.hf-input-group { margin-bottom: 15px; }
-.hf-input-group input, .hf-input-group select {
-  width: 100%; padding: 14px 20px; border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 8px; font-family: inherit; font-size: 1rem;
-  transition: var(--transition); background: #f9f9f9;
-}
-.hf-input-group input:focus, .hf-input-group select:focus {
-  border-color: var(--primary); outline: none; background: var(--white); box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.1);
-}
+.hero-form { background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); position: relative; z-index: 2; }
+.hero-form h3 { font-size: 22px; font-weight: 800; margin-bottom: 15px; text-align: center; }
+.hero-form p { font-size: 14px; color: var(--text-gray); text-align: center; margin-bottom: 20px; }
+.alert-box { background: var(--secondary-light); border: 1px dashed var(--secondary); color: #a67215; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-input { width: 100%; padding: 14px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-family: inherit; font-size: 14px; outline: none; background: #f9fafb; transition: 0.3s; }
+.form-input:focus { border-color: var(--primary); background: #fff; }
+.hero-form .btn-secondary { width: 100%; padding: 16px; font-size: 16px; border-radius: 8px; margin-top: 10px; }
 
-/* Overlapping Features Cards */
-.hero-features {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
-  margin-top: -80px; position: relative; z-index: 20;
-}
-.hero-feature-card {
-  background: var(--white); color: var(--text-dark); padding: 35px 30px;
-  border-radius: 16px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.08); transition: var(--transition);
-  position: relative; overflow: hidden; border: 1px solid rgba(0,0,0,0.02);
-}
-.hero-feature-card::before {
-  content: ''; position: absolute; top: 0; right: 0; width: 150px; height: 150px;
-  background: rgba(var(--primary-rgb), 0.05); border-radius: 50%; transform: translate(50%, -50%);
-  transition: var(--transition); z-index: 0;
-}
-.hf-content { position: relative; z-index: 1; }
-.hero-feature-card:hover { transform: translateY(-15px); background: var(--primary); color: var(--white); box-shadow: 0 25px 50px rgba(var(--primary-rgb), 0.2); }
-.hero-feature-card:hover::before { background: rgba(255,255,255,0.1); transform: translate(20%, -20%) scale(2); }
-.hero-feature-card:hover .hf-text h4, .hero-feature-card:hover .hf-text p { color: var(--white); }
-.hf-icon { font-size: 2.5rem; color: var(--primary); transition: var(--transition); position: relative; z-index: 1; margin-top: 5px; }
-.hero-feature-card:hover .hf-icon { color: var(--secondary); transform: scale(1.1) rotate(5deg); }
-.hf-text h4 { font-size: 1.3rem; margin-bottom: 8px; font-weight: 800; transition: var(--transition); }
-.hf-text p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; transition: var(--transition); }
+/* 4. Features Strip */
+.features-strip { margin-top: -80px; position: relative; z-index: 10; margin-bottom: 80px; }
+.feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.feat-card { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); display: flex; align-items: flex-start; gap: 16px; }
+.feat-icon { width: 48px; height: 48px; background: var(--primary-light); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.feat-text h4 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.feat-text p { font-size: 14px; color: var(--text-gray); line-height: 1.5; }
 
-/* Section Headers */
-.section-title {
-  color: var(--primary); font-weight: 700; font-size: 1rem; text-transform: uppercase;
-  letter-spacing: 2px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 15px;
-}
-.section-title i { color: var(--secondary); font-size: 1.2rem; }
-.section-heading { font-size: 3.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 25px; line-height: 1.2; letter-spacing: -0.5px; position: relative; z-index: 2; }
+/* 5. About Section */
+.about { padding: 60px 0; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.about-imgs { position: relative; }
+.img-main { width: 85%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.img-sub { position: absolute; bottom: -30px; right: 0; width: 50%; border-radius: 20px; border: 10px solid var(--bg-color); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.exp-badge { position: absolute; top: 30px; right: 30px; background: var(--secondary); color: #fff; width: 100px; height: 100px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 15px 30px color-mix(in srgb, var(--secondary) 30%, transparent); z-index: 2; }
+.exp-badge h3 { font-size: 28px; font-weight: 800; line-height: 1; }
+.exp-badge span { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.about-list { margin-bottom: 30px; }
+.about-list li { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; font-weight: 600; font-size: 15px; }
+.about-list i { width: 24px; height: 24px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 
-/* About Section */
-.about { padding: 120px 0; position: relative; }
-.about .deco-circle { top: 10%; right: 5%; }
-.about .deco-dot { bottom: 20%; left: 3%; }
-.about-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 2; }
-.about-images { position: relative; }
-.about-img-main { width: 85%; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); position: relative; z-index: 2; }
-.about-img-sub {
-  position: absolute; bottom: -50px; right: 0; width: 55%;
-  border-radius: 20px; border: 12px solid var(--white);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.15); z-index: 3;
-  animation: float 7s infinite ease-in-out;
-}
-.about-experience {
-  position: absolute; top: 40px; right: 20px; background: var(--secondary); color: var(--white);
-  padding: 25px; border-radius: 16px; text-align: center; font-weight: 800;
-  box-shadow: 0 15px 30px rgba(var(--secondary-rgb), 0.4); z-index: 4;
-}
-.about-experience h3 { font-size: 3rem; line-height: 1; margin-bottom: 5px; }
-.about-experience span { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+/* 6. Services Grid */
+.services { padding: 100px 0; background: #fff; }
+.serv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+.serv-card { background: #fff; border: 1px solid #f0f0f0; padding: 40px 30px; border-radius: 16px; transition: 0.3s; position: relative; }
+.serv-card:hover { box-shadow: 0 15px 40px rgba(0,0,0,0.06); border-color: transparent; }
+.serv-icon { width: 60px; height: 60px; background: var(--primary-light); color: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 24px; }
+.serv-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.serv-card p { font-size: 15px; color: var(--text-gray); margin-bottom: 24px; }
+.serv-arrow { width: 36px; height: 36px; background: var(--bg-color); color: var(--text-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: 0.3s; }
+.serv-card:hover .serv-arrow { background: var(--primary); color: #fff; }
 
-.about-text p { color: var(--text-muted); margin-bottom: 25px; font-size: 1.1rem; }
-.about-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-.about-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-weight: 700; font-size: 1.05rem; }
-.about-list li i { color: var(--white); background: var(--primary); width: 24px; height: 24px; border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 0.7rem; }
+/* 7. CTA Banner */
+.cta-banner { background: var(--primary); padding: 80px 0; text-align: center; color: #fff; }
+.cta-banner h2 { font-size: 36px; font-weight: 800; margin-bottom: 16px; color: #fff; }
+.cta-banner p { font-size: 18px; color: rgba(255,255,255,0.8); max-width: 800px; margin: 0 auto; }
 
-/* Services Grid */
-.services { background-color: var(--bg-light); padding: 120px 0; position: relative; }
-.services .deco-cross { top: 15%; left: 10%; }
-.services .deco-circle { bottom: 10%; right: 10%; }
-.services .section-heading { text-align: center; margin-bottom: 60px; }
-.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 35px; position: relative; z-index: 2; }
-.service-card {
-  background: var(--white); padding: 50px 40px; border-radius: 20px;
-  position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-  transition: var(--transition); border: 1px solid rgba(0,0,0,0.03);
-}
-.service-card::before {
-  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 0;
-  background: var(--primary); transition: var(--transition); z-index: 1;
-}
-.service-card:hover { transform: translateY(-15px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border-color: transparent; }
-.service-card:hover::before { height: 100%; }
-.service-card > * { position: relative; z-index: 2; transition: var(--transition); }
+/* 8. Trusted Partner */
+.trusted { padding: 100px 0; }
+.trusted-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.trust-item { display: flex; gap: 16px; margin-bottom: 24px; background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); }
+.trust-icon { width: 50px; height: 50px; background: var(--primary-light); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.trust-text h4 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.trust-text p { font-size: 14px; color: var(--text-gray); }
+.trust-collage { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.tc-img { width: 100%; border-radius: 100px 100px 16px 16px; object-fit: cover; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+.tc-1 { height: 400px; grid-column: 1; grid-row: 1 / span 2; }
+.tc-2 { height: 190px; }
+.tc-3 { height: 190px; border-radius: 16px 16px 100px 100px; }
 
-.srv-icon {
-  width: 70px; height: 70px; background: rgba(var(--primary-rgb), 0.05); border-radius: 16px;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 2.5rem;
-  color: var(--primary); margin-bottom: 25px; transition: var(--transition);
-}
-.service-card:hover .srv-icon { background: rgba(255,255,255,0.1); color: var(--secondary); transform: scale(1.1); }
-.service-card h3 { font-size: 1.4rem; margin-bottom: 15px; font-weight: 800; color: var(--text-dark); }
-.service-card:hover h3 { color: var(--white); }
-.service-card p { color: var(--text-muted); font-size: 1rem; margin-bottom: 25px; line-height: 1.6; }
-.service-card:hover p { color: rgba(255,255,255,0.8); }
-.srv-link {
-  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; color: var(--primary);
-  width: 50px; height: 50px; border-radius: 50%; background: var(--bg-light); justify-content: center; overflow: hidden;
-  transition: var(--transition);
-}
-.srv-link span { display: none; }
-.service-card:hover .srv-link { width: auto; padding: 0 20px; border-radius: 30px; background: var(--secondary); color: var(--white); }
-.service-card:hover .srv-link span { display: block; color: var(--white); }
+/* 9. Marquee */
+.marquee-sec { position: relative; height: 100px; overflow: hidden; background: #fff; }
+.marquee-band { position: absolute; width: 120%; left: -10%; height: 65px; display: flex; align-items: center; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #fff; }
+.band-yellow { background: var(--secondary); transform: rotate(2deg); top: 15px; z-index: 1; }
+.band-green { background: var(--primary); transform: rotate(-2deg); top: 15px; z-index: 2; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.marquee-track { display: flex; gap: 50px; white-space: nowrap; animation: scrollLeft 25s linear infinite; }
+.marquee-track span { display: flex; align-items: center; gap: 15px; }
+.marquee-track i { color: var(--secondary); font-size: 20px; }
+@keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-/* CTA Banner */
-.cta-banner { background-color: var(--primary); padding: 90px 0; position: relative; overflow: hidden; }
-.cta-banner::before {
-  content: ''; position: absolute; left: -10%; top: -30%; width: 400px; height: 400px;
-  background: var(--secondary); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; opacity: 0.15;
-  animation: float 10s infinite;
-}
-.cta-banner::after {
-  content: ''; position: absolute; right: -5%; bottom: -30%; width: 300px; height: 300px;
-  background: var(--white); border-radius: 50%; opacity: 0.05;
-}
-.cta-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; position: relative; z-index: 10; }
-.cta-text h2 { color: var(--white); font-size: 3rem; font-weight: 800; margin-bottom: 15px; }
-.cta-text p { color: rgba(255,255,255,0.8); font-size: 1.2rem; }
-.cta-btns { display: flex; flex-wrap: wrap; gap: 20px; }
+/* 10. Experts (Team) */
+.team { padding: 100px 0; background: #fff; text-align: center; }
+.team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-top: 40px; }
+.team-card { text-align: center; }
+.t-img-box { height: 320px; border-radius: 150px 150px 16px 16px; overflow: hidden; margin-bottom: 20px; position: relative; }
+.t-bg-orange { background: #f4a261; }
+.t-bg-blue { background: #cbdceb; }
+.t-bg-black { background: #264653; }
+.t-bg-green { background: #e9edc9; }
+.team-card h4 { font-size: 20px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; }
+.team-card p { font-size: 13px; color: var(--text-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-/* Why Choose Us */
-.why-choose { padding: 120px 0; position: relative; }
-.why-choose .deco-cross { bottom: 10%; left: 5%; }
-.why-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 2; }
-.why-images { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; position: relative; }
-.why-images::before {
-  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 150px; height: 150px; background: var(--secondary); border-radius: 50%; z-index: -1;
-  animation: pulseGlow 4s infinite;
-}
-.why-img { border-radius: 120px 20px 120px 20px; overflow: hidden; height: 350px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-.why-img:nth-child(2) { border-radius: 20px 120px 20px 120px; margin-top: 50px; }
-.why-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-.why-img:hover img { transform: scale(1.1); }
-.why-features { margin-top: 40px; display: flex; flex-wrap: wrap; flex-direction: column; gap: 25px; }
-.w-feature { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px; background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: var(--transition); border-left: 4px solid transparent; }
-.w-feature:hover { transform: translateX(10px); border-left-color: var(--secondary); box-shadow: 0 15px 40px rgba(0,0,0,0.08); background: var(--primary); }
-.w-icon {
-  width: 55px; height: 55px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary);
-  border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; transition: var(--transition);
-}
-.w-feature:hover .w-icon { background: var(--secondary); color: var(--white); }
-.w-text h4 { font-size: 1.3rem; margin-bottom: 8px; font-weight: 800; transition: var(--transition); }
-.w-text p { color: var(--text-muted); font-size: 1rem; transition: var(--transition); }
-.w-feature:hover .w-text h4, .w-feature:hover .w-text p { color: var(--white); }
+/* 11. Latest Projects */
+.projects { padding: 100px 0; background: var(--primary); color: #fff; }
+.projects .sec-title h2 { color: #fff; }
+.proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+.proj-card { position: relative; border-radius: 20px; overflow: hidden; height: 350px; cursor: pointer; }
+.proj-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+.proj-info { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 24px 30px; background: linear-gradient(to top, var(--primary) 10%, color-mix(in srgb, var(--primary) 80%, transparent) 50%, transparent); }
+.proj-info h3 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+.proj-info p { color: var(--secondary); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.proj-card:hover img { transform: scale(1.05); }
 
-/* Diagonal Marquee */
-.diagonal-marquee { position: relative; padding: 60px 0; background: var(--bg-light); overflow: hidden; }
-.marquee-strip-wrapper { 
-  transform: rotate(-3deg); width: 150%; margin-left: -25%; display: flex; flex-wrap: wrap; flex-direction: column; background: var(--bg-light);
-}
-.marquee-strip { 
-  display: flex; flex-wrap: nowrap; white-space: nowrap; padding: 20px 0; font-size: 1.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; width: fit-content;
-}
-.strip-green { background: var(--primary); color: var(--white); animation: marqueeLeft 30s linear infinite; }
-.strip-yellow { background: var(--secondary); color: var(--white); animation: marqueeRight 30s linear infinite; }
-.marquee-item { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 30px; padding: 0 40px; }
-.marquee-item i { font-size: 1.2rem; }
-@keyframes marqueeLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-@keyframes marqueeRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+/* 12. How We Work */
+.process { padding: 100px 0; text-align: center; }
+.process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-top: 50px; position: relative; }
+.process-grid::before { content: ''; position: absolute; top: 45px; left: 10%; width: 80%; border-top: 2px dashed #d1d5db; z-index: 0; }
+.p-step { position: relative; z-index: 1; }
+.p-icon { width: 90px; height: 90px; background: #fff; border: 4px solid var(--primary-light); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--primary); position: relative; box-shadow: 0 0 0 8px #fff; }
+.p-dot { position: absolute; top: 42px; left: -50%; width: 12px; height: 12px; background: var(--primary); border-radius: 50%; display: none; }
+.p-step h4 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.p-step p { font-size: 14px; color: var(--text-gray); }
 
-/* Team Section */
-.team { padding: 120px 0; text-align: center; position: relative; }
-.team .deco-dot { top: 15%; right: 10%; }
-.team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 35px; margin-top: 60px; position: relative; z-index: 2; }
-.team-card { position: relative; }
-.team-img { 
-  background: var(--bg-light); border-radius: 150px 150px 20px 20px; padding-top: 20px; overflow: hidden; position: relative; 
-}
-.team-img img { width: 100%; height: 320px; object-fit: cover; object-position: center top; transition: var(--transition); }
-.team-card:hover .team-img img { transform: scale(1.1); }
-.team-overlay {
-  position: absolute; inset: 0; background: rgba(var(--primary-rgb), 0.7);
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; opacity: 0; transition: var(--transition);
-}
-.team-card:hover .team-overlay { opacity: 1; }
-.team-socials { display: flex; flex-wrap: wrap; gap: 10px; transform: translateY(20px); transition: var(--transition); }
-.team-card:hover .team-socials { transform: translateY(0); }
-.team-socials a { width: 40px; height: 40px; background: var(--secondary); color: var(--white); border-radius: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; }
-.team-socials a:hover { background: var(--white); color: var(--primary); }
-.team-info {
-  background: var(--white); padding: 25px; border-radius: 16px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.08); position: relative;
-  margin-top: -40px; width: 85%; margin-left: auto; margin-right: auto; z-index: 10;
-  transition: var(--transition); border: 1px solid rgba(0,0,0,0.03);
-}
-.team-card:hover .team-info { transform: translateY(-10px); border-color: var(--secondary); background: var(--primary); }
-.team-card:hover .team-info h4, .team-card:hover .team-info p { color: var(--white); }
-.team-info h4 { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); transition: var(--transition); }
-.team-info p { color: var(--primary); font-size: 0.9rem; font-weight: 700; margin-top: 5px; text-transform: uppercase; transition: var(--transition); }
+/* 13. Testimonials */
+.testimonials { padding: 80px 0 150px; background: var(--bg-color); text-align: center; }
+.test-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+.test-card { background: #fff; padding: 40px; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.04); position: relative; }
+.test-stars { color: var(--secondary); font-size: 14px; margin-bottom: 20px; display: flex; gap: 4px; }
+.test-card p { font-size: 16px; color: var(--text-gray); margin-bottom: 30px; font-style: italic; line-height: 1.7; }
+.t-client { display: flex; align-items: center; gap: 16px; }
+.t-client img { width: 56px; height: 56px; border-radius: 50%; }
+.t-client h4 { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+.t-client span { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; }
+.quote-icon { position: absolute; top: 40px; right: 40px; font-size: 40px; color: var(--secondary-light); z-index: 0; }
 
-/* Portfolio / Projects */
-.portfolio { background: var(--primary); padding: 120px 0; }
-.portfolio .section-heading, .portfolio .section-title { color: var(--white); }
-.portfolio .section-title i { color: var(--secondary); }
-.port-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-top: 60px; }
-.port-card { position: relative; border-radius: 16px; overflow: hidden; height: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-.port-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.port-card:hover img { transform: scale(1.15); }
-.port-card::before {
-  content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(var(--primary-rgb), 0.9), transparent);
-  opacity: 0.5; transition: var(--transition); z-index: 1;
-}
-.port-card:hover::before { opacity: 0.9; }
-.port-overlay {
-  position: absolute; bottom: 0; left: 0; right: 0; padding: 30px;
-  background: rgba(var(--white-rgb), 0); z-index: 2; transform: translateY(20px); transition: var(--transition);
-}
-.port-card:hover .port-overlay { transform: translateY(0); }
-.port-link {
-  position: absolute; top: 30px; right: 30px; width: 50px; height: 50px;
-  background: var(--secondary); color: var(--white); border-radius: 50%;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 1.2rem;
-  z-index: 2; opacity: 0; transform: scale(0.5); transition: var(--transition);
-}
-.port-card:hover .port-link { opacity: 1; transform: scale(1); background: var(--white); color: var(--primary); }
-.port-overlay h4 { font-size: 1.4rem; color: var(--white); margin-bottom: 8px; font-weight: 800; }
-.port-overlay p { color: var(--secondary); font-size: 0.95rem; font-weight: 600; text-transform: uppercase; }
+/* 14. Newsletter */
+.newsletter-wrapper { margin-top: -100px; position: relative; z-index: 10; padding: 0 20px; }
+.newsletter-box { background: var(--secondary); padding: 50px 60px; border-radius: 100px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 20px 40px color-mix(in srgb, var(--secondary) 30%, transparent); max-width: 1200px; margin: 0 auto; }
+.newsletter-box h2 { font-size: 32px; font-weight: 800; color: #fff; line-height: 1.2; }
+.news-form { background: #fff; padding: 8px; border-radius: 50px; display: flex; width: 450px; }
+.news-form input { flex: 1; border: none; padding: 10px 20px; font-family: inherit; font-size: 15px; outline: none; border-radius: 50px; }
+.news-form .btn-primary { padding: 14px 32px; border-radius: 50px; }
 
-/* Process Section */
-.process { padding: 120px 0; background: var(--white); position: relative; }
-.process .deco-dot { top: 10%; left: 5%; }
-.process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-top: 60px; position: relative; z-index: 2; }
-.process-card { text-align: center; position: relative; z-index: 1; }
-.process-icon {
-  width: 90px; height: 90px; background: var(--bg-light); border-radius: 50%;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 2.5rem;
-  color: var(--primary); margin: 0 auto 25px; position: relative;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: var(--transition);
-}
-.process-card:hover .process-icon { background: var(--primary); color: var(--white); transform: scale(1.1); }
-.process-number {
-  position: absolute; top: -10px; right: 0; width: 35px; height: 35px;
-  background: var(--secondary); color: var(--white); border-radius: 50%;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-weight: 800;
-  font-size: 1rem; border: 3px solid var(--white);
-}
-.process-card h4 { font-size: 1.3rem; font-weight: 800; margin-bottom: 15px; color: var(--text-dark); transition: var(--transition); }
-.process-card:hover h4 { color: var(--primary); }
-.process-card p { color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
+/* 15. Footer */
+.footer { background: var(--primary); padding: 120px 0 40px; margin-top: -50px; color: #fff; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; padding-bottom: 60px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+.f-logo { color: #fff; margin-bottom: 24px; display: inline-flex; }
+.f-logo span { color: var(--secondary); }
+.f-desc { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width: 350px; }
+.f-socials { display: flex; gap: 12px; }
+.f-socials a { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
+.f-socials a:hover { background: var(--secondary); }
+.footer h4 { font-size: 20px; font-weight: 700; margin-bottom: 24px; color: #fff; }
+.f-links li { margin-bottom: 12px; }
+.f-links a { color: rgba(255,255,255,0.8); font-size: 15px; }
+.f-links a:hover { color: var(--secondary); }
+.f-contact li { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 15px; color: rgba(255,255,255,0.8); }
+.f-contact i { color: var(--secondary); font-size: 18px; }
+.footer-bottom { display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.6); }
 
-@media (min-width: 1025px) {
-  .process-card:not(:last-child)::after {
-    content: ''; position: absolute; top: 45px; right: -50%; width: 100%; height: 2px;
-    border-top: 2px dashed rgba(0,0,0,0.1); z-index: -1;
-  }
-}
-
-/* Testimonials */
-.testimonials { padding: 120px 0; background: var(--bg-light); text-align: center; }
-.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 35px; margin-top: 60px; }
-.testi-card {
-  background: var(--white); padding: 50px 40px; border-radius: 20px;
-  text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: var(--transition);
-  position: relative; border: 1px solid rgba(0,0,0,0.03);
-}
-.testi-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); background: var(--primary); border-color: var(--primary); }
-.testi-card::after {
-  content: '\\f10e'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-  position: absolute; top: 30px; right: 30px; font-size: 4rem; color: rgba(var(--primary-rgb), 0.05); transition: var(--transition);
-}
-.testi-card:hover::after { color: rgba(255,255,255,0.1); }
-.testi-stars { color: var(--secondary); font-size: 1.1rem; margin-bottom: 20px; transition: var(--transition); }
-.testi-text { font-size: 1.1rem; font-style: italic; color: var(--text-muted); margin-bottom: 30px; line-height: 1.7; transition: var(--transition); }
-.testi-card:hover .testi-text { color: rgba(255,255,255,0.9); }
-.testi-author { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
-.testi-author img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
-.testi-author h4 { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); transition: var(--transition); }
-.testi-author p { font-size: 0.9rem; color: var(--primary); font-weight: 700; text-transform: uppercase; transition: var(--transition); }
-.testi-card:hover .testi-author h4, .testi-card:hover .testi-author p { color: var(--white); }
-
-/* Newsletter */
-.newsletter { padding: 60px 0; margin-bottom: -100px; position: relative; z-index: 20; }
-.news-inner {
-  background: var(--secondary); border-radius: 80px; padding: 60px 80px;
-  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-  box-shadow: 0 30px 60px rgba(var(--secondary-rgb), 0.2);
-}
-.news-inner h2 { font-size: 2.8rem; font-weight: 800; color: var(--white); max-width: 500px; line-height: 1.2; }
-.news-form { display: flex; flex-wrap: wrap; background: var(--white); padding: 10px; border-radius: 50px; width: 500px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-.news-form input { flex: 1; border: none; padding: 10px 25px; outline: none; background: transparent; font-family: inherit; font-size: 1.1rem; }
-.news-form button { background: var(--primary); color: var(--white); border: none; padding: 15px 35px; border-radius: 40px; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: var(--transition); }
-.news-form button:hover { background: #111; color: var(--white); transform: scale(1.05); }
-
-/* Footer */
-.footer { background: var(--primary); color: rgba(255,255,255,0.7); padding: 180px 0 50px; }
-.foot-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 50px; }
-.foot-logo { font-size: 2.2rem; color: var(--white); font-weight: 800; margin-bottom: 25px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.foot-logo .logo-icon { background: var(--secondary); color: var(--white); }
-.footer-desc { font-size: 1.1rem; line-height: 1.7; margin-bottom: 30px; max-width: 400px; }
-.foot-social { display: flex; flex-wrap: wrap; gap: 12px; }
-.foot-social a {
-  width: 45px; height: 45px; background: rgba(255,255,255,0.05); display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  border-radius: 50%; color: var(--white); font-size: 1.1rem; transition: var(--transition);
-}
-.foot-social a:hover { background: var(--secondary); color: var(--white); transform: translateY(-5px); }
-.footer h4 { color: var(--white); font-size: 1.3rem; margin-bottom: 30px; font-weight: 800; position: relative; padding-bottom: 10px; }
-.footer h4::after { content: ''; position: absolute; bottom: 0; left: 0; width: 40px; height: 3px; background: var(--secondary); }
-.foot-links li { margin-bottom: 15px; }
-.foot-links a { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 1.05rem; }
-.foot-links a i { color: var(--secondary); font-size: 0.8rem; transition: var(--transition); }
-.foot-links a:hover { color: var(--white); }
-.foot-links a:hover i { transform: translateX(5px); }
-.foot-post { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; align-items: center; }
-.foot-post img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; }
-.foot-post h5 { color: var(--white); font-size: 1rem; line-height: 1.4; margin-bottom: 5px; transition: var(--transition); cursor: pointer; }
-.foot-post h5:hover { color: var(--secondary); }
-.foot-post span { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
-.foot-post span i { color: var(--secondary); margin-right: 5px; }
-.foot-bottom {
-  border-top: 1px solid rgba(255,255,255,0.1); margin-top: 70px; padding-top: 30px;
-  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-size: 1rem;
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
-  .hero-inner, .about-inner, .why-inner, .cta-inner, .news-inner { grid-template-columns: 1fr; gap: 50px; text-align: center; }
-  .hero-features { grid-template-columns: 1fr; margin-top: 40px; }
-  .services-grid, .team-grid, .port-grid, .testi-grid, .process-grid { grid-template-columns: 1fr 1fr; }
-  .foot-grid { grid-template-columns: 1fr 1fr; }
-  .news-form { width: 100%; }
-  .about-images { margin-bottom: 50px; }
-  .about-img-sub { right: auto; left: 50%; transform: translateX(-50%); }
-  .w-feature { text-align: left; }
-  .hero-content h1 { font-size: 3rem; }
-  .section-title { justify-content: center; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .feat-grid, .about-grid, .trusted-grid { grid-template-columns: 1fr; }
+  .serv-grid, .team-grid, .proj-grid, .test-grid, .process-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .process-grid::before { display: none; }
+  .newsletter-box { flex-direction: column; text-align: center; gap: 30px; border-radius: 30px; }
 }
 @media (max-width: 768px) {
   .topbar { display: none; }
-  .services-grid, .team-grid, .port-grid, .testi-grid, .foot-grid, .why-images, .process-grid { grid-template-columns: 1fr; }
-  .hero-content h1 { font-size: 2.5rem; }
-  .section-heading { font-size: 2.2rem; }
-  .news-inner { padding: 40px 20px; border-radius: 30px; flex-direction: column; text-align: center; gap: 30px; }
-  .news-inner h2 { font-size: 2rem; }
-  .foot-bottom { flex-direction: column; gap: 20px; text-align: center; }
+  .hero-content h1 { font-size: 42px; }
+  .serv-grid, .team-grid, .proj-grid, .test-grid, .process-grid, .footer-grid { grid-template-columns: 1fr; }
+  .news-form { width: 100%; flex-direction: column; padding: 15px; background: transparent; }
+  .news-form input { background: #fff; margin-bottom: 15px; padding: 15px; }
 }
-
-
-  /* Extracted Template Inline Styles */
-  .tpl-templates04-1 { color: var(--text-muted); }
-  .tpl-templates04-2 { color: var(--text-muted); }
-  .tpl-templates04-3 { color: var(--secondary); }
-  .tpl-templates04-4 { color: #fff; }
-  .tpl-templates04-5 { color: var(--secondary); }
-  .tpl-templates04-6 { color: var(--secondary); }
-  .tpl-templates04-7 { color: var(--secondary); }
-  .tpl-templates04-8 { color: rgba(255,255,255,0.5); }
-  .tpl-templates04-9 { color: rgba(255,255,255,0.5); }
-  .tpl-templates04-10 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
 `;
 
 export const finance03Html = `
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<!-- 1. Topbar -->
+<!-- 1. Top Bar -->
 <div class="topbar">
   <div class="container topbar-inner">
-    <div class="topbar-left">
-      <span><i class="fa-solid fa-envelope"></i> EMAIL_PLACEHOLDER</span>
-      <span><i class="fa-solid fa-phone"></i> PHONE_PLACEHOLDER</span>
-      <span><i class="fa-solid fa-clock"></i> Mon - Fri: 9:00 - 18:00</span>
+    <div class="top-info">
+      <span><i class="fa-solid fa-envelope"></i> info@agency03.com</span>
+      <span><i class="fa-solid fa-phone"></i> +1 800 123 4567</span>
+      <span><i class="fa-solid fa-location-dot"></i> 100 Finance St, NY 10001</span>
     </div>
-    <div class="topbar-right">
+    <div class="top-social">
       <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
       <a href="#"><i class="fa-brands fa-twitter"></i></a>
       <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
@@ -580,502 +237,464 @@ export const finance03Html = `
 <!-- 2. Header -->
 <header class="header">
   <div class="container header-inner">
-    <div class="logo">
-      LOGO_PLACEHOLDER
-    </div>
-    <div class="header-actions">
-      <a href="#contact" class="btn-yellow">Get A Quote <i class="fa-solid fa-arrow-right"></i></a>
-    </div>
+    <div class="logo">Logo<span>.</span></div>
+    <a href="#contact" class="btn btn-secondary">Get Started <i class="fa-solid fa-arrow-right"></i></a>
   </div>
 </header>
 
-<!-- 3. Hero Section -->
-<section id="home" class="hero">
-  <div class="hero-shape-1"></div>
-  <div class="container hero-inner">
-    <div class="hero-content animate-up">
-      <div class="hero-tag"><i class="fa-solid fa-bolt"></i> Welcome to PROJECT_NAME_PLACEHOLDER</div>
-      <h1>Expert Solutions for Corporate <span>Financial</span> Success.</h1>
-      <p>We provide tailored financial strategies and corporate consulting to help your business achieve sustainable growth and maximize profitability in a competitive market.</p>
-      <a href="#about" class="btn-green">Discover More <i class="fa-solid fa-arrow-right"></i></a>
-    </div>
-    
-    <!-- Hero Form Box -->
-    <div class="hero-form-wrapper animate-up delay-2">
-      <div class="hero-form-header">
+<main>
+  <!-- 3. Hero Section -->
+  <section class="hero">
+    <div class="hero-bg-circle"></div>
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-tag"><i class="fa-solid fa-star"></i> Welcome to AgencyPlatform</div>
+        <h1>AgencyPlatform - Agency</h1>
+        <p>Drive your agency with a solid data and tech foundation. With Agency03 by 100% with EPS, you can design, service, and advance faster your brand with proven results.</p>
+        <a href="#services" class="btn btn-primary">Discover More <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="hero-form">
         <h3>Request Consultation</h3>
-        <p>Get expert advice tailored to your business.</p>
+        <p>Welcome to AgencyPlatform - Agency. Drive more revenue and operations using analytics, customer experiences, and digital transformation.</p>
+        <div class="alert-box">
+          <i class="fa-solid fa-circle-exclamation"></i> Your business is your wealth.
+        </div>
+        <form onsubmit="event.preventDefault();" class="premium-form">
+          <div class="form-group">
+            <input type="text" class="form-input" placeholder="Full Name" required>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-input" placeholder="Email Address" required>
+          </div>
+          <div class="form-group">
+            <input type="tel" class="form-input" placeholder="Phone Number" required>
+          </div>
+          <button type="submit" class="btn btn-secondary">Get Consultation <i class="fa-solid fa-arrow-right"></i></button>
+        </form>
       </div>
-      <div class="hero-form-contact">
-        <i class="fa-solid fa-headset"></i>
-        <div>
-          <span class="tpl-templates04-1" style="display: block; font-size: 0.85rem; font-weight: 500">Call Us Now</span>
-          <span style="font-size: 1.2rem;">PHONE_PLACEHOLDER</span>
-        </div>
-      </div>
-      <form>
-        <div class="hf-input-group">
-          <input type="text" name="name" placeholder="Full Name" required>
-        </div>
-        <div class="hf-input-group">
-          <input type="email" name="email" placeholder="Email Address" required>
-        </div>
-        <div class="hf-input-group">
-          <input type="tel" name="phone" placeholder="Phone Number" required>
-        </div>
-        <button type="submit" class="btn-yellow" style="width: 100%; justify-content: center; margin-top: 10px;">Get Started Now <i class="fa-solid fa-arrow-right"></i></button>
-      </form>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Overlapping Features Cards -->
-<div class="container">
-  <div class="hero-features">
-    <div class="hero-feature-card animate-up delay-1">
-      <div class="hf-icon"><i class="fa-solid fa-chart-line"></i></div>
-      <div class="hf-content">
-        <div class="hf-text">
+  <!-- 4. Features Strip -->
+  <div class="container features-strip">
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fa-solid fa-leaf"></i></div>
+        <div class="feat-text">
           <h4>Business Growth</h4>
-          <p>Strategic planning to scale your enterprise operations effectively.</p>
+          <p>We help businesses build and enhance their financial profiles.</p>
         </div>
       </div>
-    </div>
-    <div class="hero-feature-card animate-up delay-2">
-      <div class="hf-icon"><i class="fa-solid fa-coins"></i></div>
-      <div class="hf-content">
-        <div class="hf-text">
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="feat-text">
           <h4>Financial Advice</h4>
-          <p>Expert wealth management and trusted investment consulting.</p>
+          <p>Expert wealth management and market overview consulting.</p>
         </div>
       </div>
-    </div>
-    <div class="hero-feature-card animate-up delay-3">
-      <div class="hf-icon"><i class="fa-solid fa-chart-pie"></i></div>
-      <div class="hf-content">
-        <div class="hf-text">
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+        <div class="feat-text">
           <h4>Market Analysis</h4>
-          <p>In-depth market research and precise competitor analysis.</p>
+          <p>Deep dive research and market forecasting to outpace competitors.</p>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- 4. About Section -->
-<section id="about" class="about">
-  <div class="deco-shape deco-circle"></div>
-  <div class="deco-shape deco-dot"></div>
-  <div class="container about-inner">
-    <div class="about-images animate-up">
-      <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=600" alt="Team Meeting" class="about-img-main">
-      <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400" alt="Analysis" class="about-img-sub">
-      <div class="about-experience">
-        <h3>27+</h3>
-        <span>Years<br>Experience</span>
+  <!-- 5. About Section -->
+  <section class="about" id="about">
+    <div class="container about-grid">
+      <div class="about-imgs">
+        <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800" alt="Office" class="img-main">
+        <img src="https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&q=80&w=600" alt="Meeting" class="img-sub">
+        <div class="exp-badge">
+          <h3>27+</h3>
+          <span>Years<br>Experience</span>
+        </div>
+      </div>
+      <div>
+        <div class="sec-tag"><i class="fa-solid fa-building"></i> ABOUT OUR COMPANY</div>
+        <div class="sec-title">
+          <h2>We Provide the Best Solutions For Your Business</h2>
+        </div>
+        <p class="sec-desc">Welcome to AgencyPlatform - Agency. We provide the best digital marketing, agency services tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        <ul class="about-list">
+          <li><i class="fa-solid fa-check"></i> Certified Professionals</li>
+          <li><i class="fa-solid fa-check"></i> Award-Winning Agency</li>
+          <li><i class="fa-solid fa-check"></i> 100% Satisfaction Rated</li>
+          <li><i class="fa-solid fa-check"></i> 24/7 Premium Support</li>
+        </ul>
+        <a href="#services" class="btn btn-secondary" style="margin-top: 10px;">Discover More <i class="fa-solid fa-arrow-right"></i></a>
       </div>
     </div>
-    <div class="about-text animate-up delay-2">
-      <div class="section-title"><i class="fa-solid fa-circle-play"></i> About Our Company</div>
-      <h2 class="section-heading">We Provide the Best Solutions for Your Business</h2>
-      <p>Our dedicated team of financial experts brings decades of experience to help you navigate complex market challenges. We believe in data-driven strategies and transparent partnerships.</p>
-      <ul class="about-list">
-        <li><i class="fa-solid fa-check"></i> Certified Professionals</li>
-        <li><i class="fa-solid fa-check"></i> Award Winning Agency</li>
-        <li><i class="fa-solid fa-check"></i> 100% Satisfaction Rate</li>
-        <li><i class="fa-solid fa-check"></i> 24/7 Premium Support</li>
-      </ul>
-      <a href="#services" class="btn-yellow" style="margin-top: 15px;">Discover More <i class="fa-solid fa-arrow-right"></i></a>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- 5. Services Section -->
-<section id="services" class="services">
-  <div class="deco-shape deco-cross"></div>
-  <div class="deco-shape deco-circle"></div>
-  <div class="container">
-    <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-circle-play"></i> What We Offer</div>
-    <h2 class="section-heading">Professional Services</h2>
-    <div class="services-grid">
-      <div class="service-card animate-up delay-1">
-        <div class="srv-icon"><i class="fa-solid fa-chart-simple"></i></div>
-        <h3>Financial Consulting</h3>
-        <p>Comprehensive financial planning and strategic advisory to optimize your corporate resources.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
+  <!-- 6. Services Grid -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="text-center">
+        <div class="sec-tag justify-center" style="justify-content: center;"><i class="fa-solid fa-briefcase"></i> WHAT WE OFFER</div>
+        <div class="sec-title"><h2>Professional Services</h2></div>
       </div>
-      <div class="service-card animate-up delay-2">
-        <div class="srv-icon"><i class="fa-solid fa-bullseye"></i></div>
-        <h3>Tax Strategy</h3>
-        <p>Advanced tax planning to ensure compliance while minimizing corporate tax liabilities globally.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
-      </div>
-      <div class="service-card animate-up delay-3">
-        <div class="srv-icon"><i class="fa-solid fa-shield-halved"></i></div>
-        <h3>Risk Management</h3>
-        <p>Identifying and mitigating financial risks to protect your business assets and investments.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
-      </div>
-      <div class="service-card animate-up delay-1">
-        <div class="srv-icon"><i class="fa-solid fa-briefcase"></i></div>
-        <h3>Investment Banking</h3>
-        <p>Expert guidance on mergers, acquisitions, and capital raising for enterprise expansion.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
-      </div>
-      <div class="service-card animate-up delay-2">
-        <div class="srv-icon"><i class="fa-solid fa-magnifying-glass-dollar"></i></div>
-        <h3>Audit & Assurance</h3>
-        <p>Thorough auditing services providing transparency and trust for your stakeholders.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
-      </div>
-      <div class="service-card animate-up delay-3">
-        <div class="srv-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
-        <h3>Wealth Management</h3>
-        <p>Personalized portfolio management strategies to grow and preserve corporate wealth.</p>
-        <a href="#" class="srv-link"><span>Read More</span> <i class="fa-solid fa-arrow-right"></i></a>
+      <div class="serv-grid">
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-chart-pie"></i></div>
+          <h3>Financial Consulting</h3>
+          <p>Comprehensive financial planning and strategic advisory to optimize your corporate resources.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+          <h3>Tax Strategy</h3>
+          <p>Advanced tax advisory to ensure compliance while minimizing corporate tax liabilities globally.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <h3>Risk Management</h3>
+          <p>Identify and mitigate financial risks to protect your business assets and investments.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-building-columns"></i></div>
+          <h3>Investment Banking</h3>
+          <p>Expert guidance on mergers, acquisitions, and capital raising for enterprise expansion.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-magnifying-glass-dollar"></i></div>
+          <h3>Audit & Assurance</h3>
+          <p>Thorough audits and internal controls reviews to build trust with your stakeholders.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="serv-card">
+          <div class="serv-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+          <h3>Wealth Management</h3>
+          <p>Personalized portfolio management to build, preserve, and transfer intergenerational wealth.</p>
+          <a href="#" class="serv-arrow"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- 6. CTA Banner -->
-<section class="cta-banner">
-  <div class="container cta-inner">
-    <div class="cta-text animate-up">
+  <!-- 7. CTA Banner -->
+  <section class="cta-banner">
+    <div class="container">
       <h2>We provide the best solution for your business</h2>
-      <p>Get in touch with our experts today to discuss your financial goals.</p>
+      <p>Welcome to AgencyPlatform - Agency. We provide the best digital marketing, agency services tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
     </div>
-    
-  </div>
-</section>
+  </section>
 
-<!-- 7. Why Choose Us -->
-<section class="why-choose">
-  <div class="deco-shape deco-cross"></div>
-  <div class="container why-inner">
-    <div class="why-text animate-up">
-      <div class="section-title"><i class="fa-solid fa-circle-play"></i> Why Choose Us</div>
-      <h2 class="section-heading">Your Trusted Partner in Financial Growth</h2>
-      <p class="tpl-templates04-2" style="margin-bottom: 30px">We combine industry expertise with innovative technologies to deliver results that matter. Our commitment to excellence sets us apart from the competition.</p>
-      <div class="why-features">
-        <div class="w-feature">
-          <div class="w-icon"><i class="fa-solid fa-user-tie"></i></div>
-          <div class="w-text">
+  <!-- 8. Trusted Partner -->
+  <section class="trusted">
+    <div class="container trusted-grid">
+      <div>
+        <div class="sec-tag"><i class="fa-solid fa-handshake"></i> WHY CHOOSE US</div>
+        <div class="sec-title"><h2>Your Trusted Partner in Financial Growth</h2></div>
+        <p class="sec-desc">Welcome to AgencyPlatform - Agency. We provide the best digital marketing, agency services tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
+        
+        <div class="trust-item">
+          <div class="trust-icon"><i class="fa-solid fa-user-tie"></i></div>
+          <div class="trust-text">
             <h4>Professional Team</h4>
-            <p>Our analysts and advisors are top-tier industry veterans with proven track records.</p>
+            <p>Welcome to AgencyPlatform - Agency. We provide the best digital marketing, agency services tailored to your specific needs.</p>
           </div>
         </div>
-        <div class="w-feature">
-          <div class="w-icon"><i class="fa-solid fa-lightbulb"></i></div>
-          <div class="w-text">
+        <div class="trust-item">
+          <div class="trust-icon"><i class="fa-solid fa-lightbulb"></i></div>
+          <div class="trust-text">
             <h4>Innovative Strategies</h4>
-            <p>We leverage AI and modern data analytics for sharper insights and faster execution.</p>
+            <p>Welcome to AgencyPlatform - Agency. We provide the best digital marketing, agency services tailored to your specific needs.</p>
           </div>
         </div>
       </div>
+      <div class="trust-collage">
+        <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=600" alt="Collage 1" class="tc-img tc-1">
+        <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1000&q=80" alt="Collage 2" class="tc-img tc-2">
+        <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=400" alt="Collage 3" class="tc-img tc-3">
+      </div>
     </div>
-    <div class="why-images animate-up delay-2">
-      <div class="why-img"><img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=600" alt="Office"></div>
-      <div class="why-img"><img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=600" alt="Meeting"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- 8. Diagonal Marquee -->
-<section class="diagonal-marquee">
-  <div class="marquee-strip-wrapper">
-    <div class="marquee-strip strip-green">
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> EXPERT SOLUTIONS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> PROFESSIONAL SERVICES</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> TRUSTED PARTNERS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> GLOBAL REACH</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> EXPERT SOLUTIONS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> PROFESSIONAL SERVICES</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> TRUSTED PARTNERS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> GLOBAL REACH</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> EXPERT SOLUTIONS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> PROFESSIONAL SERVICES</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> TRUSTED PARTNERS</div>
-      <div class="marquee-item"><i class="fa-solid fa-star"></i> GLOBAL REACH</div>
+  <!-- 9. Marquee -->
+  <section class="marquee-sec">
+    <div class="marquee-band band-yellow">
+      <div class="marquee-track">
+        <span><i class="fa-solid fa-check-circle"></i> PROFESSIONAL SERVICES</span>
+        <span><i class="fa-solid fa-check-circle"></i> TRUSTED PARTNERS</span>
+        <span><i class="fa-solid fa-check-circle"></i> GLOBAL REACH</span>
+        <span><i class="fa-solid fa-check-circle"></i> EXPERT SOLUTIONS</span>
+        <span><i class="fa-solid fa-check-circle"></i> MARKET ANALYSIS</span>
+        <span><i class="fa-solid fa-check-circle"></i> CONTINUOUS GROWTH</span>
+        <span><i class="fa-solid fa-check-circle"></i> 24/7 SUPPORT</span>
+        <span><i class="fa-solid fa-check-circle"></i> INNOVATIVE STRATEGY</span>
+        <span><i class="fa-solid fa-check-circle"></i> PROFESSIONAL SERVICES</span>
+        <span><i class="fa-solid fa-check-circle"></i> TRUSTED PARTNERS</span>
+        <span><i class="fa-solid fa-check-circle"></i> GLOBAL REACH</span>
+        <span><i class="fa-solid fa-check-circle"></i> EXPERT SOLUTIONS</span>
+        <span><i class="fa-solid fa-check-circle"></i> MARKET ANALYSIS</span>
+        <span><i class="fa-solid fa-check-circle"></i> CONTINUOUS GROWTH</span>
+        <span><i class="fa-solid fa-check-circle"></i> 24/7 SUPPORT</span>
+        <span><i class="fa-solid fa-check-circle"></i> INNOVATIVE STRATEGY</span>
+      </div>
     </div>
-    <div class="marquee-strip strip-yellow">
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> INNOVATIVE STRATEGY</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> MARKET ANALYSIS</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> CONTINUOUS GROWTH</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> 24/7 SUPPORT</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> INNOVATIVE STRATEGY</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> MARKET ANALYSIS</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> CONTINUOUS GROWTH</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> 24/7 SUPPORT</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> INNOVATIVE STRATEGY</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> MARKET ANALYSIS</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> CONTINUOUS GROWTH</div>
-      <div class="marquee-item"><i class="fa-solid fa-check-double"></i> 24/7 SUPPORT</div>
+    <div class="marquee-band band-green">
+      <div class="marquee-track">
+        <span><i class="fa-solid fa-check-circle"></i> PROFESSIONAL SERVICES</span>
+        <span><i class="fa-solid fa-check-circle"></i> TRUSTED PARTNERS</span>
+        <span><i class="fa-solid fa-check-circle"></i> GLOBAL REACH</span>
+        <span><i class="fa-solid fa-check-circle"></i> EXPERT SOLUTIONS</span>
+        <span><i class="fa-solid fa-check-circle"></i> MARKET ANALYSIS</span>
+        <span><i class="fa-solid fa-check-circle"></i> CONTINUOUS GROWTH</span>
+        <span><i class="fa-solid fa-check-circle"></i> 24/7 SUPPORT</span>
+        <span><i class="fa-solid fa-check-circle"></i> INNOVATIVE STRATEGY</span>
+        <span><i class="fa-solid fa-check-circle"></i> PROFESSIONAL SERVICES</span>
+        <span><i class="fa-solid fa-check-circle"></i> TRUSTED PARTNERS</span>
+        <span><i class="fa-solid fa-check-circle"></i> GLOBAL REACH</span>
+        <span><i class="fa-solid fa-check-circle"></i> EXPERT SOLUTIONS</span>
+        <span><i class="fa-solid fa-check-circle"></i> MARKET ANALYSIS</span>
+        <span><i class="fa-solid fa-check-circle"></i> CONTINUOUS GROWTH</span>
+        <span><i class="fa-solid fa-check-circle"></i> 24/7 SUPPORT</span>
+        <span><i class="fa-solid fa-check-circle"></i> INNOVATIVE STRATEGY</span>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- 9. Team Section -->
-<section class="team">
-  <div class="deco-shape deco-dot"></div>
-  <div class="container">
-    <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-circle-play"></i> Team Members</div>
-    <h2 class="section-heading">Meet Our Experts</h2>
-    <div class="team-grid">
-      <div class="team-card animate-up delay-1">
-        <div class="team-img">
-          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" alt="Team">
-          <div class="team-overlay">
-            <div class="team-socials">
-              <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-              <a href="#"><i class="fa-brands fa-twitter"></i></a>
-            </div>
+  <!-- 10. Experts (Team) -->
+  <section class="team" id="team">
+    <div class="container">
+      <div class="text-center">
+        <div class="sec-tag justify-center" style="justify-content: center;"><i class="fa-solid fa-users"></i> TEAM MEMBERS</div>
+        <div class="sec-title"><h2>Meet Our Experts</h2></div>
+      </div>
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="t-img-box t-bg-orange">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" alt="Team" style="width:100%; height:100%; object-position: top;">
           </div>
-        </div>
-        <div class="team-info">
           <h4>Sarah Jenkins</h4>
-          <p>CEO & Founder</p>
+          <p>CEO & FOUNDER</p>
+        </div>
+        <div class="team-card">
+          <div class="t-img-box t-bg-blue">
+            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400" alt="Team" style="width:100%; height:100%; object-position: top;">
+          </div>
+          <h4>Michael Ross</h4>
+          <p>FINANCIAL ADVISOR</p>
+        </div>
+        <div class="team-card">
+          <div class="t-img-box t-bg-black">
+            <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400" alt="Team" style="width:100%; height:100%; object-position: top;">
+          </div>
+          <h4>David Kim</h4>
+          <p>TAX SPECIALIST</p>
+        </div>
+        <div class="team-card">
+          <div class="t-img-box t-bg-green">
+            <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400" alt="Team" style="width:100%; height:100%; object-position: top;">
+          </div>
+          <h4>Maria Garcia</h4>
+          <p>WEALTH MANAGER</p>
         </div>
       </div>
-      <div class="team-card animate-up delay-2">
-        <div class="team-img">
-          <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" alt="Team">
-          <div class="team-overlay">
-            <div class="team-socials">
-              <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-              <a href="#"><i class="fa-brands fa-twitter"></i></a>
+    </div>
+  </section>
+
+  <!-- 11. Latest Projects -->
+  <section class="projects">
+    <div class="container">
+      <div class="text-center">
+        <div class="sec-tag justify-center" style="justify-content: center; color: var(--secondary);"><i class="fa-solid fa-folder-open"></i> RECENT PORTFOLIO</div>
+        <div class="sec-title"><h2>Latest Projects</h2></div>
+      </div>
+      <div class="proj-grid">
+        <div class="proj-card">
+          <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1000&q=80" alt="Project">
+          <div class="proj-info">
+            <h3>Financial Restructuring</h3>
+            <p>CORPORATE FINANCE</p>
+          </div>
+        </div>
+        <div class="proj-card">
+          <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800" alt="Project">
+          <div class="proj-info">
+            <h3>Data Analytics Integration</h3>
+            <p>TECH ADVISORY</p>
+          </div>
+        </div>
+        <div class="proj-card">
+          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1000&q=80" alt="Project">
+          <div class="proj-info">
+            <h3>Merger & Acquisition</h3>
+            <p>INVESTMENT BANKING</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. How We Work -->
+  <section class="process">
+    <div class="container">
+      <div class="text-center">
+        <div class="sec-tag justify-center" style="justify-content: center;"><i class="fa-solid fa-gears"></i> WORKING PROCESS</div>
+        <div class="sec-title"><h2>How We Work</h2></div>
+      </div>
+      <div class="process-grid">
+        <div class="p-step">
+          <div class="p-icon"><i class="fa-solid fa-comments"></i></div>
+          <h4>Consultation</h4>
+          <p>We meet to discuss your financial goals and understand your business structure thoroughly.</p>
+        </div>
+        <div class="p-step">
+          <div class="p-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+          <h4>Analysis</h4>
+          <p>Our expert team analyzes your data to identify risks and opportunities for growth.</p>
+        </div>
+        <div class="p-step">
+          <div class="p-icon"><i class="fa-solid fa-chess-knight"></i></div>
+          <h4>Strategy</h4>
+          <p>We develop a customized, robust financial strategy designed specifically for your objectives.</p>
+        </div>
+        <div class="p-step">
+          <div class="p-icon"><i class="fa-solid fa-rocket"></i></div>
+          <h4>Execution</h4>
+          <p>We help you implement the strategy and monitor the results for continuous improvement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. Testimonials -->
+  <section class="testimonials">
+    <div class="container">
+      <div class="text-center">
+        <div class="sec-tag justify-center" style="justify-content: center;"><i class="fa-solid fa-star"></i> CLIENT FEEDBACK</div>
+        <div class="sec-title"><h2>What They Say About Us</h2></div>
+      </div>
+      <div class="test-grid">
+        <div class="test-card">
+          <i class="fa-solid fa-quote-right quote-icon"></i>
+          <div class="test-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p>"Their financial strategies completely transformed our operational efficiency. We saw a 30% increase in profitability within the first year of partnership."</p>
+          <div class="t-client">
+            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200" alt="Client">
+            <div>
+              <h4>Robert Fox</h4>
+              <span>CEO, TECHSTART INC.</span>
             </div>
           </div>
         </div>
-        <div class="team-info">
-          <h4>Michael Chen</h4>
-          <p>Senior Analyst</p>
-        </div>
-      </div>
-      <div class="team-card animate-up delay-3">
-        <div class="team-img">
-          <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400" alt="Team">
-          <div class="team-overlay">
-            <div class="team-socials">
-              <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-              <a href="#"><i class="fa-brands fa-twitter"></i></a>
+        <div class="test-card">
+          <i class="fa-solid fa-quote-right quote-icon"></i>
+          <div class="test-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p>"The depth of their market analysis gives us the confidence to expand internationally. A truly exceptional team of professionals who deliver results."</p>
+          <div class="t-client">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=200" alt="Client">
+            <div>
+              <h4>Emily Wilson</h4>
+              <span>DIRECTOR, GLOBALTRADE</span>
             </div>
           </div>
         </div>
-        <div class="team-info">
-          <h4>David Miller</h4>
-          <p>Tax Advisor</p>
-        </div>
-      </div>
-      <div class="team-card animate-up delay-4">
-        <div class="team-img">
-          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400" alt="Team">
-          <div class="team-overlay">
-            <div class="team-socials">
-              <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-              <a href="#"><i class="fa-brands fa-twitter"></i></a>
+        <div class="test-card">
+          <i class="fa-solid fa-quote-right quote-icon"></i>
+          <div class="test-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p>"Outstanding tax advisory services. They helped us navigate complex regulations across borders and saved us significant amounts in corporate liabilities."</p>
+          <div class="t-client">
+            <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200" alt="Client">
+            <div>
+              <h4>Amy Franklin</h4>
+              <span>FOUNDER, INNOVENTURE</span>
             </div>
           </div>
         </div>
-        <div class="team-info">
-          <h4>Emma Stone</h4>
-          <p>Wealth Manager</p>
-        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- 10. Portfolio -->
-<section id="projects" class="portfolio">
-  <div class="container">
-    <div class="section-title tpl-templates04-3"  style="justify-content: center"><i class="fa-solid fa-circle-play tpl-templates04-4"  ></i> Our Case Studies</div>
-    <h2 class="section-heading" style="text-align: center;">Latest Projects</h2>
-    <div class="port-grid">
-      <div class="port-card animate-up delay-1">
-        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600" alt="Project">
-        <a href="#" class="port-link"><i class="fa-solid fa-arrow-right"></i></a>
-        <div class="port-overlay">
-          <h4>Financial Restructuring</h4>
-          <p>Corporate Finance</p>
-        </div>
-      </div>
-      <div class="port-card animate-up delay-2">
-        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600" alt="Project">
-        <a href="#" class="port-link"><i class="fa-solid fa-arrow-right"></i></a>
-        <div class="port-overlay">
-          <h4>Data Analytics Integration</h4>
-          <p>Technology</p>
-        </div>
-      </div>
-      <div class="port-card animate-up delay-3">
-        <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=600" alt="Project">
-        <a href="#" class="port-link"><i class="fa-solid fa-arrow-right"></i></a>
-        <div class="port-overlay">
-          <h4>Merger & Acquisition</h4>
-          <p>Strategy</p>
-        </div>
-      </div>
-      <div class="port-card animate-up delay-4">
-        <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=600" alt="Project">
-        <a href="#" class="port-link"><i class="fa-solid fa-arrow-right"></i></a>
-        <div class="port-overlay">
-          <h4>Tax Optimization</h4>
-          <p>Accounting</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 11. Our Process -->
-<section id="process" class="process">
-  <div class="deco-shape deco-dot"></div>
-  <div class="container">
-    <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-circle-play"></i> Working Process</div>
-    <h2 class="section-heading" style="text-align: center;">How We Work</h2>
-    <div class="process-grid">
-      <div class="process-card animate-up delay-1">
-        <div class="process-icon">
-          <i class="fa-solid fa-comments"></i>
-          <span class="process-number">1</span>
-        </div>
-        <h4>Consultation</h4>
-        <p>We meet to discuss your financial goals and understand your business needs thoroughly.</p>
-      </div>
-      <div class="process-card animate-up delay-2">
-        <div class="process-icon">
-          <i class="fa-solid fa-magnifying-glass-chart"></i>
-          <span class="process-number">2</span>
-        </div>
-        <h4>Analysis</h4>
-        <p>Our experts analyze your data to identify risks and opportunities for growth.</p>
-      </div>
-      <div class="process-card animate-up delay-3">
-        <div class="process-icon">
-          <i class="fa-solid fa-lightbulb"></i>
-          <span class="process-number">3</span>
-        </div>
-        <h4>Strategy</h4>
-        <p>We develop a customized, actionable plan designed specifically for your objectives.</p>
-      </div>
-      <div class="process-card animate-up delay-4">
-        <div class="process-icon">
-          <i class="fa-solid fa-rocket"></i>
-          <span class="process-number">4</span>
-        </div>
-        <h4>Execution</h4>
-        <p>We help you implement the strategy and monitor results for continuous improvement.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 12. Testimonials -->
-<section class="testimonials">
-  <div class="container">
-    <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-circle-play"></i> Client Feedbacks</div>
-    <h2 class="section-heading">What They Say About Us</h2>
-    <div class="testi-grid">
-      <div class="testi-card animate-up delay-1">
-        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-        <p class="testi-text">"Their financial strategies completely transformed our operational efficiency. We saw a 40% increase in profitability within the first year of partnership."</p>
-        <div class="testi-author">
-          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" alt="Client">
-          <div>
-            <h4>Robert Fox</h4>
-            <p>CEO, TechFlow</p>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card animate-up delay-2">
-        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-        <p class="testi-text">"The depth of their market analysis gave us the confidence to expand internationally. A truly exceptional team of professionals who deliver results."</p>
-        <div class="testi-author">
-          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100" alt="Client">
-          <div>
-            <h4>Jenny Wilson</h4>
-            <p>Director, GlobalTrade</p>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card animate-up delay-3">
-        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-        <p class="testi-text">"Outstanding tax advisory services. They helped us navigate complex regulations across borders and saved us significant amounts in corporate liabilities."</p>
-        <div class="testi-author">
-          <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100" alt="Client">
-          <div>
-            <h4>Guy Hawkins</h4>
-            <p>Founder, InnovateInc</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 13. Newsletter -->
-<section class="newsletter">
-  <div class="container">
-    <div class="news-inner animate-up">
+  <!-- 14. Newsletter -->
+  <div class="newsletter-wrapper">
+    <div class="newsletter-box">
       <h2>Subscribe To Our Newsletter</h2>
-      <form class="news-form">
+      <form class="news-form" onsubmit="event.preventDefault(); this.innerHTML = '<span style=\\'padding:15px 30px; font-weight:700; color:var(--primary);\\'>Subscribed Successfully!</span>';">
         <input type="email" placeholder="Email Address..." required>
-        <button type="submit">Subscribe <i class="fa-solid fa-arrow-right"></i></button>
+        <button type="submit" class="btn-primary">Subscribe <i class="fa-solid fa-paper-plane"></i></button>
       </form>
     </div>
   </div>
-</section>
 
-<!-- 14. Footer -->
-<footer class="footer">
-  <div class="container">
-    <div class="foot-grid animate-up delay-2">
-      <div class="foot-col">
-        <div class="foot-logo">
-          LOGO_PLACEHOLDER
+  <!-- 15. Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="logo f-logo">Logo<span>.</span></div>
+          <p class="f-desc">Expert consulting and corporate strategy tailored for your success. We build lasting partnerships that drive results.</p>
+          <div class="f-socials">
+            <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+          </div>
         </div>
-        <p class="footer-desc">Expert consulting and corporate strategy tailored for your success. We build lasting partnerships that drive results.</p>
-        <div class="foot-social">
-          <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-          <a href="#"><i class="fa-brands fa-twitter"></i></a>
-          <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-          <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <div>
+          <h4>Quick Links</h4>
+          <ul class="f-links">
+            <li><a href="#about">About Us</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#team">Our Team</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Services</h4>
+          <ul class="f-links">
+            <li><a href="#">Financial Consulting</a></li>
+            <li><a href="#">Tax Strategy</a></li>
+            <li><a href="#">Risk Management</a></li>
+            <li><a href="#">Wealth Management</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact Info</h4>
+          <ul class="f-contact">
+            <li><i class="fa-solid fa-location-dot"></i> 100 Business Avenue, New York, NY 10001</li>
+            <li><i class="fa-solid fa-phone"></i> +1 800 123 4567</li>
+            <li><i class="fa-solid fa-envelope"></i> info@agency03.com</li>
+          </ul>
         </div>
       </div>
-      <div class="foot-col">
-        <h4>Contact Info</h4>
-        <ul class="foot-links">
-          <li style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;"><i class="fa-solid fa-location-dot tpl-templates04-5"  style="margin-top: 5px"></i> <span>ADDRESS_PLACEHOLDER</span></li>
-          <li style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;"><i class="fa-solid fa-phone tpl-templates04-6"  style="margin-top: 5px"></i> <span>PHONE_PLACEHOLDER</span></li>
-          <li style="display: flex; flex-wrap: wrap; gap: 10px;"><i class="fa-solid fa-envelope tpl-templates04-7"  style="margin-top: 5px"></i> <span>EMAIL_PLACEHOLDER</span></li>
-        </ul>
+      <div class="footer-bottom">
+        <div>&copy; 2026 AgencyPlatform. All rights reserved.</div>
+        <div>
+          <a href="#" style="margin-right: 20px;">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
       </div>
     </div>
-    <div class="foot-bottom animate-up delay-3">
-      <p>&copy; 2026 PROJECT_NAME_PLACEHOLDER. All rights reserved.</p>
-      <div class="foot-legal">
-        <a href="#" class="tpl-templates04-8" style="margin-left: 20px">Privacy Policy</a>
-        <a href="#" class="tpl-templates04-9" style="margin-left: 20px">Terms of Service</a>
-      </div>
-    </div>
-  </div>
-</footer>
+  </footer>
+</main>
 
 <script id="core-interactions">
   (function() {
-    // Check if we are inside GrapesJS editor
     var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
     
-    // Form Validation
     document.addEventListener('submit', function(e) {
-      if (e.target.tagName === 'FORM') {
+      if (e.target.tagName === 'FORM' && e.target.classList.contains('premium-form')) {
         e.preventDefault();
         if (isInEditor) {
           e.stopImmediatePropagation();
           var existingModal = document.getElementById("preview-mode-modal");
           if (existingModal) existingModal.remove();
-          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: \\'Plus Jakarta Sans\\', sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 24px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 18px; font-weight: 800; color: var(--text-dark); margin: 0 0 12px;">Preview Mode Active</h3><p style="font-size: 14px; color: var(--text-gray); margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\\'preview-mode-modal\\').remove()" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 14px; border-radius: 30px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.3s;">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
           document.body.insertAdjacentHTML("beforeend", modalHtml);
           return;
         }
@@ -1089,15 +708,11 @@ export const finance03Html = `
             input.dataset.valSetup = 'true';
             input.addEventListener('input', function() {
               if (input.value.trim()) {
-                input.style.outline = '2px solid #22c55e';
-                input.style.outlineOffset = '1px';
-                input.style.borderColor = '#22c55e';
+                input.style.borderColor = 'var(--primary)';
                 if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
                   input.nextElementSibling.style.display = 'none';
                 }
               } else {
-                input.style.outline = '2px solid #ef4444';
-                input.style.outlineOffset = '1px';
                 input.style.borderColor = '#ef4444';
                 if (input.nextElementSibling && input.nextElementSibling.classList.contains('val-error')) {
                   input.nextElementSibling.style.display = 'block';
@@ -1108,8 +723,6 @@ export const finance03Html = `
 
           if (!input.value.trim() && input.hasAttribute('required')) {
             isValid = false;
-            input.style.outline = '2px solid #ef4444';
-            input.style.outlineOffset = '1px';
             input.style.borderColor = '#ef4444';
             
             if (!input.parentElement.classList.contains('val-wrapper')) {
@@ -1118,13 +731,6 @@ export const finance03Html = `
                 wrapper.style.display = 'flex';
                 wrapper.style.flexDirection = 'column';
                 wrapper.style.width = '100%';
-                
-                var computed = window.getComputedStyle(input);
-                if (window.getComputedStyle(input.parentElement).display === 'grid') {
-                    wrapper.style.gridColumn = input.style.gridColumn || computed.gridColumn;
-                    wrapper.style.gridRow = input.style.gridRow || computed.gridRow;
-                }
-                
                 input.parentNode.insertBefore(wrapper, input);
                 wrapper.appendChild(input);
             }
@@ -1137,7 +743,7 @@ export const finance03Html = `
               err.style.fontSize = '12px';
               err.style.display = 'block';
               err.style.marginTop = '4px';
-              err.style.fontWeight = '500';
+              err.style.fontWeight = '600';
               err.textContent = '*' + fieldName.replace(/\\*$/, '').trim() + ' is required';
               input.parentNode.insertBefore(err, input.nextSibling);
             } else {
@@ -1151,18 +757,14 @@ export const finance03Html = `
           e.stopImmediatePropagation();
         } else {
           e.preventDefault();
-          var btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('input[type="submit"]');
-          if (btn) {
-            if(btn.innerText) btn.innerText = 'Sending...';
-            else btn.value = 'Sending...';
-          }
+          var btn = e.target.querySelector('button[type="submit"]');
+          if (btn) btn.innerHTML = 'Sending...';
           setTimeout(function() {
-            e.target.innerHTML = '<div class="tpl-templates04-10" style="padding: 20px; text-align: center"><h3 style="margin: 0 0 10px 0; ">Thank You!</h3><p style="margin: 0;">Your request has been submitted successfully.</p></div>';
+            e.target.innerHTML = '<div style="padding: 30px; text-align: center; border-radius: 12px; background: var(--primary-light); color: var(--primary);"><h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 800;">Success!</h3><p style="margin: 0; font-size: 14px; font-weight: 500;">Your consultation request has been received.</p></div>';
           }, 1000);
         }
       }
     }, true);
   })();
 </script>
-
 `

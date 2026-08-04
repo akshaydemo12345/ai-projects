@@ -325,10 +325,10 @@ export const realEstate09Html = `
   <!-- Header (No Menu) -->
   <header class="re09-header">
     <div class="re09-container re09-header-inner">
-      <a href="#" class="re09-logo">
+      <a href="javascript:void(0);" class="re09-logo">
         LOGO_PLACEHOLDER
       </a>
-      <a href="#contact" class="re09-btn">Get A Quote</a>
+      <a href="javascript:void(0);" class="re09-btn">Get A Quote</a>
     </div>
   </header>
 
@@ -339,7 +339,7 @@ export const realEstate09Html = `
         <h4>Construction Services</h4>
         <h1>Building Dreams Creating That Endures Reality</h1>
         <p>We are a leading construction company committed to providing high-quality building services, delivering projects on time and exceeding client expectations.</p>
-        <a href="#contact" class="re09-btn">Discover More</a>
+        <a href="javascript:void(0);" class="re09-btn">Discover More</a>
       </div>
       
       <!-- Floating Hero Form -->
@@ -460,7 +460,7 @@ export const realEstate09Html = `
         </div>
       </div>
       <div style="margin-top: 50px;">
-        <a href="#contact" class="re09-btn re09-btn-dark">View All Services</a>
+        <a href="javascript:void(0);" class="re09-btn re09-btn-dark">View All Services</a>
       </div>
     </div>
   </section>
@@ -511,7 +511,7 @@ export const realEstate09Html = `
   <section class="re09-banner">
     <div class="re09-container re09-banner-flex">
       <h2>Do You Have Any Questions? <span>Let's Talk</span></h2>
-      <a href="#contact" class="re09-btn" style="background:#fff; color:var(--primary);">Contact Us Now</a>
+      <a href="javascript:void(0);" class="re09-btn" style="background:#fff; color:var(--primary);">Contact Us Now</a>
     </div>
   </section>
 
@@ -528,7 +528,7 @@ export const realEstate09Html = `
           <div><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Modern Technology</div>
           <div><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Expert Engineering</div>
         </div>
-        <a href="#contact" class="re09-btn">Discover More</a>
+        <a href="javascript:void(0);" class="re09-btn">Discover More</a>
       </div>
       <div class="re09-feat-right">
         <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&w=800&q=80">
@@ -644,7 +644,7 @@ export const realEstate09Html = `
           <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-4.0.3&w=600&q=80">          <div class="re09-blog-info">
             <div class="re09-blog-meta"><span>By Admin</span> <span>Oct 12, 2026</span></div>
             <h3>Future Trends in Modern Architecture</h3>
-            <a href="#">Read More &rarr;</a>
+            <a href="javascript:void(0);">Read More &rarr;</a>
           </div>
         </div>
         <div class="re09-blog-card">
@@ -652,7 +652,7 @@ export const realEstate09Html = `
           <div class="re09-blog-info">
             <div class="re09-blog-meta"><span>By Admin</span> <span>Oct 15, 2026</span></div>
             <h3>Sustainable Building Materials</h3>
-            <a href="#">Read More &rarr;</a>
+            <a href="javascript:void(0);">Read More &rarr;</a>
           </div>
         </div>
         <div class="re09-blog-card">
@@ -660,7 +660,7 @@ export const realEstate09Html = `
           <div class="re09-blog-info">
             <div class="re09-blog-meta"><span>By Admin</span> <span>Oct 18, 2026</span></div>
             <h3>Safety Protocols on Construction Sites</h3>
-            <a href="#">Read More &rarr;</a>
+            <a href="javascript:void(0);">Read More &rarr;</a>
           </div>
         </div>
       </div>
@@ -677,7 +677,7 @@ export const realEstate09Html = `
     <div class="re09-container">
       <div class="re09-foot-grid">
         <div class="re09-foot-col">
-          <a href="#" style="color:#fff; font-size:2rem; font-weight:900; text-decoration:none; display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+          <a href="javascript:void(0);" style="color:#fff; font-size:2rem; font-weight:900; text-decoration:none; display:flex; align-items:center; gap:10px; margin-bottom:20px;">
              LOGO_PLACEHOLDER
           </a>
           <p>We are dedicated to shaping the future through innovative construction solutions. Partner with us to build structures that stand the test of time.</p>

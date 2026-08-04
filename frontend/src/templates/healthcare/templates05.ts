@@ -990,7 +990,7 @@ export const healthcare05Html = `
   <!-- BEGIN: MainHeader -->
   <header class="main-header">
     <div class="container header-content">
-      <a class="logo logo-wrapper" href="#">
+      <a class="logo logo-wrapper" href="javascript:void(0);">
         LOGO_PLACEHOLDER
       </a>
       <button data-editable="true" class="btn-get-started" id="open-modal-nav">GET STARTED</button>
@@ -1131,7 +1131,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Strategy &amp; Operations</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 2 -->
@@ -1145,7 +1145,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Digital Transformation</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 3 -->
@@ -1160,7 +1160,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Financial Advisory</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 4 -->
@@ -1174,7 +1174,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Risk Management</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 5 -->
@@ -1188,7 +1188,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Human Capital</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 6 -->
@@ -1202,7 +1202,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Market Research</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 7 -->
@@ -1216,7 +1216,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">IT Consulting</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
         <!-- Service Card 8 -->
@@ -1231,7 +1231,7 @@ export const healthcare05Html = `
             </div>
             <h3 data-editable="true">Brand Strategy</h3>
             <p data-editable="true">Dui id volutpat feugiat sit nam et morbi nullam.</p>
-            <a data-editable="true" class="service-link" href="#">Read More →</a>
+            <a data-editable="true" class="service-link" href="javascript:void(0);">Read More →</a>
           </div>
         </div>
       </div>
@@ -1361,7 +1361,7 @@ export const healthcare05Html = `
   <footer class="site-footer">
     <div class="container footer-grid">
       <div class="footer-col-1">
-        <a class="logo logo-wrapper" href="#" style="margin-bottom: 2rem; display: inline-block;">
+        <a class="logo logo-wrapper" href="javascript:void(0);" style="margin-bottom: 2rem; display: inline-block;">
           LOGO_PLACEHOLDER
         </a>
         <p data-editable="true" class="footer-desc">
