@@ -2937,7 +2937,7 @@ const GrapesEditor = () => {
               overflow-x: hidden;
             }
             /* FORCE ALL ANIMATED ELEMENTS TO BE VISIBLE IN THE EDITOR */
-            [data-aos], .fade-up, .opacity-0 {
+            [data-aos], [data-reveal], .fade-up, .opacity-0 {
               opacity: 1 !important;
               transform: none !important;
               visibility: visible !important;
@@ -3978,6 +3978,7 @@ document.addEventListener('DOMContentLoaded', function() {
       toast.error('Please save your page first to generate a slug');
       return;
     }
+    
     try {
       toast.loading('Saving latest changes for preview...', { id: 'preview-save' });
       await handleSave();
@@ -3986,9 +3987,11 @@ document.addEventListener('DOMContentLoaded', function() {
       toast.dismiss('preview-save');
       console.warn('Auto-save before preview failed:', e);
     }
+    
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
     const token = page.previewToken ? `?token=${page.previewToken}` : '';
     const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
+    
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };

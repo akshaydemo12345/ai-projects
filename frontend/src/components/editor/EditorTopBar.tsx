@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 interface EditorTopBarProps {
   title: string;
   onSave: () => void;
+  onPreview?: () => void;
 }
 
-const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
+const EditorTopBar = ({ title, onSave, onPreview }: EditorTopBarProps) => {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between border-b border-border bg-[hsl(240,20%,12%)] px-4">
       <div className="flex items-center gap-3">
@@ -33,6 +34,7 @@ const EditorTopBar = ({ title, onSave }: EditorTopBarProps) => {
       <div className="flex items-center gap-2">
         <button 
           title="Live Preview"
+          onClick={onPreview}
           style={{
             display: "flex",
             alignItems: "center",
