@@ -142,7 +142,10 @@ mongoose
       console.log(`🌍 Environment: ${config.env}`);
       console.log(`🔗 API Base URL: ${config.api.baseUrl}`);
     });
-    server.timeout = 300000; // Increase server timeout to 5 minutes for AI generation
+    // Increase server timeouts to 8 minutes to prevent socket hangups during heavy AI generations
+    server.timeout = 480000; 
+    server.keepAliveTimeout = 480000;
+    server.headersTimeout = 481000; // Headers timeout must be slightly higher than keepAliveTimeout
   })
   .catch((err) => {
     logger.error('❌ MongoDB Connection Error:', err);

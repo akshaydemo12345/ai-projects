@@ -119,6 +119,7 @@ const GrapesEditor = () => {
   // Publish
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
@@ -3846,6 +3847,26 @@ const GrapesEditor = () => {
       htmlWithScripts += `\n<script>\n${js}\n</script>`;
     }
 
+    // --- FRONTEND SIMULATION: Inject CTA Scroll Script ---
+    // Instead of modifying the backend AI generator, we inject this frontend patch 
+    // into the HTML right before saving it to the database.
+    if (!htmlWithScripts.includes('cta-smooth-scroll')) {
+      htmlWithScripts += `\n<script id="cta-smooth-scroll">
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a, button').forEach(function(btn) {
+    if (btn.type === 'submit' || btn.closest('form')) return;
+    btn.removeAttribute('href'); // Remove # so no URL changes
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var formElement = document.querySelector('form#contact-form') || document.querySelector('form');
+      if (formElement) formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+});
+</script>`;
+    }
+
     const updateData: Partial<LandingPage> = {
       metaTitle: pageTitle,
       metaDescription: metaDesc,
@@ -4170,7 +4191,7 @@ const GrapesEditor = () => {
     if (!editorRef.current) return;
 
     if (!project?.isVerified) {
-      toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+      toast.error('Please verify that the required plugin is installed and configured correctly before publishing the page.', {
         style: { color: '#ef4444' }
       });
       return;
@@ -4645,7 +4666,7 @@ const GrapesEditor = () => {
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={downloadHtml}
+            onClick={() => setDownloadModalOpen(true)}
             disabled={!hasSaved}
             style={{
               ...outlineBtn,
@@ -4669,7 +4690,7 @@ const GrapesEditor = () => {
               onChange={(e) => {
                 const val = e.target.value as any;
                 if (val === 'published' && !project?.isVerified) {
-                  toast.error('Please verify that the required plugin or script is installed and configured correctly before publishing the page.', {
+                  toast.error('Please verify that the required plugin is installed and configured correctly before publishing the page.', {
                     style: { color: '#ef4444' }
                   });
                   // Revert the select element visually
@@ -5547,6 +5568,59 @@ const GrapesEditor = () => {
         </div>
       )}
 
+      {/* ═══════════════ DOWNLOAD HTML MODAL ═══════════════ */}
+      {downloadModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 450, background: '#ffffff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'publishPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc' }}>
+              <h2 style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <DownloadIcon /> Export HTML Package
+              </h2>
+              <button
+                onClick={() => setDownloadModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px', color: '#334155', fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <div style={{ color: '#3b82f6', marginTop: 2 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: '#0f172a', fontSize: 14, fontWeight: 600 }}>Important Note on Forms</h4>
+                  <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+                    The downloaded HTML package contains static files. To make the Contact Form work on your own server, you will need to integrate it with a 3rd-party form processor (like Jotform or Netlify Forms)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                onClick={() => setDownloadModalOpen(false)}
+                style={{ padding: '8px 16px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#475569', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setDownloadModalOpen(false);
+                  downloadHtml();
+                }}
+                style={{ padding: '8px 16px', background: '#059669', border: 'none', color: '#ffffff', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <DownloadIcon /> Proceed to Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* ═══════════════ CODE VIEW MODAL ═══════════════ */}
@@ -5556,7 +5630,7 @@ const GrapesEditor = () => {
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Code Editor</span>
             <div style={{ flex: 1 }} />
             <button onClick={applyCode} style={{ ...modalBtn, background: '#818cf8' }}>Apply Code</button>
-            <button onClick={downloadHtml} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
+            <button onClick={() => setDownloadModalOpen(true)} style={{ ...modalBtn, background: '#059669' }}>Download HTML</button>
             <button onClick={() => setCodeView(false)} style={{ ...modalBtn, background: '#374151' }}>Close</button>
           </div>
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>

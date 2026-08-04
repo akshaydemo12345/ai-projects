@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const fs = require('fs');
 const path = require('path');
 const config = require('../config');
+const GeneratedImage = require('../models/GeneratedImage');
 
 /**
  * API KEY
@@ -60,7 +61,7 @@ async function generateGetImgUrl(
             height,
             steps: 4,
             output_format: 'jpeg',
-            response_format: 'url'
+            response_format: 'b64'
           })
         }
       );
@@ -134,21 +135,20 @@ async function generateGetImgUrl(
           .webp({ quality: 60 }) // High compression to keep it in KBs
           .toBuffer();
 
-        const uploadsDir = path.join(__dirname, '../../public/uploads');
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
+        // Create a base64 Data URI from the compressed WebP buffer
+        const base64Data = compressedBuffer.toString('base64');
+        const dataUrl = `data:image/webp;base64,${base64Data}`;
+
+        // Save to Database as requested by the user
+        try {
+          await GeneratedImage.create({ url: 'base64-data-uri', prompt: promptText, base64: dataUrl });
+          logger.info(`[getimg.ai] Image successfully saved to MongoDB Database.`);
+        } catch (dbError) {
+          logger.error(`[getimg.ai] Failed to save image to Database: ${dbError.message}`);
         }
 
-        const fileName = `ai_img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
-        const filePath = path.join(uploadsDir, fileName);
-
-        fs.writeFileSync(filePath, compressedBuffer);
-
-        const baseUrl = config.api.baseUrl.endsWith('/') ? config.api.baseUrl.slice(0, -1) : config.api.baseUrl;
-        const fileUrl = `${baseUrl}/uploads/${fileName}`;
-
-        logger.info(`[getimg.ai] Image saved successfully to ${fileUrl}`);
-        return fileUrl;
+        logger.info(`[getimg.ai] Image generated and converted to base64 Data URI successfully.`);
+        return dataUrl;
       } catch (err) {
         logger.error(`[getimg.ai] Compression/Save failed: ${err.message}`);
         return null;
@@ -282,9 +282,17 @@ function getPromptForIndustry(
       'professional business photography';
   }
 
+  // Include surrounding text as a contextual hint for the AI prompt
+  let contextHint = '';
+  if (context?.sectionText) {
+    // Only pass a short snippet to guide the visual, avoid overwhelming the prompt
+    contextHint = `Visuals should closely match this specific context: "${context.sectionText}",`;
+  }
+
   return `
 professional ultra realistic photography of ${topic},
 ${sceneType},
+${contextHint}
 photorealistic,
 8k,
 masterpiece,
@@ -304,7 +312,7 @@ async function replacePlaceholdersInHtml(
 ) {
 
   // 👇👇👇 TESTING TOGGLE: Change this to 'true' to STOP AI image generation and save credits during testing.
-  const DISABLE_AI_IMAGES_FOR_TESTING = true;
+  const DISABLE_AI_IMAGES_FOR_TESTING = false;
   // 👆👆👆
 
   if (!htmlContent || typeof htmlContent !== 'string') {
@@ -373,6 +381,10 @@ async function replacePlaceholdersInHtml(
             .closest('section')
             .attr('class') || '';
 
+        // Extract nearby text to provide contextual hints to the image generation prompt
+        let sectionText = $(element).closest('section').text() || $(element).parent().text() || '';
+        sectionText = sectionText.replace(/\s+/g, ' ').trim().substring(0, 300);
+
         const isHero =
           classAttr.includes('hero') ||
           parentClass.includes('hero') ||
@@ -390,7 +402,8 @@ async function replacePlaceholdersInHtml(
             sectionId,
             sectionClass,
             isHero,
-            index
+            index,
+            sectionText
           }
         });
       }
@@ -403,8 +416,7 @@ async function replacePlaceholdersInHtml(
     /**
      * GENERATE ALL
      */
-    const results = [];
-    for (const img of imagesToReplace) {
+    const results = await Promise.all(imagesToReplace.map(async (img) => {
       let newUrl;
       if (DISABLE_AI_IMAGES_FOR_TESTING) {
         newUrl = getLocalFallbackImage(industry, htmlContent);
@@ -415,16 +427,13 @@ async function replacePlaceholdersInHtml(
         newUrl = await generateGetImgUrl(prompt, width, height);
       }
 
-      results.push({
+      return {
         type: img.type,
         element: img.element,
         originalSrc: img.src,
         newUrl
-      });
-
-      // Add a small delay between requests to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+      };
+    }));
 
     /**
      * APPLY URLS
@@ -476,8 +485,7 @@ async function replacePlaceholdersInHtml(
     if (remainingUrls.length > 0) {
       logger.info(`[ImageGenerationService] Found ${remainingUrls.length} background/inline images`);
 
-      const remainingResults = [];
-      for (const item of remainingUrls) {
+      const remainingResults = await Promise.all(remainingUrls.map(async (item) => {
         const context = {
           isHero: item.isHero,
           sectionClass: item.isHero ? 'hero' : ''
@@ -492,11 +500,8 @@ async function replacePlaceholdersInHtml(
           newUrl = await generateGetImgUrl(prompt, width, height);
         }
 
-        remainingResults.push({ originalUrl: item.url, newUrl });
-
-        // Add a small delay between requests to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+        return { originalUrl: item.url, newUrl };
+      }));
 
       remainingResults.forEach(res => {
         if (res && res.newUrl) {
