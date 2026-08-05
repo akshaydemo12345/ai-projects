@@ -128,38 +128,87 @@ export const ModernLoader = ({
 
   const completedStagesCount = Math.min(AI_STAGES.length, isComplete ? AI_STAGES.length : currentStageIdx);
 
+function parseCleanErrorMessage(rawMsg: string | null | undefined): string {
+  if (!rawMsg) return "An unexpected error occurred during generation.";
+
+  let msg = typeof rawMsg === "string" ? rawMsg : (rawMsg as any)?.message || String(rawMsg);
+
+  // Try extracting nested JSON if embedded in text
+  const jsonMatch = msg.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed?.error?.message) {
+        msg = parsed.error.message;
+      } else if (parsed?.message) {
+        msg = parsed.message;
+      }
+    } catch (e) {
+      // non-fatal
+    }
+  }
+
+  const lower = msg.toLowerCase();
+
+  if (
+    lower.includes("credit balance") ||
+    lower.includes("insufficient_quota") ||
+    lower.includes("plans & billing") ||
+    lower.includes("billing")
+  ) {
+    return "Your credit balance is too low to access the Anthropic API. Please check your billing or add credits.";
+  }
+
+  if (
+    lower.includes("invalid_api_key") ||
+    lower.includes("invalid api key") ||
+    lower.includes("incorrect api key") ||
+    lower.includes("authenticationerror")
+  ) {
+    return "Invalid AI API key. Please check your API key in settings.";
+  }
+
+  if (
+    lower.includes("rate_limit") ||
+    lower.includes("rate limit") ||
+    lower.includes("429") ||
+    lower.includes("too many requests")
+  ) {
+    return "AI rate limit exceeded. Please wait a minute and try again.";
+  }
+
+  msg = msg.replace(/^All AI providers failed:?\s*/i, "").replace(/^\d{3}\s*/, "").trim();
+
+  return msg || "AI page generation failed. Please try again.";
+}
+
   if (error) {
+    const displayError = parseCleanErrorMessage(error);
+
     return (
-      <div className="fixed inset-0 z-[100] bg-slate-50 text-slate-900 flex flex-col items-center justify-center p-4">
-        <div className="relative group flex flex-col items-center max-w-md text-center">
+      <div 
+        onClick={onDismissError}
+        className="fixed inset-0 z-[100] bg-slate-50/95 text-slate-900 flex flex-col items-center justify-center p-6 backdrop-blur-md cursor-pointer"
+      >
+        <div className="relative group flex flex-col items-center max-w-xl w-full text-center">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-red-500/10 blur-[100px] rounded-full animate-pulse" />
 
-          <div className="relative h-24 w-24 flex items-center justify-center mb-6">
-            <div className="h-20 w-20 rounded-full bg-red-100 border border-red-200 flex items-center justify-center animate-in zoom-in duration-300">
-              <XCircle className="h-10 w-10 text-red-600" />
+          <div className="relative h-20 w-20 flex items-center justify-center mb-5">
+            <div className="h-16 w-16 rounded-full bg-red-100 border border-red-200 flex items-center justify-center animate-in zoom-in duration-300">
+              <XCircle className="h-9 w-9 text-red-600" />
             </div>
           </div>
 
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 mb-4">
             <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-red-700">
-              Generation Failed
+              Generation Error
             </span>
           </div>
 
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            We hit a snag
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+            {displayError}
           </h2>
-          <p className="text-slate-600 text-xs mt-3 font-medium leading-relaxed">
-            {error}
-          </p>
-
-          <button
-            onClick={onDismissError}
-            className="mt-6 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold border border-slate-800 transition-colors shadow-lg"
-          >
-            Go Back & Try Again
-          </button>
         </div>
       </div>
     );

@@ -1399,7 +1399,7 @@ const CreatePagePage = () => {
         if (statusRes?.status === "failed") {
           window.clearInterval(pollRef.current!);
           pollRef.current = null;
-          setLoaderError(statusRes.generationError || "Page generation failed. Please try again.");
+          setLoaderError(statusRes.generationError || "Page generation failed on server. Please try again.");
           return;
         }
 
@@ -1407,7 +1407,7 @@ const CreatePagePage = () => {
           window.clearInterval(pollRef.current!);
           pollRef.current = null;
           setLoaderError(
-            "This is taking much longer than expected. Your page may still finish generating — check My Pages in a few minutes."
+            "Generation timeout: This is taking much longer than expected. Please check your network or try again."
           );
         }
       } catch (err: any) {
@@ -1448,13 +1448,17 @@ const CreatePagePage = () => {
     },
     onError: (err: any) => {
       console.error("Mutation Error:", err);
-      toast.error(err.message || "Failed to create page");
-      // If it failed fast, we might not have even shown the loader yet
+      const exactErrorMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create page. Please check your connection or input parameters.";
+      toast.error(exactErrorMsg);
       if (loaderTimeoutRef.current) {
         window.clearTimeout(loaderTimeoutRef.current);
       }
-      setShowDelayedLoader(false);
-      setShowLoader(false);
+      setLoaderError(exactErrorMsg);
+      setShowDelayedLoader(true);
+      setShowLoader(true);
       setIsComplete(false);
     },
   });
