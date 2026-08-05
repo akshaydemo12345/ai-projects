@@ -411,14 +411,28 @@ const injectScripts = (html) => {
 // ═══════════════════════════════════════════════════════════
 //  PROCESS RESULT  — clean + logo swap + inject + extract meta
 // ═══════════════════════════════════════════════════════════
-const processResult = (raw, logoUrl) => {
+const processResult = (raw, logoUrl, businessName) => {
   let html = cleanHTML(raw);
 
-  const fallbackLogo = 'https://placehold.co/200x60/f8fafc/6366f1?text=BRAND';
+  const safeBusinessName = businessName?.trim() || 'BRAND';
+  const fallbackLogo = `https://placehold.co/200x60/f8fafc/6366f1?text=${encodeURIComponent(safeBusinessName)}`;
   const logo = logoUrl?.trim() || fallbackLogo;
+  
   html = html
     .replace(/\{\{LOGO_URL\}\}/gi, logo)
     .replace(/\{\{logoUrl\}\}/gi, logo);
+
+  // Force replace any image that is identified as a logo, just in case AI used a generic path
+  html = html.replace(/<img([^>]*)>/gi, (match, attrs) => {
+    if (attrs.toLowerCase().includes('alt="logo"') || attrs.toLowerCase().includes('id="page-logo"') || attrs.toLowerCase().includes("alt='logo'")) {
+      if (attrs.includes('src=')) {
+        return `<img${attrs.replace(/src=["'][^"']*["']/i, `src="${logo}"`)}>`;
+      } else {
+        return `<img src="${logo}"${attrs}>`;
+      }
+    }
+    return match;
+  });
 
   html = injectScripts(html);
 
@@ -987,8 +1001,12 @@ const buildBrandingLines = (input, recipe) => {
   }
 
   // Logo URL (actual resolved value, separate from placeholder)
-  if (input.branding?.logoUrl) {
-    lines.push(`LOGO URL (actual): ${input.branding.logoUrl}`);
+  if (input.logoUrl || input.branding?.logoUrl) {
+    const actualLogo = input.logoUrl || input.branding?.logoUrl;
+    lines.push(`LOGO URL (actual): ${actualLogo}`);
+    lines.push(`🚨 CRITICAL LOGO RULE: You MUST use exactly this URL for all logos in the navbar and footer: <img src="${actualLogo}" alt="Logo">. NEVER use a placeholder text or different image for the logo!`);
+  } else {
+    lines.push(`🚨 CRITICAL LOGO RULE: You MUST use exactly this code for all logos in the navbar and footer: <img src="{{LOGO_URL}}" alt="Logo">`);
   }
 
   // ── AUTONOMOUS DESIGN FREEDOM ──
@@ -1291,7 +1309,7 @@ const generateLandingPageContent = async (input) => {
   }
 
   const totalUsage = mergeUsage(pass1.usage, pass2.usage);
-  const aiResult = { ...processResult(combinedRaw, input.logoUrl), aiUsage: totalUsage };
+  const aiResult = { ...processResult(combinedRaw, input.logoUrl, input.businessName), aiUsage: totalUsage };
 
   // INJECT ROBUST FALLBACK SCRIPT FOR ACCORDIONS, FORMS, AND AOS
   // This guarantees interactivity even if the AI forgets to generate the script
