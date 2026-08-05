@@ -365,6 +365,14 @@ async function replacePlaceholdersInHtml(
         const classAttr =
           $(element).attr('class') || '';
 
+        const altAttr =
+          $(element).attr('alt') || '';
+
+        if (idAttr.toLowerCase().includes('logo') || classAttr.toLowerCase().includes('logo') || altAttr.toLowerCase().includes('logo')) {
+          // Do not replace logos with random AI images
+          return;
+        }
+
         const parentId =
           $(element).parent().attr('id') || '';
 
