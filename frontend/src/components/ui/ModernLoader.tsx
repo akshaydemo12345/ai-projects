@@ -130,33 +130,33 @@ export const ModernLoader = ({
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-[100] bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] bg-slate-50 text-slate-900 flex flex-col items-center justify-center p-4">
         <div className="relative group flex flex-col items-center max-w-md text-center">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-red-500/10 blur-[100px] rounded-full animate-pulse" />
 
           <div className="relative h-24 w-24 flex items-center justify-center mb-6">
-            <div className="h-20 w-20 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center animate-in zoom-in duration-300">
-              <XCircle className="h-10 w-10 text-red-400" />
+            <div className="h-20 w-20 rounded-full bg-red-100 border border-red-200 flex items-center justify-center animate-in zoom-in duration-300">
+              <XCircle className="h-10 w-10 text-red-600" />
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
-            <span className="h-2 w-2 bg-red-400 rounded-full animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 mb-4">
+            <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-red-700">
               Generation Failed
             </span>
           </div>
 
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
             We hit a snag
           </h2>
-          <p className="text-slate-400 text-xs mt-3 font-medium leading-relaxed">
+          <p className="text-slate-600 text-xs mt-3 font-medium leading-relaxed">
             {error}
           </p>
 
           <button
             onClick={onDismissError}
-            className="mt-6 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 transition-colors shadow-lg"
+            className="mt-6 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold border border-slate-800 transition-colors shadow-lg"
           >
             Go Back & Try Again
           </button>
@@ -166,35 +166,35 @@ export const ModernLoader = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0b0f19] text-slate-100 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto font-sans">
+    <div className="fixed inset-0 z-[100] bg-slate-50/95 text-slate-800 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto font-sans backdrop-blur-md">
       {/* Background Glows */}
-      <div className="fixed top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-indigo-600/10 blur-[160px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[550px] h-[550px] bg-violet-600/10 blur-[160px] rounded-full pointer-events-none" />
+      <div className="fixed top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-indigo-500/10 blur-[160px] rounded-full pointer-events-none" />
+      <div className="fixed bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[550px] h-[550px] bg-violet-500/10 blur-[160px] rounded-full pointer-events-none" />
 
       <div className="relative w-full max-w-5xl my-auto py-4">
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-400 mb-6 font-medium">
-          <span className="text-slate-500">Websites</span>
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-6 font-medium">
+          <span className="text-slate-400">Websites</span>
           <span>&rsaquo;</span>
-          <span className="text-indigo-400">AI Generation Experience</span>
+          <span className="text-indigo-600 font-semibold">AI Generation Experience</span>
         </div>
 
         {/* Main Grid: Left Panel (Live AI Stages Checklist) & Right Panel (Landing Page Structure) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
           {/* LEFT PANEL: LIVE AI STAGES */}
-          <div className="lg:col-span-7 bg-[#111827]/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-white/90 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
             <div>
               {/* Header Title + Live Status Badge */}
               <div className="flex items-start justify-between gap-4 mb-6">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold tracking-wider uppercase mb-2 shadow-sm">
-                    <Sparkles className="h-3 w-3 animate-pulse text-indigo-400" /> Real-Time AI Orchestration
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold tracking-wider uppercase mb-2 shadow-sm">
+                    <Sparkles className="h-3 w-3 animate-pulse text-indigo-600" /> Real-Time AI Orchestration
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
                     {isComplete ? "Landing Page Complete!" : "Generating Landing Page"}
                   </h1>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {isComplete
                       ? "All sections, copy & assets generated. Redirecting to editor..."
                       : "Executing live generation stages in real time. Watch actual progress below."}
@@ -202,23 +202,23 @@ export const ModernLoader = ({
                 </div>
 
                 {/* AI Status Indicator Badge */}
-                <div className="flex items-center gap-2 bg-[#1e293b]/70 border border-slate-800 px-3.5 py-2 rounded-xl shrink-0">
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl shrink-0 shadow-sm">
                   {!isComplete ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+                      <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-white leading-none">Processing</span>
-                        <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-wider mt-0.5">
+                        <span className="text-xs font-bold text-slate-900 leading-none">Processing</span>
+                        <span className="text-[9px] font-semibold text-indigo-600 uppercase tracking-wider mt-0.5">
                           Stage {Math.min(AI_STAGES.length, currentStageIdx + 1)} / {AI_STAGES.length}
                         </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-white leading-none">Ready</span>
-                        <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mt-0.5">
+                        <span className="text-xs font-bold text-slate-900 leading-none">Ready</span>
+                        <span className="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mt-0.5">
                           100% Done
                         </span>
                       </div>
@@ -228,23 +228,23 @@ export const ModernLoader = ({
               </div>
 
               {/* ACTIVE ACTION CARD */}
-              <div className="bg-[#172033] border border-indigo-500/30 rounded-xl p-4 mb-6 shadow-inner relative overflow-hidden">
+              <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 mb-6 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-2xl rounded-full pointer-events-none" />
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="h-5 w-5 rounded-md bg-indigo-500/20 flex items-center justify-center">
-                    <Cpu className="h-3 w-3 text-indigo-400" />
+                  <div className="h-5 w-5 rounded-md bg-indigo-100 flex items-center justify-center">
+                    <Cpu className="h-3 w-3 text-indigo-600" />
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
                     Current AI Task
                   </span>
                 </div>
-                <p className="text-xs text-slate-100 font-semibold leading-relaxed">
+                <p className="text-xs text-slate-800 font-semibold leading-relaxed">
                   {statusText}
                 </p>
                 {!isComplete && (
-                  <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-slate-800/80">
-                    <div className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-                    <span className="text-[10px] text-slate-400 font-medium truncate">
+                  <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-indigo-100">
+                    <div className="h-2 w-2 rounded-full bg-indigo-600 animate-ping" />
+                    <span className="text-[10px] text-slate-500 font-medium truncate">
                       Backend worker active • Live execution stream
                     </span>
                   </div>
@@ -253,9 +253,9 @@ export const ModernLoader = ({
 
               {/* LIVE STAGES CHECKLIST */}
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Layers3 className="h-3.5 w-3.5 text-indigo-400" />
+                    <Layers3 className="h-3.5 w-3.5 text-indigo-600" />
                     AI Execution Pipeline
                   </span>
                   <span className="text-[10px] text-slate-400 font-medium">
@@ -271,31 +271,31 @@ export const ModernLoader = ({
                         key={stage.id}
                         className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-300 ${
                           status === "active"
-                            ? "bg-[#172033]/90 border-indigo-500/50 text-white shadow-md shadow-indigo-500/10 scale-[1.01]"
+                            ? "bg-indigo-50/90 border-indigo-300 text-slate-900 shadow-sm shadow-indigo-100 scale-[1.01]"
                             : status === "completed"
-                            ? "bg-[#1e293b]/30 border-slate-800/70 text-slate-200"
-                            : "bg-[#1e293b]/10 border-slate-800/30 text-slate-500"
+                            ? "bg-emerald-50/60 border-emerald-200/70 text-slate-800"
+                            : "bg-slate-50/70 border-slate-200/60 text-slate-400"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {status === "completed" && (
-                            <div className="h-6 w-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                            <div className="h-6 w-6 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                             </div>
                           )}
                           {status === "active" && (
-                            <div className="h-6 w-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center shrink-0">
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
+                            <div className="h-6 w-6 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center shrink-0">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600" />
                             </div>
                           )}
                           {status === "pending" && (
-                            <div className="h-6 w-6 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center shrink-0">
-                              <Clock className="h-3 w-3 text-slate-500" />
+                            <div className="h-6 w-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                              <Clock className="h-3 w-3 text-slate-400" />
                             </div>
                           )}
 
                           <span className={`text-xs font-medium truncate ${
-                            status === "active" ? "text-indigo-300 font-bold" : status === "completed" ? "text-slate-200" : "text-slate-500"
+                            status === "active" ? "text-indigo-950 font-bold" : status === "completed" ? "text-slate-800" : "text-slate-400"
                           }`}>
                             {stage.name}
                           </span>
@@ -303,17 +303,17 @@ export const ModernLoader = ({
 
                         <div className="shrink-0 ml-2">
                           {status === "completed" && (
-                            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
                               <Check className="h-2.5 w-2.5" /> Done
                             </span>
                           )}
                           {status === "active" && (
-                            <span className="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md flex items-center gap-1 animate-pulse">
+                            <span className="text-[9px] font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1 animate-pulse">
                               Active
                             </span>
                           )}
                           {status === "pending" && (
-                            <span className="text-[9px] font-medium text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-md">
+                            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md">
                               Pending
                             </span>
                           )}
@@ -326,24 +326,21 @@ export const ModernLoader = ({
             </div>
 
             {/* Bottom Footer Meta */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-indigo-400" /> PageCraft AI Engine v3.0
-              </span>
+            <div className="mt-6 pt-4 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-end">
               <span>{isComplete ? "Generation Complete" : "Live Processing"}</span>
             </div>
           </div>
 
           {/* RIGHT PANEL: LANDING PAGE STRUCTURE */}
-          <div className="lg:col-span-5 bg-[#111827]/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div className="lg:col-span-5 bg-white/90 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-6 shadow-xl flex flex-col">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
               <div>
-                <h2 className="text-sm font-bold text-white tracking-wide flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-indigo-400" /> Landing Page Structure
+                <h2 className="text-sm font-bold text-slate-900 tracking-wide flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-indigo-600" /> Landing Page Structure
                 </h2>
-                <p className="text-[10px] text-slate-400 mt-0.5">Real-time layout assembly preview</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Real-time layout assembly preview</p>
               </div>
-              <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
                 6 Sections
               </span>
             </div>
@@ -356,20 +353,20 @@ export const ModernLoader = ({
                     key={sec.id}
                     className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
                       status === "active"
-                        ? "bg-[#172033] border-indigo-500/50 text-white shadow-md shadow-indigo-500/10 scale-[1.01]"
+                        ? "bg-indigo-50/90 border-indigo-300 text-slate-900 shadow-sm shadow-indigo-100 scale-[1.01]"
                         : status === "completed"
-                        ? "bg-[#1e293b]/40 border-slate-800/80 text-slate-300"
-                        : "bg-[#1e293b]/20 border-slate-800/40 text-slate-500"
+                        ? "bg-emerald-50/50 border-emerald-200/70 text-slate-800"
+                        : "bg-slate-50/70 border-slate-200/60 text-slate-400"
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
                           status === "active"
-                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
+                            ? "bg-indigo-600 text-white shadow-sm"
                             : status === "completed"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-slate-800 text-slate-500"
+                            ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                            : "bg-slate-100 text-slate-400 border border-slate-200/60"
                         }`}
                       >
                         {sec.id}
@@ -377,27 +374,26 @@ export const ModernLoader = ({
 
                       <div className="min-w-0">
                         <p className={`text-xs font-bold truncate leading-tight ${
-                          status === "active" ? "text-indigo-300" : status === "completed" ? "text-white" : "text-slate-500"
+                          status === "active" ? "text-indigo-950" : status === "completed" ? "text-slate-900" : "text-slate-400"
                         }`}>
                           {sec.name}
                         </p>
-                        <p className="text-[10px] font-mono text-slate-500 truncate">{sec.path}</p>
                       </div>
                     </div>
 
                     <div className="shrink-0 ml-2">
                       {status === "completed" && (
-                        <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" /> Complete
                         </span>
                       )}
                       {status === "active" && (
-                        <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md flex items-center gap-1 animate-pulse">
+                        <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1 animate-pulse">
                           <Loader2 className="h-3 w-3 animate-spin" /> Generating...
                         </span>
                       )}
                       {status === "pending" && (
-                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-800/80 border border-slate-700/50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <Clock className="h-3 w-3" /> Queued
                         </span>
                       )}
@@ -408,11 +404,11 @@ export const ModernLoader = ({
             </div>
 
             {/* Structure Summary Footer */}
-            <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-slate-200 text-[10px] text-slate-500 flex items-center justify-between">
               <span className="flex items-center gap-1">
-                <Globe className="h-3 w-3 text-indigo-400" /> Fully Responsive Component Tree
+                <Globe className="h-3 w-3 text-indigo-600" /> Fully Responsive Component Tree
               </span>
-              <span className="text-indigo-400 font-semibold">Ready to Edit</span>
+              <span className="text-indigo-600 font-semibold">Ready to Edit</span>
             </div>
           </div>
 
