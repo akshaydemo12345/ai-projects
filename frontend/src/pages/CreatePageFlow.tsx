@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Sparkles, Link2, Upload, CheckCircle2, Rocket, ImagePlus, Globe, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PickrColorInput } from "@/components/ui/PickrColorInput";
@@ -58,7 +59,12 @@ const CreatePageFlow = () => {
     setLogoPreviewBgClass(getLogoPreviewContainerClasses(brightness));
   };
 
-  const industries = ["Other"];
+  const industries = [
+    "SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate",
+    "Finance", "Technology", "Consulting", "Construction", "Hospitality",
+    "Legal", "Beauty & Wellness", "Sports", "Fitness", "Education",
+    "Plumber", "Home Services", "Automotive", "General", "Other"
+  ];
   const pageTypes = [
     { id: "landing", label: "Landing Page", icon: <Rocket className="h-6 w-6" /> },
   ];
@@ -420,15 +426,13 @@ const CreatePageFlow = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground">Industry *</label>
-                <select
+                <SearchableSelect
+                  options={industries}
                   value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="mt-1.5 flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {industries.map((ind) => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setIndustry(val)}
+                  placeholder="Search industry..."
+                  className="mt-1.5 h-11"
+                />
               </div>
             </div>
 

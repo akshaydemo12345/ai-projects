@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import PickrColorInput from "@/components/ui/PickrColorInput";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
@@ -20,7 +21,7 @@ import { ModernLoader } from "@/components/ui/ModernLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import {verifyScript} from "../../../backend/src/controllers/projectController";
+import { verifyScript } from "../../../backend/src/controllers/projectController";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const autoSlug = (v: string) =>
@@ -188,7 +189,7 @@ const CreatePageModal = ({ project, onClose, onCreate, isCreating }: CreatePageM
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  
+
   // Load project suggestions when modal opens
   useEffect(() => {
     if (method === "ai") {
@@ -1452,20 +1453,22 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl overflow-hidden">
+      <div className="w-full max-w-2xl bg-background rounded-2xl border border-border shadow-2xl overflow-hidden">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
           <Settings2 className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold text-foreground flex-1">Project Settings</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-4">
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website URL (Client's Site)</label>
-            <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website Name</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Website URL (Client's Site)</label>
+              <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+            </div>
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Pre Slug (Optional URL Prefix)</label>
@@ -1476,18 +1479,13 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Industry</label>
-            <select
+            <SearchableSelect
+              options={["SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate", "Finance", "Technology", "Consulting", "Construction", "Hospitality", "Legal", "Beauty & Wellness", "Sports", "Fitness", "Education", "Plumber", "Home Services", "Automotive", "General", "Other"]}
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
+              onChange={(val) => setIndustry(val)}
+              placeholder="Search industry..."
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-            >
-              <option value="SaaS">SaaS</option>
-              <option value="Agency">Agency</option>
-              <option value="E-commerce">E-commerce</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Real Estate">Real Estate</option>
-              <option value="Other">Other</option>
-            </select>
+            />
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Sub-Industry</label>
@@ -1513,8 +1511,8 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-const [isVerifying, setIsVerifying] = useState(false);
-const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(null);
 
 
   // ── Query 1: Project meta (header, stats, integration panel) ─────────────────
@@ -1709,78 +1707,78 @@ const [verifyStatus, setVerifyStatus] = useState<"success" | "error" | null>(nul
     setLogoHeaderBgColor(brightness !== null && brightness >= 0.65 ? "rgb(20, 24, 32)" : "rgb(197, 197, 197)");
   };
 
-const handleVerifyScript = async () => {
-  try {
-    setIsVerifying(true);
-    setVerifyStatus(null);
+  const handleVerifyScript = async () => {
+    try {
+      setIsVerifying(true);
+      setVerifyStatus(null);
 
-    const url = project?.websiteUrl || project?.url;
-    const token = project?.apiToken;
+      const url = project?.websiteUrl || project?.url;
+      const token = project?.apiToken;
 
-    if (!url || !token) {
-      toast.error("Token or URL missing ❌");
-      console.error("Missing Data:", { url, token });
-      return;
-    }
-
-    console.log("🚀 Sending verify request:", { url, token });
-
-    // const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ url, token }),
-    // });
-
-const tokenAuth = localStorage.getItem("token");
-
-    const res = await fetch(
-  `${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${tokenAuth}` // ✅ FIXED
-    },
-    body: JSON.stringify({ url, token }) // ✅ matches backend
-  }
-);
-
-    const data = await res.json();
-
-    console.log("✅ Verify response:", data);
-
-    if (!res.ok) {
-      throw new Error(data?.message || "Request failed");
-    }
-
-    if (data?.verified === true) {
-      setVerifyStatus("success");
-      toast.success("Script verified successfully ✅");
-
-      // Sync the verified flag into the cached project immediately so the
-      // Publish button unlocks without needing a manual page refresh.
-      if (data?.project) {
-        queryClient.setQueryData(["project", id], (old: any) =>
-          old ? { ...old, ...data.project } : old
-        );
+      if (!url || !token) {
+        toast.error("Token or URL missing ❌");
+        console.error("Missing Data:", { url, token });
+        return;
       }
-      queryClient.invalidateQueries({ queryKey: ["project", id] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-    } else {
-      setVerifyStatus("error");
-      toast.error("Script not found ❌");
-    }
 
-  } catch (err: any) {
-    console.error("❌ Verify error:", err);
-    setVerifyStatus("error");
-    toast.error(err.message || "Verification failed");
-  } finally {
-    setIsVerifying(false);
-  }
-};
+      console.log("🚀 Sending verify request:", { url, token });
+
+      // const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`, {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ url, token }),
+      // });
+
+      const tokenAuth = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || 'https://apiserver.ai-landingpages.sharehq.org'}/projects/verify-script`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tokenAuth}` // ✅ FIXED
+          },
+          body: JSON.stringify({ url, token }) // ✅ matches backend
+        }
+      );
+
+      const data = await res.json();
+
+      console.log("✅ Verify response:", data);
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Request failed");
+      }
+
+      if (data?.verified === true) {
+        setVerifyStatus("success");
+        toast.success("Script verified successfully ✅");
+
+        // Sync the verified flag into the cached project immediately so the
+        // Publish button unlocks without needing a manual page refresh.
+        if (data?.project) {
+          queryClient.setQueryData(["project", id], (old: any) =>
+            old ? { ...old, ...data.project } : old
+          );
+        }
+        queryClient.invalidateQueries({ queryKey: ["project", id] });
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+      } else {
+        setVerifyStatus("error");
+        toast.error("Script not found ❌");
+      }
+
+    } catch (err: any) {
+      console.error("❌ Verify error:", err);
+      setVerifyStatus("error");
+      toast.error(err.message || "Verification failed");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <div className="flex-1 min-h-full flex flex-col"

@@ -13,7 +13,11 @@ const CLAUDE_MODELS = {
 };
 
 // Backwards-compatible list used elsewhere in the codebase
+// 🔧 TO GO LIVE (EXPENSIVE BUT BEST QUALITY): Uncomment the line below and comment the testing line
 const CLAUDE_MODEL_CANDIDATES = [CLAUDE_MODELS.primary, CLAUDE_MODELS.fast];
+
+// 🔧 FOR TESTING (CHEAP & FAST): Keep this active
+// const CLAUDE_MODEL_CANDIDATES = [CLAUDE_MODELS.fast];
 
 // ═══════════════════════════════════════════════════════════
 //  COST CALCULATOR
@@ -417,14 +421,22 @@ const processResult = (raw, logoUrl, businessName) => {
   const safeBusinessName = businessName?.trim() || 'BRAND';
   const fallbackLogo = `https://placehold.co/200x60/f8fafc/6366f1?text=${encodeURIComponent(safeBusinessName)}`;
   const logo = logoUrl?.trim() || fallbackLogo;
-  
+
   html = html
     .replace(/\{\{LOGO_URL\}\}/gi, logo)
     .replace(/\{\{logoUrl\}\}/gi, logo);
 
   // Force replace any image that is identified as a logo, just in case AI used a generic path
   html = html.replace(/<img([^>]*)>/gi, (match, attrs) => {
-    if (attrs.toLowerCase().includes('alt="logo"') || attrs.toLowerCase().includes('id="page-logo"') || attrs.toLowerCase().includes("alt='logo'")) {
+    const attrsLow = attrs.toLowerCase();
+    // Catch common logo attributes but exclude client/trusted logos
+    if ((attrsLow.includes('logo') && !attrsLow.includes('client') && !attrsLow.includes('partner') && !attrsLow.includes('trusted')) ||
+      attrsLow.includes('id="page-logo"') ||
+      attrsLow.includes('alt="logo"')) {
+
+      // If the source already contains our logo, skip
+      if (attrs.includes(logo)) return match;
+
       if (attrs.includes('src=')) {
         return `<img${attrs.replace(/src=["'][^"']*["']/i, `src="${logo}"`)}>`;
       } else {
@@ -626,7 +638,7 @@ const COLOR_MODES = [
 const STANDALONE_FORM_STYLES = [
   'a 50/50 split layout: contact details (address, map, email) on the left, and the form on the right.',
   'a massive, perfectly centered card floating over a beautiful blurred background image.',
-  'a dark-mode inverted section: if the page is light, this form section must have a pitch-black background with white text.',
+  'an inverted high-contrast section: background color deeply contrasts the page body, with appropriately contrasting text.',
   'a minimalistic, borderless form where inputs are just single bottom-border lines (no boxes).',
   'an asymmetric overlapping layout: the form card overlaps an image collage next to it.',
   'a stark typography-led layout: massive "SAY HELLO" text running down the left side vertically, form on the right.',
@@ -651,7 +663,7 @@ const HERO_LAYOUTS = [
   'Side-navigation feel: title and text pressed hard against the left edge in a narrow column, massive bleeding image on the right.',
   'Text-heavy editorial hero: huge drop-cap, multiple paragraphs of compelling copy, a subtle abstract illustration on the side.',
   'Grid-locked hero: The hero is split into 4 distinct quadrants (boxes with borders) containing text, image, stats, and CTA respectively.',
-  'Vertical split: Top half is entirely dark with bright text, bottom half is a massive panoramic image.',
+  'Vertical split: Top half is a solid high-contrast color with bright text, bottom half is a massive panoramic image.',
   'Circular cutout: A massive circular image mask on the right, with sleek typography wrapping on the left.',
   'Video-player mockup: A huge 16:9 faux-video player in the center, with the headline sitting elegantly above it.',
   'Search-bar focus: Instead of a normal CTA button, the hero features a massive, prominent search input bar in the center.',
@@ -667,7 +679,7 @@ const HERO_LAYOUTS = [
   'Hero with side-tabs: A large hero area with vertical navigation tabs on the far right edge to switch content.',
   'Magazine cover: Massive headline behind a cutout portrait image, overlapping the text like a fashion magazine.',
   'Minimalist wireframe: Stripped back, thin borders, blueprint aesthetic with raw text and structural outlines.',
-  'Immersive dark mode: Pitch black background, single glowing gradient orb behind a stark white headline.',
+  'Immersive focal mode: Deep solid background matching the color theme, single glowing gradient orb behind a contrasting headline.',
   'Polaroid scatter: Headline on the left, right side features a scattered pile of polaroid-style image frames.',
   'Data dashboard: Right half of the hero is a complex, beautiful, semi-transparent UI dashboard mockup.',
   'Typographic portrait: The shape of the text block forms a silhouette, or text wraps tightly around an irregular image.',
@@ -685,8 +697,8 @@ const CARD_STYLES = [
   'cards wrapped in a glowing, semi-transparent brand-color border',
   'asymmetric borders: thick left border, no other borders, light background fill',
   'overlapping stacked cards effect (using absolute positioning or negative margins)',
-  'monochrome dark cards with vibrant neon text/icon highlights',
-  'cards with a harsh drop shadow (e.g., box-shadow: 8px 8px 0px #000)',
+  'monochrome high-contrast cards with vibrant neon text/icon highlights',
+  'cards with a harsh drop shadow (e.g., box-shadow: 8px 8px 0px var(--primary))',
   'cards that look like torn paper or have jagged SVG edges',
   'hyper-minimalist cards: no background, no border, just an icon and text floating in space',
   'cards with a gradient border mask (border is a gradient, background is solid)',
@@ -697,14 +709,14 @@ const CARD_STYLES = [
   'interactive-lift cards: designed to look pressed down, lifting up on hover',
   'cards wrapped in dotted or dashed borders for a playful/blueprint feel',
   'cards with extreme padding (p-12 or p-16) for a highly spacious, premium museum feel',
-  'dark mode cards with a subtle noise/grain texture overlay',
+  'textured cards with a subtle noise/grain texture overlay matching the background',
   'cards that are perfectly square (aspect-square) regardless of content',
   'cards shaped like arches (rounded-t-full, straight bottom)'
 ];
 
 const ACCENT_MOTIFS = [
   'a few large blurred brand-color gradient orbs positioned absolutely in the background (blur-3xl, opacity-20)',
-  'a faint grid-line pattern overlay behind dark sections',
+  'a faint grid-line pattern overlay behind the background',
   'thin dashed divider lines separating sections',
   'large ghost/outline numerals or icons behind section headings',
   'small uppercase tracked-out brand-color kicker labels above every section heading',
@@ -771,7 +783,7 @@ const SECTION_POOL = [
   'Features: vertical list with massive numbers (01, 02, 03) anchoring each row',
   'Features: interactive-looking horizontal tabs (design it to look like clicked tabs)',
   'Features: single massive feature block with a side-by-side overlapping image collage',
-  'Features: dark inverted section highlighting 3 core benefits with glowing icons',
+  'Features: inverted contrast section highlighting 3 core benefits with glowing icons',
   'About/Story: full-bleed image with an overlaid text caption box on the bottom right',
   'About/Story: split 50/50 screen with a rich background color on the text side',
   'About/Story: narrow, centered single column of beautiful editorial text (like a magazine)',
@@ -884,7 +896,7 @@ USE data-reveal ONLY on these high-impact elements:
  NAVBAR
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sticky. Contains ONLY:
-  Left: <img src="{{LOGO_URL}}" alt="Logo" style="height:3.5rem;width:auto;object-fit:contain">
+  Left: <img src="{{LOGO_URL}}" id="page-logo" alt="Logo" style="height:6rem; max-width:300px; width:auto; object-fit:contain">
   Right: ONE styled CTA button
 Nothing else. No links. No hamburger menu. Ultra-minimal premium.
 
@@ -894,21 +906,21 @@ Nothing else. No links. No hamburger menu. Ultra-minimal premium.
 Follow the LAYOUT RECIPE hero description exactly.
 Contains: H1 headline + subparagraph + ONE CTA button (unless the form placement below says the form goes in-hero).
 Image backgrounds: use picsum.photos/1600/900?random=[N]
-Always add a proper dark overlay so white text is readable.
+Ensure text is completely readable against the background (e.g., use a dark overlay for white text, or a light frosted overlay for dark text).
 
 INTERACTIVE ACCORDIONS & FORMS (NO JS REQUIRED):
 - We automatically inject JavaScript for FAQs and Form validation. You DO NOT need to write any script tags for interactivity.
 - Your HTML MUST use these exact classes for FAQs: \`accordion-item\`, \`accordion-header\`, and \`accordion-content hidden\`.
 - 🚨 VARY THE FAQ DESIGN as instructed in the user prompt — never default to a plain white box every time.
-- 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page, in the placement specified in the user prompt.
+- 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page. The <form> tag MUST have id="contact-form".
 - FORM STRUCTURE: Make the form look premium. ALL form fields must have the \`required\` attribute (e.g. \`<input type="text" required>\`) so our backend validation script catches them.
 
 ULTRA-PREMIUM UI/UX FINISH (MANDATORY & CRITICAL):
 You MUST design at an "Awwwards-winning" luxury agency level. Generic designs are unacceptable.
 - WHITESPACE IS LUXURY: Use massive padding (e.g., \`py-32\`, \`py-40\`, \`gap-16\`). Let elements breathe. NEVER cramp text.
 - TYPOGRAPHY AS ART: Use extreme typographic contrast. Use \`tracking-tighter\` for massive 6xl+ headings, and \`tracking-widest uppercase text-[10px] font-bold text-[var(--primary)]\` for small kickers/subheadings.
-- PREMIUM BACKGROUNDS: Do not just use solid colors. Use subtle radial gradients, mesh gradients, or large dark backgrounds with subtle glowing orbs (e.g. absolute divs with \`bg-[var(--primary)] blur-3xl opacity-20\`).
-- GLASSMORPHISM & BORDERS: Use \`backdrop-blur-lg bg-white/10 border border-white/20\` for cards on top of dark/image backgrounds.
+- PREMIUM BACKGROUNDS: Do not just use flat solid colors. Use subtle radial gradients, mesh gradients, or abstract soft glowing orbs (e.g. absolute divs with \`bg-[var(--primary)] blur-3xl opacity-20\`). Ensure it matches the requested COLOR MODE.
+- GLASSMORPHISM & BORDERS: Use \`backdrop-blur-md\` and subtle borders for cards when placed on top of images or complex gradients to maintain readability.
 - OVERLAPPING LAYOUTS: Break out of the box! Make images overlap into the section above/below using negative margins (\`-mt-16\`) or absolute positioning.
 - GRADIENT TEXT: Use gradient text for key emphasis in headlines: \`bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]\`.
 - SHADOWS & DEPTH: Use ultra-soft, diffused shadows (e.g. \`shadow-[0_30px_60px_rgba(0,_0,_0,_0.08)]\`) and scale effects.
@@ -1006,13 +1018,15 @@ const buildBrandingLines = (input, recipe) => {
     lines.push(`LOGO URL (actual): ${actualLogo}`);
     lines.push(`🚨 CRITICAL LOGO RULE: You MUST use exactly this URL for all logos in the navbar and footer: <img src="${actualLogo}" alt="Logo">. NEVER use a placeholder text or different image for the logo!`);
   } else {
-    lines.push(`🚨 CRITICAL LOGO RULE: You MUST use exactly this code for all logos in the navbar and footer: <img src="{{LOGO_URL}}" alt="Logo">`);
+    lines.push(`🚨 CRITICAL LOGO RULE: You MUST use exactly this code for all logos in the navbar and footer: <img src="{{LOGO_URL}}" id="page-logo" alt="Logo">`);
   }
 
   // ── AUTONOMOUS DESIGN FREEDOM ──
   lines.push(
     `\n━━━ DYNAMIC DESIGN FREEDOM (INVENT A UNIQUE DESIGN LANGUAGE) ━━━`,
     `AUTONOMOUS DESIGN: Do NOT use a standard or fixed layout! You MUST invent a COMPLETELY UNIQUE, ultra-premium design language for this specific page.`,
+    `COLOR MODE & THEME: ${recipe.colorMode?.rule || 'Use a clean light theme with dark text and brand color accents.'}`,
+    `🚨 STRICT COLOR COMMAND: You MUST strictly obey the COLOR MODE & THEME above. If it asks for a LIGHT theme, you are completely FORBIDDEN from using dark backgrounds (bg-gray-900, bg-black, etc). If it asks for a light theme, text must be dark (text-gray-900). Failing to follow this theme is a catastrophic failure.`,
     `HERO LAYOUT: Invent a unique, high-converting hero section (e.g., overlapping images, asymmetrical splits, glassmorphism, or immersive full-bleed backgrounds).`,
     `CARD / CONTAINER STYLE: Invent a beautiful card style (e.g., neo-brutalist borders, soft diffused shadows, frosted glass, or minimal floating elements) and apply it consistently.`,
     `DECORATIVE ACCENT: Add unique decorative elements (e.g., glowing background orbs, faint grid-lines, overlapping shapes, or minimalist typography patterns).`,
@@ -1078,12 +1092,22 @@ const buildUserPromptPart1 = (input, recipe, sectionsPart1, sectionsPart2Count, 
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
-  const listedSections = [
-    'Section 1 (Hero): follow the HERO LAYOUT above' + (formInHero ? ' — INCLUDING the inline contact form described above' : ''),
-    ...sectionsPart1.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
-  ];
+  let listedSections = [];
 
-  if (formInPart1 && !formInHero && fields && fields.length > 0) {
+  if (input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections')) {
+    // If the industry prompt is strict, we ONLY build exactly what it says.
+    listedSections = [
+      'Section 1 (Hero): follow the HERO LAYOUT above',
+      ...sectionsPart1.map((s, i) => `Section ${i + 2}: ${s}`)
+    ];
+  } else {
+    listedSections = [
+      'Section 1 (Hero): follow the HERO LAYOUT above' + (formInHero ? ' — INCLUDING the inline contact form described above' : ''),
+      ...sectionsPart1.map((s, i) => `Section ${i + 2} (${s.split(':')[0]}): ${s}`),
+    ];
+  }
+
+  if (formInPart1 && !formInHero && fields && fields.length > 0 && !(input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections'))) {
     const placementLabel = `CONTACT FORM PLACEMENT: ${placement}`;
     const formInsertIndex = Math.floor(Math.random() * (listedSections.length + 1));
     listedSections.splice(formInsertIndex, 0, `Section (Contact/Form): ${placementLabel}`);
@@ -1152,11 +1176,17 @@ const buildUserPromptPart2 = (input, recipe, sectionsPart2, fields, submitLabel,
     lines.push(input.websiteContent.substring(0, 3500));
   }
 
-  const listedSections = sectionsPart2.map((s, i) => `Section (${s.split(':')[0]}): ${s}`);
+  let listedSections = [];
+  if (input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections')) {
+    listedSections = sectionsPart2.map((s, i) => `Section: ${s}`);
+  } else {
+    listedSections = sectionsPart2.map((s, i) => `Section (${s.split(':')[0]}): ${s}`);
+  }
 
   // 🔧 FIX: only insert a separate Contact/Form section when the form is NOT
   // already generated in Part 1 (either in hero or as a standalone section).
-  if (!formInPart1) {
+  // AND DO NOT insert it if we are strictly following industry prompts 6 sections
+  if (!formInPart1 && !(input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections'))) {
     // Randomly insert the form among the remaining sections in Part 2, instead of always at the very end
     const formInsertIndex = Math.floor(Math.random() * (listedSections.length + 1));
     listedSections.splice(formInsertIndex, 0, `Section (Contact/Form): ${placementLabel}`);
@@ -1190,7 +1220,7 @@ THIS IS PART 2 OF 2 (FINAL) — FOLLOW THESE RULES EXACTLY:
 3. ${formInHero
       ? 'The lead form already exists inside the hero from Part 1 — do NOT add a second form anywhere in this part.'
       : 'MANDATORY LEAD FORM (NO POPUPS): Design a custom, responsive HTML form in the Contact/Form section. It MUST contain the required fields above, the form tag MUST have id="contact-form", and it must be INLINE (never in a popup).'}
-4. After all sections${formInHero ? '' : ' and the form'}, write a complete, beautiful custom <footer> tag: logo image \`<img src="{{LOGO_URL}}" alt="Logo" class="h-14 w-auto object-contain">\`, contact info line (phone & email), simple social icons, and a copyright line. If website content earlier contained an exact copyright string, use it verbatim with no year added; otherwise write "© BrandName. All rights reserved." with no year.
+4. After all sections${formInHero ? '' : ' and the form'}, write a complete, beautiful custom <footer> tag: logo image \`<img src="{{LOGO_URL}}" id="page-logo" alt="Logo" class="h-20 md:h-32 w-auto object-contain">\`, contact info line (phone & email), simple social icons, and a copyright line. If website content earlier contained an exact copyright string, use it verbatim with no year added; otherwise write "© BrandName. All rights reserved." with no year.
 5. After the footer, include the AOS init script: \`<script>AOS.init({duration: 1000, once: true});</script>\`
 6. Then close \`</body>\` and \`</html>\`. This MUST be the very last thing you write — the document must be 100% complete and valid.
 7. CRITICAL CTA BEHAVIOR: Every single "Call to Action" button in this part MUST have \`href="#contact-form"\`. Do not use "#contact" or "#form".
@@ -1215,11 +1245,32 @@ const generateLandingPageContent = async (input) => {
   // every single call. No fixed list to exhaust, so pages don't repeat.
   const recipe = buildLayoutRecipe();
 
-  // Split the 5 shuffled middle sections into two non-overlapping halves —
-  // this is what guarantees no section ever repeats: each section appears
-  // in exactly ONE of the two parts, never both.
-  const sectionsPart1 = recipe.middleSections.slice(0, 3);
-  const sectionsPart2 = recipe.middleSections.slice(3);
+  let sectionsPart1 = [];
+  let sectionsPart2 = [];
+
+  // 🔧 NEW FIX: If input.aiPrompt dictates EXACTLY 6 sections (from INDUSTRY_PROMPTS),
+  // we must parse those specific middle sections and OVERRIDE recipe.middleSections!
+  // Otherwise, the AI will try to generate 8+ sections and cause catastrophic layout failures (squashing).
+  if (input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections')) {
+    const lines = input.aiPrompt.split('\n');
+    const mid1 = lines.find(l => l.startsWith('3.'))?.replace('3. ', '').trim();
+    const mid2 = lines.find(l => l.startsWith('4.'))?.replace('4. ', '').trim();
+    const mid3 = lines.find(l => l.startsWith('5.'))?.replace('5. ', '').trim();
+
+    if (mid1 && mid2 && mid3) {
+      recipe.middleSections = [mid1, mid2, mid3];
+      // Distribute for the 2-pass generation
+      sectionsPart1 = [mid1];
+      sectionsPart2 = [mid2, mid3];
+    } else {
+      sectionsPart1 = recipe.middleSections.slice(0, 3);
+      sectionsPart2 = recipe.middleSections.slice(3);
+    }
+  } else {
+    // Split the 5 shuffled middle sections into two non-overlapping halves
+    sectionsPart1 = recipe.middleSections.slice(0, 3);
+    sectionsPart2 = recipe.middleSections.slice(3);
+  }
 
   // Resolve form from DB / scrape / fallback
   const { fields, submitLabel, placement, fieldCount, source } = resolveForm(input);
@@ -1251,20 +1302,20 @@ const generateLandingPageContent = async (input) => {
 
   // ── PASS 1: <head> + navbar + hero + first 3 sections. Fresh full budget. ──
   if (typeof input.onProgress === 'function') {
-    try { await input.onProgress(25, 'Generating Header & Navigation...', 'generating_header'); } catch (e) {}
+    try { await input.onProgress(25, 'Generating Header & Navigation...', 'generating_header'); } catch (e) { }
   }
 
   const pass1 = await callAIRaw({ messages: [{ role: 'user', content: userPromptPart1 }], systemPrompt, maxTokens: MAX_OUTPUT_TOKENS, temperature: 0.95 });
   let rawPart1 = pass1.text.replace(/```html/gi, '').replace(/```/g, '').trim();
 
   if (typeof input.onProgress === 'function') {
-    try { await input.onProgress(40, 'Writing Hero Section & Headline Copy...', 'writing_hero'); } catch (e) {}
+    try { await input.onProgress(40, 'Writing Hero Section & Headline Copy...', 'writing_hero'); } catch (e) { }
   }
 
-  const userPromptPart2 = buildUserPromptPart2(input, recipe, sectionsPart2, formHTML, placement, sectionsPart1.length);
+  const userPromptPart2 = buildUserPromptPart2(input, recipe, sectionsPart2, fields, submitLabel, placement, sectionsPart1.length, formInHero, formInPart1);
 
   if (typeof input.onProgress === 'function') {
-    try { await input.onProgress(50, 'Creating Features & Services Section...', 'creating_features'); } catch (e) {}
+    try { await input.onProgress(50, 'Creating Features & Services Section...', 'creating_features'); } catch (e) { }
   }
 
   // ── PASS 2: remaining sections + form + footer + closing tags. Fresh full budget. ──
@@ -1279,7 +1330,7 @@ const generateLandingPageContent = async (input) => {
   let rawPart2 = pass2.text.replace(/```html/gi, '').replace(/```/g, '').trim();
 
   if (typeof input.onProgress === 'function') {
-    try { await input.onProgress(60, 'Generating Testimonials & Social Proof...', 'testimonials'); } catch (e) {}
+    try { await input.onProgress(60, 'Generating Testimonials & Social Proof...', 'testimonials'); } catch (e) { }
   }
 
   // Safety net: if PASS 2 itself still got cut off before reaching the

@@ -593,11 +593,11 @@ const PublicLandingPage = () => {
             if (!el) return;
             
             var href = el.getAttribute('href');
-            var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form') || 
+            var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form' || href === 'javascript:void(0);' || href === 'javascript:void(0)') || 
                         (el.tagName === 'BUTTON' && el.type !== 'submit') ||
-                        (el.classList.contains('btn-primary') || el.classList.contains('btn-secondary') || el.classList.contains('cta-btn'));
+                        (el.className && typeof el.className === 'string' && (el.className.includes('btn') || el.className.includes('cta') || el.className.includes('link-primary')));
                         
-            if (isCTA && !el.closest('form')) {
+            if (isCTA && !el.closest('form') && !el.closest('.tabs-container') && !el.closest('.dropdown-menu')) {
               e.preventDefault();
               e.stopPropagation(); // Stop any other scripts from causing a reload
               
