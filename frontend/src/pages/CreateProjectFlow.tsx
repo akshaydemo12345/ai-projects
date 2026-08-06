@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Globe, FileText, Copy, CheckCircle2, ChevronRight, Rocket, Download, Code2, Puzzle, Monitor, Upload, X, ImageIcon, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { projectsApi, aiApi } from "@/services/api";
@@ -26,24 +27,37 @@ const industries = [
   "Hospitality",
   "Legal",
   "Beauty & Wellness",
+  "Sports",
+  "Fitness",
+  "Education",
+  "Plumber",
+  "Home Services",
+  "Automotive",
   "General",
   "Other",
 ];
 
 const subIndustryOptions: Record<string, string[]> = {
   SaaS: ["Marketing SaaS", "HR SaaS", "Fintech", "Analytics", "Security", "E-commerce SaaS", "Productivity", "Customer Support"],
-  Agency: ["Digital Marketing", "Creative", "Branding", "SEO", "PPC", "Web Design", "Social Media", "PR", "Content Strategy"],
-  "E-commerce": ["Fashion", "Electronics", "Health & Beauty", "Furniture", "Food & Beverage", "Subscription", "Home Goods", "Sports"],
-  Healthcare: ["Dentistry", "Medical Clinic", "Wellness Spa", "Fitness Studio", "Telehealth", "Physical Therapy", "Cosmetic Surgery"],
-  "Real Estate": ["Residential", "Commercial", "Property Management", "Agent/Brokerage", "Vacation Rentals", "Land Development"],
-  Finance: ["Accounting", "Investment", "Insurance", "Lending", "Crypto", "Wealth Management"],
-  Technology: ["Consumer Electronics", "AI", "IoT", "Cybersecurity", "Cloud", "Mobility", "Hardware", "Software"],
-  Consulting: ["Management", "HR", "IT", "Strategy", "Financial", "Legal"],
-  Construction: ["Contractors", "Home Renovation", "Architecture", "Builders", "Remodeling", "Interior Design"],
-  Hospitality: ["Hotels", "Restaurants", "Events", "Travel Agency", "Catering", "Resorts"],
-  Legal: ["Law Firm", "Immigration", "Corporate Law", "Personal Injury", "Family Law", "Patent Law"],
-  "Beauty & Wellness": ["Salon", "Spa", "Nutrition", "Yoga Studio", "Cosmetics", "Personal Care"],
+  Agency: ["Advertising and Marketing", "SEO, SMO and PPC", "Digital Marketing", "Creative", "Branding", "Web Design", "Social Media", "PR"],
+  "E-commerce": ["Appliances", "Clothing and Designers", "Gifts", "Shopping and Sales", "Home Decor and Garden", "Fashion", "Electronics", "Health & Beauty", "Furniture", "Food & Beverage"],
+  Healthcare: ["Health and Medical", "Dental Care", "Medicine Facilities", "Medical Industry", "Doctor", "Dentistry", "Medical Clinic", "Wellness Spa", "Telehealth", "Physical Therapy", "Cosmetic Surgery", "Pharma"],
+  "Real Estate": ["Real Estate and Property", "Residential", "Commercial", "Property Management", "Agent/Brokerage", "Vacation Rentals", "Land Development"],
+  Finance: ["Business and Investment", "Insurance Services", "Money and Financial Services", "Book Keeping", "Accounting", "Wealth Management"],
+  Technology: ["Communication and Technology", "Hardware and Software Services", "Internet and computer Services", "Science", "AI", "Cybersecurity", "Cloud", "Software"],
+  Consulting: ["Careers and Recruitment", "Employment and Recruitment", "Management", "HR", "IT", "Strategy", "Financial"],
+  Construction: ["Construction and Remodeling", "Industrial Goods and Services", "Contractors", "Home Renovation", "Architecture", "Builders", "Remodeling"],
+  Hospitality: ["Food and Drink", "Hotels and Resorts", "Travel and Tour", "Weddings", "Events", "Restaurants", "Travel Agency", "Catering"],
+  Legal: ["Law Services", "Lawyers and Law Firms", "Immigration", "Corporate Law", "Personal Injury", "Family Law", "Criminal Defense", "Patent Law"],
+  "Beauty & Wellness": ["Beauty Salon and Products", "Spa", "Nutrition", "Cosmetics", "Personal Care"],
+  Sports: ["Sports and Recreation", "Cricket", "Football", "Basketball", "Tennis", "Sports Academy", "Club", "Sporting Goods"],
+  Fitness: ["Gym", "Personal Trainer", "Yoga Studio", "CrossFit", "Zumba", "Pilates"],
+  Education: ["Education and Colleges", "Tutor", "Online Course", "School", "University", "Coaching"],
+  Plumber: ["Plumbing and Plumbers", "Residential Plumbing", "Commercial Plumbing", "Emergency Repair"],
+  "Home Services": ["Air Conditioning and Heating", "Electricians", "Home Improvement Services", "Roofing", "Security Systems and Services", "HVAC", "Cleaning", "Landscaping"],
+  Automotive: ["Automotive Services", "Dealership", "Mechanic", "Car Wash", "Auto Repair"],
   General: ["Professional Services", "Local Business", "Startup", "Nonprofit"],
+  Other: ["Arts Gallery and Entertainment", "Community", "Lifestyle and People", "News", "Pawn Shop and Gunsmith", "Pets and Pet Care", "Waste Management", "Transportation Services", "Custom", "Non-profit"],
 };
 
 
@@ -539,19 +553,18 @@ const CreateProjectFlow = () => {
                       <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                         Industry <span className="text-red-500">*</span>
                       </label>
-                      <select
+                      <SearchableSelect
+                        options={availableCategories}
                         value={category}
-                        onChange={(e) => {
-                          setCategory(e.target.value);
+                        onChange={(val) => {
+                          setCategory(val);
                           setSubIndustry("");
                           setCustomIndustry("");
                           setCustomSubIndustry("");
                         }}
-                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      >
-                        <option value="">Select industry</option>
-                        {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
+                        placeholder="Search or select industry..."
+                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm focus:ring-2 focus:ring-primary/20"
+                      />
                     </div>
 
                     {/* Sub-Industry (Conditional) */}

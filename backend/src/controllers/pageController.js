@@ -233,7 +233,14 @@ exports.getPagesInProject = async (req, res, next) => {
       return res.status(403).json({ status: 'fail', message: 'Unauthorized project' });
     }
 
-    const filter = { projectId, userId: req.user._id };
+    // Only show completed/draft/published pages. Hide incomplete/failed ones.
+    const filter = { 
+      projectId, 
+      userId: req.user._id, 
+      status: { $nin: ['failed', 'generating'] } 
+    };
+    
+    // If explicitly requesting a status, override the nin filter
     if (status) filter.status = status;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
