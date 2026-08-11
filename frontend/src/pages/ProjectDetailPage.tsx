@@ -105,7 +105,7 @@ const generateAiPage = (prompt: string, project: Project, branding: { primary: s
           </div>
           <div>
             <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #334155;">How can we help?</label>
-            <textarea placeholder="Tell us about your project..." rows="4" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical;" required></textarea>
+            <textarea name="message" placeholder="Tell us about your project..." rows="4" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
           </div>
           <button type="submit" style="background: var(--primary); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 10px;">Submit Request</button>
         </form>
