@@ -1111,6 +1111,22 @@ exports.updatePage = async (req, res, next) => {
 
     const updateData = { ...parsed.data, updatedAt: Date.now() };
 
+    // ─── Auto-fix: Forcefully add required attribute to form inputs on save ───
+    if (updateData.content && typeof updateData.content === 'string') {
+      updateData.content = updateData.content.replace(/<input(?![^>]*type="(?:submit|hidden|button|radio|checkbox)")[^>]*>/gi, (match) => {
+        if (!match.includes('required')) return match.replace('<input', '<input required="required"');
+        return match;
+      });
+      updateData.content = updateData.content.replace(/<textarea[^>]*>/gi, (match) => {
+        if (!match.includes('required')) return match.replace('<textarea', '<textarea required="required"');
+        return match;
+      });
+      updateData.content = updateData.content.replace(/<select[^>]*>/gi, (match) => {
+        if (!match.includes('required')) return match.replace('<select', '<select required="required"');
+        return match;
+      });
+    }
+
     // ─── LIVE RE-VERIFICATION GATE ───────────────────────────────────────
     // A one-time "Verify" click only proves the integration script was
     // present at that moment in the past. If this request is (re)publishing

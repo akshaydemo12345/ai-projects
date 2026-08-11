@@ -1495,7 +1495,6 @@ const generateLandingPageContent = async (input) => {
     // 2. Form Validation (runs everywhere so you can see red borders in editor)
     document.addEventListener('submit', function(e) {
       if (e.target.tagName === 'FORM') {
-        e.target.setAttribute('novalidate', 'true'); // Disable native browser tooltips
         var isValid = true;
         var inputs = e.target.querySelectorAll('input:not([type="submit"]):not([type="hidden"]):not([type="button"]), textarea, select');
 
@@ -1599,6 +1598,20 @@ const generateLandingPageContent = async (input) => {
 `;
 
   if (aiResult && aiResult.fullHtml) {
+    // ─── Forcefully add required attribute to all form inputs to prevent blank submissions ───
+    aiResult.fullHtml = aiResult.fullHtml.replace(/<input(?![^>]*type="(?:submit|hidden|button|radio|checkbox)")[^>]*>/gi, (match) => {
+      if (!match.includes('required')) return match.replace('<input', '<input required="required"');
+      return match;
+    });
+    aiResult.fullHtml = aiResult.fullHtml.replace(/<textarea[^>]*>/gi, (match) => {
+      if (!match.includes('required')) return match.replace('<textarea', '<textarea required="required"');
+      return match;
+    });
+    aiResult.fullHtml = aiResult.fullHtml.replace(/<select[^>]*>/gi, (match) => {
+      if (!match.includes('required')) return match.replace('<select', '<select required="required"');
+      return match;
+    });
+
     if (aiResult.fullHtml.includes('</body>')) {
       aiResult.fullHtml = aiResult.fullHtml.replace('</body>', coreScript + '\n</body>');
     } else {
