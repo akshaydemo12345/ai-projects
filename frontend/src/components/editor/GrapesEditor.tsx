@@ -2578,6 +2578,64 @@ const GrapesEditor = () => {
       setIsEditorFullyLoaded(true);
       console.log('📤 GrapesJS Loaded - applying content');
 
+      // --- Force ALL form inputs to be required automatically in editor ---
+      const enforceRequired = (comp: any) => {
+        if (!comp) return;
+        const tagName = (comp.get('tagName') || '').toLowerCase();
+
+        // Remove novalidate from forms so native validation works on published pages
+        if (tagName === 'form') {
+          const attrs = comp.getAttributes();
+          if ('novalidate' in attrs) {
+            delete attrs.novalidate;
+            comp.setAttributes(attrs);
+          }
+        }
+
+        if (['input', 'textarea', 'select'].includes(tagName)) {
+          const attrs = comp.getAttributes();
+          const nameStr = (attrs.name || '').toLowerCase();
+          const isMessageTextarea = tagName === 'textarea' && (nameStr.includes('message') || nameStr.includes('notes') || !attrs.name);
+
+          if (attrs.type !== 'submit' && attrs.type !== 'button' && attrs.type !== 'hidden' && !isMessageTextarea) {
+            comp.addAttributes({ required: 'required' });
+          } else if (isMessageTextarea && 'required' in attrs) {
+            delete attrs.required;
+            comp.setAttributes(attrs);
+          }
+        }
+
+        // Handle Custom Code blocks if AI generated them as raw HTML
+        if (comp.get('type') === 'custom-code') {
+          let htmlContent = comp.get('content') || '';
+          if (typeof htmlContent === 'string' && htmlContent.includes('<form')) {
+            htmlContent = htmlContent.replace(/<form[^>]*novalidate[^>]*>/gi, match => match.replace(/novalidate(?:="[^"]*")?/gi, ''));
+            htmlContent = htmlContent.replace(/<(input|textarea|select)([^>]+)>/gi, (match, tag, attrs) => {
+              if (/type=["']?(submit|button|hidden)["']?/i.test(attrs)) return match;
+              const isMessage = tag.toLowerCase() === 'textarea' && (/name=["']?(?:message|notes)["']?/i.test(attrs) || !/name=/i.test(attrs));
+              if (isMessage) {
+                return match.replace(/\s*required(?:="[^"]*")?/gi, '');
+              }
+              if (!/required/i.test(attrs)) return `<${tag}${attrs} required="required">`;
+              return match;
+            });
+            comp.set('content', htmlContent);
+          }
+        }
+
+        const children = comp.components();
+        if (children && typeof children.forEach === 'function') {
+          children.forEach(enforceRequired);
+        }
+      };
+
+      const wrapper = editor.getWrapper();
+      if (wrapper) enforceRequired(wrapper);
+
+      // Ensure any newly added blocks/components also get required fields
+      editor.on('component:add', enforceRequired);
+      // --------------------------------------------------------------------
+
       // ── Inject Swiper (npm package) into canvas iframe window ──
       // This makes window.Swiper available inside the canvas so the
       // component script can use it without loading any CDN
@@ -3986,7 +4044,7 @@ document.addEventListener('click', function(e) {
       toast.error('Please save your page first to generate a slug');
       return;
     }
-    
+
     try {
       toast.loading('Saving latest changes for preview...', { id: 'preview-save' });
       await handleSave();
@@ -3995,11 +4053,11 @@ document.addEventListener('click', function(e) {
       toast.dismiss('preview-save');
       console.warn('Auto-save before preview failed:', e);
     }
-    
+
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
     const token = page.previewToken ? `?token=${page.previewToken}` : '';
     const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
-    
+
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };
@@ -5907,7 +5965,7 @@ function extractCanvasScripts(canvasDoc: Document): string {
     const id = s.getAttribute('id');
     if (src && src.includes('cdn.tailwindcss.com')) return;
     if (s.innerHTML.includes('tailwind.config')) return;
-    if (id === 'block-submit' || id === 'editor-interactions' || id === 'tw-config' || id === 'core-icon-styles') return;
+    if (s.id === 'block-submit' || s.id === 'editor-interactions') return;
     const key = src ? src : s.innerHTML.trim();
     if (key && !unique.has(key)) unique.set(key, s.outerHTML);
   });
