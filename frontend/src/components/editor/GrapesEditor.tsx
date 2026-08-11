@@ -5904,8 +5904,10 @@ function extractCanvasScripts(canvasDoc: Document): string {
   const unique = new Map<string, string>();
   scriptTags.forEach(s => {
     const src = s.getAttribute('src');
+    const id = s.getAttribute('id');
     if (src && src.includes('cdn.tailwindcss.com')) return;
     if (s.innerHTML.includes('tailwind.config')) return;
+    if (id === 'block-submit' || id === 'editor-interactions' || id === 'tw-config' || id === 'core-icon-styles') return;
     const key = src ? src : s.innerHTML.trim();
     if (key && !unique.has(key)) unique.set(key, s.outerHTML);
   });

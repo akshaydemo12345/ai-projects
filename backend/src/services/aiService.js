@@ -536,7 +536,7 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
           model, max_tokens: maxTokens, temperature,
           system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
           messages,
-        }, { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' }, timeout: AI_CALL_TIMEOUT_MS });
+        }, { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31, max-tokens-3-5-sonnet-2024-07-15' }, timeout: AI_CALL_TIMEOUT_MS });
         const usage = response.usage;
         return {
           text: response.content[0].text,
@@ -922,7 +922,7 @@ Ensure text is completely readable against the background (e.g., use a dark over
 INTERACTIVE ACCORDIONS & FORMS (NO JS REQUIRED):
 - We automatically inject JavaScript for FAQs and Form validation. You DO NOT need to write any script tags for interactivity.
 - Your HTML MUST use these exact classes for FAQs: \`accordion-item\`, \`accordion-header\`, and \`accordion-content hidden\`.
-- 🚨 VARY THE FAQ DESIGN as instructed in the user prompt — never default to a plain white box every time.
+- 🚨 CRITICAL FAQ RULE: You MUST include a FontAwesome icon (e.g., \`<i class="fa-solid fa-plus"></i>\` or \`<i class="fa-solid fa-chevron-down"></i>\`) inside EVERY \`accordion-header\`! Without this icon, the accordion will NOT open.
 - 🚨 MAXIMUM ONE FORM PER PAGE: You must generate EXACTLY ONE lead/contact form on the entire page. The <form> tag MUST have id="contact-form".
 - FORM STRUCTURE: Make the form look premium. ALL form fields must have the \`required\` attribute (e.g. \`<input type="text" required>\`) so our backend validation script catches them.
 
@@ -1259,10 +1259,30 @@ const generateLandingPageContent = async (input) => {
   let sectionsPart1 = [];
   let sectionsPart2 = [];
 
-  // 🔧 NEW FIX: If input.aiPrompt dictates EXACTLY 6 sections (from INDUSTRY_PROMPTS),
-  // we must parse those specific middle sections and OVERRIDE recipe.middleSections!
-  // Otherwise, the AI will try to generate 8+ sections and cause catastrophic layout failures (squashing).
-  if (input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections')) {
+  // 🔧 NEW FIX: Parse custom numbered sections from the user prompt
+  let requestedSections = [];
+  if (input.aiPrompt) {
+    const sectionLines = input.aiPrompt.split('\n')
+      .map(l => l.trim())
+      .filter(l => /^\d+[\)\.]\s/.test(l) && l.length > 5);
+      
+    if (sectionLines.length >= 3) {
+      requestedSections = sectionLines.map(l => l.replace(/^\d+[\)\.]\s/, '').trim());
+    }
+  }
+
+  if (requestedSections.length > 0) {
+    // Filter out Hero and Footer as they are added automatically by the system prompt
+    let middle = requestedSections.filter(s => 
+      !s.toLowerCase().includes('hero') && 
+      !s.toLowerCase().includes('footer')
+    );
+    if (middle.length === 0) middle = requestedSections;
+    recipe.middleSections = middle;
+    const midPoint = Math.ceil(middle.length / 2);
+    sectionsPart1 = middle.slice(0, midPoint);
+    sectionsPart2 = middle.slice(midPoint);
+  } else if (input.aiPrompt && input.aiPrompt.includes('EXACTLY 6 sections')) {
     const lines = input.aiPrompt.split('\n');
     const mid1 = lines.find(l => l.startsWith('3.'))?.replace('3. ', '').trim();
     const mid2 = lines.find(l => l.startsWith('4.'))?.replace('4. ', '').trim();
@@ -1270,7 +1290,6 @@ const generateLandingPageContent = async (input) => {
 
     if (mid1 && mid2 && mid3) {
       recipe.middleSections = [mid1, mid2, mid3];
-      // Distribute for the 2-pass generation
       sectionsPart1 = [mid1];
       sectionsPart2 = [mid2, mid3];
     } else {
@@ -1278,7 +1297,6 @@ const generateLandingPageContent = async (input) => {
       sectionsPart2 = recipe.middleSections.slice(3);
     }
   } else {
-    // Split the 5 shuffled middle sections into two non-overlapping halves
     sectionsPart1 = recipe.middleSections.slice(0, 3);
     sectionsPart2 = recipe.middleSections.slice(3);
   }
@@ -1417,19 +1435,21 @@ const generateLandingPageContent = async (input) => {
 
          const container = current;
          const hiddenChild = Array.from(container.children).find(c => c.classList.contains('hidden') || c.style.display === 'none');
-         const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item');
+         const hasPointer = window.getComputedStyle(container).cursor === 'pointer' || container.classList.contains('cursor-pointer') || container.classList.contains('faq-item') || container.classList.contains('accordion-item') || container.classList.contains('accordion-header');
 
-         if (hiddenChild && hasPointer && container.querySelector('svg, i')) {
+         // Added fallback so it opens even if AI forgets the icon
+         if (hiddenChild && hasPointer) {
             hiddenChild.classList.remove('hidden');
             hiddenChild.style.display = 'block';
             const icon = container.querySelector('svg, i');
             if (icon) {
                icon.classList.add('rotate-180');
                if(icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+               if(icon.classList.contains('fa-chevron-down')) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
             }
             toggled = true;
             break;
-         } else if (hasPointer && container.querySelector('svg, i') && container.children.length >= 2) {
+         } else if (hasPointer && container.children.length >= 2) {
             const visibleChild = Array.from(container.children).find(c => (c.tagName === 'DIV' || c.tagName === 'P') && c !== container.firstElementChild && c.offsetHeight > 0 && !c.classList.contains('hidden'));
             if (visibleChild && container.firstElementChild && container.firstElementChild.contains(e.target)) {
                visibleChild.classList.add('hidden');
@@ -1438,6 +1458,7 @@ const generateLandingPageContent = async (input) => {
                if (icon) {
                   icon.classList.remove('rotate-180');
                   if(icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  if(icon.classList.contains('fa-chevron-up')) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
                }
                toggled = true;
                break;
@@ -1447,8 +1468,29 @@ const generateLandingPageContent = async (input) => {
       }
     });
 
-    // Check if we are inside GrapesJS editor (published pages don't have data-gjs-type)
-    var isInEditor = !!document.querySelector('[data-gjs-type]') || document.body.classList.contains('gjs-dashed');
+    // Check if we are inside GrapesJS editor (gjs-dashed is dynamically added in the canvas)
+    var isInEditor = document.body.classList.contains('gjs-dashed');
+
+    // 1.5 Smooth scroll to form for CTA buttons
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest('a, button');
+      if (!el) return;
+      var href = el.getAttribute('href');
+      var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form' || href === 'javascript:void(0);' || href === 'javascript:void(0)') || 
+                  (el.tagName === 'BUTTON' && el.type !== 'submit') ||
+                  (el.className && typeof el.className === 'string' && (el.className.includes('btn') || el.className.includes('cta') || el.className.includes('link-primary')));
+      if (isCTA && !el.closest('form') && !el.closest('.tabs-container') && !el.closest('.dropdown-menu') && !el.closest('.accordion-item') && !el.closest('.faq-item')) {
+        e.preventDefault();
+        e.stopPropagation();
+        var formElement = document.querySelector('form#contact-form') || document.querySelector('form');
+        if (formElement) {
+          formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          formElement.style.transition = 'box-shadow 0.3s';
+          formElement.style.boxShadow = '0 0 0 4px var(--primary)';
+          setTimeout(function() { formElement.style.boxShadow = 'none'; }, 1000);
+        }
+      }
+    }, true);
 
     // 2. Form Validation (runs everywhere so you can see red borders in editor)
     document.addEventListener('submit', function(e) {
