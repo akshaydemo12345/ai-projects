@@ -148,7 +148,8 @@ const AIPromptModal = ({ open, onClose, onApply }: AIPromptModalProps) => {
 {
   "type": "hero" | "features" | "testimonials" | "pricing" | "contact" | "text" | "image" | "grid",
   "content": { ...fields depending on type }
-}`,
+}
+CRITICAL REQUIREMENT: All form fields (input, select) MUST have the required="required" attribute. However, textareas for "message" or "notes" MUST NOT be required. You MUST NOT add novalidate to the <form> element.`,
               },
             ],
           }),
@@ -177,7 +178,7 @@ const AIPromptModal = ({ open, onClose, onApply }: AIPromptModalProps) => {
             messages: [
               {
                 role: "system",
-                content: `You are a landing page builder AI. Respond ONLY with a valid JSON object: {"type": "...", "content": {...}}. Type must be one of: hero, features, testimonials, pricing, contact, text, image, grid.`,
+                content: `You are a landing page builder AI. Respond ONLY with a valid JSON object: {"type": "...", "content": {...}}. Type must be one of: hero, features, testimonials, pricing, contact, text, image, grid. CRITICAL REQUIREMENT: All form fields (input, select) MUST have the required="required" attribute. However, textareas for "message" or "notes" MUST NOT be required. You MUST NOT add novalidate to the <form> element.`,
               },
               { role: "user", content: prompt },
             ],
