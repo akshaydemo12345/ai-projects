@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi, aiApi } from "@/services/api";
 import { toast } from "sonner";
@@ -23,7 +24,12 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
   const [name, setName] = useState(cleanProjectName(project.name) || "");
   const [websiteUrl, setWebsiteUrl] = useState(project.websiteUrl || "");
   const [preSlug, setPreSlug] = useState(project.preSlug || "");
-  const allowedIndustries = ["SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate", "Plumber", "Lawyer", "Other"];
+  const allowedIndustries = [
+    "SaaS", "Agency", "E-commerce", "Healthcare", "Real Estate",
+    "Finance", "Technology", "Consulting", "Construction", "Hospitality",
+    "Legal", "Beauty & Wellness", "Sports", "Fitness", "Education",
+    "Plumber", "Home Services", "Automotive", "General", "Other"
+  ];
   const initialIndustryRaw = project.websiteProfile?.industry?.industry || project.scrapedData?.industry || project.industry || project.category || "SaaS";
   const initialIndustry = allowedIndustries.includes(initialIndustryRaw) ? initialIndustryRaw : "General";
   const [industry, setIndustry] = useState(initialIndustry);
@@ -48,20 +54,22 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl overflow-hidden text-left">
+      <div className="w-full max-w-2xl bg-background rounded-2xl border border-border shadow-2xl overflow-hidden text-left">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
           <Settings2 className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold text-foreground flex-1">Project Settings</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-4">
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website URL (Client's Site)</label>
-            <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website Name</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. samsung.com" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Website URL (Client's Site)</label>
+              <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+            </div>
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Pre Slug (Optional URL Prefix)</label>
@@ -72,32 +80,22 @@ const EditProjectModal = ({ project, onClose, onSave }: EditProjectModalProps) =
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Industry</label>
-            <select
+            <SearchableSelect
+              options={allowedIndustries}
               value={industry}
-              onChange={(e) => {
-                const val = e.target.value;
+              onChange={(val) => {
                 setIndustry(val);
-                // If user selects General, and we have a scraped/raw industry, surface it in subIndustry
-                if (val === 'General') {
+                if (val === 'Other') {
                   const raw = project.websiteProfile?.industry?.industry || project.scrapedData?.industry || project.industry || project.category || '';
                   if (raw && !allowedIndustries.includes(raw)) setSubIndustry(raw);
                 }
-                // If user picks a known industry, clear subIndustry placeholder
                 if (val !== 'General' && allowedIndustries.includes(val)) {
-                  // preserve existing subIndustry if it's meaningful, otherwise clear
                   if (!project.subIndustry && !project.scrapedData?.subIndustry) setSubIndustry('');
                 }
               }}
+              placeholder="Search industry..."
               className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-            >
-              <option value="General">General</option>
-              <option value="SaaS">SaaS</option>
-              <option value="Agency">Agency</option>
-              <option value="E-commerce">E-commerce</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Real Estate">Real Estate</option>
-              <option value="Other">Other</option>
-            </select>
+            />
           </div>
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block text-left">Sub-Industry</label>

@@ -3852,18 +3852,26 @@ const GrapesEditor = () => {
     // into the HTML right before saving it to the database.
     if (!htmlWithScripts.includes('cta-smooth-scroll')) {
       htmlWithScripts += `\n<script id="cta-smooth-scroll">
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('a, button').forEach(function(btn) {
-    if (btn.type === 'submit' || btn.closest('form')) return;
-    btn.removeAttribute('href'); // Remove # so no URL changes
-    btn.style.cursor = 'pointer';
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      var formElement = document.querySelector('form#contact-form') || document.querySelector('form');
-      if (formElement) formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  });
-});
+// Smooth scroll to form for CTA buttons
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('a, button');
+  if (!el) return;
+  var href = el.getAttribute('href');
+  var isCTA = (href === '#' || href === '#contact-form' || href === '#contact' || href === '#form' || href === 'javascript:void(0);' || href === 'javascript:void(0)') || 
+              (el.tagName === 'BUTTON' && el.type !== 'submit') ||
+              (el.className && typeof el.className === 'string' && (el.className.includes('btn') || el.className.includes('cta') || el.className.includes('link-primary')));
+  if (isCTA && !el.closest('form') && !el.closest('.tabs-container') && !el.closest('.dropdown-menu')) {
+    e.preventDefault();
+    e.stopPropagation();
+    var formElement = document.querySelector('form#contact-form') || document.querySelector('form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      formElement.style.transition = 'box-shadow 0.3s';
+      formElement.style.boxShadow = '0 0 0 4px var(--primary)';
+      setTimeout(function() { formElement.style.boxShadow = 'none'; }, 1000);
+    }
+  }
+}, true);
 </script>`;
     }
 

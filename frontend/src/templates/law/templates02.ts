@@ -74,6 +74,10 @@ h1 em{font-style:italic;color:var(--secondary);font-weight:500}
 .form-trust{text-align:center;font-size:.78rem;color:var(--text-muted);margin-top:8px}
 .form-trust i{color:var(--secondary);margin-right:5px}
 
+/* BADGE / KICKERS */
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:'Manrope',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--secondary);margin-bottom:14px}
+.badge svg{width:20px;height:20px}
+
 /* MARQUEE */
 .marquee-section{padding:40px 0 50px;background:var(--bg-light);border-bottom:1px solid var(--border)}
 .muted-center{text-align:center;color:var(--text-muted);font-size:.85rem;margin-bottom:20px;letter-spacing:.1em;text-transform:uppercase}
