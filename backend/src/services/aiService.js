@@ -710,7 +710,7 @@ const CARD_STYLES = [
   'overlapping stacked cards effect (using absolute positioning or negative margins)',
   'monochrome high-contrast cards with vibrant neon text/icon highlights',
   'cards with a harsh drop shadow (e.g., box-shadow: 8px 8px 0px var(--primary))',
-  'cards that look like torn paper or have jagged SVG edges',
+  'cards with a subtle gradient mask',
   'hyper-minimalist cards: no background, no border, just an icon and text floating in space',
   'cards with a gradient border mask (border is a gradient, background is solid)',
   'skeuomorphic cards: subtle gradients and highlights to look like physical plastic or metal',
@@ -732,7 +732,7 @@ const ACCENT_MOTIFS = [
   'large ghost/outline numerals or icons behind section headings',
   'small uppercase tracked-out brand-color kicker labels above every section heading',
   'no extra decoration at all — pure typography, whitespace, and color carry the design',
-  'subtle abstract SVG wave shapes at the top and bottom boundaries of sections',
+  'subtle abstract decorative elements using pure CSS (NO SVG shapes)',
   'tiny plus (+) signs forming a subtle repeating pattern in the background',
   'sharp diagonal slashes acting as separators between columns',
   'a persistent thin border around the entire viewport (body framed in a box)',
@@ -740,7 +740,7 @@ const ACCENT_MOTIFS = [
   'vertical typography running down the left and right margins of the page',
   'massive oversized quotation marks used purely as background decoration',
   'retro 8-bit style pixelated accents or borders',
-  'hand-drawn/scribbled SVG arrows pointing to important elements'
+  'faint, elegant typography-based watermarks pointing to important elements'
 ];
 
 const TYPOGRAPHY_PAIRS = [
@@ -768,11 +768,11 @@ const INTERACTION_EFFECTS = [
 ];
 
 const SECTION_TRANSITIONS = [
-  'Use harsh diagonal angled cuts (achieved via rotated SVG shapes or angled CSS gradients, NEVER clip-path) to transition between sections instead of straight horizontal lines.',
-  'Use beautiful fluid SVG wave dividers at the top and bottom of dark sections to create a liquid, organic flow.',
+  'Use harsh diagonal angled cuts (achieved via angled CSS gradients, NEVER clip-path or SVGs) to transition between sections instead of straight horizontal lines.',
+  'Use clean straight horizontal borders with alternating background colors (NO SVG shapes or waves).',
   'Use slight overlapping negative margins so sections visually break out of their horizontal boundaries and overlap the section above them.',
   'Keep section dividers perfectly straight and flat, but use a thick 4px border-bottom in the primary color between every single section.',
-  'Use jagged, torn-paper style SVG dividers between sections for a grunge/creative aesthetic.',
+  'Use staggered overlapping rectangles (using pure CSS margins/positioning) between sections for a creative aesthetic.',
   'No background color changes between sections; the entire page flows as one continuous canvas separated only by massive whitespace.',
   'Use staggered overlapping rectangles so the transition between sections looks like a solid staircase.',
   'Every section is a standalone "card" with rounded corners floating on a universal background color (e.g. gray body, white sections).'
@@ -1041,7 +1041,7 @@ const buildBrandingLines = (input, recipe) => {
     `HERO LAYOUT: Invent a unique, high-converting hero section (e.g., overlapping images, asymmetrical splits, glassmorphism, or immersive full-bleed backgrounds).`,
     `CARD / CONTAINER STYLE: Invent a beautiful card style (e.g., neo-brutalist borders, soft diffused shadows, frosted glass, or minimal floating elements) and apply it consistently.`,
     `DECORATIVE ACCENT: Add unique decorative elements (e.g., glowing background orbs, faint grid-lines, overlapping shapes, or minimalist typography patterns).`,
-    `SECTION TRANSITIONS: ${recipe.transition || 'Use dynamic fluid SVG waves or staggered overlaps between sections to break the boxy grid look (NO clip-paths).'}`,
+    `SECTION TRANSITIONS: ${recipe.transition || 'Use staggered overlaps between sections to break the boxy grid look (NO clip-paths, NO SVG waves).'}`,
     `MICRO-INTERACTIONS: ${recipe.interaction || 'Ensure buttons have premium hover states and cards use subtle transform transitions.'}`,
     `SECTION VARIETY: Make every section structurally different from the others. Surprise me with creative use of CSS grids, negative margins, and Tailwind classes.`
   );
