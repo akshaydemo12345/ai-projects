@@ -369,7 +369,7 @@ footer { background: var(--dark); color: #94a3b8; padding: 5rem 0 2rem; margin-t
 export const travel02Html = `
 
 
-<section class="hero">
+<header class="hero">
   <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=2000" class="hero-bg-img" alt="Travel Destination" />
   <div class="hero-content">
     <h1 class="hero-title">Travel Far, Live Fully, and Come Alive in Every Moment.</h1>
@@ -859,6 +859,7 @@ export const travel02Html = `
   <div class="container">
     <div class="foot-grid">
       <div class="foot-col">
+        LOGO_PLACEHOLDER
         <h4>Language & Currency</h4>
         <select required>
           <option>English (US)</option>

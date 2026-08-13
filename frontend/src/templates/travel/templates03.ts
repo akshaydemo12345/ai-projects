@@ -374,7 +374,7 @@ export const travel03Html = `
 <!-- Navbar -->
 <header class="nav">
   <div class="container nav-inner">
-    <a data-editable="true" href="javascript:void(0);" class="logo"><i class="fa-solid fa-sun"></i> Kanra</a>
+    <a data-editable="true" href="javascript:void(0);" class="logo">LOGO_PLACEHOLDER</a>
     
     <a data-editable="true" href="javascript:void(0);" class="btn btn-primary">Get the App <i class="fa-solid fa-arrow-right"></i></a>
     
@@ -769,7 +769,7 @@ export const travel03Html = `
 
     </div>
     <div class="foot-cols">
-      <div class="fc-brand"><a data-editable="true" href="javascript:void(0);" class="logo light"><i class="fa-solid fa-sun"></i> Kanra</a></div>
+      <div class="fc-brand"><a data-editable="true" href="javascript:void(0);" class="logo light">LOGO_PLACEHOLDER</a></div>
       <div><b>Contact</b><a data-editable="true"><i class="fa-solid fa-envelope"></i> getemail@kanra.com</a><a data-editable="true"><i class="fa-solid fa-phone"></i> (270) 555-0117</a></div>
       <div><b>Company</b><a data-editable="true">Career</a><a data-editable="true">Developers</a><a data-editable="true">Our Story</a></div>
       <div><b>Kanra</b><a data-editable="true">Why Kanra</a><a data-editable="true">Customer</a><a data-editable="true">Press Info</a></div>

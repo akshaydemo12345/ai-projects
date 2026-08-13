@@ -278,16 +278,13 @@ export const law02Html = `
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- TOP STRIP WITH FORM (FORM ON TOP / SIDE) -->
-<section class="top-hero">
+<header class="top-hero">
   <div class="bg-image" style="background-image: url('/assets/templates/LawFirm/templates02/hero.jpg'); background-position: center; background-size: cover; background-repeat: no-repeat;"></div>
   <div class="bg-overlay"></div>
 
   <div class="container top-inner">
     <div class="brand-line">
-      <div class="brand">
-        <i class="fa-solid fa-scale-balanced"></i>
-        <div><span data-editable="true" class="brand-name">Verma Law Chambers</span><small>Est. 2003 · Advocates &amp; Solicitors</small></div>
-      </div>
+      LOGO_PLACEHOLDER
       <div class="top-contact">
         <a data-editable="true" href="tel:+918888888888"><i class="fa-solid fa-phone-volume"></i> +91 88888 88888</a>
         <span data-editable="true" class="award"><i class="fa-solid fa-award"></i> Top Rated Law Firm 2024</span>
@@ -532,7 +529,7 @@ export const law02Html = `
 <footer>
   <div class="container footer-grid">
     <div>
-      <div class="brand"><i class="fa-solid fa-scale-balanced"></i><div><span data-editable="true" class="brand-name">Verma Law Chambers</span><small>Advocates &amp; Solicitors</small></div></div>
+      LOGO_PLACEHOLDER
 
     </div>
     <div><h4 data-editable="true">Contact</h4><p><i class="fa-solid fa-phone" style="color: var(--primary);"></i> <a data-editable="true" href="tel:+918888888888" style="color: var(--primary); text-decoration: none;">+91 88888 88888</a></p><p><i class="fa-solid fa-envelope" style="color: var(--primary);"></i> <a data-editable="true" href="mailto:hello@vermachambers.in" style="color: var(--primary); text-decoration: none;">hello@vermachambers.in</a></p><p><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> <span data-editable="true" style="color: var(--primary);">Nariman Point, Mumbai 400021</span></p></div>

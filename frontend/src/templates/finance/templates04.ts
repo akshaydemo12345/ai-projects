@@ -208,7 +208,7 @@ export const finance04Html = `
 
 <main>
   <!-- 1. Header & Hero -->
-  <section class="header-hero">
+  <header class="header-hero">
     <div class="container">
       <div class="top-nav">
         <div class="nav-logo">
@@ -228,8 +228,7 @@ export const finance04Html = `
         <a href="#about" class="btn-primary">Discover More</a>
       </div>
     </div>
-  </section>
-
+  </header>
   <!-- CSS Logo Slider -->
   <div class="client-marquee">
     <div class="marquee-track">

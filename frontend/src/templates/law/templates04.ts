@@ -269,8 +269,8 @@ export const law04Html = `
 <header class="header">
   <div class="container header-inner">
     <a href="javascript:void(0);" class="logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-      PROJECT_NAME_PLACEHOLDER
+      LOGO_PLACEHOLDER
+      LOGO_PLACEHOLDER
     </a>
    
   </div>
@@ -282,9 +282,9 @@ export const law04Html = `
       <span class="hero-badge">Law Professionals</span>
       <div class="pos-rel" style="display:inline-block;">
         <h1>Restoring Lives, Divorce And Law Professionals</h1>
-        <svg class="deco-sparkle deco-sparkle-1" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-        <svg class="deco-sparkle deco-sparkle-2" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-        <svg class="deco-swoosh deco-swoosh-1" viewBox="0 0 100 20"><path d="M0 15 Q 50 -5 100 15"/></svg>
+        LOGO_PLACEHOLDER
+        LOGO_PLACEHOLDER
+        LOGO_PLACEHOLDER
       </div>
       <p>Providing expert legal guidance and compassionate support during your most challenging times. We stand by you.</p>
       <a href="javascript:void(0);" class="btn btn-primary">Book Consultation</a>
@@ -299,12 +299,12 @@ export const law04Html = `
       
       <div class="hero-stats-card">
         <div class="stat-box pos-rel">
-          <svg class="deco-sparkle" style="top:-15px; left:-10px; width:20px; height:20px;" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
+          LOGO_PLACEHOLDER
           <h4>$25B+</h4>
           <p>Recovered</p>
         </div>
         <div class="stat-box pos-rel">
-          <svg class="deco-sparkle" style="top:-10px; right:-15px; width:24px; height:24px;" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
+          LOGO_PLACEHOLDER
           <h4>250+</h4>
           <p>Successful Cases</p>
         </div>
@@ -314,18 +314,15 @@ export const law04Html = `
 </section>
 
 <section class="split-section" id="about" style="position:relative; overflow:hidden;">
-  <svg class="deco-circle-bg" style="top:-100px; left:-100px; width:300px; height:300px;" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100"/></svg>
+  LOGO_PLACEHOLDER
   <div class="container split-inner pos-rel">
-    <svg class="deco-bg-dots" style="top:-20px; right:10px; width:80px; height:80px;" viewBox="0 0 100 100">
-      <pattern id="dots1" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle fill="var(--secondary)" cx="2" cy="2" r="2" opacity="0.4"></circle></pattern>
-      <rect x="0" y="0" width="100" height="100" fill="url(#dots1)"></rect>
-    </svg>
+    LOGO_PLACEHOLDER
     <div class="split-visual">
       <img src="/assets/templates/LawFirm/templates03/hero-lawyer.jpg" alt="Attorney at desk">
       <img src="/assets/templates/LawFirm/templates03/justice.jpg" alt="Consultation">
       <div class="split-visual-card pos-rel">
-        <svg class="deco-sparkle" style="top:10px; left:10px; width:30px; height:30px;" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-        <svg class="deco-sparkle" style="bottom:10px; right:10px; width:30px; height:30px; transform:rotate(180deg);" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
+        LOGO_PLACEHOLDER
+        LOGO_PLACEHOLDER
         <h3>15+</h3>
         <p>Years of Excellence</p>
       </div>
@@ -342,10 +339,10 @@ export const law04Html = `
 </section>
 
 <section class="lawyers-section" id="attorneys" style="position:relative; overflow:hidden;">
-  <svg class="deco-circle-bg" style="bottom:-50px; right:-100px; width:400px; height:400px;" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100"/></svg>
+  LOGO_PLACEHOLDER
   <div class="container">
     <div class="section-header pos-rel">
-      <svg class="deco-asterisk" style="top:-10px; left:-30px; width:32px; height:32px;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M4.9 19.1l14.2-14.2"/></svg>
+      LOGO_PLACEHOLDER
       <span class="badge" style="color:var(--primary);">Our Team</span>
       <h2>Experienced Divorce Lawyers By Your Side</h2>
     </div>
@@ -406,24 +403,24 @@ export const law04Html = `
     <div class="support-grid">
       <div class="support-card">
         <div class="icon-wrap">
-          <svg class="icon-sparks" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+          LOGO_PLACEHOLDER
+          LOGO_PLACEHOLDER
         </div>
         <h3>Child Support</h3>
         <p>Ensuring fair and adequate support arrangements that prioritize the well-being and future of your children.</p>
       </div>
       <div class="support-card">
         <div class="icon-wrap">
-          <svg class="icon-sparks" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          LOGO_PLACEHOLDER
+          LOGO_PLACEHOLDER
         </div>
         <h3>Legal Representation</h3>
         <p>Fierce advocacy in the courtroom and strategic negotiation at the settlement table to protect your rights.</p>
       </div>
       <div class="support-card">
         <div class="icon-wrap">
-          <svg class="icon-sparks" viewBox="0 0 24 24"><path d="M12 2v6M5 7l4 4M19 7l-4 4"/></svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          LOGO_PLACEHOLDER
+          LOGO_PLACEHOLDER
         </div>
         <h3>Complicated Divorces</h3>
         <p>Expert handling of high-net-worth divorces, complex asset division, and contentious separation agreements.</p>
@@ -435,7 +432,7 @@ export const law04Html = `
 <section class="testimonials-section" style="position:relative;">
   <div class="container">
     <div class="section-header pos-rel">
-      <svg class="deco-wave" style="top:-30px; left:50%; transform:translateX(-50%); width:80px; height:20px;" viewBox="0 0 100 20"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10"/></svg>
+      LOGO_PLACEHOLDER
       <span class="badge" style="color:var(--primary);">Testimonials</span>
       <h2>Real Stories, Real Results</h2>
     </div>
@@ -519,12 +516,9 @@ export const law04Html = `
 </section>
 
 <section class="contact-section" id="contact" style="position:relative; overflow:hidden;">
-  <svg class="deco-bg-dots" style="bottom:40px; right:40px; width:120px; height:120px;" viewBox="0 0 100 100">
-    <pattern id="dots2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle fill="var(--secondary)" cx="2" cy="2" r="2" opacity="0.3"></circle></pattern>
-    <rect x="0" y="0" width="100" height="100" fill="url(#dots2)"></rect>
-  </svg>
+  LOGO_PLACEHOLDER
   <div class="container contact-inner pos-rel">
-    <svg class="deco-asterisk" style="top:20px; right:20px; width:40px; height:40px;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M4.9 19.1l14.2-14.2"/></svg>
+    LOGO_PLACEHOLDER
     <div>
       <span class="badge" style="color:var(--primary); text-transform:uppercase; font-size:0.8rem; font-weight:600; margin-bottom:1rem; display:block;">Contact Us</span>
       <h2 style="font-size:3rem; margin-bottom:1rem;">Get In Touch With Us</h2>
@@ -555,8 +549,8 @@ export const law04Html = `
       <div class="footer-col">
         <div class="footer-logo">
          <a href="javascript:void(0);" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            PROJECT_NAME_PLACEHOLDER
+            LOGO_PLACEHOLDER
+            LOGO_PLACEHOLDER
           </a>
         
         </div>
@@ -589,7 +583,7 @@ export const law04Html = `
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</p>
+      <p>&copy; 2026 LOGO_PLACEHOLDER. All Rights Reserved.</p>
     </div>
   </div>
 </footer>

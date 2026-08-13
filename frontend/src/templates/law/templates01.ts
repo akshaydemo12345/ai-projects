@@ -385,8 +385,8 @@ export const law01Html = `
 <header class="header">
   <div class="container header-inner">
     <a href="javascript:void(0);" class="logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-      PROJECT_NAME_PLACEHOLDER
+      LOGO_PLACEHOLDER
+      LOGO_PLACEHOLDER
     </a>
     <a href="javascript:void(0);" class="btn btn-primary">Request A Call</a>
   </div>
@@ -406,7 +406,7 @@ export const law01Html = `
   <div class="container hero-inner">
     <div class="hero-content animate-up">
       <div class="badge">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        LOGO_PLACEHOLDER
         Trusted Law Firm
       </div>
       <h1>Expert Legal Representation You Need It Most</h1>
@@ -415,7 +415,7 @@ export const law01Html = `
       <div class="hero-actions">
         <a href="javascript:void(0);" class="btn btn-primary">Get Started</a>
         <a href="javascript:void(0);" class="btn btn-outline">
-          <span class="play-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
+          <span class="play-icon">LOGO_PLACEHOLDER</span>
           Our Story
         </a>
       </div>
@@ -439,7 +439,7 @@ export const law01Html = `
       </div>
       <div class="hero-floating-card">
         <div class="icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          LOGO_PLACEHOLDER
         </div>
         <p>Providing legal guidance through your toughest times</p>
       </div>
@@ -456,28 +456,28 @@ export const law01Html = `
     <div class="stats-grid">
       <div class="stat-item">
         <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          LOGO_PLACEHOLDER
         </div>
         <h3>150+</h3>
         <p>Cases Won</p>
       </div>
       <div class="stat-item">
         <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          LOGO_PLACEHOLDER
         </div>
         <h3>$27M</h3>
         <p>Recovered</p>
       </div>
       <div class="stat-item">
         <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+          LOGO_PLACEHOLDER
         </div>
         <h3>12</h3>
         <p>Awards</p>
       </div>
       <div class="stat-item">
         <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          LOGO_PLACEHOLDER
         </div>
         <h3>437+</h3>
         <p>Happy Clients</p>
@@ -516,7 +516,7 @@ export const law01Html = `
   
   <div class="container">
     <div class="tabs-header animate-up">
-      <span class="badge"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Legal Practice Areas</span>
+      <span class="badge">LOGO_PLACEHOLDER Legal Practice Areas</span>
       <h2>Expertise You Can Trust. Your Dedicated Legal Partner.</h2>
       <p>We provide specialized legal representation across multiple practice areas, combining deep industry knowledge with a commitment to securing the best outcomes for our clients.</p>
     </div>
@@ -525,23 +525,23 @@ export const law01Html = `
       <div class="tab-list">
         <div class="tab-item active">
           <span>SERVICES_PLACEHOLDER</span>
-          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+          <span class="tab-icon">LOGO_PLACEHOLDER</span>
         </div>
         <div class="tab-item">
           <span>Corporate Law</span>
-          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+          <span class="tab-icon">LOGO_PLACEHOLDER</span>
         </div>
         <div class="tab-item">
           <span>Family Law</span>
-          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+          <span class="tab-icon">LOGO_PLACEHOLDER</span>
         </div>
         <div class="tab-item">
           <span>Real Estate</span>
-          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+          <span class="tab-icon">LOGO_PLACEHOLDER</span>
         </div>
         <div class="tab-item">
           <span>Criminal Defense</span>
-          <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
+          <span class="tab-icon">LOGO_PLACEHOLDER</span>
         </div>
       </div>
       
@@ -550,35 +550,35 @@ export const law01Html = `
           <h3>Discover Solutions</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image8.jpg" alt="Legal Solutions">
-          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More LOGO_PLACEHOLDER</a>
         </div>
         
         <div class="tab-content-box" id="panel-2">
           <h3>Corporate Law Mastery</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image9.jpg" alt="Corporate Law">
-          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More LOGO_PLACEHOLDER</a>
         </div>
 
         <div class="tab-content-box" id="panel-3">
           <h3>Family Law & Divorce</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image10.jpg" alt="Family Law">
-          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More LOGO_PLACEHOLDER</a>
         </div>
 
         <div class="tab-content-box" id="panel-4">
           <h3>Real Estate Legalities</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image11.jpg" alt="Real Estate">
-          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More LOGO_PLACEHOLDER</a>
         </div>
 
         <div class="tab-content-box" id="panel-5">
           <h3>Criminal Defense</h3>
           <p>Welcome to purplle.com - E-commerce. We provide the best Beauty & Wellness solutions tailored to your specific needs. Partner with us for unparalleled success in your industry.</p>
           <img src="/assets/templates/LawFirm/templates01/image12.jpg" alt="Criminal Defense">
-          <a href="javascript:void(0);" class="link-primary">Learn More <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+          <a href="javascript:void(0);" class="link-primary">Learn More LOGO_PLACEHOLDER</a>
         </div>
       </div>
     </div>
@@ -595,7 +595,7 @@ export const law01Html = `
   <div class="container">
     <div class="steps-header animate-up">
       <div class="badge">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        LOGO_PLACEHOLDER
         Our Process
       </div>
       <h2 style="margin-bottom: 1rem; margin-top: 1rem;">A Clear Path to Legal Resolution</h2>
@@ -605,9 +605,7 @@ export const law01Html = `
     <div class="steps-wrapper">
       <!-- Animated Dashed Line from Screenshot -->
       <div class="steps-path-wrap">
-        <svg viewBox="0 0 200 800" preserveAspectRatio="none" style="width: 100%; height: 100%;">
-          <path class="path-anim" d="M100,50 C150,150 180,200 100,280 C20,350 -10,250 50,220 C100,200 180,250 100,400 C0,550 -30,650 100,700 C180,750 150,850 100,900" />
-        </svg>
+        LOGO_PLACEHOLDER
       </div>
 
       <!-- AI INSTRUCTION: You MUST keep exactly 3 .step-row elements. DO NOT delete the .step-content or .step-img divs inside them. Only rewrite the text! -->
@@ -690,7 +688,7 @@ export const law01Html = `
       
       <div class="info-item">
         <div class="info-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          LOGO_PLACEHOLDER
         </div>
         <div class="info-text">
           <h4>Our Location</h4>
@@ -700,7 +698,7 @@ export const law01Html = `
       
       <div class="info-item">
         <div class="info-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          LOGO_PLACEHOLDER
         </div>
         <div class="info-text">
           <h4>Phone Number</h4>
@@ -710,7 +708,7 @@ export const law01Html = `
       
       <div class="info-item">
         <div class="info-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          LOGO_PLACEHOLDER
         </div>
         <div class="info-text">
           <h4>Email Address</h4>
@@ -759,7 +757,7 @@ export const law01Html = `
   
   <div class="footer-bottom">
     <div class="container footer-bottom-inner">
-      <div class="copyright">© 2026 PROJECT_NAME_PLACEHOLDER. All Rights Reserved.</div>
+      <div class="copyright">© 2026 LOGO_PLACEHOLDER. All Rights Reserved.</div>
       <div class="footer-links">
         <a href="javascript:void(0);">Privacy Policy</a>
         <a href="javascript:void(0);">Terms of Service</a>
@@ -803,7 +801,7 @@ export const law01Html = `
           e.stopImmediatePropagation();
           var existingModal = document.getElementById("preview-mode-modal");
           if (existingModal) existingModal.remove();
-          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><svg style="width: 30px; height: 30px; color: #EF4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
+          var modalHtml = '<div id="preview-mode-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); opacity: 0; animation: pModalFadeIn 0.3s forwards; font-family: system-ui, -apple-system, sans-serif;"><div style="background: #ffffff; width: 90%; max-width: 400px; border-radius: 20px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; transform: scale(0.95); animation: pModalScaleUp 0.3s forwards;"><div style="width: 60px; height: 60px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">LOGO_PLACEHOLDER</div><h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0 0 12px; letter-spacing: -0.02em;">Preview Mode Active</h3><p style="font-size: 15px; color: #64748B; margin: 0 0 28px; line-height: 1.5;">Form submissions are disabled in preview mode. Publish your page to accept real submissions.</p><button onclick="document.getElementById(\'preview-mode-modal\').remove()" style="width: 100%; background: #0F172A; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#1E293B\'" onmouseout="this.style.background=\'#0F172A\'">Got it, close</button></div><style>@keyframes pModalFadeIn { to { opacity: 1; } } @keyframes pModalScaleUp { to { transform: scale(1); } }</style></div>';
           document.body.insertAdjacentHTML("beforeend", modalHtml);
           return;
         }

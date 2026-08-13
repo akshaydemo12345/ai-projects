@@ -369,8 +369,7 @@ export const travel01Html = `
 <header class="nav" id="nav">
   <div class="container nav__inner">
     <a data-editable="true" href="javascript:void(0);" class="brand">
-      <span data-editable="true" class="brand__mark">✦</span>
-      <span data-editable="true" class="brand__text">Wanderly</span>
+      LOGO_PLACEHOLDER
     </a>
    
     <a data-editable="true" href="javascript:void(0);" class="btn btn--primary btn--sm">Book Now →</a>
@@ -748,7 +747,7 @@ export const travel01Html = `
 <footer class="footer">
   <div class="container footer__inner">
     <div class="footer__brand">
-      <a data-editable="true" href="javascript:void(0);" class="brand"><span data-editable="true" class="brand__mark">✦</span><span data-editable="true" class="brand__text">Wanderly</span></a>
+      <a data-editable="true" href="javascript:void(0);" class="brand">LOGO_PLACEHOLDER</a>
       <p data-editable="true" class="footer__desc">Premium travel, thoughtfully designed. Explore more, worry less. Since 2014.</p>
       <div class="socials">
         <a data-editable="true" href="javascript:void(0);" aria-label="Instagram">Ig</a>

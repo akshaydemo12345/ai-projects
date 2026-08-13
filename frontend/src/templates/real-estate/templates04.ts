@@ -501,7 +501,7 @@ p { margin: 0 0 20px 0; }
 export const realEstate04Html = `
 <div class="re04-wrap">
   <!-- Hero Section -->
-  <section class="re04-hero">
+  <header class="re04-hero">
     <div class="re04-hero-menu">
       <div style="font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 20px;">LOGO_PLACEHOLDER</div>
       <a href="javascript:void(0);" class="re04-btn">Download CTA</a>

@@ -237,7 +237,7 @@ export const finance03Html = `
 <!-- 2. Header -->
 <header class="header">
   <div class="container header-inner">
-    <div class="logo">Logo<span>.</span></div>
+    <div class="logo">LOGO_PLACEHOLDER</div>
     <a href="#contact" class="btn btn-secondary">Get Started <i class="fa-solid fa-arrow-right"></i></a>
   </div>
 </header>
@@ -636,7 +636,7 @@ export const finance03Html = `
     <div class="container">
       <div class="footer-grid">
         <div>
-          <div class="logo f-logo">Logo<span>.</span></div>
+          <div class="logo f-logo">LOGO_PLACEHOLDER</div>
           <p class="f-desc">Expert consulting and corporate strategy tailored for your success. We build lasting partnerships that drive results.</p>
           <div class="f-socials">
             <a href="#"><i class="fa-brands fa-facebook-f"></i></a>

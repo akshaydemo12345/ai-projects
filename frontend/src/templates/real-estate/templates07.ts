@@ -653,7 +653,7 @@ export const realEstate07Html = `
 <div class="re07-wrap">
   
   <!-- Floating Pill Header -->
-  <div class="re07-header-wrapper">
+  <header class="re07-header-wrapper">
     <div class="re07-header">
       <a href="javascript:void(0);" class="re07-logo">
         
@@ -666,7 +666,7 @@ export const realEstate07Html = `
         <a href="javascript:void(0);" class="re07-header-btn">Get A Quote</a>
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- Hero Section -->
   <section class="re07-hero">
@@ -894,7 +894,7 @@ export const realEstate07Html = `
   </section>
 
   <!-- Footer & Contact (Bottom Section) -->
-  <section id="contact" class="re07-footer-section">
+  <footer id="contact" class="re07-footer-section">
     <div class="re07-container re07-footer-content">
       
       <!-- Contact Form & Image Grid -->
