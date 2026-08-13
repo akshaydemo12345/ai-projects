@@ -1308,7 +1308,9 @@ exports.handleFormSubmission = async (req, res, next) => {
         } catch (e) { }
       }
 
-      if (detectedSlug) pageSlug = detectedSlug.replace(/\/thank-you$/i, '');
+      if (detectedSlug) {
+        pageSlug = detectedSlug.replace(/\/(thank-you|proxy-form)$/i, '');
+      }
     }
 
     // Normalize slug parts for lookup
