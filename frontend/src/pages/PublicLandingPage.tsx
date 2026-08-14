@@ -317,6 +317,7 @@ const PublicLandingPage = () => {
     }
 
     const coreDependencies = `
+      <meta name="referrer" content="no-referrer">
       <base href="${window.location.origin}/" />
       <title>${extractedTitle}</title>
       ${extractedFavicon}
@@ -510,6 +511,7 @@ const PublicLandingPage = () => {
         label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #475569; }
         form { width: 100%; max-width: 100%; }
         .float-badge { z-index: 1 !important; }
+        #page-logo, img[alt="Logo"], img[alt="logo"] { max-height: 40px !important; max-width: 200px !important; width: auto !important; object-fit: contain !important; filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.4)) !important; }
         ${aiCss}
       </style>
       <script>

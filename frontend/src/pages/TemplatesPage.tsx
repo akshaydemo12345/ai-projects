@@ -520,6 +520,7 @@ const TemplatesPage = () => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="referrer" content="no-referrer">
           <title>Preview — ${tpl.name}</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <script>tailwind.config={theme:{extend:{colors:{primary:'${PRIMARY}',secondary:'${SECONDARY}'}}}}</script>
@@ -529,6 +530,7 @@ const TemplatesPage = () => {
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
           <style>
             body { margin: 0; padding: 0; overflow-x: hidden; }
+            #page-logo, img[alt="Logo"], img[alt="logo"] { max-height: 40px !important; max-width: 200px !important; width: auto !important; object-fit: contain !important; filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.4)) !important; }
             ${styledCss}
           </style>
         </head>

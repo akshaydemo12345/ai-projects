@@ -484,10 +484,20 @@ const GrapesEditor = () => {
 
         const brandingTag = canvasDoc.createElement('style');
         brandingTag.id = 'branding-vars';
+
+        // Anti-hotlink bypass
+        let metaReferrer = canvasDoc.querySelector('meta[name="referrer"]');
+        if (!metaReferrer) {
+          metaReferrer = canvasDoc.createElement('meta');
+          metaReferrer.setAttribute('name', 'referrer');
+          metaReferrer.setAttribute('content', 'no-referrer');
+          canvasDoc.head.appendChild(metaReferrer);
+        }
+
         canvasDoc.head.appendChild(brandingTag); // append at END so it wins cascade
         brandingTag.innerHTML = `
         /* Editor Image Safeguards */
-        /* Editor Image Safeguards */
+        #page-logo, img[alt="Logo"], img[alt="logo"] { max-height: 40px !important; max-width: 200px !important; width: auto !important; object-fit: contain !important; filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.4)) !important; }
         .flex img, [class*="flex"] img { flex-shrink: 0 !important; }
         img { max-width: 100%; object-fit: cover; }
         :root { 
