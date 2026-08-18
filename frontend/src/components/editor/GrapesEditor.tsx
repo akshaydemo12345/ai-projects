@@ -4885,18 +4885,7 @@ const GrapesEditor = () => {
             : (styleMap['margin-left'] === 'auto' ? 'right' : 'left');
 
           card.innerHTML = `
-            <!-- ── ELEMENTOR INSPECTOR HEADER ── -->
-            <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%); margin: -14px -14px 12px -14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f5a; border-radius: 12px 12px 0 0;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 22px; height: 22px; background: #e11d48; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 12px;">E</div>
-                <span style="font-size: 12px; font-weight: 700; color: #ffffff; letter-spacing: 0.02em;">
-                  ${isLogoComponent ? 'Brand Logo Control' : 'Image Control'}
-                </span>
-              </div>
-              <span style="font-size: 10px; font-weight: 600; color: #fda4af; background: rgba(225, 29, 72, 0.2); border: 1px solid rgba(225, 29, 72, 0.4); padding: 2px 8px; border-radius: 12px;">
-                Elementor
-              </span>
-            </div>
+
 
             <!-- ── CHOOSE IMAGE PREVIEW BOX (ELEMENTOR STYLE) ── -->
             <div class="elementor-img-choose-container" style="position: relative;">
@@ -4918,7 +4907,7 @@ const GrapesEditor = () => {
                 ${currentSrc
                   ? `<img src="${currentSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`
                   : `<div style="text-align: center; color: #64748b;">
-                      <svg style="margin: 0 auto 6px auto; width: 28px; height: 28px; color: #e11d48;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <svg style="margin: 0 auto 6px auto; width: 28px; height: 28px; color: #6366f1;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                       <div style="font-size: 12px; font-weight: 600; color: #334155;">Click to Choose Image</div>
                      </div>`
                 }
@@ -4933,37 +4922,23 @@ const GrapesEditor = () => {
                   justify-content: center;
                   gap: 6px;
                   padding: 8px 12px;
-                  background: #e11d48;
+                  background: #6366f1;
                   color: #ffffff;
                   font-size: 12px;
                   font-weight: 700;
                   border-radius: 8px;
                   cursor: pointer;
-                  box-shadow: 0 2px 4px rgba(225, 29, 72, 0.25);
+                  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
                 ">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span>Choose Image</span>
                   <input type="file" class="card-file-input" accept="image/*" style="display: none;" />
                 </label>
-
-                <button type="button" class="card-media-btn" style="
-                  padding: 8px 12px;
-                  background: #ffffff;
-                  color: #334155;
-                  border: 1px solid #cbd5e1;
-                  font-size: 12px;
-                  font-weight: 600;
-                  border-radius: 8px;
-                  cursor: pointer;
-                ">
-                  🖼️ Media Library
-                </button>
               </div>
             </div>
 
             <!-- ── ELEMENTOR SEGMENTED TAB SWITCHER (CONTENT vs STYLE) ── -->
             <div style="display: flex; border: 1px solid #e2e8f0; background: #f1f5f9; padding: 3px; border-radius: 8px; margin-top: 4px;">
-              <button type="button" class="elm-tab-btn active" data-tab="content" style="flex: 1; padding: 7px; font-size: 11px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: #ffffff; color: #e11d48; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s;">
+              <button type="button" class="elm-tab-btn active" data-tab="content" style="flex: 1; padding: 7px; font-size: 11px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: #ffffff; color: #6366f1; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s;">
                 📝 Content
               </button>
               <button type="button" class="elm-tab-btn" data-tab="style" style="flex: 1; padding: 7px; font-size: 11px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: transparent; color: #64748b; transition: all 0.2s;">
@@ -4978,9 +4953,9 @@ const GrapesEditor = () => {
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="font-size: 11px; font-weight: 600; color: #475569;">Alignment</label>
                 <div style="display: flex; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                  <button type="button" class="align-btn" data-align="left" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='left' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='left' ? '#e11d48' : '#64748b'}; font-weight: 700;">Left</button>
-                  <button type="button" class="align-btn" data-align="center" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='center' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='center' ? '#e11d48' : '#64748b'}; font-weight: 700;">Center</button>
-                  <button type="button" class="align-btn" data-align="right" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='right' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='right' ? '#e11d48' : '#64748b'}; font-weight: 700;">Right</button>
+                  <button type="button" class="align-btn" data-align="left" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='left' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='left' ? '#6366f1' : '#64748b'}; font-weight: 700;">Left</button>
+                  <button type="button" class="align-btn" data-align="center" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='center' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='center' ? '#6366f1' : '#64748b'}; font-weight: 700;">Center</button>
+                  <button type="button" class="align-btn" data-align="right" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='right' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='right' ? '#6366f1' : '#64748b'}; font-weight: 700;">Right</button>
                 </div>
               </div>
 
@@ -5025,10 +5000,10 @@ const GrapesEditor = () => {
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <label style="font-size: 11px; font-weight: 600; color: #475569;">Border Radius</label>
                 <div style="display: flex; gap: 6px;">
-                  <button type="button" class="radius-btn" data-radius="0px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='0px'||!currentRadius?'#e11d48':'#fff'}; color: ${currentRadius==='0px'||!currentRadius?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">0px</button>
-                  <button type="button" class="radius-btn" data-radius="8px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='8px'?'#e11d48':'#fff'}; color: ${currentRadius==='8px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">8px</button>
-                  <button type="button" class="radius-btn" data-radius="16px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='16px'?'#e11d48':'#fff'}; color: ${currentRadius==='16px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">16px</button>
-                  <button type="button" class="radius-btn" data-radius="50%" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='50%'||currentRadius==='9999px'?'#e11d48':'#fff'}; color: ${currentRadius==='50%'||currentRadius==='9999px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">Circle</button>
+                  <button type="button" class="radius-btn" data-radius="0px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='0px'||!currentRadius?'#6366f1':'#fff'}; color: ${currentRadius==='0px'||!currentRadius?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">0px</button>
+                  <button type="button" class="radius-btn" data-radius="8px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='8px'?'#6366f1':'#fff'}; color: ${currentRadius==='8px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">8px</button>
+                  <button type="button" class="radius-btn" data-radius="16px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='16px'?'#6366f1':'#fff'}; color: ${currentRadius==='16px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">16px</button>
+                  <button type="button" class="radius-btn" data-radius="50%" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='50%'||currentRadius==='9999px'?'#6366f1':'#fff'}; color: ${currentRadius==='50%'||currentRadius==='9999px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">Circle</button>
                 </div>
               </div>
 
@@ -5057,7 +5032,7 @@ const GrapesEditor = () => {
               tabBtns.forEach((b) => {
                 const isAct = (b as HTMLElement).dataset.tab === tab;
                 (b as HTMLElement).style.background = isAct ? '#ffffff' : 'transparent';
-                (b as HTMLElement).style.color = isAct ? '#e11d48' : '#64748b';
+                (b as HTMLElement).style.color = isAct ? '#6366f1' : '#64748b';
                 (b as HTMLElement).style.boxShadow = isAct ? '0 1px 3px rgba(0,0,0,0.08)' : 'none';
               });
 
