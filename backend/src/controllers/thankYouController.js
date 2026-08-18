@@ -150,7 +150,7 @@ exports.renderThankYouPage = async (req, res, next) => {
     let html = template;
 
     // Inject Landing Page Styles to ensure Header/Footer look correct
-    const landingStyles = page.styles || page.landingPageStyles || '';
+    const landingStyles = page.landingPageStyles || page.styles || '';
     if (landingStyles) {
       html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
     }
@@ -355,7 +355,7 @@ exports.previewThankYouPage = async (req, res, next) => {
 
     if (page) {
       // Inject Landing Page Styles
-      const landingStyles = page.styles || page.landingPageStyles || '';
+      const landingStyles = page.landingPageStyles || page.styles || '';
       if (landingStyles) {
         html = html.replace('</head>', `<style id="landing-page-styles">${landingStyles}</style></head>`);
       }

@@ -555,22 +555,139 @@
   opacity: 0.7 !important;
 }
 
-/* Color Picker specific fixes */
-.gjs-editor .gjs-field-color-picker {
-  border: none !important;
-  cursor: pointer !important;
-  height: 100% !important;
-  width: 100% !important;
+/* Color Picker & Swatch specific fixes */
+.gjs-editor .gjs-field-color {
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: space-between !important;
+  padding: 4px 6px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  height: 32px !important;
+  position: relative !important;
+}
+
+.gjs-editor .gjs-field-color input,
+.gjs-editor .gjs-field-color input[type="text"],
+.gjs-editor .gjs-sm-property__color input,
+.gjs-editor .gjs-sm-property__background-color input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 4px !important;
   margin: 0 !important;
 }
 
-.gjs-editor .gjs-sm-property__color .gjs-field {
+/* Hide native OS system color picker inputs completely */
+.gjs-editor .gjs-field-color input[type="color"],
+.gjs-editor .gjs-field-colorp-c input[type="color"],
+.gjs-editor .gjs-field-color-picker input[type="color"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Parent Swatch Wrapper (remove any parent border/divider lines) */
+.gjs-editor .gjs-field-colorp-c {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  margin: 0 2px 0 6px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  border-radius: 4px !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
+
+/* Inner Color Swatch Box (nested inside .gjs-field-colorp-c) */
+.gjs-editor .gjs-field-color-picker,
+.gjs-editor .gjs-field-colorp-c .gjs-field-color-picker {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+/* Standalone Color Swatches (Pickr, custom swatches) */
+.gjs-editor .gjs-color-picker-preview,
+.gjs-editor .gjs-chk-rgb,
+.gjs-editor .custom-grapesjs-pickr,
+.gjs-editor .pcr-button {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  cursor: pointer !important;
+  margin: 0 2px 0 6px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+/* Pickr Color Picker Overlay Popup Dialog */
+.pcr-app {
+  z-index: 99999999 !important;
+  position: fixed !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.gjs-editor .gjs-sm-property__color .gjs-field,
+.gjs-editor .gjs-sm-property__background-color .gjs-field {
   flex-direction: row !important;
-  justify-content: flex-start !important;
-  padding: 0 6px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 6px !important;
+  background-color: #ffffff !important;
 }
 
 /* Fix for overall layout scrolling when color picker opens */
@@ -1642,4 +1759,32 @@ body:has(.gjs-editor) {
 .gjs-editor input[type=range]::-webkit-slider-thumb {
   margin-top: auto !important;
   transform: translateY(calc(-50% + 2px));
+}
+
+.gjs-field-colorp {
+  position: relative;
+  padding: 0;
+  left: -4px;
+}
+
+/* ════ ELEMENTOR IMAGE HOVER ANIMATION RULES ════ */
+.elm-hover-zoom {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.elm-hover-zoom:hover {
+  transform: scale(1.05) !important;
+}
+
+.elm-hover-float {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.elm-hover-float:hover {
+  transform: translateY(-6px) !important;
+}
+
+.elm-hover-fade {
+  transition: opacity 0.3s ease !important;
+}
+.elm-hover-fade:hover {
+  opacity: 0.8 !important;
 }

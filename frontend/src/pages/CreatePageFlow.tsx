@@ -11,6 +11,7 @@ import { pagesApi, aiApi, projectsApi, type Project } from "@/services/api";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { generateLandingPageHtml } from "@/lib/landingPageTemplates";
 import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { compressImageFile, compressBase64Image } from "@/lib/imageCompressor";
 import { ModernLoader } from "@/components/ui/ModernLoader";
 import { toast } from "sonner";
 
@@ -151,7 +152,15 @@ const CreatePageFlow = () => {
     if (file) {
       setLogoPreview(URL.createObjectURL(file));
       const reader = new FileReader();
-      reader.onloadend = () => setLogoUrl(reader.result as string);
+      reader.onloadend = async () => {
+        const rawBase64 = reader.result as string;
+        try {
+          const compressed = await compressBase64Image(rawBase64, { maxWidth: 400, quality: 0.85 });
+          setLogoUrl(compressed);
+        } catch {
+          setLogoUrl(rawBase64);
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
