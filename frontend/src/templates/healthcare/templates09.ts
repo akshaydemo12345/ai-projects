@@ -199,6 +199,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
   .hc9-checker-widget { padding: 1.25rem; }
   .hc9-appointment-form { padding: 1.5rem 1.25rem; }
 }
+@media (max-width: 768px) {
+  .hc9-tile-grid, .hc9-checker-card, .hc9-dept-row, .hc9-bento { grid-template-columns: 1fr !important; }
+  .hc9-header-inner, .hc9-header-status, .hc9-checker-widget-head, .hc9-departments-head, .arrow, .hc9-doctors-head, .hc9-info-row { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare09Html = `

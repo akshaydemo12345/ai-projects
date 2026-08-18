@@ -283,6 +283,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
   .hc10-legacy-imgs img.sub-img { display: none; }
   .hc10-legacy-imgs img.main-img { width: 100%; }
 }
+@media (max-width: 768px) {
+  .hc10-hero-grid, .hc10-trust-strip, .hc10-milestones-grid, .hc10-timeline-grid, .hc10-services-grid, .hc10-doctors-grid, .hc10-appointment-card { grid-template-columns: 1fr !important; }
+  .hc10-header-inner, .hc10-nav, .hc10-info-row { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare10Html = `

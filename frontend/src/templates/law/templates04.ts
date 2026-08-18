@@ -260,6 +260,11 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 
 .tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
 
+@media (max-width: 768px) {
+  .lawyers-grid, .victory-inner, .support-grid, .blog-grid, .footer-inner, .tabs-container { grid-template-columns: 1fr !important; }
+  .header-inner, .header-nav, .hero-visual, .hero-stats-card, .tab-content-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const law04Html = `

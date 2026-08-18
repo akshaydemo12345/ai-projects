@@ -333,6 +333,11 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 
 .tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
 
+@media (max-width: 768px) {
+  .hero-strip, .practice-grid, .process, .att-grid, .results, .testi-grid, .foot-top, .tabs-container { grid-template-columns: 1fr !important; }
+  .tb-right, .nav-inner, .nav-links, .hero-cta, .hero-bullets, .track, .arrow, .chips, .foot-bottom, .tab-content-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const law03Html = `

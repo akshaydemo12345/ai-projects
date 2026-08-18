@@ -220,6 +220,11 @@ details.hc7-faq-item[open] .hc7-faq-toggle { background: var(--primary); color: 
   .hc7-appointment-card { padding: 2rem; }
   .hc7-day-row { grid-template-columns: repeat(5, 1fr); font-size: 0.7rem; }
 }
+@media (max-width: 768px) {
+  .hc7-hero-grid, .hc7-day-row, .hc7-stats-grid, .hc7-dept-grid, .hc7-faq-grid { grid-template-columns: 1fr !important; }
+  .hc7-header-inner, .hc7-header-emergency, .hc7-hero-trust, .hc7-scheduler-head, .hc7-time-row, .hc7-doctors-head, .hc7-doctors-nav, .hc7-doctor-grid, .hc7-insurance-inner, .hc7-faq-item-head, .hc7-info-row { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare07Html = `

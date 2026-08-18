@@ -164,6 +164,11 @@ details[open] .lf9-faq-toggle { transform: rotate(45deg); }
   .lf9-footer-grid { grid-template-columns: 1fr; }
   .lf9-hero-stats { flex-wrap: wrap; gap: 1.5rem; }
 }
+@media (max-width: 768px) {
+  .lf9-about-grid, .lf9-timeline-grid, .lf9-faq-grid, .lf9-footer-grid { grid-template-columns: 1fr !important; }
+  .eyebrow, .lf9-header-inner, .lf9-hero-stats, .lf9-service-row-head, .lf9-faq-item-head, .lf9-footer-newsletter { flex-direction: column !important; }
+}
+
 `;
 
 export const law09Html = `

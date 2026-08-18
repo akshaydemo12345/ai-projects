@@ -230,6 +230,11 @@ a { text-decoration: none; }
   .re10-features-wrap { grid-template-columns: 1fr; }
   .re10-hero h1 { font-size: 3rem; }
 }
+@media (max-width: 768px) {
+  .re10-features-wrap, .re10-causes-grid, .re10-stats-grid, .re10-team-grid, .re10-foot-grid { grid-template-columns: 1fr !important; }
+  .re10-header-inner, .re10-nav, .re10-help-flex, .re10-moments-flex, .re10-moment-item { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate10Html = `

@@ -183,6 +183,11 @@ a { text-decoration: none; color: inherit; }
     box-shadow: 0 10px 20px color-mix(in srgb, var(--secondary) 30%, transparent);
 }
 
+@media (max-width: 768px) {
+  .services-10-grid, .stats-10-grid { grid-template-columns: 1fr !important; }
+  .header-10-inner, .hero-10, .footer-10-inner, .footer-10-links { flex-direction: column !important; }
+}
+
 `;
 
 export const finance10Html = `

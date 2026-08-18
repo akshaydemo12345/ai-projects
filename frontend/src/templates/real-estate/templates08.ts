@@ -249,6 +249,11 @@ p { margin: 0 0 15px 0; }
   .re08-agent-grid { flex-direction: column; align-items: center; }
   .re08-agent-card { width: 100%; }
 }
+@media (max-width: 768px) {
+  .re08-proj-grid, .re08-rev-grid { grid-template-columns: 1fr !important; }
+  .re08-topbar-left, .re08-header-inner, .re08-hero, .re08-hero-content, .re08-af-flex, .re08-srv-flex, .re08-faq-flex, .re08-spec-flex, .re08-agent-grid, .re08-agent-card { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate08Html = `

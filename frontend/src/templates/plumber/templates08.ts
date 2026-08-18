@@ -149,6 +149,11 @@ img { max-width: 100%; display: block; }
     box-shadow: var(--glow-primary);
 }
 .premium-form button:hover { transform: translateY(-2px); }
+@media (max-width: 768px) {
+  .features-08-grid, .stats-08-grid, .roadmap-grid-08 { grid-template-columns: 1fr !important; }
+  .nav-08-inner, .nav-links-08, .hero-08, .ticker-track-08, .swap-row, .footer-08-bottom { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber08Html = `

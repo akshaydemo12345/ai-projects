@@ -263,6 +263,11 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 
 .tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
 
+@media (max-width: 768px) {
+  .tabs-container { grid-template-columns: 1fr !important; }
+  .tab-content-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const law02Html = `

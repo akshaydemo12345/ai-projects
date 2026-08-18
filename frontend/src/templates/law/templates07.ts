@@ -261,6 +261,11 @@ body.js-enabled .animate-up.in-view { opacity: 1; transform: translateY(0); }
   .case-row { flex-direction: column; align-items: flex-start; }
   .marquee-track span { font-size: 1.8rem; }
 }
+@media (max-width: 768px) {
+  .split-inner, .services-grid, .faq-inner, .metrics-grid, .cta-inner, .team-grid, .contact-inner { grid-template-columns: 1fr !important; }
+  .header-inner, .hero-stats, .split-foot, .services-header, .trusted-row, .faq-call-card, .faq-item-head, .cases-header, .case-row, .case-arrow, .footer-bottom-inner, .footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const law07Html = `

@@ -199,6 +199,11 @@ img { max-width: 100%; display: block; }
   .exp-badge { width: 120px; height: 120px; bottom: -15px; right: -15px; }
   .exp-badge span { font-size: 2.5rem; }
 }
+@media (max-width: 768px) {
+  .hero-inner, .services-grid, .process-grid, .gallery-grid, .why-inner, .testi-grid { grid-template-columns: 1fr !important; }
+  .header-inner, .header-right, .header-call, .hero-feat, .trust-inner { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber05Html = `

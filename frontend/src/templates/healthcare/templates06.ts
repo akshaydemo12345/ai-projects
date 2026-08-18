@@ -584,6 +584,10 @@ export const healthcare06Styles = `
             transition: all 0.3s ease;
         }
         .modal-btn:hover { background-color: #ffffff; color: white; }
+@media (max-width: 768px) {
+  .main-header, .hero-stats, .feature-card-float, .footer-contact-item, .footer-bottom-links { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare06Html = `

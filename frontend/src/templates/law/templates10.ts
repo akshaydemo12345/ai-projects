@@ -181,6 +181,11 @@ details.lf10-faq-item[open] .lf10-faq-toggle { transform: rotate(45deg); }
 }
 .lf10-radial-fallback { display: none; flex-direction: column; gap: 1rem; align-items: center; }
 .lf10-radial-fallback .lf10-radial-node { position: static; width: 80%; text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; transform: translateX(0%); }
+@media (max-width: 768px) {
+  .lf10-hero-grid, .lf10-faq-grid { grid-template-columns: 1fr !important; }
+  .lf10-hero-stats-row, .lf10-faq-item-head, .lf10-footer, .lf10-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const law10Html = `

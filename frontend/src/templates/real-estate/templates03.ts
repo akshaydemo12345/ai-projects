@@ -413,6 +413,11 @@ export const realEstate03Styles = `
   .re03-hero-bar { margin-top: auto; }
   .re03-icons-section { grid-template-columns: 1fr; }
 }
+@media (max-width: 768px) {
+  .re03-icons-grid, .re03-grid-features { grid-template-columns: 1fr !important; }
+  .re03-hero-section, .re03-hero-bar, .re03-hero-bar-arrow, .re03-features-section { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate03Html = `

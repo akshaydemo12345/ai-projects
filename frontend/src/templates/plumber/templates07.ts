@@ -145,6 +145,11 @@ img { max-width: 100%; display: block; filter: grayscale(100%) contrast(1.1); }
     cursor: pointer; transition: 0.2s; background: var(--ink); color: #fff; border: none;
 }
 .premium-form button:hover { background: var(--primary); }
+@media (max-width: 768px) {
+  .hero-07-meta, .tombstone-wall-07, .offices-grid-07, .news-item-07 { grid-template-columns: 1fr !important; }
+  .nav-07-inner, .nav-links-07, .hero-07-top, .toc-07-row, .data-07-head, .footer-07-bottom { flex-direction: column !important; }
+}
+
 `;
 export const plumber07Html = `
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">

@@ -183,6 +183,11 @@ ul, ol { list-style: none; }
   .pl09-c-meta-item p { font-size: 1.25rem; }
   .pl09-form-wrap { padding: 6vw 4vw; }
 }
+@media (max-width: 768px) {
+  .pl09-hero-grid, .pl09-services-layout, .pl09-tips-grid { grid-template-columns: 1fr !important; }
+  .pl09-header-inner, .pl09-marquee-inner, .pl09-service-header, .pl09-footer-top, .pl09-footer-bottom, .pl09-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber09Html = `

@@ -647,6 +647,11 @@ p { margin: 0 0 20px 0; }
   .re07-footer-panel { flex-direction: column; gap: 30px; text-align: center; }
   .re07-footer-links { flex-direction: column; gap: 20px; }
 }
+@media (max-width: 768px) {
+  .re07-amenities-grid, .re07-gallery-grid, .re07-news-grid, .re07-form-gallery { grid-template-columns: 1fr !important; }
+  .re07-header-wrapper, .re07-header, .re07-nav, .re07-header-right, .re07-hero, .re07-hero-play, .re07-agent-card, .re07-testi-flex, .re07-schedule-flex, .re07-form-grid, .re07-footer-panel, .re07-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate07Html = `

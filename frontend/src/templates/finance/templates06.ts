@@ -144,6 +144,11 @@ img { max-width: 100%; display: block; border-radius: 4px; }
   .form-grp.full { grid-column: span 1; }
   .security-logos { flex-wrap: wrap; gap: 30px; }
 }
+@media (max-width: 768px) {
+  .values-06-grid, .products-06-grid { grid-template-columns: 1fr !important; }
+  .top-bar-links, .header-06-inner, .nav-06, .locator-container, .story-card { flex-direction: column !important; }
+}
+
 `;
 
 export const finance06Html = `

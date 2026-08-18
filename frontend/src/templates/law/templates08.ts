@@ -243,6 +243,11 @@ details[open] .lf3-faq-toggle { background: var(--primary); transform: rotate(45
   .lf3-footer-wordmark { font-size: 4rem; }
   .lf3-contact-info, .lf3-contact-form { padding: 2.5rem; }
 }
+@media (max-width: 768px) {
+  .lf3-hero-top, .lf3-hero-bottom, .lf3-service-row, .lf3-bento-grid, .lf3-team-grid, .lf3-cta-inner, .lf3-faq-inner, .lf3-footer-grid { grid-template-columns: 1fr !important; }
+  .eyebrow, .lf3-header-inner, .lf3-header-meta, .lf3-about-row, .lf3-services-head, .arrow, .lf3-cases-head, .lf3-team-head, .lf3-faq-item-head, .lf3-info-row, .lf3-footer-bottom, .lf3-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const law08Html = `

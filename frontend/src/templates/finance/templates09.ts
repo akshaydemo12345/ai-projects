@@ -168,6 +168,11 @@ img { max-width: 100%; display: block; }
   .step-num-09 { width: auto; }
   .statement-09 { margin-top: 20px; }
 }
+@media (max-width: 768px) {
+  .row-item-09, .test-grid-09 { grid-template-columns: 1fr !important; }
+  .eyebrow-09, .ledger-row-09, .header-09-inner, .hero-09, .hero-cta-row-09, .statement-head-09, .m-row-09, .step-item-09, .dm-head-09, .mock-bar-wrap-09, .footer-09-inner { flex-direction: column !important; }
+}
+
 `;
 
 export const finance09Html = `

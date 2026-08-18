@@ -639,6 +639,11 @@ h1, h2, h3, h4, h5, h6 {
   .re02-title-main { font-size: 2.2rem; }
   .re02-form-area { padding: 30px; transform: translateY(0); margin-top: 40px; }
 }
+@media (max-width: 768px) {
+  .re02-features-grid, .re02-cards-container, .re02-blog-grid, .re02-footer-grid { grid-template-columns: 1fr !important; }
+  .re02-header-inner, .re02-nav-menu, .re02-hero, .re02-trust-flex, .re02-prop-meta, .re02-about-wrap, .re02-stats-row { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate02Html = `

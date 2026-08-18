@@ -966,6 +966,11 @@ export const healthcare05Styles = `
 
     /* Utilities */
     .hidden { display: none !important; }
+@media (max-width: 768px) {
+  .stats-grid, .form-row { grid-template-columns: 1fr !important; }
+  .header-content, .main-nav, .feature-card, .services-header, .contact-card, .footer-contact-item, .footer-bottom, .modal-header-box { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare05Html = `

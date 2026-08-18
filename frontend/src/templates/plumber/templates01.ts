@@ -516,6 +516,10 @@ h1, h2, h3, h4, h5, h6, p, span, div, a {
         .modal-close:hover { color: var(--primary); }
         .modal-body { padding: 32px; }
         .modal-body form { margin-top: 24px; }
+@media (max-width: 768px) {
+  .header-inner, .phone-link, .hero-stats, .testimonials-header, .cta-features { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber01Html = `

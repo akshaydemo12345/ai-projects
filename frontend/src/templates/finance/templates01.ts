@@ -179,6 +179,11 @@ img { max-width: 100%; display: block; }
     box-shadow: 0 10px 20px color-mix(in srgb, var(--secondary) 30%, transparent);
 }
 
+@media (max-width: 768px) {
+  .bento-grid, .dash-grid, .price-grid { grid-template-columns: 1fr !important; }
+  .header-01-inner, .hero-form, .float-card, .foot-bottom { flex-direction: column !important; }
+}
+
 `;
 
 export const finance01Html = `

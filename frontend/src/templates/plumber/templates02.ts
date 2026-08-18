@@ -1141,6 +1141,11 @@ h1, h2, h3, h4, h5, h6, p, span, div, a {
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
     }
+@media (max-width: 768px) {
+  .stats-grid, .grid-2 { grid-template-columns: 1fr !important; }
+  .header-inner, .hero, .list-item, .feature, .modal-header { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber02Html = `

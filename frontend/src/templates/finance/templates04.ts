@@ -200,6 +200,11 @@ textarea.form-control { height: 160px; resize: none; margin-bottom: 30px; }
   .stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 20px 0; }
   .ab-badge-top { display: none; }
 }
+@media (max-width: 768px) {
+  .services-grid, .stats-grid, .blog-grid, .footer-grid { grid-template-columns: 1fr !important; }
+  .top-nav, .marquee-track, .about-list-item { flex-direction: column !important; }
+}
+
 `;
 
 export const finance04Html = `

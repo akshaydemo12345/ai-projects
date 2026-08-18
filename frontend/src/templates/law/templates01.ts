@@ -379,6 +379,11 @@ body.js-enabled .animate-fade.in-view {
   /* Extracted Template Inline Styles */
   .tpl-templates01-1 { color: var(--text-muted); }
   .tpl-templates01-2 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+@media (max-width: 768px) {
+  .stats-grid, .tabs-container, .contact-inner { grid-template-columns: 1fr !important; }
+  .header-inner, .hero-floating-card, .tab-content-wrapper, .attorney-card, .footer-bottom-inner, .footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const law01Html = `

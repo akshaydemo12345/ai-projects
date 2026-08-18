@@ -600,6 +600,11 @@ h1, h2, h3, h4, h5, h6, p {
   /* Extracted Template Inline Styles */
   .tpl-templates01-1 { color: PRIMARY_COLOR_PLACEHOLDER; }
   .tpl-templates01-2 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+@media (max-width: 768px) {
+  .team-grid, .facilities-grid { grid-template-columns: 1fr !important; }
+  .header-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare01Html = `

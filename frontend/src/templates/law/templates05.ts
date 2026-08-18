@@ -601,6 +601,11 @@ body:not(.js-enabled) .tab-content-wrapper::-webkit-scrollbar-thumb { background
 
 .tabs-action { text-align: center; margin-top: 3rem; position: relative; z-index: 2; }
 
+@media (max-width: 768px) {
+  .features-grid, .practice-grid, .attorney-grid, .footer-grid, .tabs-container { grid-template-columns: 1fr !important; }
+  .top-bar-inner, .header-inner, .nav-links, .banner-left, .features-inner, .testi-news-layout, .section-header, .testi-author, .news-item, .tab-content-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const law05Html = `

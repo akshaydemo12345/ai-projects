@@ -228,6 +228,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
   .hp30-certs-inner { flex-direction: column; align-items: flex-start; }
   .hp30-header-phone span.ph-text { display: none; }
 }
+@media (max-width: 768px) {
+  .hp30-hero-grid, .hp30-stats-grid, .hp30-timeline-track, .hp30-process-grid, .hp30-pricing-grid, .hp30-review-grid { grid-template-columns: 1fr !important; }
+  .hp30-header-inner, .hp30-header-phone, .hp30-hero-top, .hp30-faq-item-head, .hp30-footer-inner, .hp30-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 

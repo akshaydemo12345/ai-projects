@@ -827,6 +827,11 @@ export const plumber04Styles = `
   .pl04-badge { width: 100px; height: 100px; }
   .pl04-badge h3 { font-size: 1.5rem; }
 }
+@media (max-width: 768px) {
+  .pl04-features-bar, .pl04-services-grid, .pl04-process-grid, .pl04-testi-grid, .pl04-footer-grid { grid-template-columns: 1fr !important; }
+  .pl04-header-inner, .pl04-contact-info { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber04Html = `

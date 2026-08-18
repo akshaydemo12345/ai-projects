@@ -199,6 +199,11 @@ a { text-decoration: none; color: inherit; transition: 0.3s; }
   .hc8-cta-inner h2 { font-size: 1.75rem; }
   .hc8-header-inner { flex-wrap: wrap; gap: 1rem; justify-content: center; text-align: center; }
 }
+@media (max-width: 768px) {
+  .hc8-services-row, .hc8-steps-row, .hc8-doctor-row, .hc8-tips-grid { grid-template-columns: 1fr !important; }
+  .hc8-header-inner, .hc8-hero-floater, .hc8-tips-head, .hc8-cta-inner { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare08Html = `

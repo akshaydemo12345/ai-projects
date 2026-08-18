@@ -432,6 +432,10 @@ input, select, textarea { font-family: inherit; }
   .tpl-templates02-7 { color: rgba(255,255,255,0.8); }
   .tpl-templates02-8 { color: rgba(255,255,255,0.35); }
   .tpl-templates02-9 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+@media (max-width: 768px) {
+  .v2-header-inner, .v2-header-cta, .v2-hero, .v2-hero-stat-chips, .v2-hero-trust, .v2-service-link, .v2-process-step, .v2-header-phone, .v2-nav, .v2-hero-card-1, .v2-hero-card-2 { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare02Html = `

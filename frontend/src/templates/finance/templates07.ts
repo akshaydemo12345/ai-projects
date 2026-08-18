@@ -218,6 +218,11 @@ img { max-width: 100%; display: block; object-fit: cover; }
   .serv-grid, .price-grid, .form-row { grid-template-columns: 1fr; }
   .hero-img-shape, .hero-img-bg { width: 100%; max-width: 400px; height: auto; aspect-ratio: 4/5; }
 }
+@media (max-width: 768px) {
+  .serv-grid, .process-grid, .price-grid { grid-template-columns: 1fr !important; }
+  .header-inner, .nav-links, .hero-img-wrap, .stats-grid, .c-row, .footer-bottom { flex-direction: column !important; }
+}
+
 `;
 
 export const finance07Html = `

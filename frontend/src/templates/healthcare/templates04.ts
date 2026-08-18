@@ -1294,6 +1294,11 @@ select.hc4-input {
   .tpl-templates04-1 { color: var(--white); }
   .tpl-templates04-2 { background: var(--white); color: var(--bg-dark); }
   .tpl-templates04-3 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+@media (max-width: 768px) {
+  .hc4-container, .hc4-container, .hc4-stats-grid, .hc4-services-grid, .hc4-team-grid, .hc4-tab-content-panel, .hc4-container, .hc4-blog-grid, .hc4-footer-grid { grid-template-columns: 1fr !important; }
+  .hc4-topbar-left, .hc4-nav-links, .hc4-hero-image-wrapper, .hc4-overlap-banner, .hc4-overlap-left, .hc4-accordion-header { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare04Html = `

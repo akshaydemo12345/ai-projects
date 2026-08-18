@@ -182,6 +182,11 @@ ul, ol { list-style: none; }
   .sec-title h2 { font-size: 2.5rem; }
   .pl10-testi-quote { font-size: 1.75rem; }
 }
+@media (max-width: 768px) {
+  .pl10-services-grid, .pl10-gallery-grid, .pl10-packages { grid-template-columns: 1fr !important; }
+  .pl10-header-inner, .pl10-nav, .pl10-hero, .pl10-footer-links { flex-direction: column !important; }
+}
+
 `;
 
 export const plumber10Html = `

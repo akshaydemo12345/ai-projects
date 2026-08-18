@@ -496,6 +496,11 @@ p { margin: 0 0 20px 0; }
   .re04-team-grid { grid-template-columns: 1fr; padding: 0 20px; }
   .re04-contact-container { flex-direction: column; margin: 0 20px; }
 }
+@media (max-width: 768px) {
+  .re04-checkerboard, .re04-stats-grid, .re04-offer-thumbs, .re04-team-grid { grid-template-columns: 1fr !important; }
+  .re04-offer-card, .re04-team-member { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate04Html = `

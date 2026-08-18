@@ -197,6 +197,11 @@ img { max-width: 100%; display: block; }
     box-shadow: 0 10px 20px color-mix(in srgb, var(--secondary) 30%, transparent);
 }
 
+@media (max-width: 768px) {
+  .stats-grid, .exp-grid, .lead-grid, .office-grid { grid-template-columns: 1fr !important; }
+  .header-top-inner, .header-main, .nav-02, .hero-slide, .insights-header, .ins-main-card, .ins-side-item, .footer-bottom-02 { flex-direction: column !important; }
+}
+
 `;
 
 export const finance02Html = `

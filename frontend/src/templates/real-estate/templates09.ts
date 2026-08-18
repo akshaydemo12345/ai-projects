@@ -304,6 +304,11 @@ p { margin: 0 0 15px 0; }
   .re09-foot-col { text-align: center; }
   .re09-foot-contact div { justify-content: center; }
 }
+@media (max-width: 768px) {
+  .re09-arch-grid, .re09-process-grid, .re09-port-grid, .re09-blog-grid { grid-template-columns: 1fr !important; }
+  .re09-topbar-left, .re09-header-inner, .re09-hero-content, .re09-stats-wrap, .re09-stat-box-light, .re09-stat-box-dark, .re09-about-flex, .re09-contact-box, .re09-partner-grid, .re09-feat-flex, .re09-feat-overlay, .re09-faq-flex, .re09-testi-author { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate09Html = `

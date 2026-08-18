@@ -171,6 +171,11 @@ img { max-width: 100%; border: var(--border-thick); box-shadow: var(--shadow-har
     box-shadow: 0 10px 20px color-mix(in srgb, var(--secondary) 30%, transparent);
 }
 
+@media (max-width: 768px) {
+  .srv-05-grid, .news-grid { grid-template-columns: 1fr !important; }
+  .header-05-inner, .nav-05, .process-wrapper { flex-direction: column !important; }
+}
+
 `;
 
 export const finance05Html = `

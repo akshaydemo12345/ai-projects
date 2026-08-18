@@ -442,6 +442,11 @@ input, select, textarea { font-family: inherit; }
   .tpl-templates03-5 { color: rgba(255,255,255,0.65); }
   .tpl-templates03-6 { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
   .tpl-templates03-7 { border: 2px dashed #22c55e; border-radius: 8px; background: rgba(34,197,94,0.1); color: #166534; }
+@media (max-width: 768px) {
+  .p3-hero-mini-cards, .p3-services-grid, .p3-doctors-grid { grid-template-columns: 1fr !important; }
+  .p3-hero-form, .p3-header-inner, .p3-header-right, .p3-hero-features, .p3-hero-feat, .p3-hero-img-tag, .p3-proc-step, .p3-cta-perks, .p3-cta-perk, .p3-header-phone, .p3-nav { flex-direction: column !important; }
+}
+
 `;
 
 export const healthcare03Html = `

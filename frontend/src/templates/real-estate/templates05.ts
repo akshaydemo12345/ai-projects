@@ -629,6 +629,11 @@ body {
   .re05-team-grid { grid-template-columns: 1fr; }
   .re05-hero-buttons { flex-direction: column; }
 }
+@media (max-width: 768px) {
+  .re05-stats-grid, .re05-properties-grid, .re05-services-grid, .re05-testimonials-grid, .re05-team-grid, .re05-footer-grid { grid-template-columns: 1fr !important; }
+  .re05-nav, .re05-hero, .re05-feature { flex-direction: column !important; }
+}
+
 `;
 
 export const realEstate05Html = `

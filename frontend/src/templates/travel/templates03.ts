@@ -349,6 +349,10 @@ p{color:#475569}
   .cta-form .btn{width:100%;justify-content:center}
   .creative-form{padding:20px}
 }
+@media (max-width: 768px) {
+  .booking-grid, .dest-grid { grid-template-columns: 1fr !important; }
+}
+
 `;
 
 export const travel03Html = `

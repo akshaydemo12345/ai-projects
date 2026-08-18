@@ -1023,4 +1023,9 @@ export const travel02Html = `
   })();
 </script>
 
+@media (max-width: 768px) {
+  .booking-form-wrap, .dest-grid, .tours-grid, .why-grid, .testi-grid, .insights-grid { grid-template-columns: 1fr !important; }
+  .nav-inner, .nav-links, .hero, .carousel-nav, .tour-footer, .foot-bottom { flex-direction: column !important; }
+}
+
 `;

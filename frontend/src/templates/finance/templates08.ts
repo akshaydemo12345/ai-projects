@@ -150,6 +150,11 @@ img { max-width: 100%; display: block; }
   .hero-text h1 { font-size: 2.5rem; }
   .metrics-grid { flex-direction: column; gap: 30px; }
 }
+@media (max-width: 768px) {
+  .feat-grid-08 { grid-template-columns: 1fr !important; }
+  .header-08-inner, .nav-08, .hero-08, .fin-card-header, .ticker-track, .metrics-grid, .p-step, .footer-bottom { flex-direction: column !important; }
+}
+
 `;
 
 export const finance08Html = `

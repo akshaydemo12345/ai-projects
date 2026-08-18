@@ -211,6 +211,11 @@ ul { list-style: none; }
   .news-form { width: 100%; flex-direction: column; padding: 15px; background: transparent; }
   .news-form input { background: #fff; margin-bottom: 15px; padding: 15px; }
 }
+@media (max-width: 768px) {
+  .hero-grid, .feat-grid, .serv-grid, .team-grid, .proj-grid, .process-grid, .test-grid, .footer-grid { grid-template-columns: 1fr !important; }
+  .top-info, .header-inner, .feat-card, .serv-arrow, .marquee-track, .footer-bottom { flex-direction: column !important; }
+}
+
 `;
 
 export const finance03Html = `
