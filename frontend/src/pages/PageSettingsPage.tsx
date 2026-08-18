@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { getImageAverageBrightness, getLogoPreviewContainerClasses } from "@/lib/utils";
+import { compressHtmlAndCssImages } from "@/lib/imageCompressor";
 
 const PageSettingsPage = () => {
   const { id: projectId, pageId } = useParams();
@@ -138,41 +139,50 @@ const PageSettingsPage = () => {
     return updated;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim() || !slug.trim()) {
       toast.error("Name and slug are required.");
       return;
     }
 
     // Update content and styles with new colors
-    const updatedLandingPageContent = updateContentColors(
+    let updatedLandingPageContent = updateContentColors(
       page.landingPageContent,
       primaryColor,
       secondaryColor,
       page.primaryColor,
       page.secondaryColor
     );
-    const updatedLandingPageStyles = updateContentColors(
+    let updatedLandingPageStyles = updateContentColors(
       page.landingPageStyles,
       primaryColor,
       secondaryColor,
       page.primaryColor,
       page.secondaryColor
     );
-    const updatedThankYouPageContent = updateContentColors(
+    let updatedThankYouPageContent = updateContentColors(
       page.thankYouPageContent,
       primaryColor,
       secondaryColor,
       page.primaryColor,
       page.secondaryColor
     );
-    const updatedThankYouPageStyles = updateContentColors(
+    let updatedThankYouPageStyles = updateContentColors(
       page.thankYouPageStyles,
       primaryColor,
       secondaryColor,
       page.primaryColor,
       page.secondaryColor
     );
+
+    try {
+      if (updatedLandingPageContent) updatedLandingPageContent = await compressHtmlAndCssImages(updatedLandingPageContent);
+      if (updatedLandingPageStyles) updatedLandingPageStyles = await compressHtmlAndCssImages(updatedLandingPageStyles);
+      if (updatedThankYouPageContent) updatedThankYouPageContent = await compressHtmlAndCssImages(updatedThankYouPageContent);
+      if (updatedThankYouPageStyles) updatedThankYouPageStyles = await compressHtmlAndCssImages(updatedThankYouPageStyles);
+    } catch (e) {
+      console.warn('Failed to compress settings page content images:', e);
+    }
 
     // If page has a content object with html/fullHtml/styles
     let updatedContentObj = page.content;

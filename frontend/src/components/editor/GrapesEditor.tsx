@@ -17,6 +17,7 @@ import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
 import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { copyToClipboard } from '@/lib/utils';
+import { compressHtmlAndCssImages, compressImageFile } from '@/lib/imageCompressor';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
@@ -30,6 +31,439 @@ const hexToRgbStr = (hex: string) => {
     return `${parseInt(c[0] + c[0], 16)}, ${parseInt(c[1] + c[1], 16)}, ${parseInt(c[2] + c[2], 16)}`;
   }
   return `${parseInt(c.substring(0, 2), 16)}, ${parseInt(c.substring(2, 4), 16)}, ${parseInt(c.substring(4, 6), 16)}`;
+};
+
+export const GOOGLE_FONTS_OPTIONS = [
+  { id: 'inherit', name: 'Default / Inherit' },
+  { id: 'Aboreto', name: 'Aboreto' },
+  { id: 'Abril Fatface', name: 'Abril Fatface' },
+  { id: 'Alex Brush', name: 'Alex Brush' },
+  { id: 'Alfa Slab One', name: 'Alfa Slab One' },
+  { id: 'Amatic SC', name: 'Amatic SC' },
+  { id: 'Anton', name: 'Anton' },
+  { id: 'Archivo', name: 'Archivo' },
+  { id: 'Arimo', name: 'Arimo' },
+  { id: 'Arvo', name: 'Arvo' },
+  { id: 'Asap', name: 'Asap' },
+  { id: 'Barlow', name: 'Barlow' },
+  { id: 'Bebas Neue', name: 'Bebas Neue' },
+  { id: 'Bitter', name: 'Bitter' },
+  { id: 'Bodoni Moda', name: 'Bodoni Moda' },
+  { id: 'Cabin', name: 'Cabin' },
+  { id: 'Caveat', name: 'Caveat' },
+  { id: 'Cinzel', name: 'Cinzel' },
+  { id: 'Comfortaa', name: 'Comfortaa' },
+  { id: 'Cormorant Garamond', name: 'Cormorant Garamond' },
+  { id: 'Crimson Text', name: 'Crimson Text' },
+  { id: 'Dancing Script', name: 'Dancing Script' },
+  { id: 'DM Sans', name: 'DM Sans' },
+  { id: 'DM Serif Display', name: 'DM Serif Display' },
+  { id: 'Dosis', name: 'Dosis' },
+  { id: 'Fira Sans', name: 'Fira Sans' },
+  { id: 'Fjalla One', name: 'Fjalla One' },
+  { id: 'Frank Ruhl Libre', name: 'Frank Ruhl Libre' },
+  { id: 'Geist', name: 'Geist' },
+  { id: 'Great Vibes', name: 'Great Vibes' },
+  { id: 'Inconsolata', name: 'Inconsolata' },
+  { id: 'Inter', name: 'Inter' },
+  { id: 'Josefin Sans', name: 'Josefin Sans' },
+  { id: 'Kanit', name: 'Kanit' },
+  { id: 'Karla', name: 'Karla' },
+  { id: 'Lato', name: 'Lato' },
+  { id: 'Libre Baskerville', name: 'Libre Baskerville' },
+  { id: 'Lora', name: 'Lora' },
+  { id: 'Manrope', name: 'Manrope' },
+  { id: 'Merriweather', name: 'Merriweather' },
+  { id: 'Montserrat', name: 'Montserrat' },
+  { id: 'Mukta', name: 'Mukta' },
+  { id: 'Nanum Gothic', name: 'Nanum Gothic' },
+  { id: 'Noto Sans', name: 'Noto Sans' },
+  { id: 'Noto Serif', name: 'Noto Serif' },
+  { id: 'Nunito', name: 'Nunito' },
+  { id: 'Nunito Sans', name: 'Nunito Sans' },
+  { id: 'Open Sans', name: 'Open Sans' },
+  { id: 'Oswald', name: 'Oswald' },
+  { id: 'Outfit', name: 'Outfit' },
+  { id: 'Pacifico', name: 'Pacifico' },
+  { id: 'Playfair Display', name: 'Playfair Display' },
+  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
+  { id: 'Poppins', name: 'Poppins' },
+  { id: 'Prompt', name: 'Prompt' },
+  { id: 'PT Sans', name: 'PT Sans' },
+  { id: 'PT Serif', name: 'PT Serif' },
+  { id: 'Quicksand', name: 'Quicksand' },
+  { id: 'Raleway', name: 'Raleway' },
+  { id: 'Red Hat Display', name: 'Red Hat Display' },
+  { id: 'Righteous', name: 'Righteous' },
+  { id: 'Roboto', name: 'Roboto' },
+  { id: 'Roboto Condensed', name: 'Roboto Condensed' },
+  { id: 'Roboto Mono', name: 'Roboto Mono' },
+  { id: 'Roboto Slab', name: 'Roboto Slab' },
+  { id: 'Rubik', name: 'Rubik' },
+  { id: 'Sacramento', name: 'Sacramento' },
+  { id: 'Shadows Into Light', name: 'Shadows Into Light' },
+  { id: 'Space Grotesk', name: 'Space Grotesk' },
+  { id: 'Syne', name: 'Syne' },
+  { id: 'Titillium Web', name: 'Titillium Web' },
+  { id: 'Ubuntu', name: 'Ubuntu' },
+  { id: 'Urbanist', name: 'Urbanist' },
+  { id: 'Varela Round', name: 'Varela Round' },
+  { id: 'Volkhov', name: 'Volkhov' },
+  { id: 'Work Sans', name: 'Work Sans' },
+  { id: 'Yantramanav', name: 'Yantramanav' },
+  { id: 'Zilla Slab', name: 'Zilla Slab' },
+  { id: 'sans-serif', name: 'Sans-Serif (System)' },
+  { id: 'serif', name: 'Serif (System)' },
+  { id: 'monospace', name: 'Monospace (System)' }
+];
+
+export const preloadAllGoogleFontsOptions = (ed?: any) => {
+  if (typeof document === 'undefined') return;
+  const fontNames = GOOGLE_FONTS_OPTIONS
+    .map(f => f.id)
+    .filter(id => id && !['inherit', 'sans-serif', 'serif', 'monospace'].includes(id));
+  
+  const chunkSize = 15;
+  for (let i = 0; i < fontNames.length; i += chunkSize) {
+    const chunk = fontNames.slice(i, i + chunkSize);
+    const fontId = `google-fonts-batch-${i}`;
+    const familyStr = chunk.map(name => `family=${encodeURIComponent(name)}`).join('&');
+    const fontUrl = `https://fonts.googleapis.com/css2?${familyStr}&display=swap`;
+
+    if (!document.getElementById(fontId)) {
+      const link = document.createElement('link');
+      link.id = fontId;
+      link.rel = 'stylesheet';
+      link.href = fontUrl;
+      document.head.appendChild(link);
+    }
+
+    if (ed && ed.Canvas) {
+      try {
+        const canvasDoc = ed.Canvas.getDocument();
+        if (canvasDoc && !canvasDoc.getElementById(fontId)) {
+          const link = canvasDoc.createElement('link');
+          link.id = fontId;
+          link.rel = 'stylesheet';
+          link.href = fontUrl;
+          canvasDoc.head.appendChild(link);
+        }
+      } catch (e) {}
+    }
+  }
+};
+
+export const ensureGoogleFontLoaded = (ed: any, fontName: string) => {
+  if (!fontName || fontName === 'inherit' || fontName === 'sans-serif' || fontName === 'serif' || fontName === 'monospace') return;
+  try {
+    const cleanFont = fontName.replace(/['"]/g, '').split(',')[0].trim();
+    if (!cleanFont || cleanFont === 'inherit') return;
+    const fontId = `google-font-${cleanFont.replace(/\s+/g, '-').toLowerCase()}`;
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${cleanFont.replace(/\s+/g, '+')}&display=swap`;
+
+    // Load in main document
+    if (!document.getElementById(fontId)) {
+      const link = document.createElement('link');
+      link.id = fontId;
+      link.rel = 'stylesheet';
+      link.href = fontUrl;
+      document.head.appendChild(link);
+    }
+
+    // Load in iframe canvas document
+    if (ed && ed.Canvas) {
+      const canvasDoc = ed.Canvas.getDocument();
+      if (canvasDoc && !canvasDoc.getElementById(fontId)) {
+        const link = canvasDoc.createElement('link');
+        link.id = fontId;
+        link.rel = 'stylesheet';
+        link.href = fontUrl;
+        canvasDoc.head.appendChild(link);
+      }
+    }
+  } catch (e) {}
+};
+
+export const extractElementComputedStyles = (model: any): Record<string, string> => {
+  const result: Record<string, string> = {};
+  if (!model) return result;
+
+  const el = typeof model.getEl === 'function' ? model.getEl() : null;
+  const attrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+
+  // Parse raw inline style string
+  let parsedInline: Record<string, string> = {};
+  if (typeof attrs.style === 'string' && attrs.style.trim()) {
+    attrs.style.split(';').forEach((rule: string) => {
+      const p = rule.indexOf(':');
+      if (p > 0) {
+        const k = rule.slice(0, p).trim().toLowerCase();
+        let v = rule.slice(p + 1).trim().replace(/\s*!important\s*$/i, '');
+        if (k && v) parsedInline[k] = v;
+      }
+    });
+  }
+
+  if (el && el.ownerDocument && el.ownerDocument.defaultView) {
+    try {
+      const comp = el.ownerDocument.defaultView.getComputedStyle(el);
+
+      const rgbToHex = (colorStr: string) => {
+        if (!colorStr) return '';
+        const trimmed = colorStr.trim();
+        if (trimmed.startsWith('#')) return trimmed;
+        const match = trimmed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (match) {
+          const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+          const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+          const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+          return `#${r}${g}${b}`;
+        }
+        return trimmed;
+      };
+
+      // 1. Colors
+      const col = comp.getPropertyValue('color');
+      if (col && col !== 'rgba(0, 0, 0, 0)' && col !== 'transparent') {
+        result['color'] = rgbToHex(col);
+      }
+
+      let bgCol = comp.getPropertyValue('background-color');
+      if (!bgCol || bgCol === 'rgba(0, 0, 0, 0)' || bgCol === 'transparent') {
+        const bg = comp.getPropertyValue('background');
+        if (bg && bg !== 'none') {
+          const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+\)?)?/i) || bg.match(/#([a-f0-9]{3,8})/i);
+          if (match) {
+            bgCol = match[0];
+          }
+        }
+      }
+      if (bgCol && bgCol !== 'rgba(0, 0, 0, 0)' && bgCol !== 'transparent') {
+        result['background-color'] = rgbToHex(bgCol);
+      }
+
+      let bgImg = comp.getPropertyValue('background-image');
+      if (!bgImg || bgImg === 'none') {
+        const bg = comp.getPropertyValue('background');
+        if (bg && (bg.includes('gradient') || bg.includes('url('))) {
+          const gradMatch = bg.match(/(?:repeating-)?(?:linear|radial|conic)-gradient\([^)]+\)/i) || bg.match(/url\([^)]+\)/i);
+          if (gradMatch) {
+            bgImg = gradMatch[0];
+          } else {
+            bgImg = bg;
+          }
+        }
+      }
+      if (bgImg && bgImg !== 'none') {
+        result['background-image'] = bgImg;
+      }
+
+      // 1b. Image src attributes for <img> elements or elements with src
+      const srcAttr = el.getAttribute?.('src') || (el as any).src;
+      if (srcAttr) {
+        result['src'] = srcAttr;
+      }
+
+      // 2. Typography
+      let ff = comp.getPropertyValue('font-family');
+      if (ff) {
+        ff = ff.replace(/['"]/g, '').split(',')[0].trim();
+        if (ff) result['font-family'] = ff;
+      }
+
+      const fs = comp.getPropertyValue('font-size');
+      if (fs) result['font-size'] = fs;
+
+      const fw = comp.getPropertyValue('font-weight');
+      if (fw) result['font-weight'] = fw;
+
+      const fontSt = comp.getPropertyValue('font-style');
+      if (fontSt) result['font-style'] = fontSt;
+
+      const lh = comp.getPropertyValue('line-height');
+      if (lh && lh !== 'normal') {
+        result['line-height'] = lh;
+      } else if (lh === 'normal' && fs) {
+        const numFs = parseFloat(fs);
+        if (!isNaN(numFs)) {
+          result['line-height'] = (Math.round(numFs * 1.2 * 10) / 10) + 'px';
+        }
+      }
+
+      const ls = comp.getPropertyValue('letter-spacing');
+      if (ls && ls !== 'normal') {
+        result['letter-spacing'] = ls;
+      } else if (ls === 'normal') {
+        result['letter-spacing'] = '0px';
+      }
+
+      let ta = comp.getPropertyValue('text-align');
+      if (ta === 'start') ta = 'left';
+      if (ta === 'end') ta = 'right';
+      if (ta) result['text-align'] = ta;
+
+      const tt = comp.getPropertyValue('text-transform');
+      if (tt) result['text-transform'] = tt;
+
+      const td = comp.getPropertyValue('text-decoration');
+      if (td && td !== 'none') result['text-decoration'] = td;
+
+      // 3. Layout, Positioning & Flex/Grid
+      const display = comp.getPropertyValue('display');
+      if (display) result['display'] = display;
+
+      const position = comp.getPropertyValue('position');
+      if (position) result['position'] = position;
+
+      const zIndex = comp.getPropertyValue('z-index');
+      if (zIndex && zIndex !== 'auto') result['z-index'] = zIndex;
+
+      const flexDir = comp.getPropertyValue('flex-direction');
+      if (flexDir) result['flex-direction'] = flexDir;
+
+      const jc = comp.getPropertyValue('justify-content');
+      if (jc) result['justify-content'] = jc;
+
+      const ai = comp.getPropertyValue('align-items');
+      if (ai) result['align-items'] = ai;
+
+      const gap = comp.getPropertyValue('gap');
+      if (gap && gap !== 'normal') result['gap'] = gap;
+
+      const gridCols = comp.getPropertyValue('grid-template-columns');
+      if (gridCols && gridCols !== 'none') result['grid-template-columns'] = gridCols;
+
+      // 4. Sizing
+      const w = comp.getPropertyValue('width');
+      if (w) result['width'] = w;
+
+      const h = comp.getPropertyValue('height');
+      if (h) result['height'] = h;
+
+      const minW = comp.getPropertyValue('min-width');
+      if (minW) result['min-width'] = minW;
+
+      const maxW = comp.getPropertyValue('max-width');
+      if (maxW) result['max-width'] = maxW;
+
+      const objFit = comp.getPropertyValue('object-fit');
+      if (objFit) result['object-fit'] = objFit;
+
+      const objPos = comp.getPropertyValue('object-position');
+      if (objPos) result['object-position'] = objPos;
+
+      // 5. Padding
+      const pt = comp.getPropertyValue('padding-top');
+      const pr = comp.getPropertyValue('padding-right');
+      const pb = comp.getPropertyValue('padding-bottom');
+      const pl = comp.getPropertyValue('padding-left');
+      if (pt) result['padding-top'] = pt;
+      if (pr) result['padding-right'] = pr;
+      if (pb) result['padding-bottom'] = pb;
+      if (pl) result['padding-left'] = pl;
+      if (pt && pr && pb && pl) {
+        if (pt === pr && pr === pb && pb === pl) {
+          result['padding'] = pt;
+        } else if (pt === pb && pr === pl) {
+          result['padding'] = `${pt} ${pr}`;
+        } else {
+          result['padding'] = `${pt} ${pr} ${pb} ${pl}`;
+        }
+      }
+
+      // 6. Margin
+      const mt = comp.getPropertyValue('margin-top');
+      const mr = comp.getPropertyValue('margin-right');
+      const mb = comp.getPropertyValue('margin-bottom');
+      const ml = comp.getPropertyValue('margin-left');
+      if (mt) result['margin-top'] = mt;
+      if (mr) result['margin-right'] = mr;
+      if (mb) result['margin-bottom'] = mb;
+      if (ml) result['margin-left'] = ml;
+      if (mt && mr && mb && ml) {
+        if (mt === mr && mr === mb && mb === ml) {
+          result['margin'] = mt;
+        } else if (mt === mb && mr === ml) {
+          result['margin'] = `${mt} ${mr}`;
+        } else {
+          result['margin'] = `${mt} ${mr} ${mb} ${ml}`;
+        }
+      }
+
+      // 7. Borders & Effects
+      const border = comp.getPropertyValue('border');
+      if (border && border !== '0px none rgb(0, 0, 0)') result['border'] = border;
+
+      const br = comp.getPropertyValue('border-radius');
+      if (br) result['border-radius'] = br;
+
+      const bw = comp.getPropertyValue('border-width');
+      if (bw) result['border-width'] = bw;
+
+      const bs = comp.getPropertyValue('border-style');
+      if (bs) result['border-style'] = bs;
+
+      const bc = comp.getPropertyValue('border-color');
+      if (bc) result['border-color'] = rgbToHex(bc);
+
+      const boxSh = comp.getPropertyValue('box-shadow');
+      if (boxSh && boxSh !== 'none') result['box-shadow'] = boxSh;
+
+      const opacity = comp.getPropertyValue('opacity');
+      if (opacity && opacity !== '1') result['opacity'] = opacity;
+
+      const overflow = comp.getPropertyValue('overflow');
+      if (overflow && overflow !== 'visible') result['overflow'] = overflow;
+
+      const cursor = comp.getPropertyValue('cursor');
+      if (cursor && cursor !== 'auto' && cursor !== 'default') result['cursor'] = cursor;
+
+      const transform = comp.getPropertyValue('transform');
+      if (transform && transform !== 'none') result['transform'] = transform;
+
+      const transition = comp.getPropertyValue('transition');
+      if (transition && transition !== 'none' && !transition.startsWith('all 0s')) result['transition'] = transition;
+
+    } catch (e) {}
+  }
+
+  // Merge parsed inline style overrides
+  Object.entries(parsedInline).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') {
+      result[k] = v;
+    }
+  });
+
+  // Merge GrapesJS model styles
+  const modelStyle = typeof model.getStyle === 'function' ? model.getStyle() : {};
+  Object.entries(modelStyle).forEach(([k, v]) => {
+    if (typeof v === 'string' && v.trim() !== '') {
+      result[k] = v.trim();
+    }
+  });
+
+  return result;
+};
+
+export const extractMultiElementStyles = (models: any[]): Record<string, string> => {
+  if (!models || models.length === 0) return {};
+  if (models.length === 1) return extractElementComputedStyles(models[0]);
+
+  const maps = models.map(m => extractElementComputedStyles(m));
+  const keys = Array.from(new Set(maps.flatMap(m => Object.keys(m))));
+  const merged: Record<string, string> = {};
+
+  keys.forEach(key => {
+    const firstVal = maps[0][key];
+    const isSame = maps.every(m => m[key] === firstVal);
+    if (isSame && firstVal !== undefined) {
+      merged[key] = firstVal;
+    } else {
+      merged[key] = 'Mixed';
+    }
+  });
+
+  return merged;
 };
 
 const GrapesEditor = () => {
@@ -158,6 +592,7 @@ const GrapesEditor = () => {
   const [siteStatus, setSiteStatus] = useState<'draft' | 'published' | 'republished' | 'unpublished'>('draft');
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
+  const applySequenceRef = useRef(0);
 
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -239,15 +674,33 @@ const GrapesEditor = () => {
   }, [page?.name, page?.metaTitle, page?.metaDescription]);
 
   // Handle content application
-  const applyContentToEditor = (editor: any, forcedMode?: 'landing' | 'thank-you') => {
+  const applyContentToEditor = async (editor: any, forcedMode?: 'landing' | 'thank-you') => {
     const currentPage = pageDataRef.current;
-    if (!editor || !currentPage) return;
+    if (!editor || !currentPage) {
+      setIsCanvasLoading(false);
+      return;
+    }
 
+    const currentSeq = ++applySequenceRef.current;
     const activeMode = forcedMode || mode;
-    console.log('🔄 Applying content to editor. Mode:', activeMode, 'Page ID:', currentPage._id);
+    console.log('🔄 Applying content to editor (Lazy/Async). Mode:', activeMode, 'Page ID:', currentPage._id);
 
     // ── Show loading overlay while content + CSS load ──
     setIsCanvasLoading(true);
+
+    // Safety fallback timer to prevent infinite loader under any network/parsing delay
+    const safetyTimer = setTimeout(() => {
+      if (currentSeq === applySequenceRef.current) {
+        setIsCanvasLoading(false);
+      }
+    }, 4000);
+
+    // Yield control to browser main thread so Editor UI shell (toolbar, sidebars) paints immediately
+    await new Promise(resolve => setTimeout(resolve, 20));
+    if (currentSeq !== applySequenceRef.current) {
+      clearTimeout(safetyTimer);
+      return;
+    }
 
     let dbContent: string = '';
     let dbStyles: string = '';
@@ -287,6 +740,10 @@ const GrapesEditor = () => {
     let extractedScripts: { src: string, innerHTML: string }[] = [];
     let extractedBodyStyle: string | null = null;
     let extractedBodyClass: string | null = null;
+
+    // Yield micro-task before heavy DOM parsing & string cleaning
+    await new Promise(resolve => setTimeout(resolve, 0));
+    if (currentSeq !== applySequenceRef.current) return;
 
     // ── SANITIZE CORRUPTED SWIPER DOM ──
     try {
@@ -435,6 +892,11 @@ const GrapesEditor = () => {
 
       // ─── Map body styles to GrapesJS wrapper for all templates ───
       finalStyles = finalStyles.replace(/(^|\s|\})body\s*\{/g, '$1body, [data-gjs-type="wrapper"], .gjs-dashed {');
+
+      // Strip restrictive !important from generic element selectors (p, span, li, td, etc.) so component-specific styles win
+      finalStyles = finalStyles.replace(/(?:^|\}|\,)\s*(?:p|span|li|td|h[1-6]|div|a|label|input)[^{]*?\{[^}]*?\}/gi, (match) => {
+        return match.replace(/\s*!important/gi, '');
+      });
 
       // ─── Inject template CSS FIRST into canvas <iframe> ───
       // (branding-vars must come AFTER template-styles so it wins the cascade)
@@ -597,21 +1059,21 @@ const GrapesEditor = () => {
                 const allTabs = Array.from(container.querySelectorAll('.tab-item'));
                 const allPanels = Array.from(container.querySelectorAll('.tab-content-box'));
                 const tabIndex = allTabs.indexOf(tabItem);
-                allTabs.forEach(function(t: any) { 
+                allTabs.forEach(function(t) { 
                   t.classList.remove('active'); 
                   t.style.borderBottomColor = 'transparent'; 
                   t.style.color = '#4b5563'; 
                 });
-                allPanels.forEach(function(p: any) { 
+                allPanels.forEach(function(p) { 
                   p.classList.remove('active'); 
                   p.style.display = 'none'; 
                 });
                 tabItem.classList.add('active');
-                (tabItem as any).style.borderBottomColor = 'var(--primary, #6366f1)';
-                (tabItem as any).style.color = 'var(--primary, #6366f1)';
+                tabItem.style.borderBottomColor = 'var(--primary, #6366f1)';
+                tabItem.style.color = 'var(--primary, #6366f1)';
                 if (allPanels[tabIndex]) {
                   allPanels[tabIndex].classList.add('active');
-                  (allPanels[tabIndex] as any).style.display = 'block';
+                  allPanels[tabIndex].style.display = 'block';
                 }
               }
             }
@@ -633,7 +1095,7 @@ const GrapesEditor = () => {
             const docPrev = e.target.closest('.hc7-doc-prev');
             const docNext = e.target.closest('.hc7-doc-next');
             if (docPrev || docNext) {
-              const grid = document.querySelector('.hc7-doctor-grid') as HTMLElement;
+              const grid = document.querySelector('.hc7-doctor-grid');
               if (grid) {
                 const cards = grid.querySelectorAll('.hc7-doctor-card');
                 if (cards.length) {
@@ -647,7 +1109,7 @@ const GrapesEditor = () => {
                     curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
                   }
                   grid.setAttribute('data-index', String(curIdx));
-                  const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+                  const cardWidth = cards[0].offsetWidth;
                   const moveAmount = (cardWidth + 24) * curIdx;
                   grid.style.transform = 'translateX(-' + moveAmount + 'px)';
                 }
@@ -666,7 +1128,7 @@ const GrapesEditor = () => {
                 slides.forEach((s, idx) => { if (s.classList.contains('active')) curSlide = idx; });
                 if (testDot) {
                   const dotsArr = Array.from(dots);
-                  curSlide = dotsArr.indexOf(testDot as any);
+                  curSlide = dotsArr.indexOf(testDot);
                   if (curSlide < 0) curSlide = 0;
                 } else if (testNext) {
                   curSlide = (curSlide + 1) % slides.length;
@@ -901,6 +1363,10 @@ const GrapesEditor = () => {
         return newMatch;
       });
 
+      // Yield control before GrapesJS builds DOM component tree
+      await new Promise(resolve => setTimeout(resolve, 10));
+      if (currentSeq !== applySequenceRef.current) return;
+
       editor.setComponents(dbContent);
 
       // ── Apply Extracted Body Classes & Styles to Wrapper ──
@@ -996,7 +1462,13 @@ const GrapesEditor = () => {
   useEffect(() => {
     if (projectLoading || pageLoading || !page || !project || editorRef.current) return;
 
-    console.log('🚀 Initializing GrapesJS Editor...');
+    let isMounted = true;
+
+    // Asynchronously initialize GrapesJS after the Editor Shell has rendered and painted to DOM
+    const initTimer = setTimeout(() => {
+      if (!isMounted || editorRef.current) return;
+
+      console.log('🚀 Initializing GrapesJS Editor asynchronously after UI Shell mount...');
 
     // ─── Style GrapesJS Modal Header Only ───
     const style = document.createElement('style');
@@ -1121,6 +1593,10 @@ const GrapesEditor = () => {
               }
             });
 
+            if (initialVal && initialVal !== 'transparent') {
+              pickrBtn.style.backgroundColor = initialVal;
+            }
+
             pickr.on('change', (color: Pickr.HSVaColor) => {
               const hex = color ? toHexAny(color.toHEXA().toString()) : '';
               pickrBtn.style.backgroundColor = hex || 'transparent';
@@ -1183,15 +1659,276 @@ const GrapesEditor = () => {
           updateStyle(value, { partial });
         },
 
-        update({ value, el }: any) {
+        update({ value, el, property }: any) {
           if (!el) return;
-          const val = value || '';
+          let raw = '';
+          if (typeof value === 'string') raw = value;
+          else if (value && typeof value.toString === 'function' && typeof value !== 'object') raw = value.toString();
+          else if (property && typeof property.getValue === 'function') raw = property.getValue() || '';
+
+          let val = (raw || '').trim();
+          if (val === 'initial' || val === 'inherit' || val === 'none' || val === 'auto') val = '';
+          const match = val.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+          if (match) {
+            const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+            const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+            const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+            val = `#${r}${g}${b}`;
+          }
+
           if (el.__inputHex) el.__inputHex.value = val;
           if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
           const pickr = el.__pickr;
           if (pickr) {
-            if (val) pickr.setColor(val, true);
-            else pickr.setColor(null, true);
+            if (val && val !== 'transparent') {
+              try { pickr.setColor(val, true); } catch (e) {}
+            } else {
+              try { pickr.setColor(null, true); } catch (e) {}
+            }
+          }
+        }
+      });
+    };
+
+    const visualFontPlugin = (ed: any) => {
+      ed.StyleManager.addType('visual-font-select', {
+        create({ props, change }: any) {
+          preloadAllGoogleFontsOptions(ed);
+
+          const el = document.createElement('div');
+          el.className = 'gjs-visual-font-picker';
+          el.style.position = 'relative';
+          el.style.width = '100%';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'gjs-visual-font-btn';
+          btn.style.width = '100%';
+          btn.style.display = 'flex';
+          btn.style.alignItems = 'center';
+          btn.style.justifyContent = 'space-between';
+          btn.style.backgroundColor = '#ffffff';
+          btn.style.border = '1px solid #d1d5db';
+          btn.style.borderRadius = '4px';
+          btn.style.padding = '4px 8px';
+          btn.style.fontSize = '12px';
+          btn.style.color = '#111827';
+          btn.style.cursor = 'pointer';
+          btn.style.boxSizing = 'border-box';
+          btn.style.outline = 'none';
+
+          const fontLabel = document.createElement('span');
+          fontLabel.className = 'gjs-font-label';
+          fontLabel.style.overflow = 'hidden';
+          fontLabel.style.textOverflow = 'ellipsis';
+          fontLabel.style.whiteSpace = 'nowrap';
+          fontLabel.style.flex = '1';
+          fontLabel.style.textAlign = 'left';
+          fontLabel.style.fontWeight = '500';
+          fontLabel.textContent = 'Default / Inherit';
+
+          const arrow = document.createElement('span');
+          arrow.innerHTML = '&#9660;';
+          arrow.style.fontSize = '8px';
+          arrow.style.color = '#6b7280';
+          arrow.style.marginLeft = '6px';
+
+          btn.appendChild(fontLabel);
+          btn.appendChild(arrow);
+          el.appendChild(btn);
+
+          const dropdown = document.createElement('div');
+          dropdown.className = 'gjs-visual-font-dropdown';
+          dropdown.style.display = 'none';
+          dropdown.style.position = 'absolute';
+          dropdown.style.left = '0';
+          dropdown.style.right = '0';
+          dropdown.style.top = 'calc(100% + 4px)';
+          dropdown.style.maxHeight = '280px';
+          dropdown.style.backgroundColor = '#ffffff';
+          dropdown.style.border = '1px solid #cbd5e1';
+          dropdown.style.borderRadius = '6px';
+          dropdown.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05)';
+          dropdown.style.zIndex = '9999999';
+          dropdown.style.overflow = 'hidden';
+          dropdown.style.flexDirection = 'column';
+
+          const searchWrap = document.createElement('div');
+          searchWrap.style.padding = '6px';
+          searchWrap.style.borderBottom = '1px solid #f1f5f9';
+          searchWrap.style.backgroundColor = '#f8fafc';
+
+          const searchInput = document.createElement('input');
+          searchInput.type = 'text';
+          searchInput.placeholder = 'Search font...';
+          searchInput.style.width = '100%';
+          searchInput.style.padding = '4px 8px';
+          searchInput.style.fontSize = '12px';
+          searchInput.style.border = '1px solid #cbd5e1';
+          searchInput.style.borderRadius = '4px';
+          searchInput.style.outline = 'none';
+          searchInput.style.boxSizing = 'border-box';
+          searchWrap.appendChild(searchInput);
+          dropdown.appendChild(searchWrap);
+
+          const listWrap = document.createElement('div');
+          listWrap.style.overflowY = 'auto';
+          listWrap.style.maxHeight = '220px';
+          listWrap.className = 'custom-scroll';
+          dropdown.appendChild(listWrap);
+
+          let currentValue = props?.value || 'inherit';
+
+          const renderList = (filterText: string = '') => {
+            listWrap.innerHTML = '';
+            const query = filterText.toLowerCase();
+            const filtered = GOOGLE_FONTS_OPTIONS.filter(f =>
+              f.name.toLowerCase().includes(query) || f.id.toLowerCase().includes(query)
+            );
+
+            if (filtered.length === 0) {
+              const empty = document.createElement('div');
+              empty.style.padding = '10px';
+              empty.style.fontSize = '11px';
+              empty.style.color = '#94a3b8';
+              empty.style.textAlign = 'center';
+              empty.textContent = 'No fonts found';
+              listWrap.appendChild(empty);
+              return;
+            }
+
+            filtered.forEach(font => {
+              const item = document.createElement('div');
+              item.style.padding = '6px 10px';
+              item.style.cursor = 'pointer';
+              item.style.borderBottom = '1px solid #f8fafc';
+              item.style.display = 'flex';
+              item.style.flexDirection = 'column';
+              item.style.gap = '2px';
+              item.style.transition = 'background-color 0.15s ease';
+
+              const isSelected = font.id === currentValue || font.name === currentValue;
+              const fontStyle = font.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(font.id)
+                ? `'${font.id}', sans-serif`
+                : font.id;
+
+              if (isSelected) {
+                item.style.backgroundColor = '#eff6ff';
+                item.style.color = '#2563eb';
+              } else {
+                item.style.backgroundColor = '#ffffff';
+                item.style.color = '#1e293b';
+              }
+
+              item.onmouseenter = () => {
+                if (!isSelected) item.style.backgroundColor = '#f1f5f9';
+              };
+              item.onmouseleave = () => {
+                if (!isSelected) item.style.backgroundColor = '#ffffff';
+              };
+
+              const titleRow = document.createElement('div');
+              titleRow.style.display = 'flex';
+              titleRow.style.justifyContent = 'space-between';
+              titleRow.style.alignItems = 'center';
+              titleRow.style.width = '100%';
+
+              const titleSpan = document.createElement('span');
+              titleSpan.style.fontSize = '13px';
+              titleSpan.style.fontWeight = '500';
+              titleSpan.style.fontFamily = fontStyle;
+              titleSpan.textContent = font.name;
+              titleRow.appendChild(titleSpan);
+
+              if (isSelected) {
+                const check = document.createElement('span');
+                check.textContent = '✓';
+                check.style.fontWeight = 'bold';
+                check.style.fontSize = '12px';
+                check.style.color = '#2563eb';
+                titleRow.appendChild(check);
+              }
+
+              item.appendChild(titleRow);
+
+              if (font.id !== 'inherit') {
+                const sampleSpan = document.createElement('span');
+                sampleSpan.style.fontSize = '11px';
+                sampleSpan.style.color = '#64748b';
+                sampleSpan.style.fontFamily = fontStyle;
+                sampleSpan.style.whiteSpace = 'nowrap';
+                sampleSpan.style.overflow = 'hidden';
+                sampleSpan.style.textOverflow = 'ellipsis';
+                sampleSpan.textContent = 'The quick brown fox jumps over the lazy dog';
+                item.appendChild(sampleSpan);
+              }
+
+              item.onclick = (e) => {
+                e.stopPropagation();
+                currentValue = font.id;
+                ensureGoogleFontLoaded(ed, font.id);
+                change({ value: font.id, partial: false });
+                fontLabel.textContent = font.name;
+                btn.style.fontFamily = fontStyle;
+                dropdown.style.display = 'none';
+              };
+
+              listWrap.appendChild(item);
+            });
+          };
+
+          const toggleDropdown = () => {
+            const isHidden = dropdown.style.display === 'none';
+            dropdown.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden) {
+              searchInput.value = '';
+              renderList('');
+              setTimeout(() => searchInput.focus(), 50);
+            }
+          };
+
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            toggleDropdown();
+          };
+
+          searchInput.oninput = (e: any) => {
+            renderList(e.target.value);
+          };
+
+          const handleOutsideClick = (e: MouseEvent) => {
+            if (!el.contains(e.target as Node)) {
+              dropdown.style.display = 'none';
+            }
+          };
+
+          document.addEventListener('click', handleOutsideClick);
+
+          el.appendChild(dropdown);
+          return el;
+        },
+
+        emit({ updateStyle }: any, { value, partial }: any) {
+          updateStyle(value, { partial });
+        },
+
+        update({ value, el, property }: any) {
+          if (!el) return;
+          let val = '';
+          if (typeof value === 'string') val = value;
+          else if (value && typeof value.toString === 'function') val = value.toString();
+          else if (property && typeof property.getValue === 'function') val = property.getValue() || 'inherit';
+          val = (val || 'inherit').trim();
+
+          const fontObj = GOOGLE_FONTS_OPTIONS.find(f => f.id === val || f.name === val) || { id: val, name: val };
+          const btn = el.querySelector('.gjs-visual-font-btn');
+          const fontLabel = btn ? btn.querySelector('.gjs-font-label') : null;
+          if (fontLabel) fontLabel.textContent = fontObj.name;
+          if (btn) {
+            const fontStyle = fontObj.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(fontObj.id)
+              ? `'${fontObj.id}', sans-serif`
+              : fontObj.id;
+            btn.style.fontFamily = fontStyle;
           }
         }
       });
@@ -1924,7 +2661,7 @@ const GrapesEditor = () => {
           allowScripts: true
         }
       },
-      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin, customSwiperPlugin],
+      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin, visualFontPlugin, customSwiperPlugin],
       pluginsOpts: {
         'grapesjs-preset-webpage': {
           blocksBasicOpts: { flexGrid: true },
@@ -1958,17 +2695,18 @@ const GrapesEditor = () => {
       },
       styleManager: {
         appendTo: '#styles-container',
+        showComputed: true,
         sectors: [
           {
             id: 'layout',
             name: 'Layout',
-            open: false,
+            open: true,
             buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content', 'gap', 'row-gap', 'column-gap'],
           },
           {
             id: 'size',
             name: 'Size',
-            open: false,
+            open: true,
             buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height', 'object-fit', 'object-position'],
             properties: [
               {
@@ -1988,7 +2726,7 @@ const GrapesEditor = () => {
           {
             id: 'space',
             name: 'Space',
-            open: false,
+            open: true,
             buildProps: ['padding', 'margin'],
           },
           {
@@ -2014,9 +2752,16 @@ const GrapesEditor = () => {
           {
             id: 'typography',
             name: 'Typography',
-            open: false,
+            open: true,
             buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
             properties: [
+              {
+                property: 'font-family',
+                name: 'Font Family',
+                type: 'visual-font-select',
+                default: 'inherit',
+                options: GOOGLE_FONTS_OPTIONS
+              },
               {
                 property: 'color',
                 type: 'pickr-color',
@@ -2079,7 +2824,7 @@ const GrapesEditor = () => {
           {
             id: 'background',
             name: 'Background',
-            open: false,
+            open: true,
             buildProps: ['background-color', 'background-image', 'background-repeat', 'background-position', 'background-attachment', 'background-size', 'background-clip'],
             properties: [
               {
@@ -2108,7 +2853,7 @@ const GrapesEditor = () => {
           {
             id: 'border',
             name: 'Border',
-            open: false,
+            open: true,
             buildProps: ['border-radius', 'border'],
           },
           {
@@ -2923,18 +3668,9 @@ const GrapesEditor = () => {
       // Restore custom font options in Typography sector
       try {
         const styleManager = editor.StyleManager;
-        const fontProp = styleManager.getProperty('Typography', 'font-family');
+        const fontProp = styleManager.getProperty('typography', 'font-family') || styleManager.getProperty('Typography', 'font-family');
         if (fontProp) {
-          fontProp.set('options', [
-            { id: 'Inter', name: 'Inter' },
-            { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans' },
-            { id: 'Montserrat', name: 'Montserrat' },
-            { id: 'Playfair Display', name: 'Playfair Display' },
-            { id: 'Dancing Script', name: 'Dancing Script' },
-            { id: 'DM Serif Display', name: 'DM Serif Display' },
-            { id: 'Manrope', name: 'Manrope' },
-            { id: 'Outfit', name: 'Outfit' },
-          ]);
+          fontProp.set('options', GOOGLE_FONTS_OPTIONS);
         }
       } catch (e) {
         console.warn('Could not set custom fonts in style manager', e);
@@ -2944,10 +3680,12 @@ const GrapesEditor = () => {
       try {
         const styleManager = editor.StyleManager;
 
+        const sm = styleManager as any;
+
         // Padding and Margin are composite properties
         ['padding', 'margin'].forEach(propName => {
           // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
-          const prop = styleManager.getProperty('Space', propName) as any;
+          const prop = (sm.getProperty('space', propName) || sm.getProperty('dimension', propName) || sm.getProperty(propName)) as any;
           if (prop && typeof prop.getProperties === 'function') {
             prop.getProperties().forEach((p: any) => {
               p.set('min', ''); // Remove the minimum limit
@@ -2957,7 +3695,7 @@ const GrapesEditor = () => {
 
         // Top, Right, Bottom, Left are regular properties under Position
         ['top', 'right', 'bottom', 'left'].forEach(propName => {
-          const prop = styleManager.getProperty('Position', propName);
+          const prop = sm.getProperty('position', propName) || sm.getProperty('extra', propName) || sm.getProperty(propName);
           if (prop) {
             prop.set('min', ''); // Remove the minimum limit
           }
@@ -3010,6 +3748,103 @@ const GrapesEditor = () => {
               transform: none !important;
               visibility: visible !important;
             }
+
+            /* EMPTY COLUMN / CELL PLACEHOLDER (+) VISUAL STYLING */
+            .gjs-cell:empty,
+            .gjs-column:empty,
+            [data-gjs-type="column"]:empty,
+            [data-gjs-type="cell"]:empty,
+            .gjs-row > div:empty,
+            .row > div:empty,
+            div[class*="col-"]:empty,
+            div[class*="cell"]:empty,
+            div[data-gjs-type="column"]:empty,
+            div[data-gjs-type="cell"]:empty,
+            .gjs-empty-column {
+              min-height: 90px !important;
+              min-width: 60px !important;
+              border: 2px dashed #a5b4fc !important;
+              border-radius: 8px !important;
+              background-color: rgba(238, 242, 255, 0.5) !important;
+              position: relative !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+              cursor: pointer !important;
+              transition: all 0.2s ease !important;
+              box-sizing: border-box !important;
+              padding: 12px !important;
+              margin: 4px !important;
+            }
+
+            .gjs-cell:empty:hover,
+            .gjs-column:empty:hover,
+            [data-gjs-type="column"]:empty:hover,
+            [data-gjs-type="cell"]:empty:hover,
+            .gjs-row > div:empty:hover,
+            .row > div:empty:hover,
+            div[class*="col-"]:empty:hover,
+            div[class*="cell"]:empty:hover,
+            div[data-gjs-type="column"]:empty:hover,
+            div[data-gjs-type="cell"]:empty:hover,
+            .gjs-empty-column:hover {
+              border-color: #6366f1 !important;
+              background-color: rgba(238, 242, 255, 0.85) !important;
+              box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15) !important;
+            }
+
+            .gjs-cell:empty::before,
+            .gjs-column:empty::before,
+            [data-gjs-type="column"]:empty::before,
+            [data-gjs-type="cell"]:empty::before,
+            .gjs-row > div:empty::before,
+            .row > div:empty::before,
+            div[class*="col-"]:empty::before,
+            div[class*="cell"]:empty::before,
+            div[data-gjs-type="column"]:empty::before,
+            div[data-gjs-type="cell"]:empty::before,
+            .gjs-empty-column::before {
+              content: '+' !important;
+              font-family: Inter, system-ui, -apple-system, sans-serif !important;
+              font-size: 24px !important;
+              font-weight: 600 !important;
+              color: #6366f1 !important;
+              line-height: 1 !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              width: 36px !important;
+              height: 36px !important;
+              border-radius: 50% !important;
+              background: #ffffff !important;
+              border: 1px solid #c7d2fe !important;
+              box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2) !important;
+              pointer-events: none !important;
+              margin-bottom: 4px !important;
+            }
+
+            .gjs-cell:empty::after,
+            .gjs-column:empty::after,
+            [data-gjs-type="column"]:empty::after,
+            [data-gjs-type="cell"]:empty::after,
+            .gjs-row > div:empty::after,
+            .row > div:empty::after,
+            div[class*="col-"]:empty::after,
+            div[class*="cell"]:empty::after,
+            div[data-gjs-type="column"]:empty::after,
+            div[data-gjs-type="cell"]:empty::after,
+            .gjs-empty-column::after {
+              content: 'Add Component' !important;
+              font-family: Inter, system-ui, -apple-system, sans-serif !important;
+              font-size: 11px !important;
+              font-weight: 600 !important;
+              color: #6366f1 !important;
+              pointer-events: none !important;
+              opacity: 0.85 !important;
+              letter-spacing: 0.5px !important;
+              text-transform: uppercase !important;
+            }
           `;
           canvasDoc.head.appendChild(resetStyle);
         }
@@ -3017,6 +3852,23 @@ const GrapesEditor = () => {
 
       // Configure RTE after load to avoid TS errors in init
       const rte = editor.RichTextEditor;
+      rte.add('link', {
+        icon: '<i class="fa fa-link"></i>',
+        attributes: { title: 'Insert Link' },
+        result: (rte: any) => {
+          const url = prompt('Enter link URL (e.g. https://example.com or #section):', 'https://');
+          if (url && url.trim() !== '' && url !== 'https://') {
+            rte.exec('createLink', url);
+          }
+        }
+      });
+      rte.add('unlink', {
+        icon: '<i class="fa fa-chain-broken"></i>',
+        attributes: { title: 'Remove Link' },
+        result: (rte: any) => {
+          rte.exec('unlink');
+        }
+      });
       rte.add('foreColor', {
         icon: '<i class="fa fa-font" style="color: #6366f1"></i>',
         attributes: { title: 'Text Color' },
@@ -3388,8 +4240,6 @@ const GrapesEditor = () => {
         },
       });
 
-      applyContentToEditor(editor);
-      contentAppliedRef.current = true;
       // Set up custom color picker injection after load
       setTimeout(() => setupEditorEvents(editor), 500);
 
@@ -3398,9 +4248,9 @@ const GrapesEditor = () => {
 
       // 1. BASIC CATEGORY
       bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
-      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:20px; min-height: 50px; justify-content:center;"><div style="flex:1;">1 Column</div></div>' });
-      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Column 2</div></div>' });
-      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:20px; min-height: 50px; gap: 20px;"><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 1</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 2</div><div style="flex:1; padding: 10px; border: 1px dashed #ccc;">Col 3</div></div>' });
+      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; justify-content:center;"><div style="flex:1;" class="gjs-cell"></div></div>' });
+      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
+      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
       bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
       bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
       bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
@@ -3595,7 +4445,7 @@ const GrapesEditor = () => {
         }
       });
 
-      // 5. REGISTER ALL BLOCKS FROM BLOCK_DEFS
+      // Register block definitions
       BLOCK_DEFS.forEach((b: any) => {
         if (!bm.get(b.type)) {
           bm.add(b.type, {
@@ -3637,8 +4487,11 @@ const GrapesEditor = () => {
     editorRef.current = editor;
     setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
     (window as any).editorInstance = editor; // Expose to iframe interaction script
+    }, 50);
 
     return () => {
+      isMounted = false;
+      clearTimeout(initTimer);
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
@@ -3648,19 +4501,1126 @@ const GrapesEditor = () => {
 
   // ─── Setup Editor Events (Tabs & Labels) ───
   const setupEditorEvents = (editor: Editor) => {
-    editor.on('component:selected', (model: any) => {
-      const tagName = model.get('tagName') || 'div';
-      const classes = model.getClasses();
-      const isIcon = tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
+    let isSelectingElement = false;
 
-      const isCustomCode = model.get('type') === 'custom-code' ||
-        classes.includes('gjs-custom-code') ||
-        (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
-
-      // 1. Handle UI Tab Switching
-      if (isCustomCode) {
-        setRightTab('traits');
+    const handleFontCheck = (componentOrModel?: any, propName?: string, propVal?: any) => {
+      let ff = propVal || '';
+      if (!ff && componentOrModel) {
+        if (typeof componentOrModel.getStyle === 'function') {
+          const st = componentOrModel.getStyle();
+          ff = st['font-family'] || '';
+        } else if (componentOrModel.style) {
+          ff = componentOrModel.style['font-family'] || '';
+        }
       }
+      if (ff) {
+        ensureGoogleFontLoaded(editor, ff);
+        const sel = editor.getSelected();
+        if (sel) {
+          const clean = ff.replace(/['"]/g, '').split(',')[0].trim();
+          const generic = ['inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui'];
+          const formattedFont = generic.includes(clean.toLowerCase())
+            ? clean
+            : `'${clean}', sans-serif`;
+
+          const currentSt = sel.getStyle() || {};
+          if (currentSt['font-family'] !== formattedFont) {
+            sel.addStyle({ 'font-family': formattedFont });
+          }
+        }
+      }
+    };
+
+    const handleStylePropertyChange = (propModel: any, val: any) => {
+      if (isSelectingElement || !propModel) return;
+      const pName = typeof propModel.get === 'function' ? propModel.get('property') : (propModel?.id || propModel);
+      if (!pName) return;
+
+      const propValue = (val !== undefined && val !== null)
+        ? val
+        : (typeof propModel.getValue === 'function' ? propModel.getValue() : (propModel?.get ? propModel.get('value') : null));
+
+      if (propValue === undefined || propValue === null) return;
+
+      if (pName === 'font-family') {
+        ensureGoogleFontLoaded(editor, String(propValue));
+        handleFontCheck(null, 'font-family', propValue);
+      }
+
+      const selected = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [editor.getSelected()];
+      if (selected && selected.length) {
+        selected.forEach((comp: any) => {
+          if (comp && typeof comp.addStyle === 'function') {
+            const styleUpdate: Record<string, any> = { [pName]: propValue };
+            const isGrad = typeof propValue === 'string' && propValue.includes('gradient');
+            if (pName === 'background-color') {
+              styleUpdate['background'] = propValue;
+            } else if (pName === 'background-image' || isGrad) {
+              styleUpdate['background-image'] = propValue;
+              styleUpdate['background'] = propValue;
+            }
+            comp.addStyle(styleUpdate);
+            const el = comp.getEl();
+            if (el && el.style) {
+              try {
+                el.style.setProperty(pName, String(propValue), 'important');
+                if (pName === 'background-color' || isGrad) {
+                  el.style.setProperty('background', String(propValue), 'important');
+                }
+                if (isGrad) {
+                  el.style.setProperty('background-image', String(propValue), 'important');
+                }
+              } catch (e) {
+                (el.style as any)[pName] = String(propValue);
+                if (pName === 'background-color' || isGrad) {
+                  (el.style as any)['background'] = String(propValue);
+                }
+                if (isGrad) {
+                  (el.style as any)['background-image'] = String(propValue);
+                }
+              }
+            }
+          }
+        });
+      }
+    };
+
+    editor.on('component:styleUpdate', (component: any) => {
+      handleFontCheck(component);
+      if (component && typeof component.getStyle === 'function') {
+        const styles = component.getStyle() || {};
+        const el = component.getEl();
+        if (el && el.style) {
+          Object.keys(styles).forEach((p) => {
+            const v = styles[p];
+            if (v !== undefined && v !== null && v !== '') {
+              try {
+                el.style.setProperty(p, String(v), 'important');
+              } catch (e) {}
+            }
+          });
+        }
+      }
+    });
+    editor.on('component:update:style', (component: any) => handleFontCheck(component));
+    editor.on('style:property:change', (propModel: any, val: any) => handleStylePropertyChange(propModel, val));
+    editor.on('styleManager:change', (propModel: any, val: any) => handleStylePropertyChange(propModel, val));
+    editor.on('style:change', (propModel: any, val: any) => handleStylePropertyChange(propModel, val));
+
+    // Enable real-time typing updates for StyleManager inputs & instant select updates
+    setTimeout(() => {
+      const stylesContainer = document.getElementById('styles-container');
+      if (stylesContainer) {
+        const handleUIInput = (e: Event) => {
+          const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
+            const row = target.closest('.gjs-sm-property');
+            if (row) {
+              const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
+              const labelText = (labelEl?.textContent || '').trim().toLowerCase();
+              let pName = '';
+              if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') pName = 'background-color';
+              else if (labelText === 'color' || labelText.includes('text color')) pName = 'color';
+              else if (labelText.includes('font size')) pName = 'font-size';
+              else if (labelText.includes('font family')) pName = 'font-family';
+              else if (labelText === 'width') pName = 'width';
+              else if (labelText === 'height') pName = 'height';
+              else if (labelText === 'opacity') pName = 'opacity';
+
+              if (pName) {
+                const val = target.value;
+                const sm = editor.StyleManager as any;
+                let propModel = sm?.getProperty ? sm.getProperty(pName) : null;
+                if (!propModel && sm?.getSectors) {
+                  const sectors = sm.getSectors();
+                  const sectorList = sectors.models || sectors;
+                  if (Array.isArray(sectorList)) {
+                    for (const sec of sectorList) {
+                      if (sec.getProperties) {
+                        const props = sec.getProperties();
+                        const propList = props.models || props;
+                        if (Array.isArray(propList)) {
+                          const found = propList.find((item: any) => {
+                            const name = typeof item.get === 'function' ? item.get('property') : item.id;
+                            return name === pName;
+                          });
+                          if (found) { propModel = found; break; }
+                        }
+                      }
+                    }
+                  }
+                }
+                handleStylePropertyChange(propModel || pName, val);
+              }
+            }
+          }
+        };
+
+        stylesContainer.addEventListener('input', handleUIInput);
+        stylesContainer.addEventListener('change', handleUIInput);
+
+        const handleColorSwatchClick = (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (!target) return;
+
+          // Prevent native browser system color picker inputs from firing
+          const nativeInput = target.closest('input[type="color"]') as HTMLInputElement;
+          if (nativeInput) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+
+          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview]') as HTMLElement;
+          if (swatch) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const parentRow = swatch.closest('.gjs-sm-property') || swatch.parentElement;
+            
+            // 1. Check if Pickr is already attached
+            let pickr = (swatch as any).__pickr || (parentRow as any)?.__pickr || (parentRow as any)?.querySelector?.('.custom-grapesjs-pickr')?.__pickr;
+
+            // 2. If Pickr is not attached, instantiate Pickr dynamically on this swatch
+            if (!pickr) {
+              const hexInput = (parentRow?.querySelector('input[type="text"]') || parentRow?.querySelector('input')) as HTMLInputElement | null;
+              const curVal = hexInput?.value || swatch.style.backgroundColor || '';
+
+              try {
+                pickr = Pickr.create({
+                  el: swatch,
+                  theme: 'monolith',
+                  default: curVal && curVal !== 'transparent' ? curVal : null,
+                  useAsButton: true,
+                  components: {
+                    preview: true,
+                    opacity: true,
+                    hue: true,
+                    interaction: { hex: true, input: true, save: true, clear: true }
+                  }
+                });
+
+                const toHexAny = (hex: string) => {
+                  if (!hex) return '';
+                  if (hex.startsWith('#') && (hex.length === 9 || hex.length === 7)) return hex;
+                  if (hex.startsWith('#') && hex.length === 5) {
+                    const [, r, g, b, a] = hex;
+                    return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+                  }
+                  if (hex.startsWith('#') && hex.length === 4) {
+                    const [, r, g, b] = hex;
+                    return `#${r}${r}${g}${g}${b}${b}`;
+                  }
+                  return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : hex;
+                };
+
+                pickr.on('change', (color: Pickr.HSVaColor) => {
+                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
+                  if (hexInput) {
+                    hexInput.value = hex;
+                    handleUIInput({ target: hexInput } as any);
+                  }
+                });
+
+                pickr.on('save', (color: Pickr.HSVaColor) => {
+                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
+                  if (hexInput) {
+                    hexInput.value = hex;
+                    handleUIInput({ target: hexInput } as any);
+                  }
+                  pickr.hide();
+                });
+
+                pickr.on('clear', () => {
+                  swatch.style.setProperty('background-color', 'transparent', 'important');
+                  if (hexInput) {
+                    hexInput.value = '';
+                    handleUIInput({ target: hexInput } as any);
+                  }
+                  pickr.hide();
+                });
+
+                (swatch as any).__pickr = pickr;
+                if (parentRow) (parentRow as any).__pickr = pickr;
+              } catch (err) {
+                console.error('Failed to create Pickr instance:', err);
+              }
+            }
+
+            // 3. Show Pickr popover
+            if (pickr && typeof pickr.show === 'function') {
+              setTimeout(() => {
+                try {
+                  pickr.show();
+                } catch (err) {}
+              }, 10);
+            }
+          }
+        };
+
+        stylesContainer.addEventListener('click', handleColorSwatchClick);
+      }
+    }, 500);
+
+    // Helper: Render Image Preview Thumbnail + File Upload Button + Media Library controls
+    const setupImageUploadControls = (model: any) => {
+      if (!model) return;
+
+      const tagName = (model.get('tagName') || '').toLowerCase();
+      const attrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+      const isImageComponent = tagName === 'img' || model.get('type') === 'image' || !!attrs.src || !!attrs['data-src'];
+
+      // 1. Inject Image Preview & File Upload Card into #traits-container (Properties Tab)
+      const traitsContainer = document.getElementById('traits-container');
+      if (traitsContainer) {
+        if (!isImageComponent) {
+          const existingCard = traitsContainer.querySelector('.custom-image-upload-card');
+          if (existingCard) existingCard.remove();
+        } else {
+          // Auto-activate Properties tab whenever an image or logo is inspected
+          setRightTab('traits');
+          const currentSrc = attrs.src || model.get('src') || '';
+
+          // ── LOGO DETECTION & RULES ──
+          const classesArr = Array.from(model.getClasses ? model.getClasses() : []);
+          const parentTag = (model.parent ? model.parent().get('tagName') || '' : '').toLowerCase();
+          const isLogoComponent = isImageComponent && (
+            classesArr.some((c: any) => typeof c === 'string' && c.toLowerCase().includes('logo')) ||
+            (attrs.id || '').toLowerCase().includes('logo') ||
+            (attrs.alt || '').toLowerCase().includes('logo') ||
+            (attrs.src || '').toLowerCase().includes('logo') ||
+            ['header', 'nav', 'footer'].includes(parentTag) ||
+            attrs['data-is-logo'] === 'true'
+          );
+
+          // Function to apply layout safety rules to a logo
+          const applyLogoRulesToModel = (targetModel: any, newSrc?: string) => {
+            if (!targetModel) return;
+            const currentSt = targetModel.getStyle() || {};
+            const logoMaxH = currentSt['max-height'] || currentSt['height'] || '48px';
+
+            targetModel.addStyle({
+              'max-height': logoMaxH,
+              'max-width': currentSt['max-width'] || '220px',
+              'width': 'auto',
+              'object-fit': 'contain',
+              'display': 'inline-block'
+            });
+
+            const domEl = targetModel.getEl();
+            if (domEl) {
+              domEl.style.maxHeight = logoMaxH;
+              domEl.style.maxWidth = currentSt['max-width'] || '220px';
+              domEl.style.width = 'auto';
+              domEl.style.objectFit = 'contain';
+            }
+
+            if (newSrc) {
+              targetModel.addAttributes({ src: newSrc });
+              if (typeof targetModel.set === 'function') targetModel.set('src', newSrc);
+              if (domEl) domEl.setAttribute('src', newSrc);
+            }
+          };
+
+          // Function to sync logo across header/footer
+          const syncLogoAcrossPage = (newLogoSrc: string) => {
+            if (typeof editor.DomComponents?.getWrapper !== 'function') return;
+            const wrapper = editor.DomComponents.getWrapper();
+            if (!wrapper) return;
+
+            let count = 0;
+            const allComps = wrapper.find('*');
+            allComps.forEach((comp: any) => {
+              const tag = (comp.get('tagName') || '').toLowerCase();
+              const cAttrs = comp.getAttributes() || {};
+              const cClasses = comp.getClasses() || [];
+              const pTag = (comp.parent() ? comp.parent().get('tagName') || '' : '').toLowerCase();
+
+              const isTargetLogo = tag === 'img' && (
+                cClasses.some((c: any) => typeof c === 'string' && c.toLowerCase().includes('logo')) ||
+                (cAttrs.id || '').toLowerCase().includes('logo') ||
+                (cAttrs.alt || '').toLowerCase().includes('logo') ||
+                (cAttrs.src || '').toLowerCase().includes('logo') ||
+                ['header', 'nav', 'footer'].includes(pTag)
+              );
+
+              if (isTargetLogo) {
+                applyLogoRulesToModel(comp, newLogoSrc);
+                count++;
+              }
+            });
+
+            toast.success(`Logo synced across ${count} page instance(s)!`, { id: 'logo-sync' });
+          };
+
+          let card = traitsContainer.querySelector('.custom-image-upload-card') as HTMLElement;
+          if (!card) {
+            card = document.createElement('div');
+            card.className = 'custom-image-upload-card';
+            card.style.cssText = `
+              margin-bottom: 16px;
+              padding: 14px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            `;
+            traitsContainer.insertBefore(card, traitsContainer.firstChild);
+          }
+
+          // Extract current attributes & styles
+          const currentAlt = attrs.alt || '';
+          const currentLink = attrs.href || '';
+          const isNewTab = attrs.target === '_blank';
+          const styleMap = typeof model.getStyle === 'function' ? model.getStyle() : {};
+          const currentRadius = styleMap['border-radius'] || styleMap['borderRadius'] || '';
+          const currentFit = styleMap['object-fit'] || styleMap['objectFit'] || (isLogoComponent ? 'contain' : 'cover');
+          const currentLogoMaxH = styleMap['max-height'] || styleMap['height'] || '48px';
+          const currentAlign = styleMap['margin-left'] === 'auto' && styleMap['margin-right'] === 'auto'
+            ? 'center'
+            : (styleMap['margin-left'] === 'auto' ? 'right' : 'left');
+
+          card.innerHTML = `
+            <!-- ── ELEMENTOR INSPECTOR HEADER ── -->
+            <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%); margin: -14px -14px 12px -14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f5a; border-radius: 12px 12px 0 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 22px; height: 22px; background: #e11d48; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 12px;">E</div>
+                <span style="font-size: 12px; font-weight: 700; color: #ffffff; letter-spacing: 0.02em;">
+                  ${isLogoComponent ? 'Brand Logo Control' : 'Image Control'}
+                </span>
+              </div>
+              <span style="font-size: 10px; font-weight: 600; color: #fda4af; background: rgba(225, 29, 72, 0.2); border: 1px solid rgba(225, 29, 72, 0.4); padding: 2px 8px; border-radius: 12px;">
+                Elementor
+              </span>
+            </div>
+
+            <!-- ── CHOOSE IMAGE PREVIEW BOX (ELEMENTOR STYLE) ── -->
+            <div class="elementor-img-choose-container" style="position: relative;">
+              <div class="elementor-choose-img-box" style="
+                position: relative;
+                width: 100%;
+                height: 135px;
+                background: #ffffff;
+                border: 2px dashed #cbd5e1;
+                border-radius: 10px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-image: linear-gradient(45deg, #f1f5f9 25%, transparent 25%), linear-gradient(-45deg, #f1f5f9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f1f5f9 75%), linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+                background-size: 16px 16px;
+                background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+              ">
+                ${currentSrc
+                  ? `<img src="${currentSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`
+                  : `<div style="text-align: center; color: #64748b;">
+                      <svg style="margin: 0 auto 6px auto; width: 28px; height: 28px; color: #e11d48;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <div style="font-size: 12px; font-weight: 600; color: #334155;">Click to Choose Image</div>
+                     </div>`
+                }
+              </div>
+
+              <!-- Elementor Choose Image Action Bar -->
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <label style="
+                  flex: 1;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+                  padding: 8px 12px;
+                  background: #e11d48;
+                  color: #ffffff;
+                  font-size: 12px;
+                  font-weight: 700;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  box-shadow: 0 2px 4px rgba(225, 29, 72, 0.25);
+                ">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span>Choose Image</span>
+                  <input type="file" class="card-file-input" accept="image/*" style="display: none;" />
+                </label>
+
+                <button type="button" class="card-media-btn" style="
+                  padding: 8px 12px;
+                  background: #ffffff;
+                  color: #334155;
+                  border: 1px solid #cbd5e1;
+                  font-size: 12px;
+                  font-weight: 600;
+                  border-radius: 8px;
+                  cursor: pointer;
+                ">
+                  🖼️ Media Library
+                </button>
+              </div>
+            </div>
+
+            <!-- ── ELEMENTOR SEGMENTED TAB SWITCHER (CONTENT vs STYLE) ── -->
+            <div style="display: flex; border: 1px solid #e2e8f0; background: #f1f5f9; padding: 3px; border-radius: 8px; margin-top: 4px;">
+              <button type="button" class="elm-tab-btn active" data-tab="content" style="flex: 1; padding: 7px; font-size: 11px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: #ffffff; color: #e11d48; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s;">
+                📝 Content
+              </button>
+              <button type="button" class="elm-tab-btn" data-tab="style" style="flex: 1; padding: 7px; font-size: 11px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: transparent; color: #64748b; transition: all 0.2s;">
+                🎨 Style & Effects
+              </button>
+            </div>
+
+            <!-- ── CONTENT TAB PANEL ── -->
+            <div class="elm-panel-content" style="display: flex; flex-direction: column; gap: 12px;">
+              
+              <!-- Image Alignment -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Alignment</label>
+                <div style="display: flex; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                  <button type="button" class="align-btn" data-align="left" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='left' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='left' ? '#e11d48' : '#64748b'}; font-weight: 700;">Left</button>
+                  <button type="button" class="align-btn" data-align="center" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='center' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='center' ? '#e11d48' : '#64748b'}; font-weight: 700;">Center</button>
+                  <button type="button" class="align-btn" data-align="right" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='right' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='right' ? '#e11d48' : '#64748b'}; font-weight: 700;">Right</button>
+                </div>
+              </div>
+
+              <!-- Alt Text -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Alt Text (SEO)</label>
+                <input type="text" class="card-alt-input" value="${currentAlt || (isLogoComponent ? 'Brand Logo' : '')}" placeholder="Describe image for SEO..." style="padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #ffffff; color: #0f172a;" />
+              </div>
+
+              <!-- Link Destination -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Link URL (href)</label>
+                <input type="text" class="card-link-input" value="${currentLink || (isLogoComponent ? '/' : '')}" placeholder="https://example.com" style="padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #ffffff; color: #0f172a;" />
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569; cursor: pointer; margin-top: 2px;">
+                  <input type="checkbox" class="card-target-checkbox" ${isNewTab ? 'checked' : ''} />
+                  <span>Open link in new window (_blank)</span>
+                </label>
+              </div>
+
+              ${isLogoComponent ? `
+                <button type="button" class="card-logo-sync-btn" style="padding: 8px; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer;">
+                  🔄 Sync Logo Across Header & Footer
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- ── STYLE & HOVER TAB PANEL ── -->
+            <div class="elm-panel-style" style="display: none; flex-direction: column; gap: 12px;">
+              
+              <!-- Object Fit -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Object Fit</label>
+                <select class="card-fit-select" style="padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #ffffff; color: #0f172a;">
+                  <option value="cover" ${currentFit==='cover' ? 'selected' : ''}>Cover (Crop & Fill Box)</option>
+                  <option value="contain" ${currentFit==='contain' ? 'selected' : ''}>Contain (Fit Full Image)</option>
+                  <option value="fill" ${currentFit==='fill' ? 'selected' : ''}>Fill (Stretch)</option>
+                  <option value="none" ${currentFit==='none' ? 'selected' : ''}>Original Size</option>
+                </select>
+              </div>
+
+              <!-- Border Radius -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Border Radius</label>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" class="radius-btn" data-radius="0px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='0px'||!currentRadius?'#e11d48':'#fff'}; color: ${currentRadius==='0px'||!currentRadius?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">0px</button>
+                  <button type="button" class="radius-btn" data-radius="8px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='8px'?'#e11d48':'#fff'}; color: ${currentRadius==='8px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">8px</button>
+                  <button type="button" class="radius-btn" data-radius="16px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='16px'?'#e11d48':'#fff'}; color: ${currentRadius==='16px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">16px</button>
+                  <button type="button" class="radius-btn" data-radius="50%" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='50%'||currentRadius==='9999px'?'#e11d48':'#fff'}; color: ${currentRadius==='50%'||currentRadius==='9999px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">Circle</button>
+                </div>
+              </div>
+
+              <!-- Hover Animation Effect -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Hover Animation</label>
+                <select class="card-hover-effect-select" style="padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #ffffff; color: #0f172a;">
+                  <option value="none">None</option>
+                  <option value="zoom-in">Zoom In (Scale Up)</option>
+                  <option value="float-up">Float Up (-6px Y)</option>
+                  <option value="fade-opacity">Fade Opacity</option>
+                </select>
+              </div>
+
+            </div>
+          `;
+
+          // Elementor Tab Switcher Listener
+          const tabBtns = card.querySelectorAll('.elm-tab-btn');
+          const panelContent = card.querySelector('.elm-panel-content') as HTMLElement;
+          const panelStyle = card.querySelector('.elm-panel-style') as HTMLElement;
+
+          tabBtns.forEach((btn) => {
+            (btn as HTMLButtonElement).onclick = () => {
+              const tab = (btn as HTMLElement).dataset.tab;
+              tabBtns.forEach((b) => {
+                const isAct = (b as HTMLElement).dataset.tab === tab;
+                (b as HTMLElement).style.background = isAct ? '#ffffff' : 'transparent';
+                (b as HTMLElement).style.color = isAct ? '#e11d48' : '#64748b';
+                (b as HTMLElement).style.boxShadow = isAct ? '0 1px 3px rgba(0,0,0,0.08)' : 'none';
+              });
+
+              if (tab === 'content') {
+                if (panelContent) panelContent.style.display = 'flex';
+                if (panelStyle) panelStyle.style.display = 'none';
+              } else {
+                if (panelContent) panelContent.style.display = 'none';
+                if (panelStyle) panelStyle.style.display = 'flex';
+              }
+            };
+          });
+
+          // Alignment listener
+          const alignBtns = card.querySelectorAll('.align-btn');
+          alignBtns.forEach((btn) => {
+            (btn as HTMLButtonElement).onclick = () => {
+              const align = (btn as HTMLElement).dataset.align || 'left';
+              if (align === 'center') {
+                model.addStyle({ 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto' });
+              } else if (align === 'right') {
+                model.addStyle({ 'display': 'block', 'margin-left': 'auto', 'margin-right': '0' });
+              } else {
+                model.addStyle({ 'display': 'inline-block', 'margin-left': '0', 'margin-right': 'auto' });
+              }
+              setupImageUploadControls(model);
+            };
+          });
+
+          // Hover animation listener
+          const hoverSelect = card.querySelector('.card-hover-effect-select') as HTMLSelectElement;
+          if (hoverSelect) {
+            hoverSelect.onchange = () => {
+              const val = hoverSelect.value;
+              const domEl = model.getEl();
+              if (domEl) {
+                domEl.classList.remove('elm-hover-zoom', 'elm-hover-float', 'elm-hover-fade');
+                if (val === 'zoom-in') domEl.classList.add('elm-hover-zoom');
+                if (val === 'float-up') domEl.classList.add('elm-hover-float');
+                if (val === 'fade-opacity') domEl.classList.add('elm-hover-fade');
+              }
+            };
+          }
+
+          // File input listener (Instant Local Render + Background Compression)
+          const fileInp = card.querySelector('.card-file-input') as HTMLInputElement;
+          if (fileInp) {
+            fileInp.onchange = (e: any) => {
+              const file = e.target?.files?.[0];
+              if (file) {
+                // 1. INSTANT LOCAL RENDER (0ms delay)
+                const tempLocalUrl = URL.createObjectURL(file);
+
+                if (isLogoComponent) {
+                  applyLogoRulesToModel(model, tempLocalUrl);
+                } else {
+                  model.addAttributes({ src: tempLocalUrl });
+                  if (typeof model.set === 'function') model.set('src', tempLocalUrl);
+                  const domEl = model.getEl();
+                  if (domEl) domEl.setAttribute('src', tempLocalUrl);
+                }
+
+                // Update thumbnail preview instantly
+                const chooseBox = card.querySelector('.elementor-choose-img-box') as HTMLElement;
+                if (chooseBox) {
+                  chooseBox.innerHTML = `<img src="${tempLocalUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`;
+                }
+
+                // Sync text input box in traits
+                const srcInput = traitsContainer.querySelector('input[name="src"], input[data-trait="src"]') as HTMLInputElement;
+                if (srcInput) srcInput.value = tempLocalUrl;
+
+                toast.success(`${isLogoComponent ? 'Logo' : 'Image'} updated!`, { id: 'img-upload', duration: 1500 });
+
+                // 2. ASYNCHRONOUS BACKGROUND COMPRESSION & OPTIMIZATION
+                setTimeout(async () => {
+                  try {
+                    const compressedDataUrl = await compressImageFile(file);
+
+                    if (isLogoComponent) {
+                      applyLogoRulesToModel(model, compressedDataUrl);
+                    } else {
+                      model.addAttributes({ src: compressedDataUrl });
+                      if (typeof model.set === 'function') model.set('src', compressedDataUrl);
+                      const domEl = model.getEl();
+                      if (domEl) domEl.setAttribute('src', compressedDataUrl);
+                    }
+
+                    if (chooseBox) {
+                      chooseBox.innerHTML = `<img src="${compressedDataUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`;
+                    }
+                    if (srcInput) srcInput.value = compressedDataUrl;
+
+                    // Clean up blob URL
+                    setTimeout(() => URL.revokeObjectURL(tempLocalUrl), 1000);
+                  } catch (err) {
+                    console.error('Background compression error:', err);
+                  }
+                }, 20);
+              }
+            };
+          }
+
+          // Logo sync button listener
+          const syncBtn = card.querySelector('.card-logo-sync-btn') as HTMLButtonElement;
+          if (syncBtn) {
+            syncBtn.onclick = () => {
+              const srcToSync = attrs.src || model.get('src') || '';
+              if (srcToSync) {
+                syncLogoAcrossPage(srcToSync);
+              }
+            };
+          }
+
+          // Logo height preset buttons listener
+          const logoHeightBtns = card.querySelectorAll('.logo-height-btn');
+          logoHeightBtns.forEach((btn) => {
+            (btn as HTMLButtonElement).onclick = () => {
+              const h = (btn as HTMLElement).dataset.height || '48px';
+              model.addStyle({ 'max-height': h, 'height': 'auto' });
+              const domEl = model.getEl();
+              if (domEl) {
+                domEl.style.maxHeight = h;
+                domEl.style.height = 'auto';
+              }
+              setupImageUploadControls(model);
+            };
+          });
+
+          // Media Library button listener
+          const mediaBtn = card.querySelector('.card-media-btn') as HTMLButtonElement;
+          if (mediaBtn) {
+            mediaBtn.onclick = () => {
+              if (editor.AssetManager && typeof editor.AssetManager.open === 'function') {
+                editor.AssetManager.open({
+                  select(asset: any) {
+                    const src = typeof asset === 'string' ? asset : (asset.get ? asset.get('src') : asset.src);
+                    if (src) {
+                      model.addAttributes({ src });
+                      if (typeof model.set === 'function') model.set('src', src);
+                      const domEl = model.getEl();
+                      if (domEl) domEl.setAttribute('src', src);
+                      setupImageUploadControls(model);
+                    }
+                    editor.AssetManager.close();
+                  }
+                });
+              }
+            };
+          }
+
+          // Alt Text listener
+          const altInp = card.querySelector('.card-alt-input') as HTMLInputElement;
+          if (altInp) {
+            const handleAltChange = () => {
+              const val = altInp.value;
+              model.addAttributes({ alt: val });
+              const domEl = model.getEl();
+              if (domEl) domEl.setAttribute('alt', val);
+            };
+            altInp.oninput = handleAltChange;
+            altInp.onchange = handleAltChange;
+          }
+
+          // Link URL listener
+          const linkInp = card.querySelector('.card-link-input') as HTMLInputElement;
+          if (linkInp) {
+            const handleLinkChange = () => {
+              const val = linkInp.value;
+              model.addAttributes({ href: val });
+              const domEl = model.getEl();
+              if (domEl) domEl.setAttribute('href', val);
+            };
+            linkInp.oninput = handleLinkChange;
+            linkInp.onchange = handleLinkChange;
+          }
+
+          // Target Checkbox listener
+          const targetChk = card.querySelector('.card-target-checkbox') as HTMLInputElement;
+          if (targetChk) {
+            targetChk.onchange = () => {
+              const val = targetChk.checked ? '_blank' : '_self';
+              model.addAttributes({ target: val });
+              const domEl = model.getEl();
+              if (domEl) domEl.setAttribute('target', val);
+            };
+          }
+
+          // Border Radius buttons listener
+          const radiusBtns = card.querySelectorAll('.radius-btn');
+          radiusBtns.forEach((btn) => {
+            (btn as HTMLButtonElement).onclick = () => {
+              const rad = (btn as HTMLElement).dataset.radius || '0px';
+              model.addStyle({ 'border-radius': rad });
+              const domEl = model.getEl();
+              if (domEl) domEl.style.borderRadius = rad;
+
+              // Re-render card to update active button styles
+              setupImageUploadControls(model);
+            };
+          });
+
+          // Object Fit listener
+          const fitSelect = card.querySelector('.card-fit-select') as HTMLSelectElement;
+          if (fitSelect) {
+            fitSelect.onchange = () => {
+              const fit = fitSelect.value;
+              model.addStyle({ 'object-fit': fit });
+              const domEl = model.getEl();
+              if (domEl) domEl.style.objectFit = fit;
+            };
+          }
+        }
+      }
+
+      // 2. Inject Upload Button into Background Image property row in #styles-container
+      const stylesContainer = document.getElementById('styles-container');
+      if (stylesContainer) {
+        const bgRows = Array.from(stylesContainer.querySelectorAll('.gjs-sm-property')).filter((row) => {
+          const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
+          const text = (labelEl?.textContent || '').toLowerCase();
+          return text.includes('background image') || text === 'background-image';
+        });
+
+        bgRows.forEach((row) => {
+          let bgUploadBtn = row.querySelector('.custom-bg-upload-btn') as HTMLElement;
+          if (!bgUploadBtn) {
+            bgUploadBtn = document.createElement('label');
+            bgUploadBtn.className = 'custom-bg-upload-btn';
+            bgUploadBtn.style.cssText = `
+              display: inline-flex;
+              align-items: center;
+              gap: 5px;
+              margin-top: 6px;
+              padding: 6px 10px;
+              background: #e0e7ff;
+              color: #4338ca;
+              font-size: 11px;
+              font-weight: 600;
+              border-radius: 6px;
+              cursor: pointer;
+              border: 1px solid #c7d2fe;
+            `;
+            bgUploadBtn.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Background Image</span>
+              <input type="file" class="bg-file-input" accept="image/*" style="display: none;" />
+            `;
+            row.appendChild(bgUploadBtn);
+
+            const bgFileInp = bgUploadBtn.querySelector('.bg-file-input') as HTMLInputElement;
+            if (bgFileInp) {
+              bgFileInp.onchange = (e: any) => {
+                const file = e.target?.files?.[0];
+                if (file) {
+                  // 1. INSTANT LOCAL RENDER (0ms delay)
+                  const tempLocalUrl = URL.createObjectURL(file);
+                  const localBgVal = `url("${tempLocalUrl}")`;
+                  model.addStyle({ 'background-image': localBgVal });
+                  const domEl = model.getEl();
+                  if (domEl) domEl.style.backgroundImage = localBgVal;
+
+                  // Sync input field in row
+                  const inp = row.querySelector('input') as HTMLInputElement;
+                  if (inp) inp.value = localBgVal;
+
+                  toast.success('Background image updated!', { id: 'bg-upload', duration: 1500 });
+
+                  // 2. ASYNCHRONOUS BACKGROUND COMPRESSION & OPTIMIZATION
+                  setTimeout(async () => {
+                    try {
+                      const compressedDataUrl = await compressImageFile(file);
+                      const finalBgVal = `url("${compressedDataUrl}")`;
+                      model.addStyle({ 'background-image': finalBgVal });
+                      if (domEl) domEl.style.backgroundImage = finalBgVal;
+                      if (inp) inp.value = finalBgVal;
+
+                      // Clean up temporary blob URL
+                      setTimeout(() => URL.revokeObjectURL(tempLocalUrl), 1000);
+                    } catch (err) {
+                      console.error('Background compression error:', err);
+                    }
+                  }, 20);
+                }
+              };
+            }
+          }
+        });
+      }
+    };
+
+    editor.on('component:selected', (model: any) => {
+      isSelectingElement = true;
+      try {
+        // 1. Auto-open right sidebar on element selection
+        setIsRightSidebarOpen(true);
+
+        const tagName = (model.get('tagName') || 'div').toLowerCase();
+        const classesArr = Array.from(model.getClasses ? model.getClasses() : []);
+        const attrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+        const parentTag = (model.parent ? model.parent().get('tagName') || '' : '').toLowerCase();
+
+        const isCustomCode = model.get('type') === 'custom-code' ||
+          classesArr.includes('gjs-custom-code') ||
+          (attrs['data-gjs-type'] === 'custom-code');
+
+        const isLink = tagName === 'a' || model.get('type') === 'link';
+        const isImage = tagName === 'img' || model.get('type') === 'image' || !!attrs.src || !!attrs['data-src'] || (typeof model.is === 'function' && model.is('image'));
+        const isLogoComponent = isImage ||
+          classesArr.some((c: any) => typeof c === 'string' && c.toLowerCase().includes('logo')) ||
+          (attrs.id || '').toLowerCase().includes('logo') ||
+          (attrs.alt || '').toLowerCase().includes('logo') ||
+          (attrs.src || '').toLowerCase().includes('logo') ||
+          ['header', 'nav', 'footer'].includes(parentTag) ||
+          attrs['data-is-logo'] === 'true';
+
+        // 2. Handle UI Tab Switching (Image, Logo, Link, and Custom Code elements ALWAYS activate the Properties/Traits tab)
+        if (isCustomCode || isLink || isImage || isLogoComponent) {
+          setRightTab('traits');
+        }
+
+        // Ensure image tags have src/alt traits registered so image URL appears under Properties
+        if (isImage || isLogoComponent) {
+          try {
+            const currentTraits = model.get('traits');
+            const traitList = currentTraits?.models || currentTraits || [];
+            const hasSrc = Array.isArray(traitList) && traitList.some((t: any) => {
+              const name = typeof t.get === 'function' ? t.get('name') : t.name;
+              return name === 'src';
+            });
+            if (!hasSrc && typeof model.addTrait === 'function') {
+              model.addTrait([
+                { type: 'text', label: 'Image Source (src)', name: 'src', changeProp: false },
+                { type: 'text', label: 'Alt Text', name: 'alt', changeProp: false }
+              ]);
+            }
+          } catch (e) {}
+        }
+
+        // Trigger Image Preview Thumbnail + File Upload Controls
+        setTimeout(() => setupImageUploadControls(model), 60);
+
+        // 3. Extract & Hydrate Applied Styles across selected component(s)
+        const selectedAll = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [model];
+        let computedMap: Record<string, string> = {};
+
+        try {
+          computedMap = extractMultiElementStyles(selectedAll);
+
+          // Dynamically load font if font-family is active
+          if (computedMap['font-family'] && computedMap['font-family'] !== 'Mixed') {
+            ensureGoogleFontLoaded(editor, computedMap['font-family']);
+            if (editor.StyleManager) {
+              try {
+                const ffProp = editor.StyleManager.getProperty('typography', 'font-family') || editor.StyleManager.getProperty('Typography', 'font-family');
+                if (ffProp && typeof ffProp.get === 'function') {
+                  const opts = ffProp.get('options') || [];
+                  const targetFont = computedMap['font-family'];
+                  const exists = opts.some((o: any) => o.id === targetFont || o.name === targetFont);
+                  if (!exists) {
+                    ffProp.set('options', [...opts, { id: targetFont, name: targetFont }]);
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        } catch (e) {}
+
+        // 4. Ensure StyleManager sectors are open, render target, then push computedMap applied values so inputs show applied values
+        if (editor.StyleManager) {
+          try {
+            const sectors = editor.StyleManager.getSectors();
+            if (sectors && sectors.models) {
+              sectors.models.forEach((sector: any) => {
+                sector.set('open', true);
+              });
+            }
+
+            if (typeof editor.StyleManager.select === 'function') {
+              editor.StyleManager.select(model);
+            } else if (typeof editor.StyleManager.render === 'function') {
+              editor.StyleManager.render();
+            }
+
+            // Push computedMap values to property models AFTER editor.StyleManager.select(model)
+            // Use { silent: true } to prevent recursive styleManager:change / component:selected event loops
+            const sm = editor.StyleManager as any;
+
+            const findSMProperty = (propertyName: string) => {
+              let p = sm.getProperty ? sm.getProperty(propertyName) : null;
+              if (p) return p;
+              if (sm.getSectors) {
+                const sectors = sm.getSectors();
+                const sectorList = sectors.models || sectors;
+                if (Array.isArray(sectorList)) {
+                  for (const sec of sectorList) {
+                    if (sec.getProperties) {
+                      const props = sec.getProperties();
+                      const propList = props.models || props;
+                      if (Array.isArray(propList)) {
+                        const found = propList.find((item: any) => {
+                          const name = typeof item.get === 'function' ? item.get('property') : item.id;
+                          return name === propertyName;
+                        });
+                        if (found) return found;
+                      }
+                    }
+                  }
+                }
+              }
+              return null;
+            };
+
+            const applyComputedMapToUI = () => {
+              Object.keys(computedMap).forEach((pName) => {
+                const val = computedMap[pName];
+                if (val && val !== 'Mixed') {
+                  const prop = findSMProperty(pName);
+                  if (prop && typeof prop.set === 'function') {
+                    prop.set('value', val, { silent: true });
+                    if (prop.view && typeof prop.view.update === 'function') {
+                      try { prop.view.update(); } catch (e) {}
+                    }
+
+                    if (pName === 'color' || pName === 'background-color' || pName === 'border-color') {
+                      try {
+                        const viewEl = prop.view?.el;
+                        if (viewEl) {
+                          const colorInput = viewEl.querySelector('input[type="color"], input.gjs-field-color-picker, .gjs-field-color-picker input');
+                          if (colorInput) {
+                            (colorInput as HTMLInputElement).value = val;
+                          }
+                          const colorPreview = viewEl.querySelector('.gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview]');
+                          if (colorPreview) {
+                            (colorPreview as HTMLElement).style.backgroundColor = val;
+                          }
+                        }
+                      } catch (e) {}
+                    }
+                  }
+                }
+              });
+
+              // Direct DOM hydration into #styles-container DOM elements
+              const container = document.getElementById('styles-container');
+              if (container) {
+                const rows = container.querySelectorAll('.gjs-sm-property');
+                rows.forEach((row) => {
+                  const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
+                  const labelText = (labelEl?.textContent || '').trim().toLowerCase();
+
+                  let targetVal = '';
+                  if (labelText === 'color' || labelText.includes('text color')) {
+                    targetVal = computedMap['color'] || '';
+                  } else if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') {
+                    targetVal = computedMap['background-color'] || '';
+                  } else if (labelText.includes('background image') || labelText === 'background-image') {
+                    targetVal = computedMap['background-image'] || '';
+                  } else if (labelText.includes('font family')) {
+                    targetVal = computedMap['font-family'] || '';
+                  } else if (labelText.includes('font size')) {
+                    targetVal = computedMap['font-size'] || '';
+                  } else if (labelText.includes('font weight')) {
+                    targetVal = computedMap['font-weight'] || '';
+                  } else if (labelText.includes('line height')) {
+                    targetVal = computedMap['line-height'] || '';
+                  } else if (labelText.includes('letter spacing')) {
+                    targetVal = computedMap['letter-spacing'] || '';
+                  } else if (labelText.includes('text align')) {
+                    targetVal = computedMap['text-align'] || '';
+                  } else if (labelText.includes('text transform')) {
+                    targetVal = computedMap['text-transform'] || '';
+                  } else if (labelText.includes('text decoration')) {
+                    targetVal = computedMap['text-decoration'] || '';
+                  } else if (labelText === 'width') {
+                    targetVal = computedMap['width'] || '';
+                  } else if (labelText === 'height') {
+                    targetVal = computedMap['height'] || '';
+                  } else if (labelText.includes('min width') || labelText === 'min-width') {
+                    targetVal = computedMap['min-width'] || '';
+                  } else if (labelText.includes('max width') || labelText === 'max-width') {
+                    targetVal = computedMap['max-width'] || '';
+                  } else if (labelText === 'padding') {
+                    targetVal = computedMap['padding'] || '';
+                  } else if (labelText.includes('padding top') || labelText === 'padding-top') {
+                    targetVal = computedMap['padding-top'] || '';
+                  } else if (labelText.includes('padding right') || labelText === 'padding-right') {
+                    targetVal = computedMap['padding-right'] || '';
+                  } else if (labelText.includes('padding bottom') || labelText === 'padding-bottom') {
+                    targetVal = computedMap['padding-bottom'] || '';
+                  } else if (labelText.includes('padding left') || labelText === 'padding-left') {
+                    targetVal = computedMap['padding-left'] || '';
+                  } else if (labelText === 'margin') {
+                    targetVal = computedMap['margin'] || '';
+                  } else if (labelText.includes('margin top') || labelText === 'margin-top') {
+                    targetVal = computedMap['margin-top'] || '';
+                  } else if (labelText.includes('margin right') || labelText === 'margin-right') {
+                    targetVal = computedMap['margin-right'] || '';
+                  } else if (labelText.includes('margin bottom') || labelText === 'margin-bottom') {
+                    targetVal = computedMap['margin-bottom'] || '';
+                  } else if (labelText.includes('margin left') || labelText === 'margin-left') {
+                    targetVal = computedMap['margin-left'] || '';
+                  } else if (labelText.includes('border radius') || labelText === 'border-radius') {
+                    targetVal = computedMap['border-radius'] || '';
+                  } else if (labelText.includes('border color') || labelText === 'border-color') {
+                    targetVal = computedMap['border-color'] || '';
+                  } else if (labelText.includes('border width') || labelText === 'border-width') {
+                    targetVal = computedMap['border-width'] || '';
+                  } else if (labelText.includes('border style') || labelText === 'border-style') {
+                    targetVal = computedMap['border-style'] || '';
+                  } else if (labelText === 'border') {
+                    targetVal = computedMap['border'] || '';
+                  } else if (labelText === 'opacity') {
+                    targetVal = computedMap['opacity'] || '';
+                  } else if (labelText === 'display') {
+                    targetVal = computedMap['display'] || '';
+                  } else if (labelText === 'position') {
+                    targetVal = computedMap['position'] || '';
+                  } else if (labelText.includes('flex direction') || labelText === 'flex-direction') {
+                    targetVal = computedMap['flex-direction'] || '';
+                  } else if (labelText.includes('justify content') || labelText === 'justify-content') {
+                    targetVal = computedMap['justify-content'] || '';
+                  } else if (labelText.includes('align items') || labelText === 'align-items') {
+                    targetVal = computedMap['align-items'] || '';
+                  } else if (labelText === 'gap') {
+                    targetVal = computedMap['gap'] || '';
+                  } else if (labelText.includes('box shadow') || labelText === 'box-shadow') {
+                    targetVal = computedMap['box-shadow'] || '';
+                  } else if (labelText === 'cursor') {
+                    targetVal = computedMap['cursor'] || '';
+                  }
+
+                  if (targetVal && targetVal !== 'Mixed') {
+                    const inputs = row.querySelectorAll('input, select');
+                    inputs.forEach((input) => {
+                      const inp = input as HTMLInputElement;
+                      if (document.activeElement !== inp) {
+                        inp.value = targetVal;
+                      }
+                    });
+
+                    const isColorProperty = labelText === 'color' || labelText.includes('text color') || labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color' || labelText.includes('border color') || labelText === 'border-color';
+                    if (isColorProperty) {
+                      const colorPreviews = row.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview], .custom-grapesjs-pickr, .pcr-button');
+                      colorPreviews.forEach((swatch) => {
+                        const sw = swatch as HTMLElement;
+                        if (sw && sw.tagName !== 'INPUT') {
+                          try {
+                            sw.style.setProperty('background-color', targetVal, 'important');
+                          } catch (e) {}
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+            };
+
+            applyComputedMapToUI();
+            setTimeout(applyComputedMapToUI, 50);
+            setTimeout(applyComputedMapToUI, 150);
+          } catch (e) {}
+        }
 
       // 2. Handle Native Details/Summary Toggle on Click (including children of summary)
       let summaryModel = model;
@@ -3805,6 +5765,9 @@ const GrapesEditor = () => {
       let readableName = name.charAt(0).toUpperCase() + name.slice(1);
       if (readableName === 'Wrapper') readableName = 'Body';
       setSelectedLabel(readableName);
+      } finally {
+        isSelectingElement = false;
+      }
     });
 
     editor.on('component:deselected', () => {
@@ -3851,7 +5814,7 @@ const GrapesEditor = () => {
   useEffect(() => {
     if (editorRef.current && page && isEditorFullyLoaded && !contentAppliedRef.current) {
       contentAppliedRef.current = true;
-      applyContentToEditor(editorRef.current);
+      setTimeout(() => applyContentToEditor(editorRef.current), 30);
     }
   }, [page, isEditorFullyLoaded]);
 
@@ -3897,7 +5860,7 @@ const GrapesEditor = () => {
 
     const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
 
-    const styleData = globalCss + '\n' + css;
+    let styleData = globalCss + '\n' + css;
 
     // Extract all custom script tags from the canvas document using the unified helper
     let canvasScripts = '';
@@ -3941,6 +5904,14 @@ document.addEventListener('click', function(e) {
   }
 }, true);
 </script>`;
+    }
+
+    // Compress large base64 images in HTML and CSS to prevent Payload Too Large errors
+    try {
+      htmlWithScripts = await compressHtmlAndCssImages(htmlWithScripts);
+      styleData = await compressHtmlAndCssImages(styleData);
+    } catch (err) {
+      console.warn('Image compression before save encountered an error:', err);
     }
 
     const updateData: Partial<LandingPage> = {
@@ -4671,12 +6642,22 @@ document.addEventListener('click', function(e) {
     }
   };
 
-  if (projectLoading || pageLoading || !page || !project) {
+  // Show error screen ONLY if fetching is complete AND project/page are missing
+  if (!projectLoading && !pageLoading && (!page || !project)) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#111827]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-white font-medium">Loading Editor...</p>
+        <div className="flex flex-col items-center gap-4 p-8 bg-gray-900 border border-gray-800 rounded-2xl max-w-md text-center shadow-xl">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-xl font-bold">
+            !
+          </div>
+          <h3 className="text-xl font-bold text-white">Project or Page Not Found</h3>
+          <p className="text-gray-400 text-sm">The requested landing page could not be retrieved. Please check the URL or return to your projects dashboard.</p>
+          <button 
+            onClick={() => navigate('/projects')}
+            className="mt-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors text-sm"
+          >
+            Back to Projects
+          </button>
         </div>
       </div>
     );
@@ -5348,24 +7329,28 @@ document.addEventListener('click', function(e) {
         {/* ══ CANVAS (light grey bg) ══ */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e5e7eb' }}>
           <div id="gjs" style={{ flex: 1, overflow: 'hidden' }} />
-          {/* ── CSS Loading Overlay — shown while template CSS/fonts load ── */}
-          {isCanvasLoading && (
+          {/* ── Canvas Loading Overlay — localized to canvas container ── */}
+          {(isCanvasLoading || projectLoading || pageLoading || !isEditorFullyLoaded) && (
             <div style={{
               position: 'absolute', inset: 0, zIndex: 50,
-              background: 'rgba(226, 232, 240, 0.85)',
-              backdropFilter: 'blur(2px)',
+              background: 'rgba(241, 245, 249, 0.92)',
+              backdropFilter: 'blur(3px)',
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center', gap: 14,
               pointerEvents: 'none',
             }}>
               <div style={{
                 width: 44, height: 44, borderRadius: '50%',
-                border: '3px solid rgba(124,58,237,0.15)',
-                borderTop: '3px solid #818cf8',
+                border: '3px solid rgba(99,102,241,0.15)',
+                borderTop: '3px solid #6366f1',
                 animation: 'spin 0.8s linear infinite',
               }} />
-              <p style={{ color: '#818cf8', fontWeight: 700, fontSize: 13, letterSpacing: 0.3, margin: 0 }}>
-                Loading template...
+              <p style={{ color: '#4f46e5', fontWeight: 700, fontSize: 13, letterSpacing: 0.3, margin: 0 }}>
+                {projectLoading || pageLoading
+                  ? 'Fetching Page Data...'
+                  : !isEditorFullyLoaded
+                  ? 'Initializing Canvas...'
+                  : 'Rendering Landing Page...'}
               </p>
               <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
             </div>

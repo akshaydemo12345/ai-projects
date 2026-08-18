@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight, Type, X } from 'lucide-react';
 import type { Editor } from 'grapesjs';
 import { PickrColorInput } from '@/components/ui/PickrColorInput';
+import { GOOGLE_FONTS_OPTIONS, preloadAllGoogleFontsOptions, ensureGoogleFontLoaded } from './GrapesEditor';
 interface GlobalStylesPanelProps {
   editor: Editor | null;
   initialPrimary?: string;
@@ -51,17 +52,129 @@ const DEFAULT_FONTS = [
   'Inter', 'Geist Mono', 'Righteous', 'Plus Jakarta Sans', 'Outfit', 'Roboto', 'Arial', 'sans-serif'
 ];
 
+const VisualFontPicker: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  editor?: Editor | null;
+}> = ({ value, onChange, editor }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    preloadAllGoogleFontsOptions(editor);
+  }, [editor]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  const filteredFonts = GOOGLE_FONTS_OPTIONS.filter(f =>
+    f.name.toLowerCase().includes(search.toLowerCase()) ||
+    f.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const fontObj = GOOGLE_FONTS_OPTIONS.find(f => f.id === value || f.name === value) || { id: value || 'inherit', name: value || 'Default / Inherit' };
+  const currentFontStyle = fontObj.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(fontObj.id)
+    ? `'${fontObj.id}', sans-serif`
+    : fontObj.id;
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between bg-white border border-[#cbd5e1] rounded px-2 py-1 text-[12px] text-[#000000] focus:outline-none cursor-pointer truncate"
+        style={{ fontFamily: currentFontStyle }}
+      >
+        <span className="truncate flex-1 text-left font-medium">{fontObj.name}</span>
+        <ChevronDown size={12} className="text-[#6b7280] ml-1 shrink-0" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1 w-64 max-h-72 bg-white border border-[#cbd5e1] rounded-md shadow-2xl z-[99999] flex flex-col overflow-hidden text-left">
+          <div className="p-1.5 border-b border-[#f1f5f9] bg-[#f8fafc]">
+            <input
+              type="text"
+              placeholder="Search font..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-2 py-1 text-xs border border-[#cbd5e1] rounded outline-none focus:border-[#2563eb]"
+              autoFocus
+            />
+          </div>
+          <div className="overflow-y-auto max-h-56 custom-scroll py-1">
+            {filteredFonts.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-[#94a3b8] text-center">No fonts found</div>
+            ) : (
+              filteredFonts.map((font) => {
+                const isSelected = font.id === value || font.name === value;
+                const fontStyle = font.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(font.id)
+                  ? `'${font.id}', sans-serif`
+                  : font.id;
+                return (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => {
+                      ensureGoogleFontLoaded(editor, font.id);
+                      onChange(font.id);
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-[#f1f5f9] transition-colors border-b border-[#f8fafc] ${
+                      isSelected ? 'bg-[#eff6ff] text-[#2563eb]' : 'text-[#1e293b]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span
+                        className="text-sm font-medium truncate"
+                        style={{ fontFamily: fontStyle }}
+                      >
+                        {font.name}
+                      </span>
+                      {isSelected && <span className="text-[#2563eb] text-xs font-bold ml-1">✓</span>}
+                    </div>
+                    {font.id !== 'inherit' && (
+                      <span
+                        className="text-[11px] text-[#64748b] truncate opacity-85"
+                        style={{ fontFamily: fontStyle }}
+                      >
+                        The quick brown fox jumps over the lazy dog
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const INIT_STYLES: StyleConfig = {
   Colors: {
     primary: { label: 'Primary', type: 'color', varName: '--primary', value: '#fa0000' },
     secondary: { label: 'Secondary', type: 'color', varName: '--secondary', value: '#d1d1d1' },
   },
   Body: {
-    bg: { label: 'Background', type: 'color', varName: '--body-bg', value: '#ffffff00' },
+    bg: { label: 'Background', type: 'color', varName: '--body-bg', value: '#ffffff' },
     text: { label: 'Color', type: 'color', varName: '--body-text', value: '#0f172a' },
     fontSize: { label: 'Font Size', type: 'number', varName: '--body-size', value: '1', unit: 'rem' },
     lineHeight: { label: 'Line Height', type: 'number', varName: '--body-line-height', value: '1.75', unit: '' },
-    fontFamily: { label: 'Font Family', type: 'font', varName: '--body-font', value: 'Geist Mono' },
+    fontFamily: { label: 'Font Family', type: 'font', varName: '--body-font', value: 'Inter' },
   },
   Heading: {
     color: { label: 'Color', type: 'color', varName: '--heading-color', value: '#0f172a' },
@@ -430,7 +543,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
         }
 
         // Find and replace in global template-styles
-        const canvasDoc = editor.Canvas.getDocument();
+        const canvasDoc = editor?.Canvas?.getDocument ? editor.Canvas.getDocument() : null;
         if (canvasDoc) {
           const templateStyles = canvasDoc.getElementById('template-styles');
           if (templateStyles) {
@@ -507,6 +620,9 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     let css = ':root, body {\n';
     Object.values(currentStyles).forEach(category => {
       Object.values(category).forEach(prop => {
+        if (prop.varName === '--body-bg' && (prop.value === '#ffffff00' || prop.value === 'transparent')) {
+          return;
+        }
         css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
       });
     });
@@ -518,11 +634,11 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
 
     css += `
 body {
-  background-color: var(--body-bg) !important;
-  color: var(--body-text) !important;
-  font-family: var(--body-font) !important;
-  font-size: var(--body-size) !important;
-  line-height: var(--body-line-height) !important;
+  background-color: var(--body-bg, inherit);
+  color: var(--body-text);
+  font-family: var(--body-font);
+  font-size: var(--body-size);
+  line-height: var(--body-line-height);
 }
 
 h1, h2, .headline, .heading {
@@ -588,7 +704,7 @@ input, select, textarea, .input-field {
   };
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || !editor.Canvas || typeof editor.Canvas.getDocument !== 'function') return;
 
     const css = generateCSS(styles);
 
@@ -729,18 +845,12 @@ input, select, textarea, .input-field {
                       )}
 
                       {prop.type === 'font' && (
-                        <div className="flex items-center w-full min-w-[160px]">
-                          <Type size={12} className="text-[#6b7280] ml-1.5" />
-                          <select
+                        <div className="flex items-center w-full min-w-[160px] p-0.5">
+                          <VisualFontPicker
                             value={prop.value}
-                            onChange={(e) => handleUpdate(category, key, e.target.value)}
-                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-2 py-0.5 focus:outline-none appearance-none cursor-pointer"
-                            style={{ fontFamily: prop.value }}
-                          >
-                            {DEFAULT_FONTS.map(f => (
-                              <option key={f} value={f} className="bg-[#fff] text-[#000000]" style={{ fontFamily: f }}>{f}</option>
-                            ))}
-                          </select>
+                            onChange={(val) => handleUpdate(category, key, val)}
+                            editor={editor}
+                          />
                         </div>
                       )}
                     </div>

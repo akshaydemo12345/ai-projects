@@ -6,6 +6,44 @@ import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+const ALL_GOOGLE_FONTS = [
+  'Aboreto', 'Abril Fatface', 'Alex Brush', 'Alfa Slab One', 'Amatic SC', 'Anton', 'Archivo', 'Arimo', 'Arvo', 'Asap',
+  'Barlow', 'Bebas Neue', 'Bitter', 'Bodoni Moda', 'Cabin', 'Caveat', 'Cinzel', 'Comfortaa', 'Cormorant Garamond',
+  'Crimson Text', 'Dancing Script', 'DM Sans', 'DM Serif Display', 'Dosis', 'Fira Sans', 'Fjalla One', 'Frank Ruhl Libre',
+  'Geist', 'Great Vibes', 'Inconsolata', 'Inter', 'Josefin Sans', 'Kanit', 'Karla', 'Lato', 'Libre Baskerville', 'Lora',
+  'Manrope', 'Merriweather', 'Montserrat', 'Mukta', 'Nanum Gothic', 'Noto Sans', 'Noto Serif', 'Nunito', 'Nunito Sans',
+  'Open Sans', 'Oswald', 'Outfit', 'Pacifico', 'Playfair Display', 'Plus Jakarta Sans', 'Poppins', 'Prompt', 'PT Sans',
+  'PT Serif', 'Quicksand', 'Raleway', 'Red Hat Display', 'Righteous', 'Roboto', 'Roboto Condensed', 'Roboto Mono',
+  'Roboto Slab', 'Rubik', 'Sacramento', 'Shadows Into Light', 'Space Grotesk', 'Syne', 'Titillium Web', 'Ubuntu', 'Urbanist',
+  'Varela Round', 'Volkhov', 'Work Sans', 'Yantramanav', 'Zilla Slab'
+];
+
+function generateGoogleFontsHtml(cssAndHtmlContent: string = ''): string {
+  const matchedFonts = new Set(['Inter', 'Plus Jakarta Sans', 'Outfit', 'Poppins']);
+
+  if (typeof cssAndHtmlContent === 'string') {
+    for (const font of ALL_GOOGLE_FONTS) {
+      const escaped = font.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?:font-family\\s*:\\s*|var\\(--[^)]*font[^)]*\\)\\s*:\\s*|['"])${escaped}(?:['";,]|\$|\\s)`, 'i');
+      if (regex.test(cssAndHtmlContent) || cssAndHtmlContent.toLowerCase().includes(font.toLowerCase())) {
+        matchedFonts.add(font);
+      }
+    }
+  }
+
+  const fontList = Array.from(matchedFonts);
+  const chunkSize = 10;
+  const linkTags: string[] = [];
+
+  for (let i = 0; i < fontList.length; i += chunkSize) {
+    const chunk = fontList.slice(i, i + chunkSize);
+    const familyQuery = chunk.map(f => `family=${encodeURIComponent(f)}:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700`).join('&');
+    linkTags.push(`<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${familyQuery}&display=swap">`);
+  }
+
+  return linkTags.join('\n    ');
+}
+
 // Helper: convert hex color to "R, G, B" string for use in rgba()
 const hexToRgbStr = (hex: string): string => {
   const c = hex.replace('#', '');
@@ -293,14 +331,14 @@ const PublicLandingPage = () => {
         .replace(/SECONDARY_COLOR_PLACEHOLDER/g, BRAND_SECONDARY)
         .replace(/PRIMARY_RGB_PLACEHOLDER/g, pRgb)
         .replace(/SECONDARY_RGB_PLACEHOLDER/g, sRgb)
-        .replace(/:\s*var\(--primary\)/g, `: ${BRAND_PRIMARY}`)
-        .replace(/:\s*var\(--secondary\)/g, `: ${BRAND_SECONDARY}`)
         .replace(/LOGO_PLACEHOLDER/g, res.logoUrl ? `<img src="${res.logoUrl}" alt="Logo" style="height:56px;object-fit:contain;" />` : '<span style="font-weight:700;">Your Brand</span>')
         .replace(/PROJECT_NAME_PLACEHOLDER/g, res.metaTitle || res.title || 'Your Brand');
     };
 
     let aiHtml = applyPlaceholders(rawHtml);
     let aiCss = applyPlaceholders(rawCss);
+
+    const detectDark = /bg-(slate|zinc|neutral|gray|stone)-9[05]0|bg-black|dark-theme|theme-dark|bg-\[#0[0-9a-f]{5}\]|background-color:\s*#(0[0-9a-f]{5}|1[0-9a-f]{5})/i.test(aiHtml + '\n' + aiCss);
 
     // ─── Also replace any remaining var(--primary) references with real color fallback ───
     const BRAND_COLOR = BRAND_PRIMARY;
@@ -489,7 +527,7 @@ const PublicLandingPage = () => {
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
       
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;700&family=Fraunces:ital,wght@0,100..900;1,100..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      ${generateGoogleFontsHtml(aiHtml + '\n' + aiCss)}
       <style>
         :root {
           --primary: ${BRAND_PRIMARY};
@@ -505,13 +543,15 @@ const PublicLandingPage = () => {
           --white: #ffffff;
           --button-gradient: linear-gradient(135deg, ${BRAND_PRIMARY}, ${BRAND_SECONDARY});
         }
-        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; overflow-x: hidden; }
+        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: var(--body-font, 'Inter', sans-serif); background-color: var(--body-bg, ${detectDark ? '#0f172a' : '#ffffff'}); color: var(--body-text, ${detectDark ? '#f8fafc' : '#1e293b'}); overflow-x: hidden; }
         form:not([class*="form"]) input, form:not([class*="form"]) select, form:not([class*="form"]) textarea { border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 18px; width: 100%; margin-bottom: 20px; display: block; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
         form:not([class*="form"]) input:focus { border-color: ${BRAND_PRIMARY}; outline: none; box-shadow: 0 0 0 4px ${BRAND_PRIMARY}15; }
         label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #475569; }
         form { width: 100%; max-width: 100%; }
         .float-badge { z-index: 1 !important; }
         #page-logo, img[alt="Logo"], img[alt="logo"] { max-height: 40px !important; max-width: 200px !important; width: auto !important; object-fit: contain !important; filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.4)) !important; }
+      </style>
+      <style id="ai-generated-styles">
         ${aiCss}
       </style>
       <script>

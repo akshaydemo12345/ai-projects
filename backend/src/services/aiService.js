@@ -529,6 +529,7 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
 
   if (anthropicKey) {
     const anthropic = new Anthropic({ apiKey: anthropicKey });
+    let lastErrStr = null;
     for (const model of CLAUDE_MODEL_CANDIDATES) {
       try {
         const response = await anthropic.messages.create({
@@ -543,7 +544,17 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
           usage: { promptTokens: usage.input_tokens, completionTokens: usage.output_tokens, totalTokens: usage.input_tokens + usage.output_tokens, cost: calculateCost(model, usage.input_tokens, usage.output_tokens), model },
         };
       } catch (err) {
-        logger.error(`[AI-RAW] Claude failed (${model}): ${err.message}`);
+        let msg = err.message || String(err);
+        const jsonMatch = msg.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed?.error?.message) msg = parsed.error.message;
+            else if (parsed?.message) msg = parsed.message;
+          } catch (_) {}
+        }
+        lastErrStr = msg;
+        logger.error(`[AI-RAW] Claude failed (${model}): ${msg}`);
         if (!String(err.message).toLowerCase().match(/not_found|model:/)) break;
       }
     }
@@ -551,7 +562,7 @@ const callAIRaw = async ({ messages, systemPrompt, maxTokens = MAX_OUTPUT_TOKENS
       logger.warn('[AI-RAW] All Claude models failed, falling back to OpenAI');
       return await tryOpenAIRaw();
     }
-    throw new Error('All AI providers failed');
+    throw new Error(lastErrStr || 'All AI providers failed');
   }
 
   return await tryOpenAIRaw();

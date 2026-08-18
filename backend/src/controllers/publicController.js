@@ -31,6 +31,44 @@ const normalizeScript = (value = '') => {
   return `<script>${trimmed}</script>`;
 };
 
+const ALL_GOOGLE_FONTS = [
+  'Aboreto', 'Abril Fatface', 'Alex Brush', 'Alfa Slab One', 'Amatic SC', 'Anton', 'Archivo', 'Arimo', 'Arvo', 'Asap',
+  'Barlow', 'Bebas Neue', 'Bitter', 'Bodoni Moda', 'Cabin', 'Caveat', 'Cinzel', 'Comfortaa', 'Cormorant Garamond',
+  'Crimson Text', 'Dancing Script', 'DM Sans', 'DM Serif Display', 'Dosis', 'Fira Sans', 'Fjalla One', 'Frank Ruhl Libre',
+  'Geist', 'Great Vibes', 'Inconsolata', 'Inter', 'Josefin Sans', 'Kanit', 'Karla', 'Lato', 'Libre Baskerville', 'Lora',
+  'Manrope', 'Merriweather', 'Montserrat', 'Mukta', 'Nanum Gothic', 'Noto Sans', 'Noto Serif', 'Nunito', 'Nunito Sans',
+  'Open Sans', 'Oswald', 'Outfit', 'Pacifico', 'Playfair Display', 'Plus Jakarta Sans', 'Poppins', 'Prompt', 'PT Sans',
+  'PT Serif', 'Quicksand', 'Raleway', 'Red Hat Display', 'Righteous', 'Roboto', 'Roboto Condensed', 'Roboto Mono',
+  'Roboto Slab', 'Rubik', 'Sacramento', 'Shadows Into Light', 'Space Grotesk', 'Syne', 'Titillium Web', 'Ubuntu', 'Urbanist',
+  'Varela Round', 'Volkhov', 'Work Sans', 'Yantramanav', 'Zilla Slab'
+];
+
+function generateGoogleFontsHtml(cssAndHtmlContent = '') {
+  const matchedFonts = new Set(['Inter', 'Plus Jakarta Sans', 'Outfit', 'Poppins']);
+  
+  if (typeof cssAndHtmlContent === 'string') {
+    for (const font of ALL_GOOGLE_FONTS) {
+      const escaped = font.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?:font-family\\s*:\\s*|var\\(--[^)]*font[^)]*\\)\\s*:\\s*|['"])${escaped}(?:['";,]|\$|\\s)`, 'i');
+      if (regex.test(cssAndHtmlContent) || cssAndHtmlContent.toLowerCase().includes(font.toLowerCase())) {
+        matchedFonts.add(font);
+      }
+    }
+  }
+
+  const fontList = Array.from(matchedFonts);
+  const chunkSize = 10;
+  const linkTags = [];
+
+  for (let i = 0; i < fontList.length; i += chunkSize) {
+    const chunk = fontList.slice(i, i + chunkSize);
+    const familyQuery = chunk.map(f => `family=${encodeURIComponent(f)}:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700`).join('&');
+    linkTags.push(`<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${familyQuery}&display=swap">`);
+  }
+
+  return linkTags.join('\n    ');
+}
+
 /**
  * SECURITY: Resolve a page by slug, scoped to a specific projectId.
  * When projectId is provided, ALL queries include it — preventing cross-project leakage.
@@ -519,8 +557,12 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
   const { title, content, seo, metaTitle, metaDescription } = page || {};
   if (!content) return '<html><body><p>Loading your AI design...</p></body></html>';
 
-  const aiHtml = (typeof content === 'string' ? content : (content?.fullHtml || '')).trim();
-  const aiCss = (typeof content === 'object' && content?.fullCss) ? content.fullCss : (page.styles || page.landingPageStyles || '');
+  const aiHtml = isThankYou
+    ? (page.thankYouPageContent || (typeof content === 'string' ? content : (content?.fullHtml || ''))).trim()
+    : (page.landingPageContent || (typeof content === 'string' ? content : (content?.fullHtml || ''))).trim();
+  const aiCss = isThankYou
+    ? (page.thankYouPageStyles || page.landingPageStyles || page.styles || (typeof content === 'object' ? content?.fullCss : ''))
+    : (page.landingPageStyles || page.styles || (typeof content === 'object' ? content?.fullCss : ''));
   const aiJs = typeof content === 'object' ? (content?.fullJs || '') : '';
 
   let finalHtml = aiHtml;
@@ -642,7 +684,12 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
   // ── Inject Branding Variables ─────────────────────────────────────────────
   const pColor = page.primaryColor || '#7c3aed';
   const sColor = page.secondaryColor || '#6366f1';
-  const detectDark = (aiCss.includes('#0f172a') || aiHtml.includes('bg-slate-950') || aiHtml.includes('bg-[#0f172a]'));
+  const detectDark = (
+    aiCss.includes('#0f172a') || aiHtml.includes('bg-slate-950') || aiHtml.includes('bg-[#0f172a]') ||
+    aiCss.includes('#0a0a0a') || aiCss.includes('#111827') || aiCss.includes('#000000') ||
+    aiHtml.includes('bg-slate-900') || aiHtml.includes('bg-gray-900') || aiHtml.includes('bg-black') ||
+    aiHtml.includes('bg-zinc-950') || aiHtml.includes('bg-neutral-900')
+  );
 
   const brandingStyles = `
 <style id="branding-vars">
@@ -653,16 +700,22 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
     --button-gradient: linear-gradient(135deg, ${pColor}, ${sColor});
   }
   body { 
-    background-color: ${detectDark ? '#0f172a' : '#ffffff'}; 
-    color: ${detectDark ? '#f8fafc' : '#0f172a'}; 
+    background-color: var(--body-bg, ${detectDark ? '#0f172a' : '#ffffff'}); 
+    color: var(--body-text, ${detectDark ? '#f8fafc' : '#0f172a'}); 
     margin: 0; 
     overflow-x: hidden;
   }
-  /* Guarantee form input visibility overrides — scoped to avoid conflicting with styled template inputs */
-  input:not(.lead-field-inner input), textarea:not(.lead-field-inner textarea), select:not(.lead-field-inner select) {
-    color: #0f172a !important;
-    background-color: #f8fafc !important;
-    border: 1px solid #cbd5e1 !important;
+  /* Default form input styling only if not explicitly styled */
+  form:not([class*="form"]) input, form:not([class*="form"]) select, form:not([class*="form"]) textarea {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 14px 18px;
+    width: 100%;
+    margin-bottom: 20px;
+    display: block;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.2s;
   }
   .lead-field-inner input {
     border: none !important;
@@ -826,22 +879,24 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
       if (!html.includes('cdn.tailwindcss.com')) {
         html = html.replace(/<\/head>/i, `  <script src="https://cdn.tailwindcss.com"></script>\n</head>`);
       }
-      if (!html.includes('fonts.googleapis.com')) {
-        html = html.replace(/<\/head>/i, `  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">\n</head>`);
-      }
+
+      const googleFontsLinks = generateGoogleFontsHtml(html + '\n' + (aiCss || ''));
+      html = html.replace(/<\/head>/i, `  ${googleFontsLinks}\n</head>`);
+
       if (!html.includes('--primary:')) {
         html = html.replace(/<\/head>/i, `${brandingStyles}\n</head>`);
       }
-      // Inject AI-generated CSS if not already present
+      // Inject or update AI-generated CSS
       if (aiCss) {
         let processedCss = aiCss
           .replace(/PRIMARY_COLOR_PLACEHOLDER/g, pColor)
           .replace(/SECONDARY_COLOR_PLACEHOLDER/g, sColor)
           .replace(/LOGO_URL_PLACEHOLDER/g, finalLogo);
 
-        if (!html.includes('id="ai-generated-styles"')) {
-          html = html.replace(/<\/head>/i, `  <style id="ai-generated-styles">${processedCss}</style>\n</head>`);
+        if (html.includes('id="ai-generated-styles"')) {
+          html = html.replace(/<style id="ai-generated-styles">[\s\S]*?<\/style>/i, '');
         }
+        html = html.replace(/<\/head>/i, `  <style id="ai-generated-styles">${processedCss}</style>\n</head>`);
       }
 
       // Inject Swiper dynamically if the page uses it
@@ -1005,10 +1060,11 @@ const renderFullHTML = (page, canonicalUrl = '', isThankYou = false, faviconUrl 
     <meta name="dm-page-slug" content="${page.slug}">
     <base href="${apiBaseUrl}/">
     ${seoMetaBlock}
+    ${generateGoogleFontsHtml(aiHtml + '\n' + (aiCss || ''))}
     ${brandingStyles}
     ${finalHeaderScript}
     ${thankYouRedirectScript}
-    <style>${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
+    <style id="ai-generated-styles">${aiCss || (aiHtml ? '' : fallbackStyles)}</style>
 </head>
 <body${bodyAttributes}>
     ${finalBodyContent}
@@ -1036,7 +1092,7 @@ exports.getPreviewHTML = async (req, res, next) => {
     let page = null;
 
     if (pageId && /^[0-9a-fA-F]{24}$/.test(pageId)) {
-      page = await Page.findById(pageId).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
+      page = await Page.findById(pageId).select('title content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
       if (page && page.status !== 'published') {
         if (token && token !== page.previewToken) {
           return next(new AppError('Preview expired or invalid', 404));
@@ -1051,7 +1107,7 @@ exports.getPreviewHTML = async (req, res, next) => {
           { previewToken: token },
           { _id: tokenId }
         ],
-      }).select('title content styles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
+      }).select('title content styles landingPageContent landingPageStyles thankYouPageContent thankYouPageStyles seo status metaTitle metaDescription noIndex noFollow mainHeader mainFooter thankYouHeader thankYouFooter thankYouConversionScript thankYouUrl primaryColor secondaryColor logoUrl slug projectId previewToken');
     }
 
     if (!page) return next(new AppError('Preview expired or invalid', 404));
