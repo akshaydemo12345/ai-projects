@@ -781,7 +781,7 @@ input, select, textarea, .input-field {
   return (
     <div className="w-full flex-shrink-0 flex flex-col bg-[#fff] text-sm h-full font-sans select-none overflow-y-auto custom-scroll" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {Object.entries(styles).map(([category, properties]) => {
-        if (category === 'Heading') return null;
+        if (['Heading', 'Subheading', 'Buttons', 'Forms'].includes(category)) return null;
         return (
           <div key={category} className="border-b border-[#e5e7eb]">
             <button
@@ -799,7 +799,9 @@ input, select, textarea, .input-field {
 
             {expanded[category] && (
               <div className="p-4 bg-[#fff] flex flex-col gap-3">
-                {Object.entries(properties).map(([key, prop]) => (
+                {Object.entries(properties)
+                  .filter(([key, prop]) => prop.label !== 'Font Size' && prop.label !== 'Line Height')
+                  .map(([key, prop]) => (
                   <div key={key} className="flex flex-col gap-1.5">
                     <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
                       {prop.label}
