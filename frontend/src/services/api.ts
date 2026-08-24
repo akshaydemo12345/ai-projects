@@ -1063,9 +1063,18 @@ export interface ThankYouConfig {
   customCss?: string;
 }
 
+let cachedThankYouLayouts: ThankYouLayout[] | null = null;
+const thankYouPreviewCache = new Map<string, string>();
+
 export const thankYouApi = {
   getLayouts: async (): Promise<ThankYouLayout[]> => {
+    if (cachedThankYouLayouts && cachedThankYouLayouts.length > 0) {
+      return cachedThankYouLayouts;
+    }
     const res = await apiFetch('/api/thank-you/layouts');
+    if (res?.data?.layouts) {
+      cachedThankYouLayouts = res.data.layouts;
+    }
     return res.data.layouts;
   },
 
@@ -1083,6 +1092,11 @@ export const thankYouApi = {
   },
 
   preview: async (previewConfig: { layout: string; content?: any; branding?: any; pageId?: string }): Promise<string> => {
+    const cacheKey = `${previewConfig.layout}_${previewConfig.pageId || ''}_${JSON.stringify(previewConfig.content || {})}_${JSON.stringify(previewConfig.branding || {})}`;
+    if (thankYouPreviewCache.has(cacheKey)) {
+      return thankYouPreviewCache.get(cacheKey)!;
+    }
+
     const token = localStorage.getItem('pagecraft_token');
 
     // Use consistent API base URL
@@ -1142,6 +1156,7 @@ export const thankYouApi = {
       .replace(/\{\{logoUrl\}\}/g, escapeHtml(branding.logoUrl || ''))
       .replace(/\{\{businessName\}\}/g, escapeHtml(businessName));
 
+    thankYouPreviewCache.set(cacheKey, html);
     return html;
   },
 };

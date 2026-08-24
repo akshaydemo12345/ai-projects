@@ -14,12 +14,13 @@ import { Swiper as SwiperClass } from 'swiper/bundle';
 
 import './grapes-custom.css';
 import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
-import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
+import { projectsApi, pagesApi, aiApi, thankYouApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { copyToClipboard } from '@/lib/utils';
 import { compressHtmlAndCssImages, compressImageFile } from '@/lib/imageCompressor';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
+import CustomCssPanel from './CustomCssPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
 import Pickr from "@simonwep/pickr";
@@ -122,7 +123,7 @@ export const preloadAllGoogleFontsOptions = (ed?: any) => {
   const fontNames = GOOGLE_FONTS_OPTIONS
     .map(f => f.id)
     .filter(id => id && !['inherit', 'sans-serif', 'serif', 'monospace'].includes(id));
-  
+
   const chunkSize = 15;
   for (let i = 0; i < fontNames.length; i += chunkSize) {
     const chunk = fontNames.slice(i, i + chunkSize);
@@ -148,7 +149,7 @@ export const preloadAllGoogleFontsOptions = (ed?: any) => {
           link.href = fontUrl;
           canvasDoc.head.appendChild(link);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 };
@@ -156,7 +157,7 @@ export const preloadAllGoogleFontsOptions = (ed?: any) => {
 export const ensureGoogleFontLoaded = (ed: any, fontName: string) => {
   if (!fontName || fontName === 'inherit' || fontName === 'sans-serif' || fontName === 'serif' || fontName === 'monospace') return;
   try {
-    const cleanFont = fontName.replace(/['"]/g, '').split(',')[0].trim();
+    let cleanFont = fontName.replace(/['"]/g, '').replace(/\s*!important/gi, '').split(',')[0].trim();
     if (!cleanFont || cleanFont === 'inherit') return;
     const fontId = `google-font-${cleanFont.replace(/\s+/g, '-').toLowerCase()}`;
     const fontUrl = `https://fonts.googleapis.com/css2?family=${cleanFont.replace(/\s+/g, '+')}&display=swap`;
@@ -181,7 +182,7 @@ export const ensureGoogleFontLoaded = (ed: any, fontName: string) => {
         canvasDoc.head.appendChild(link);
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 };
 
 export const extractElementComputedStyles = (model: any): Record<string, string> => {
@@ -424,7 +425,7 @@ export const extractElementComputedStyles = (model: any): Record<string, string>
       const transition = comp.getPropertyValue('transition');
       if (transition && transition !== 'none' && !transition.startsWith('all 0s')) result['transition'] = transition;
 
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Merge parsed inline style overrides
@@ -498,8 +499,8 @@ const GrapesEditor = () => {
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const initialMode = searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing';
-  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
-  const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'custom-css' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
+  const [rightTab, setRightTab] = useState<'styles' | 'traits' | 'custom-css'>('styles');
   const [mode, setMode] = useState<'landing' | 'thank-you'>(initialMode);
 
   const modeRef = useRef(mode);
@@ -716,20 +717,44 @@ const GrapesEditor = () => {
         dbStyles = '';
       }
 
+      // Fallback: If Thank You content is not yet set for this page, fetch the default Thank You layout preview
+      if ((!dbContent || dbContent.trim().length === 0) && currentPage._id) {
+        try {
+          console.log('✨ Thank You page content empty — fetching default Thank You template layout...');
+          const configRes = await thankYouApi.getConfig(currentPage._id);
+          const layoutId = configRes?.config?.layout || 'default';
+          dbContent = await thankYouApi.preview({ layout: layoutId, pageId: currentPage._id });
+        } catch (e) {
+          console.warn('Failed to load default Thank You template fallback:', e);
+        }
+      }
+
       // Inject base template styles so components dragged into the Thank You page retain their design
       if (currentPage.styles) {
         dbStyles = currentPage.styles + '\n' + dbStyles;
       }
     } else {
-      // Landing Page Mode (Legacy Support)
-      if (currentPage.landingPageContent) {
-        dbContent = currentPage.landingPageContent;
+      // Landing Page Mode
+      const isPlaceholder = (htmlStr?: string) => {
+        if (!htmlStr) return true;
+        return htmlStr.includes('Landing Page is Ready') || htmlStr.includes('Your request has been successfully submitted');
+      };
+
+      let landingContent = currentPage.landingPageContent || '';
+      if (isPlaceholder(landingContent)) {
+        landingContent = '';
+      }
+
+      if (landingContent) {
+        dbContent = landingContent;
         dbStyles = currentPage.landingPageStyles || '';
       } else if (typeof currentPage.content === 'object' && currentPage.content !== null) {
-        dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
+        const full = currentPage.content.fullHtml || currentPage.content.html || '';
+        dbContent = isPlaceholder(full) ? '' : full;
         dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
       } else if (typeof currentPage.content === 'string') {
-        dbContent = currentPage.content;
+        const str = currentPage.content;
+        dbContent = isPlaceholder(str) ? '' : str;
       }
 
       if (currentPage.styles && !dbStyles) {
@@ -833,9 +858,18 @@ const GrapesEditor = () => {
     if (dbContent && dbContent.trim().length > 10) {
       console.log('💎 Injecting branding variables and setting content...');
 
-      // Clear then set
-      editor.setComponents('');
+      // Safely stop inline RTE editing & deselect active component to prevent RichTextEditor undefined errors
       try {
+        if (typeof editor.select === 'function') editor.select(null);
+        if (typeof editor.stopCommand === 'function') {
+          editor.stopCommand('rte-edit');
+          editor.stopCommand('core:component-inline-edit');
+        }
+      } catch (e) { }
+
+      // Clear then set
+      try {
+        editor.setComponents('');
         if (editor.DomComponents && editor.DomComponents.clear) editor.DomComponents.clear();
         // @ts-ignore
         if (editor.Css && editor.Css.clear) editor.Css.clear();
@@ -1443,18 +1477,9 @@ const GrapesEditor = () => {
         setIsCanvasLoading(false);
       }, 200);
     } else {
-      if (activeMode === 'thank-you') {
-        // Do not inject placeholder. The ThankYouEditorPanel will auto-fetch and apply the default template.
-        // Keep the loading overlay visible until onSelect completes. Add a 5s fallback just in case.
-        editor.setComponents('');
-        setTimeout(() => setIsCanvasLoading(false), 5000);
-      } else {
-        editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
-          `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
-          `<p>Start editing by choosing a block from the left or use the AI generator.</p>` +
-          `</div>`);
-        setTimeout(() => setIsCanvasLoading(false), 400);
-      }
+      // Clear canvas without injecting persistent DOM placeholder node
+      editor.setComponents('');
+      setTimeout(() => setIsCanvasLoading(false), 100);
     }
   };
 
@@ -1470,9 +1495,9 @@ const GrapesEditor = () => {
 
       console.log('🚀 Initializing GrapesJS Editor asynchronously after UI Shell mount...');
 
-    // ─── Style GrapesJS Modal Header Only ───
-    const style = document.createElement('style');
-    style.innerHTML = `
+      // ─── Style GrapesJS Modal Header Only ───
+      const style = document.createElement('style');
+      style.innerHTML = `
       .gjs-mdl-header { background-color: #1f2937 !important; border-bottom: 1px solid #1f2937 !important; padding: 15px 20px !important; }
       .gjs-mdl-title { color: #f8fafc !important; font-weight: bold !important; font-size: 16px !important; }
       .gjs-mdl-btn-close { color: #94a3b8 !important; }
@@ -1503,13 +1528,18 @@ const GrapesEditor = () => {
         background-color: #1f2937 !important;
         border-radius: 8px !important;
         margin: 5px !important;
+      /* Hide native / GrapesJS spectrum default color popovers so Pickr monolith is always used */
+      .gjs-sp-container, .sp-container, .gjs-color-picker, .sp-picker-container {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
       }
     `;
-    document.head.appendChild(style);
+      document.head.appendChild(style);
 
-    // ── SILENCE CASH-DOM WARNINGS BY FORCING PASSIVE LISTENERS ──
-    const passiveScript = document.createElement('script');
-    passiveScript.innerHTML = `
+      // ── SILENCE CASH-DOM WARNINGS BY FORCING PASSIVE LISTENERS ──
+      const passiveScript = document.createElement('script');
+      passiveScript.innerHTML = `
       (function() {
         var originalAddEventListener = EventTarget.prototype.addEventListener;
         EventTarget.prototype.addEventListener = function(type, listener, options) {
@@ -1525,444 +1555,444 @@ const GrapesEditor = () => {
         };
       })();
     `;
-    document.head.prepend(passiveScript);
+      document.head.prepend(passiveScript);
 
-    const pickrColorPlugin = (ed: any) => {
-      ed.StyleManager.addType('pickr-color', {
-        create({ props, change }: any) {
-          const el = document.createElement('div');
-          el.style.display = 'flex';
-          el.style.alignItems = 'center';
-          el.style.width = '100%';
-          el.style.border = '1px solid #d1d5db';
-          el.style.borderRadius = '4px';
-          el.style.padding = '4px 6px';
-          el.style.backgroundColor = '#ffffff';
+      const pickrColorPlugin = (ed: any) => {
+        ed.StyleManager.addType('pickr-color', {
+          create({ props, change }: any) {
+            const el = document.createElement('div');
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.width = '100%';
+            el.style.border = '1px solid #d1d5db';
+            el.style.borderRadius = '4px';
+            el.style.padding = '4px 6px';
+            el.style.backgroundColor = '#ffffff';
 
-          const pickrBtn = document.createElement('div');
-          pickrBtn.className = 'custom-grapesjs-pickr';
-          pickrBtn.style.width = '18px';
-          pickrBtn.style.height = '18px';
-          pickrBtn.style.borderRadius = '3px';
-          pickrBtn.style.border = '1px solid rgba(0,0,0,0.1)';
-          pickrBtn.style.cursor = 'pointer';
-          pickrBtn.style.flexShrink = '0';
+            const pickrBtn = document.createElement('div');
+            pickrBtn.className = 'custom-grapesjs-pickr';
+            pickrBtn.style.width = '18px';
+            pickrBtn.style.height = '18px';
+            pickrBtn.style.borderRadius = '3px';
+            pickrBtn.style.border = '1px solid rgba(0,0,0,0.1)';
+            pickrBtn.style.cursor = 'pointer';
+            pickrBtn.style.flexShrink = '0';
 
-          const inputHex = document.createElement('input');
-          inputHex.type = 'text';
-          inputHex.style.width = '100%';
-          inputHex.style.marginLeft = '8px';
-          inputHex.style.border = 'none';
-          inputHex.style.background = 'transparent';
-          inputHex.style.color = '#111827';
-          inputHex.style.fontSize = '12px';
-          inputHex.style.outline = 'none';
-          el.appendChild(pickrBtn);
-          el.appendChild(inputHex);
+            const inputHex = document.createElement('input');
+            inputHex.type = 'text';
+            inputHex.style.width = '100%';
+            inputHex.style.marginLeft = '8px';
+            inputHex.style.border = 'none';
+            inputHex.style.background = 'transparent';
+            inputHex.style.color = '#111827';
+            inputHex.style.fontSize = '12px';
+            inputHex.style.outline = 'none';
+            el.appendChild(pickrBtn);
+            el.appendChild(inputHex);
 
-          const applyUpdate = (val: string, partial: boolean) => {
-            // Pass to emit()
-            change({ value: val, partial });
-          };
+            const applyUpdate = (val: string, partial: boolean) => {
+              // Pass to emit()
+              change({ value: val, partial });
+            };
 
-          const toHexAny = (hex: string) => {
-            if (!hex) return '';
-            if (hex.startsWith('#') && (hex.length === 9 || hex.length === 7)) return hex;
-            if (hex.startsWith('#') && hex.length === 5) {
-              const [, r, g, b, a] = hex;
-              return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
-            }
-            if (hex.startsWith('#') && hex.length === 4) {
-              const [, r, g, b] = hex;
-              return `#${r}${r}${g}${g}${b}${b}`;
-            }
-            return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : '';
-          };
-
-          const initPickr = () => {
-            if ((el as any).__pickr) return;
-            const initialVal = inputHex.value || '';
-            const pickr = Pickr.create({
-              el: pickrBtn,
-              theme: 'monolith',
-              default: initialVal || null,
-              useAsButton: true,
-              components: {
-                preview: true, opacity: true, hue: true,
-                interaction: { hex: true, input: true, save: true, clear: true }
+            const toHexAny = (hex: string) => {
+              if (!hex) return '';
+              if (hex.startsWith('#') && (hex.length === 9 || hex.length === 7)) return hex;
+              if (hex.startsWith('#') && hex.length === 5) {
+                const [, r, g, b, a] = hex;
+                return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
               }
-            });
-
-            if (initialVal && initialVal !== 'transparent') {
-              pickrBtn.style.backgroundColor = initialVal;
-            }
-
-            pickr.on('change', (color: Pickr.HSVaColor) => {
-              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-              pickrBtn.style.backgroundColor = hex || 'transparent';
-              inputHex.value = hex;
-              applyUpdate(hex, true);
-            });
-
-            pickr.on('save', (color: Pickr.HSVaColor) => {
-              const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-              pickrBtn.style.backgroundColor = hex || 'transparent';
-              inputHex.value = hex;
-              applyUpdate(hex, false);
-              pickr.hide();
-            });
-
-            pickr.on('clear', () => {
-              pickrBtn.style.backgroundColor = 'transparent';
-              inputHex.value = '';
-              applyUpdate('', false);
-              pickr.hide();
-            });
-
-            inputHex.addEventListener('change', (e: any) => {
-              const val = e.target.value;
-              const hex = toHexAny(val);
-              if (hex) {
-                pickr.setColor(hex);
-                pickrBtn.style.backgroundColor = hex;
-                applyUpdate(hex, false);
-              } else {
-                pickr.setColor(null);
-                pickrBtn.style.backgroundColor = 'transparent';
-                applyUpdate('', false);
+              if (hex.startsWith('#') && hex.length === 4) {
+                const [, r, g, b] = hex;
+                return `#${r}${r}${g}${g}${b}${b}`;
               }
-            });
+              return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : '';
+            };
 
-            (el as any).__pickr = pickr;
-          };
-
-          setTimeout(() => {
-            if (el.offsetWidth > 0) initPickr();
-            else {
-              const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting) {
-                  initPickr();
-                  observer.disconnect();
+            const initPickr = () => {
+              if ((el as any).__pickr) return;
+              const initialVal = inputHex.value || '';
+              const pickr = Pickr.create({
+                el: pickrBtn,
+                theme: 'monolith',
+                default: initialVal || null,
+                useAsButton: true,
+                components: {
+                  preview: true, opacity: true, hue: true,
+                  interaction: { hex: true, input: true, save: true, clear: true }
                 }
               });
-              observer.observe(el);
-            }
-          }, 50);
 
-          (el as any).__inputHex = inputHex;
-          (el as any).__pickrBtn = pickrBtn;
+              if (initialVal && initialVal !== 'transparent') {
+                pickrBtn.style.backgroundColor = initialVal;
+              }
 
-          return el;
-        },
+              pickr.on('change', (color: Pickr.HSVaColor) => {
+                const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                pickrBtn.style.backgroundColor = hex || 'transparent';
+                inputHex.value = hex;
+                applyUpdate(hex, true);
+              });
 
-        emit({ updateStyle }: any, { value, partial }: any) {
-          updateStyle(value, { partial });
-        },
+              pickr.on('save', (color: Pickr.HSVaColor) => {
+                const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                pickrBtn.style.backgroundColor = hex || 'transparent';
+                inputHex.value = hex;
+                applyUpdate(hex, false);
+                pickr.hide();
+              });
 
-        update({ value, el, property }: any) {
-          if (!el) return;
-          let raw = '';
-          if (typeof value === 'string') raw = value;
-          else if (value && typeof value.toString === 'function' && typeof value !== 'object') raw = value.toString();
-          else if (property && typeof property.getValue === 'function') raw = property.getValue() || '';
+              pickr.on('clear', () => {
+                pickrBtn.style.backgroundColor = 'transparent';
+                inputHex.value = '';
+                applyUpdate('', false);
+                pickr.hide();
+              });
 
-          let val = (raw || '').trim();
-          if (val === 'initial' || val === 'inherit' || val === 'none' || val === 'auto') val = '';
-          const match = val.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-          if (match) {
-            const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
-            const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
-            const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
-            val = `#${r}${g}${b}`;
-          }
+              inputHex.addEventListener('change', (e: any) => {
+                const val = e.target.value;
+                const hex = toHexAny(val);
+                if (hex) {
+                  pickr.setColor(hex);
+                  pickrBtn.style.backgroundColor = hex;
+                  applyUpdate(hex, false);
+                } else {
+                  pickr.setColor(null);
+                  pickrBtn.style.backgroundColor = 'transparent';
+                  applyUpdate('', false);
+                }
+              });
 
-          if (el.__inputHex) el.__inputHex.value = val;
-          if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
-          const pickr = el.__pickr;
-          if (pickr) {
-            if (val && val !== 'transparent') {
-              try { pickr.setColor(val, true); } catch (e) {}
-            } else {
-              try { pickr.setColor(null, true); } catch (e) {}
-            }
-          }
-        }
-      });
-    };
+              (el as any).__pickr = pickr;
+            };
 
-    const visualFontPlugin = (ed: any) => {
-      ed.StyleManager.addType('visual-font-select', {
-        create({ props, change }: any) {
-          preloadAllGoogleFontsOptions(ed);
+            setTimeout(() => {
+              if (el.offsetWidth > 0) initPickr();
+              else {
+                const observer = new IntersectionObserver((entries) => {
+                  if (entries[0].isIntersecting) {
+                    initPickr();
+                    observer.disconnect();
+                  }
+                });
+                observer.observe(el);
+              }
+            }, 50);
 
-          const el = document.createElement('div');
-          el.className = 'gjs-visual-font-picker';
-          el.style.position = 'relative';
-          el.style.width = '100%';
+            (el as any).__inputHex = inputHex;
+            (el as any).__pickrBtn = pickrBtn;
 
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'gjs-visual-font-btn';
-          btn.style.width = '100%';
-          btn.style.display = 'flex';
-          btn.style.alignItems = 'center';
-          btn.style.justifyContent = 'space-between';
-          btn.style.backgroundColor = '#ffffff';
-          btn.style.border = '1px solid #d1d5db';
-          btn.style.borderRadius = '4px';
-          btn.style.padding = '4px 8px';
-          btn.style.fontSize = '12px';
-          btn.style.color = '#111827';
-          btn.style.cursor = 'pointer';
-          btn.style.boxSizing = 'border-box';
-          btn.style.outline = 'none';
+            return el;
+          },
 
-          const fontLabel = document.createElement('span');
-          fontLabel.className = 'gjs-font-label';
-          fontLabel.style.overflow = 'hidden';
-          fontLabel.style.textOverflow = 'ellipsis';
-          fontLabel.style.whiteSpace = 'nowrap';
-          fontLabel.style.flex = '1';
-          fontLabel.style.textAlign = 'left';
-          fontLabel.style.fontWeight = '500';
-          fontLabel.textContent = 'Default / Inherit';
+          emit({ updateStyle }: any, { value, partial }: any) {
+            updateStyle(value, { partial });
+          },
 
-          const arrow = document.createElement('span');
-          arrow.innerHTML = '&#9660;';
-          arrow.style.fontSize = '8px';
-          arrow.style.color = '#6b7280';
-          arrow.style.marginLeft = '6px';
+          update({ value, el, property }: any) {
+            if (!el) return;
+            let raw = '';
+            if (typeof value === 'string') raw = value;
+            else if (value && typeof value.toString === 'function' && typeof value !== 'object') raw = value.toString();
+            else if (property && typeof property.getValue === 'function') raw = property.getValue() || '';
 
-          btn.appendChild(fontLabel);
-          btn.appendChild(arrow);
-          el.appendChild(btn);
-
-          const dropdown = document.createElement('div');
-          dropdown.className = 'gjs-visual-font-dropdown';
-          dropdown.style.display = 'none';
-          dropdown.style.position = 'absolute';
-          dropdown.style.left = '0';
-          dropdown.style.right = '0';
-          dropdown.style.top = 'calc(100% + 4px)';
-          dropdown.style.maxHeight = '280px';
-          dropdown.style.backgroundColor = '#ffffff';
-          dropdown.style.border = '1px solid #cbd5e1';
-          dropdown.style.borderRadius = '6px';
-          dropdown.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05)';
-          dropdown.style.zIndex = '9999999';
-          dropdown.style.overflow = 'hidden';
-          dropdown.style.flexDirection = 'column';
-
-          const searchWrap = document.createElement('div');
-          searchWrap.style.padding = '6px';
-          searchWrap.style.borderBottom = '1px solid #f1f5f9';
-          searchWrap.style.backgroundColor = '#f8fafc';
-
-          const searchInput = document.createElement('input');
-          searchInput.type = 'text';
-          searchInput.placeholder = 'Search font...';
-          searchInput.style.width = '100%';
-          searchInput.style.padding = '4px 8px';
-          searchInput.style.fontSize = '12px';
-          searchInput.style.border = '1px solid #cbd5e1';
-          searchInput.style.borderRadius = '4px';
-          searchInput.style.outline = 'none';
-          searchInput.style.boxSizing = 'border-box';
-          searchWrap.appendChild(searchInput);
-          dropdown.appendChild(searchWrap);
-
-          const listWrap = document.createElement('div');
-          listWrap.style.overflowY = 'auto';
-          listWrap.style.maxHeight = '220px';
-          listWrap.className = 'custom-scroll';
-          dropdown.appendChild(listWrap);
-
-          let currentValue = props?.value || 'inherit';
-
-          const renderList = (filterText: string = '') => {
-            listWrap.innerHTML = '';
-            const query = filterText.toLowerCase();
-            const filtered = GOOGLE_FONTS_OPTIONS.filter(f =>
-              f.name.toLowerCase().includes(query) || f.id.toLowerCase().includes(query)
-            );
-
-            if (filtered.length === 0) {
-              const empty = document.createElement('div');
-              empty.style.padding = '10px';
-              empty.style.fontSize = '11px';
-              empty.style.color = '#94a3b8';
-              empty.style.textAlign = 'center';
-              empty.textContent = 'No fonts found';
-              listWrap.appendChild(empty);
-              return;
+            let val = (raw || '').trim();
+            if (val === 'initial' || val === 'inherit' || val === 'none' || val === 'auto') val = '';
+            const match = val.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+            if (match) {
+              const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+              const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+              const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+              val = `#${r}${g}${b}`;
             }
 
-            filtered.forEach(font => {
-              const item = document.createElement('div');
-              item.style.padding = '6px 10px';
-              item.style.cursor = 'pointer';
-              item.style.borderBottom = '1px solid #f8fafc';
-              item.style.display = 'flex';
-              item.style.flexDirection = 'column';
-              item.style.gap = '2px';
-              item.style.transition = 'background-color 0.15s ease';
-
-              const isSelected = font.id === currentValue || font.name === currentValue;
-              const fontStyle = font.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(font.id)
-                ? `'${font.id}', sans-serif`
-                : font.id;
-
-              if (isSelected) {
-                item.style.backgroundColor = '#eff6ff';
-                item.style.color = '#2563eb';
+            if (el.__inputHex) el.__inputHex.value = val;
+            if (el.__pickrBtn) el.__pickrBtn.style.backgroundColor = val || 'transparent';
+            const pickr = el.__pickr;
+            if (pickr) {
+              if (val && val !== 'transparent') {
+                try { pickr.setColor(val, true); } catch (e) { }
               } else {
-                item.style.backgroundColor = '#ffffff';
-                item.style.color = '#1e293b';
+                try { pickr.setColor(null, true); } catch (e) { }
               }
-
-              item.onmouseenter = () => {
-                if (!isSelected) item.style.backgroundColor = '#f1f5f9';
-              };
-              item.onmouseleave = () => {
-                if (!isSelected) item.style.backgroundColor = '#ffffff';
-              };
-
-              const titleRow = document.createElement('div');
-              titleRow.style.display = 'flex';
-              titleRow.style.justifyContent = 'space-between';
-              titleRow.style.alignItems = 'center';
-              titleRow.style.width = '100%';
-
-              const titleSpan = document.createElement('span');
-              titleSpan.style.fontSize = '13px';
-              titleSpan.style.fontWeight = '500';
-              titleSpan.style.fontFamily = fontStyle;
-              titleSpan.textContent = font.name;
-              titleRow.appendChild(titleSpan);
-
-              if (isSelected) {
-                const check = document.createElement('span');
-                check.textContent = '✓';
-                check.style.fontWeight = 'bold';
-                check.style.fontSize = '12px';
-                check.style.color = '#2563eb';
-                titleRow.appendChild(check);
-              }
-
-              item.appendChild(titleRow);
-
-              if (font.id !== 'inherit') {
-                const sampleSpan = document.createElement('span');
-                sampleSpan.style.fontSize = '11px';
-                sampleSpan.style.color = '#64748b';
-                sampleSpan.style.fontFamily = fontStyle;
-                sampleSpan.style.whiteSpace = 'nowrap';
-                sampleSpan.style.overflow = 'hidden';
-                sampleSpan.style.textOverflow = 'ellipsis';
-                sampleSpan.textContent = 'The quick brown fox jumps over the lazy dog';
-                item.appendChild(sampleSpan);
-              }
-
-              item.onclick = (e) => {
-                e.stopPropagation();
-                currentValue = font.id;
-                ensureGoogleFontLoaded(ed, font.id);
-                change({ value: font.id, partial: false });
-                fontLabel.textContent = font.name;
-                btn.style.fontFamily = fontStyle;
-                dropdown.style.display = 'none';
-              };
-
-              listWrap.appendChild(item);
-            });
-          };
-
-          const toggleDropdown = () => {
-            const isHidden = dropdown.style.display === 'none';
-            dropdown.style.display = isHidden ? 'flex' : 'none';
-            if (isHidden) {
-              searchInput.value = '';
-              renderList('');
-              setTimeout(() => searchInput.focus(), 50);
             }
-          };
-
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            toggleDropdown();
-          };
-
-          searchInput.oninput = (e: any) => {
-            renderList(e.target.value);
-          };
-
-          const handleOutsideClick = (e: MouseEvent) => {
-            if (!el.contains(e.target as Node)) {
-              dropdown.style.display = 'none';
-            }
-          };
-
-          document.addEventListener('click', handleOutsideClick);
-
-          el.appendChild(dropdown);
-          return el;
-        },
-
-        emit({ updateStyle }: any, { value, partial }: any) {
-          updateStyle(value, { partial });
-        },
-
-        update({ value, el, property }: any) {
-          if (!el) return;
-          let val = '';
-          if (typeof value === 'string') val = value;
-          else if (value && typeof value.toString === 'function') val = value.toString();
-          else if (property && typeof property.getValue === 'function') val = property.getValue() || 'inherit';
-          val = (val || 'inherit').trim();
-
-          const fontObj = GOOGLE_FONTS_OPTIONS.find(f => f.id === val || f.name === val) || { id: val, name: val };
-          const btn = el.querySelector('.gjs-visual-font-btn');
-          const fontLabel = btn ? btn.querySelector('.gjs-font-label') : null;
-          if (fontLabel) fontLabel.textContent = fontObj.name;
-          if (btn) {
-            const fontStyle = fontObj.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(fontObj.id)
-              ? `'${fontObj.id}', sans-serif`
-              : fontObj.id;
-            btn.style.fontFamily = fontStyle;
           }
+        });
+      };
+
+      const visualFontPlugin = (ed: any) => {
+        ed.StyleManager.addType('visual-font-select', {
+          create({ props, change }: any) {
+            preloadAllGoogleFontsOptions(ed);
+
+            const el = document.createElement('div');
+            el.className = 'gjs-visual-font-picker';
+            el.style.position = 'relative';
+            el.style.width = '100%';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'gjs-visual-font-btn';
+            btn.style.width = '100%';
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'space-between';
+            btn.style.backgroundColor = '#ffffff';
+            btn.style.border = '1px solid #d1d5db';
+            btn.style.borderRadius = '4px';
+            btn.style.padding = '4px 8px';
+            btn.style.fontSize = '12px';
+            btn.style.color = '#111827';
+            btn.style.cursor = 'pointer';
+            btn.style.boxSizing = 'border-box';
+            btn.style.outline = 'none';
+
+            const fontLabel = document.createElement('span');
+            fontLabel.className = 'gjs-font-label';
+            fontLabel.style.overflow = 'hidden';
+            fontLabel.style.textOverflow = 'ellipsis';
+            fontLabel.style.whiteSpace = 'nowrap';
+            fontLabel.style.flex = '1';
+            fontLabel.style.textAlign = 'left';
+            fontLabel.style.fontWeight = '500';
+            fontLabel.textContent = 'Default / Inherit';
+
+            const arrow = document.createElement('span');
+            arrow.innerHTML = '&#9660;';
+            arrow.style.fontSize = '8px';
+            arrow.style.color = '#6b7280';
+            arrow.style.marginLeft = '6px';
+
+            btn.appendChild(fontLabel);
+            btn.appendChild(arrow);
+            el.appendChild(btn);
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'gjs-visual-font-dropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.position = 'absolute';
+            dropdown.style.left = '0';
+            dropdown.style.right = '0';
+            dropdown.style.top = 'calc(100% + 4px)';
+            dropdown.style.maxHeight = '280px';
+            dropdown.style.backgroundColor = '#ffffff';
+            dropdown.style.border = '1px solid #cbd5e1';
+            dropdown.style.borderRadius = '6px';
+            dropdown.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05)';
+            dropdown.style.zIndex = '9999999';
+            dropdown.style.overflow = 'hidden';
+            dropdown.style.flexDirection = 'column';
+
+            const searchWrap = document.createElement('div');
+            searchWrap.style.padding = '6px';
+            searchWrap.style.borderBottom = '1px solid #f1f5f9';
+            searchWrap.style.backgroundColor = '#f8fafc';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search font...';
+            searchInput.style.width = '100%';
+            searchInput.style.padding = '4px 8px';
+            searchInput.style.fontSize = '12px';
+            searchInput.style.border = '1px solid #cbd5e1';
+            searchInput.style.borderRadius = '4px';
+            searchInput.style.outline = 'none';
+            searchInput.style.boxSizing = 'border-box';
+            searchWrap.appendChild(searchInput);
+            dropdown.appendChild(searchWrap);
+
+            const listWrap = document.createElement('div');
+            listWrap.style.overflowY = 'auto';
+            listWrap.style.maxHeight = '220px';
+            listWrap.className = 'custom-scroll';
+            dropdown.appendChild(listWrap);
+
+            let currentValue = props?.value || 'inherit';
+
+            const renderList = (filterText: string = '') => {
+              listWrap.innerHTML = '';
+              const query = filterText.toLowerCase();
+              const filtered = GOOGLE_FONTS_OPTIONS.filter(f =>
+                f.name.toLowerCase().includes(query) || f.id.toLowerCase().includes(query)
+              );
+
+              if (filtered.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.padding = '10px';
+                empty.style.fontSize = '11px';
+                empty.style.color = '#94a3b8';
+                empty.style.textAlign = 'center';
+                empty.textContent = 'No fonts found';
+                listWrap.appendChild(empty);
+                return;
+              }
+
+              filtered.forEach(font => {
+                const item = document.createElement('div');
+                item.style.padding = '6px 10px';
+                item.style.cursor = 'pointer';
+                item.style.borderBottom = '1px solid #f8fafc';
+                item.style.display = 'flex';
+                item.style.flexDirection = 'column';
+                item.style.gap = '2px';
+                item.style.transition = 'background-color 0.15s ease';
+
+                const isSelected = font.id === currentValue || font.name === currentValue;
+                const fontStyle = font.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(font.id)
+                  ? `'${font.id}', sans-serif`
+                  : font.id;
+
+                if (isSelected) {
+                  item.style.backgroundColor = '#eff6ff';
+                  item.style.color = '#2563eb';
+                } else {
+                  item.style.backgroundColor = '#ffffff';
+                  item.style.color = '#1e293b';
+                }
+
+                item.onmouseenter = () => {
+                  if (!isSelected) item.style.backgroundColor = '#f1f5f9';
+                };
+                item.onmouseleave = () => {
+                  if (!isSelected) item.style.backgroundColor = '#ffffff';
+                };
+
+                const titleRow = document.createElement('div');
+                titleRow.style.display = 'flex';
+                titleRow.style.justifyContent = 'space-between';
+                titleRow.style.alignItems = 'center';
+                titleRow.style.width = '100%';
+
+                const titleSpan = document.createElement('span');
+                titleSpan.style.fontSize = '13px';
+                titleSpan.style.fontWeight = '500';
+                titleSpan.style.fontFamily = fontStyle;
+                titleSpan.textContent = font.name;
+                titleRow.appendChild(titleSpan);
+
+                if (isSelected) {
+                  const check = document.createElement('span');
+                  check.textContent = '✓';
+                  check.style.fontWeight = 'bold';
+                  check.style.fontSize = '12px';
+                  check.style.color = '#2563eb';
+                  titleRow.appendChild(check);
+                }
+
+                item.appendChild(titleRow);
+
+                if (font.id !== 'inherit') {
+                  const sampleSpan = document.createElement('span');
+                  sampleSpan.style.fontSize = '11px';
+                  sampleSpan.style.color = '#64748b';
+                  sampleSpan.style.fontFamily = fontStyle;
+                  sampleSpan.style.whiteSpace = 'nowrap';
+                  sampleSpan.style.overflow = 'hidden';
+                  sampleSpan.style.textOverflow = 'ellipsis';
+                  sampleSpan.textContent = 'The quick brown fox jumps over the lazy dog';
+                  item.appendChild(sampleSpan);
+                }
+
+                item.onclick = (e) => {
+                  e.stopPropagation();
+                  currentValue = font.id;
+                  ensureGoogleFontLoaded(ed, font.id);
+                  change({ value: font.id, partial: false });
+                  fontLabel.textContent = font.name;
+                  btn.style.fontFamily = fontStyle;
+                  dropdown.style.display = 'none';
+                };
+
+                listWrap.appendChild(item);
+              });
+            };
+
+            const toggleDropdown = () => {
+              const isHidden = dropdown.style.display === 'none';
+              dropdown.style.display = isHidden ? 'flex' : 'none';
+              if (isHidden) {
+                searchInput.value = '';
+                renderList('');
+                setTimeout(() => searchInput.focus(), 50);
+              }
+            };
+
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              toggleDropdown();
+            };
+
+            searchInput.oninput = (e: any) => {
+              renderList(e.target.value);
+            };
+
+            const handleOutsideClick = (e: MouseEvent) => {
+              if (!el.contains(e.target as Node)) {
+                dropdown.style.display = 'none';
+              }
+            };
+
+            document.addEventListener('click', handleOutsideClick);
+
+            el.appendChild(dropdown);
+            return el;
+          },
+
+          emit({ updateStyle }: any, { value, partial }: any) {
+            updateStyle(value, { partial });
+          },
+
+          update({ value, el, property }: any) {
+            if (!el) return;
+            let val = '';
+            if (typeof value === 'string') val = value;
+            else if (value && typeof value.toString === 'function') val = value.toString();
+            else if (property && typeof property.getValue === 'function') val = property.getValue() || 'inherit';
+            val = (val || 'inherit').trim();
+
+            const fontObj = GOOGLE_FONTS_OPTIONS.find(f => f.id === val || f.name === val) || { id: val, name: val };
+            const btn = el.querySelector('.gjs-visual-font-btn');
+            const fontLabel = btn ? btn.querySelector('.gjs-font-label') : null;
+            if (fontLabel) fontLabel.textContent = fontObj.name;
+            if (btn) {
+              const fontStyle = fontObj.id !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(fontObj.id)
+                ? `'${fontObj.id}', sans-serif`
+                : fontObj.id;
+              btn.style.fontFamily = fontStyle;
+            }
+          }
+        });
+      };
+
+      // ─────────────────────────────────────────────────────────────────────────────
+      // customSwiperPlugin — drop-in replacement for the existing function
+      // Fixes:
+      //   1. Accordion headers now reliably toggle (class-based, survives re-renders)
+      //   2. Swiper traits (Pagination Type, Slides Per View, etc.) actually apply
+      //   3. MutationObserver re-applies collapsed state after every panel refresh
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      // ─────────────────────────────────────────────────────────────────────────────
+      // customSwiperPlugin — fully fixed accordion + swiper traits
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      const customSwiperPlugin = (editor: Editor) => {
+
+        // ── Inject accordion-collapsed CSS once ──
+        if (!document.getElementById('accordion-collapsed-style')) {
+          const s = document.createElement('style');
+          s.id = 'accordion-collapsed-style';
+          s.innerHTML = `.gjs-trt-trait__wrp.accordion-collapsed { display: none !important; }`;
+          document.head.appendChild(s);
         }
-      });
-    };
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // customSwiperPlugin — drop-in replacement for the existing function
-    // Fixes:
-    //   1. Accordion headers now reliably toggle (class-based, survives re-renders)
-    //   2. Swiper traits (Pagination Type, Slides Per View, etc.) actually apply
-    //   3. MutationObserver re-applies collapsed state after every panel refresh
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // customSwiperPlugin — fully fixed accordion + swiper traits
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    const customSwiperPlugin = (editor: Editor) => {
-
-      // ── Inject accordion-collapsed CSS once ──
-      if (!document.getElementById('accordion-collapsed-style')) {
-        const s = document.createElement('style');
-        s.id = 'accordion-collapsed-style';
-        s.innerHTML = `.gjs-trt-trait__wrp.accordion-collapsed { display: none !important; }`;
-        document.head.appendChild(s);
-      }
-
-      // ── Custom trait type: accordion-header ──
-      editor.TraitManager.addType('accordion-header', {
-        createLabel() { return ''; },
-        createInput({ trait }: any) {
-          const el = document.createElement('div');
-          el.style.cssText = 'width:100%; display:block;';
-          el.innerHTML = `
+        // ── Custom trait type: accordion-header ──
+        editor.TraitManager.addType('accordion-header', {
+          createLabel() { return ''; },
+          createInput({ trait }: any) {
+            const el = document.createElement('div');
+            el.style.cssText = 'width:100%; display:block;';
+            el.innerHTML = `
     <div class="trait-accordion-header" data-open="false"
       style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;
              padding:12px 14px;background:#ffffff;border-bottom:1px solid #e2e8f0;
@@ -1976,150 +2006,150 @@ const GrapesEditor = () => {
       </svg>
     </div>
   `;
-          return el;
-        },
-        onEvent({ elInput }: any) { }
-      });
-
-      // ════════════════════════════════════════════════
-      // ACCORDION HELPERS
-      // ════════════════════════════════════════════════
-
-      const getWrapperEl = (header: HTMLElement): HTMLElement | null => {
-        let node: HTMLElement | null = header;
-        while (node) {
-          if (
-            node.classList.contains('gjs-trt-trait__wrp') ||
-            node.classList.contains('gjs-trt-trait-container') ||
-            (node.parentElement && node.parentElement.classList.contains('gjs-trt-traits'))
-          ) {
-            return node;
-          }
-          node = node.parentElement as HTMLElement | null;
-        }
-        return null;
-      };
-
-      const getSiblingWrappers = (wrapperEl: HTMLElement): HTMLElement[] => {
-        const result: HTMLElement[] = [];
-        let next = wrapperEl.nextElementSibling as HTMLElement | null;
-        while (next) {
-          if (next.querySelector('.trait-accordion-header')) break;
-          result.push(next);
-          next = next.nextElementSibling as HTMLElement | null;
-        }
-        return result;
-      };
-
-      const applyAccordionState = (header: HTMLElement) => {
-        const isOpen = header.dataset.open === 'true';
-        const icon = header.querySelector('.accordion-icon') as HTMLElement | null;
-        if (icon) icon.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
-
-        const wrapperEl = getWrapperEl(header);
-        if (!wrapperEl) return;
-
-        getSiblingWrappers(wrapperEl).forEach(sibling => {
-          if (isOpen) {
-            sibling.classList.remove('accordion-collapsed');
-          } else {
-            sibling.classList.add('accordion-collapsed');
-          }
+            return el;
+          },
+          onEvent({ elInput }: any) { }
         });
-      };
 
-      // LAYER 1 — capture-phase click
-      const accordionClickHandler = (e: MouseEvent) => {
-        const header = (e.target as Element).closest('.trait-accordion-header') as HTMLElement | null;
-        if (!header) return;
-        e.stopImmediatePropagation();
-        header.dataset.open = header.dataset.open === 'true' ? 'false' : 'true';
-        applyAccordionState(header);
-      };
-      document.addEventListener('click', accordionClickHandler, true);
+        // ════════════════════════════════════════════════
+        // ACCORDION HELPERS
+        // ════════════════════════════════════════════════
 
-      // LAYER 2 — initialize all headers (collapsed by default)
-      const initAllAccordionHeaders = () => {
-        document.querySelectorAll<HTMLElement>('.trait-accordion-header').forEach(header => {
-          if (!header.dataset.open) header.dataset.open = 'false';
+        const getWrapperEl = (header: HTMLElement): HTMLElement | null => {
+          let node: HTMLElement | null = header;
+          while (node) {
+            if (
+              node.classList.contains('gjs-trt-trait__wrp') ||
+              node.classList.contains('gjs-trt-trait-container') ||
+              (node.parentElement && node.parentElement.classList.contains('gjs-trt-traits'))
+            ) {
+              return node;
+            }
+            node = node.parentElement as HTMLElement | null;
+          }
+          return null;
+        };
+
+        const getSiblingWrappers = (wrapperEl: HTMLElement): HTMLElement[] => {
+          const result: HTMLElement[] = [];
+          let next = wrapperEl.nextElementSibling as HTMLElement | null;
+          while (next) {
+            if (next.querySelector('.trait-accordion-header')) break;
+            result.push(next);
+            next = next.nextElementSibling as HTMLElement | null;
+          }
+          return result;
+        };
+
+        const applyAccordionState = (header: HTMLElement) => {
+          const isOpen = header.dataset.open === 'true';
+          const icon = header.querySelector('.accordion-icon') as HTMLElement | null;
+          if (icon) icon.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+
+          const wrapperEl = getWrapperEl(header);
+          if (!wrapperEl) return;
+
+          getSiblingWrappers(wrapperEl).forEach(sibling => {
+            if (isOpen) {
+              sibling.classList.remove('accordion-collapsed');
+            } else {
+              sibling.classList.add('accordion-collapsed');
+            }
+          });
+        };
+
+        // LAYER 1 — capture-phase click
+        const accordionClickHandler = (e: MouseEvent) => {
+          const header = (e.target as Element).closest('.trait-accordion-header') as HTMLElement | null;
+          if (!header) return;
+          e.stopImmediatePropagation();
+          header.dataset.open = header.dataset.open === 'true' ? 'false' : 'true';
           applyAccordionState(header);
+        };
+        document.addEventListener('click', accordionClickHandler, true);
+
+        // LAYER 2 — initialize all headers (collapsed by default)
+        const initAllAccordionHeaders = () => {
+          document.querySelectorAll<HTMLElement>('.trait-accordion-header').forEach(header => {
+            if (!header.dataset.open) header.dataset.open = 'false';
+            applyAccordionState(header);
+          });
+        };
+
+        // LAYER 3 — MutationObserver: re-apply state whenever traits panel changes
+        let debounce: ReturnType<typeof setTimeout>;
+        const observer = new MutationObserver(() => {
+          clearTimeout(debounce);
+          debounce = setTimeout(initAllAccordionHeaders, 150);
         });
-      };
 
-      // LAYER 3 — MutationObserver: re-apply state whenever traits panel changes
-      let debounce: ReturnType<typeof setTimeout>;
-      const observer = new MutationObserver(() => {
-        clearTimeout(debounce);
-        debounce = setTimeout(initAllAccordionHeaders, 150);
-      });
+        setTimeout(() => {
+          const target =
+            document.querySelector('#traits-container') ||
+            document.querySelector('.gjs-trt-traits') ||
+            document.body;
+          observer.observe(target, { childList: true, subtree: true });
+          initAllAccordionHeaders();
+        }, 500);
 
-      setTimeout(() => {
-        const target =
-          document.querySelector('#traits-container') ||
-          document.querySelector('.gjs-trt-traits') ||
-          document.body;
-        observer.observe(target, { childList: true, subtree: true });
-        initAllAccordionHeaders();
-      }, 500);
+        // ════════════════════════════════════════════════
+        // SWIPER BLOCK + COMPONENTS
+        // ════════════════════════════════════════════════
 
-      // ════════════════════════════════════════════════
-      // SWIPER BLOCK + COMPONENTS
-      // ════════════════════════════════════════════════
+        // ─── SWIPER BLOCK + COMPONENTS ───
 
-      // ─── SWIPER BLOCK + COMPONENTS ───
-
-      editor.Components.addType('details', {
-        isComponent: el => el.tagName === 'DETAILS',
-        model: {
-          defaults: {
-            traits: [
-              {
-                type: 'checkbox',
-                name: 'open',
-                label: 'Accordion Open'
-              }
-            ]
-          }
-        }
-      });
-
-      editor.Components.addType('custom-tabs', {
-        isComponent: el => {
-          if (el && el.classList && el.classList.contains('tabs-container')) {
-            return { type: 'custom-tabs' };
-          }
-        },
-        model: {
-          defaults: {
-            script: function () {
-              var container = this;
-              var allTabs = Array.prototype.slice.call(container.querySelectorAll('.tab-item'));
-              var allPanels = Array.prototype.slice.call(container.querySelectorAll('.tab-content-box'));
-
-              allTabs.forEach(function (tabEl, index) {
-                tabEl.addEventListener('click', function () {
-                  allTabs.forEach(function (t) { t.classList.remove('active'); t.style.borderBottomColor = 'transparent'; t.style.color = '#4b5563'; });
-                  allPanels.forEach(function (p) { p.classList.remove('active'); p.style.display = 'none'; });
-
-                  tabEl.classList.add('active');
-                  tabEl.style.borderBottomColor = '#6366f1';
-                  tabEl.style.color = '#6366f1';
-
-                  if (allPanels[index]) {
-                    allPanels[index].classList.add('active');
-                    allPanels[index].style.display = 'block';
-                  }
-                });
-              });
+        editor.Components.addType('details', {
+          isComponent: el => el.tagName === 'DETAILS',
+          model: {
+            defaults: {
+              traits: [
+                {
+                  type: 'checkbox',
+                  name: 'open',
+                  label: 'Accordion Open'
+                }
+              ]
             }
           }
-        }
-      });
+        });
 
-      editor.BlockManager.add('tabs', {
-        label: '<i class="fa fa-folder"></i><br/>Tabs',
-        category: 'Basic',
-        content: `
+        editor.Components.addType('custom-tabs', {
+          isComponent: el => {
+            if (el && el.classList && el.classList.contains('tabs-container')) {
+              return { type: 'custom-tabs' };
+            }
+          },
+          model: {
+            defaults: {
+              script: function () {
+                var container = this;
+                var allTabs = Array.prototype.slice.call(container.querySelectorAll('.tab-item'));
+                var allPanels = Array.prototype.slice.call(container.querySelectorAll('.tab-content-box'));
+
+                allTabs.forEach(function (tabEl, index) {
+                  tabEl.addEventListener('click', function () {
+                    allTabs.forEach(function (t) { t.classList.remove('active'); t.style.borderBottomColor = 'transparent'; t.style.color = '#4b5563'; });
+                    allPanels.forEach(function (p) { p.classList.remove('active'); p.style.display = 'none'; });
+
+                    tabEl.classList.add('active');
+                    tabEl.style.borderBottomColor = '#6366f1';
+                    tabEl.style.color = '#6366f1';
+
+                    if (allPanels[index]) {
+                      allPanels[index].classList.add('active');
+                      allPanels[index].style.display = 'block';
+                    }
+                  });
+                });
+              }
+            }
+          }
+        });
+
+        editor.BlockManager.add('tabs', {
+          label: '<i class="fa fa-folder"></i><br/>Tabs',
+          category: 'Basic',
+          content: `
       <div data-gjs-type="custom-tabs" class="tabs-container" data-gjs-droppable="false" style="width: 100%; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #fff;">
         <div style="display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb;" data-gjs-droppable="false">
           <div class="tab-item active" data-gjs-droppable="false" style="padding: 12px 24px; cursor: pointer; font-weight: 600; font-size: 14px; border-bottom: 2px solid #6366f1; color: #6366f1; transition: all 0.2s;">Tab 1</div>
@@ -2142,12 +2172,12 @@ const GrapesEditor = () => {
         </div>
       </div>
 `
-      });
+        });
 
-      editor.BlockManager.add('swiper-slider', {
-        label: '<i class="fa fa-arrows-h"></i><br/>Swiper Slider',
-        category: 'Basic',
-        content: `
+        editor.BlockManager.add('swiper-slider', {
+          label: '<i class="fa fa-arrows-h"></i><br/>Swiper Slider',
+          category: 'Basic',
+          content: `
   <div data-gjs-type="swiper-container"
        class="swiper-container my-swiper relative overflow-hidden bg-gray-100 min-h-[300px]"
        data-navigation="true"
@@ -2163,13 +2193,13 @@ const GrapesEditor = () => {
     <div data-gjs-type="swiper-button-next" class="swiper-button-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/50 rounded-full flex items-center justify-center cursor-pointer !text-black !scale-75" style="z-index:10;"></div>
   </div>
 `
-      });
+        });
 
-      // ─── SWIPER: Grid Slider Block (3 columns, cards layout) ───
-      editor.BlockManager.add('swiper-grid', {
-        label: '<i class="fa fa-th"></i><br/>Grid Slider',
-        category: 'Basic',
-        content: `
+        // ─── SWIPER: Grid Slider Block (3 columns, cards layout) ───
+        editor.BlockManager.add('swiper-grid', {
+          label: '<i class="fa fa-th"></i><br/>Grid Slider',
+          category: 'Basic',
+          content: `
   <div data-gjs-type="swiper-container"
        class="swiper-container my-swiper relative overflow-hidden bg-white py-8"
        data-slides-per-view="3"
@@ -2212,13 +2242,13 @@ const GrapesEditor = () => {
     <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#6366f1;"></div>
   </div>
 `
-      });
+        });
 
-      // ─── SWIPER: Card Slider Block (image + text cards) ───
-      editor.BlockManager.add('swiper-cards', {
-        label: '<i class="fa fa-id-card"></i><br/>Card Slider',
-        category: 'Basic',
-        content: `
+        // ─── SWIPER: Card Slider Block (image + text cards) ───
+        editor.BlockManager.add('swiper-cards', {
+          label: '<i class="fa fa-id-card"></i><br/>Card Slider',
+          category: 'Basic',
+          content: `
   <div data-gjs-type="swiper-container"
        class="swiper-container my-swiper relative overflow-hidden bg-gray-50 py-10"
        data-slides-per-view="1"
@@ -2266,13 +2296,13 @@ const GrapesEditor = () => {
     <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#111827;background:rgba(255,255,255,0.9);border-radius:50%;width:44px;height:44px;z-index:10;"></div>
   </div>
 `
-      });
+        });
 
-      // ─── SWIPER: Hero Slider Block (full-width hero with background image) ───
-      editor.BlockManager.add('swiper-hero', {
-        label: '<i class="fa fa-image"></i><br/>Hero Slider',
-        category: 'Basic',
-        content: `
+        // ─── SWIPER: Hero Slider Block (full-width hero with background image) ───
+        editor.BlockManager.add('swiper-hero', {
+          label: '<i class="fa fa-image"></i><br/>Hero Slider',
+          category: 'Basic',
+          content: `
   <div data-gjs-type="swiper-container"
        class="swiper-container my-swiper relative overflow-hidden"
        data-slides-per-view="1"
@@ -2322,857 +2352,889 @@ const GrapesEditor = () => {
     <div data-gjs-type="swiper-button-next" class="swiper-button-next" style="color:#fff;z-index:10;"></div>
   </div>
 `
-      });
+        });
 
-      // ── reinitSwiper: destroy old instance and create new one in the canvas ──
-      const reinitSwiper = (component: any, retryCount = 0) => {
-        const canvasWin = editor.Canvas.getWindow() as any;
+        // ── reinitSwiper: destroy old instance and create new one in the canvas ──
+        const reinitSwiper = (component: any, retryCount = 0) => {
+          const canvasWin = editor.Canvas.getWindow() as any;
 
-        // If Swiper not loaded yet, retry up to 10 times (5 seconds)
-        if (typeof canvasWin.Swiper === 'undefined') {
-          if (retryCount < 10) {
-            setTimeout(() => reinitSwiper(component, retryCount + 1), 500);
+          // If Swiper not loaded yet, retry up to 10 times (5 seconds)
+          if (typeof canvasWin.Swiper === 'undefined') {
+            if (retryCount < 10) {
+              setTimeout(() => reinitSwiper(component, retryCount + 1), 500);
+            } else {
+              console.warn('Swiper: CDN script not loaded after retries');
+            }
+            return;
+          }
+
+          const el = component.getEl() as HTMLElement | null;
+          if (!el) return;
+
+          // Destroy old swiper instance
+          if ((el as any).__swiper) {
+            try { (el as any).__swiper.destroy(true, true); } catch (_) { }
+            (el as any).__swiper = null;
+          }
+
+          // --- CRITICAL CLEANUP ---
+          el.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
+          el.querySelectorAll('.swiper-slide-duplicate').forEach((dup) => dup.remove());
+          el.querySelectorAll('.swiper-slide').forEach((s: any) => {
+            s.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
+            s.removeAttribute('data-swiper-slide-index');
+            s.style.opacity = '';
+            s.style.transform = '';
+            s.style.width = '';
+            s.style.margin = '';
+          });
+          el.querySelectorAll('.swiper-wrapper').forEach((w: any) => {
+            w.removeAttribute('style');
+            w.style.transform = '';
+          });
+          const paginationEl = el.querySelector('.swiper-pagination');
+          if (paginationEl) paginationEl.innerHTML = '';
+          // -------------------------
+
+          const attrs = component.getAttributes();
+          const bool = (k: string) => {
+            let v = attrs[k];
+            const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+            if ((v === undefined || v === false || v === 'false') && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+            if ((v === undefined || v === false || v === 'false') && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
+            return v !== undefined && v !== null && String(v) !== 'false';
+          };
+          const num = (k: string, fb: number) => {
+            let v = attrs[k];
+            const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+            if ((v === undefined || v === fb || v === String(fb)) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+            if ((v === undefined || v === fb || v === String(fb)) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
+            return parseFloat(String(v ?? fb)) || fb;
+          };
+          const str = (k: string, fb: string) => {
+            let v = attrs[k];
+            const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+            if ((v === undefined || v === fb) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
+            if ((v === undefined || v === fb) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
+            return v !== undefined ? String(v) : fb;
+          };
+
+          const props: any = {
+            observer: true,
+            observeParents: true,
+            direction: bool('vertical') ? 'vertical' : 'horizontal',
+            loop: bool('loop') !== false ? true : false, // Default to true if not explicitly false
+            freeMode: bool('freeMode'),
+            autoHeight: bool('autoHeight'),
+            initialSlide: num('initialSlide', 0),
+            speed: num('speed', 300),
+            effect: str('effect', 'slide'),
+            parallax: bool('parallax'),
+            slidesPerView: num('slidesPerView', 2), // Default 2
+            spaceBetween: num('spaceBetween', 30), // Default 30
+            slidesPerGroup: num('slidesPerGroup', 1),
+            centeredSlides: bool('centeredSlides'),
+            rewind: bool('rewind'),
+            keyboard: bool('keyboard') ? { enabled: true } : false,
+            mousewheel: bool('mousewheel'),
+            grabCursor: bool('grabCursor'),
+            lazy: bool('lazy') ? { loadPrevNext: true } : false,
+          };
+
+          if (bool('autoplay')) {
+            props.autoplay = {
+              delay: num('autoplayDelay', 3000),
+              disableOnInteraction: bool('autoplayDisableOnInteraction'),
+              pauseOnMouseEnter: bool('autoplayPauseOnMouseEnter'),
+              reverseDirection: bool('autoplayReverseDirection'),
+            };
           } else {
-            console.warn('Swiper: CDN script not loaded after retries');
+            props.autoplay = false;
           }
-          return;
-        }
 
-        const el = component.getEl() as HTMLElement | null;
-        if (!el) return;
+          if (bool('navigation')) {
+            props.navigation = {
+              nextEl: el.querySelector('.swiper-button-next'),
+              prevEl: el.querySelector('.swiper-button-prev'),
+            };
+          }
 
-        // Destroy old swiper instance
-        if ((el as any).__swiper) {
-          try { (el as any).__swiper.destroy(true, true); } catch (_) { }
-          (el as any).__swiper = null;
-        }
-
-        // --- CRITICAL CLEANUP ---
-        el.classList.remove('swiper-initialized', 'swiper-horizontal', 'swiper-vertical', 'swiper-backface-hidden');
-        el.querySelectorAll('.swiper-slide-duplicate').forEach((dup) => dup.remove());
-        el.querySelectorAll('.swiper-slide').forEach((s: any) => {
-          s.classList.remove('swiper-slide-active', 'swiper-slide-next', 'swiper-slide-prev', 'swiper-slide-visible');
-          s.removeAttribute('data-swiper-slide-index');
-          s.style.opacity = '';
-          s.style.transform = '';
-          s.style.width = '';
-          s.style.margin = '';
-        });
-        el.querySelectorAll('.swiper-wrapper').forEach((w: any) => {
-          w.removeAttribute('style');
-          w.style.transform = '';
-        });
-        const paginationEl = el.querySelector('.swiper-pagination');
-        if (paginationEl) paginationEl.innerHTML = '';
-        // -------------------------
-
-        const attrs = component.getAttributes();
-        const bool = (k: string) => {
-          let v = attrs[k];
-          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-          if ((v === undefined || v === false || v === 'false') && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
-          if ((v === undefined || v === false || v === 'false') && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
-          return v !== undefined && v !== null && String(v) !== 'false';
-        };
-        const num = (k: string, fb: number) => {
-          let v = attrs[k];
-          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-          if ((v === undefined || v === fb || v === String(fb)) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
-          if ((v === undefined || v === fb || v === String(fb)) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
-          return parseFloat(String(v ?? fb)) || fb;
-        };
-        const str = (k: string, fb: string) => {
-          let v = attrs[k];
-          const kebab = k.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-          if ((v === undefined || v === fb) && attrs['data-' + kebab] !== undefined) v = attrs['data-' + kebab];
-          if ((v === undefined || v === fb) && el.dataset && el.dataset[k] !== undefined) v = el.dataset[k];
-          return v !== undefined ? String(v) : fb;
-        };
-
-        const props: any = {
-          observer: true,
-          observeParents: true,
-          direction: bool('vertical') ? 'vertical' : 'horizontal',
-          loop: bool('loop') !== false ? true : false, // Default to true if not explicitly false
-          freeMode: bool('freeMode'),
-          autoHeight: bool('autoHeight'),
-          initialSlide: num('initialSlide', 0),
-          speed: num('speed', 300),
-          effect: str('effect', 'slide'),
-          parallax: bool('parallax'),
-          slidesPerView: num('slidesPerView', 2), // Default 2
-          spaceBetween: num('spaceBetween', 30), // Default 30
-          slidesPerGroup: num('slidesPerGroup', 1),
-          centeredSlides: bool('centeredSlides'),
-          rewind: bool('rewind'),
-          keyboard: bool('keyboard') ? { enabled: true } : false,
-          mousewheel: bool('mousewheel'),
-          grabCursor: bool('grabCursor'),
-          lazy: bool('lazy') ? { loadPrevNext: true } : false,
-        };
-
-        if (bool('autoplay')) {
-          props.autoplay = {
-            delay: num('autoplayDelay', 3000),
-            disableOnInteraction: bool('autoplayDisableOnInteraction'),
-            pauseOnMouseEnter: bool('autoplayPauseOnMouseEnter'),
-            reverseDirection: bool('autoplayReverseDirection'),
+          props.pagination = {
+            el: el.querySelector('.swiper-pagination'),
+            type: str('pagination', 'bullets') || 'bullets',
+            clickable: true,
           };
-        } else {
-          props.autoplay = false;
-        }
 
-        if (bool('navigation')) {
-          props.navigation = {
-            nextEl: el.querySelector('.swiper-button-next'),
-            prevEl: el.querySelector('.swiper-button-prev'),
+          if (bool('scrollbar')) {
+            props.scrollbar = { el: el.querySelector('.swiper-scrollbar'), hide: true };
+          }
+
+          // Apply Responsive Breakpoints (Mobile First)
+          props.breakpoints = {
+            // Mobile (0px and up)
+            320: {
+              slidesPerView: 1,
+              spaceBetween: 10
+            },
+            // Tablet (768px and up)
+            768: {
+              slidesPerView: props.slidesPerView > 1 ? 2 : 1,
+              spaceBetween: 20
+            },
+            // Desktop (1024px and up)
+            1024: {
+              slidesPerView: props.slidesPerView,
+              spaceBetween: props.spaceBetween
+            }
           };
-        }
 
-        props.pagination = {
-          el: el.querySelector('.swiper-pagination'),
-          type: str('pagination', 'bullets') || 'bullets',
-          clickable: true,
-        };
+          // For mobile-first Swiper, the base slidesPerView should be 1, but we use breakpoints to scale it up.
+          // So we override the base slidesPerView to 1, and let breakpoints handle the rest.
+          props.slidesPerView = 1;
 
-        if (bool('scrollbar')) {
-          props.scrollbar = { el: el.querySelector('.swiper-scrollbar'), hide: true };
-        }
-
-        // Apply Responsive Breakpoints (Mobile First)
-        props.breakpoints = {
-          // Mobile (0px and up)
-          320: {
-            slidesPerView: 1,
-            spaceBetween: 10
-          },
-          // Tablet (768px and up)
-          768: {
-            slidesPerView: props.slidesPerView > 1 ? 2 : 1,
-            spaceBetween: 20
-          },
-          // Desktop (1024px and up)
-          1024: {
-            slidesPerView: props.slidesPerView,
-            spaceBetween: props.spaceBetween
+          try {
+            (el as any).__swiper = new canvasWin.Swiper(el, props);
+            console.log('✅ Swiper reinit OK — slidesPerView:', props.slidesPerView, 'effect:', props.effect);
+          } catch (err) {
+            console.warn('Swiper reinit error:', err);
           }
         };
 
-        // For mobile-first Swiper, the base slidesPerView should be 1, but we use breakpoints to scale it up.
-        // So we override the base slidesPerView to 1, and let breakpoints handle the rest.
-        props.slidesPerView = 1;
 
-        try {
-          (el as any).__swiper = new canvasWin.Swiper(el, props);
-          console.log('✅ Swiper reinit OK — slidesPerView:', props.slidesPerView, 'effect:', props.effect);
-        } catch (err) {
-          console.warn('Swiper reinit error:', err);
-        }
+        const SWIPER_TRAIT_NAMES = [
+          'vertical', 'loop', 'freeMode', 'autoHeight', 'navigation', 'initialSlide', 'speed', 'effect',
+          'autoplay', 'autoplayDelay', 'autoplayDisableOnInteraction', 'autoplayPauseOnMouseEnter',
+          'autoplayReverseDirection', 'pagination', 'dynamicBullets', 'clickableBullets', 'scrollbar',
+          'parallax', 'mobileBreakpoint', 'tabletBreakpoint', 'slidesPerView', 'spaceBetween',
+          'slidesPerGroup', 'centeredSlides', 'rewind', 'keyboard', 'mousewheel', 'grabCursor', 'lazy',
+        ];
+
+        editor.Components.addType('swiper-container', {
+          extend: 'default',
+          isComponent: el => {
+            if (el.classList && el.classList.contains('swiper-container')) {
+              return { type: 'swiper-container' };
+            }
+          },
+          model: {
+            defaults: {
+              name: 'Swiper Slider',
+              traits: [
+                { type: 'checkbox', name: 'vertical', label: 'Vertical', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'loop', label: 'Loop', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'freeMode', label: 'Free Mode', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'autoHeight', label: 'Auto Height', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'navigation', label: 'Navigation', valueTrue: 'true', valueFalse: 'false', value: 'true' },
+                { type: 'number', name: 'initialSlide', label: 'Initial Slide', value: 0 },
+                { type: 'number', name: 'speed', label: 'Speed (ms)', value: 300 },
+
+                { type: 'accordion-header', name: 'hdr-effects', label: 'Effects' },
+                {
+                  type: 'select', name: 'effect', label: 'Effect Type',
+                  options: [
+                    { id: 'slide', name: 'Slide' },
+                    { id: 'fade', name: 'Fade' },
+                    { id: 'cube', name: 'Cube' },
+                    { id: 'coverflow', name: 'Coverflow' },
+                    { id: 'flip', name: 'Flip' },
+                  ]
+                },
+
+                { type: 'accordion-header', name: 'hdr-autoplay', label: 'Autoplay' },
+                { type: 'checkbox', name: 'autoplay', label: 'Enable Autoplay', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'number', name: 'autoplayDelay', label: 'Autoplay Delay (ms)', value: 3000 },
+                { type: 'checkbox', name: 'autoplayDisableOnInteraction', label: 'Disable on Interaction', valueTrue: 'true', valueFalse: 'false', value: 'true' },
+                { type: 'checkbox', name: 'autoplayPauseOnMouseEnter', label: 'Pause on Hover', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'autoplayReverseDirection', label: 'Reverse Direction', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-pagination', label: 'Pagination' },
+                {
+                  type: 'select', name: 'pagination', label: 'Pagination Type',
+                  options: [
+                    { id: '', name: 'None' },
+                    { id: 'bullets', name: 'Bullets' },
+                    { id: 'fraction', name: 'Fraction' },
+                    { id: 'progressbar', name: 'Progressbar' },
+                  ]
+                },
+                { type: 'checkbox', name: 'dynamicBullets', label: 'Dynamic Bullets', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'clickableBullets', label: 'Clickable Bullets', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-scrollbar', label: 'Scrollbar' },
+                { type: 'checkbox', name: 'scrollbar', label: 'Enable Scrollbar', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-parallax', label: 'Parallax' },
+                { type: 'checkbox', name: 'parallax', label: 'Enable Parallax', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-responsive', label: 'Responsive' },
+                { type: 'checkbox', name: 'mobileBreakpoint', label: 'Enable Mobile Breakpoint', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'tabletBreakpoint', label: 'Enable Tablet Breakpoint', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-extra', label: 'Extra' },
+                { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1, step: 0.1 },
+                { type: 'number', name: 'spaceBetween', label: 'Space Between', value: 0 },
+
+                { type: 'accordion-header', name: 'hdr-layout', label: 'Layout' },
+                { type: 'number', name: 'slidesPerGroup', label: 'Slides Per Group', value: 1 },
+                { type: 'checkbox', name: 'centeredSlides', label: 'Centered Slides', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'rewind', label: 'Rewind', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-controls', label: 'Controls' },
+                { type: 'checkbox', name: 'keyboard', label: 'Keyboard Control', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'mousewheel', label: 'Mousewheel Control', valueTrue: 'true', valueFalse: 'false' },
+                { type: 'checkbox', name: 'grabCursor', label: 'Grab Cursor', valueTrue: 'true', valueFalse: 'false' },
+
+                { type: 'accordion-header', name: 'hdr-lazy', label: 'Lazy Loading' },
+                { type: 'checkbox', name: 'lazy', label: 'Lazy Load Images', valueTrue: 'true', valueFalse: 'false' },
+              ] as any,
+            },
+
+            init() {
+              // Nuke any legacy script saved in the DB that causes infinite MutationObserver loops
+              this.set('script', '');
+
+              (this as any).triggerReinit = () => reinitSwiper(this);
+              (this as any)._lastSwiperTraits = '';
+
+              this.on('change:attributes', () => {
+                const attrs = this.getAttributes();
+
+                // Only reinit if a Swiper-related trait actually changed
+                const currentTraits = SWIPER_TRAIT_NAMES.reduce((acc, name) => {
+                  acc[name] = attrs[name];
+                  return acc;
+                }, {} as any);
+                const currentTraitsStr = JSON.stringify(currentTraits);
+
+                if ((this as any)._lastSwiperTraits === currentTraitsStr) {
+                  return; // Prevent infinite loops from DOM mutations syncing back
+                }
+                (this as any)._lastSwiperTraits = currentTraitsStr;
+
+                const el = this.getEl() as HTMLElement | null;
+                if (el) {
+                  SWIPER_TRAIT_NAMES.forEach(name => {
+                    const val = attrs[name];
+                    if (val !== undefined && val !== null) {
+                      el.dataset[name] = String(val);
+                    } else {
+                      delete el.dataset[name]; // Clean up dataset if trait is removed
+                    }
+                  });
+                }
+                reinitSwiper(this);
+              });
+
+              // Initialize Swiper on component mount
+              setTimeout(() => (this as any).triggerReinit(), 500);
+            }
+          }
+        });
+
+        editor.Components.addType('swiper-wrapper', {
+          isComponent: el => el.classList && el.classList.contains('swiper-wrapper'),
+          model: {
+            defaults: {
+              name: 'Swiper Wrapper',
+              draggable: '[data-gjs-type="swiper-container"]',
+              droppable: '[data-gjs-type="swiper-slide"]',
+              selectable: false,
+              hoverable: false,
+            }
+          }
+        });
+
+        editor.Components.addType('swiper-slide', {
+          isComponent: el => el.classList && el.classList.contains('swiper-slide'),
+          model: {
+            defaults: {
+              name: 'Swiper Slide',
+              draggable: '[data-gjs-type="swiper-wrapper"]',
+              droppable: true,
+            }
+          }
+        });
+
+        editor.Components.addType('swiper-pagination', {
+          isComponent: el => el.classList && el.classList.contains('swiper-pagination'),
+          model: {
+            defaults: { name: 'Pagination', selectable: false, hoverable: false, droppable: false },
+            init() { this.set('script', ''); }
+          }
+        });
+
+        editor.Components.addType('swiper-button-prev', {
+          isComponent: el => el.classList && el.classList.contains('swiper-button-prev'),
+          model: {
+            defaults: { name: 'Prev Button', selectable: false, hoverable: false, droppable: false },
+            init() { this.set('script', ''); }
+          }
+        });
+
+        editor.Components.addType('swiper-button-next', {
+          isComponent: el => el.classList && el.classList.contains('swiper-button-next'),
+          model: {
+            defaults: { name: 'Next Button', selectable: false, hoverable: false, droppable: false },
+            init() { this.set('script', ''); }
+          }
+        });
       };
-
-
-      const SWIPER_TRAIT_NAMES = [
-        'vertical', 'loop', 'freeMode', 'autoHeight', 'navigation', 'initialSlide', 'speed', 'effect',
-        'autoplay', 'autoplayDelay', 'autoplayDisableOnInteraction', 'autoplayPauseOnMouseEnter',
-        'autoplayReverseDirection', 'pagination', 'dynamicBullets', 'clickableBullets', 'scrollbar',
-        'parallax', 'mobileBreakpoint', 'tabletBreakpoint', 'slidesPerView', 'spaceBetween',
-        'slidesPerGroup', 'centeredSlides', 'rewind', 'keyboard', 'mousewheel', 'grabCursor', 'lazy',
-      ];
-
-      editor.Components.addType('swiper-container', {
-        extend: 'default',
-        isComponent: el => {
-          if (el.classList && el.classList.contains('swiper-container')) {
-            return { type: 'swiper-container' };
+      const editor = grapesjs.init({
+        container: '#gjs',
+        height: '100%',
+        width: 'auto',
+        fromElement: false,
+        storageManager: false,
+        undoManager: { trackSelection: false },
+        parser: {
+          optionsHtml: {
+            allowScripts: true
           }
         },
-        model: {
-          defaults: {
-            name: 'Swiper Slider',
-            traits: [
-              { type: 'checkbox', name: 'vertical', label: 'Vertical', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'loop', label: 'Loop', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'freeMode', label: 'Free Mode', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'autoHeight', label: 'Auto Height', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'navigation', label: 'Navigation', valueTrue: 'true', valueFalse: 'false', value: 'true' },
-              { type: 'number', name: 'initialSlide', label: 'Initial Slide', value: 0 },
-              { type: 'number', name: 'speed', label: 'Speed (ms)', value: 300 },
-
-              { type: 'accordion-header', name: 'hdr-effects', label: 'Effects' },
-              {
-                type: 'select', name: 'effect', label: 'Effect Type',
-                options: [
-                  { id: 'slide', name: 'Slide' },
-                  { id: 'fade', name: 'Fade' },
-                  { id: 'cube', name: 'Cube' },
-                  { id: 'coverflow', name: 'Coverflow' },
-                  { id: 'flip', name: 'Flip' },
-                ]
-              },
-
-              { type: 'accordion-header', name: 'hdr-autoplay', label: 'Autoplay' },
-              { type: 'checkbox', name: 'autoplay', label: 'Enable Autoplay', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'number', name: 'autoplayDelay', label: 'Autoplay Delay (ms)', value: 3000 },
-              { type: 'checkbox', name: 'autoplayDisableOnInteraction', label: 'Disable on Interaction', valueTrue: 'true', valueFalse: 'false', value: 'true' },
-              { type: 'checkbox', name: 'autoplayPauseOnMouseEnter', label: 'Pause on Hover', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'autoplayReverseDirection', label: 'Reverse Direction', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-pagination', label: 'Pagination' },
-              {
-                type: 'select', name: 'pagination', label: 'Pagination Type',
-                options: [
-                  { id: '', name: 'None' },
-                  { id: 'bullets', name: 'Bullets' },
-                  { id: 'fraction', name: 'Fraction' },
-                  { id: 'progressbar', name: 'Progressbar' },
-                ]
-              },
-              { type: 'checkbox', name: 'dynamicBullets', label: 'Dynamic Bullets', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'clickableBullets', label: 'Clickable Bullets', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-scrollbar', label: 'Scrollbar' },
-              { type: 'checkbox', name: 'scrollbar', label: 'Enable Scrollbar', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-parallax', label: 'Parallax' },
-              { type: 'checkbox', name: 'parallax', label: 'Enable Parallax', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-responsive', label: 'Responsive' },
-              { type: 'checkbox', name: 'mobileBreakpoint', label: 'Enable Mobile Breakpoint', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'tabletBreakpoint', label: 'Enable Tablet Breakpoint', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-extra', label: 'Extra' },
-              { type: 'number', name: 'slidesPerView', label: 'Slides Per View', value: 1, step: 0.1 },
-              { type: 'number', name: 'spaceBetween', label: 'Space Between', value: 0 },
-
-              { type: 'accordion-header', name: 'hdr-layout', label: 'Layout' },
-              { type: 'number', name: 'slidesPerGroup', label: 'Slides Per Group', value: 1 },
-              { type: 'checkbox', name: 'centeredSlides', label: 'Centered Slides', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'rewind', label: 'Rewind', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-controls', label: 'Controls' },
-              { type: 'checkbox', name: 'keyboard', label: 'Keyboard Control', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'mousewheel', label: 'Mousewheel Control', valueTrue: 'true', valueFalse: 'false' },
-              { type: 'checkbox', name: 'grabCursor', label: 'Grab Cursor', valueTrue: 'true', valueFalse: 'false' },
-
-              { type: 'accordion-header', name: 'hdr-lazy', label: 'Lazy Loading' },
-              { type: 'checkbox', name: 'lazy', label: 'Lazy Load Images', valueTrue: 'true', valueFalse: 'false' },
-            ] as any,
+        plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin, visualFontPlugin, customSwiperPlugin],
+        pluginsOpts: {
+          'grapesjs-preset-webpage': {
+            blocksBasicOpts: { flexGrid: true },
+            addBasicStyle: true,
           },
-
-          init() {
-            // Nuke any legacy script saved in the DB that causes infinite MutationObserver loops
-            this.set('script', '');
-
-            (this as any).triggerReinit = () => reinitSwiper(this);
-            (this as any)._lastSwiperTraits = '';
-
-            this.on('change:attributes', () => {
-              const attrs = this.getAttributes();
-
-              // Only reinit if a Swiper-related trait actually changed
-              const currentTraits = SWIPER_TRAIT_NAMES.reduce((acc, name) => {
-                acc[name] = attrs[name];
-                return acc;
-              }, {} as any);
-              const currentTraitsStr = JSON.stringify(currentTraits);
-
-              if ((this as any)._lastSwiperTraits === currentTraitsStr) {
-                return; // Prevent infinite loops from DOM mutations syncing back
-              }
-              (this as any)._lastSwiperTraits = currentTraitsStr;
-
-              const el = this.getEl() as HTMLElement | null;
-              if (el) {
-                SWIPER_TRAIT_NAMES.forEach(name => {
-                  const val = attrs[name];
-                  if (val !== undefined && val !== null) {
-                    el.dataset[name] = String(val);
-                  } else {
-                    delete el.dataset[name]; // Clean up dataset if trait is removed
-                  }
-                });
-              }
-              reinitSwiper(this);
-            });
-
-            // Initialize Swiper on component mount
-            setTimeout(() => (this as any).triggerReinit(), 500);
-          }
-        }
-      });
-
-      editor.Components.addType('swiper-wrapper', {
-        isComponent: el => el.classList && el.classList.contains('swiper-wrapper'),
-        model: {
-          defaults: {
-            name: 'Swiper Wrapper',
-            draggable: '[data-gjs-type="swiper-container"]',
-            droppable: '[data-gjs-type="swiper-slide"]',
-            selectable: false,
-            hoverable: false,
-          }
-        }
-      });
-
-      editor.Components.addType('swiper-slide', {
-        isComponent: el => el.classList && el.classList.contains('swiper-slide'),
-        model: {
-          defaults: {
-            name: 'Swiper Slide',
-            draggable: '[data-gjs-type="swiper-wrapper"]',
-            droppable: true,
-          }
-        }
-      });
-
-      editor.Components.addType('swiper-pagination', {
-        isComponent: el => el.classList && el.classList.contains('swiper-pagination'),
-        model: {
-          defaults: { name: 'Pagination', selectable: false, hoverable: false, droppable: false },
-          init() { this.set('script', ''); }
-        }
-      });
-
-      editor.Components.addType('swiper-button-prev', {
-        isComponent: el => el.classList && el.classList.contains('swiper-button-prev'),
-        model: {
-          defaults: { name: 'Prev Button', selectable: false, hoverable: false, droppable: false },
-          init() { this.set('script', ''); }
-        }
-      });
-
-      editor.Components.addType('swiper-button-next', {
-        isComponent: el => el.classList && el.classList.contains('swiper-button-next'),
-        model: {
-          defaults: { name: 'Next Button', selectable: false, hoverable: false, droppable: false },
-          init() { this.set('script', ''); }
-        }
-      });
-    };
-    const editor = grapesjs.init({
-      container: '#gjs',
-      height: '100%',
-      width: 'auto',
-      fromElement: false,
-      storageManager: false,
-      undoManager: { trackSelection: false },
-      parser: {
-        optionsHtml: {
-          allowScripts: true
-        }
-      },
-      plugins: [grapesjsPresetWebpage, grapesjsBlocksBasic, pickrColorPlugin, visualFontPlugin, customSwiperPlugin],
-      pluginsOpts: {
-        'grapesjs-preset-webpage': {
-          blocksBasicOpts: { flexGrid: true },
-          addBasicStyle: true,
+          'grapesjs-blocks-basic': { flexGrid: true },
         },
-        'grapesjs-blocks-basic': { flexGrid: true },
-      },
-      canvas: {
-        styles: [
-          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Public+Sans:wght@300;400;600;700&display=swap',
-          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-          'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
-          'https://fonts.googleapis.com/icon?family=Material+Icons',
-          // Swiper CSS is injected directly via npm package (see SwiperBundle injection below)
-        ],
-        scripts: [
-          'https://cdn.tailwindcss.com',
-        ],
-      },
-      deviceManager: {
-        devices: [
-          { id: 'desktop', name: 'Desktop', width: '' },
-          { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
-          { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '480px' },
-        ],
-      },
-      panels: { defaults: [] },
-      selectorManager: {
-        componentFirst: true,
-        appendTo: '#selectors-container',
-      },
-      styleManager: {
-        appendTo: '#styles-container',
-        showComputed: true,
-        sectors: [
-          {
-            id: 'layout',
-            name: 'Layout',
-            open: true,
-            buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content', 'gap', 'row-gap', 'column-gap'],
-          },
-          {
-            id: 'size',
-            name: 'Size',
-            open: true,
-            buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height', 'object-fit', 'object-position'],
-            properties: [
-              {
-                property: 'object-fit',
-                type: 'select',
-                default: 'fill',
-                options: [
-                  { id: 'fill', name: 'Fill' },
-                  { id: 'contain', name: 'Contain' },
-                  { id: 'cover', name: 'Cover' },
-                  { id: 'none', name: 'None' },
-                  { id: 'scale-down', name: 'Scale-down' }
-                ]
-              }
-            ]
-          },
-          {
-            id: 'space',
-            name: 'Space',
-            open: true,
-            buildProps: ['padding', 'margin'],
-          },
-          {
-            id: 'position',
-            name: 'Position',
-            open: false,
-            buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'],
-            properties: [
-              {
-                property: 'position',
-                type: 'select',
-                default: 'static',
-                options: [
-                  { id: 'static', name: 'Static' },
-                  { id: 'relative', name: 'Relative' },
-                  { id: 'absolute', name: 'Absolute' },
-                  { id: 'fixed', name: 'Fixed' },
-                  { id: 'sticky', name: 'Sticky' }
-                ]
-              }
-            ]
-          },
-          {
-            id: 'typography',
-            name: 'Typography',
-            open: true,
-            buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
-            properties: [
-              {
-                property: 'font-family',
-                name: 'Font Family',
-                type: 'visual-font-select',
-                default: 'inherit',
-                options: GOOGLE_FONTS_OPTIONS
-              },
-              {
-                property: 'color',
-                type: 'pickr-color',
-              },
-              {
-                property: 'text-align',
-                type: 'select',
-                default: 'left',
-                options: [
-                  { id: 'left', name: 'Left' },
-                  { id: 'center', name: 'Center' },
-                  { id: 'right', name: 'Right' },
-                  { id: 'justify', name: 'Justify' }
-                ]
-              },
-              {
-                property: 'text-decoration',
-                type: 'select',
-                default: 'none',
-                options: [
-                  { id: 'none', name: 'None' },
-                  { id: 'underline', name: 'Underline' },
-                  { id: 'overline', name: 'Overline' },
-                  { id: 'line-through', name: 'Line-through' }
-                ]
-              },
-              {
-                property: 'text-transform',
-                type: 'select',
-                default: 'none',
-                options: [
-                  { id: 'none', name: 'None' },
-                  { id: 'capitalize', name: 'Capitalize' },
-                  { id: 'uppercase', name: 'Uppercase' },
-                  { id: 'lowercase', name: 'Lowercase' }
-                ]
-              },
-              {
-                property: 'vertical-align',
-                type: 'select',
-                default: 'baseline',
-                options: [
-                  { id: 'baseline', name: 'Baseline' },
-                  { id: 'top', name: 'Top' },
-                  { id: 'middle', name: 'Middle' },
-                  { id: 'bottom', name: 'Bottom' }
-                ]
-              },
-              {
-                property: 'direction',
-                type: 'select',
-                default: 'ltr',
-                options: [
-                  { id: 'ltr', name: 'LTR' },
-                  { id: 'rtl', name: 'RTL' }
-                ]
-              }
-            ]
-          },
-          {
-            id: 'background',
-            name: 'Background',
-            open: true,
-            buildProps: ['background-color', 'background-image', 'background-repeat', 'background-position', 'background-attachment', 'background-size', 'background-clip'],
-            properties: [
-              {
-                property: 'background-color',
-                type: 'pickr-color',
-              },
-              { property: 'background-repeat', name: 'Bg Repeat' },
-              { property: 'background-position', name: 'Bg Position' },
-              { property: 'background-attachment', name: 'Bg Attach' },
-              { property: 'background-size', name: 'Bg Size' },
-              {
-                property: 'background-clip',
-                name: 'Clip',
-                type: 'select',
-                full: true,
-                default: 'border-box',
-                options: [
-                  { id: 'border-box', name: 'Border Box' },
-                  { id: 'padding-box', name: 'Padding Box' },
-                  { id: 'content-box', name: 'Content Box' },
-                  { id: 'text', name: 'Text' }
-                ]
-              }
-            ]
-          },
-          {
-            id: 'border',
-            name: 'Border',
-            open: true,
-            buildProps: ['border-radius', 'border'],
-          },
-          {
-            id: 'effects',
-            name: 'Effects',
-            open: false,
-            buildProps: [
-              'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter',
-              'transition', 'transform', 'transform-origin', 'overflow', 'backface-visibility', 'transform-style'
-            ],
-            properties: [
-              {
-                property: 'opacity',
-                type: 'slider',
-                full: true,
-                min: 0,
-                max: 1,
-                step: 0.01,
-                default: '1'
-              },
-              { extend: 'box-shadow' },
-              { extend: 'text-shadow' },
-              { extend: 'transition' },
-              { extend: 'transform' },
-              {
-                property: 'filter',
-                type: 'stack',
-                layerSeparator: ' ',
-                properties: [
-                  { name: 'Value', property: 'filter-value', type: 'text', default: 'blur(5px)' }
-                ]
-              },
-              {
-                property: 'backdrop-filter',
-                type: 'stack',
-                layerSeparator: ' ',
-                properties: [
-                  { name: 'Value', property: 'backdrop-filter-value', type: 'text', default: 'blur(5px)' }
-                ]
-              },
-              {
-                property: 'mix-blend-mode',
-                name: 'Blend mode',
-                type: 'select',
-                full: true,
-                default: 'normal',
-                options: [
-                  { id: 'normal', name: 'Normal' },
-                  { id: 'multiply', name: 'Multiply' },
-                  { id: 'screen', name: 'Screen' },
-                  { id: 'overlay', name: 'Overlay' },
-                  { id: 'darken', name: 'Darken' },
-                  { id: 'lighten', name: 'Lighten' },
-                  { id: 'color-dodge', name: 'Color Dodge' },
-                  { id: 'color-burn', name: 'Color Burn' },
-                  { id: 'hard-light', name: 'Hard Light' },
-                  { id: 'soft-light', name: 'Soft Light' },
-                  { id: 'difference', name: 'Difference' },
-                  { id: 'exclusion', name: 'Exclusion' },
-                  { id: 'hue', name: 'Hue' },
-                  { id: 'saturation', name: 'Saturation' },
-                  { id: 'color', name: 'Color' },
-                  { id: 'luminosity', name: 'Luminosity' }
-                ]
-              },
-              {
-                property: 'cursor',
-                type: 'select',
-                full: true,
-                default: 'auto',
-                options: [
-                  { id: 'auto', name: 'Auto' },
-                  { id: 'default', name: 'Default' },
-                  { id: 'pointer', name: 'Pointer' },
-                  { id: 'wait', name: 'Wait' },
-                  { id: 'text', name: 'Text' },
-                  { id: 'move', name: 'Move' },
-                  { id: 'help', name: 'Help' },
-                  { id: 'not-allowed', name: 'Not Allowed' },
-                  { id: 'crosshair', name: 'Crosshair' },
-                  { id: 'grab', name: 'Grab' },
-                  { id: 'grabbing', name: 'Grabbing' }
-                ]
-              },
-              {
-                property: 'overflow',
-                type: 'select',
-                default: 'visible',
-                options: [
-                  { id: 'visible', name: 'Visible' },
-                  { id: 'hidden', name: 'Hidden' },
-                  { id: 'scroll', name: 'Scroll' },
-                  { id: 'auto', name: 'Auto' }
-                ]
-              },
-              {
-                property: 'backface-visibility',
-                name: 'Backface',
-                type: 'select',
-                default: 'visible',
-                options: [
-                  { id: 'visible', name: 'Visible' },
-                  { id: 'hidden', name: 'Hidden' }
-                ]
-              },
-              {
-                property: 'transform-style',
-                name: 'Children transform',
-                type: 'select',
-                default: 'flat',
-                options: [
-                  { id: 'flat', name: 'Flat' },
-                  { id: 'preserve-3d', name: 'Preserve-3D' }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      traitManager: { appendTo: '#traits-container' },
-      layerManager: { appendTo: '#layers-container' },
-      blockManager: { appendTo: '#blocks-container' },
-    });
-
-    // ─── Pre-Load Registration (Ensures existing HTML icons are typed correctly) ───
-    editor.DomComponents.addType('icon', {
-      isComponent: el => (el.tagName === 'I' || el.tagName === 'SPAN') &&
-        (el.classList && (el.classList.contains('fa') || el.classList.contains('fas') || el.classList.contains('fab') || el.classList.contains('far'))),
-      model: {
-        defaults: {
-          tagName: 'i',
-          droppable: false,
-          editable: false,
-          resizable: true,
-          // Explicitly allow all style properties
-          stylable: [
-            'color', 'font-size', 'width', 'height',
-            'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-            'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-            'display', 'opacity', 'cursor', 'background-color',
-            'border', 'border-radius', 'text-align',
-            'position', 'top', 'right', 'bottom', 'left', 'z-index',
-            'transform', 'transition', 'box-shadow',
+        canvas: {
+          styles: [
+            'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Dancing+Script:wght@600&family=DM+Serif+Display&family=Manrope:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Public+Sans:wght@300;400;600;700&display=swap',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+            'https://fonts.googleapis.com/icon?family=Material+Icons',
+            // Swiper CSS is injected directly via npm package (see SwiperBundle injection below)
           ],
-          traits: [
+          scripts: [
+            'https://cdn.tailwindcss.com',
+          ],
+        },
+        deviceManager: {
+          devices: [
+            { id: 'desktop', name: 'Desktop', width: '' },
+            { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
+            { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '480px' },
+          ],
+        },
+        panels: { defaults: [] },
+        selectorManager: {
+          componentFirst: true,
+          appendTo: '#selectors-container',
+        },
+        styleManager: {
+          appendTo: '#styles-container',
+          showComputed: true,
+          sectors: [
             {
-              type: 'button',
-              text: 'Select Icon',
-              full: true,
-              command: 'open-icon-picker',
+              id: 'layout',
+              name: 'Layout',
+              open: true,
+              buildProps: ['display', 'flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'align-content', 'gap', 'row-gap', 'column-gap'],
+            },
+            {
+              id: 'size',
+              name: 'Size',
+              open: true,
+              buildProps: ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height', 'object-fit', 'object-position'],
+              properties: [
+                {
+                  property: 'object-fit',
+                  type: 'select',
+                  default: 'fill',
+                  options: [
+                    { id: 'fill', name: 'Fill' },
+                    { id: 'contain', name: 'Contain' },
+                    { id: 'cover', name: 'Cover' },
+                    { id: 'none', name: 'None' },
+                    { id: 'scale-down', name: 'Scale-down' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 'space',
+              name: 'Space',
+              open: true,
+              buildProps: ['padding', 'margin'],
+            },
+            {
+              id: 'position',
+              name: 'Position',
+              open: false,
+              buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index'],
+              properties: [
+                {
+                  property: 'position',
+                  type: 'select',
+                  default: 'static',
+                  options: [
+                    { id: 'static', name: 'Static' },
+                    { id: 'relative', name: 'Relative' },
+                    { id: 'absolute', name: 'Absolute' },
+                    { id: 'fixed', name: 'Fixed' },
+                    { id: 'sticky', name: 'Sticky' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 'typography',
+              name: 'Typography',
+              open: true,
+              buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'vertical-align', 'text-transform', 'direction'],
+              properties: [
+                {
+                  property: 'font-family',
+                  name: 'Font Family',
+                  type: 'visual-font-select',
+                  default: 'inherit',
+                  options: GOOGLE_FONTS_OPTIONS
+                },
+                {
+                  property: 'color',
+                  type: 'pickr-color',
+                },
+                {
+                  property: 'text-align',
+                  type: 'select',
+                  default: 'left',
+                  options: [
+                    { id: 'left', name: 'Left' },
+                    { id: 'center', name: 'Center' },
+                    { id: 'right', name: 'Right' },
+                    { id: 'justify', name: 'Justify' }
+                  ]
+                },
+                {
+                  property: 'text-decoration',
+                  type: 'select',
+                  default: 'none',
+                  options: [
+                    { id: 'none', name: 'None' },
+                    { id: 'underline', name: 'Underline' },
+                    { id: 'overline', name: 'Overline' },
+                    { id: 'line-through', name: 'Line-through' }
+                  ]
+                },
+                {
+                  property: 'text-transform',
+                  type: 'select',
+                  default: 'none',
+                  options: [
+                    { id: 'none', name: 'None' },
+                    { id: 'capitalize', name: 'Capitalize' },
+                    { id: 'uppercase', name: 'Uppercase' },
+                    { id: 'lowercase', name: 'Lowercase' }
+                  ]
+                },
+                {
+                  property: 'vertical-align',
+                  type: 'select',
+                  default: 'baseline',
+                  options: [
+                    { id: 'baseline', name: 'Baseline' },
+                    { id: 'top', name: 'Top' },
+                    { id: 'middle', name: 'Middle' },
+                    { id: 'bottom', name: 'Bottom' }
+                  ]
+                },
+                {
+                  property: 'direction',
+                  type: 'select',
+                  default: 'ltr',
+                  options: [
+                    { id: 'ltr', name: 'LTR' },
+                    { id: 'rtl', name: 'RTL' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 'background',
+              name: 'Background',
+              open: true,
+              buildProps: ['background-color', 'background-image', 'background-repeat', 'background-position', 'background-attachment', 'background-size', 'background-clip'],
+              properties: [
+                {
+                  property: 'background-color',
+                  type: 'pickr-color',
+                },
+                { property: 'background-repeat', name: 'Bg Repeat' },
+                { property: 'background-position', name: 'Bg Position' },
+                { property: 'background-attachment', name: 'Bg Attach' },
+                { property: 'background-size', name: 'Bg Size' },
+                {
+                  property: 'background-clip',
+                  name: 'Clip',
+                  type: 'select',
+                  full: true,
+                  default: 'border-box',
+                  options: [
+                    { id: 'border-box', name: 'Border Box' },
+                    { id: 'padding-box', name: 'Padding Box' },
+                    { id: 'content-box', name: 'Content Box' },
+                    { id: 'text', name: 'Text' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 'border',
+              name: 'Border',
+              open: true,
+              buildProps: ['border-radius', 'border'],
+            },
+            {
+              id: 'effects',
+              name: 'Effects',
+              open: false,
+              buildProps: [
+                'opacity', 'mix-blend-mode', 'cursor', 'box-shadow', 'text-shadow', 'filter', 'backdrop-filter',
+                'transition', 'transform', 'transform-origin', 'overflow', 'backface-visibility', 'transform-style'
+              ],
+              properties: [
+                {
+                  property: 'opacity',
+                  type: 'slider',
+                  full: true,
+                  min: 0,
+                  max: 1,
+                  step: 0.01,
+                  default: '1'
+                },
+                { extend: 'box-shadow' },
+                { extend: 'text-shadow' },
+                { extend: 'transition' },
+                { extend: 'transform' },
+                {
+                  property: 'filter',
+                  type: 'stack',
+                  layerSeparator: ' ',
+                  properties: [
+                    { name: 'Value', property: 'filter-value', type: 'text', default: 'blur(5px)' }
+                  ]
+                },
+                {
+                  property: 'backdrop-filter',
+                  type: 'stack',
+                  layerSeparator: ' ',
+                  properties: [
+                    { name: 'Value', property: 'backdrop-filter-value', type: 'text', default: 'blur(5px)' }
+                  ]
+                },
+                {
+                  property: 'mix-blend-mode',
+                  name: 'Blend mode',
+                  type: 'select',
+                  full: true,
+                  default: 'normal',
+                  options: [
+                    { id: 'normal', name: 'Normal' },
+                    { id: 'multiply', name: 'Multiply' },
+                    { id: 'screen', name: 'Screen' },
+                    { id: 'overlay', name: 'Overlay' },
+                    { id: 'darken', name: 'Darken' },
+                    { id: 'lighten', name: 'Lighten' },
+                    { id: 'color-dodge', name: 'Color Dodge' },
+                    { id: 'color-burn', name: 'Color Burn' },
+                    { id: 'hard-light', name: 'Hard Light' },
+                    { id: 'soft-light', name: 'Soft Light' },
+                    { id: 'difference', name: 'Difference' },
+                    { id: 'exclusion', name: 'Exclusion' },
+                    { id: 'hue', name: 'Hue' },
+                    { id: 'saturation', name: 'Saturation' },
+                    { id: 'color', name: 'Color' },
+                    { id: 'luminosity', name: 'Luminosity' }
+                  ]
+                },
+                {
+                  property: 'cursor',
+                  type: 'select',
+                  full: true,
+                  default: 'auto',
+                  options: [
+                    { id: 'auto', name: 'Auto' },
+                    { id: 'default', name: 'Default' },
+                    { id: 'pointer', name: 'Pointer' },
+                    { id: 'wait', name: 'Wait' },
+                    { id: 'text', name: 'Text' },
+                    { id: 'move', name: 'Move' },
+                    { id: 'help', name: 'Help' },
+                    { id: 'not-allowed', name: 'Not Allowed' },
+                    { id: 'crosshair', name: 'Crosshair' },
+                    { id: 'grab', name: 'Grab' },
+                    { id: 'grabbing', name: 'Grabbing' }
+                  ]
+                },
+                {
+                  property: 'overflow',
+                  type: 'select',
+                  default: 'visible',
+                  options: [
+                    { id: 'visible', name: 'Visible' },
+                    { id: 'hidden', name: 'Hidden' },
+                    { id: 'scroll', name: 'Scroll' },
+                    { id: 'auto', name: 'Auto' }
+                  ]
+                },
+                {
+                  property: 'backface-visibility',
+                  name: 'Backface',
+                  type: 'select',
+                  default: 'visible',
+                  options: [
+                    { id: 'visible', name: 'Visible' },
+                    { id: 'hidden', name: 'Hidden' }
+                  ]
+                },
+                {
+                  property: 'transform-style',
+                  name: 'Children transform',
+                  type: 'select',
+                  default: 'flat',
+                  options: [
+                    { id: 'flat', name: 'Flat' },
+                    { id: 'preserve-3d', name: 'Preserve-3D' }
+                  ]
+                }
+              ]
             }
           ]
-        }
-      }
-    });
+        },
+        traitManager: { appendTo: '#traits-container' },
+        layerManager: { appendTo: '#layers-container' },
+        blockManager: { appendTo: '#blocks-container' },
+      });
 
-    editor.DomComponents.addType('input', {
-      isComponent: el => el.tagName === 'INPUT',
-      model: {
-        defaults: {
-          tagName: 'input',
-          traits: [
-            'id', 'name', 'placeholder', 'type', { type: 'checkbox', name: 'required', label: 'Required' },
-            { type: 'text', label: 'Label Text', name: 'data-label' }
-          ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; font-family: inherit;' }
-        }
-      }
-    });
+      // ─── Ensure RichTextEditor reference on Editor Model to prevent TypeError on disableEditing ───
+      const patchEmRichTextEditor = (editorInst: any) => {
+        try {
+          if (!editorInst) return;
+          const em = (editorInst as any).em || (typeof editorInst.getModel === 'function' ? editorInst.getModel() : null);
+          if (em) {
+            const rte = editorInst.RichTextEditor || {};
+            if (!rte.events) rte.events = {};
+            if (!rte.actions) rte.actions = [];
+            if (typeof rte.add !== 'function') rte.add = () => { };
+            if (typeof rte.get !== 'function') rte.get = () => null;
 
-    editor.DomComponents.addType('textarea', {
-      isComponent: el => el.tagName === 'TEXTAREA',
-      model: {
-        defaults: {
-          tagName: 'textarea',
-          traits: [
-            'id', 'name', 'placeholder', { type: 'checkbox', name: 'required', label: 'Required' },
-            { type: 'text', label: 'Label Text', name: 'data-label' }
-          ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; min-height: 100px; font-family: inherit;' }
-        }
-      }
-    });
+            try {
+              Object.defineProperty(em, 'RichTextEditor', {
+                get: () => rte,
+                set: () => { },
+                configurable: true,
+                enumerable: true
+              });
+            } catch (err) { }
 
-    editor.DomComponents.addType('select', {
-      isComponent: el => el.tagName === 'SELECT',
-      model: {
-        defaults: {
-          tagName: 'select',
-          traits: [
-            'id', 'name', { type: 'checkbox', name: 'required', label: 'Required' },
-            { type: 'text', label: 'Label Text', name: 'data-label' },
-            {
-              type: 'options',
-              label: 'Options',
-              name: 'options',
-            }
-          ],
-          attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
-        }
-      }
-    });
+            try {
+              if (typeof em.set === 'function') {
+                em.set('RichTextEditor', rte);
+              }
+            } catch (err) { }
+          }
+        } catch (e) { }
+      };
 
-    // ─── SELECT OPTIONS SYNC LOGIC ───
-    editor.on('component:update:attributes:options-list', (component) => {
-      if (component.get('tagName') !== 'select') return;
-      const optionsStr = component.getAttributes()['options-list'];
-      if (!optionsStr) return;
+      patchEmRichTextEditor(editor);
 
-      try {
-        const options = optionsStr.split(',').filter(Boolean).map((opt: string) => {
-          const parts = opt.split(':');
-          const val = parts[0]?.trim();
-          const name = parts[1]?.trim() || val;
-          return { tagName: 'option', attributes: { id: val }, content: name };
-        });
-
-        if (options.length > 0) {
-          component.components().reset(options);
-        }
-      } catch (err) {
-        console.error('Error parsing options-list:', err);
-      }
-    });
-
-    editor.DomComponents.addType('checkbox', {
-      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'checkbox',
-      model: {
-        defaults: {
-          tagName: 'input',
-          traits: [
-            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
-            { type: 'text', label: 'Label Text', name: 'data-label' }
-          ],
-          attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
-        }
-      }
-    });
-
-    editor.DomComponents.addType('radio', {
-      isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'radio',
-      model: {
-        defaults: {
-          tagName: 'input',
-          traits: [
-            'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
-            { type: 'text', label: 'Label Text', name: 'data-label' }
-          ],
-          attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
-        }
-      }
-    });
-
-    editor.DomComponents.addType('button', {
-      model: {
-        defaults: {
-          traits: [
-            'name', 'type',
-            { type: 'text', label: 'Label Text', name: 'text' }
-          ],
-          attributes: { style: 'background: #818cf8; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
-        }
-      }
-    });
-
-    editor.DomComponents.addType('custom-code', {
-      isComponent: el => (el.classList && el.classList.contains('gjs-custom-code')) || el.getAttribute?.('data-gjs-type') === 'custom-code',
-      model: {
-        defaults: {
-          tagName: 'div',
-          name: 'Custom Code',
-          classes: ['gjs-custom-code'],
-          droppable: false,
-          editable: false,
-          attributes: { 'data-gjs-type': 'custom-code' },
-          traits: [
-            {
-              type: 'button',
-              text: 'Edit Code',
-              full: true,
-              command: 'open-custom-code-editor',
-            }
-          ],
-        }
-      }
-    });
-
-    // ─── Custom Code Editor Command ───
-    editor.Commands.add('open-custom-code-editor', {
-      run(editor, sender) {
-        const selected = editor.getSelected();
-        if (!selected) return;
-
-        const modal = editor.Modal;
-        const container = document.createElement('div');
-        // Retrieve code: prioritize data-code, then inner content
-        let currentCode = selected.getAttributes()['data-code'] || '';
-
-        if (!currentCode) {
-          // Fallback: try to get the inner HTML from components
-          const components = selected.get('components');
-          if (components && components.length > 0) {
-            currentCode = selected.toHTML().replace(/^<div[^>]*>|<\/div>$/gi, '');
-          } else {
-            currentCode = selected.get('content') || '';
+      // ─── Pre-Load Registration (Ensures existing HTML icons are typed correctly) ───
+      editor.DomComponents.addType('icon', {
+        isComponent: el => (el.tagName === 'I' || el.tagName === 'SPAN') &&
+          (el.classList && (el.classList.contains('fa') || el.classList.contains('fas') || el.classList.contains('fab') || el.classList.contains('far'))),
+        model: {
+          defaults: {
+            tagName: 'i',
+            droppable: false,
+            editable: false,
+            resizable: true,
+            // Explicitly allow all style properties
+            stylable: [
+              'color', 'font-size', 'width', 'height',
+              'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+              'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+              'display', 'opacity', 'cursor', 'background-color',
+              'border', 'border-radius', 'text-align',
+              'position', 'top', 'right', 'bottom', 'left', 'z-index',
+              'transform', 'transition', 'box-shadow',
+            ],
+            traits: [
+              {
+                type: 'button',
+                text: 'Select Icon',
+                full: true,
+                command: 'open-icon-picker',
+              }
+            ]
           }
         }
+      });
 
-        // If it's the default placeholder, show empty string
-        if (currentCode.includes('Click to Edit Custom Code') || currentCode.includes('Paste your HTML code here')) {
-          currentCode = '';
+      editor.DomComponents.addType('input', {
+        isComponent: el => el.tagName === 'INPUT',
+        model: {
+          defaults: {
+            tagName: 'input',
+            traits: [
+              'id', 'name', 'placeholder', 'type', { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'text', label: 'Label Text', name: 'data-label' }
+            ],
+            attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; font-family: inherit;' }
+          }
         }
+      });
 
-        container.style.backgroundColor = '#161622';
-        container.style.padding = '20px';
-        container.style.borderRadius = '12px';
-        container.style.color = '#e5e7eb';
+      editor.DomComponents.addType('textarea', {
+        isComponent: el => el.tagName === 'TEXTAREA',
+        model: {
+          defaults: {
+            tagName: 'textarea',
+            traits: [
+              'id', 'name', 'placeholder', { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'text', label: 'Label Text', name: 'data-label' }
+            ],
+            attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; min-height: 100px; font-family: inherit;' }
+          }
+        }
+      });
 
-        container.innerHTML = `
+      editor.DomComponents.addType('select', {
+        isComponent: el => el.tagName === 'SELECT',
+        model: {
+          defaults: {
+            tagName: 'select',
+            traits: [
+              'id', 'name', { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'text', label: 'Label Text', name: 'data-label' },
+              {
+                type: 'options',
+                label: 'Options',
+                name: 'options',
+              }
+            ],
+            attributes: { style: 'width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none; background: #fff; font-family: inherit; min-height: 45px;' }
+          }
+        }
+      });
+
+      // ─── SELECT OPTIONS SYNC LOGIC ───
+      editor.on('component:update:attributes:options-list', (component) => {
+        if (component.get('tagName') !== 'select') return;
+        const optionsStr = component.getAttributes()['options-list'];
+        if (!optionsStr) return;
+
+        try {
+          const options = optionsStr.split(',').filter(Boolean).map((opt: string) => {
+            const parts = opt.split(':');
+            const val = parts[0]?.trim();
+            const name = parts[1]?.trim() || val;
+            return { tagName: 'option', attributes: { id: val }, content: name };
+          });
+
+          if (options.length > 0) {
+            component.components().reset(options);
+          }
+        } catch (err) {
+          console.error('Error parsing options-list:', err);
+        }
+      });
+
+      editor.DomComponents.addType('checkbox', {
+        isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'checkbox',
+        model: {
+          defaults: {
+            tagName: 'input',
+            traits: [
+              'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'text', label: 'Label Text', name: 'data-label' }
+            ],
+            attributes: { type: 'checkbox', style: 'width: 16px; height: 16px; cursor: pointer;' }
+          }
+        }
+      });
+
+      editor.DomComponents.addType('radio', {
+        isComponent: el => el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'radio',
+        model: {
+          defaults: {
+            tagName: 'input',
+            traits: [
+              'id', 'name', 'value', 'checked', { type: 'checkbox', name: 'required', label: 'Required' },
+              { type: 'text', label: 'Label Text', name: 'data-label' }
+            ],
+            attributes: { type: 'radio', style: 'width: 16px; height: 16px; cursor: pointer;' }
+          }
+        }
+      });
+
+      editor.DomComponents.addType('button', {
+        model: {
+          defaults: {
+            traits: [
+              'name', 'type',
+              { type: 'text', label: 'Label Text', name: 'text' }
+            ],
+            attributes: { style: 'background: #818cf8; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; font-family: inherit;' }
+          }
+        }
+      });
+
+      editor.DomComponents.addType('custom-code', {
+        isComponent: el => (el.classList && el.classList.contains('gjs-custom-code')) || el.getAttribute?.('data-gjs-type') === 'custom-code',
+        model: {
+          defaults: {
+            tagName: 'div',
+            name: 'Custom Code',
+            classes: ['gjs-custom-code'],
+            droppable: false,
+            editable: false,
+            attributes: { 'data-gjs-type': 'custom-code' },
+            traits: [
+              {
+                type: 'button',
+                text: 'Edit Code',
+                full: true,
+                command: 'open-custom-code-editor',
+              }
+            ],
+          }
+        }
+      });
+
+      // ─── Custom Code Editor Command ───
+      editor.Commands.add('open-custom-code-editor', {
+        run(editor, sender) {
+          const selected = editor.getSelected();
+          if (!selected) return;
+
+          const modal = editor.Modal;
+          const container = document.createElement('div');
+          // Retrieve code: prioritize data-code, then inner content
+          let currentCode = selected.getAttributes()['data-code'] || '';
+
+          if (!currentCode) {
+            // Fallback: try to get the inner HTML from components
+            const components = selected.get('components');
+            if (components && components.length > 0) {
+              currentCode = selected.toHTML().replace(/^<div[^>]*>|<\/div>$/gi, '');
+            } else {
+              currentCode = selected.get('content') || '';
+            }
+          }
+
+          // If it's the default placeholder, show empty string
+          if (currentCode.includes('Click to Edit Custom Code') || currentCode.includes('Paste your HTML code here')) {
+            currentCode = '';
+          }
+
+          container.style.backgroundColor = '#161622';
+          container.style.padding = '20px';
+          container.style.borderRadius = '12px';
+          container.style.color = '#e5e7eb';
+
+          container.innerHTML = `
           <div style="padding: 0 0 16px;">
             <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px;">Paste your HTML/Shortcode below and click "Save Changes"</p>
             <textarea id="custom-html-edit-input" rows="12" placeholder="&lt;div&gt;Your HTML here...&lt;/div&gt;"
@@ -3185,44 +3247,44 @@ const GrapesEditor = () => {
           </div>
         `;
 
-        const btnSave = container.querySelector('#custom-code-edit-save') as HTMLButtonElement;
-        const btnCancel = container.querySelector('#custom-code-edit-cancel') as HTMLButtonElement;
-        const input = container.querySelector('#custom-html-edit-input') as HTMLTextAreaElement;
+          const btnSave = container.querySelector('#custom-code-edit-save') as HTMLButtonElement;
+          const btnCancel = container.querySelector('#custom-code-edit-cancel') as HTMLButtonElement;
+          const input = container.querySelector('#custom-html-edit-input') as HTMLTextAreaElement;
 
-        btnSave.addEventListener('click', () => {
-          const newHtml = input.value;
-          // Store the raw code in a custom attribute for later editing
-          selected.addAttributes({ 'data-code': newHtml });
-          selected.set('content', newHtml);
-          // Force re-render of components
-          selected.components(newHtml);
-          modal.close();
-        });
+          btnSave.addEventListener('click', () => {
+            const newHtml = input.value;
+            // Store the raw code in a custom attribute for later editing
+            selected.addAttributes({ 'data-code': newHtml });
+            selected.set('content', newHtml);
+            // Force re-render of components
+            selected.components(newHtml);
+            modal.close();
+          });
 
-        btnCancel.addEventListener('click', () => modal.close());
+          btnCancel.addEventListener('click', () => modal.close());
 
-        modal.setTitle('Edit Custom Code');
-        modal.setContent(container);
-        modal.open();
+          modal.setTitle('Edit Custom Code');
+          modal.setContent(container);
+          modal.open();
 
-        // Auto-focus and SELECT the text for easy replacement
-        setTimeout(() => {
-          input.focus();
-          input.select();
-        }, 50);
-      }
-    });
+          // Auto-focus and SELECT the text for easy replacement
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 50);
+        }
+      });
 
-    // ─── Native GrapesJS Icon Picker Command ───
-    editor.Commands.add('open-icon-picker', {
-      run(editor, sender) {
-        const selected = editor.getSelected();
-        if (!selected) return;
+      // ─── Native GrapesJS Icon Picker Command ───
+      editor.Commands.add('open-icon-picker', {
+        run(editor, sender) {
+          const selected = editor.getSelected();
+          if (!selected) return;
 
-        const modal = editor.Modal;
-        const container = document.createElement('div');
-        container.className = 'icon-picker-container';
-        container.innerHTML = `
+          const modal = editor.Modal;
+          const container = document.createElement('div');
+          container.className = 'icon-picker-container';
+          container.innerHTML = `
           <div style="padding: 10px; margin-bottom: 15px; background: #111827; border-radius: 8px;">
             <input type="text" id="icon-search" placeholder="Search icons..." 
               style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #1f2937; color: #fff; border-radius: 6px; outline: none;">
@@ -3231,183 +3293,183 @@ const GrapesEditor = () => {
           </div>
         `;
 
-        const icons = [
-          // General
-          'fa-star', 'fa-heart', 'fa-user', 'fa-home', 'fa-search', 'fa-envelope',
-          'fa-bell', 'fa-camera', 'fa-check', 'fa-times', 'fa-cog', 'fa-settings',
-          'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down',
-          'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down',
-          'fa-play', 'fa-pause', 'fa-stop', 'fa-forward', 'fa-backward',
-          // Files & Media
-          'fa-music', 'fa-video', 'fa-image', 'fa-file', 'fa-folder', 'fa-file-pdf',
-          'fa-file-word', 'fa-file-excel', 'fa-file-image', 'fa-file-video', 'fa-file-audio',
-          'fa-file-code', 'fa-file-alt', 'fa-file-archive', 'fa-folder-open',
-          // Actions
-          'fa-edit', 'fa-save', 'fa-trash', 'fa-trash-alt', 'fa-copy', 'fa-cut', 'fa-paste',
-          'fa-lock', 'fa-unlock', 'fa-key', 'fa-eye', 'fa-eye-slash', 'fa-download', 'fa-upload',
-          'fa-share', 'fa-share-alt', 'fa-reply', 'fa-forward', 'fa-redo', 'fa-undo',
-          'fa-print', 'fa-compress', 'fa-expand', 'fa-plus', 'fa-minus', 'fa-times-circle',
-          'fa-check-circle', 'fa-info-circle', 'fa-exclamation-circle', 'fa-question-circle',
-          // Security & Account
-          'fa-shield-alt', 'fa-user-shield', 'fa-user-lock', 'fa-fingerprint',
-          'fa-id-card', 'fa-id-badge', 'fa-address-card', 'fa-passport',
-          // People & Social
-          'fa-users', 'fa-user-friends', 'fa-user-plus', 'fa-user-minus', 'fa-user-check',
-          'fa-comment', 'fa-comments', 'fa-thumbs-up', 'fa-thumbs-down',
-          'fa-heart-broken', 'fa-hand-peace', 'fa-hands-helping',
-          // Medical & Health
-          'fa-user-md', 'fa-stethoscope', 'fa-tooth', 'fa-heartbeat', 'fa-heart',
-          'fa-hospital', 'fa-ambulance', 'fa-pills', 'fa-syringe', 'fa-prescription-bottle',
-          'fa-thermometer', 'fa-bandage', 'fa-brain', 'fa-capsules', 'fa-dna',
-          'fa-first-aid', 'fa-flask', 'fa-microscope', 'fa-notes-medical',
-          'fa-wheelchair', 'fa-user-nurse', 'fa-vials', 'fa-x-ray', 'fa-lungs',
-          'fa-virus', 'fa-virus-slash', 'fa-hand-holding-medical', 'fa-laptop-medical',
-          // Communication
-          'fa-phone', 'fa-phone-alt', 'fa-phone-volume', 'fa-fax', 'fa-map-marker-alt',
-          'fa-map', 'fa-globe', 'fa-globe-americas', 'fa-wifi', 'fa-satellite-dish',
-          // Technology
-          'fa-laptop', 'fa-mobile-alt', 'fa-tablet-alt', 'fa-desktop', 'fa-cloud',
-          'fa-server', 'fa-database', 'fa-code', 'fa-terminal', 'fa-microchip',
-          'fa-robot', 'fa-cogs', 'fa-code-branch', 'fa-bug', 'fa-plug',
-          'fa-broadcast-tower', 'fa-satellite', 'fa-hard-drive', 'fa-memory',
-          // Business & Finance
-          'fa-calendar', 'fa-clock', 'fa-chart-bar', 'fa-chart-pie', 'fa-chart-line',
-          'fa-shopping-cart', 'fa-credit-card', 'fa-wallet', 'fa-money-bill',
-          'fa-money-check', 'fa-receipt', 'fa-percentage', 'fa-tag', 'fa-tags',
-          'fa-barcode', 'fa-qrcode', 'fa-store', 'fa-cash-register',
-          // Delivery & Transport
-          'fa-gift', 'fa-truck', 'fa-plane', 'fa-car', 'fa-bicycle', 'fa-ship',
-          'fa-train', 'fa-bus', 'fa-motorcycle', 'fa-rocket', 'fa-parachute-box',
-          // Nature & Weather
-          'fa-bolt', 'fa-fire', 'fa-leaf', 'fa-water', 'fa-sun', 'fa-moon',
-          'fa-cloud-sun', 'fa-cloud-rain', 'fa-snowflake', 'fa-wind', 'fa-mountain',
-          'fa-tree', 'fa-seedling', 'fa-paw', 'fa-dove', 'fa-fish',
-          // Emoji
-          'fa-smile', 'fa-grin', 'fa-laugh', 'fa-meh', 'fa-frown', 'fa-sad-cry',
-          'fa-angry', 'fa-surprise', 'fa-kiss', 'fa-grimace', 'fa-tired',
-          // Misc
-          'fa-trophy', 'fa-medal', 'fa-award', 'fa-certificate', 'fa-graduation-cap',
-          'fa-book', 'fa-bookmark', 'fa-newspaper', 'fa-pen', 'fa-pencil-alt',
-          'fa-paint-brush', 'fa-palette', 'fa-magic', 'fa-wand-magic-sparkles',
-          'fa-gem', 'fa-crown', 'fa-hat-wizard', 'fa-dice', 'fa-gamepad',
-          'fa-headphones', 'fa-microphone', 'fa-camera-retro', 'fa-film',
-          'fa-utensils', 'fa-coffee', 'fa-pizza-slice', 'fa-hamburger',
-          'fa-glass-cheers', 'fa-cocktail', 'fa-wine-glass', 'fa-beer',
-        ];
+          const icons = [
+            // General
+            'fa-star', 'fa-heart', 'fa-user', 'fa-home', 'fa-search', 'fa-envelope',
+            'fa-bell', 'fa-camera', 'fa-check', 'fa-times', 'fa-cog', 'fa-settings',
+            'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down',
+            'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down',
+            'fa-play', 'fa-pause', 'fa-stop', 'fa-forward', 'fa-backward',
+            // Files & Media
+            'fa-music', 'fa-video', 'fa-image', 'fa-file', 'fa-folder', 'fa-file-pdf',
+            'fa-file-word', 'fa-file-excel', 'fa-file-image', 'fa-file-video', 'fa-file-audio',
+            'fa-file-code', 'fa-file-alt', 'fa-file-archive', 'fa-folder-open',
+            // Actions
+            'fa-edit', 'fa-save', 'fa-trash', 'fa-trash-alt', 'fa-copy', 'fa-cut', 'fa-paste',
+            'fa-lock', 'fa-unlock', 'fa-key', 'fa-eye', 'fa-eye-slash', 'fa-download', 'fa-upload',
+            'fa-share', 'fa-share-alt', 'fa-reply', 'fa-forward', 'fa-redo', 'fa-undo',
+            'fa-print', 'fa-compress', 'fa-expand', 'fa-plus', 'fa-minus', 'fa-times-circle',
+            'fa-check-circle', 'fa-info-circle', 'fa-exclamation-circle', 'fa-question-circle',
+            // Security & Account
+            'fa-shield-alt', 'fa-user-shield', 'fa-user-lock', 'fa-fingerprint',
+            'fa-id-card', 'fa-id-badge', 'fa-address-card', 'fa-passport',
+            // People & Social
+            'fa-users', 'fa-user-friends', 'fa-user-plus', 'fa-user-minus', 'fa-user-check',
+            'fa-comment', 'fa-comments', 'fa-thumbs-up', 'fa-thumbs-down',
+            'fa-heart-broken', 'fa-hand-peace', 'fa-hands-helping',
+            // Medical & Health
+            'fa-user-md', 'fa-stethoscope', 'fa-tooth', 'fa-heartbeat', 'fa-heart',
+            'fa-hospital', 'fa-ambulance', 'fa-pills', 'fa-syringe', 'fa-prescription-bottle',
+            'fa-thermometer', 'fa-bandage', 'fa-brain', 'fa-capsules', 'fa-dna',
+            'fa-first-aid', 'fa-flask', 'fa-microscope', 'fa-notes-medical',
+            'fa-wheelchair', 'fa-user-nurse', 'fa-vials', 'fa-x-ray', 'fa-lungs',
+            'fa-virus', 'fa-virus-slash', 'fa-hand-holding-medical', 'fa-laptop-medical',
+            // Communication
+            'fa-phone', 'fa-phone-alt', 'fa-phone-volume', 'fa-fax', 'fa-map-marker-alt',
+            'fa-map', 'fa-globe', 'fa-globe-americas', 'fa-wifi', 'fa-satellite-dish',
+            // Technology
+            'fa-laptop', 'fa-mobile-alt', 'fa-tablet-alt', 'fa-desktop', 'fa-cloud',
+            'fa-server', 'fa-database', 'fa-code', 'fa-terminal', 'fa-microchip',
+            'fa-robot', 'fa-cogs', 'fa-code-branch', 'fa-bug', 'fa-plug',
+            'fa-broadcast-tower', 'fa-satellite', 'fa-hard-drive', 'fa-memory',
+            // Business & Finance
+            'fa-calendar', 'fa-clock', 'fa-chart-bar', 'fa-chart-pie', 'fa-chart-line',
+            'fa-shopping-cart', 'fa-credit-card', 'fa-wallet', 'fa-money-bill',
+            'fa-money-check', 'fa-receipt', 'fa-percentage', 'fa-tag', 'fa-tags',
+            'fa-barcode', 'fa-qrcode', 'fa-store', 'fa-cash-register',
+            // Delivery & Transport
+            'fa-gift', 'fa-truck', 'fa-plane', 'fa-car', 'fa-bicycle', 'fa-ship',
+            'fa-train', 'fa-bus', 'fa-motorcycle', 'fa-rocket', 'fa-parachute-box',
+            // Nature & Weather
+            'fa-bolt', 'fa-fire', 'fa-leaf', 'fa-water', 'fa-sun', 'fa-moon',
+            'fa-cloud-sun', 'fa-cloud-rain', 'fa-snowflake', 'fa-wind', 'fa-mountain',
+            'fa-tree', 'fa-seedling', 'fa-paw', 'fa-dove', 'fa-fish',
+            // Emoji
+            'fa-smile', 'fa-grin', 'fa-laugh', 'fa-meh', 'fa-frown', 'fa-sad-cry',
+            'fa-angry', 'fa-surprise', 'fa-kiss', 'fa-grimace', 'fa-tired',
+            // Misc
+            'fa-trophy', 'fa-medal', 'fa-award', 'fa-certificate', 'fa-graduation-cap',
+            'fa-book', 'fa-bookmark', 'fa-newspaper', 'fa-pen', 'fa-pencil-alt',
+            'fa-paint-brush', 'fa-palette', 'fa-magic', 'fa-wand-magic-sparkles',
+            'fa-gem', 'fa-crown', 'fa-hat-wizard', 'fa-dice', 'fa-gamepad',
+            'fa-headphones', 'fa-microphone', 'fa-camera-retro', 'fa-film',
+            'fa-utensils', 'fa-coffee', 'fa-pizza-slice', 'fa-hamburger',
+            'fa-glass-cheers', 'fa-cocktail', 'fa-wine-glass', 'fa-beer',
+          ];
 
 
-        const renderGrid = (filter = '') => {
-          const grid = container.querySelector('#icon-grid')!;
-          grid.innerHTML = '';
-          icons.filter(i => i.includes(filter)).forEach(icon => {
-            const btn = document.createElement('button');
-            btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #111827; border: 1px solid #1f2937; border-radius: 8px; color: #e5e7eb; cursor: pointer; transition: all 0.2s;';
-            btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
-            btn.onclick = () => {
-              const classModels = selected.getClasses();
-              const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
+          const renderGrid = (filter = '') => {
+            const grid = container.querySelector('#icon-grid')!;
+            grid.innerHTML = '';
+            icons.filter(i => i.includes(filter)).forEach(icon => {
+              const btn = document.createElement('button');
+              btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 15px 5px; background: #111827; border: 1px solid #1f2937; border-radius: 8px; color: #e5e7eb; cursor: pointer; transition: all 0.2s;';
+              btn.innerHTML = `<i class="fas ${icon}" style="font-size: 20px; margin-bottom: 5px;"></i><div style="font-size: 9px; opacity: 0.7; overflow: hidden; width: 100%; text-overflow: ellipsis;">${icon.replace('fa-', '')}</div>`;
+              btn.onclick = () => {
+                const classModels = selected.getClasses();
+                const classes = Array.isArray(classModels) ? classModels : (classModels.models ? classModels.models.map((c: any) => c.id || c.get('name')) : []);
 
-              const filteredClasses = classes.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
-              filteredClasses.push('fas');
-              filteredClasses.push(icon);
+                const filteredClasses = classes.filter((c: string) => !c.startsWith('fa-') && c !== 'fas' && c !== 'far' && c !== 'fab');
+                filteredClasses.push('fas');
+                filteredClasses.push(icon);
 
-              selected.setClass(filteredClasses);
-              modal.close();
-            };
-            btn.onmouseenter = () => { btn.style.background = '#1f2937'; btn.style.borderColor = '#818cf8'; };
-            btn.onmouseleave = () => { btn.style.background = '#111827'; btn.style.borderColor = '#1f2937'; };
-            grid.appendChild(btn);
-          });
+                selected.setClass(filteredClasses);
+                modal.close();
+              };
+              btn.onmouseenter = () => { btn.style.background = '#1f2937'; btn.style.borderColor = '#818cf8'; };
+              btn.onmouseleave = () => { btn.style.background = '#111827'; btn.style.borderColor = '#1f2937'; };
+              grid.appendChild(btn);
+            });
+          };
+
+          renderGrid();
+          container.querySelector('#icon-search')!.addEventListener('input', (e: any) => renderGrid(e.target.value));
+
+          modal.setTitle('Select Icon');
+          modal.setContent(container);
+          modal.open();
+        }
+      });
+
+      editor.on('load', () => {
+        setIsEditorFullyLoaded(true);
+        console.log('📤 GrapesJS Loaded - applying content');
+
+        // --- Force ALL form inputs to be required automatically in editor ---
+        const enforceRequired = (comp: any) => {
+          if (!comp) return;
+          const tagName = (comp.get('tagName') || '').toLowerCase();
+
+          // Remove novalidate from forms so native validation works on published pages
+          if (tagName === 'form') {
+            const attrs = comp.getAttributes();
+            if ('novalidate' in attrs) {
+              delete attrs.novalidate;
+              comp.setAttributes(attrs);
+            }
+          }
+
+          if (['input', 'textarea', 'select'].includes(tagName)) {
+            const attrs = comp.getAttributes();
+            const nameStr = (attrs.name || '').toLowerCase();
+            const isMessageTextarea = tagName === 'textarea' && (nameStr.includes('message') || nameStr.includes('notes') || !attrs.name);
+
+            if (attrs.type !== 'submit' && attrs.type !== 'button' && attrs.type !== 'hidden' && !isMessageTextarea) {
+              comp.addAttributes({ required: 'required' });
+            } else if (isMessageTextarea && 'required' in attrs) {
+              delete attrs.required;
+              comp.setAttributes(attrs);
+            }
+          }
+
+          // Handle Custom Code blocks if AI generated them as raw HTML
+          if (comp.get('type') === 'custom-code') {
+            let htmlContent = comp.get('content') || '';
+            if (typeof htmlContent === 'string' && htmlContent.includes('<form')) {
+              htmlContent = htmlContent.replace(/<form[^>]*novalidate[^>]*>/gi, match => match.replace(/novalidate(?:="[^"]*")?/gi, ''));
+              htmlContent = htmlContent.replace(/<(input|textarea|select)([^>]+)>/gi, (match, tag, attrs) => {
+                if (/type=["']?(submit|button|hidden)["']?/i.test(attrs)) return match;
+                const isMessage = tag.toLowerCase() === 'textarea' && (/name=["']?(?:message|notes)["']?/i.test(attrs) || !/name=/i.test(attrs));
+                if (isMessage) {
+                  return match.replace(/\s*required(?:="[^"]*")?/gi, '');
+                }
+                if (!/required/i.test(attrs)) return `<${tag}${attrs} required="required">`;
+                return match;
+              });
+              comp.set('content', htmlContent);
+            }
+          }
+
+          const children = comp.components();
+          if (children && typeof children.forEach === 'function') {
+            children.forEach(enforceRequired);
+          }
         };
 
-        renderGrid();
-        container.querySelector('#icon-search')!.addEventListener('input', (e: any) => renderGrid(e.target.value));
+        const wrapper = editor.getWrapper();
+        if (wrapper) enforceRequired(wrapper);
 
-        modal.setTitle('Select Icon');
-        modal.setContent(container);
-        modal.open();
-      }
-    });
+        // Ensure any newly added blocks/components also get required fields
+        editor.on('component:add', enforceRequired);
+        // --------------------------------------------------------------------
 
-    editor.on('load', () => {
-      setIsEditorFullyLoaded(true);
-      console.log('📤 GrapesJS Loaded - applying content');
-
-      // --- Force ALL form inputs to be required automatically in editor ---
-      const enforceRequired = (comp: any) => {
-        if (!comp) return;
-        const tagName = (comp.get('tagName') || '').toLowerCase();
-        
-        // Remove novalidate from forms so native validation works on published pages
-        if (tagName === 'form') {
-          const attrs = comp.getAttributes();
-          if ('novalidate' in attrs) {
-            delete attrs.novalidate;
-            comp.setAttributes(attrs);
+        // ── Inject Swiper (npm package) into canvas iframe window ──
+        // This makes window.Swiper available inside the canvas so the
+        // component script can use it without loading any CDN
+        try {
+          const canvasWin = editor.Canvas.getWindow() as any;
+          const canvasDoc = editor.Canvas.getDocument();
+          if (canvasWin && !canvasWin.Swiper) {
+            // SwiperClass is the constructor — inject directly into canvas window
+            canvasWin.Swiper = SwiperClass;
+            console.log('✅ Swiper injected into canvas window:', typeof SwiperClass);
           }
-        }
-
-        if (['input', 'textarea', 'select'].includes(tagName)) {
-          const attrs = comp.getAttributes();
-          const nameStr = (attrs.name || '').toLowerCase();
-          const isMessageTextarea = tagName === 'textarea' && (nameStr.includes('message') || nameStr.includes('notes') || !attrs.name);
-          
-          if (attrs.type !== 'submit' && attrs.type !== 'button' && attrs.type !== 'hidden' && !isMessageTextarea) {
-            comp.addAttributes({ required: 'required' });
-          } else if (isMessageTextarea && 'required' in attrs) {
-            delete attrs.required;
-            comp.setAttributes(attrs);
-          }
-        }
-        
-        // Handle Custom Code blocks if AI generated them as raw HTML
-        if (comp.get('type') === 'custom-code') {
-          let htmlContent = comp.get('content') || '';
-          if (typeof htmlContent === 'string' && htmlContent.includes('<form')) {
-             htmlContent = htmlContent.replace(/<form[^>]*novalidate[^>]*>/gi, match => match.replace(/novalidate(?:="[^"]*")?/gi, ''));
-             htmlContent = htmlContent.replace(/<(input|textarea|select)([^>]+)>/gi, (match, tag, attrs) => {
-               if (/type=["']?(submit|button|hidden)["']?/i.test(attrs)) return match;
-               const isMessage = tag.toLowerCase() === 'textarea' && (/name=["']?(?:message|notes)["']?/i.test(attrs) || !/name=/i.test(attrs));
-               if (isMessage) {
-                 return match.replace(/\s*required(?:="[^"]*")?/gi, '');
-               }
-               if (!/required/i.test(attrs)) return `<${tag}${attrs} required="required">`;
-               return match;
-             });
-             comp.set('content', htmlContent);
-          }
-        }
-        
-        const children = comp.components();
-        if (children && typeof children.forEach === 'function') {
-          children.forEach(enforceRequired);
-        }
-      };
-      
-      const wrapper = editor.getWrapper();
-      if (wrapper) enforceRequired(wrapper);
-
-      // Ensure any newly added blocks/components also get required fields
-      editor.on('component:add', enforceRequired);
-      // --------------------------------------------------------------------
-
-      // ── Inject Swiper (npm package) into canvas iframe window ──
-      // This makes window.Swiper available inside the canvas so the
-      // component script can use it without loading any CDN
-      try {
-        const canvasWin = editor.Canvas.getWindow() as any;
-        const canvasDoc = editor.Canvas.getDocument();
-        if (canvasWin && !canvasWin.Swiper) {
-          // SwiperClass is the constructor — inject directly into canvas window
-          canvasWin.Swiper = SwiperClass;
-          console.log('✅ Swiper injected into canvas window:', typeof SwiperClass);
-        }
-        // Also inject Swiper CSS into canvas <head>
-        if (canvasDoc && !canvasDoc.getElementById('swiper-bundle-css')) {
-          const swiperStyle = canvasDoc.createElement('style');
-          swiperStyle.id = 'swiper-bundle-css';
-          // Inline the essential Swiper CSS so no network request is needed
-          swiperStyle.innerHTML = `
+          // Also inject Swiper CSS into canvas <head>
+          if (canvasDoc && !canvasDoc.getElementById('swiper-bundle-css')) {
+            const swiperStyle = canvasDoc.createElement('style');
+            swiperStyle.id = 'swiper-bundle-css';
+            // Inline the essential Swiper CSS so no network request is needed
+            swiperStyle.innerHTML = `
             .swiper{margin-left:auto;margin-right:auto;position:relative;overflow:hidden;list-style:none;padding:0;z-index:1;display:block}
             .swiper-vertical>.swiper-wrapper{flex-direction:column}
             .swiper-wrapper{position:relative;width:100%;height:100%;z-index:1;display:flex;transition-property:transform;transition-timing-function:var(--swiper-wrapper-transition-timing-function,initial);box-sizing:content-box}
@@ -3478,265 +3540,265 @@ const GrapesEditor = () => {
             .swiper-horizontal>.swiper-pagination-progressbar.swiper-pagination-progressbar-opposite,.swiper-pagination-progressbar.swiper-pagination-horizontal.swiper-pagination-progressbar-opposite,.swiper-pagination-progressbar.swiper-pagination-vertical.swiper-pagination-horizontal,.swiper-vertical>.swiper-pagination-progressbar{width:4px;height:100%;left:0;top:0}
             .swiper-pagination-lock{display:none}
           `;
-          canvasDoc.head.appendChild(swiperStyle);
-          console.log('✅ Swiper CSS injected into canvas from npm package');
-        }
-      } catch (e) {
-        console.warn('Could not inject Swiper into canvas:', e);
-      }
-
-      // ─── Initialize Travel-03 Destination Slider in Editor Canvas ───
-      // The template's svg onload script is stripped by GrapesJS, so we
-      // manually initialize Swiper for .dest-swiper here.
-      setTimeout(() => {
-        try {
-          const canvasWin = editor.Canvas.getWindow() as any;
-          const canvasDoc = editor.Canvas.getDocument();
-          if (!canvasWin || !canvasDoc) return;
-
-          const initTravel03Slider = () => {
-            if (typeof canvasWin.Swiper === 'undefined') return;
-            const destContainer = canvasDoc.querySelector('.dest-swiper');
-            if (!destContainer) return;
-
-            // Destroy existing instance to avoid duplicates
-            if (canvasWin.t03DestSwiper) {
-              try { canvasWin.t03DestSwiper.destroy(true, true); } catch (_) { }
-              canvasWin.t03DestSwiper = null;
-            }
-
-            canvasWin.t03DestSwiper = new canvasWin.Swiper('.dest-swiper', {
-              wrapperClass: 'dest-grid',
-              slideClass: 'dest',
-              slidesPerView: 1.2,
-              spaceBetween: 20,
-              loop: true,
-              breakpoints: {
-                640: { slidesPerView: 2.2 },
-                900: { slidesPerView: 3.2 },
-                1200: { slidesPerView: 4 },
-              },
-            });
-
-            // Wire up arrow buttons — they use onclick="if(window.t03DestSwiper)..."
-            // but window inside the canvas iframe IS canvasWin, so this just works.
-            console.log('✅ Travel-03 dest-swiper initialized in editor canvas');
-          };
-
-          // Run immediately and also after a short delay for slow renders
-          initTravel03Slider();
-          setTimeout(initTravel03Slider, 800);
-          setTimeout(initTravel03Slider, 2000);
+            canvasDoc.head.appendChild(swiperStyle);
+            console.log('✅ Swiper CSS injected into canvas from npm package');
+          }
         } catch (e) {
-          console.warn('Could not initialize Travel-03 slider in editor:', e);
+          console.warn('Could not inject Swiper into canvas:', e);
         }
-      }, 600);
 
-      // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
-      try {
-        const canvasDoc = editor.Canvas.getDocument();
-        if (canvasDoc) {
-          canvasDoc.addEventListener('click', (e: any) => {
-            // ── Healthcare 07 Sliders & FAQ in Canvas ──
-            const docPrev = e.target.closest('.hc7-doc-prev');
-            const docNext = e.target.closest('.hc7-doc-next');
-            if (docPrev || docNext) {
-              const grid = canvasDoc.querySelector('.hc7-doctor-grid') as HTMLElement;
-              if (grid) {
-                const cards = grid.querySelectorAll('.hc7-doctor-card');
-                if (cards.length) {
-                  let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
-                  const w = canvasDoc.defaultView?.innerWidth || 1200;
-                  const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
-                  const maxIdx = Math.max(0, cards.length - visible);
-                  if (docNext) {
-                    curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
-                  } else {
-                    curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
-                  }
-                  grid.setAttribute('data-index', String(curIdx));
-                  const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
-                  const moveAmount = (cardWidth + 24) * curIdx;
-                  grid.style.transform = 'translateX(-' + moveAmount + 'px)';
-                }
+        // ─── Initialize Travel-03 Destination Slider in Editor Canvas ───
+        // The template's svg onload script is stripped by GrapesJS, so we
+        // manually initialize Swiper for .dest-swiper here.
+        setTimeout(() => {
+          try {
+            const canvasWin = editor.Canvas.getWindow() as any;
+            const canvasDoc = editor.Canvas.getDocument();
+            if (!canvasWin || !canvasDoc) return;
+
+            const initTravel03Slider = () => {
+              if (typeof canvasWin.Swiper === 'undefined') return;
+              const destContainer = canvasDoc.querySelector('.dest-swiper');
+              if (!destContainer) return;
+
+              // Destroy existing instance to avoid duplicates
+              if (canvasWin.t03DestSwiper) {
+                try { canvasWin.t03DestSwiper.destroy(true, true); } catch (_) { }
+                canvasWin.t03DestSwiper = null;
               }
-            }
 
-            const testPrev = e.target.closest('.hc7-testimonial-prev');
-            const testNext = e.target.closest('.hc7-testimonial-next');
-            const testDot = e.target.closest('.hc7-testimonial-dots span');
-            if (testPrev || testNext || testDot) {
-              const slides = canvasDoc.querySelectorAll('.hc7-testimonial-slide');
-              const dots = canvasDoc.querySelectorAll('.hc7-testimonial-dots span');
-              if (slides.length) {
-                let curSlide = 0;
-                slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
-                if (testDot) {
-                  const dotsArr = Array.from(dots);
-                  curSlide = dotsArr.indexOf(testDot as any);
-                  if (curSlide < 0) curSlide = 0;
-                } else if (testNext) {
-                  curSlide = (curSlide + 1) % slides.length;
-                } else if (testPrev) {
-                  curSlide = (curSlide - 1 + slides.length) % slides.length;
-                }
-                slides.forEach((s: any, idx: number) => {
-                  if (idx === curSlide) s.classList.add('active');
-                  else s.classList.remove('active');
-                });
-                dots.forEach((d: any, idx: number) => {
-                  if (idx === curSlide) d.classList.add('active');
-                  else d.classList.remove('active');
-                });
-              }
-            }
-
-            const hc7FaqHead = e.target.closest('.hc7-faq-item-head, .hc7-faq-item');
-            if (hc7FaqHead) {
-              const item = hc7FaqHead.closest('.hc7-faq-item');
-              if (item) {
-                const wasActive = item.classList.contains('active');
-                canvasDoc.querySelectorAll('.hc7-faq-item').forEach((el: any) => el.classList.remove('active'));
-                if (!wasActive) item.classList.add('active');
-              }
-            }
-
-            let accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
-            let item, content, icon;
-
-            // Fallback for generic tailwind accordions (e.g. older generated pages)
-            if (!accHeader) {
-              const genericHeader = e.target.closest('.cursor-pointer, [cursor="pointer"]');
-              if (genericHeader && genericHeader.parentElement) {
-                const sibling = genericHeader.nextElementSibling;
-                if (sibling && (sibling.classList.contains('hidden') || genericHeader.querySelector('svg, i'))) {
-                  accHeader = genericHeader;
-                  item = genericHeader.parentElement;
-                  content = sibling;
-                  icon = genericHeader.querySelector('svg, i');
-                }
-              }
-            }
-
-            if (accHeader) {
-              if (!item) item = accHeader.closest('.accordion-item, .faq-item, .border-b, [class*="border"]');
-              if (!item) return;
-
-              if (!content) content = item.querySelector('.accordion-content, .faq-body, .faq-answer') || accHeader.nextElementSibling;
-              if (!content) return;
-
-              if (!icon) icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg');
-
-              const isOpen = !content.classList.contains('hidden');
-
-              // Close all others first
-              canvasDoc.querySelectorAll('.accordion-content, .faq-body, .faq-answer').forEach((c: any) => {
-                if (c !== content) {
-                  c.classList.add('hidden');
-                  const comp = editor.DomComponents.getWrapper()?.find(`[id="${c.id}"]`)[0];
-                  if (comp) comp.addClass('hidden');
-                }
+              canvasWin.t03DestSwiper = new canvasWin.Swiper('.dest-swiper', {
+                wrapperClass: 'dest-grid',
+                slideClass: 'dest',
+                slidesPerView: 1.2,
+                spaceBetween: 20,
+                loop: true,
+                breakpoints: {
+                  640: { slidesPerView: 2.2 },
+                  900: { slidesPerView: 3.2 },
+                  1200: { slidesPerView: 4 },
+                },
               });
 
-              // Open this one if it was closed, or close if open
-              if (!isOpen) {
-                content.classList.remove('hidden');
-                const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
-                if (comp) comp.removeClass('hidden');
+              // Wire up arrow buttons — they use onclick="if(window.t03DestSwiper)..."
+              // but window inside the canvas iframe IS canvasWin, so this just works.
+              console.log('✅ Travel-03 dest-swiper initialized in editor canvas');
+            };
 
-                if (icon) {
-                  icon.classList.add('rotate-180');
-                  if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
-                }
-              } else {
-                content.classList.add('hidden');
-                const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
-                if (comp) comp.addClass('hidden');
+            // Run immediately and also after a short delay for slow renders
+            initTravel03Slider();
+            setTimeout(initTravel03Slider, 800);
+            setTimeout(initTravel03Slider, 2000);
+          } catch (e) {
+            console.warn('Could not initialize Travel-03 slider in editor:', e);
+          }
+        }, 600);
 
-                if (icon) {
-                  icon.classList.remove('rotate-180');
-                  if (icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+        // ─── Inject FAQ Toggle Logic inside Editor Canvas ───
+        try {
+          const canvasDoc = editor.Canvas.getDocument();
+          if (canvasDoc) {
+            canvasDoc.addEventListener('click', (e: any) => {
+              // ── Healthcare 07 Sliders & FAQ in Canvas ──
+              const docPrev = e.target.closest('.hc7-doc-prev');
+              const docNext = e.target.closest('.hc7-doc-next');
+              if (docPrev || docNext) {
+                const grid = canvasDoc.querySelector('.hc7-doctor-grid') as HTMLElement;
+                if (grid) {
+                  const cards = grid.querySelectorAll('.hc7-doctor-card');
+                  if (cards.length) {
+                    let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                    const w = canvasDoc.defaultView?.innerWidth || 1200;
+                    const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                    const maxIdx = Math.max(0, cards.length - visible);
+                    if (docNext) {
+                      curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                    } else {
+                      curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                    }
+                    grid.setAttribute('data-index', String(curIdx));
+                    const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+                    const moveAmount = (cardWidth + 24) * curIdx;
+                    grid.style.transform = 'translateX(-' + moveAmount + 'px)';
+                  }
                 }
               }
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Failed to inject editor canvas FAQ logic', err);
-      }
 
-      // Restore custom font options in Typography sector
-      try {
-        const styleManager = editor.StyleManager;
-        const fontProp = styleManager.getProperty('typography', 'font-family') || styleManager.getProperty('Typography', 'font-family');
-        if (fontProp) {
-          fontProp.set('options', GOOGLE_FONTS_OPTIONS);
-        }
-      } catch (e) {
-        console.warn('Could not set custom fonts in style manager', e);
-      }
+              const testPrev = e.target.closest('.hc7-testimonial-prev');
+              const testNext = e.target.closest('.hc7-testimonial-next');
+              const testDot = e.target.closest('.hc7-testimonial-dots span');
+              if (testPrev || testNext || testDot) {
+                const slides = canvasDoc.querySelectorAll('.hc7-testimonial-slide');
+                const dots = canvasDoc.querySelectorAll('.hc7-testimonial-dots span');
+                if (slides.length) {
+                  let curSlide = 0;
+                  slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+                  if (testDot) {
+                    const dotsArr = Array.from(dots);
+                    curSlide = dotsArr.indexOf(testDot as any);
+                    if (curSlide < 0) curSlide = 0;
+                  } else if (testNext) {
+                    curSlide = (curSlide + 1) % slides.length;
+                  } else if (testPrev) {
+                    curSlide = (curSlide - 1 + slides.length) % slides.length;
+                  }
+                  slides.forEach((s: any, idx: number) => {
+                    if (idx === curSlide) s.classList.add('active');
+                    else s.classList.remove('active');
+                  });
+                  dots.forEach((d: any, idx: number) => {
+                    if (idx === curSlide) d.classList.add('active');
+                    else d.classList.remove('active');
+                  });
+                }
+              }
 
-      // ── Remove min value constraints on spacing/position to allow negative values ──
-      try {
-        const styleManager = editor.StyleManager;
+              const hc7FaqHead = e.target.closest('.hc7-faq-item-head, .hc7-faq-item');
+              if (hc7FaqHead) {
+                const item = hc7FaqHead.closest('.hc7-faq-item');
+                if (item) {
+                  const wasActive = item.classList.contains('active');
+                  canvasDoc.querySelectorAll('.hc7-faq-item').forEach((el: any) => el.classList.remove('active'));
+                  if (!wasActive) item.classList.add('active');
+                }
+              }
 
-        const sm = styleManager as any;
+              let accHeader = e.target.closest('.accordion-header, .faq-header, .faq-head, .v2-faq-summary, .accordion-button');
+              let item, content, icon;
 
-        // Padding and Margin are composite properties
-        ['padding', 'margin'].forEach(propName => {
-          // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
-          const prop = (sm.getProperty('space', propName) || sm.getProperty('dimension', propName) || sm.getProperty(propName)) as any;
-          if (prop && typeof prop.getProperties === 'function') {
-            prop.getProperties().forEach((p: any) => {
-              p.set('min', ''); // Remove the minimum limit
+              // Fallback for generic tailwind accordions (e.g. older generated pages)
+              if (!accHeader) {
+                const genericHeader = e.target.closest('.cursor-pointer, [cursor="pointer"]');
+                if (genericHeader && genericHeader.parentElement) {
+                  const sibling = genericHeader.nextElementSibling;
+                  if (sibling && (sibling.classList.contains('hidden') || genericHeader.querySelector('svg, i'))) {
+                    accHeader = genericHeader;
+                    item = genericHeader.parentElement;
+                    content = sibling;
+                    icon = genericHeader.querySelector('svg, i');
+                  }
+                }
+              }
+
+              if (accHeader) {
+                if (!item) item = accHeader.closest('.accordion-item, .faq-item, .border-b, [class*="border"]');
+                if (!item) return;
+
+                if (!content) content = item.querySelector('.accordion-content, .faq-body, .faq-answer') || accHeader.nextElementSibling;
+                if (!content) return;
+
+                if (!icon) icon = accHeader.querySelector('.accordion-icon, .fa-chevron-down, .fa-plus, .fa-minus, svg');
+
+                const isOpen = !content.classList.contains('hidden');
+
+                // Close all others first
+                canvasDoc.querySelectorAll('.accordion-content, .faq-body, .faq-answer').forEach((c: any) => {
+                  if (c !== content) {
+                    c.classList.add('hidden');
+                    const comp = editor.DomComponents.getWrapper()?.find(`[id="${c.id}"]`)[0];
+                    if (comp) comp.addClass('hidden');
+                  }
+                });
+
+                // Open this one if it was closed, or close if open
+                if (!isOpen) {
+                  content.classList.remove('hidden');
+                  const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
+                  if (comp) comp.removeClass('hidden');
+
+                  if (icon) {
+                    icon.classList.add('rotate-180');
+                    if (icon.classList.contains('fa-plus')) { icon.classList.remove('fa-plus'); icon.classList.add('fa-minus'); }
+                  }
+                } else {
+                  content.classList.add('hidden');
+                  const comp = editor.DomComponents.getWrapper()?.find(`[id="${content.id}"]`)[0];
+                  if (comp) comp.addClass('hidden');
+
+                  if (icon) {
+                    icon.classList.remove('rotate-180');
+                    if (icon.classList.contains('fa-minus')) { icon.classList.remove('fa-minus'); icon.classList.add('fa-plus'); }
+                  }
+                }
+              }
             });
           }
-        });
+        } catch (err) {
+          console.warn('Failed to inject editor canvas FAQ logic', err);
+        }
 
-        // Top, Right, Bottom, Left are regular properties under Position
-        ['top', 'right', 'bottom', 'left'].forEach(propName => {
-          const prop = sm.getProperty('position', propName) || sm.getProperty('extra', propName) || sm.getProperty(propName);
-          if (prop) {
-            prop.set('min', ''); // Remove the minimum limit
+        // Restore custom font options in Typography sector
+        try {
+          const styleManager = editor.StyleManager;
+          const fontProp = styleManager.getProperty('typography', 'font-family') || styleManager.getProperty('Typography', 'font-family');
+          if (fontProp) {
+            fontProp.set('options', GOOGLE_FONTS_OPTIONS);
           }
-        });
-      } catch (e) {
-        console.warn('Could not update min constraints for spacing properties', e);
-      }
+        } catch (e) {
+          console.warn('Could not set custom fonts in style manager', e);
+        }
 
-      // ── Cleanup legacy inline styles from icons so Style Manager works ──
-      try {
-        const wrapper = editor.getWrapper();
-        if (wrapper) {
-          // Find all icons and remove inline color/font-size to let Style Manager take over
-          const icons = wrapper.findType('icon');
-          icons.forEach((icon: any) => {
-            const style = icon.getStyle();
-            let changed = false;
-            if (style.color === 'var(--primary)' || style.color === '#818cf8') {
-              delete style.color;
-              changed = true;
-            }
-            if (style['font-size'] === '32px') {
-              delete style['font-size'];
-              changed = true;
-            }
-            if (changed) {
-              icon.setStyle(style);
+        // ── Remove min value constraints on spacing/position to allow negative values ──
+        try {
+          const styleManager = editor.StyleManager;
+
+          const sm = styleManager as any;
+
+          // Padding and Margin are composite properties
+          ['padding', 'margin'].forEach(propName => {
+            // Cast to any: getProperty() returns base Property, but padding/margin are PropertyComposite
+            const prop = (sm.getProperty('space', propName) || sm.getProperty('dimension', propName) || sm.getProperty(propName)) as any;
+            if (prop && typeof prop.getProperties === 'function') {
+              prop.getProperties().forEach((p: any) => {
+                p.set('min', ''); // Remove the minimum limit
+              });
             }
           });
-        }
-      } catch (e) {
-        console.warn('Could not cleanup legacy icon styles', e);
-      }
 
-      // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
-      try {
-        const canvasDoc = editor.Canvas.getDocument();
-        if (canvasDoc) {
-          const resetStyle = canvasDoc.createElement('style');
-          resetStyle.id = 'gjs-canvas-reset';
-          resetStyle.innerHTML = `
+          // Top, Right, Bottom, Left are regular properties under Position
+          ['top', 'right', 'bottom', 'left'].forEach(propName => {
+            const prop = sm.getProperty('position', propName) || sm.getProperty('extra', propName) || sm.getProperty(propName);
+            if (prop) {
+              prop.set('min', ''); // Remove the minimum limit
+            }
+          });
+        } catch (e) {
+          console.warn('Could not update min constraints for spacing properties', e);
+        }
+
+        // ── Cleanup legacy inline styles from icons so Style Manager works ──
+        try {
+          const wrapper = editor.getWrapper();
+          if (wrapper) {
+            // Find all icons and remove inline color/font-size to let Style Manager take over
+            const icons = wrapper.findType('icon');
+            icons.forEach((icon: any) => {
+              const style = icon.getStyle();
+              let changed = false;
+              if (style.color === 'var(--primary)' || style.color === '#818cf8') {
+                delete style.color;
+                changed = true;
+              }
+              if (style['font-size'] === '32px') {
+                delete style['font-size'];
+                changed = true;
+              }
+              if (changed) {
+                icon.setStyle(style);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Could not cleanup legacy icon styles', e);
+        }
+
+        // ── Inject global canvas reset — prevents body margin/padding causing scroll issues ──
+        try {
+          const canvasDoc = editor.Canvas.getDocument();
+          if (canvasDoc) {
+            const resetStyle = canvasDoc.createElement('style');
+            resetStyle.id = 'gjs-canvas-reset';
+            resetStyle.innerHTML = `
             html, body {
               margin: 0 !important;
               padding: 0 !important;
@@ -3846,358 +3908,360 @@ const GrapesEditor = () => {
               text-transform: uppercase !important;
             }
           `;
-          canvasDoc.head.appendChild(resetStyle);
-        }
-      } catch (e) { /* canvas not ready */ }
-
-      // Configure RTE after load to avoid TS errors in init
-      const rte = editor.RichTextEditor;
-      rte.add('link', {
-        icon: '<i class="fa fa-link"></i>',
-        attributes: { title: 'Insert Link' },
-        result: (rte: any) => {
-          const url = prompt('Enter link URL (e.g. https://example.com or #section):', 'https://');
-          if (url && url.trim() !== '' && url !== 'https://') {
-            rte.exec('createLink', url);
+            canvasDoc.head.appendChild(resetStyle);
           }
-        }
-      });
-      rte.add('unlink', {
-        icon: '<i class="fa fa-chain-broken"></i>',
-        attributes: { title: 'Remove Link' },
-        result: (rte: any) => {
-          rte.exec('unlink');
-        }
-      });
-      rte.add('foreColor', {
-        icon: '<i class="fa fa-font" style="color: #6366f1"></i>',
-        attributes: { title: 'Text Color' },
-        result: (rte: any, action: any) => {
-          const color = prompt('Enter color (hex or name):', '#6366f1');
-          if (color) rte.exec('foreColor', color);
-        }
-      });
-      rte.add('hiliteColor', {
-        icon: '<i class="fa fa-paint-brush"></i>',
-        attributes: { title: 'Background Color' },
-        result: (rte: any, action: any) => {
-          const color = prompt('Enter background color:', '#ffff00');
-          if (color) rte.exec('hiliteColor', color);
-        }
-      });
+        } catch (e) { /* canvas not ready */ }
 
-
-      // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
-      setTimeout(() => {
-        try {
-          const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
-          const frameDoc = frameEl?.contentDocument;
-          if (frameDoc) {
-            frameDoc.addEventListener('click', () => {
-              setTimeout(() => {
-                const selected = editor.getSelected();
-                if (!selected) return;
-                const type = selected.get('type');
-                const classes = selected.getClasses ? selected.getClasses() : [];
-                const isCustomCode = type === 'custom-code' || (Array.isArray(classes) && classes.includes('gjs-custom-code'));
-                if (isCustomCode) {
-                  editor.runCommand('open-custom-code-editor');
-                }
-                // NOTE: Icon picker is opened on double-click only (component:dblclick below)
-              }, 50);
-            }, true);
-          }
-        } catch (e) { /* Canvas frame not ready yet */ }
-      }, 1500);
-
-
-      // ─── Auto-open editor on drop ───
-      editor.on('block:drag:stop', (model) => {
-        if (!model) return;
-        const classes = model.getClasses ? model.getClasses() : [];
-        const isCustomCode = model.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
-        if (isCustomCode) {
-          setTimeout(() => {
-            editor.select(model);
-            editor.runCommand('open-custom-code-editor');
-          }, 100);
-        }
-      });
-
-      // ─── Auto-reveal animated components when dragged to canvas ───
-      editor.on('component:add', (model) => {
-        const makeVisible = (comp: any) => {
-          const classes = comp.getClasses ? comp.getClasses() : [];
-          if (classes.includes('animate-up') || classes.includes('animate-fade')) {
-            comp.addClass('in-view');
-          }
-          const components = comp.components();
-          if (components && components.length) {
-            components.forEach((child: any) => makeVisible(child));
-          }
-        };
-        makeVisible(model);
-
-        // Update Swiper if a new slide is added
-        if (model.is('swiper-slide')) {
-          const classes = model.getClasses();
-          if (!classes.includes('swiper-slide-duplicate')) {
-            const parent = model.closest('[data-gjs-type="swiper-container"]');
-            if (parent && typeof (parent as any).triggerReinit === 'function') {
-              setTimeout(() => {
-                (parent as any).triggerReinit();
-              }, 250);
+        // Configure RTE after load to avoid TS errors in init
+        const rte = editor.RichTextEditor;
+        rte.add('link', {
+          icon: '<i class="fa fa-link"></i>',
+          attributes: { title: 'Insert Link' },
+          result: (rte: any) => {
+            const url = prompt('Enter link URL (e.g. https://example.com or #section):', 'https://');
+            if (url && url.trim() !== '' && url !== 'https://') {
+              rte.exec('createLink', url);
             }
           }
-        }
-      });
-
-      editor.on('component:remove', (model) => {
-        if (model.is('swiper-slide')) {
-          const classes = model.getClasses();
-          if (!classes.includes('swiper-slide-duplicate')) {
-            const parent = model.closest('[data-gjs-type="swiper-container"]');
-            if (parent && typeof (parent as any).triggerReinit === 'function') {
-              setTimeout(() => {
-                (parent as any).triggerReinit();
-              }, 250);
-            }
+        });
+        rte.add('unlink', {
+          icon: '<i class="fa fa-chain-broken"></i>',
+          attributes: { title: 'Remove Link' },
+          result: (rte: any) => {
+            rte.exec('unlink');
           }
-        }
-      });
+        });
+        rte.add('foreColor', {
+          icon: '<i class="fa fa-font" style="color: #6366f1"></i>',
+          attributes: { title: 'Text Color' },
+          result: (rte: any, action: any) => {
+            const color = prompt('Enter color (hex or name):', '#6366f1');
+            if (color) rte.exec('foreColor', color);
+          }
+        });
+        rte.add('hiliteColor', {
+          icon: '<i class="fa fa-paint-brush"></i>',
+          attributes: { title: 'Background Color' },
+          result: (rte: any, action: any) => {
+            const color = prompt('Enter background color:', '#ffff00');
+            if (color) rte.exec('hiliteColor', color);
+          }
+        });
 
-      editor.on('component:dblclick', (model) => {
-        const tagName = model.get('tagName');
-        const classes = model.getClasses();
-        const isIcon = model.is('icon') || tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
 
-        if (isIcon) {
-          editor.runCommand('open-icon-picker');
-        } else if (model.get('type') === 'custom-code') {
-          editor.runCommand('open-custom-code-editor');
-        }
-      });
+        patchEmRichTextEditor(editor);
+
+        // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
+        setTimeout(() => {
+          try {
+            const frameEl = editor.Canvas.getFrameEl() as HTMLIFrameElement;
+            const frameDoc = frameEl?.contentDocument;
+            if (frameDoc) {
+              frameDoc.addEventListener('click', () => {
+                setTimeout(() => {
+                  const selected = editor.getSelected();
+                  if (!selected) return;
+                  const type = selected.get('type');
+                  const classes = selected.getClasses ? selected.getClasses() : [];
+                  const isCustomCode = type === 'custom-code' || (Array.isArray(classes) && classes.includes('gjs-custom-code'));
+                  if (isCustomCode) {
+                    editor.runCommand('open-custom-code-editor');
+                  }
+                  // NOTE: Icon picker is opened on double-click only (component:dblclick below)
+                }, 50);
+              }, true);
+            }
+          } catch (e) { /* Canvas frame not ready yet */ }
+        }, 1500);
 
 
-      editor.BlockManager.add('icon', {
-        label: '<i class="fas fa-star" style="font-size: 24px; margin-bottom: 8px;"></i><div>Icon</div>',
-        category: 'Basic',
-        content: {
-          type: 'icon',
-          classes: ['fas', 'fa-star'],
-          style: { 'display': 'inline-block' }
-        }
-      });
+        // ─── Auto-open editor on drop ───
+        editor.on('block:drag:stop', (model) => {
+          if (!model) return;
+          const classes = model.getClasses ? model.getClasses() : [];
+          const isCustomCode = model.get('type') === 'custom-code' || classes.includes('gjs-custom-code') || (model.getAttributes?.()['data-gjs-type'] === 'custom-code');
+          if (isCustomCode) {
+            setTimeout(() => {
+              editor.select(model);
+              editor.runCommand('open-custom-code-editor');
+            }, 100);
+          }
+        });
 
-      editor.BlockManager.add('custom-code', {
-        label: '<i class="fas fa-code" style="font-size: 24px; margin-bottom: 8px;"></i><div>Custom Code</div>',
-        category: 'Basic',
-        content: {
-          type: 'custom-code',
-          classes: ['gjs-custom-code'],
-          content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #818cf8; border-radius: 8px; text-align: center; color: #818cf8; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
-        }
-      });
+        // ─── Auto-reveal animated components when dragged to canvas ───
+        editor.on('component:add', (model) => {
+          const makeVisible = (comp: any) => {
+            const classes = comp.getClasses ? comp.getClasses() : [];
+            if (classes.includes('animate-up') || classes.includes('animate-fade')) {
+              comp.addClass('in-view');
+            }
+            const components = comp.components();
+            if (components && components.length) {
+              components.forEach((child: any) => makeVisible(child));
+            }
+          };
+          makeVisible(model);
 
-      // ─── Register Form Traits (Automatic mapping to HTML tags) ───
-      editor.DomComponents.addType('form', {
-        isComponent: el => el.tagName === 'FORM',
-        model: {
-          defaults: {
-            traits: [
-              { type: 'text', name: 'id', label: 'ID' },
-              { type: 'text', name: 'title', label: 'Title' },
-              { type: 'text', name: 'action', label: 'Action URL' },
-              { type: 'select', name: 'method', label: 'Method', options: [{ id: 'POST', name: 'POST' }, { id: 'GET', name: 'GET' }] },
-              { type: 'text', name: 'success-msg', label: 'Success Message' },
-              { type: 'text', name: 'redirect-url', label: 'Redirect URL' },
-            ],
-          },
-        },
-      });
-
-      editor.DomComponents.addType('input', {
-        isComponent: el => el.tagName === 'INPUT',
-        model: {
-          defaults: {
-            traits: [
-              { type: 'text', name: 'id', label: 'ID' },
-              { type: 'text', name: 'name', label: 'Field Name' },
-              { type: 'text', name: 'placeholder', label: 'Placeholder' },
-              { type: 'checkbox', name: 'required', label: 'Required' },
-              {
-                type: 'select', name: 'type', label: 'Type', options: [
-                  { id: 'text', name: 'Text' },
-                  { id: 'email', name: 'Email' },
-                  { id: 'number', name: 'Number' },
-                  { id: 'tel', name: 'Phone' },
-                  { id: 'password', name: 'Password' },
-                ]
-              },
-            ],
-          },
-        },
-      });
-
-      editor.DomComponents.addType('textarea', {
-        isComponent: el => el.tagName === 'TEXTAREA',
-        model: {
-          defaults: {
-            traits: [
-              { type: 'text', name: 'id', label: 'ID' },
-              { type: 'text', name: 'name', label: 'Field Name' },
-              { type: 'text', name: 'placeholder', label: 'Placeholder' },
-              { type: 'checkbox', name: 'required', label: 'Required' },
-            ],
-          },
-        },
-      });
-
-      editor.DomComponents.addType('select', {
-        isComponent: el => el.tagName === 'SELECT',
-        model: {
-          defaults: {
-            traits: [
-              { type: 'text', name: 'id', label: 'ID' },
-              { type: 'text', name: 'name', label: 'Field Name' },
-              { type: 'checkbox', name: 'required', label: 'Required' },
-              {
-                type: 'button',
-                name: 'add-option',
-                text: 'Add Option',
-                command: (ed: any, trait: any) => {
-                  const model = trait.target;
-                  model.components().add({ type: 'option', content: 'New Option', attributes: { id: 'new' } });
-                }
+          // Update Swiper if a new slide is added
+          if (model.is('swiper-slide')) {
+            const classes = model.getClasses();
+            if (!classes.includes('swiper-slide-duplicate')) {
+              const parent = model.closest('[data-gjs-type="swiper-container"]');
+              if (parent && typeof (parent as any).triggerReinit === 'function') {
+                setTimeout(() => {
+                  (parent as any).triggerReinit();
+                }, 250);
               }
-            ],
-          },
-        },
-      });
-
-      // ─── Register Form Embed Component ───
-      editor.DomComponents.addType('form-embed', {
-        isComponent: el => el.classList && el.classList.contains('form-embed-container'),
-        model: {
-          defaults: {
-            tagName: 'div',
-            draggable: true,
-            droppable: false,
-            attributes: {
-              class: 'form-embed-container',
-              'data-gjs-type': 'form-embed'
-            },
-            embedCode: '',
-            embedType: 'html',
-            traits: [
-              {
-                type: 'textarea',
-                name: 'embedCode',
-                label: 'Embed Code',
-                placeholder: 'Paste your HubSpot, Typeform, or Jotform code here...',
-                changeProp: true
-              },
-              {
-                type: 'select',
-                name: 'embedType',
-                label: 'Embed Type',
-                options: [
-                  { id: 'embed', name: 'Embed' },
-                  { id: 'iframe', name: 'IFrame' },
-                  { id: 'script', name: 'Script' },
-                  { id: 'html', name: 'HTML' },
-                ],
-                changeProp: true,
-              },
-            ],
-          },
-          init() {
-            // Listen for property changes from the traits panel
-            this.on('change:embedCode change:embedType', this.handleUpdate);
-
-            // Initial sync from attributes if loading from HTML
-            const attrCode = this.getAttributes()['data-embed-code'];
-            const attrType = this.getAttributes()['data-embed-type'];
-            if (attrCode && !this.get('embedCode')) this.set('embedCode', attrCode, { silent: true });
-            if (attrType && !this.get('embedType')) this.set('embedType', attrType, { silent: true });
-
-            // If we have code, ensure it's rendered as components for export
-            if (this.get('embedCode')) {
-              this.handleUpdate();
             }
-          },
-          handleUpdate() {
-            const code = this.get('embedCode') || '';
-            const type = this.get('embedType') || 'html';
+          }
+        });
 
-            // Store values in attributes so they survive save/load (persistence)
-            this.addAttributes({
-              'data-embed-code': code,
-              'data-embed-type': type
-            });
+        editor.on('component:remove', (model) => {
+          if (model.is('swiper-slide')) {
+            const classes = model.getClasses();
+            if (!classes.includes('swiper-slide-duplicate')) {
+              const parent = model.closest('[data-gjs-type="swiper-container"]');
+              if (parent && typeof (parent as any).triggerReinit === 'function') {
+                setTimeout(() => {
+                  (parent as any).triggerReinit();
+                }, 250);
+              }
+            }
+          }
+        });
 
-            // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
-            // Using components() ensures the code is included in the exported HTML.
-            this.components(`<div class="embed-inner-wrapper">${code}</div>`);
+        editor.on('component:dblclick', (model) => {
+          const tagName = model.get('tagName');
+          const classes = model.getClasses();
+          const isIcon = model.is('icon') || tagName === 'i' || classes.some((c: string) => c.startsWith('fa') || c === 'fas' || c === 'fa');
 
-            // Trigger a view refresh
-            this.trigger('rerender-view');
+          if (isIcon) {
+            editor.runCommand('open-icon-picker');
+          } else if (model.get('type') === 'custom-code') {
+            editor.runCommand('open-custom-code-editor');
+          }
+        });
+
+
+        editor.BlockManager.add('icon', {
+          label: '<i class="fas fa-star" style="font-size: 24px; margin-bottom: 8px;"></i><div>Icon</div>',
+          category: 'Basic',
+          content: {
+            type: 'icon',
+            classes: ['fas', 'fa-star'],
+            style: { 'display': 'inline-block' }
+          }
+        });
+
+        editor.BlockManager.add('custom-code', {
+          label: '<i class="fas fa-code" style="font-size: 24px; margin-bottom: 8px;"></i><div>Custom Code</div>',
+          category: 'Basic',
+          content: {
+            type: 'custom-code',
+            classes: ['gjs-custom-code'],
+            content: '<div style="padding: 20px; background: rgba(124,58,237,0.1); border: 1px dashed #818cf8; border-radius: 8px; text-align: center; color: #818cf8; font-size: 13px; pointer-events: none;">Click to Edit Custom Code / Shortcode</div>',
+          }
+        });
+
+        // ─── Register Form Traits (Automatic mapping to HTML tags) ───
+        editor.DomComponents.addType('form', {
+          isComponent: el => el.tagName === 'FORM',
+          model: {
+            defaults: {
+              traits: [
+                { type: 'text', name: 'id', label: 'ID' },
+                { type: 'text', name: 'title', label: 'Title' },
+                { type: 'text', name: 'action', label: 'Action URL' },
+                { type: 'select', name: 'method', label: 'Method', options: [{ id: 'POST', name: 'POST' }, { id: 'GET', name: 'GET' }] },
+                { type: 'text', name: 'success-msg', label: 'Success Message' },
+                { type: 'text', name: 'redirect-url', label: 'Redirect URL' },
+              ],
+            },
           },
-        },
-        view: {
-          init() {
-            this.listenTo(this.model, 'change:embedCode change:embedType rerender-view', this.render);
+        });
+
+        editor.DomComponents.addType('input', {
+          isComponent: el => el.tagName === 'INPUT',
+          model: {
+            defaults: {
+              traits: [
+                { type: 'text', name: 'id', label: 'ID' },
+                { type: 'text', name: 'name', label: 'Field Name' },
+                { type: 'text', name: 'placeholder', label: 'Placeholder' },
+                { type: 'checkbox', name: 'required', label: 'Required' },
+                {
+                  type: 'select', name: 'type', label: 'Type', options: [
+                    { id: 'text', name: 'Text' },
+                    { id: 'email', name: 'Email' },
+                    { id: 'number', name: 'Number' },
+                    { id: 'tel', name: 'Phone' },
+                    { id: 'password', name: 'Password' },
+                  ]
+                },
+              ],
+            },
           },
-          onRender() {
-            const model = this.model;
-            const code = model.get('embedCode');
-            const type = String(model.get('embedType') || 'html').toUpperCase();
-            if (!code) {
-              this.el.innerHTML = `
+        });
+
+        editor.DomComponents.addType('textarea', {
+          isComponent: el => el.tagName === 'TEXTAREA',
+          model: {
+            defaults: {
+              traits: [
+                { type: 'text', name: 'id', label: 'ID' },
+                { type: 'text', name: 'name', label: 'Field Name' },
+                { type: 'text', name: 'placeholder', label: 'Placeholder' },
+                { type: 'checkbox', name: 'required', label: 'Required' },
+              ],
+            },
+          },
+        });
+
+        editor.DomComponents.addType('select', {
+          isComponent: el => el.tagName === 'SELECT',
+          model: {
+            defaults: {
+              traits: [
+                { type: 'text', name: 'id', label: 'ID' },
+                { type: 'text', name: 'name', label: 'Field Name' },
+                { type: 'checkbox', name: 'required', label: 'Required' },
+                {
+                  type: 'button',
+                  name: 'add-option',
+                  text: 'Add Option',
+                  command: (ed: any, trait: any) => {
+                    const model = trait.target;
+                    model.components().add({ type: 'option', content: 'New Option', attributes: { id: 'new' } });
+                  }
+                }
+              ],
+            },
+          },
+        });
+
+        // ─── Register Form Embed Component ───
+        editor.DomComponents.addType('form-embed', {
+          isComponent: el => el.classList && el.classList.contains('form-embed-container'),
+          model: {
+            defaults: {
+              tagName: 'div',
+              draggable: true,
+              droppable: false,
+              attributes: {
+                class: 'form-embed-container',
+                'data-gjs-type': 'form-embed'
+              },
+              embedCode: '',
+              embedType: 'html',
+              traits: [
+                {
+                  type: 'textarea',
+                  name: 'embedCode',
+                  label: 'Embed Code',
+                  placeholder: 'Paste your HubSpot, Typeform, or Jotform code here...',
+                  changeProp: true
+                },
+                {
+                  type: 'select',
+                  name: 'embedType',
+                  label: 'Embed Type',
+                  options: [
+                    { id: 'embed', name: 'Embed' },
+                    { id: 'iframe', name: 'IFrame' },
+                    { id: 'script', name: 'Script' },
+                    { id: 'html', name: 'HTML' },
+                  ],
+                  changeProp: true,
+                },
+              ],
+            },
+            init() {
+              // Listen for property changes from the traits panel
+              this.on('change:embedCode change:embedType', this.handleUpdate);
+
+              // Initial sync from attributes if loading from HTML
+              const attrCode = this.getAttributes()['data-embed-code'];
+              const attrType = this.getAttributes()['data-embed-type'];
+              if (attrCode && !this.get('embedCode')) this.set('embedCode', attrCode, { silent: true });
+              if (attrType && !this.get('embedType')) this.set('embedType', attrType, { silent: true });
+
+              // If we have code, ensure it's rendered as components for export
+              if (this.get('embedCode')) {
+                this.handleUpdate();
+              }
+            },
+            handleUpdate() {
+              const code = this.get('embedCode') || '';
+              const type = this.get('embedType') || 'html';
+
+              // Store values in attributes so they survive save/load (persistence)
+              this.addAttributes({
+                'data-embed-code': code,
+                'data-embed-type': type
+              });
+
+              // Important: Use a wrapper to keep the content isolated from GrapesJS selection logic if it's a script.
+              // Using components() ensures the code is included in the exported HTML.
+              this.components(`<div class="embed-inner-wrapper">${code}</div>`);
+
+              // Trigger a view refresh
+              this.trigger('rerender-view');
+            },
+          },
+          view: {
+            init() {
+              this.listenTo(this.model, 'change:embedCode change:embedType rerender-view', this.render);
+            },
+            onRender() {
+              const model = this.model;
+              const code = model.get('embedCode');
+              const type = String(model.get('embedType') || 'html').toUpperCase();
+              if (!code) {
+                this.el.innerHTML = `
                 <div style="padding: 40px 24px; border: 2px dashed #e5e7eb; text-align: center; color: #64748b; background: #f8fafc; border-radius: 12px; font-family: sans-serif; pointer-events: none;">
                   <div style="font-size: 40px; margin-bottom: 16px; filter: grayscale(1);">🔌</div>
                   <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 16px;">Form Embed Module</div>
                   <div style="font-size: 13px; max-width: 300px; margin: 0 auto; line-height: 1.5;">Paste your HubSpot, Jotform, or Typeform code in the <b>Properties</b> panel on the right.</div>
                 </div>
               `;
-            }
+              }
 
-            // Add the "Active" badge
-            const badge = document.createElement('div');
-            badge.className = 'embed-badge';
-            badge.style.cssText = `
+              // Add the "Active" badge
+              const badge = document.createElement('div');
+              badge.className = 'embed-badge';
+              badge.style.cssText = `
               position: absolute; top: 0; right: 0; background: #6366f1; color: white;
               padding: 2px 10px; font-size: 10px; font-weight: 800; border-bottom-left-radius: 8px;
               z-index: 100; pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             `;
-            badge.innerText = `${type} Active`;
-            this.el.style.position = 'relative';
-            this.el.appendChild(badge);
+              badge.innerText = `${type} Active`;
+              this.el.style.position = 'relative';
+              this.el.appendChild(badge);
 
-            // Create a preview container
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'embed-preview-container';
-            previewContainer.style.width = '100%';
-            previewContainer.style.minHeight = '100px';
-            this.el.appendChild(previewContainer);
+              // Create a preview container
+              const previewContainer = document.createElement('div');
+              previewContainer.className = 'embed-preview-container';
+              previewContainer.style.width = '100%';
+              previewContainer.style.minHeight = '100px';
+              this.el.appendChild(previewContainer);
 
-            // For Script/Embed/IFrame types, we use an iframe for the EDITOR PREVIEW.
-            // This prevents complex scripts from breaking the main editor or disappearing after render.
-            if (type === 'script' || type === 'embed' || type === 'iframe' || code.includes('<script')) {
-              const iframe = document.createElement('iframe');
-              iframe.className = 'embed-preview-iframe';
-              iframe.style.width = '100%';
-              iframe.style.border = 'none';
-              iframe.style.minHeight = '200px';
-              iframe.style.display = 'block';
-              iframe.style.pointerEvents = 'none'; // Allow clicking the component itself for selection
-              previewContainer.appendChild(iframe);
+              // For Script/Embed/IFrame types, we use an iframe for the EDITOR PREVIEW.
+              // This prevents complex scripts from breaking the main editor or disappearing after render.
+              if (type === 'script' || type === 'embed' || type === 'iframe' || code.includes('<script')) {
+                const iframe = document.createElement('iframe');
+                iframe.className = 'embed-preview-iframe';
+                iframe.style.width = '100%';
+                iframe.style.border = 'none';
+                iframe.style.minHeight = '200px';
+                iframe.style.display = 'block';
+                iframe.style.pointerEvents = 'none'; // Allow clicking the component itself for selection
+                previewContainer.appendChild(iframe);
 
-              const doc = iframe.contentWindow?.document;
-              if (doc) {
-                doc.open();
-                doc.write(`
+                const doc = iframe.contentWindow?.document;
+                if (doc) {
+                  doc.open();
+                  doc.write(`
                   <!DOCTYPE html>
                   <html>
                     <head>
@@ -4230,263 +4294,263 @@ const GrapesEditor = () => {
                     </body>
                   </html>
                 `);
-                doc.close();
-              }
-            } else {
-              // Standard HTML preview
-              previewContainer.innerHTML = code;
-            }
-          },
-        },
-      });
-
-      // Set up custom color picker injection after load
-      setTimeout(() => setupEditorEvents(editor), 500);
-
-      // ─── Add Native GrapesJS Custom Blocks ───
-      const bm = editor.BlockManager;
-
-      // 1. BASIC CATEGORY
-      bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
-      bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; justify-content:center;"><div style="flex:1;" class="gjs-cell"></div></div>' });
-      bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
-      bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
-      bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
-      bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
-      bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
-      bm.add('custom-image', { label: 'Image', category: 'Basic', attributes: { class: 'fa fa-picture-o' }, content: { type: 'image', style: { color: 'black' }, activeOnRender: 1 } });
-      bm.add('custom-quote', { label: 'Quote', category: 'Basic', attributes: { class: 'fa fa-quote-right' }, content: '<blockquote style="border-left: 4px solid var(--primary); padding-left: 15px; margin: 20px 0; font-style: italic; color: #4b5563;">Insert your quote here.</blockquote>' });
-      bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
-
-      // 2. FORMS CATEGORY
-      bm.add('custom-form', {
-        label: 'Form',
-        category: 'Forms',
-        attributes: { class: 'fa fa-wpforms' },
-        content: {
-          type: 'form',
-          droppable: true,
-          style: { padding: '20px', border: '1px solid var(--input-border)', borderRadius: '8px', minHeight: '100px', backgroundColor: 'var(--form-bg)' },
-          components: [
-            {
-              type: 'label',
-              content: 'Email',
-              editable: true,
-              style: { color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
-            },
-            {
-              type: 'input',
-              attributes: { type: 'email', placeholder: 'your@email.com' },
-              style: { width: '100%', padding: '8px', color: 'var(--input-text)', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '4px', marginBottom: '15px' }
-            },
-            {
-              type: 'button',
-              content: 'Submit',
-              attributes: { type: 'submit' },
-              style: { padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }
-            }
-          ]
-        }
-      });
-
-      bm.add('custom-input', {
-        label: 'Input',
-        category: 'Forms',
-        attributes: { class: 'fa fa-keyboard-o' },
-        content: {
-          type: 'input',
-          attributes: { placeholder: 'Type here...' },
-          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' }
-        }
-      });
-
-      bm.add('custom-textarea', {
-        label: 'Textarea',
-        category: 'Forms',
-        attributes: { class: 'fa fa-file-text-o' },
-        content: {
-          type: 'textarea',
-          attributes: { placeholder: 'Type message...' },
-          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', minHeight: '100px', color: 'var(--input-text)', background: 'var(--input-bg)' }
-        }
-      });
-
-      bm.add('custom-select', {
-        label: 'Select',
-        category: 'Forms',
-        attributes: { class: 'fa fa-caret-square-o-down' },
-        content: {
-          type: 'select',
-          style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
-          components: [
-            { type: 'option', content: 'Option 1', attributes: { id: '1' } },
-            { type: 'option', content: 'Option 2', attributes: { id: '2' } }
-          ]
-        }
-      });
-
-      bm.add('custom-check', {
-        label: 'Checkbox',
-        category: 'Forms',
-        attributes: { class: 'fa fa-check-square-o' },
-        content: {
-          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
-          components: [
-            { type: 'checkbox', style: { width: 'auto' } },
-            { type: 'text', tagName: 'span', content: 'Checkbox Label', style: { color: 'var(--label-color)' } }
-          ]
-        }
-      });
-
-      bm.add('custom-radio', {
-        label: 'Radio',
-        category: 'Forms',
-        attributes: { class: 'fa fa-dot-circle-o' },
-        content: {
-          style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
-          components: [
-            { type: 'radio', attributes: { name: 'radioGrp' }, style: { width: 'auto' } },
-            { type: 'text', tagName: 'span', content: 'Radio Label', style: { color: 'var(--label-color)' } }
-          ]
-        }
-      });
-
-      bm.add('custom-button', {
-        label: 'Button',
-        category: 'Forms',
-        attributes: { class: 'fa fa-hand-pointer-o' },
-        content: {
-          type: 'button',
-          content: 'Button Text',
-          style: { display: 'inline-block', padding: '12px 24px', backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }
-        }
-      });
-
-      bm.add('custom-label', {
-        label: 'Label',
-        category: 'Forms',
-        attributes: { class: 'fa fa-tag' },
-        content: {
-          type: 'label',
-          content: 'Field Label',
-          style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
-        }
-      });
-
-      bm.add('form-embed', {
-        label: 'Form Embed',
-        category: 'Embeds',
-        attributes: { class: 'fa fa-code' },
-        content: {
-          type: 'form-embed',
-        }
-      });
-
-      // 3. EXTRA CATEGORY
-      bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
-      bm.add('custom-map', { label: 'Google Maps', category: 'Extra', attributes: { class: 'fa fa-map-marker' }, content: { type: 'map', style: { height: '350px' } } });
-      bm.add('custom-linkblock', { label: 'Link Block', category: 'Extra', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: '<div>Link Block Content</div>', style: { display: 'inline-block', padding: '10px' } } });
-      bm.add('custom-countdown', { label: 'Countdown', category: 'Extra', attributes: { class: 'fa fa-clock-o' }, content: '<div data-gjs-type="countdown" style="text-align: center; font-size: 2rem; font-weight: bold; padding: 20px;">00:00:00:00</div>' });
-
-      // 4. DATA CATEGORY
-      bm.add('custom-table', { label: 'Data Table', category: 'Data', attributes: { class: 'fa fa-table' }, content: '<table style="width:100%; border-collapse: collapse; margin: 20px 0;"><tr style="background:#f1f5f9;"><th style="border:1px solid #ccc; padding:10px;">Header 1</th><th style="border:1px solid #ccc; padding:10px;">Header 2</th></tr><tr><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 1</td><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 2</td></tr></table>' });
-      bm.add('custom-dynamic-fields', { label: 'Dynamic Fields', category: 'Data', attributes: { class: 'fa fa-database' }, content: '<div style="padding: 15px; border: 1px dashed var(--primary); background: rgba(124,58,237,0.05); text-align: center; font-family: monospace; color: var(--primary);">{{ DYNAMIC_CONTENT }}</div>' });
-
-      // ─── Add Custom Lead Form Block ───
-      editor.BlockManager.add('lead-form', {
-        label: 'Lead Form',
-        category: 'Forms',
-        attributes: { class: 'fa fa-paper-plane' },
-        content: {
-          type: 'form',
-          droppable: true,
-          style: { padding: '40px', background: 'var(--form-bg)', border: '1px solid var(--input-border)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto' },
-          components: [
-            { type: 'text', tagName: 'h3', content: 'Get Started Now', editable: true, style: { margin: '0 0 10px 0', fontSize: '24px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' } },
-            { type: 'text', tagName: 'p', content: 'Fill out your details and we will get back to you.', editable: true, style: { margin: '0 0 20px 0', fontSize: '14px', color: '#64748b', textAlign: 'center' } },
-            {
-              tagName: 'div',
-              droppable: true,
-              style: { display: 'flex', flexDirection: 'column', gap: '16px' },
-              components: [
-                {
-                  droppable: true,
-                  tagName: 'div',
-                  components: [
-                    { type: 'label', content: 'Name', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
-                    { type: 'input', attributes: { type: 'text', name: 'name', required: 'true', placeholder: 'Your Name' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
-                  ]
-                },
-                {
-                  droppable: true,
-                  tagName: 'div',
-                  components: [
-                    { type: 'label', content: 'Email', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
-                    { type: 'input', attributes: { type: 'email', name: 'email', required: 'true', placeholder: 'email@example.com' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
-                  ]
-                },
-                {
-                  droppable: true,
-                  tagName: 'div',
-                  components: [
-                    { type: 'label', content: 'Phone', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
-                    { type: 'input', attributes: { type: 'tel', name: 'phone', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
-                  ]
-                },
-                {
-                  type: 'button',
-                  content: 'Send Inquiry',
-                  attributes: { type: 'submit' },
-                  style: { marginTop: '10px', padding: '14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }
+                  doc.close();
                 }
-              ]
-            }
-          ]
-        }
-      });
+              } else {
+                // Standard HTML preview
+                previewContainer.innerHTML = code;
+              }
+            },
+          },
+        });
 
-      // Register block definitions
-      BLOCK_DEFS.forEach((b: any) => {
-        if (!bm.get(b.type)) {
-          bm.add(b.type, {
-            label: b.label,
-            category: b.category,
-            content: b.defaultContent,
-          });
-        }
-      });
+        // Set up custom color picker injection after load
+        setTimeout(() => setupEditorEvents(editor), 500);
 
-      // 6. DYNAMIC LABEL SYNC LOGIC
-      editor.on('component:update:attributes:data-label', (component) => {
-        const newLabel = component.getAttributes()['data-label'];
-        if (!newLabel) return;
+        // ─── Add Native GrapesJS Custom Blocks ───
+        const bm = editor.BlockManager;
 
-        // Find associated label: 
-        // 1. Check parent for a label
-        // 2. Check siblings for a label
-        const parent = component.parent();
-        if (parent) {
-          const labelComp = parent.components().find((c: any) => c.get('tagName') === 'label');
-          if (labelComp) {
-            // If it's a wrapper label like <label>Text <input/></label>
-            if (labelComp === component.parent() && labelComp.get('tagName') === 'label') {
-              const content = labelComp.get('content') || '';
-              // Simple replacement for radio/checkbox labels
-              labelComp.set('content', `${newLabel} `);
-            } else {
-              labelComp.set('content', newLabel);
+        // 1. BASIC CATEGORY
+        bm.add('custom-section', { label: 'Section', category: 'Basic', attributes: { class: 'fa fa-square-o' }, content: '<section style="padding:50px 20px; width: 100%; min-height: 50px; background:#f9fafb;"></section>' });
+        bm.add('custom-1col', { label: '1 Column', category: 'Basic', attributes: { class: 'fa fa-bars' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; justify-content:center;"><div style="flex:1;" class="gjs-cell"></div></div>' });
+        bm.add('custom-2col', { label: '2 Columns', category: 'Basic', attributes: { class: 'fa fa-columns' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
+        bm.add('custom-3col', { label: '3 Columns', category: 'Basic', attributes: { class: 'fa fa-th' }, content: '<div style="display:flex; padding:10px; width:100%; min-height: 100px; gap: 16px;"><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div><div style="flex:1;" class="gjs-cell"></div></div>' });
+        bm.add('custom-heading', { label: 'Heading', category: 'Basic', attributes: { class: 'fa fa-header' }, content: '<h2 style="margin: 0 0 15px 0; font-family: sans-serif; font-weight: bold;">Heading Text</h2>' });
+        bm.add('custom-text', { label: 'Text', category: 'Basic', attributes: { class: 'fa fa-font' }, content: '<p style="margin: 0 0 15px 0; line-height: 1.5; font-family: sans-serif; color: #4b5563;">Insert your text here</p>' });
+        bm.add('custom-link', { label: 'Link', category: 'Basic', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: 'Link Text', href: '#' } });
+        bm.add('custom-image', { label: 'Image', category: 'Basic', attributes: { class: 'fa fa-picture-o' }, content: { type: 'image', style: { color: 'black' }, activeOnRender: 1 } });
+        bm.add('custom-quote', { label: 'Quote', category: 'Basic', attributes: { class: 'fa fa-quote-right' }, content: '<blockquote style="border-left: 4px solid var(--primary); padding-left: 15px; margin: 20px 0; font-style: italic; color: #4b5563;">Insert your quote here.</blockquote>' });
+        bm.add('custom-icon', { label: 'Icon', category: 'Basic', attributes: { class: 'fa fa-diamond' }, content: '<div style="display:inline-block; font-size:32px; color:var(--primary);">★</div>' });
+
+        // 2. FORMS CATEGORY
+        bm.add('custom-form', {
+          label: 'Form',
+          category: 'Forms',
+          attributes: { class: 'fa fa-wpforms' },
+          content: {
+            type: 'form',
+            droppable: true,
+            style: { padding: '20px', border: '1px solid var(--input-border)', borderRadius: '8px', minHeight: '100px', backgroundColor: 'var(--form-bg)' },
+            components: [
+              {
+                type: 'label',
+                content: 'Email',
+                editable: true,
+                style: { color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+              },
+              {
+                type: 'input',
+                attributes: { type: 'email', placeholder: 'your@email.com' },
+                style: { width: '100%', padding: '8px', color: 'var(--input-text)', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '4px', marginBottom: '15px' }
+              },
+              {
+                type: 'button',
+                content: 'Submit',
+                attributes: { type: 'submit' },
+                style: { padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }
+              }
+            ]
+          }
+        });
+
+        bm.add('custom-input', {
+          label: 'Input',
+          category: 'Forms',
+          attributes: { class: 'fa fa-keyboard-o' },
+          content: {
+            type: 'input',
+            attributes: { placeholder: 'Type here...' },
+            style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+          }
+        });
+
+        bm.add('custom-textarea', {
+          label: 'Textarea',
+          category: 'Forms',
+          attributes: { class: 'fa fa-file-text-o' },
+          content: {
+            type: 'textarea',
+            attributes: { placeholder: 'Type message...' },
+            style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', minHeight: '100px', color: 'var(--input-text)', background: 'var(--input-bg)' }
+          }
+        });
+
+        bm.add('custom-select', {
+          label: 'Select',
+          category: 'Forms',
+          attributes: { class: 'fa fa-caret-square-o-down' },
+          content: {
+            type: 'select',
+            style: { padding: '8px', width: '100%', border: '1px solid var(--input-border)', borderRadius: '4px', color: 'var(--input-text)', background: 'var(--input-bg)' },
+            components: [
+              { type: 'option', content: 'Option 1', attributes: { id: '1' } },
+              { type: 'option', content: 'Option 2', attributes: { id: '2' } }
+            ]
+          }
+        });
+
+        bm.add('custom-check', {
+          label: 'Checkbox',
+          category: 'Forms',
+          attributes: { class: 'fa fa-check-square-o' },
+          content: {
+            style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+            components: [
+              { type: 'checkbox', style: { width: 'auto' } },
+              { type: 'text', tagName: 'span', content: 'Checkbox Label', style: { color: 'var(--label-color)' } }
+            ]
+          }
+        });
+
+        bm.add('custom-radio', {
+          label: 'Radio',
+          category: 'Forms',
+          attributes: { class: 'fa fa-dot-circle-o' },
+          content: {
+            style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '5px' },
+            components: [
+              { type: 'radio', attributes: { name: 'radioGrp' }, style: { width: 'auto' } },
+              { type: 'text', tagName: 'span', content: 'Radio Label', style: { color: 'var(--label-color)' } }
+            ]
+          }
+        });
+
+        bm.add('custom-button', {
+          label: 'Button',
+          category: 'Forms',
+          attributes: { class: 'fa fa-hand-pointer-o' },
+          content: {
+            type: 'button',
+            content: 'Button Text',
+            style: { display: 'inline-block', padding: '12px 24px', backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }
+          }
+        });
+
+        bm.add('custom-label', {
+          label: 'Label',
+          category: 'Forms',
+          attributes: { class: 'fa fa-tag' },
+          content: {
+            type: 'label',
+            content: 'Field Label',
+            style: { fontSize: '14px', fontWeight: '500', color: 'var(--label-color)', display: 'block', marginBottom: '5px' }
+          }
+        });
+
+        bm.add('form-embed', {
+          label: 'Form Embed',
+          category: 'Embeds',
+          attributes: { class: 'fa fa-code' },
+          content: {
+            type: 'form-embed',
+          }
+        });
+
+        // 3. EXTRA CATEGORY
+        bm.add('custom-video', { label: 'Video', category: 'Extra', attributes: { class: 'fa fa-youtube-play' }, content: { type: 'video', src: 'https://youtube.com/embed/dQw4w9WgXcQ', style: { height: '350px', width: '100%' } } });
+        bm.add('custom-map', { label: 'Google Maps', category: 'Extra', attributes: { class: 'fa fa-map-marker' }, content: { type: 'map', style: { height: '350px' } } });
+        bm.add('custom-linkblock', { label: 'Link Block', category: 'Extra', attributes: { class: 'fa fa-link' }, content: { type: 'link', content: '<div>Link Block Content</div>', style: { display: 'inline-block', padding: '10px' } } });
+        bm.add('custom-countdown', { label: 'Countdown', category: 'Extra', attributes: { class: 'fa fa-clock-o' }, content: '<div data-gjs-type="countdown" style="text-align: center; font-size: 2rem; font-weight: bold; padding: 20px;">00:00:00:00</div>' });
+
+        // 4. DATA CATEGORY
+        bm.add('custom-table', { label: 'Data Table', category: 'Data', attributes: { class: 'fa fa-table' }, content: '<table style="width:100%; border-collapse: collapse; margin: 20px 0;"><tr style="background:#f1f5f9;"><th style="border:1px solid #ccc; padding:10px;">Header 1</th><th style="border:1px solid #ccc; padding:10px;">Header 2</th></tr><tr><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 1</td><td style="border:1px solid #ccc; padding:10px;">Row 1 Col 2</td></tr></table>' });
+        bm.add('custom-dynamic-fields', { label: 'Dynamic Fields', category: 'Data', attributes: { class: 'fa fa-database' }, content: '<div style="padding: 15px; border: 1px dashed var(--primary); background: rgba(124,58,237,0.05); text-align: center; font-family: monospace; color: var(--primary);">{{ DYNAMIC_CONTENT }}</div>' });
+
+        // ─── Add Custom Lead Form Block ───
+        editor.BlockManager.add('lead-form', {
+          label: 'Lead Form',
+          category: 'Forms',
+          attributes: { class: 'fa fa-paper-plane' },
+          content: {
+            type: 'form',
+            droppable: true,
+            style: { padding: '40px', background: 'var(--form-bg)', border: '1px solid var(--input-border)', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto' },
+            components: [
+              { type: 'text', tagName: 'h3', content: 'Get Started Now', editable: true, style: { margin: '0 0 10px 0', fontSize: '24px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' } },
+              { type: 'text', tagName: 'p', content: 'Fill out your details and we will get back to you.', editable: true, style: { margin: '0 0 20px 0', fontSize: '14px', color: '#64748b', textAlign: 'center' } },
+              {
+                tagName: 'div',
+                droppable: true,
+                style: { display: 'flex', flexDirection: 'column', gap: '16px' },
+                components: [
+                  {
+                    droppable: true,
+                    tagName: 'div',
+                    components: [
+                      { type: 'label', content: 'Name', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                      { type: 'input', attributes: { type: 'text', name: 'name', required: 'true', placeholder: 'Your Name' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                    ]
+                  },
+                  {
+                    droppable: true,
+                    tagName: 'div',
+                    components: [
+                      { type: 'label', content: 'Email', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                      { type: 'input', attributes: { type: 'email', name: 'email', required: 'true', placeholder: 'email@example.com' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                    ]
+                  },
+                  {
+                    droppable: true,
+                    tagName: 'div',
+                    components: [
+                      { type: 'label', content: 'Phone', editable: true, style: { fontSize: '12px', fontWeight: '600', color: 'var(--label-color)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' } },
+                      { type: 'input', attributes: { type: 'tel', name: 'phone', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '12px', border: '1px solid var(--input-border)', borderRadius: '8px', outline: 'none', color: 'var(--input-text)', background: 'var(--input-bg)' } }
+                    ]
+                  },
+                  {
+                    type: 'button',
+                    content: 'Send Inquiry',
+                    attributes: { type: 'submit' },
+                    style: { marginTop: '10px', padding: '14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }
+                  }
+                ]
+              }
+            ]
+          }
+        });
+
+        // Register block definitions
+        BLOCK_DEFS.forEach((b: any) => {
+          if (!bm.get(b.type)) {
+            bm.add(b.type, {
+              label: b.label,
+              category: b.category,
+              content: b.defaultContent,
+            });
+          }
+        });
+
+        // 6. DYNAMIC LABEL SYNC LOGIC
+        editor.on('component:update:attributes:data-label', (component) => {
+          const newLabel = component.getAttributes()['data-label'];
+          if (!newLabel) return;
+
+          // Find associated label: 
+          // 1. Check parent for a label
+          // 2. Check siblings for a label
+          const parent = component.parent();
+          if (parent) {
+            const labelComp = parent.components().find((c: any) => c.get('tagName') === 'label');
+            if (labelComp) {
+              // If it's a wrapper label like <label>Text <input/></label>
+              if (labelComp === component.parent() && labelComp.get('tagName') === 'label') {
+                const content = labelComp.get('content') || '';
+                // Simple replacement for radio/checkbox labels
+                labelComp.set('content', `${newLabel} `);
+              } else {
+                labelComp.set('content', newLabel);
+              }
             }
           }
-        }
+        });
       });
-    });
 
-    // Fallback removed — editor.on('load') handles first apply,
-    // and the useEffect([page, isEditorFullyLoaded]) handles late page data arrival.
+      // Fallback removed — editor.on('load') handles first apply,
+      // and the useEffect([page, isEditorFullyLoaded]) handles late page data arrival.
 
-    editorRef.current = editor;
-    setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
-    (window as any).editorInstance = editor; // Expose to iframe interaction script
+      editorRef.current = editor;
+      setEditorInstance(editor); // Trigger re-render so GlobalStylesPanel gets editor
+      (window as any).editorInstance = editor; // Expose to iframe interaction script
     }, 50);
 
     return () => {
@@ -4596,7 +4660,7 @@ const GrapesEditor = () => {
             if (v !== undefined && v !== null && v !== '') {
               try {
                 el.style.setProperty(p, String(v), 'important');
-              } catch (e) {}
+              } catch (e) { }
             }
           });
         }
@@ -4663,31 +4727,25 @@ const GrapesEditor = () => {
           const target = e.target as HTMLElement;
           if (!target) return;
 
-          // Prevent native browser system color picker inputs from firing
-          const nativeInput = target.closest('input[type="color"]') as HTMLInputElement;
-          if (nativeInput) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-
-          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview]') as HTMLElement;
+          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview], input[type="color"], .gjs-field-color') as HTMLElement;
           if (swatch) {
             e.preventDefault();
             e.stopPropagation();
 
-            const parentRow = swatch.closest('.gjs-sm-property') || swatch.parentElement;
-            
+            const parentRow = (swatch.closest('.gjs-sm-property, .gjs-trt-trait, .gjs-trait, .gjs-field') || swatch.parentElement) as HTMLElement | null;
+
             // 1. Check if Pickr is already attached
             let pickr = (swatch as any).__pickr || (parentRow as any)?.__pickr || (parentRow as any)?.querySelector?.('.custom-grapesjs-pickr')?.__pickr;
 
             // 2. If Pickr is not attached, instantiate Pickr dynamically on this swatch
             if (!pickr) {
-              const hexInput = (parentRow?.querySelector('input[type="text"]') || parentRow?.querySelector('input')) as HTMLInputElement | null;
-              const curVal = hexInput?.value || swatch.style.backgroundColor || '';
+              const hexInput = (parentRow?.querySelector('input[type="text"]') || parentRow?.querySelector('input:not([type="color"])') || parentRow?.querySelector('input')) as HTMLInputElement | null;
+              const curVal = hexInput?.value || (swatch.tagName === 'INPUT' ? (swatch as HTMLInputElement).value : swatch.style.backgroundColor) || '';
 
               try {
+                const anchorEl = (swatch.tagName === 'INPUT' ? (parentRow || swatch) : swatch) as HTMLElement;
                 pickr = Pickr.create({
-                  el: swatch,
+                  el: anchorEl,
                   theme: 'monolith',
                   default: curVal && curVal !== 'transparent' ? curVal : null,
                   useAsButton: true,
@@ -4713,31 +4771,31 @@ const GrapesEditor = () => {
                   return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : hex;
                 };
 
-                pickr.on('change', (color: Pickr.HSVaColor) => {
-                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
+                const notifyInputChange = (val: string) => {
+                  if (swatch.tagName !== 'INPUT') {
+                    swatch.style.setProperty('background-color', val || 'transparent', 'important');
+                  }
                   if (hexInput) {
-                    hexInput.value = hex;
+                    hexInput.value = val;
+                    hexInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    hexInput.dispatchEvent(new Event('change', { bubbles: true }));
                     handleUIInput({ target: hexInput } as any);
                   }
+                };
+
+                pickr.on('change', (color: Pickr.HSVaColor) => {
+                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                  notifyInputChange(hex);
                 });
 
                 pickr.on('save', (color: Pickr.HSVaColor) => {
                   const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
-                  if (hexInput) {
-                    hexInput.value = hex;
-                    handleUIInput({ target: hexInput } as any);
-                  }
+                  notifyInputChange(hex);
                   pickr.hide();
                 });
 
                 pickr.on('clear', () => {
-                  swatch.style.setProperty('background-color', 'transparent', 'important');
-                  if (hexInput) {
-                    hexInput.value = '';
-                    handleUIInput({ target: hexInput } as any);
-                  }
+                  notifyInputChange('');
                   pickr.hide();
                 });
 
@@ -4753,13 +4811,21 @@ const GrapesEditor = () => {
               setTimeout(() => {
                 try {
                   pickr.show();
-                } catch (err) {}
+                } catch (err) { }
               }, 10);
             }
           }
         };
 
-        stylesContainer.addEventListener('click', handleColorSwatchClick);
+        if (stylesContainer) {
+          stylesContainer.removeEventListener('click', handleColorSwatchClick);
+          stylesContainer.addEventListener('click', handleColorSwatchClick);
+        }
+        const traitsContainer = document.getElementById('traits-container');
+        if (traitsContainer) {
+          traitsContainer.removeEventListener('click', handleColorSwatchClick);
+          traitsContainer.addEventListener('click', handleColorSwatchClick);
+        }
       }
     }, 500);
 
@@ -4885,7 +4951,15 @@ const GrapesEditor = () => {
             : (styleMap['margin-left'] === 'auto' ? 'right' : 'left');
 
           card.innerHTML = `
-
+            <!-- ── ELEMENTOR INSPECTOR HEADER ── -->
+            <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%); margin: -14px -14px 12px -14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f5a; border-radius: 12px 12px 0 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 22px; height: 22px; background: #e11d48; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 12px;">E</div>
+                <span style="font-size: 12px; font-weight: 700; color: #ffffff; letter-spacing: 0.02em;">
+                  ${isLogoComponent ? 'Brand Logo Control' : 'Image Control'}
+                </span>
+              </div>
+            </div>
 
             <!-- ── CHOOSE IMAGE PREVIEW BOX (ELEMENTOR STYLE) ── -->
             <div class="elementor-img-choose-container" style="position: relative;">
@@ -4905,12 +4979,12 @@ const GrapesEditor = () => {
                 background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
               ">
                 ${currentSrc
-                  ? `<img src="${currentSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`
-                  : `<div style="text-align: center; color: #64748b;">
+              ? `<img src="${currentSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 6px;" />`
+              : `<div style="text-align: center; color: #64748b;">
                       <svg style="margin: 0 auto 6px auto; width: 28px; height: 28px; color: #6366f1;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                       <div style="font-size: 12px; font-weight: 600; color: #334155;">Click to Choose Image</div>
                      </div>`
-                }
+            }
               </div>
 
               <!-- Elementor Choose Image Action Bar -->
@@ -4953,9 +5027,9 @@ const GrapesEditor = () => {
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="font-size: 11px; font-weight: 600; color: #475569;">Alignment</label>
                 <div style="display: flex; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                  <button type="button" class="align-btn" data-align="left" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='left' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='left' ? '#6366f1' : '#64748b'}; font-weight: 700;">Left</button>
-                  <button type="button" class="align-btn" data-align="center" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='center' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='center' ? '#6366f1' : '#64748b'}; font-weight: 700;">Center</button>
-                  <button type="button" class="align-btn" data-align="right" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign==='right' ? '#ffffff' : 'transparent'}; color: ${currentAlign==='right' ? '#6366f1' : '#64748b'}; font-weight: 700;">Right</button>
+                  <button type="button" class="align-btn" data-align="left" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign === 'left' ? '#ffffff' : 'transparent'}; color: ${currentAlign === 'left' ? '#6366f1' : '#64748b'}; font-weight: 700;">Left</button>
+                  <button type="button" class="align-btn" data-align="center" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign === 'center' ? '#ffffff' : 'transparent'}; color: ${currentAlign === 'center' ? '#6366f1' : '#64748b'}; font-weight: 700;">Center</button>
+                  <button type="button" class="align-btn" data-align="right" style="padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; background: ${currentAlign === 'right' ? '#ffffff' : 'transparent'}; color: ${currentAlign === 'right' ? '#6366f1' : '#64748b'}; font-weight: 700;">Right</button>
                 </div>
               </div>
 
@@ -4989,10 +5063,10 @@ const GrapesEditor = () => {
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <label style="font-size: 11px; font-weight: 600; color: #475569;">Object Fit</label>
                 <select class="card-fit-select" style="padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #ffffff; color: #0f172a;">
-                  <option value="cover" ${currentFit==='cover' ? 'selected' : ''}>Cover (Crop & Fill Box)</option>
-                  <option value="contain" ${currentFit==='contain' ? 'selected' : ''}>Contain (Fit Full Image)</option>
-                  <option value="fill" ${currentFit==='fill' ? 'selected' : ''}>Fill (Stretch)</option>
-                  <option value="none" ${currentFit==='none' ? 'selected' : ''}>Original Size</option>
+                  <option value="cover" ${currentFit === 'cover' ? 'selected' : ''}>Cover (Crop & Fill Box)</option>
+                  <option value="contain" ${currentFit === 'contain' ? 'selected' : ''}>Contain (Fit Full Image)</option>
+                  <option value="fill" ${currentFit === 'fill' ? 'selected' : ''}>Fill (Stretch)</option>
+                  <option value="none" ${currentFit === 'none' ? 'selected' : ''}>Original Size</option>
                 </select>
               </div>
 
@@ -5000,10 +5074,10 @@ const GrapesEditor = () => {
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <label style="font-size: 11px; font-weight: 600; color: #475569;">Border Radius</label>
                 <div style="display: flex; gap: 6px;">
-                  <button type="button" class="radius-btn" data-radius="0px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='0px'||!currentRadius?'#6366f1':'#fff'}; color: ${currentRadius==='0px'||!currentRadius?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">0px</button>
-                  <button type="button" class="radius-btn" data-radius="8px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='8px'?'#6366f1':'#fff'}; color: ${currentRadius==='8px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">8px</button>
-                  <button type="button" class="radius-btn" data-radius="16px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='16px'?'#6366f1':'#fff'}; color: ${currentRadius==='16px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">16px</button>
-                  <button type="button" class="radius-btn" data-radius="50%" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius==='50%'||currentRadius==='9999px'?'#6366f1':'#fff'}; color: ${currentRadius==='50%'||currentRadius==='9999px'?'#fff':'#475569'}; cursor: pointer; font-weight: 700;">Circle</button>
+                  <button type="button" class="radius-btn" data-radius="0px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius === '0px' || !currentRadius ? '#6366f1' : '#fff'}; color: ${currentRadius === '0px' || !currentRadius ? '#fff' : '#475569'}; cursor: pointer; font-weight: 700;">0px</button>
+                  <button type="button" class="radius-btn" data-radius="8px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius === '8px' ? '#6366f1' : '#fff'}; color: ${currentRadius === '8px' ? '#fff' : '#475569'}; cursor: pointer; font-weight: 700;">8px</button>
+                  <button type="button" class="radius-btn" data-radius="16px" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius === '16px' ? '#6366f1' : '#fff'}; color: ${currentRadius === '16px' ? '#fff' : '#475569'}; cursor: pointer; font-weight: 700;">16px</button>
+                  <button type="button" class="radius-btn" data-radius="50%" style="flex:1; padding: 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: ${currentRadius === '50%' || currentRadius === '9999px' ? '#6366f1' : '#fff'}; color: ${currentRadius === '50%' || currentRadius === '9999px' ? '#fff' : '#475569'}; cursor: pointer; font-weight: 700;">Circle</button>
                 </div>
               </div>
 
@@ -5349,35 +5423,203 @@ const GrapesEditor = () => {
           ['header', 'nav', 'footer'].includes(parentTag) ||
           attrs['data-is-logo'] === 'true';
 
-        // 2. Handle UI Tab Switching (Image, Logo, Link, and Custom Code elements ALWAYS activate the Properties/Traits tab)
-        if (isCustomCode || isLink || isImage || isLogoComponent) {
-          setRightTab('traits');
+        // 2. Always activate Right-side Properties (Traits) tab on element selection
+        setRightTab('traits');
+
+        // Extract applied computed styles for selected element
+        const selectedAll = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [model];
+        let computedMap: Record<string, string> = {};
+        try { computedMap = extractMultiElementStyles(selectedAll); } catch (e) { }
+
+        // 3. Generate Rich Element-Specific Traits (Properties Tab)
+        try {
+          const isText = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'b', 'i', 'strong', 'em', 'small', 'label'].includes(tagName) ||
+            model.is('text') || (typeof model.get('content') === 'string' && model.get('content').trim() !== '');
+          const isInput = ['input', 'textarea', 'select'].includes(tagName);
+          const isLinkBtn = isLink || tagName === 'a' || tagName === 'button' || model.get('type') === 'link';
+
+          const fontOpts = GOOGLE_FONTS_OPTIONS.map(f => ({ id: f.id || f.name, name: f.name || f.id }));
+          const fontSizeOpts = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '40px', '48px', '56px', '64px', '72px'].map(s => ({ id: s, name: s }));
+          const fontWeightOpts = [
+            { id: '300', name: 'Light (300)' },
+            { id: '400', name: 'Regular (400)' },
+            { id: '500', name: 'Medium (500)' },
+            { id: '600', name: 'SemiBold (600)' },
+            { id: '700', name: 'Bold (700)' },
+            { id: '800', name: 'ExtraBold (800)' }
+          ];
+          const textAlignOpts = [
+            { id: 'left', name: 'Left' },
+            { id: 'center', name: 'Center' },
+            { id: 'right', name: 'Right' },
+            { id: 'justify', name: 'Justify' }
+          ];
+          const borderRadiusOpts = ['0px', '4px', '6px', '8px', '12px', '16px', '24px', '50%', '9999px'].map(s => ({ id: s, name: s }));
+          const objectFitOpts = [
+            { id: 'cover', name: 'Cover' },
+            { id: 'contain', name: 'Contain' },
+            { id: 'fill', name: 'Fill' },
+            { id: 'none', name: 'None' }
+          ];
+          const paddingOpts = ['0px', '8px', '12px', '16px', '24px', '32px', '48px', '64px', '80px'].map(s => ({ id: s, name: s }));
+
+          let dynamicTraits: any[] = [];
+
+          if (isImage || isLogoComponent) {
+            dynamicTraits = [
+              { type: 'text', label: 'Image Source (URL)', name: 'src', changeProp: false },
+              { type: 'text', label: 'Alt Text (SEO)', name: 'alt', changeProp: false },
+              { type: 'select', label: 'Object Fit', name: 'style_objectFit', options: objectFitOpts, changeProp: false },
+              { type: 'select', label: 'Corner Rounding', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Width (e.g. 100%, 300px)', name: 'style_width', changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isLinkBtn) {
+            dynamicTraits = [
+              { type: 'text', label: 'Button / Link Text', name: 'element_text', changeProp: false },
+              { type: 'text', label: 'Target Link (href)', name: 'href', changeProp: false },
+              { type: 'select', label: 'Target Window', name: 'target', options: [{ id: '_self', name: 'Same Window' }, { id: '_blank', name: 'New Window' }], changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'color', label: 'Button Background', name: 'style_backgroundColor', changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'select', label: 'Font Weight', name: 'style_fontWeight', options: fontWeightOpts, changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isInput) {
+            dynamicTraits = [
+              { type: 'text', label: 'Field Name', name: 'name', changeProp: false },
+              { type: 'text', label: 'Placeholder Text', name: 'placeholder', changeProp: false },
+              { type: 'select', label: 'Input Type', name: 'type', options: [{ id: 'text', name: 'Text' }, { id: 'email', name: 'Email' }, { id: 'tel', name: 'Phone' }, { id: 'password', name: 'Password' }, { id: 'number', name: 'Number' }], changeProp: false },
+              { type: 'checkbox', label: 'Required Field', name: 'required', valueTrue: 'required', valueFalse: '', changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isText) {
+            dynamicTraits = [
+              { type: 'text', label: 'Text Content', name: 'element_text', changeProp: false },
+              { type: 'select', label: 'Font Family', name: 'style_fontFamily', options: fontOpts, changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'select', label: 'Font Weight', name: 'style_fontWeight', options: fontWeightOpts, changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Text Alignment', name: 'style_textAlign', options: textAlignOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else {
+            dynamicTraits = [
+              { type: 'color', label: 'Background Color', name: 'style_backgroundColor', changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Padding', name: 'style_padding', options: paddingOpts, changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID (Anchor)', name: 'id', changeProp: false },
+              { type: 'text', label: 'Title / Tooltip', name: 'title', changeProp: false }
+            ];
+          }
+
+          // Hydrate component attributes with initial computed style values so inputs display current state
+          const currentAttrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+          const initialValues: Record<string, any> = {};
+
+          if (computedMap['font-family'] && computedMap['font-family'] !== 'Mixed') initialValues.style_fontFamily = computedMap['font-family'];
+          if (computedMap['font-size'] && computedMap['font-size'] !== 'Mixed') initialValues.style_fontSize = computedMap['font-size'];
+          if (computedMap['font-weight'] && computedMap['font-weight'] !== 'Mixed') initialValues.style_fontWeight = computedMap['font-weight'];
+          if (computedMap['color'] && computedMap['color'] !== 'Mixed') initialValues.style_color = computedMap['color'];
+          if (computedMap['background-color'] && computedMap['background-color'] !== 'Mixed') initialValues.style_backgroundColor = computedMap['background-color'];
+          if (computedMap['text-align'] && computedMap['text-align'] !== 'Mixed') initialValues.style_textAlign = computedMap['text-align'];
+          if (computedMap['border-radius'] && computedMap['border-radius'] !== 'Mixed') initialValues.style_borderRadius = computedMap['border-radius'];
+          if (computedMap['object-fit'] && computedMap['object-fit'] !== 'Mixed') initialValues.style_objectFit = computedMap['object-fit'];
+          if (computedMap['padding'] && computedMap['padding'] !== 'Mixed') initialValues.style_padding = computedMap['padding'];
+          if (computedMap['width'] && computedMap['width'] !== 'Mixed') initialValues.style_width = computedMap['width'];
+
+          if (isText || isLinkBtn) {
+            const rawText = model.get('content') || model.getEl()?.innerText || '';
+            if (rawText && typeof rawText === 'string') {
+              initialValues.element_text = rawText.trim();
+            }
+          }
+
+          // Hydrate silently so initial attribute setting doesn't trigger style overrides
+          model.setAttributes({ ...currentAttrs, ...initialValues }, { silent: true });
+          if (typeof model.set === 'function') {
+            model.set('traits', dynamicTraits);
+          }
+
+          let lastAttrs = { ...(typeof model.getAttributes === 'function' ? model.getAttributes() : {}) };
+
+          // Bind live change listener so ONLY user-modified trait inputs update component in real-time
+          const handleTraitChange = () => {
+            if (isSelectingElement) return;
+
+            const attrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+            const stylesToApply: Record<string, string> = {};
+
+            if (attrs.style_fontFamily && lastAttrs.style_fontFamily !== undefined && attrs.style_fontFamily !== lastAttrs.style_fontFamily) {
+              const cleanFamily = attrs.style_fontFamily.replace(/\s*!important/gi, '').trim();
+              stylesToApply['font-family'] = cleanFamily;
+              ensureGoogleFontLoaded(editor, cleanFamily);
+            }
+            if (attrs.style_fontSize && lastAttrs.style_fontSize !== undefined && attrs.style_fontSize !== lastAttrs.style_fontSize) {
+              stylesToApply['font-size'] = attrs.style_fontSize;
+            }
+            if (attrs.style_fontWeight && lastAttrs.style_fontWeight !== undefined && attrs.style_fontWeight !== lastAttrs.style_fontWeight) {
+              stylesToApply['font-weight'] = attrs.style_fontWeight;
+            }
+            if (attrs.style_color && lastAttrs.style_color !== undefined && attrs.style_color !== lastAttrs.style_color) {
+              stylesToApply['color'] = attrs.style_color;
+            }
+            if (attrs.style_backgroundColor && lastAttrs.style_backgroundColor !== undefined && attrs.style_backgroundColor !== lastAttrs.style_backgroundColor) {
+              stylesToApply['background-color'] = attrs.style_backgroundColor;
+            }
+            if (attrs.style_textAlign && lastAttrs.style_textAlign !== undefined && attrs.style_textAlign !== lastAttrs.style_textAlign) {
+              stylesToApply['text-align'] = attrs.style_textAlign;
+            }
+            if (attrs.style_borderRadius && lastAttrs.style_borderRadius !== undefined && attrs.style_borderRadius !== lastAttrs.style_borderRadius) {
+              stylesToApply['border-radius'] = attrs.style_borderRadius;
+            }
+            if (attrs.style_objectFit && lastAttrs.style_objectFit !== undefined && attrs.style_objectFit !== lastAttrs.style_objectFit) {
+              stylesToApply['object-fit'] = attrs.style_objectFit;
+            }
+            if (attrs.style_padding && lastAttrs.style_padding !== undefined && attrs.style_padding !== lastAttrs.style_padding) {
+              stylesToApply['padding'] = attrs.style_padding;
+            }
+            if (attrs.style_width && lastAttrs.style_width !== undefined && attrs.style_width !== lastAttrs.style_width) {
+              stylesToApply['width'] = attrs.style_width;
+            }
+
+            if (Object.keys(stylesToApply).length > 0) {
+              model.addStyle(stylesToApply);
+              const domEl = model.getEl();
+              if (domEl) {
+                Object.entries(stylesToApply).forEach(([k, v]) => {
+                  domEl.style.setProperty(k, v, 'important');
+                });
+              }
+            }
+
+            if (attrs.element_text !== undefined && lastAttrs.element_text !== undefined && attrs.element_text !== lastAttrs.element_text && (isText || isLinkBtn)) {
+              if (typeof model.components === 'function') {
+                model.components(attrs.element_text);
+              }
+            }
+
+            lastAttrs = { ...attrs };
+          };
+
+          model.off('change:attributes', handleTraitChange);
+          model.on('change:attributes', handleTraitChange);
+        } catch (e) {
+          console.warn('Trait generation error:', e);
         }
 
-        // Ensure image tags have src/alt traits registered so image URL appears under Properties
-        if (isImage || isLogoComponent) {
-          try {
-            const currentTraits = model.get('traits');
-            const traitList = currentTraits?.models || currentTraits || [];
-            const hasSrc = Array.isArray(traitList) && traitList.some((t: any) => {
-              const name = typeof t.get === 'function' ? t.get('name') : t.name;
-              return name === 'src';
-            });
-            if (!hasSrc && typeof model.addTrait === 'function') {
-              model.addTrait([
-                { type: 'text', label: 'Image Source (src)', name: 'src', changeProp: false },
-                { type: 'text', label: 'Alt Text', name: 'alt', changeProp: false }
-              ]);
-            }
-          } catch (e) {}
+        // Re-render TraitManager & StyleManager views for target component
+        if (editor.TraitManager && typeof editor.TraitManager.render === 'function') {
+          try { editor.TraitManager.render(); } catch (e) { }
         }
 
         // Trigger Image Preview Thumbnail + File Upload Controls
         setTimeout(() => setupImageUploadControls(model), 60);
-
-        // 3. Extract & Hydrate Applied Styles across selected component(s)
-        const selectedAll = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [model];
-        let computedMap: Record<string, string> = {};
 
         try {
           computedMap = extractMultiElementStyles(selectedAll);
@@ -5396,10 +5638,10 @@ const GrapesEditor = () => {
                     ffProp.set('options', [...opts, { id: targetFont, name: targetFont }]);
                   }
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
           }
-        } catch (e) {}
+        } catch (e) { }
 
         // 4. Ensure StyleManager sectors are open, render target, then push computedMap applied values so inputs show applied values
         if (editor.StyleManager) {
@@ -5447,299 +5689,320 @@ const GrapesEditor = () => {
             };
 
             const applyComputedMapToUI = () => {
-              Object.keys(computedMap).forEach((pName) => {
-                const val = computedMap[pName];
-                if (val && val !== 'Mixed') {
-                  const prop = findSMProperty(pName);
-                  if (prop && typeof prop.set === 'function') {
-                    prop.set('value', val, { silent: true });
-                    if (prop.view && typeof prop.view.update === 'function') {
-                      try { prop.view.update(); } catch (e) {}
-                    }
-
-                    if (pName === 'color' || pName === 'background-color' || pName === 'border-color') {
+              try {
+                Object.keys(computedMap).forEach((pName) => {
+                  const val = computedMap[pName];
+                  if (val && val !== 'Mixed') {
+                    const prop = findSMProperty(pName);
+                    if (prop && typeof prop.set === 'function') {
                       try {
-                        const viewEl = prop.view?.el;
-                        if (viewEl) {
-                          const colorInput = viewEl.querySelector('input[type="color"], input.gjs-field-color-picker, .gjs-field-color-picker input');
-                          if (colorInput) {
-                            (colorInput as HTMLInputElement).value = val;
-                          }
-                          const colorPreview = viewEl.querySelector('.gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview]');
-                          if (colorPreview) {
-                            (colorPreview as HTMLElement).style.backgroundColor = val;
-                          }
+                        prop.set('value', val, { silent: true });
+                        if (prop.view && typeof prop.view.update === 'function') {
+                          prop.view.update();
                         }
-                      } catch (e) {}
-                    }
-                  }
-                }
-              });
+                      } catch (e) { }
 
-              // Direct DOM hydration into #styles-container DOM elements
-              const container = document.getElementById('styles-container');
-              if (container) {
-                const rows = container.querySelectorAll('.gjs-sm-property');
-                rows.forEach((row) => {
-                  const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
-                  const labelText = (labelEl?.textContent || '').trim().toLowerCase();
-
-                  let targetVal = '';
-                  if (labelText === 'color' || labelText.includes('text color')) {
-                    targetVal = computedMap['color'] || '';
-                  } else if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') {
-                    targetVal = computedMap['background-color'] || '';
-                  } else if (labelText.includes('background image') || labelText === 'background-image') {
-                    targetVal = computedMap['background-image'] || '';
-                  } else if (labelText.includes('font family')) {
-                    targetVal = computedMap['font-family'] || '';
-                  } else if (labelText.includes('font size')) {
-                    targetVal = computedMap['font-size'] || '';
-                  } else if (labelText.includes('font weight')) {
-                    targetVal = computedMap['font-weight'] || '';
-                  } else if (labelText.includes('line height')) {
-                    targetVal = computedMap['line-height'] || '';
-                  } else if (labelText.includes('letter spacing')) {
-                    targetVal = computedMap['letter-spacing'] || '';
-                  } else if (labelText.includes('text align')) {
-                    targetVal = computedMap['text-align'] || '';
-                  } else if (labelText.includes('text transform')) {
-                    targetVal = computedMap['text-transform'] || '';
-                  } else if (labelText.includes('text decoration')) {
-                    targetVal = computedMap['text-decoration'] || '';
-                  } else if (labelText === 'width') {
-                    targetVal = computedMap['width'] || '';
-                  } else if (labelText === 'height') {
-                    targetVal = computedMap['height'] || '';
-                  } else if (labelText.includes('min width') || labelText === 'min-width') {
-                    targetVal = computedMap['min-width'] || '';
-                  } else if (labelText.includes('max width') || labelText === 'max-width') {
-                    targetVal = computedMap['max-width'] || '';
-                  } else if (labelText === 'padding') {
-                    targetVal = computedMap['padding'] || '';
-                  } else if (labelText.includes('padding top') || labelText === 'padding-top') {
-                    targetVal = computedMap['padding-top'] || '';
-                  } else if (labelText.includes('padding right') || labelText === 'padding-right') {
-                    targetVal = computedMap['padding-right'] || '';
-                  } else if (labelText.includes('padding bottom') || labelText === 'padding-bottom') {
-                    targetVal = computedMap['padding-bottom'] || '';
-                  } else if (labelText.includes('padding left') || labelText === 'padding-left') {
-                    targetVal = computedMap['padding-left'] || '';
-                  } else if (labelText === 'margin') {
-                    targetVal = computedMap['margin'] || '';
-                  } else if (labelText.includes('margin top') || labelText === 'margin-top') {
-                    targetVal = computedMap['margin-top'] || '';
-                  } else if (labelText.includes('margin right') || labelText === 'margin-right') {
-                    targetVal = computedMap['margin-right'] || '';
-                  } else if (labelText.includes('margin bottom') || labelText === 'margin-bottom') {
-                    targetVal = computedMap['margin-bottom'] || '';
-                  } else if (labelText.includes('margin left') || labelText === 'margin-left') {
-                    targetVal = computedMap['margin-left'] || '';
-                  } else if (labelText.includes('border radius') || labelText === 'border-radius') {
-                    targetVal = computedMap['border-radius'] || '';
-                  } else if (labelText.includes('border color') || labelText === 'border-color') {
-                    targetVal = computedMap['border-color'] || '';
-                  } else if (labelText.includes('border width') || labelText === 'border-width') {
-                    targetVal = computedMap['border-width'] || '';
-                  } else if (labelText.includes('border style') || labelText === 'border-style') {
-                    targetVal = computedMap['border-style'] || '';
-                  } else if (labelText === 'border') {
-                    targetVal = computedMap['border'] || '';
-                  } else if (labelText === 'opacity') {
-                    targetVal = computedMap['opacity'] || '';
-                  } else if (labelText === 'display') {
-                    targetVal = computedMap['display'] || '';
-                  } else if (labelText === 'position') {
-                    targetVal = computedMap['position'] || '';
-                  } else if (labelText.includes('flex direction') || labelText === 'flex-direction') {
-                    targetVal = computedMap['flex-direction'] || '';
-                  } else if (labelText.includes('justify content') || labelText === 'justify-content') {
-                    targetVal = computedMap['justify-content'] || '';
-                  } else if (labelText.includes('align items') || labelText === 'align-items') {
-                    targetVal = computedMap['align-items'] || '';
-                  } else if (labelText === 'gap') {
-                    targetVal = computedMap['gap'] || '';
-                  } else if (labelText.includes('box shadow') || labelText === 'box-shadow') {
-                    targetVal = computedMap['box-shadow'] || '';
-                  } else if (labelText === 'cursor') {
-                    targetVal = computedMap['cursor'] || '';
-                  }
-
-                  if (targetVal && targetVal !== 'Mixed') {
-                    const inputs = row.querySelectorAll('input, select');
-                    inputs.forEach((input) => {
-                      const inp = input as HTMLInputElement;
-                      if (document.activeElement !== inp) {
-                        inp.value = targetVal;
+                      if (pName === 'color' || pName === 'background-color' || pName === 'border-color') {
+                        try {
+                          const viewEl = prop.view?.el;
+                          if (viewEl && viewEl.isConnected) {
+                            const colorInput = viewEl.querySelector('input[type="color"], input.gjs-field-color-picker, .gjs-field-color-picker input') as HTMLInputElement;
+                            if (colorInput && colorInput.isConnected) {
+                              if (colorInput.type === 'color') {
+                                if (val && val.startsWith('#') && val.length === 7) {
+                                  colorInput.value = val;
+                                }
+                              } else {
+                                colorInput.value = val;
+                              }
+                            }
+                            const colorPreview = viewEl.querySelector('.gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview]') as HTMLElement;
+                            if (colorPreview && colorPreview.isConnected) {
+                              colorPreview.style.backgroundColor = val;
+                            }
+                          }
+                        } catch (e) { }
                       }
-                    });
-
-                    const isColorProperty = labelText === 'color' || labelText.includes('text color') || labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color' || labelText.includes('border color') || labelText === 'border-color';
-                    if (isColorProperty) {
-                      const colorPreviews = row.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview], .custom-grapesjs-pickr, .pcr-button');
-                      colorPreviews.forEach((swatch) => {
-                        const sw = swatch as HTMLElement;
-                        if (sw && sw.tagName !== 'INPUT') {
-                          try {
-                            sw.style.setProperty('background-color', targetVal, 'important');
-                          } catch (e) {}
-                        }
-                      });
                     }
                   }
                 });
-              }
+
+                // Direct DOM hydration into #styles-container DOM elements
+                const container = document.getElementById('styles-container');
+                if (container) {
+                  const rows = container.querySelectorAll('.gjs-sm-property');
+                  rows.forEach((row) => {
+                    try {
+                      if (!row.isConnected) return;
+                      const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
+                      const labelText = (labelEl?.textContent || '').trim().toLowerCase();
+
+                      let targetVal = '';
+                      if (labelText === 'color' || labelText.includes('text color')) {
+                        targetVal = computedMap['color'] || '';
+                      } else if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') {
+                        targetVal = computedMap['background-color'] || '';
+                      } else if (labelText.includes('background image') || labelText === 'background-image') {
+                        targetVal = computedMap['background-image'] || '';
+                      } else if (labelText.includes('font family')) {
+                        targetVal = computedMap['font-family'] || '';
+                      } else if (labelText.includes('font size')) {
+                        targetVal = computedMap['font-size'] || '';
+                      } else if (labelText.includes('font weight')) {
+                        targetVal = computedMap['font-weight'] || '';
+                      } else if (labelText.includes('line height')) {
+                        targetVal = computedMap['line-height'] || '';
+                      } else if (labelText.includes('letter spacing')) {
+                        targetVal = computedMap['letter-spacing'] || '';
+                      } else if (labelText.includes('text align')) {
+                        targetVal = computedMap['text-align'] || '';
+                      } else if (labelText.includes('text transform')) {
+                        targetVal = computedMap['text-transform'] || '';
+                      } else if (labelText.includes('text decoration')) {
+                        targetVal = computedMap['text-decoration'] || '';
+                      } else if (labelText === 'width') {
+                        targetVal = computedMap['width'] || '';
+                      } else if (labelText === 'height') {
+                        targetVal = computedMap['height'] || '';
+                      } else if (labelText.includes('min width') || labelText === 'min-width') {
+                        targetVal = computedMap['min-width'] || '';
+                      } else if (labelText.includes('max width') || labelText === 'max-width') {
+                        targetVal = computedMap['max-width'] || '';
+                      } else if (labelText === 'padding') {
+                        targetVal = computedMap['padding'] || '';
+                      } else if (labelText.includes('padding top') || labelText === 'padding-top') {
+                        targetVal = computedMap['padding-top'] || '';
+                      } else if (labelText.includes('padding right') || labelText === 'padding-right') {
+                        targetVal = computedMap['padding-right'] || '';
+                      } else if (labelText.includes('padding bottom') || labelText === 'padding-bottom') {
+                        targetVal = computedMap['padding-bottom'] || '';
+                      } else if (labelText.includes('padding left') || labelText === 'padding-left') {
+                        targetVal = computedMap['padding-left'] || '';
+                      } else if (labelText === 'margin') {
+                        targetVal = computedMap['margin'] || '';
+                      } else if (labelText.includes('margin top') || labelText === 'margin-top') {
+                        targetVal = computedMap['margin-top'] || '';
+                      } else if (labelText.includes('margin right') || labelText === 'margin-right') {
+                        targetVal = computedMap['margin-right'] || '';
+                      } else if (labelText.includes('margin bottom') || labelText === 'margin-bottom') {
+                        targetVal = computedMap['margin-bottom'] || '';
+                      } else if (labelText.includes('margin left') || labelText === 'margin-left') {
+                        targetVal = computedMap['margin-left'] || '';
+                      } else if (labelText.includes('border radius') || labelText === 'border-radius') {
+                        targetVal = computedMap['border-radius'] || '';
+                      } else if (labelText.includes('border color') || labelText === 'border-color') {
+                        targetVal = computedMap['border-color'] || '';
+                      } else if (labelText.includes('border width') || labelText === 'border-width') {
+                        targetVal = computedMap['border-width'] || '';
+                      } else if (labelText.includes('border style') || labelText === 'border-style') {
+                        targetVal = computedMap['border-style'] || '';
+                      } else if (labelText === 'border') {
+                        targetVal = computedMap['border'] || '';
+                      } else if (labelText === 'opacity') {
+                        targetVal = computedMap['opacity'] || '';
+                      } else if (labelText === 'display') {
+                        targetVal = computedMap['display'] || '';
+                      } else if (labelText === 'position') {
+                        targetVal = computedMap['position'] || '';
+                      } else if (labelText.includes('flex direction') || labelText === 'flex-direction') {
+                        targetVal = computedMap['flex-direction'] || '';
+                      } else if (labelText.includes('justify content') || labelText === 'justify-content') {
+                        targetVal = computedMap['justify-content'] || '';
+                      } else if (labelText.includes('align items') || labelText === 'align-items') {
+                        targetVal = computedMap['align-items'] || '';
+                      } else if (labelText === 'gap') {
+                        targetVal = computedMap['gap'] || '';
+                      } else if (labelText.includes('box shadow') || labelText === 'box-shadow') {
+                        targetVal = computedMap['box-shadow'] || '';
+                      } else if (labelText === 'cursor') {
+                        targetVal = computedMap['cursor'] || '';
+                      }
+
+                      if (targetVal && targetVal !== 'Mixed') {
+                        const inputs = row.querySelectorAll('input, select');
+                        inputs.forEach((input) => {
+                          try {
+                            const inp = input as HTMLInputElement;
+                            if (inp && inp.isConnected && document.activeElement !== inp) {
+                              if (inp.type === 'color') {
+                                if (targetVal && targetVal.startsWith('#') && targetVal.length === 7) {
+                                  inp.value = targetVal;
+                                }
+                              } else {
+                                inp.value = targetVal;
+                              }
+                            }
+                          } catch (err) { }
+                        });
+
+                        const isColorProperty = labelText === 'color' || labelText.includes('text color') || labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color' || labelText.includes('border color') || labelText === 'border-color';
+                        if (isColorProperty) {
+                          const colorPreviews = row.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview], .custom-grapesjs-pickr, .pcr-button');
+                          colorPreviews.forEach((swatch) => {
+                            try {
+                              const sw = swatch as HTMLElement;
+                              if (sw && sw.isConnected && sw.tagName !== 'INPUT') {
+                                sw.style.setProperty('background-color', targetVal, 'important');
+                              }
+                            } catch (err) { }
+                          });
+                        }
+                      }
+                    } catch (err) { }
+                  });
+                }
+              } catch (err) { }
             };
 
             applyComputedMapToUI();
-            setTimeout(applyComputedMapToUI, 50);
-            setTimeout(applyComputedMapToUI, 150);
-          } catch (e) {}
+            setTimeout(() => { try { applyComputedMapToUI(); } catch (e) { } }, 50);
+            setTimeout(() => { try { applyComputedMapToUI(); } catch (e) { } }, 150);
+          } catch (e) { }
         }
 
-      // 2. Handle Native Details/Summary Toggle on Click (including children of summary)
-      let summaryModel = model;
-      while (summaryModel && summaryModel.get('tagName')?.toLowerCase() !== 'summary') {
-        summaryModel = summaryModel.parent();
-      }
-      if (summaryModel && summaryModel.get('tagName')?.toLowerCase() === 'summary') {
-        const detailsModel = summaryModel.parent();
-        if (detailsModel && detailsModel.get('tagName')?.toLowerCase() === 'details') {
-          const attrs = Object.assign({}, detailsModel.getAttributes());
-          if (attrs.open) {
-            delete attrs.open;
-          } else {
-            attrs.open = 'open';
+        // 2. Handle Native Details/Summary Toggle on Click (including children of summary)
+        let summaryModel = model;
+        while (summaryModel && summaryModel.get('tagName')?.toLowerCase() !== 'summary') {
+          summaryModel = summaryModel.parent();
+        }
+        if (summaryModel && summaryModel.get('tagName')?.toLowerCase() === 'summary') {
+          const detailsModel = summaryModel.parent();
+          if (detailsModel && detailsModel.get('tagName')?.toLowerCase() === 'details') {
+            const attrs = Object.assign({}, detailsModel.getAttributes());
+            if (attrs.open) {
+              delete attrs.open;
+            } else {
+              attrs.open = 'open';
+            }
+            detailsModel.setAttributes(attrs);
           }
-          detailsModel.setAttributes(attrs);
         }
-      }
 
-      // 3. Handle FAQ Toggle when selected in Editor
-      let currentModel: any = model;
-      let faqWrapper: any = null;
-      while (currentModel) {
-        const classes = currentModel.getClasses?.() || [];
-        if (classes.includes('hc7-faq-item') || classes.includes('faq-item')) {
-          faqWrapper = currentModel;
-          break;
+        // 3. Handle FAQ Toggle when selected in Editor
+        let currentModel: any = model;
+        let faqWrapper: any = null;
+        while (currentModel) {
+          const classes = currentModel.getClasses?.() || [];
+          if (classes.includes('hc7-faq-item') || classes.includes('faq-item')) {
+            faqWrapper = currentModel;
+            break;
+          }
+          currentModel = currentModel.parent();
         }
-        currentModel = currentModel.parent();
-      }
-      if (faqWrapper) {
-        const el = faqWrapper.getEl();
-        if (el) {
-          const wasActive = el.classList.contains('active');
-          const doc = el.ownerDocument;
-          doc.querySelectorAll('.hc7-faq-item, .faq-item').forEach((f: any) => f.classList.remove('active'));
-          if (!wasActive) el.classList.add('active');
+        if (faqWrapper) {
+          const el = faqWrapper.getEl();
+          if (el) {
+            const wasActive = el.classList.contains('active');
+            const doc = el.ownerDocument;
+            doc.querySelectorAll('.hc7-faq-item, .faq-item').forEach((f: any) => f.classList.remove('active'));
+            if (!wasActive) el.classList.add('active');
+          }
         }
-      }
 
-      // 4. Handle Doctors Slider Arrow Click when selected in Editor
-      let docNavModel: any = model;
-      let isDocPrev = false;
-      let isDocNext = false;
-      while (docNavModel) {
-        const classes = docNavModel.getClasses?.() || [];
-        if (classes.includes('hc7-doc-prev')) { isDocPrev = true; break; }
-        if (classes.includes('hc7-doc-next')) { isDocNext = true; break; }
-        docNavModel = docNavModel.parent();
-      }
-      if (isDocPrev || isDocNext) {
-        const doc = docNavModel.getEl()?.ownerDocument;
-        if (doc) {
-          const grid = doc.querySelector('.hc7-doctor-grid') as HTMLElement;
-          if (grid) {
-            const cards = grid.querySelectorAll('.hc7-doctor-card');
-            if (cards.length) {
-              let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
-              const w = doc.defaultView?.innerWidth || 1200;
-              const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
-              const maxIdx = Math.max(0, cards.length - visible);
-              if (isDocNext) {
-                curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
-              } else {
-                curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+        // 4. Handle Doctors Slider Arrow Click when selected in Editor
+        let docNavModel: any = model;
+        let isDocPrev = false;
+        let isDocNext = false;
+        while (docNavModel) {
+          const classes = docNavModel.getClasses?.() || [];
+          if (classes.includes('hc7-doc-prev')) { isDocPrev = true; break; }
+          if (classes.includes('hc7-doc-next')) { isDocNext = true; break; }
+          docNavModel = docNavModel.parent();
+        }
+        if (isDocPrev || isDocNext) {
+          const doc = docNavModel.getEl()?.ownerDocument;
+          if (doc) {
+            const grid = doc.querySelector('.hc7-doctor-grid') as HTMLElement;
+            if (grid) {
+              const cards = grid.querySelectorAll('.hc7-doctor-card');
+              if (cards.length) {
+                let curIdx = parseInt(grid.getAttribute('data-index') || '0', 10);
+                const w = doc.defaultView?.innerWidth || 1200;
+                const visible = w <= 600 ? 1 : (w <= 992 ? 2 : 4);
+                const maxIdx = Math.max(0, cards.length - visible);
+                if (isDocNext) {
+                  curIdx = curIdx < maxIdx ? curIdx + 1 : 0;
+                } else {
+                  curIdx = curIdx > 0 ? curIdx - 1 : maxIdx;
+                }
+                grid.setAttribute('data-index', String(curIdx));
+                const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
+                const moveAmount = (cardWidth + 24) * curIdx;
+                grid.style.transform = 'translateX(-' + moveAmount + 'px)';
               }
-              grid.setAttribute('data-index', String(curIdx));
-              const cardWidth = (cards[0] as HTMLElement).offsetWidth || 260;
-              const moveAmount = (cardWidth + 24) * curIdx;
-              grid.style.transform = 'translateX(-' + moveAmount + 'px)';
             }
           }
         }
-      }
 
-      // 5. Handle Testimonial Slider Nav when selected in Editor
-      let testNavModel: any = model;
-      let isTestPrev = false;
-      let isTestNext = false;
-      let isTestDot = false;
-      while (testNavModel) {
-        const classes = testNavModel.getClasses?.() || [];
-        const parentClasses = testNavModel.parent()?.getClasses?.() || [];
-        if (classes.includes('hc7-testimonial-prev')) { isTestPrev = true; break; }
-        if (classes.includes('hc7-testimonial-next')) { isTestNext = true; break; }
-        if (testNavModel.get('tagName')?.toLowerCase() === 'span' && parentClasses.includes('hc7-testimonial-dots')) {
-          isTestDot = true;
-          break;
+        // 5. Handle Testimonial Slider Nav when selected in Editor
+        let testNavModel: any = model;
+        let isTestPrev = false;
+        let isTestNext = false;
+        let isTestDot = false;
+        while (testNavModel) {
+          const classes = testNavModel.getClasses?.() || [];
+          const parentClasses = testNavModel.parent()?.getClasses?.() || [];
+          if (classes.includes('hc7-testimonial-prev')) { isTestPrev = true; break; }
+          if (classes.includes('hc7-testimonial-next')) { isTestNext = true; break; }
+          if (testNavModel.get('tagName')?.toLowerCase() === 'span' && parentClasses.includes('hc7-testimonial-dots')) {
+            isTestDot = true;
+            break;
+          }
+          testNavModel = testNavModel.parent();
         }
-        testNavModel = testNavModel.parent();
-      }
-      if (isTestPrev || isTestNext || isTestDot) {
-        const doc = testNavModel.getEl()?.ownerDocument;
-        if (doc) {
-          const slides = doc.querySelectorAll('.hc7-testimonial-slide');
-          const dots = doc.querySelectorAll('.hc7-testimonial-dots span');
-          if (slides.length) {
-            let curSlide = 0;
-            slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
-            if (isTestDot) {
-              const el = testNavModel.getEl();
-              const dotsArr = Array.from(dots);
-              curSlide = dotsArr.indexOf(el as any);
-              if (curSlide < 0) curSlide = 0;
-            } else if (isTestNext) {
-              curSlide = (curSlide + 1) % slides.length;
-            } else if (isTestPrev) {
-              curSlide = (curSlide - 1 + slides.length) % slides.length;
+        if (isTestPrev || isTestNext || isTestDot) {
+          const doc = testNavModel.getEl()?.ownerDocument;
+          if (doc) {
+            const slides = doc.querySelectorAll('.hc7-testimonial-slide');
+            const dots = doc.querySelectorAll('.hc7-testimonial-dots span');
+            if (slides.length) {
+              let curSlide = 0;
+              slides.forEach((s: any, idx: number) => { if (s.classList.contains('active')) curSlide = idx; });
+              if (isTestDot) {
+                const el = testNavModel.getEl();
+                const dotsArr = Array.from(dots);
+                curSlide = dotsArr.indexOf(el as any);
+                if (curSlide < 0) curSlide = 0;
+              } else if (isTestNext) {
+                curSlide = (curSlide + 1) % slides.length;
+              } else if (isTestPrev) {
+                curSlide = (curSlide - 1 + slides.length) % slides.length;
+              }
+              slides.forEach((s: any, idx: number) => {
+                if (idx === curSlide) s.classList.add('active');
+                else s.classList.remove('active');
+              });
+              dots.forEach((d: any, idx: number) => {
+                if (idx === curSlide) d.classList.add('active');
+                else d.classList.remove('active');
+              });
             }
-            slides.forEach((s: any, idx: number) => {
-              if (idx === curSlide) s.classList.add('active');
-              else s.classList.remove('active');
-            });
-            dots.forEach((d: any, idx: number) => {
-              if (idx === curSlide) d.classList.add('active');
-              else d.classList.remove('active');
-            });
           }
         }
-      }
 
-      // Restore Swiper Pagination if wiped by GrapesJS re-render
-      const swiperContainer = model.is('swiper-container') ? model : model.closest('[data-gjs-type="swiper-container"]');
-      if (swiperContainer) {
-        setTimeout(() => {
-          const el = swiperContainer.getEl() as any;
-          if (el && el.__swiper && el.__swiper.pagination) {
-            el.__swiper.pagination.render();
-            el.__swiper.pagination.update();
-            if (el.__swiper.navigation) el.__swiper.navigation.update();
-          }
-        }, 150);
-      }
+        // Restore Swiper Pagination if wiped by GrapesJS re-render
+        const swiperContainer = model.is('swiper-container') ? model : model.closest('[data-gjs-type="swiper-container"]');
+        if (swiperContainer) {
+          setTimeout(() => {
+            const el = swiperContainer.getEl() as any;
+            if (el && el.__swiper && el.__swiper.pagination) {
+              el.__swiper.pagination.render();
+              el.__swiper.pagination.update();
+              if (el.__swiper.navigation) el.__swiper.navigation.update();
+            }
+          }, 150);
+        }
 
-      setActiveComponent(model);
+        setActiveComponent(model);
 
-      // Update Selection Label for AI
-      const type = model.get('type') || '';
-      const name = model.get('name') || type || tagName;
+        // Update Selection Label for AI
+        const type = model.get('type') || '';
+        const name = model.get('name') || type || tagName;
 
-      // Capitalize first letter and format
-      let readableName = name.charAt(0).toUpperCase() + name.slice(1);
-      if (readableName === 'Wrapper') readableName = 'Body';
-      setSelectedLabel(readableName);
+        // Capitalize first letter and format
+        let readableName = name.charAt(0).toUpperCase() + name.slice(1);
+        if (readableName === 'Wrapper') readableName = 'Body';
+        setSelectedLabel(readableName);
       } finally {
         isSelectingElement = false;
       }
@@ -5825,15 +6088,21 @@ const GrapesEditor = () => {
     html = makeAbsolute(html);
     css = makeAbsolute(css);
 
-    // Capture internal global styles injected by GlobalStylesPanel
+    // Capture internal global styles injected by GlobalStylesPanel and CustomCssPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
     const templateStyleTag = canvasDoc.getElementById('template-styles');
+    const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+    let elementCssTags = '';
+    if (canvasDoc) {
+      const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+      elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+    }
 
     const templateCss = templateStyleTag?.innerHTML || '';
 
-    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
 
     let styleData = globalCss + '\n' + css;
 
@@ -5940,9 +6209,15 @@ document.addEventListener('click', function(e) {
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
+      const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+      let elementCssTags = '';
+      if (canvasDoc) {
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+      }
 
       const templateCss = templateStyleTag?.innerHTML || '';
-      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
 
       // Extract scripts to ensure they aren't lost
       let canvasScripts = '';
@@ -5958,17 +6233,31 @@ document.addEventListener('click', function(e) {
       }
 
       if (page) {
+        const isPlaceholder = html.includes('Landing Page is Ready') || html.includes('Your request has been successfully submitted');
         if (mode === 'landing') {
-          page.landingPageContent = htmlWithScripts;
-          page.landingPageStyles = globalCss + '\n' + css;
+          if (!isPlaceholder && html.trim() !== '') {
+            page.landingPageContent = htmlWithScripts;
+            page.landingPageStyles = globalCss + '\n' + css;
+            if (pageDataRef.current) {
+              pageDataRef.current.landingPageContent = htmlWithScripts;
+              pageDataRef.current.landingPageStyles = globalCss + '\n' + css;
+            }
+          }
         } else {
-          page.thankYouPageContent = htmlWithScripts;
-          page.thankYouPageStyles = globalCss + '\n' + css;
+          if (!isPlaceholder && html.trim() !== '') {
+            page.thankYouPageContent = htmlWithScripts;
+            page.thankYouPageStyles = globalCss + '\n' + css;
+            if (pageDataRef.current) {
+              pageDataRef.current.thankYouPageContent = htmlWithScripts;
+              pageDataRef.current.thankYouPageStyles = globalCss + '\n' + css;
+            }
+          }
         }
       }
     }
 
     // 2. Switch Mode
+    modeRef.current = newMode;
     setMode(newMode);
 
     // Sync URL
@@ -6000,7 +6289,7 @@ document.addEventListener('click', function(e) {
       toast.error('Please save your page first to generate a slug');
       return;
     }
-    
+
     try {
       toast.loading('Saving latest changes for preview...', { id: 'preview-save' });
       await handleSave();
@@ -6009,11 +6298,11 @@ document.addEventListener('click', function(e) {
       toast.dismiss('preview-save');
       console.warn('Auto-save before preview failed:', e);
     }
-    
+
     const preSlug = project?.preSlug?.replace(/^\/+|\/+$/g, '') || '';
     const token = page.previewToken ? `?token=${page.previewToken}` : '';
     const previewUrl = `${window.location.origin}/preview/${preSlug ? preSlug + '/' : ''}${page.slug}${token}`;
-    
+
     console.log('🔗 Opening Preview URL:', previewUrl);
     window.open(previewUrl, '_blank');
   };
@@ -6056,12 +6345,16 @@ document.addEventListener('click', function(e) {
         const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
         const brandingStyleTag = canvasDoc.getElementById('branding-vars');
         const templateStyleTag = canvasDoc.getElementById('template-styles');
+        const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+        let elementCssTags = '';
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
 
         const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
           .replace(/var\\(--primary\\)/g, themePrimary)
           .replace(/var\\(--secondary\\)/g, themeSecondary);
 
-        globalCssForDownload = cleanTemplateCss + '\\n' + (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '');
+        globalCssForDownload = cleanTemplateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
       }
     } catch (e) {
       console.warn('Failed to extract scripts or styles from canvas for download:', e);
@@ -6228,15 +6521,21 @@ document.addEventListener('click', function(e) {
       let html = editorRef.current.getHtml();
       let css = editorRef.current.getCss() || '';
 
-      // Capture internal global styles injected by GlobalStylesPanel
+      // Capture internal global styles injected by GlobalStylesPanel and CustomCssPanel
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
+      const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+      let elementCssTags = '';
+      if (canvasDoc) {
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+      }
 
       const templateCss = templateStyleTag?.innerHTML || '';
 
-      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
       const styleData = globalCss + '\n' + css;
 
       // Extract scripts from canvas using unified helper, then merge with backup
@@ -6627,7 +6926,7 @@ document.addEventListener('click', function(e) {
           </div>
           <h3 className="text-xl font-bold text-white">Project or Page Not Found</h3>
           <p className="text-gray-400 text-sm">The requested landing page could not be retrieved. Please check the URL or return to your projects dashboard.</p>
-          <button 
+          <button
             onClick={() => navigate('/projects')}
             className="mt-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors text-sm"
           >
@@ -6854,6 +7153,7 @@ document.addEventListener('click', function(e) {
           }}>
             <NavIcon title="Blocks" active={leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
             <NavIcon title="Theme Options" active={leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
+            <NavIcon title="Custom CSS Options" active={leftTab === 'custom-css'} onClick={() => { if (leftTab === 'custom-css') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('custom-css'); setIsSidebarOpen(true); } }}><CodeIcon /><span>CSS</span></NavIcon>
             <NavIcon title="Layer Manager" active={leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon title="AI Assistant" active={leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
             {mode === 'thank-you' && (
@@ -6883,7 +7183,7 @@ document.addEventListener('click', function(e) {
           }}>
             <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280, backgroundColor: '#fff' }}>
               <span style={{ color: '#000', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
+                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab === 'custom-css' ? 'Global Custom CSS' : leftTab}
               </span>
               <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#000', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
             </div>
@@ -6950,6 +7250,14 @@ document.addEventListener('click', function(e) {
                   setThemePrimary(primary);
                   setThemeSecondary(secondary);
                 }}
+              />
+            </div>
+
+            {/* Custom CSS Panel (Global CSS Only) */}
+            <div style={{ flex: 1, display: leftTab === 'custom-css' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <CustomCssPanel
+                editor={editorInstance}
+                mode="global"
               />
             </div>
 
@@ -7324,8 +7632,8 @@ document.addEventListener('click', function(e) {
                 {projectLoading || pageLoading
                   ? 'Fetching Page Data...'
                   : !isEditorFullyLoaded
-                  ? 'Initializing Canvas...'
-                  : 'Rendering Landing Page...'}
+                    ? 'Initializing Canvas...'
+                    : 'Rendering Landing Page...'}
               </p>
               <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
             </div>
@@ -7358,6 +7666,7 @@ document.addEventListener('click', function(e) {
             <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
               <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
               <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
+              <TabButton active={rightTab === 'custom-css'} onClick={() => setRightTab('custom-css')}>Element CSS</TabButton>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
               <div id="styles-container" />
@@ -7384,6 +7693,12 @@ document.addEventListener('click', function(e) {
             `}} />
             </div>
             <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
+            <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'custom-css' ? 'flex' : 'none', background: '#ffffff', flexDirection: 'column' }}>
+              <CustomCssPanel
+                editor={editorInstance}
+                mode="element"
+              />
+            </div>
           </div>
         </div>
       </div>

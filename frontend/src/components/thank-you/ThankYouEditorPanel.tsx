@@ -34,12 +34,8 @@ export const ThankYouEditorPanel = ({
   const [selectedId, setSelectedId] = useState<string>('default');
 
   useEffect(() => {
-    // Add a slight delay to ensure GrapesEditor's 500ms initial applyContentToEditor timeout 
-    // has finished clearing the canvas before we attempt to auto-apply the default layout.
-    const timer = setTimeout(() => {
-      loadData();
-    }, 600);
-    return () => clearTimeout(timer);
+    // Immediate async fetch — no 600ms artificial delay
+    loadData();
   }, [pageId]);
 
   // NOTE: Auto-sync on config change removed — handleLayoutChange directly calls onSelect
@@ -65,6 +61,22 @@ export const ThankYouEditorPanel = ({
       if (isCanvasEmpty) {
         handleLayoutChange(activeLayout, layoutsData);
       }
+
+      // Pre-warm previews in background non-blocking queue for instant zero-lag switching
+      setTimeout(() => {
+        layoutsData.forEach((l: ThankYouLayout) => {
+          thankYouApi.preview({
+            layout: l.id,
+            content: { ...l.defaultContent },
+            branding: {
+              primaryColor: l.theme.primaryColor,
+              secondaryColor: l.theme.secondaryColor,
+              logoUrl: savedConfig.branding?.logoUrl || '',
+            },
+            pageId
+          }).catch(() => {});
+        });
+      }, 50);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -75,7 +87,7 @@ export const ThankYouEditorPanel = ({
   const handleLayoutChange = async (layoutId: string, layoutsList = layouts) => {
     const selectedLayout = layoutsList.find((l: ThankYouLayout) => l.id === layoutId);
     if (selectedLayout) {
-      // ✅ Update UI selection instantly — don't wait for API
+      // ✅ Update UI selection instantly (0ms) — don't wait for API
       setSelectedId(layoutId);
       setApplyingId(layoutId);
 
@@ -92,8 +104,10 @@ export const ThankYouEditorPanel = ({
 
       setConfig(newConfig);
 
+      // Save config in background non-blocking task
+      thankYouApi.updateConfig(pageId, newConfig).catch(err => console.error('Background config update error:', err));
+
       try {
-        await thankYouApi.updateConfig(pageId, newConfig);
         const html = await thankYouApi.preview({ ...newConfig, pageId });
         onSelect?.(html);
         onSave?.(); // Automatically trigger save so the HTML/CSS persists
