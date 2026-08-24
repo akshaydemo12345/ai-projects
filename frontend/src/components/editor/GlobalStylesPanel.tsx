@@ -248,6 +248,10 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     secondary: INIT_STYLES.Colors.secondary.value,
   });
 
+  const prevFontsRef = React.useRef({
+    bodyFont: INIT_STYLES.Body.fontFamily.value,
+  });
+
   // 1. Listen for component selection and detect used variables
   useEffect(() => {
     if (!editor) return;
@@ -505,6 +509,16 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
         next.Subheading = { ...next.Subheading, color: { ...next.Subheading.color, value: val } };
       }
 
+      // Since Heading and Subheading panels are hidden, sync their fonts with Body font
+      if (cat === 'Body' && key === 'fontFamily') {
+        if (next.Heading) {
+          next.Heading = { ...next.Heading, fontFamily: { ...next.Heading.fontFamily, value: val } };
+        }
+        if (next.Subheading) {
+          next.Subheading = { ...next.Subheading, fontFamily: { ...next.Subheading.fontFamily, value: val } };
+        }
+      }
+
       return next;
     });
 
@@ -623,6 +637,55 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
         });
 
         prevColorsRef.current[key] = val;
+      } else if (cat === 'Body' && key === 'fontFamily') {
+        const oldVal = prevFontsRef.current.bodyFont;
+        if (!isFinal || !val || oldVal === val) return;
+
+        const wrapper = editor.getWrapper();
+        if (wrapper) {
+          const updateRecursive = (comp: any) => {
+            const compStyle = comp.getStyle() || {};
+            const updates: any = {};
+            let changed = false;
+
+            Object.keys(compStyle).forEach(prop => {
+              if (prop === 'font-family' && typeof compStyle[prop] === 'string') {
+                if (compStyle[prop].includes(oldVal)) {
+                  updates[prop] = compStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                  changed = true;
+                }
+              }
+            });
+
+            if (changed) {
+              comp.addStyle(updates);
+            }
+            comp.components().forEach(updateRecursive);
+          };
+          updateRecursive(wrapper);
+        }
+
+        const rules = editor.Css.getRules();
+        rules.forEach((rule: any) => {
+          const style = rule.getStyle();
+          let changedRule = false;
+          const newStyle = { ...style };
+
+          Object.keys(newStyle).forEach(prop => {
+            if (prop === 'font-family' && typeof newStyle[prop] === 'string') {
+              if (newStyle[prop].includes(oldVal)) {
+                newStyle[prop] = newStyle[prop].replace(new RegExp(oldVal, 'gi'), val);
+                changedRule = true;
+              }
+            }
+          });
+
+          if (changedRule) {
+            rule.setStyle(newStyle);
+          }
+        });
+
+        prevFontsRef.current.bodyFont = val;
       } else {
         // Apply directly to selected component if not a sweeping color change
         const selected = editor.getSelected();
@@ -655,7 +718,11 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
         if (prop.varName === '--body-bg' && (prop.value === '#ffffff00' || prop.value === 'transparent')) {
           return;
         }
-        css += `  ${prop.varName}: ${prop.value}${prop.unit || ''} !important;\n`;
+        let val = prop.value;
+        if (prop.type === 'font') {
+          val = val !== 'inherit' && !['sans-serif', 'serif', 'monospace'].includes(val) ? `'${val}', sans-serif` : val;
+        }
+        css += `  ${prop.varName}: ${val}${prop.unit || ''} !important;\n`;
       });
     });
     css += `  --primary-rgb: ${primaryRgb} !important;\n`;
@@ -665,17 +732,19 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     css += `
+body, body *:not(.material-icons):not(.material-symbols-outlined) {
+  font-family: var(--body-font) !important;
+}
 body {
   background-color: var(--body-bg, inherit);
   color: var(--body-text);
-  font-family: var(--body-font);
   font-size: var(--body-size);
   line-height: var(--body-line-height);
 }
 
-h1, h2, .headline, .heading {
+h1, h2, .headline, .heading, h1 *, h2 *, .headline *, .heading * {
   color: var(--heading-color);
-  font-family: var(--heading-font);
+  font-family: var(--heading-font) !important;
 }
 
 h1, .headline, .heading {
@@ -683,9 +752,9 @@ h1, .headline, .heading {
   line-height: var(--heading-line-height);
 }
 
-h3, h4, h5, h6, .subheading, .subtitle {
+h3, h4, h5, h6, .subheading, .subtitle, h3 *, h4 *, h5 *, h6 *, .subheading *, .subtitle * {
   color: var(--subheading-color);
-  font-family: var(--subheading-font);
+  font-family: var(--subheading-font) !important;
 }
 
 .subheading, .subtitle {
