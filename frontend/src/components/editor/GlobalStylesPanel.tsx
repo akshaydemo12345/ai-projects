@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronRight, Type, X } from 'lucide-react';
 import type { Editor } from 'grapesjs';
 import { PickrColorInput } from '@/components/ui/PickrColorInput';
@@ -60,6 +61,8 @@ const VisualFontPicker: React.FC<{
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     preloadAllGoogleFontsOptions(editor);
@@ -67,17 +70,41 @@ const VisualFontPicker: React.FC<{
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
+    const handleScroll = (event: Event) => {
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      if (open) setOpen(false);
+    };
+
     if (open) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [open]);
+
+  const handleToggle = () => {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      });
+    }
+    setOpen(!open);
+  };
 
   const filteredFonts = GOOGLE_FONTS_OPTIONS.filter(f =>
     f.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -90,19 +117,24 @@ const VisualFontPicker: React.FC<{
     : fontObj.id;
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div className="w-full">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between bg-white border border-[#cbd5e1] rounded px-2 py-1 text-[12px] text-[#000000] focus:outline-none cursor-pointer truncate"
+        onClick={handleToggle}
+        className="w-full flex items-center justify-between bg-transparent border-none px-2 py-0.5 text-[12px] text-[#000000] focus:outline-none cursor-pointer truncate"
         style={{ fontFamily: currentFontStyle }}
       >
         <span className="truncate flex-1 text-left font-medium">{fontObj.name}</span>
         <ChevronDown size={12} className="text-[#6b7280] ml-1 shrink-0" />
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-full mt-1 w-64 max-h-72 bg-white border border-[#cbd5e1] rounded-md shadow-2xl z-[99999] flex flex-col overflow-hidden text-left">
+      {open && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed bg-white border border-[#cbd5e1] rounded-md shadow-2xl z-[99999] flex flex-col overflow-hidden text-left"
+          style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width || 256, maxHeight: 288 }}
+        >
           <div className="p-1.5 border-b border-[#f1f5f9] bg-[#f8fafc]">
             <input
               type="text"
@@ -132,9 +164,8 @@ const VisualFontPicker: React.FC<{
                       setOpen(false);
                       setSearch('');
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-[#f1f5f9] transition-colors border-b border-[#f8fafc] ${
-                      isSelected ? 'bg-[#eff6ff] text-[#2563eb]' : 'text-[#1e293b]'
-                    }`}
+                    className={`w-full text-left px-3 py-2 text-xs flex flex-col gap-0.5 hover:bg-[#f1f5f9] transition-colors border-b border-[#f8fafc] ${isSelected ? 'bg-[#eff6ff] text-[#2563eb]' : 'text-[#1e293b]'
+                      }`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span
@@ -158,7 +189,8 @@ const VisualFontPicker: React.FC<{
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -802,62 +834,62 @@ input, select, textarea, .input-field {
                 {Object.entries(properties)
                   .filter(([key, prop]) => prop.label !== 'Font Size' && prop.label !== 'Line Height')
                   .map(([key, prop]) => (
-                  <div key={key} className="flex flex-col gap-1.5">
-                    <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
-                      {prop.label}
-                    </span>
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <span className="text-[12px] font-medium text-[#4b5563] flex items-center gap-1">
+                        {prop.label}
+                      </span>
 
-                    {/* Controls Rendering */}
-                    <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
-                      ? 'border-[#6366f1] shadow-[0_0_10px_rgba(99,102,241,0.15)] bg-[#6366f1]/5'
-                      : 'border-[#d1d5db] hover:border-[#6366f1]'
-                      }`}>
+                      {/* Controls Rendering */}
+                      <div className={`flex bg-[#fff] border rounded-[4px] min-w-[140px] items-center p-1 transition-all duration-300 ${selectedVars.includes(prop.varName)
+                        ? 'border-[#6366f1] shadow-[0_0_10px_rgba(99,102,241,0.15)] bg-[#6366f1]/5'
+                        : 'border-[#d1d5db] hover:border-[#6366f1]'
+                        }`}>
 
-                      {prop.type === 'color' && (
-                        <>
-                          <PickrColorInput
-                            value={prop.value.length === 7 || prop.value.length === 9 ? prop.value : '#000000'}
-                            onChange={(val, isFinal) => handleUpdate(category, key, val, isFinal)}
-                            className="ml-1"
-                          />
-                          <input
-                            type="text"
-                            value={prop.value}
-                            onChange={(e) => handleUpdate(category, key, e.target.value)}
-                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-2 py-0.5 focus:outline-none"
-                          />
-                        </>
-                      )}
+                        {prop.type === 'color' && (
+                          <>
+                            <PickrColorInput
+                              value={prop.value.length === 7 || prop.value.length === 9 ? prop.value : '#000000'}
+                              onChange={(val, isFinal) => handleUpdate(category, key, val, isFinal)}
+                              className="ml-1"
+                            />
+                            <input
+                              type="text"
+                              value={prop.value}
+                              onChange={(e) => handleUpdate(category, key, e.target.value)}
+                              className="bg-transparent border-none text-[#000000] text-[12px] w-full px-2 py-0.5 focus:outline-none"
+                            />
+                          </>
+                        )}
 
-                      {prop.type === 'number' && (
-                        <>
-                          <div className="px-1.5 text-[#6b7280] flex flex-col justify-center gap-[1px]">
-                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-transparent border-b-[#9ca3af] cursor-pointer hover:border-b-[#6366f1]"></div>
-                            <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-transparent border-t-[#9ca3af] cursor-pointer hover:border-t-[#6366f1]"></div>
+                        {prop.type === 'number' && (
+                          <>
+                            <div className="px-1.5 text-[#6b7280] flex flex-col justify-center gap-[1px]">
+                              <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-transparent border-b-[#9ca3af] cursor-pointer hover:border-b-[#6366f1]"></div>
+                              <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-transparent border-t-[#9ca3af] cursor-pointer hover:border-t-[#6366f1]"></div>
+                            </div>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={prop.value}
+                              onChange={(e) => handleUpdate(category, key, String(parseFloat(e.target.value) || 0))}
+                              className="bg-transparent border-none text-[#000000] text-[12px] w-full px-1 py-0.5 focus:outline-none"
+                            />
+                            {prop.unit && <span className="text-[10px] text-[#6b7280] pr-2">{prop.unit}</span>}
+                          </>
+                        )}
+
+                        {prop.type === 'font' && (
+                          <div className="flex items-center w-full min-w-[160px] p-0.5">
+                            <VisualFontPicker
+                              value={prop.value}
+                              onChange={(val) => handleUpdate(category, key, val)}
+                              editor={editor}
+                            />
                           </div>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={prop.value}
-                            onChange={(e) => handleUpdate(category, key, String(parseFloat(e.target.value) || 0))}
-                            className="bg-transparent border-none text-[#000000] text-[12px] w-full px-1 py-0.5 focus:outline-none"
-                          />
-                          {prop.unit && <span className="text-[10px] text-[#6b7280] pr-2">{prop.unit}</span>}
-                        </>
-                      )}
-
-                      {prop.type === 'font' && (
-                        <div className="flex items-center w-full min-w-[160px] p-0.5">
-                          <VisualFontPicker
-                            value={prop.value}
-                            onChange={(val) => handleUpdate(category, key, val)}
-                            editor={editor}
-                          />
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
