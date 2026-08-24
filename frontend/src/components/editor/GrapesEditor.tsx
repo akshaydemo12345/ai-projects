@@ -14,12 +14,13 @@ import { Swiper as SwiperClass } from 'swiper/bundle';
 
 import './grapes-custom.css';
 import { ArrowLeft, X, Copy, CheckCircle2 } from 'lucide-react';
-import { projectsApi, pagesApi, aiApi, Project, LandingPage } from '../../services/api';
+import { projectsApi, pagesApi, aiApi, thankYouApi, Project, LandingPage } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { copyToClipboard } from '@/lib/utils';
 import { compressHtmlAndCssImages, compressImageFile } from '@/lib/imageCompressor';
 import BlocksPanel from './BlocksPanel';
 import GlobalStylesPanel from './GlobalStylesPanel';
+import CustomCssPanel from './CustomCssPanel';
 import { ThankYouEditorPanel } from '../thank-you/ThankYouEditorPanel';
 import { BLOCK_DEFS } from './blockDefs';
 import Pickr from "@simonwep/pickr";
@@ -156,7 +157,7 @@ export const preloadAllGoogleFontsOptions = (ed?: any) => {
 export const ensureGoogleFontLoaded = (ed: any, fontName: string) => {
   if (!fontName || fontName === 'inherit' || fontName === 'sans-serif' || fontName === 'serif' || fontName === 'monospace') return;
   try {
-    const cleanFont = fontName.replace(/['"]/g, '').split(',')[0].trim();
+    let cleanFont = fontName.replace(/['"]/g, '').replace(/\s*!important/gi, '').split(',')[0].trim();
     if (!cleanFont || cleanFont === 'inherit') return;
     const fontId = `google-font-${cleanFont.replace(/\s+/g, '-').toLowerCase()}`;
     const fontUrl = `https://fonts.googleapis.com/css2?family=${cleanFont.replace(/\s+/g, '+')}&display=swap`;
@@ -498,8 +499,8 @@ const GrapesEditor = () => {
   const [cssCode, setCssCode] = useState('');
   const [activeDevice, setActiveDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const initialMode = searchParams.get('mode') === 'thankyou' ? 'thank-you' : 'landing';
-  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
-  const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
+  const [leftTab, setLeftTab] = useState<'blocks' | 'theme' | 'custom-css' | 'layers' | 'ai' | 'seo' | 'thank-you' | 'icons'>(initialMode === 'thank-you' ? 'thank-you' : 'blocks');
+  const [rightTab, setRightTab] = useState<'styles' | 'traits' | 'custom-css'>('styles');
   const [mode, setMode] = useState<'landing' | 'thank-you'>(initialMode);
 
   const modeRef = useRef(mode);
@@ -716,20 +717,44 @@ const GrapesEditor = () => {
         dbStyles = '';
       }
 
+      // Fallback: If Thank You content is not yet set for this page, fetch the default Thank You layout preview
+      if ((!dbContent || dbContent.trim().length === 0) && currentPage._id) {
+        try {
+          console.log('✨ Thank You page content empty — fetching default Thank You template layout...');
+          const configRes = await thankYouApi.getConfig(currentPage._id);
+          const layoutId = configRes?.config?.layout || 'default';
+          dbContent = await thankYouApi.preview({ layout: layoutId, pageId: currentPage._id });
+        } catch (e) {
+          console.warn('Failed to load default Thank You template fallback:', e);
+        }
+      }
+
       // Inject base template styles so components dragged into the Thank You page retain their design
       if (currentPage.styles) {
         dbStyles = currentPage.styles + '\n' + dbStyles;
       }
     } else {
-      // Landing Page Mode (Legacy Support)
-      if (currentPage.landingPageContent) {
-        dbContent = currentPage.landingPageContent;
+      // Landing Page Mode
+      const isPlaceholder = (htmlStr?: string) => {
+        if (!htmlStr) return true;
+        return htmlStr.includes('Landing Page is Ready') || htmlStr.includes('Your request has been successfully submitted');
+      };
+
+      let landingContent = currentPage.landingPageContent || '';
+      if (isPlaceholder(landingContent)) {
+        landingContent = '';
+      }
+
+      if (landingContent) {
+        dbContent = landingContent;
         dbStyles = currentPage.landingPageStyles || '';
       } else if (typeof currentPage.content === 'object' && currentPage.content !== null) {
-        dbContent = currentPage.content.fullHtml || currentPage.content.html || '';
+        const full = currentPage.content.fullHtml || currentPage.content.html || '';
+        dbContent = isPlaceholder(full) ? '' : full;
         dbStyles = currentPage.content.fullCss || currentPage.content.css || '';
       } else if (typeof currentPage.content === 'string') {
-        dbContent = currentPage.content;
+        const str = currentPage.content;
+        dbContent = isPlaceholder(str) ? '' : str;
       }
 
       if (currentPage.styles && !dbStyles) {
@@ -833,9 +858,18 @@ const GrapesEditor = () => {
     if (dbContent && dbContent.trim().length > 10) {
       console.log('💎 Injecting branding variables and setting content...');
 
-      // Clear then set
-      editor.setComponents('');
+      // Safely stop inline RTE editing & deselect active component to prevent RichTextEditor undefined errors
       try {
+        if (typeof editor.select === 'function') editor.select(null);
+        if (typeof editor.stopCommand === 'function') {
+          editor.stopCommand('rte-edit');
+          editor.stopCommand('core:component-inline-edit');
+        }
+      } catch (e) {}
+
+      // Clear then set
+      try {
+        editor.setComponents('');
         if (editor.DomComponents && editor.DomComponents.clear) editor.DomComponents.clear();
         // @ts-ignore
         if (editor.Css && editor.Css.clear) editor.Css.clear();
@@ -1433,18 +1467,9 @@ const GrapesEditor = () => {
         setIsCanvasLoading(false);
       }, 200);
     } else {
-      if (activeMode === 'thank-you') {
-        // Do not inject placeholder. The ThankYouEditorPanel will auto-fetch and apply the default template.
-        // Keep the loading overlay visible until onSelect completes. Add a 5s fallback just in case.
-        editor.setComponents('');
-        setTimeout(() => setIsCanvasLoading(false), 5000);
-      } else {
-        editor.setComponents(`<div style="padding: 100px 20px; text-align: center; font-family: sans-serif; color: #64748b;">` +
-          `<h2 style="margin-bottom: 10px;">Landing Page is Ready</h2>` +
-          `<p>Start editing by choosing a block from the left or use the AI generator.</p>` +
-          `</div>`);
-        setTimeout(() => setIsCanvasLoading(false), 400);
-      }
+      // Clear canvas without injecting persistent DOM placeholder node
+      editor.setComponents('');
+      setTimeout(() => setIsCanvasLoading(false), 100);
     }
   };
 
@@ -1493,6 +1518,11 @@ const GrapesEditor = () => {
         background-color: #1f2937 !important;
         border-radius: 8px !important;
         margin: 5px !important;
+      /* Hide native / GrapesJS spectrum default color popovers so Pickr monolith is always used */
+      .gjs-sp-container, .sp-container, .gjs-color-picker, .sp-picker-container {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
       }
     `;
     document.head.appendChild(style);
@@ -2968,6 +2998,38 @@ const GrapesEditor = () => {
       blockManager: { appendTo: '#blocks-container' },
     });
 
+    // ─── Ensure RichTextEditor reference on Editor Model to prevent TypeError on disableEditing ───
+    const patchEmRichTextEditor = (editorInst: any) => {
+      try {
+        if (!editorInst) return;
+        const em = (editorInst as any).em || (typeof editorInst.getModel === 'function' ? editorInst.getModel() : null);
+        if (em) {
+          const rte = editorInst.RichTextEditor || {};
+          if (!rte.events) rte.events = {};
+          if (!rte.actions) rte.actions = [];
+          if (typeof rte.add !== 'function') rte.add = () => {};
+          if (typeof rte.get !== 'function') rte.get = () => null;
+
+          try {
+            Object.defineProperty(em, 'RichTextEditor', {
+              get: () => rte,
+              set: () => {},
+              configurable: true,
+              enumerable: true
+            });
+          } catch (err) {}
+
+          try {
+            if (typeof em.set === 'function') {
+              em.set('RichTextEditor', rte);
+            }
+          } catch (err) {}
+        }
+      } catch (e) {}
+    };
+
+    patchEmRichTextEditor(editor);
+
     // ─── Pre-Load Registration (Ensures existing HTML icons are typed correctly) ───
     editor.DomComponents.addType('icon', {
       isComponent: el => (el.tagName === 'I' || el.tagName === 'SPAN') &&
@@ -3819,6 +3881,8 @@ const GrapesEditor = () => {
       });
 
 
+      patchEmRichTextEditor(editor);
+
       // ── Auto-open custom code editor on canvas click (icon picker is now double-click only) ──
       setTimeout(() => {
         try {
@@ -4595,31 +4659,25 @@ const GrapesEditor = () => {
           const target = e.target as HTMLElement;
           if (!target) return;
 
-          // Prevent native browser system color picker inputs from firing
-          const nativeInput = target.closest('input[type="color"]') as HTMLInputElement;
-          if (nativeInput) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-
-          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview]') as HTMLElement;
+          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview], input[type="color"], .gjs-field-color') as HTMLElement;
           if (swatch) {
             e.preventDefault();
             e.stopPropagation();
 
-            const parentRow = swatch.closest('.gjs-sm-property') || swatch.parentElement;
+            const parentRow = (swatch.closest('.gjs-sm-property, .gjs-trt-trait, .gjs-trait, .gjs-field') || swatch.parentElement) as HTMLElement | null;
             
             // 1. Check if Pickr is already attached
             let pickr = (swatch as any).__pickr || (parentRow as any)?.__pickr || (parentRow as any)?.querySelector?.('.custom-grapesjs-pickr')?.__pickr;
 
             // 2. If Pickr is not attached, instantiate Pickr dynamically on this swatch
             if (!pickr) {
-              const hexInput = (parentRow?.querySelector('input[type="text"]') || parentRow?.querySelector('input')) as HTMLInputElement | null;
-              const curVal = hexInput?.value || swatch.style.backgroundColor || '';
+              const hexInput = (parentRow?.querySelector('input[type="text"]') || parentRow?.querySelector('input:not([type="color"])') || parentRow?.querySelector('input')) as HTMLInputElement | null;
+              const curVal = hexInput?.value || (swatch.tagName === 'INPUT' ? (swatch as HTMLInputElement).value : swatch.style.backgroundColor) || '';
 
               try {
+                const anchorEl = (swatch.tagName === 'INPUT' ? (parentRow || swatch) : swatch) as HTMLElement;
                 pickr = Pickr.create({
-                  el: swatch,
+                  el: anchorEl,
                   theme: 'monolith',
                   default: curVal && curVal !== 'transparent' ? curVal : null,
                   useAsButton: true,
@@ -4645,31 +4703,31 @@ const GrapesEditor = () => {
                   return hex.length === 6 ? `#${hex}` : hex.length === 8 ? `#${hex}` : hex;
                 };
 
-                pickr.on('change', (color: Pickr.HSVaColor) => {
-                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
+                const notifyInputChange = (val: string) => {
+                  if (swatch.tagName !== 'INPUT') {
+                    swatch.style.setProperty('background-color', val || 'transparent', 'important');
+                  }
                   if (hexInput) {
-                    hexInput.value = hex;
+                    hexInput.value = val;
+                    hexInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    hexInput.dispatchEvent(new Event('change', { bubbles: true }));
                     handleUIInput({ target: hexInput } as any);
                   }
+                };
+
+                pickr.on('change', (color: Pickr.HSVaColor) => {
+                  const hex = color ? toHexAny(color.toHEXA().toString()) : '';
+                  notifyInputChange(hex);
                 });
 
                 pickr.on('save', (color: Pickr.HSVaColor) => {
                   const hex = color ? toHexAny(color.toHEXA().toString()) : '';
-                  swatch.style.setProperty('background-color', hex || 'transparent', 'important');
-                  if (hexInput) {
-                    hexInput.value = hex;
-                    handleUIInput({ target: hexInput } as any);
-                  }
+                  notifyInputChange(hex);
                   pickr.hide();
                 });
 
                 pickr.on('clear', () => {
-                  swatch.style.setProperty('background-color', 'transparent', 'important');
-                  if (hexInput) {
-                    hexInput.value = '';
-                    handleUIInput({ target: hexInput } as any);
-                  }
+                  notifyInputChange('');
                   pickr.hide();
                 });
 
@@ -4691,7 +4749,15 @@ const GrapesEditor = () => {
           }
         };
 
-        stylesContainer.addEventListener('click', handleColorSwatchClick);
+        if (stylesContainer) {
+          stylesContainer.removeEventListener('click', handleColorSwatchClick);
+          stylesContainer.addEventListener('click', handleColorSwatchClick);
+        }
+        const traitsContainer = document.getElementById('traits-container');
+        if (traitsContainer) {
+          traitsContainer.removeEventListener('click', handleColorSwatchClick);
+          traitsContainer.addEventListener('click', handleColorSwatchClick);
+        }
       }
     }, 500);
 
@@ -4825,9 +4891,6 @@ const GrapesEditor = () => {
                   ${isLogoComponent ? 'Brand Logo Control' : 'Image Control'}
                 </span>
               </div>
-              <span style="font-size: 10px; font-weight: 600; color: #fda4af; background: rgba(225, 29, 72, 0.2); border: 1px solid rgba(225, 29, 72, 0.4); padding: 2px 8px; border-radius: 12px;">
-                Elementor
-              </span>
             </div>
 
             <!-- ── CHOOSE IMAGE PREVIEW BOX (ELEMENTOR STYLE) ── -->
@@ -5306,35 +5369,203 @@ const GrapesEditor = () => {
           ['header', 'nav', 'footer'].includes(parentTag) ||
           attrs['data-is-logo'] === 'true';
 
-        // 2. Handle UI Tab Switching (Image, Logo, Link, and Custom Code elements ALWAYS activate the Properties/Traits tab)
-        if (isCustomCode || isLink || isImage || isLogoComponent) {
-          setRightTab('traits');
+        // 2. Always activate Right-side Properties (Traits) tab on element selection
+        setRightTab('traits');
+
+        // Extract applied computed styles for selected element
+        const selectedAll = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [model];
+        let computedMap: Record<string, string> = {};
+        try { computedMap = extractMultiElementStyles(selectedAll); } catch (e) {}
+
+        // 3. Generate Rich Element-Specific Traits (Properties Tab)
+        try {
+          const isText = ['h1','h2','h3','h4','h5','h6','p','span','b','i','strong','em','small','label'].includes(tagName) ||
+            model.is('text') || (typeof model.get('content') === 'string' && model.get('content').trim() !== '');
+          const isInput = ['input','textarea','select'].includes(tagName);
+          const isLinkBtn = isLink || tagName === 'a' || tagName === 'button' || model.get('type') === 'link';
+
+          const fontOpts = GOOGLE_FONTS_OPTIONS.map(f => ({ id: f.id || f.name, name: f.name || f.id }));
+          const fontSizeOpts = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','40px','48px','56px','64px','72px'].map(s => ({ id: s, name: s }));
+          const fontWeightOpts = [
+            { id: '300', name: 'Light (300)' },
+            { id: '400', name: 'Regular (400)' },
+            { id: '500', name: 'Medium (500)' },
+            { id: '600', name: 'SemiBold (600)' },
+            { id: '700', name: 'Bold (700)' },
+            { id: '800', name: 'ExtraBold (800)' }
+          ];
+          const textAlignOpts = [
+            { id: 'left', name: 'Left' },
+            { id: 'center', name: 'Center' },
+            { id: 'right', name: 'Right' },
+            { id: 'justify', name: 'Justify' }
+          ];
+          const borderRadiusOpts = ['0px','4px','6px','8px','12px','16px','24px','50%','9999px'].map(s => ({ id: s, name: s }));
+          const objectFitOpts = [
+            { id: 'cover', name: 'Cover' },
+            { id: 'contain', name: 'Contain' },
+            { id: 'fill', name: 'Fill' },
+            { id: 'none', name: 'None' }
+          ];
+          const paddingOpts = ['0px','8px','12px','16px','24px','32px','48px','64px','80px'].map(s => ({ id: s, name: s }));
+
+          let dynamicTraits: any[] = [];
+
+          if (isImage || isLogoComponent) {
+            dynamicTraits = [
+              { type: 'text', label: 'Image Source (URL)', name: 'src', changeProp: false },
+              { type: 'text', label: 'Alt Text (SEO)', name: 'alt', changeProp: false },
+              { type: 'select', label: 'Object Fit', name: 'style_objectFit', options: objectFitOpts, changeProp: false },
+              { type: 'select', label: 'Corner Rounding', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Width (e.g. 100%, 300px)', name: 'style_width', changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isLinkBtn) {
+            dynamicTraits = [
+              { type: 'text', label: 'Button / Link Text', name: 'element_text', changeProp: false },
+              { type: 'text', label: 'Target Link (href)', name: 'href', changeProp: false },
+              { type: 'select', label: 'Target Window', name: 'target', options: [{ id: '_self', name: 'Same Window' }, { id: '_blank', name: 'New Window' }], changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'color', label: 'Button Background', name: 'style_backgroundColor', changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'select', label: 'Font Weight', name: 'style_fontWeight', options: fontWeightOpts, changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isInput) {
+            dynamicTraits = [
+              { type: 'text', label: 'Field Name', name: 'name', changeProp: false },
+              { type: 'text', label: 'Placeholder Text', name: 'placeholder', changeProp: false },
+              { type: 'select', label: 'Input Type', name: 'type', options: [{ id: 'text', name: 'Text' }, { id: 'email', name: 'Email' }, { id: 'tel', name: 'Phone' }, { id: 'password', name: 'Password' }, { id: 'number', name: 'Number' }], changeProp: false },
+              { type: 'checkbox', label: 'Required Field', name: 'required', valueTrue: 'required', valueFalse: '', changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else if (isText) {
+            dynamicTraits = [
+              { type: 'text', label: 'Text Content', name: 'element_text', changeProp: false },
+              { type: 'select', label: 'Font Family', name: 'style_fontFamily', options: fontOpts, changeProp: false },
+              { type: 'select', label: 'Font Size', name: 'style_fontSize', options: fontSizeOpts, changeProp: false },
+              { type: 'select', label: 'Font Weight', name: 'style_fontWeight', options: fontWeightOpts, changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Text Alignment', name: 'style_textAlign', options: textAlignOpts, changeProp: false },
+              { type: 'text', label: 'Element ID', name: 'id', changeProp: false }
+            ];
+          } else {
+            dynamicTraits = [
+              { type: 'color', label: 'Background Color', name: 'style_backgroundColor', changeProp: false },
+              { type: 'color', label: 'Text Color', name: 'style_color', changeProp: false },
+              { type: 'select', label: 'Padding', name: 'style_padding', options: paddingOpts, changeProp: false },
+              { type: 'select', label: 'Border Radius', name: 'style_borderRadius', options: borderRadiusOpts, changeProp: false },
+              { type: 'text', label: 'Element ID (Anchor)', name: 'id', changeProp: false },
+              { type: 'text', label: 'Title / Tooltip', name: 'title', changeProp: false }
+            ];
+          }
+
+          // Hydrate component attributes with initial computed style values so inputs display current state
+          const currentAttrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+          const initialValues: Record<string, any> = {};
+
+          if (computedMap['font-family'] && computedMap['font-family'] !== 'Mixed') initialValues.style_fontFamily = computedMap['font-family'];
+          if (computedMap['font-size'] && computedMap['font-size'] !== 'Mixed') initialValues.style_fontSize = computedMap['font-size'];
+          if (computedMap['font-weight'] && computedMap['font-weight'] !== 'Mixed') initialValues.style_fontWeight = computedMap['font-weight'];
+          if (computedMap['color'] && computedMap['color'] !== 'Mixed') initialValues.style_color = computedMap['color'];
+          if (computedMap['background-color'] && computedMap['background-color'] !== 'Mixed') initialValues.style_backgroundColor = computedMap['background-color'];
+          if (computedMap['text-align'] && computedMap['text-align'] !== 'Mixed') initialValues.style_textAlign = computedMap['text-align'];
+          if (computedMap['border-radius'] && computedMap['border-radius'] !== 'Mixed') initialValues.style_borderRadius = computedMap['border-radius'];
+          if (computedMap['object-fit'] && computedMap['object-fit'] !== 'Mixed') initialValues.style_objectFit = computedMap['object-fit'];
+          if (computedMap['padding'] && computedMap['padding'] !== 'Mixed') initialValues.style_padding = computedMap['padding'];
+          if (computedMap['width'] && computedMap['width'] !== 'Mixed') initialValues.style_width = computedMap['width'];
+
+          if (isText || isLinkBtn) {
+            const rawText = model.get('content') || model.getEl()?.innerText || '';
+            if (rawText && typeof rawText === 'string') {
+              initialValues.element_text = rawText.trim();
+            }
+          }
+
+          // Hydrate silently so initial attribute setting doesn't trigger style overrides
+          model.setAttributes({ ...currentAttrs, ...initialValues }, { silent: true });
+          if (typeof model.set === 'function') {
+            model.set('traits', dynamicTraits);
+          }
+
+          let lastAttrs = { ...(typeof model.getAttributes === 'function' ? model.getAttributes() : {}) };
+
+          // Bind live change listener so ONLY user-modified trait inputs update component in real-time
+          const handleTraitChange = () => {
+            if (isSelectingElement) return;
+
+            const attrs = typeof model.getAttributes === 'function' ? model.getAttributes() : {};
+            const stylesToApply: Record<string, string> = {};
+
+            if (attrs.style_fontFamily && lastAttrs.style_fontFamily !== undefined && attrs.style_fontFamily !== lastAttrs.style_fontFamily) {
+              const cleanFamily = attrs.style_fontFamily.replace(/\s*!important/gi, '').trim();
+              stylesToApply['font-family'] = cleanFamily;
+              ensureGoogleFontLoaded(editor, cleanFamily);
+            }
+            if (attrs.style_fontSize && lastAttrs.style_fontSize !== undefined && attrs.style_fontSize !== lastAttrs.style_fontSize) {
+              stylesToApply['font-size'] = attrs.style_fontSize;
+            }
+            if (attrs.style_fontWeight && lastAttrs.style_fontWeight !== undefined && attrs.style_fontWeight !== lastAttrs.style_fontWeight) {
+              stylesToApply['font-weight'] = attrs.style_fontWeight;
+            }
+            if (attrs.style_color && lastAttrs.style_color !== undefined && attrs.style_color !== lastAttrs.style_color) {
+              stylesToApply['color'] = attrs.style_color;
+            }
+            if (attrs.style_backgroundColor && lastAttrs.style_backgroundColor !== undefined && attrs.style_backgroundColor !== lastAttrs.style_backgroundColor) {
+              stylesToApply['background-color'] = attrs.style_backgroundColor;
+            }
+            if (attrs.style_textAlign && lastAttrs.style_textAlign !== undefined && attrs.style_textAlign !== lastAttrs.style_textAlign) {
+              stylesToApply['text-align'] = attrs.style_textAlign;
+            }
+            if (attrs.style_borderRadius && lastAttrs.style_borderRadius !== undefined && attrs.style_borderRadius !== lastAttrs.style_borderRadius) {
+              stylesToApply['border-radius'] = attrs.style_borderRadius;
+            }
+            if (attrs.style_objectFit && lastAttrs.style_objectFit !== undefined && attrs.style_objectFit !== lastAttrs.style_objectFit) {
+              stylesToApply['object-fit'] = attrs.style_objectFit;
+            }
+            if (attrs.style_padding && lastAttrs.style_padding !== undefined && attrs.style_padding !== lastAttrs.style_padding) {
+              stylesToApply['padding'] = attrs.style_padding;
+            }
+            if (attrs.style_width && lastAttrs.style_width !== undefined && attrs.style_width !== lastAttrs.style_width) {
+              stylesToApply['width'] = attrs.style_width;
+            }
+
+            if (Object.keys(stylesToApply).length > 0) {
+              model.addStyle(stylesToApply);
+              const domEl = model.getEl();
+              if (domEl) {
+                Object.entries(stylesToApply).forEach(([k, v]) => {
+                  domEl.style.setProperty(k, v, 'important');
+                });
+              }
+            }
+
+            if (attrs.element_text !== undefined && lastAttrs.element_text !== undefined && attrs.element_text !== lastAttrs.element_text && (isText || isLinkBtn)) {
+              if (typeof model.components === 'function') {
+                model.components(attrs.element_text);
+              }
+            }
+
+            lastAttrs = { ...attrs };
+          };
+
+          model.off('change:attributes', handleTraitChange);
+          model.on('change:attributes', handleTraitChange);
+        } catch (e) {
+          console.warn('Trait generation error:', e);
         }
 
-        // Ensure image tags have src/alt traits registered so image URL appears under Properties
-        if (isImage || isLogoComponent) {
-          try {
-            const currentTraits = model.get('traits');
-            const traitList = currentTraits?.models || currentTraits || [];
-            const hasSrc = Array.isArray(traitList) && traitList.some((t: any) => {
-              const name = typeof t.get === 'function' ? t.get('name') : t.name;
-              return name === 'src';
-            });
-            if (!hasSrc && typeof model.addTrait === 'function') {
-              model.addTrait([
-                { type: 'text', label: 'Image Source (src)', name: 'src', changeProp: false },
-                { type: 'text', label: 'Alt Text', name: 'alt', changeProp: false }
-              ]);
-            }
-          } catch (e) {}
+        // Re-render TraitManager & StyleManager views for target component
+        if (editor.TraitManager && typeof editor.TraitManager.render === 'function') {
+          try { editor.TraitManager.render(); } catch (e) {}
         }
 
         // Trigger Image Preview Thumbnail + File Upload Controls
         setTimeout(() => setupImageUploadControls(model), 60);
-
-        // 3. Extract & Hydrate Applied Styles across selected component(s)
-        const selectedAll = typeof editor.getSelectedAll === 'function' ? editor.getSelectedAll() : [model];
-        let computedMap: Record<string, string> = {};
 
         try {
           computedMap = extractMultiElementStyles(selectedAll);
@@ -5404,153 +5635,174 @@ const GrapesEditor = () => {
             };
 
             const applyComputedMapToUI = () => {
-              Object.keys(computedMap).forEach((pName) => {
-                const val = computedMap[pName];
-                if (val && val !== 'Mixed') {
-                  const prop = findSMProperty(pName);
-                  if (prop && typeof prop.set === 'function') {
-                    prop.set('value', val, { silent: true });
-                    if (prop.view && typeof prop.view.update === 'function') {
-                      try { prop.view.update(); } catch (e) {}
-                    }
-
-                    if (pName === 'color' || pName === 'background-color' || pName === 'border-color') {
+              try {
+                Object.keys(computedMap).forEach((pName) => {
+                  const val = computedMap[pName];
+                  if (val && val !== 'Mixed') {
+                    const prop = findSMProperty(pName);
+                    if (prop && typeof prop.set === 'function') {
                       try {
-                        const viewEl = prop.view?.el;
-                        if (viewEl) {
-                          const colorInput = viewEl.querySelector('input[type="color"], input.gjs-field-color-picker, .gjs-field-color-picker input');
-                          if (colorInput) {
-                            (colorInput as HTMLInputElement).value = val;
-                          }
-                          const colorPreview = viewEl.querySelector('.gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview]');
-                          if (colorPreview) {
-                            (colorPreview as HTMLElement).style.backgroundColor = val;
-                          }
+                        prop.set('value', val, { silent: true });
+                        if (prop.view && typeof prop.view.update === 'function') {
+                          prop.view.update();
                         }
                       } catch (e) {}
-                    }
-                  }
-                }
-              });
 
-              // Direct DOM hydration into #styles-container DOM elements
-              const container = document.getElementById('styles-container');
-              if (container) {
-                const rows = container.querySelectorAll('.gjs-sm-property');
-                rows.forEach((row) => {
-                  const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
-                  const labelText = (labelEl?.textContent || '').trim().toLowerCase();
-
-                  let targetVal = '';
-                  if (labelText === 'color' || labelText.includes('text color')) {
-                    targetVal = computedMap['color'] || '';
-                  } else if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') {
-                    targetVal = computedMap['background-color'] || '';
-                  } else if (labelText.includes('background image') || labelText === 'background-image') {
-                    targetVal = computedMap['background-image'] || '';
-                  } else if (labelText.includes('font family')) {
-                    targetVal = computedMap['font-family'] || '';
-                  } else if (labelText.includes('font size')) {
-                    targetVal = computedMap['font-size'] || '';
-                  } else if (labelText.includes('font weight')) {
-                    targetVal = computedMap['font-weight'] || '';
-                  } else if (labelText.includes('line height')) {
-                    targetVal = computedMap['line-height'] || '';
-                  } else if (labelText.includes('letter spacing')) {
-                    targetVal = computedMap['letter-spacing'] || '';
-                  } else if (labelText.includes('text align')) {
-                    targetVal = computedMap['text-align'] || '';
-                  } else if (labelText.includes('text transform')) {
-                    targetVal = computedMap['text-transform'] || '';
-                  } else if (labelText.includes('text decoration')) {
-                    targetVal = computedMap['text-decoration'] || '';
-                  } else if (labelText === 'width') {
-                    targetVal = computedMap['width'] || '';
-                  } else if (labelText === 'height') {
-                    targetVal = computedMap['height'] || '';
-                  } else if (labelText.includes('min width') || labelText === 'min-width') {
-                    targetVal = computedMap['min-width'] || '';
-                  } else if (labelText.includes('max width') || labelText === 'max-width') {
-                    targetVal = computedMap['max-width'] || '';
-                  } else if (labelText === 'padding') {
-                    targetVal = computedMap['padding'] || '';
-                  } else if (labelText.includes('padding top') || labelText === 'padding-top') {
-                    targetVal = computedMap['padding-top'] || '';
-                  } else if (labelText.includes('padding right') || labelText === 'padding-right') {
-                    targetVal = computedMap['padding-right'] || '';
-                  } else if (labelText.includes('padding bottom') || labelText === 'padding-bottom') {
-                    targetVal = computedMap['padding-bottom'] || '';
-                  } else if (labelText.includes('padding left') || labelText === 'padding-left') {
-                    targetVal = computedMap['padding-left'] || '';
-                  } else if (labelText === 'margin') {
-                    targetVal = computedMap['margin'] || '';
-                  } else if (labelText.includes('margin top') || labelText === 'margin-top') {
-                    targetVal = computedMap['margin-top'] || '';
-                  } else if (labelText.includes('margin right') || labelText === 'margin-right') {
-                    targetVal = computedMap['margin-right'] || '';
-                  } else if (labelText.includes('margin bottom') || labelText === 'margin-bottom') {
-                    targetVal = computedMap['margin-bottom'] || '';
-                  } else if (labelText.includes('margin left') || labelText === 'margin-left') {
-                    targetVal = computedMap['margin-left'] || '';
-                  } else if (labelText.includes('border radius') || labelText === 'border-radius') {
-                    targetVal = computedMap['border-radius'] || '';
-                  } else if (labelText.includes('border color') || labelText === 'border-color') {
-                    targetVal = computedMap['border-color'] || '';
-                  } else if (labelText.includes('border width') || labelText === 'border-width') {
-                    targetVal = computedMap['border-width'] || '';
-                  } else if (labelText.includes('border style') || labelText === 'border-style') {
-                    targetVal = computedMap['border-style'] || '';
-                  } else if (labelText === 'border') {
-                    targetVal = computedMap['border'] || '';
-                  } else if (labelText === 'opacity') {
-                    targetVal = computedMap['opacity'] || '';
-                  } else if (labelText === 'display') {
-                    targetVal = computedMap['display'] || '';
-                  } else if (labelText === 'position') {
-                    targetVal = computedMap['position'] || '';
-                  } else if (labelText.includes('flex direction') || labelText === 'flex-direction') {
-                    targetVal = computedMap['flex-direction'] || '';
-                  } else if (labelText.includes('justify content') || labelText === 'justify-content') {
-                    targetVal = computedMap['justify-content'] || '';
-                  } else if (labelText.includes('align items') || labelText === 'align-items') {
-                    targetVal = computedMap['align-items'] || '';
-                  } else if (labelText === 'gap') {
-                    targetVal = computedMap['gap'] || '';
-                  } else if (labelText.includes('box shadow') || labelText === 'box-shadow') {
-                    targetVal = computedMap['box-shadow'] || '';
-                  } else if (labelText === 'cursor') {
-                    targetVal = computedMap['cursor'] || '';
-                  }
-
-                  if (targetVal && targetVal !== 'Mixed') {
-                    const inputs = row.querySelectorAll('input, select');
-                    inputs.forEach((input) => {
-                      const inp = input as HTMLInputElement;
-                      if (document.activeElement !== inp) {
-                        inp.value = targetVal;
+                      if (pName === 'color' || pName === 'background-color' || pName === 'border-color') {
+                        try {
+                          const viewEl = prop.view?.el;
+                          if (viewEl && viewEl.isConnected) {
+                            const colorInput = viewEl.querySelector('input[type="color"], input.gjs-field-color-picker, .gjs-field-color-picker input') as HTMLInputElement;
+                            if (colorInput && colorInput.isConnected) {
+                              if (colorInput.type === 'color') {
+                                if (val && val.startsWith('#') && val.length === 7) {
+                                  colorInput.value = val;
+                                }
+                              } else {
+                                colorInput.value = val;
+                              }
+                            }
+                            const colorPreview = viewEl.querySelector('.gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview]') as HTMLElement;
+                            if (colorPreview && colorPreview.isConnected) {
+                              colorPreview.style.backgroundColor = val;
+                            }
+                          }
+                        } catch (e) {}
                       }
-                    });
-
-                    const isColorProperty = labelText === 'color' || labelText.includes('text color') || labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color' || labelText.includes('border color') || labelText === 'border-color';
-                    if (isColorProperty) {
-                      const colorPreviews = row.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview], .custom-grapesjs-pickr, .pcr-button');
-                      colorPreviews.forEach((swatch) => {
-                        const sw = swatch as HTMLElement;
-                        if (sw && sw.tagName !== 'INPUT') {
-                          try {
-                            sw.style.setProperty('background-color', targetVal, 'important');
-                          } catch (e) {}
-                        }
-                      });
                     }
                   }
                 });
-              }
+
+                // Direct DOM hydration into #styles-container DOM elements
+                const container = document.getElementById('styles-container');
+                if (container) {
+                  const rows = container.querySelectorAll('.gjs-sm-property');
+                  rows.forEach((row) => {
+                    try {
+                      if (!row.isConnected) return;
+                      const labelEl = row.querySelector('.gjs-sm-label, .gjs-label');
+                      const labelText = (labelEl?.textContent || '').trim().toLowerCase();
+
+                      let targetVal = '';
+                      if (labelText === 'color' || labelText.includes('text color')) {
+                        targetVal = computedMap['color'] || '';
+                      } else if (labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color') {
+                        targetVal = computedMap['background-color'] || '';
+                      } else if (labelText.includes('background image') || labelText === 'background-image') {
+                        targetVal = computedMap['background-image'] || '';
+                      } else if (labelText.includes('font family')) {
+                        targetVal = computedMap['font-family'] || '';
+                      } else if (labelText.includes('font size')) {
+                        targetVal = computedMap['font-size'] || '';
+                      } else if (labelText.includes('font weight')) {
+                        targetVal = computedMap['font-weight'] || '';
+                      } else if (labelText.includes('line height')) {
+                        targetVal = computedMap['line-height'] || '';
+                      } else if (labelText.includes('letter spacing')) {
+                        targetVal = computedMap['letter-spacing'] || '';
+                      } else if (labelText.includes('text align')) {
+                        targetVal = computedMap['text-align'] || '';
+                      } else if (labelText.includes('text transform')) {
+                        targetVal = computedMap['text-transform'] || '';
+                      } else if (labelText.includes('text decoration')) {
+                        targetVal = computedMap['text-decoration'] || '';
+                      } else if (labelText === 'width') {
+                        targetVal = computedMap['width'] || '';
+                      } else if (labelText === 'height') {
+                        targetVal = computedMap['height'] || '';
+                      } else if (labelText.includes('min width') || labelText === 'min-width') {
+                        targetVal = computedMap['min-width'] || '';
+                      } else if (labelText.includes('max width') || labelText === 'max-width') {
+                        targetVal = computedMap['max-width'] || '';
+                      } else if (labelText === 'padding') {
+                        targetVal = computedMap['padding'] || '';
+                      } else if (labelText.includes('padding top') || labelText === 'padding-top') {
+                        targetVal = computedMap['padding-top'] || '';
+                      } else if (labelText.includes('padding right') || labelText === 'padding-right') {
+                        targetVal = computedMap['padding-right'] || '';
+                      } else if (labelText.includes('padding bottom') || labelText === 'padding-bottom') {
+                        targetVal = computedMap['padding-bottom'] || '';
+                      } else if (labelText.includes('padding left') || labelText === 'padding-left') {
+                        targetVal = computedMap['padding-left'] || '';
+                      } else if (labelText === 'margin') {
+                        targetVal = computedMap['margin'] || '';
+                      } else if (labelText.includes('margin top') || labelText === 'margin-top') {
+                        targetVal = computedMap['margin-top'] || '';
+                      } else if (labelText.includes('margin right') || labelText === 'margin-right') {
+                        targetVal = computedMap['margin-right'] || '';
+                      } else if (labelText.includes('margin bottom') || labelText === 'margin-bottom') {
+                        targetVal = computedMap['margin-bottom'] || '';
+                      } else if (labelText.includes('margin left') || labelText === 'margin-left') {
+                        targetVal = computedMap['margin-left'] || '';
+                      } else if (labelText.includes('border radius') || labelText === 'border-radius') {
+                        targetVal = computedMap['border-radius'] || '';
+                      } else if (labelText.includes('border color') || labelText === 'border-color') {
+                        targetVal = computedMap['border-color'] || '';
+                      } else if (labelText.includes('border width') || labelText === 'border-width') {
+                        targetVal = computedMap['border-width'] || '';
+                      } else if (labelText.includes('border style') || labelText === 'border-style') {
+                        targetVal = computedMap['border-style'] || '';
+                      } else if (labelText === 'border') {
+                        targetVal = computedMap['border'] || '';
+                      } else if (labelText === 'opacity') {
+                        targetVal = computedMap['opacity'] || '';
+                      } else if (labelText === 'display') {
+                        targetVal = computedMap['display'] || '';
+                      } else if (labelText === 'position') {
+                        targetVal = computedMap['position'] || '';
+                      } else if (labelText.includes('flex direction') || labelText === 'flex-direction') {
+                        targetVal = computedMap['flex-direction'] || '';
+                      } else if (labelText.includes('justify content') || labelText === 'justify-content') {
+                        targetVal = computedMap['justify-content'] || '';
+                      } else if (labelText.includes('align items') || labelText === 'align-items') {
+                        targetVal = computedMap['align-items'] || '';
+                      } else if (labelText === 'gap') {
+                        targetVal = computedMap['gap'] || '';
+                      } else if (labelText.includes('box shadow') || labelText === 'box-shadow') {
+                        targetVal = computedMap['box-shadow'] || '';
+                      } else if (labelText === 'cursor') {
+                        targetVal = computedMap['cursor'] || '';
+                      }
+
+                      if (targetVal && targetVal !== 'Mixed') {
+                        const inputs = row.querySelectorAll('input, select');
+                        inputs.forEach((input) => {
+                          try {
+                            const inp = input as HTMLInputElement;
+                            if (inp && inp.isConnected && document.activeElement !== inp) {
+                              if (inp.type === 'color') {
+                                if (targetVal && targetVal.startsWith('#') && targetVal.length === 7) {
+                                  inp.value = targetVal;
+                                }
+                              } else {
+                                inp.value = targetVal;
+                              }
+                            }
+                          } catch (err) {}
+                        });
+
+                        const isColorProperty = labelText === 'color' || labelText.includes('text color') || labelText.includes('background color') || labelText === 'background-color' || labelText === 'bg color' || labelText.includes('border color') || labelText === 'border-color';
+                        if (isColorProperty) {
+                          const colorPreviews = row.querySelectorAll('.gjs-field-color-picker, .gjs-field-colorp-c, .gjs-chk-rgb, .gjs-color-picker-preview, [data-color-preview], .custom-grapesjs-pickr, .pcr-button');
+                          colorPreviews.forEach((swatch) => {
+                            try {
+                              const sw = swatch as HTMLElement;
+                              if (sw && sw.isConnected && sw.tagName !== 'INPUT') {
+                                sw.style.setProperty('background-color', targetVal, 'important');
+                              }
+                            } catch (err) {}
+                          });
+                        }
+                      }
+                    } catch (err) {}
+                  });
+                }
+              } catch (err) {}
             };
 
             applyComputedMapToUI();
-            setTimeout(applyComputedMapToUI, 50);
-            setTimeout(applyComputedMapToUI, 150);
+            setTimeout(() => { try { applyComputedMapToUI(); } catch (e) {} }, 50);
+            setTimeout(() => { try { applyComputedMapToUI(); } catch (e) {} }, 150);
           } catch (e) {}
         }
 
@@ -5782,15 +6034,21 @@ const GrapesEditor = () => {
     html = makeAbsolute(html);
     css = makeAbsolute(css);
 
-    // Capture internal global styles injected by GlobalStylesPanel
+    // Capture internal global styles injected by GlobalStylesPanel and CustomCssPanel
     const canvasDoc = editorRef.current.Canvas.getDocument();
     const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
     const brandingStyleTag = canvasDoc.getElementById('branding-vars');
     const templateStyleTag = canvasDoc.getElementById('template-styles');
+    const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+    let elementCssTags = '';
+    if (canvasDoc) {
+      const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+      elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+    }
 
     const templateCss = templateStyleTag?.innerHTML || '';
 
-    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+    const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
 
     let styleData = globalCss + '\n' + css;
 
@@ -5897,9 +6155,15 @@ document.addEventListener('click', function(e) {
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
+      const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+      let elementCssTags = '';
+      if (canvasDoc) {
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+      }
 
       const templateCss = templateStyleTag?.innerHTML || '';
-      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
 
       // Extract scripts to ensure they aren't lost
       let canvasScripts = '';
@@ -5915,17 +6179,31 @@ document.addEventListener('click', function(e) {
       }
 
       if (page) {
+        const isPlaceholder = html.includes('Landing Page is Ready') || html.includes('Your request has been successfully submitted');
         if (mode === 'landing') {
-          page.landingPageContent = htmlWithScripts;
-          page.landingPageStyles = globalCss + '\n' + css;
+          if (!isPlaceholder && html.trim() !== '') {
+            page.landingPageContent = htmlWithScripts;
+            page.landingPageStyles = globalCss + '\n' + css;
+            if (pageDataRef.current) {
+              pageDataRef.current.landingPageContent = htmlWithScripts;
+              pageDataRef.current.landingPageStyles = globalCss + '\n' + css;
+            }
+          }
         } else {
-          page.thankYouPageContent = htmlWithScripts;
-          page.thankYouPageStyles = globalCss + '\n' + css;
+          if (!isPlaceholder && html.trim() !== '') {
+            page.thankYouPageContent = htmlWithScripts;
+            page.thankYouPageStyles = globalCss + '\n' + css;
+            if (pageDataRef.current) {
+              pageDataRef.current.thankYouPageContent = htmlWithScripts;
+              pageDataRef.current.thankYouPageStyles = globalCss + '\n' + css;
+            }
+          }
         }
       }
     }
 
     // 2. Switch Mode
+    modeRef.current = newMode;
     setMode(newMode);
 
     // Sync URL
@@ -6013,12 +6291,16 @@ document.addEventListener('click', function(e) {
         const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
         const brandingStyleTag = canvasDoc.getElementById('branding-vars');
         const templateStyleTag = canvasDoc.getElementById('template-styles');
+        const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+        let elementCssTags = '';
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
 
         const cleanTemplateCss = (templateStyleTag?.innerHTML || '')
           .replace(/var\\(--primary\\)/g, themePrimary)
           .replace(/var\\(--secondary\\)/g, themeSecondary);
 
-        globalCssForDownload = cleanTemplateCss + '\\n' + (themeStyleTag?.innerHTML || '') + '\\n' + (brandingStyleTag?.innerHTML || '');
+        globalCssForDownload = cleanTemplateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
       }
     } catch (e) {
       console.warn('Failed to extract scripts or styles from canvas for download:', e);
@@ -6185,15 +6467,21 @@ document.addEventListener('click', function(e) {
       let html = editorRef.current.getHtml();
       let css = editorRef.current.getCss() || '';
 
-      // Capture internal global styles injected by GlobalStylesPanel
+      // Capture internal global styles injected by GlobalStylesPanel and CustomCssPanel
       const canvasDoc = editorRef.current.Canvas.getDocument();
       const themeStyleTag = canvasDoc.getElementById('global-theme-styles');
       const brandingStyleTag = canvasDoc.getElementById('branding-vars');
       const templateStyleTag = canvasDoc.getElementById('template-styles');
+      const customGlobalCssTag = canvasDoc.getElementById('custom-global-css');
+      let elementCssTags = '';
+      if (canvasDoc) {
+        const elTags = canvasDoc.querySelectorAll('style[id^="element-css-"]');
+        elTags.forEach((t: any) => { if (t.innerHTML) elementCssTags += t.innerHTML + '\n'; });
+      }
 
       const templateCss = templateStyleTag?.innerHTML || '';
 
-      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '');
+      const globalCss = templateCss + '\n' + (themeStyleTag?.innerHTML || '') + '\n' + (brandingStyleTag?.innerHTML || '') + '\n' + (customGlobalCssTag?.innerHTML || '') + '\n' + elementCssTags;
       const styleData = globalCss + '\n' + css;
 
       // Extract scripts from canvas using unified helper, then merge with backup
@@ -6811,6 +7099,7 @@ document.addEventListener('click', function(e) {
           }}>
             <NavIcon title="Blocks" active={leftTab === 'blocks'} onClick={() => { if (leftTab === 'blocks') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('blocks'); setIsSidebarOpen(true); } }}><GridIcon /><span>Blocks</span></NavIcon>
             <NavIcon title="Theme Options" active={leftTab === 'theme'} onClick={() => { if (leftTab === 'theme') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('theme'); setIsSidebarOpen(true); } }}><PaletteIcon /><span>Theme</span></NavIcon>
+            <NavIcon title="Custom CSS Options" active={leftTab === 'custom-css'} onClick={() => { if (leftTab === 'custom-css') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('custom-css'); setIsSidebarOpen(true); } }}><CodeIcon /><span>CSS</span></NavIcon>
             <NavIcon title="Layer Manager" active={leftTab === 'layers'} onClick={() => { if (leftTab === 'layers') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('layers'); setIsSidebarOpen(true); } }}><LayersIcon /><span>Layers</span></NavIcon>
             <NavIcon title="AI Assistant" active={leftTab === 'ai'} onClick={() => { if (leftTab === 'ai') setIsSidebarOpen(!isSidebarOpen); else { setLeftTab('ai'); setIsSidebarOpen(true); } }}><SparklesIcon /><span>AI</span></NavIcon>
             {mode === 'thank-you' && (
@@ -6840,7 +7129,7 @@ document.addEventListener('click', function(e) {
           }}>
             <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 280, backgroundColor: '#fff' }}>
               <span style={{ color: '#000', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab}
+                {leftTab === 'thank-you' ? 'Thank You Page Templates' : leftTab === 'custom-css' ? 'Global Custom CSS' : leftTab}
               </span>
               <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#000', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: 0.7 }}>✕</button>
             </div>
@@ -6907,6 +7196,14 @@ document.addEventListener('click', function(e) {
                   setThemePrimary(primary);
                   setThemeSecondary(secondary);
                 }}
+              />
+            </div>
+
+            {/* Custom CSS Panel (Global CSS Only) */}
+            <div style={{ flex: 1, display: leftTab === 'custom-css' ? 'flex' : 'none', overflow: 'hidden' }}>
+              <CustomCssPanel
+                editor={editorInstance}
+                mode="global"
               />
             </div>
 
@@ -7315,6 +7612,7 @@ document.addEventListener('click', function(e) {
             <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
               <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
               <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
+              <TabButton active={rightTab === 'custom-css'} onClick={() => setRightTab('custom-css')}>Element CSS</TabButton>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
               <div id="styles-container" />
@@ -7341,6 +7639,12 @@ document.addEventListener('click', function(e) {
             `}} />
             </div>
             <div id="traits-container" style={{ flex: 1, overflowY: 'auto', display: rightTab === 'traits' ? 'block' : 'none', background: '#ffffff' }} />
+            <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'custom-css' ? 'flex' : 'none', background: '#ffffff', flexDirection: 'column' }}>
+              <CustomCssPanel
+                editor={editorInstance}
+                mode="element"
+              />
+            </div>
           </div>
         </div>
       </div>
