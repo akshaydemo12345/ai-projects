@@ -972,6 +972,17 @@ const GrapesEditor = () => {
             letter-spacing: normal; text-transform: none; display: inline-block;
             white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased;
           }
+          .material-icons, .material-icons-outlined {
+            font-family: 'Material Icons' !important;
+          }
+          .fa, .fas, .far, .fal, .fab, .fad, .fak, .fa-solid, .fa-regular, .fa-light, .fa-thin, .fa-duotone, .fa-brands, .fa-sharp,
+          i.fa, i.fas, i.far, i.fal, i.fab, i.fa-solid, i.fa-regular, i.fa-brands,
+          i[class*="fa-"], [class*="fa-"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+          }
+          .fa-brands, .fab, i.fa-brands, i.fab {
+            font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", "FontAwesome" !important;
+          }
         `;
 
         // Remove existing branding-vars if present so we re-insert at end
@@ -4951,16 +4962,6 @@ const GrapesEditor = () => {
             : (styleMap['margin-left'] === 'auto' ? 'right' : 'left');
 
           card.innerHTML = `
-            <!-- ── ELEMENTOR INSPECTOR HEADER ── -->
-            <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%); margin: -14px -14px 12px -14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f5a; border-radius: 12px 12px 0 0;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 22px; height: 22px; background: #e11d48; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 12px;">E</div>
-                <span style="font-size: 12px; font-weight: 700; color: #ffffff; letter-spacing: 0.02em;">
-                  ${isLogoComponent ? 'Brand Logo Control' : 'Image Control'}
-                </span>
-              </div>
-            </div>
-
             <!-- ── CHOOSE IMAGE PREVIEW BOX (ELEMENTOR STYLE) ── -->
             <div class="elementor-img-choose-container" style="position: relative;">
               <div class="elementor-choose-img-box" style="
@@ -7666,7 +7667,7 @@ document.addEventListener('click', function(e) {
             <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', height: 48, alignItems: 'center', background: '#ffffff' }}>
               <TabButton active={rightTab === 'styles'} onClick={() => setRightTab('styles')}>Styles</TabButton>
               <TabButton active={rightTab === 'traits'} onClick={() => setRightTab('traits')}>Properties</TabButton>
-              <TabButton active={rightTab === 'custom-css'} onClick={() => setRightTab('custom-css')}>Element CSS</TabButton>
+              <TabButton active={rightTab === 'custom-css'} onClick={() => setRightTab('custom-css')}>CSS</TabButton>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: rightTab === 'styles' ? 'block' : 'none', background: '#ffffff' }}>
               <div id="styles-container" />

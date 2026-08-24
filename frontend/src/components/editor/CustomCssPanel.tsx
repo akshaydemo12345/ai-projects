@@ -312,7 +312,7 @@ export const CustomCssPanel: React.FC<CustomCssPanelProps> = ({
               }`}
             >
               <Target size={13} className={activeTab === 'element' ? 'text-[#6366f1]' : 'text-[#9ca3af]'} />
-              <span>Element CSS</span>
+              <span>CSS</span>
               {selectedComponent && (
                 <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] ml-0.5" title="Element selected" />
               )}

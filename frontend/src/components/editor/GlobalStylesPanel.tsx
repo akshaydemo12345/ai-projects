@@ -732,7 +732,7 @@ const GlobalStylesPanel = ({ editor, initialPrimary, initialSecondary, initialSt
     css += 'input::placeholder, textarea::placeholder { color: #94a3b8 !important; opacity: 0.6; }\n';
 
     css += `
-body, body *:not(.material-icons):not(.material-symbols-outlined) {
+body, body *:not(.material-icons):not(.material-symbols-outlined):not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands) {
   font-family: var(--body-font) !important;
 }
 body {
@@ -742,7 +742,11 @@ body {
   line-height: var(--body-line-height);
 }
 
-h1, h2, .headline, .heading, h1 *, h2 *, .headline *, .heading * {
+h1, h2, .headline, .heading,
+h1 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+h2 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+.headline *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+.heading *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined) {
   color: var(--heading-color);
   font-family: var(--heading-font) !important;
 }
@@ -752,14 +756,15 @@ h1, .headline, .heading {
   line-height: var(--heading-line-height);
 }
 
-h3, h4, h5, h6, .subheading, .subtitle, h3 *, h4 *, h5 *, h6 *, .subheading *, .subtitle * {
+h3, h4, h5, h6, .subheading, .subtitle,
+h3 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+h4 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+h5 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+h6 *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+.subheading *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined),
+.subtitle *:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-light):not(.fa-thin):not(.fa-duotone):not(.fa-brands):not(.material-icons):not(.material-symbols-outlined) {
   color: var(--subheading-color);
   font-family: var(--subheading-font) !important;
-}
-
-.subheading, .subtitle {
-  font-size: var(--subheading-size);
-  line-height: var(--subheading-line-height);
 }
 
 .material-symbols-outlined {
@@ -767,6 +772,15 @@ h3, h4, h5, h6, .subheading, .subtitle, h3 *, h4 *, h5 *, h6 *, .subheading *, .
 }
 .material-icons, .material-icons-outlined {
   font-family: 'Material Icons' !important;
+}
+
+.fa, .fas, .far, .fal, .fab, .fad, .fak, .fa-solid, .fa-regular, .fa-light, .fa-thin, .fa-duotone, .fa-brands, .fa-sharp,
+i.fa, i.fas, i.far, i.fal, i.fab, i.fa-solid, i.fa-regular, i.fa-brands,
+i[class*="fa-"], [class*="fa-"] {
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+}
+.fa-brands, .fab, i.fa-brands, i.fab {
+  font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", "FontAwesome" !important;
 }
 
 a:where(:not(.logo):not(.btn):not([class*="btn-"]):not([class*="-btn-"]):not(.cta-button)) {
