@@ -324,44 +324,6 @@ export const CustomCssPanel: React.FC<CustomCssPanelProps> = ({
       {/* ════════════════ TAB 1: GLOBAL CUSTOM CSS ════════════════ */}
       {activeTab === 'global' && (
         <div className="flex-1 flex flex-col p-3 gap-3 bg-[#ffffff] overflow-hidden">
-          {/* Header Bar matching Editor Style */}
-          <div className="flex items-center justify-between bg-[#f8fafc] border border-[#e2e8f0] rounded px-3 py-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-              <span className="text-[12px] font-semibold text-[#0f172a]">Global Canvas Stylesheet</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => handleFormat(true)}
-                disabled={!globalCss.trim()}
-                title="Format CSS"
-                className="px-2 py-1 text-[11px] font-medium text-[#475569] hover:text-[#0f172a] bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] rounded transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1"
-              >
-                <Wand2 size={11} />
-                <span>Format</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => copyToClipboard(globalCss, true)}
-                disabled={!globalCss.trim()}
-                title="Copy Global CSS"
-                className="p-1.5 text-[#475569] hover:text-[#6366f1] bg-[#ffffff] hover:bg-[#f1f5f9] border border-[#cbd5e1] rounded transition-colors disabled:opacity-40 cursor-pointer"
-              >
-                {globalCopied ? <Check size={13} className="text-[#10b981]" /> : <Copy size={13} />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setGlobalCss('')}
-                disabled={!globalCss.trim()}
-                title="Clear Global CSS"
-                className="p-1.5 text-[#475569] hover:text-[#ef4444] bg-[#ffffff] hover:bg-[#fee2e2] border border-[#cbd5e1] rounded transition-colors disabled:opacity-40 cursor-pointer"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          </div>
-
           {/* Clean Code Editor Container matching GrapesJS Panel Design */}
           <div className="flex-1 flex flex-col border border-[#cbd5e1] rounded-md overflow-hidden bg-[#ffffff] shadow-xs focus-within:border-[#6366f1] focus-within:ring-1 focus-within:ring-[#6366f1] transition-all">
             {/* Editor Control Bar */}
@@ -398,14 +360,6 @@ export const CustomCssPanel: React.FC<CustomCssPanelProps> = ({
                 }}
               />
             </div>
-          </div>
-
-          {/* Footer Note */}
-          <div className="flex items-start gap-2 p-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded text-xs text-[#475569] shrink-0">
-            <Info size={14} className="shrink-0 mt-0.5 text-[#6366f1]" />
-            <p className="leading-snug text-[11px]">
-              Global CSS styles are injected into the page canvas head in real-time and saved directly into the project stylesheet.
-            </p>
           </div>
         </div>
       )}

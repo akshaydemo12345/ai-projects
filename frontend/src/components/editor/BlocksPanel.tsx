@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Search, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import type { Editor } from 'grapesjs';
 
 interface BlocksPanelProps {
   onAdd: (type: string) => void;
   onDragStart: (type: string, ev: React.DragEvent<HTMLDivElement>) => void;
+  editor?: Editor | null;
 }
 
 const CATEGORIES: any[] = [
@@ -152,10 +154,12 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
       {/* Accordion Categories */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#fff] custom-scroll">
         {CATEGORIES.map(category => {
-          const blocks = category.blocks.filter(b => b.label.toLowerCase().includes(searchQuery.toLowerCase()));
+          const blocks = category.blocks.filter((b: any) => b.label.toLowerCase().includes(searchQuery.toLowerCase()));
           if (blocks.length === 0) return null;
 
           const isExpanded = expandedCats[category.name];
+
+          if (blocks.length === 0) return null;
 
           return (
             <div key={category.name} className="border-b border-[#e5e7eb]">

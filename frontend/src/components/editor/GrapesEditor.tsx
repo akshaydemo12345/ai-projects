@@ -4738,7 +4738,7 @@ const GrapesEditor = () => {
           const target = e.target as HTMLElement;
           if (!target) return;
 
-          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview], input[type="color"], .gjs-field-color') as HTMLElement;
+          const swatch = target.closest('.gjs-field-colorp-c, .gjs-field-color-picker, .custom-grapesjs-pickr, .pcr-button, [data-color-preview], input[type="color"]') as HTMLElement;
           if (swatch) {
             e.preventDefault();
             e.stopPropagation();
