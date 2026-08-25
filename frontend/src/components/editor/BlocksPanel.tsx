@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Editor } from 'grapesjs';
 
 interface BlocksPanelProps {
@@ -225,14 +225,6 @@ const BlocksPanel = ({ onAdd, onDragStart }: BlocksPanelProps) => {
             </div>
           );
         })}
-      </div>
-
-      {/* Bottom Fixed Button */}
-      <div className="px-3 py-3 border-t border-[#e5e7eb] bg-[#fff]">
-        <button className="flex items-center justify-center w-full gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium py-2 rounded-[4px] transition-colors text-[13px]">
-          <Plus size={16} />
-          <span>Add more blocks</span>
-        </button>
       </div>
 
     </div>
